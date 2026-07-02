@@ -75,9 +75,10 @@ def main():
 
     print(f"Loaded {len(chuti_auth)} Chuti auth users, {len(quotes_auth)} Quotes auth users.")
 
-    # Create mapping maps
-    chuti_users_by_email = {u["email"].lower(): u for u in chuti_auth if u.get("email")}
+    # Create mapping maps based on Username (case-insensitive) as the unique key
     chuti_profiles_by_id = {p["id"]: p for p in chuti_profiles}
+    chuti_profiles_by_username = {p["username"].upper(): p for p in chuti_profiles if p.get("username")}
+    chuti_users_by_id = {u["id"]: u for u in chuti_auth}
     quotes_profiles_by_id = {p["id"]: p for p in quotes_profiles}
     quotes_users_by_id = {u["id"]: u for u in quotes_auth}
 
@@ -92,13 +93,16 @@ def main():
     print("\n[2/5] Processing users and roles mapping...")
     
     # 1. We will insert ALL auth users from Chuti and Quotes
-    auth_users_inserted = set()
+    auth_users_inserted = set() # tracks usernames
     auth_inserts_sql = []
     
     # Insert Chuti Auth Users first
     for c_user in chuti_auth:
         c_id = c_user["id"]
         email = c_user["email"]
+        c_profile = chuti_profiles_by_id.get(c_id, {})
+        username = c_profile.get("username", "").upper()
+        
         enc_password = c_user["encrypted_password"]
         raw_app_metadata = json.dumps(c_user.get("raw_app_meta_data", {"provider": "email", "providers": ["email"]}))
         raw_user_metadata = json.dumps(c_user.get("raw_user_meta_data", {}))
@@ -108,26 +112,27 @@ def main():
         auth_sql = f"""INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role) 
 VALUES ('{c_id}', '00000000-0000-0000-0000-000000000000', '{email}', '{enc_password}', NOW(), NOW(), NOW(), '{raw_app_metadata}'::jsonb, '{raw_user_metadata}'::jsonb, '{aud}', '{user_role}') ON CONFLICT (id) DO NOTHING;"""
         auth_inserts_sql.append(auth_sql)
-        auth_users_inserted.add(email.lower())
+        if username:
+            auth_users_inserted.add(username)
         
     # Insert Quotes-Only Auth Users
     for q_user in quotes_auth:
-        email = q_user.get("email", "").lower()
-        if email in auth_users_inserted:
-            # Common user, already added under Chuti ID
-            old_id = q_user["id"]
+        q_id = q_user["id"]
+        q_profile = quotes_profiles_by_id.get(q_id, {})
+        username = q_profile.get("username", "").upper()
+        
+        if username and username in auth_users_inserted:
+            # Common user (matched by Username)
             # Find the corresponding Chuti ID
-            master_user = chuti_users_by_email[email]
-            user_id_map[old_id] = master_user["id"]
+            master_profile = chuti_profiles_by_username[username]
+            user_id_map[q_id] = master_profile["id"]
             continue
             
-        q_id = q_user["id"]
         user_id_map[q_id] = q_id
-        
+        email = q_user["email"]
         enc_password = q_user["encrypted_password"]
         raw_app_metadata = json.dumps(q_user.get("raw_app_meta_data", {"provider": "email", "providers": ["email"]}))
         
-        q_profile = quotes_profiles_by_id.get(q_id, {})
         is_quotes_admin = q_profile.get("role") == "admin"
         final_chuti_role = "admin" if is_quotes_admin else "user"
         
@@ -139,9 +144,10 @@ VALUES ('{c_id}', '00000000-0000-0000-0000-000000000000', '{email}', '{enc_passw
         user_role = q_user.get("role", "authenticated")
 
         auth_sql = f"""INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role) 
-VALUES ('{q_id}', '00000000-0000-0000-0000-000000000000', '{q_user["email"]}', '{enc_password}', NOW(), NOW(), NOW(), '{raw_app_metadata}'::jsonb, '{raw_user_metadata_str}'::jsonb, '{aud}', '{user_role}') ON CONFLICT (id) DO NOTHING;"""
+VALUES ('{q_id}', '00000000-0000-0000-0000-000000000000', '{email}', '{enc_password}', NOW(), NOW(), NOW(), '{raw_app_metadata}'::jsonb, '{raw_user_metadata_str}'::jsonb, '{aud}', '{user_role}') ON CONFLICT (id) DO NOTHING;"""
         auth_inserts_sql.append(auth_sql)
-        auth_users_inserted.add(email)
+        if username:
+            auth_users_inserted.add(username)
 
     sql_statements.append("-- 1. Insert All Auth Users")
     sql_statements.extend(auth_inserts_sql)
@@ -153,6 +159,7 @@ VALUES ('{q_id}', '00000000-0000-0000-0000-000000000000', '{q_user["email"]}', '
     # Process Chuti profiles first
     for c_profile in chuti_profiles:
         p_id = c_profile["id"]
+        username = c_profile["username"].upper()
         
         # Default flags for Chuti profile
         c_profile["has_chuti_access"] = True
@@ -161,43 +168,42 @@ VALUES ('{q_id}', '00000000-0000-0000-0000-000000000000', '{q_user["email"]}', '
         c_profile["allowed_types"] = ["Quote", "Requote", "Requote Van", "Requote Bike", "Review", "Review Van", "Review Bike", "Individual Review", "Other Site", 'Van', 'Bike', 'Sale']
         c_profile["can_manage_rules"] = False
         
-        # Check if they match a Quotes user by email
-        # Find email from Chuti auth users list
-        c_user = next((u for u in chuti_auth if u["id"] == p_id), None)
-        if c_user and c_user.get("email"):
-            email = c_user["email"].lower()
-            # Find if there is a Quotes auth user with this email
-            q_user = next((u for u in quotes_auth if u.get("email", "").lower() == email), None)
-            if q_user:
-                q_id = q_user["id"]
-                q_profile = quotes_profiles_by_id.get(q_id, {})
+        # Check if they match a Quotes user by username
+        q_profile_id = None
+        for q_id, q_p in quotes_profiles_by_id.items():
+            if q_p.get("username", "").upper() == username:
+                q_profile_id = q_id
+                break
                 
-                # Merge Quotes details into Chuti profile
-                c_profile["has_quotes_access"] = True
-                c_profile["allowed_types"] = q_profile.get("allowed_types", c_profile["allowed_types"])
-                c_profile["can_manage_rules"] = q_profile.get("can_manage_rules", False)
+        if q_profile_id:
+            q_profile = quotes_profiles_by_id[q_profile_id]
+            # Merge Quotes details into Chuti profile
+            c_profile["has_quotes_access"] = True
+            c_profile["allowed_types"] = q_profile.get("allowed_types", c_profile["allowed_types"])
+            c_profile["can_manage_rules"] = q_profile.get("can_manage_rules", False)
+            
+            # Role check logic: supervisor in Chuti gets Quotes admin
+            if c_profile.get("role") == "supervisor":
+                c_profile["quotes_role"] = "admin"
+            else:
+                c_profile["quotes_role"] = q_profile.get("role", "user")
                 
-                # Role check logic: supervisor in Chuti gets Quotes admin
-                if c_profile.get("role") == "supervisor":
-                    c_profile["quotes_role"] = "admin"
-                else:
-                    c_profile["quotes_role"] = q_profile.get("role", "user")
-                    
         master_profiles[p_id] = c_profile
 
     # Process Quotes-only profiles next
     for q_profile in quotes_profiles:
         q_id = q_profile["id"]
+        username = q_profile.get("username", "").upper()
+        
+        # If already added under Chuti username, skip
+        if username in chuti_profiles_by_username:
+            continue
+            
         q_user = quotes_users_by_id.get(q_id)
         if not q_user or not q_user.get("email"):
             continue
             
-        email = q_user["email"].lower()
-        # If already added under Chuti, skip
-        if email in chuti_users_by_email:
-            continue
-            
-        # Quotes-only user setup
+        email = q_user["email"]
         is_quotes_admin = q_profile.get("role") == "admin"
         final_chuti_role = "admin" if is_quotes_admin else "user"
         
@@ -257,7 +263,7 @@ VALUES ('{q_id}', '00000000-0000-0000-0000-000000000000', '{q_user["email"]}', '
             job_role_sql = f"'{job_role_escaped}'"
         else:
             job_role_sql = "NULL"
-
+            
         default_sign_in = f"'{p['default_sign_in']}'" if p.get("default_sign_in") else "NULL"
         default_sign_out = f"'{p['default_sign_out']}'" if p.get("default_sign_out") else "NULL"
         
@@ -396,6 +402,7 @@ VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{
             is_deleted = "TRUE" if rule["is_deleted"] else "FALSE"
             created_at = rule["created_at"]
             updated_at = rule["updated_at"]
+            
             updated_by = rule.get("updated_by")
             if updated_by and updated_by in user_id_map:
                 updated_by_sql = f"'{user_id_map[updated_by]}'"
