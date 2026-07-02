@@ -83,6 +83,7 @@ CREATE TABLE public.profiles (
   -- Quotes App Integration Columns
   allowed_types TEXT[] DEFAULT ARRAY['Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review', 'Review Van', 'Review Bike', 'Individual Review', 'Other Site', 'Van', 'Bike', 'Sale']::TEXT[] NOT NULL,
   can_manage_rules BOOLEAN NOT NULL DEFAULT FALSE,
+  quotes_role TEXT DEFAULT 'user' CHECK (quotes_role IN ('admin', 'user')),
   
   -- Unified Access Flags
   has_chuti_access BOOLEAN DEFAULT FALSE,
