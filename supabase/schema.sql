@@ -812,7 +812,8 @@ CREATE TABLE public.records (
   codename TEXT NOT NULL,
   file_type TEXT NOT NULL CHECK (file_type IN ('Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review', 'Review Van', 'Review Bike', 'Individual Review', 'Other Site', 'Van', 'Bike', 'Sale')),
   submitted_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Enable RLS on Records
@@ -830,6 +831,25 @@ CREATE POLICY "Allow users to update own records, admins/supervisors update all"
 
 CREATE POLICY "Allow users to delete own records, admins/supervisors delete all" ON public.records
   FOR DELETE TO authenticated USING (auth.uid() = user_id OR public.is_admin() OR public.is_supervisor());
+
+-- Indexes for performance optimization on records
+CREATE INDEX IF NOT EXISTS idx_records_updated_at ON public.records(updated_at);
+CREATE INDEX IF NOT EXISTS idx_records_user_id ON public.records(user_id);
+CREATE INDEX IF NOT EXISTS idx_records_submitted_at ON public.records(submitted_at);
+
+-- Trigger to auto-update updated_at on records table modifications
+CREATE OR REPLACE FUNCTION public.update_records_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER records_set_updated_at
+  BEFORE UPDATE ON public.records
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_records_updated_at();
 
 -- ==========================================
 -- 10. Quotes App: login_codes Table

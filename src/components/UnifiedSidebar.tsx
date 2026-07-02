@@ -13,7 +13,9 @@ import {
   TrendingUp,
   Users,
   ScrollText,
-  ListTodo
+  ListTodo,
+  User,
+  RotateCcw
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
@@ -21,6 +23,8 @@ interface UnifiedSidebarProps {
   profile: Profile | null;
   activeQuotesTab?: 'entry' | 'monthly' | 'users' | 'analytics' | 'audit_logs' | 'rules' | 'todo';
   onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'users' | 'analytics' | 'audit_logs' | 'rules' | 'todo') => void;
+  activeChutiTab?: 'staff_master' | 'govt_responses' | 'settlement';
+  onChutiTabChange?: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
 }
@@ -30,6 +34,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   profile,
   activeQuotesTab,
   onQuotesTabChange,
+  activeChutiTab,
+  onChutiTabChange,
   isSidebarCollapsed,
   onSidebarToggle,
 }) => {
@@ -81,7 +87,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
       <div className="space-y-4">
         {/* Workspace 1: Chuti Leave Tracker */}
         {hasChutiAccess && (
-          <div>
+          <div className="space-y-1">
             <button
               onClick={handleChutiNav}
               title={isSidebarCollapsed ? 'Leave Tracker' : undefined}
@@ -96,6 +102,59 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               <Calendar className="h-5 w-5 shrink-0" />
               {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Tracker</span>}
             </button>
+
+            {/* Embedded Chuti sub-tabs when chuti section is active and user is admin */}
+            {activeSection === 'chuti' && onChutiTabChange && activeChutiTab && profile?.role === 'admin' && (
+              <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-slate-800/80 ml-6'}`}>
+                {/* 1. Leave Dashboard */}
+                <button
+                  onClick={() => onChutiTabChange('staff_master')}
+                  title={isSidebarCollapsed ? 'Leave Dashboard' : undefined}
+                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                  } ${
+                    activeChutiTab === 'staff_master'
+                      ? 'bg-orange-500/10 text-orange-400'
+                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                  }`}
+                >
+                  <User className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Dashboard</span>}
+                </button>
+
+                {/* 2. Govt Holiday Response */}
+                <button
+                  onClick={() => onChutiTabChange('govt_responses')}
+                  title={isSidebarCollapsed ? 'Govt Holiday Response' : undefined}
+                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                  } ${
+                    activeChutiTab === 'govt_responses'
+                      ? 'bg-orange-500/10 text-orange-400'
+                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                  }`}
+                >
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Govt Holiday Response</span>}
+                </button>
+
+                {/* 3. Review & Settlements */}
+                <button
+                  onClick={() => onChutiTabChange('settlement')}
+                  title={isSidebarCollapsed ? 'Review & Settlements' : undefined}
+                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                  } ${
+                    activeChutiTab === 'settlement'
+                      ? 'bg-orange-500/10 text-orange-400'
+                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                  }`}
+                >
+                  <RotateCcw className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Review & Settlements</span>}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

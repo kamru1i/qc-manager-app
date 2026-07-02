@@ -321,8 +321,8 @@ export const useQuotesDashboardData = () => {
           } catch (pruneErr) {
             console.error('Active cache pruning failed:', pruneErr);
           }
-        } catch (netError) {
-          console.error('Network sync/fetch failed, falling back to cache:', netError);
+        } catch (netError: any) {
+          console.error('Network sync/fetch failed, falling back to cache:', netError?.message || netError, netError);
           showToast('error', 'Network error. Loading offline cache...');
         }
       }
@@ -446,8 +446,8 @@ export const useQuotesDashboardData = () => {
 
           earliestDate = earliestResult.data?.[0]?.submitted_at ? new Date(earliestResult.data[0].submitted_at) : null;
           latestDate = latestResult.data?.[0]?.submitted_at ? new Date(latestResult.data[0].submitted_at) : null;
-        } catch (netError) {
-          console.error('Failed to fetch available dates online, falling back to cache:', netError);
+        } catch (netError: any) {
+          console.error('Failed to fetch available dates online, falling back to cache:', netError?.message || netError, netError);
           // Offline: read min/max from IndexedDB cache
           const cached = await getCacheData<RecordItem>('records_cache');
           const userRecords = cached.filter(r => (profile.role === 'admin' || profile.role === 'supervisor') || r.user_id === sessionUser.id);

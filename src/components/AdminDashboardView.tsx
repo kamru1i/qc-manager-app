@@ -92,6 +92,8 @@ interface AdminDashboardViewProps {
   adminRecords: ChutiRecordWithProfile[];
   currentUserProfile: Profile | null;
   initialFetchDone: boolean;
+  activeTab?: 'staff_master' | 'govt_responses' | 'settlement';
+  setActiveTab?: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
 }
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
@@ -140,12 +142,15 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   adminRecords,
   currentUserProfile,
   initialFetchDone,
+  activeTab: propActiveTab,
+  setActiveTab: propSetActiveTab,
 }) => {
 
   // Local settings modals visibility
   const [showOfficeModal, setShowOfficeModal] = React.useState(false);
   const [showGovtModal, setShowGovtModal] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
+  
+  const [localActiveTab, setLocalActiveTab] = React.useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('adminActiveTab');
       if (saved === 'staff_master' || saved === 'govt_responses' || saved === 'settlement') {
@@ -154,6 +159,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     }
     return 'staff_master';
   });
+
+  const activeTab = propActiveTab || localActiveTab;
+  const setActiveTab = propSetActiveTab || setLocalActiveTab;
 
   React.useEffect(() => {
     sessionStorage.setItem('adminActiveTab', activeTab);
@@ -489,39 +497,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       ) : (
         /* ================= STAFF MASTER DATABASE SUMMARY TABLE ================= */
         <div className="flex flex-col gap-6">
-          {/* Tabs Navigation */}
-          <div className="flex flex-col sm:flex-row w-full sm:w-auto bg-slate-900/40 backdrop-blur-xl p-1 rounded-xl border border-slate-850/80 self-center gap-1 sm:gap-0">
-            <button
-              onClick={() => setActiveTab('staff_master')}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'staff_master'
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-950/40 border border-orange-500/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 border border-transparent'
-                }`}
-            >
-              <User className="h-4 w-4" />
-              <span>Leave Dashboard</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('govt_responses')}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'govt_responses'
-                ? 'bg-teal-600 text-white shadow-lg shadow-teal-955/40 border border-teal-500/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 border border-transparent'
-                }`}
-            >
-              <Calendar className="h-4 w-4" />
-              <span>Govt Holiday Response</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('settlement')}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'settlement'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-950/40 border border-indigo-500/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 border border-transparent'
-                }`}
-            >
-              <RotateCcw className="h-4 w-4" />
-              <span>Review & Settlements</span>
-            </button>
-          </div>
+
 
           {activeTab === 'staff_master' ? (
             /* ================= STAFF MASTER DATABASE SUMMARY TABLE ================= */

@@ -91,6 +91,29 @@ export default function Dashboard() {
   const [showAdminAddLeaveModal, setShowAdminAddLeaveModal] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  const [activeChutiTab, setActiveChutiTab] = useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('adminActiveTab');
+      if (saved === 'staff_master' || saved === 'govt_responses' || saved === 'settlement') {
+        return saved as 'staff_master' | 'govt_responses' | 'settlement';
+      }
+    }
+    return 'staff_master';
+  });
+
+  const handleChutiTabChange = (tab: 'staff_master' | 'govt_responses' | 'settlement') => {
+    setActiveChutiTab(tab);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('adminActiveTab', tab);
+    }
+    if (adminActiveTab !== 'admin') {
+      setAdminActiveTab('admin');
+      if (typeof window !== 'undefined' && profile?.id) {
+        localStorage.setItem('admin_mode_' + profile.id, 'admin');
+      }
+    }
+  };
+
   useEffect(() => {
     const savedSidebarState = localStorage.getItem('quotes_sales_sidebar_collapsed');
     if (savedSidebarState === 'true' || savedSidebarState === 'false') {
@@ -815,6 +838,8 @@ export default function Dashboard() {
         <UnifiedSidebar
           activeSection="chuti"
           profile={profile}
+          activeChutiTab={activeChutiTab}
+          onChutiTabChange={handleChutiTabChange}
           isSidebarCollapsed={isSidebarCollapsed}
           onSidebarToggle={handleSidebarToggle}
         />
@@ -859,6 +884,8 @@ export default function Dashboard() {
         {/* ================= ADMIN VIEW ================= */}
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && adminActiveTab === 'admin' && (
           <AdminDashboardView
+            activeTab={activeChutiTab}
+            setActiveTab={handleChutiTabChange}
             profilesList={profilesList}
             viewingStaffId={viewingStaffId}
             setViewingStaffId={setViewingStaffId}
