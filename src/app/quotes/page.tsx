@@ -25,7 +25,6 @@ const AuditLogsPanel = lazy(() => import("@/components/AuditLogsPanel").then(m =
 const QuoteRulesPanel = lazy(() => import("@/components/QuoteRulesPanel").then(m => ({ default: m.QuoteRulesPanel })));
 const CopyHelperPanel = lazy(() => import("@/components/CopyHelperPanel").then(m => ({ default: m.CopyHelperPanel })));
 const SaveFileHelperPanel = lazy(() => import("@/components/SaveFileHelperPanel").then(m => ({ default: m.SaveFileHelperPanel })));
-const UserManagementPanel = lazy(() => import("@/components/QuotesUserManagementPanel").then(m => ({ default: m.UserManagementPanel })));
 const TodoPanel = lazy(() => import("@/components/TodoPanel").then(m => ({ default: m.TodoPanel })));
 import { validator } from "@/utils/quotesValidator";
 import {
@@ -119,9 +118,9 @@ export default function Dashboard() {
     logActivity,
   } = dashboardData;
 
-  // Tabs: 'entry' (Daily Entry), 'monthly' (Month's Data), 'users' (User Management), 'analytics' (Analytics), 'audit_logs' (Audit Logs), 'rules' (Quote Rules), 'todo' (Superadmin Todos)
+  // Tabs: 'entry' (Daily Entry), 'monthly' (Month's Data), 'analytics' (Analytics), 'audit_logs' (Audit Logs), 'rules' (Quote Rules), 'todo' (Superadmin Todos)
   const [activeTab, setActiveTab] = useState<
-    "entry" | "monthly" | "users" | "analytics" | "audit_logs" | "rules" | "todo"
+    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo"
   >(() => {
     if (typeof window !== "undefined") {
       const savedTab = localStorage.getItem("quotes_sales_active_tab");
@@ -129,7 +128,6 @@ export default function Dashboard() {
         savedTab &&
         (savedTab === "entry" ||
           savedTab === "monthly" ||
-          savedTab === "users" ||
           savedTab === "analytics" ||
           savedTab === "audit_logs" ||
           savedTab === "rules" ||
@@ -141,7 +139,7 @@ export default function Dashboard() {
           try {
             const cachedProfile = JSON.parse(cachedProfileStr);
             if (
-              (savedTab === "users" || savedTab === "analytics" || savedTab === "audit_logs") &&
+              (savedTab === "analytics" || savedTab === "audit_logs") &&
               (cachedProfile?.role !== "admin" && cachedProfile?.role !== "supervisor")
             ) {
               return "entry";
@@ -151,7 +149,7 @@ export default function Dashboard() {
             }
           } catch {}
         }
-        return savedTab as "entry" | "monthly" | "users" | "analytics" | "audit_logs" | "rules" | "todo";
+        return savedTab as "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo";
       }
     }
     return "entry";
@@ -187,14 +185,13 @@ export default function Dashboard() {
       savedTab &&
       (savedTab === "entry" ||
         savedTab === "monthly" ||
-        savedTab === "users" ||
         savedTab === "analytics" ||
         savedTab === "audit_logs" ||
         savedTab === "rules" ||
         savedTab === "todo")
     ) {
       if (
-        (savedTab === "users" || savedTab === "analytics" || savedTab === "audit_logs") &&
+        (savedTab === "analytics" || savedTab === "audit_logs") &&
         (profile.role !== "admin" && profile.role !== "supervisor")
       ) {
         setActiveTab("entry");
@@ -202,17 +199,17 @@ export default function Dashboard() {
         setActiveTab("entry");
       } else {
         setActiveTab(
-          savedTab as "entry" | "monthly" | "users" | "analytics" | "audit_logs" | "rules" | "todo",
+          savedTab as "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo",
         );
       }
     }
   }, [profile]);
 
   const handleTabChange = (
-    tab: "entry" | "monthly" | "users" | "analytics" | "audit_logs" | "rules" | "todo",
+    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo",
   ) => {
     if (
-      (tab === "users" || tab === "analytics" || tab === "audit_logs") &&
+      (tab === "analytics" || tab === "audit_logs") &&
       (profile?.role !== "admin" && profile?.role !== "supervisor")
     ) {
       return;
@@ -1091,48 +1088,7 @@ export default function Dashboard() {
     }
   };
 
-  // Admin: Create User
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setGeneratedPassword(null);
 
-    const validation = validator.validateCreateUserForm({
-      username: newCodename,
-      fullName: newFullName,
-      password: newPassword,
-      confirmPassword: newPassword,
-      role: newRole,
-    });
-
-    if (!validation.isValid) {
-      showToast("error", validation.errors[0]);
-      return;
-    }
-
-    if (allowedTypesSelect.length === 0) {
-      showToast("error", "Please allow at least one file type.");
-      return;
-    }
-
-    const pw = await createUser(
-      newCodename,
-      newRole,
-      newFullName,
-      allowedTypesSelect,
-      newCanManageRules,
-      newPassword,
-    );
-    if (pw) {
-      setGeneratedPassword(null);
-      setNewCodename("");
-      setNewFullName("");
-      setNewRole("user");
-      setNewPassword("1234");
-      setAllowedTypesSelect(ALL_10_FILE_TYPES);
-      setNewCanManageRules(false);
-      setIsAddUserModalOpen(false);
-    }
-  };
 
   // Admin reset password handled inline inside EditProfileModal
 
@@ -1809,27 +1765,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* TAB 3: USER MANAGEMENT (Admin Only) */}
-          {activeTab === "users" && (profile?.role === "admin" || profile?.role === "supervisor") && (
-            <Suspense fallback={<SkeletonLoader type="users" />}>
-              <UserManagementPanel
-                filteredProfiles={filteredProfiles}
-                initialFetchDone={initialFetchDone}
-                userSearchQuery={userSearchQuery}
-                setUserSearchQuery={setUserSearchQuery}
-                setEditingProfile={setEditingProfile}
-                setEditUserFullName={setEditUserFullName}
-                setEditUserRole={setEditUserRole}
-                setEditUserAllowedTypes={setEditUserAllowedTypes}
-                setEditUserCanManageRules={setEditUserCanManageRules}
-                setDeletingUserAccount={setDeletingUserAccount}
-                setGeneratedPassword={setGeneratedPassword}
-                setIsAddUserModalOpen={setIsAddUserModalOpen}
-                sessionUser={sessionUser}
-                badges={topPerformerBadges}
-              />
-            </Suspense>
-          )}
+
 
           {/* TAB 4: PERFORMANCE ANALYTICS */}
           {activeTab === "analytics" && (profile?.role === "admin" || profile?.role === "supervisor") && (
@@ -1907,122 +1843,7 @@ export default function Dashboard() {
         />
       )}
 
-      {/* MODAL 3: EDIT USER PROFILE */}
-      {editingProfile && (
-        <EditProfileModal
-          username={editingProfile.username}
-          fullName={editUserFullName}
-          setFullName={setEditUserFullName}
-          role={editUserRole}
-          setRole={setEditUserRole}
-          allowedTypes={editUserAllowedTypes}
-          setAllowedTypes={setEditUserAllowedTypes}
-          canManageRules={editUserCanManageRules}
-          setCanManageRules={setEditUserCanManageRules}
-          submitting={submitting}
-          onClose={() => setEditingProfile(null)}
-          onSave={async (newPasswordToSet) => {
-            if (editUserAllowedTypes.length === 0) {
-              showToast("error", "Please allow at least one file type.");
-              return;
-            }
 
-            const isFullNameSame = (editingProfile.full_name || "").trim() === editUserFullName.trim();
-            const isRoleSame = editingProfile.role === editUserRole;
-            const oldAllowedTypes = editingProfile.allowed_types || [];
-            const isAllowedTypesSame =
-              oldAllowedTypes.length === editUserAllowedTypes.length &&
-              oldAllowedTypes.every((t) => editUserAllowedTypes.includes(t));
-            const isCanManageRulesSame = !!editingProfile.can_manage_rules === editUserCanManageRules;
-
-            const hasProfileChanges = !isFullNameSame || !isRoleSame || !isAllowedTypesSame || !isCanManageRulesSame;
-
-            let profileUpdateSuccess = true;
-            if (hasProfileChanges) {
-              profileUpdateSuccess = await adminUpdateUserProfile(
-                editingProfile.id,
-                editUserFullName,
-                editUserRole,
-                editUserAllowedTypes,
-                editUserCanManageRules,
-              );
-            }
-
-            if (profileUpdateSuccess) {
-              if (newPasswordToSet) {
-                const pwSuccess = await resetUserPassword(
-                  editingProfile.id,
-                  newPasswordToSet,
-                );
-                if (!pwSuccess && hasProfileChanges) {
-                  showToast(
-                    "error",
-                    "Profile updated, but password reset failed.",
-                  );
-                }
-              }
-              setEditingProfile(null);
-            }
-          }}
-        />
-      )}
-
-      {/* MODAL 4: ADD NEW USER */}
-      {isAddUserModalOpen && (
-        <AddUserModal
-          newCodename={newCodename}
-          setNewCodename={setNewCodename}
-          newFullName={newFullName}
-          setNewFullName={setNewFullName}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          newRole={newRole}
-          setNewRole={setNewRole}
-          allowedTypes={allowedTypesSelect}
-          setAllowedTypes={setAllowedTypesSelect}
-          canManageRules={newCanManageRules}
-          setCanManageRules={setNewCanManageRules}
-          submitting={submitting}
-          onSubmit={handleCreateUser}
-          generatedPassword={generatedPassword}
-          onClose={() => {
-            setIsAddUserModalOpen(false);
-            setGeneratedPassword(null);
-            setNewCanManageRules(false);
-          }}
-          onCopyPassword={() => {
-            if (generatedPassword) {
-              navigator.clipboard.writeText(generatedPassword);
-              showToast("success", "Password copied to clipboard!");
-            }
-          }}
-        />
-      )}
-
-      {/* MODAL 5: DELETE USER CONFIRMATION */}
-      <ConfirmModal
-        isOpen={!!deletingUserAccount}
-        onClose={() => setDeletingUserAccount(null)}
-        onConfirm={() => {
-          if (deletingUserAccount) {
-            deleteUser(deletingUserAccount.id);
-            setDeletingUserAccount(null);
-          }
-        }}
-        title="Delete User Account"
-        message={
-          <span>
-            Are you sure you want to permanently delete the account for{" "}
-            <strong className="text-white">
-              {deletingUserAccount?.username}
-            </strong>
-            ? This action cannot be undone.
-          </span>
-        }
-        confirmText="Delete Account"
-        cancelText="Cancel"
-        isDanger={true}
-      />
 
       {/* MODAL 6: DELETE RECORD CONFIRMATION */}
       <ConfirmModal

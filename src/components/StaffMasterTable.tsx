@@ -90,14 +90,7 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
           )}
         </div>
 
-        {/* Master Export Summary buttons */}
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
-          <button
-            onClick={onAddStaffClick}
-            className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-orange-600 text-orange-600 dark:border-orange-500 dark:text-orange-500 hover:bg-orange-600/10 dark:hover:bg-orange-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
-          >
-            <Plus className="h-3.5 w-3.5" /> Add Staff
-          </button>
           <button
             onClick={onExportExcel}
             className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500 hover:bg-emerald-600/10 dark:hover:bg-emerald-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"

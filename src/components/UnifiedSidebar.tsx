@@ -19,10 +19,10 @@ import {
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
-  activeSection: 'chuti' | 'quotes';
+  activeSection: 'chuti' | 'quotes' | 'user_management';
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'users' | 'analytics' | 'audit_logs' | 'rules' | 'todo';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'users' | 'analytics' | 'audit_logs' | 'rules' | 'todo') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo') => void;
   activeChutiTab?: 'staff_master' | 'govt_responses' | 'settlement';
   onChutiTabChange?: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
   isSidebarCollapsed: boolean;
@@ -59,6 +59,12 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     router.push('/');
   };
 
+  const handleUserManagementNav = () => {
+    localStorage.setItem('last_active_dashboard', 'user_management');
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'user_management' }));
+    router.push('/');
+  };
+
   // Quotes admin role helper (supervisors and admins both access Quotes admin panel)
   const isQuotesAdmin = profile.role === 'admin' || profile.role === 'supervisor';
 
@@ -79,7 +85,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
           type="button"
           onClick={onSidebarToggle}
           title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-800 bg-slate-950/60 text-slate-400 hover:text-white hover:bg-slate-850 transition-all cursor-pointer hover:scale-105 active:scale-95"
+          className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-800 bg-slate-955/60 text-slate-400 hover:text-white hover:bg-slate-850 transition-all cursor-pointer hover:scale-105 active:scale-95"
         >
           {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
@@ -263,25 +269,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   </button>
                 )}
 
-                {/* 6. User Management (Admin) */}
-                {isQuotesAdmin && (
-                  <button
-                    onClick={() => onQuotesTabChange('users')}
-                    title={isSidebarCollapsed ? 'User Management' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'users'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                    }`}
-                  >
-                    <Users className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Staff Admin</span>}
-                  </button>
-                )}
-
-                {/* 7. Audit Logs (Admin) */}
+                {/* 6. Audit Logs (Admin) */}
                 {isQuotesAdmin && (
                   <button
                     onClick={() => onQuotesTabChange('audit_logs')}
@@ -300,6 +288,26 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Workspace 3: User Management (Admin & Supervisor Only) */}
+        {(profile.role === 'admin' || profile.role === 'supervisor') && (
+          <div className="space-y-1">
+            <button
+              onClick={handleUserManagementNav}
+              title={isSidebarCollapsed ? 'User Management' : undefined}
+              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
+              } ${
+                activeSection === 'user_management'
+                  ? 'bg-purple-600/15 border border-purple-500/30 text-purple-400 shadow-md shadow-purple-900/5'
+                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+              }`}
+            >
+              <Users className="h-5 w-5 shrink-0" />
+              {!isSidebarCollapsed && <span className="whitespace-nowrap">User Management</span>}
+            </button>
           </div>
         )}
       </div>

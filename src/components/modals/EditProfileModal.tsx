@@ -8,6 +8,10 @@ interface EditProfileModalProps {
   setFullName: (val: string) => void;
   role: 'admin' | 'user' | 'supervisor';
   setRole: (val: 'admin' | 'user' | 'supervisor') => void;
+  hasChutiAccess: boolean;
+  setHasChutiAccess: (val: boolean) => void;
+  hasQuotesAccess: boolean;
+  setHasQuotesAccess: (val: boolean) => void;
   allowedTypes: string[];
   setAllowedTypes: React.Dispatch<React.SetStateAction<string[]>>;
   canManageRules: boolean;
@@ -15,6 +19,7 @@ interface EditProfileModalProps {
   submitting: boolean;
   onClose: () => void;
   onSave: (newPassword?: string) => Promise<void>;
+  editorRole: 'admin' | 'supervisor';
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -23,13 +28,18 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   setFullName,
   role,
   setRole,
+  hasChutiAccess,
+  setHasChutiAccess,
+  hasQuotesAccess,
+  setHasQuotesAccess,
   allowedTypes,
   setAllowedTypes,
   canManageRules,
   setCanManageRules,
   submitting,
   onClose,
-  onSave
+  onSave,
+  editorRole
 }) => {
   const [changePassword, setChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -80,166 +90,226 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           <X className="h-5 w-5" />
         </button>
 
-        <h3 className="text-lg font-bold text-white mb-1">Edit Profile</h3>
+        <h3 className="text-lg font-bold text-white mb-1">
+          {editorRole === 'supervisor' ? 'Configure Permissions' : 'Edit Profile'}
+        </h3>
         <p className="text-xs text-slate-455 mb-5">
           User: <strong className="text-white">{username.toUpperCase()}</strong>
         </p>
 
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-350 mb-1">Full Name</label>
-            <input
-              type="text"
-              placeholder="e.g. Kamrul Islam"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-355 mb-1">Account Role</label>
-            <select
-              value={role}
-              onChange={(e) => {
-                const val = e.target.value as 'admin' | 'user' | 'supervisor';
-                setRole(val);
-                if (val === 'admin') {
-                  setCanManageRules(true);
-                }
-              }}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-            >
-              <option value="user">User (Staff)</option>
-              <option value="supervisor">Supervisor</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-
-          {/* Reusable categories checklist grid */}
-          <CategoryCheckboxList
-            allowedTypes={allowedTypes}
-            onChange={setAllowedTypes}
-          />
-
-          {/* Quote Rules Permission Toggle */}
-          <div className="border-t border-slate-800/80 pt-3">
-            <label className={`flex items-center gap-2.5 cursor-pointer group select-none ${role === 'admin' ? 'opacity-70 pointer-events-none' : ''}`}>
-              <div className="relative flex items-center">
+          {editorRole === 'admin' ? (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-slate-350 mb-1">Full Name</label>
                 <input
-                  type="checkbox"
-                  checked={canManageRules}
-                  disabled={role === 'admin'}
-                  onChange={(e) => setCanManageRules(e.target.checked)}
-                  className="sr-only"
+                  type="text"
+                  placeholder="e.g. Kamrul Islam"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
-                <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                  (canManageRules || role === 'admin')
-                    ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                    : 'border-slate-700 bg-slate-900 text-transparent'
-                }`}>
-                  {(canManageRules || role === 'admin') && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                </div>
               </div>
-              <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
-                Can Manage Quote Rules? {role === 'admin' && <span className="text-[10px] text-slate-500 font-normal italic ml-1">(Always Allowed for Admin)</span>}
-              </span>
-            </label>
-            <p className="text-[10px] text-slate-455 mt-1 ml-6.5">
-              Allows the user to add, edit, or delete compliance rules and view archive history.
-            </p>
-          </div>
 
-          {/* Reset User Password Section */}
-          <div className="border-t border-slate-800/80 pt-3 space-y-3">
-            <label className="flex items-center gap-2.5 cursor-pointer group select-none">
-              <div className="relative flex items-center">
-                <input
-                  type="checkbox"
-                  checked={changePassword}
+              <div>
+                <label className="block text-xs font-semibold text-slate-355 mb-1">Account Role</label>
+                <select
+                  value={role}
                   onChange={(e) => {
-                    setChangePassword(e.target.checked);
-                    if (!e.target.checked) {
-                      setNewPassword('');
-                      setConfirmPassword('');
+                    const val = e.target.value as 'admin' | 'user' | 'supervisor';
+                    setRole(val);
+                    if (val === 'admin') {
+                      setCanManageRules(true);
                     }
                   }}
-                  className="sr-only"
-                />
-                <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                  changePassword
-                    ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                    : 'border-slate-700 bg-slate-900 text-transparent'
-                }`}>
-                  {changePassword && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                >
+                  <option value="user">User (Staff)</option>
+                  <option value="supervisor">Supervisor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              {/* Leave / Quotes Workspace Toggles */}
+              <div className="border-t border-slate-800/80 pt-3">
+                <label className="block text-[11px] font-semibold text-slate-355 mb-2">Workspace Access</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={hasChutiAccess}
+                        onChange={(e) => setHasChutiAccess(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
+                        hasChutiAccess
+                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-900 text-transparent'
+                      }`}>
+                        {hasChutiAccess && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                      Leave Tracker
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={hasQuotesAccess}
+                        onChange={(e) => setHasQuotesAccess(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
+                        hasQuotesAccess
+                          ? 'bg-blue-600 border-blue-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-900 text-transparent'
+                      }`}>
+                        {hasQuotesAccess && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                      Quotes Tracker
+                    </span>
+                  </label>
                 </div>
               </div>
-              <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5">
-                <KeyRound className="h-4 w-4 text-blue-500" />
-                Change Password?
-              </span>
-            </label>
+            </>
+          ) : null}
 
-            {changePassword && (
-              <div className="space-y-3 pt-1 animate-fade-in">
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 mb-1">New Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPass ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      placeholder="6 to 12 character password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    {newPassword && (
+          {hasQuotesAccess && (
+            <>
+              {/* Reusable categories checklist grid */}
+              <CategoryCheckboxList
+                allowedTypes={allowedTypes}
+                onChange={setAllowedTypes}
+              />
+
+              {editorRole === 'admin' && (
+                <div className="border-t border-slate-800/80 pt-3">
+                  <label className={`flex items-center gap-2.5 cursor-pointer group select-none ${role === 'admin' ? 'opacity-70 pointer-events-none' : ''}`}>
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={canManageRules}
+                        disabled={role === 'admin'}
+                        onChange={(e) => setCanManageRules(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        (canManageRules || role === 'admin')
+                          ? 'bg-blue-600 border-blue-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-900 text-transparent'
+                      }`}>
+                        {(canManageRules || role === 'admin') && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                      Can Manage Quote Rules? {role === 'admin' && <span className="text-[10px] text-slate-500 font-normal italic ml-1">(Always Allowed for Admin)</span>}
+                    </span>
+                  </label>
+                  <p className="text-[10px] text-slate-455 mt-1 ml-6.5">
+                    Allows the user to add, edit, or delete compliance rules and view archive history.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {editorRole === 'admin' && (
+            <div className="border-t border-slate-800/80 pt-3 space-y-3">
+              <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                <div className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={changePassword}
+                    onChange={(e) => {
+                      setChangePassword(e.target.checked);
+                      if (!e.target.checked) {
+                        setNewPassword('');
+                        setConfirmPassword('');
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    changePassword
+                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
+                      : 'border-slate-700 bg-slate-900 text-transparent'
+                  }`}>
+                    {changePassword && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5">
+                  <KeyRound className="h-4 w-4 text-blue-500" />
+                  Change Password?
+                </span>
+              </label>
+
+              {changePassword && (
+                <div className="space-y-3 pt-1 animate-fade-in">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPass ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        placeholder="6 to 12 character password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      {newPassword && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPass(!showPass)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                        >
+                          {showPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">Confirm New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPass ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        placeholder="Re-enter new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
                       <button
                         type="button"
-                        onClick={() => setShowPass(!showPass)}
+                        onClick={() => setShowConfirmPass(!showConfirmPass)}
                         className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                       >
-                        {showPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        {showConfirmPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] font-medium mt-1.5">
+                    {newPassword.length < 6 || newPassword.length > 12 ? (
+                      <p className="text-red-400">Password must be 6 to 12 characters</p>
+                    ) : confirmPassword && newPassword !== confirmPassword ? (
+                      <p className="text-red-400">Passwords do not match</p>
+                    ) : confirmPassword && newPassword === confirmPassword ? (
+                      <p className="text-emerald-400">Passwords match!</p>
+                    ) : (
+                      <p className="text-slate-455">Confirm password to proceed</p>
                     )}
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 mb-1">Confirm New Password</label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPass ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      placeholder="Re-enter new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPass(!showConfirmPass)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showConfirmPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="text-[11px] font-medium mt-1.5">
-                  {newPassword.length < 6 || newPassword.length > 12 ? (
-                    <p className="text-red-400">Password must be 6 to 12 characters</p>
-                  ) : confirmPassword && newPassword !== confirmPassword ? (
-                    <p className="text-red-400">Passwords do not match</p>
-                  ) : confirmPassword && newPassword === confirmPassword ? (
-                    <p className="text-emerald-400">Passwords match!</p>
-                  ) : (
-                    <p className="text-slate-450">Confirm password to proceed</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-3">
             <button
@@ -253,7 +323,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               type="button"
               disabled={submitting || !isPasswordValid}
               onClick={handleUpdate}
-              className="flex-1 py-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-blue-950/20"
+              className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               {submitting ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : 'Update'}
             </button>

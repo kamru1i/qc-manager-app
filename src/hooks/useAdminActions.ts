@@ -23,7 +23,16 @@ export const useAdminActions = ({
 }: UseAdminActionsOptions) => {
 
   // Admin: Create a new user account
-  const createUser = useCallback(async (username: string, role: 'admin' | 'user', fullName: string, allowedTypes: string[], canManageRules: boolean, password?: string) => {
+  const createUser = useCallback(async (
+    username: string, 
+    role: 'admin' | 'supervisor' | 'user', 
+    fullName: string, 
+    allowedTypes: string[], 
+    canManageRules: boolean,
+    hasChutiAccess: boolean,
+    hasQuotesAccess: boolean,
+    password?: string
+  ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
       return null;
@@ -51,17 +60,21 @@ export const useAdminActions = ({
         return null;
       }
 
-      // Update the newly created user profile with can_manage_rules
+      // Update the newly created user profile with permissions and access flags
       const { data: newProfile } = await supabase
         .from('profiles')
         .select('id')
         .eq('username', username.toUpperCase().trim())
         .single();
       
-      if (newProfile && canManageRules) {
+      if (newProfile) {
         await supabase
           .from('profiles')
-          .update({ can_manage_rules: true })
+          .update({ 
+            can_manage_rules: canManageRules,
+            has_chuti_access: hasChutiAccess,
+            has_quotes_access: hasQuotesAccess
+          })
           .eq('id', newProfile.id);
       }
 
@@ -168,8 +181,17 @@ export const useAdminActions = ({
     }
   }, [showToast, logActivity, profilesList, setProfilesList, updateLastActivity]);
 
-  // Admin: Update user profile details
-  const adminUpdateUserProfile = useCallback(async (userId: string, fullName: string, role: 'admin' | 'user' | 'supervisor', allowedTypes: string[], canManageRules: boolean) => {
+  // Admin/Supervisor: Update user profile details
+  const adminUpdateUserProfile = useCallback(async (
+    userId: string, 
+    fullName: string, 
+    role: 'admin' | 'user' | 'supervisor', 
+    allowedTypes: string[], 
+    canManageRules: boolean,
+    hasChutiAccess: boolean,
+    hasQuotesAccess: boolean,
+    editorRole: 'admin' | 'supervisor'
+  ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
       return false;
@@ -177,14 +199,22 @@ export const useAdminActions = ({
     updateLastActivity();
     setSubmitting(true);
     try {
+      const updatePayload: any = {};
+      if (editorRole === 'admin') {
+        updatePayload.full_name = fullName.trim() || null;
+        updatePayload.role = role;
+        updatePayload.allowed_types = allowedTypes;
+        updatePayload.can_manage_rules = canManageRules;
+        updatePayload.has_chuti_access = hasChutiAccess;
+        updatePayload.has_quotes_access = hasQuotesAccess;
+      } else {
+        // Supervisor can ONLY update allowed_types (file permissions)
+        updatePayload.allowed_types = allowedTypes;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          full_name: fullName.trim() || null,
-          role,
-          allowed_types: allowedTypes,
-          can_manage_rules: canManageRules
-        })
+        .update(updatePayload)
         .eq('id', userId);
 
       if (error) throw error;
@@ -203,8 +233,18 @@ export const useAdminActions = ({
 
         const oldRole = targetProfile.role;
         const newRole = role;
-        if (oldRole !== newRole) {
+        if (editorRole === 'admin' && oldRole !== newRole) {
           changes.push(`Role: '${oldRole}' → '${newRole}'`);
+        }
+
+        const oldChuti = !!targetProfile.has_chuti_access;
+        if (editorRole === 'admin' && oldChuti !== hasChutiAccess) {
+          changes.push(`Leave Tracker: ${oldChuti} → ${hasChutiAccess}`);
+        }
+
+        const oldQuotes = !!targetProfile.has_quotes_access;
+        if (editorRole === 'admin' && oldQuotes !== hasQuotesAccess) {
+          changes.push(`Quotes Tracker: ${oldQuotes} → ${hasQuotesAccess}`);
         }
 
         const oldAllowed = [...(targetProfile.allowed_types || [])].sort();

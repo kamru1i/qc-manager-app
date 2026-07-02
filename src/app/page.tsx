@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import LoginPage from '@/app/login/page';
 import ChutiDashboard from '@/app/chuti/page';
 import QuotesDashboard from '@/app/quotes/page';
+import { UserManagementDashboard } from '@/components/UserManagementDashboard';
 
 export default function AppPortal() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function AppPortal() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chuti' | 'quotes' | null>(null);
+  const [activeTab, setActiveTab] = useState<'chuti' | 'quotes' | 'user_management' | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
 
@@ -79,9 +80,10 @@ export default function AppPortal() {
       const hasChuti = !!cachedProfile.has_chuti_access;
       const hasQuotes = !!cachedProfile.has_quotes_access;
       
-      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | null;
+      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | null;
       if (lastActive === 'chuti' && !hasChuti) lastActive = null;
       if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
+      if (lastActive === 'user_management' && !(cachedProfile.role === 'admin' || cachedProfile.role === 'supervisor')) lastActive = null;
 
       if (!lastActive) {
         lastActive = hasChuti ? 'chuti' : 'quotes';
@@ -151,9 +153,10 @@ export default function AppPortal() {
       }
 
       // Choose active workspace tab
-      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | null;
+      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | null;
       if (lastActive === 'chuti' && !hasChuti) lastActive = null;
       if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
+      if (lastActive === 'user_management' && !(userProfile.role === 'admin' || userProfile.role === 'supervisor')) lastActive = null;
 
       if (!lastActive) {
         lastActive = hasChuti ? 'chuti' : 'quotes';
@@ -179,13 +182,14 @@ export default function AppPortal() {
   // Listen for custom workspace-change event dispatched by sidebar
   useEffect(() => {
     const handleWorkspaceChange = (e: Event) => {
-      const targetWorkspace = (e as CustomEvent).detail as 'chuti' | 'quotes';
+      const targetWorkspace = (e as CustomEvent).detail as 'chuti' | 'quotes' | 'user_management';
       addLog(`custom workspace-change event detected: ${targetWorkspace}`);
       
       // Safety check: ensure user has access before switching
       if (profile) {
         if (targetWorkspace === 'chuti' && !profile.has_chuti_access) return;
         if (targetWorkspace === 'quotes' && !profile.has_quotes_access) return;
+        if (targetWorkspace === 'user_management' && !(profile.role === 'admin' || profile.role === 'supervisor')) return;
       }
       
       setActiveTab(targetWorkspace);
@@ -270,6 +274,24 @@ export default function AppPortal() {
   if (activeTab === 'quotes') {
     console.log('[AppPortal] Rendering QuotesDashboard');
     return <QuotesDashboard />;
+  }
+
+  if (activeTab === 'user_management') {
+    console.log('[AppPortal] Rendering UserManagementDashboard');
+    return (
+      <UserManagementDashboard
+        sessionUser={sessionUser}
+        profile={profile}
+        onLogout={async () => {
+          setLoading(true);
+          await supabase.auth.signOut();
+        }}
+        theme="dark"
+        onThemeToggle={() => {}}
+        isSidebarCollapsed={false}
+        onSidebarToggle={() => {}}
+      />
+    );
   }
 
   console.log('[AppPortal] Rendering ChutiDashboard');
