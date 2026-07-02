@@ -60,11 +60,14 @@ jobs:
 
       - name: Sanitize private key and password
         run: |
-          CLEAN_KEY=$(printf '%s' "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | tr -d '\r\n ')
-          CLEAN_PASS=$(printf '%s' "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" | tr -d '\r\n ')
+          CLEAN_KEY=$(printf '%s' "$RAW_KEY" | tr -d '\r\n ')
+          CLEAN_PASS=$(printf '%s' "$RAW_PASS" | tr -d '\r\n ')
           echo "TAURI_SIGNING_PRIVATE_KEY=$CLEAN_KEY" >> $GITHUB_ENV
           echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$CLEAN_PASS" >> $GITHUB_ENV
         shell: bash
+        env:
+          RAW_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          RAW_PASS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Build desktop application
         uses: tauri-apps/tauri-action@v0
