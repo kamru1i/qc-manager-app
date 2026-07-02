@@ -56,6 +56,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [allowedTypes, setAllowedTypes] = useState<string[]>([]);
   const [canManageRules, setCanManageRules] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [newNeedsApproval, setNewNeedsApproval] = useState(true);
+  const [newSupervisorIds, setNewSupervisorIds] = useState<string[]>([]);
+  const [newEligibleGovtHoliday, setNewEligibleGovtHoliday] = useState(true);
+  const [newEligibleOfficeLeave, setNewEligibleOfficeLeave] = useState(true);
+  const [newAllowOvertime, setNewAllowOvertime] = useState(false);
+  const [newAllowReserve, setNewAllowReserve] = useState(false);
 
   // Edit User State
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
@@ -65,6 +71,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [editHasQuotesAccess, setEditHasQuotesAccess] = useState(false);
   const [editUserAllowedTypes, setEditUserAllowedTypes] = useState<string[]>([]);
   const [editUserCanManageRules, setEditUserCanManageRules] = useState(false);
+  const [editNeedsApproval, setEditNeedsApproval] = useState(true);
+  const [editSupervisorIds, setEditSupervisorIds] = useState<string[]>([]);
+  const [editEligibleGovtHoliday, setEditEligibleGovtHoliday] = useState(true);
+  const [editEligibleOfficeLeave, setEditEligibleOfficeLeave] = useState(true);
+  const [editAllowOvertime, setEditAllowOvertime] = useState(false);
+  const [editAllowReserve, setEditAllowReserve] = useState(false);
 
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
@@ -146,7 +158,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       canManageRules,
       hasChutiAccess,
       hasQuotesAccess,
-      '1234'
+      '1234',
+      newNeedsApproval,
+      newNeedsApproval ? newSupervisorIds : [],
+      newEligibleGovtHoliday,
+      newEligibleOfficeLeave,
+      newAllowOvertime,
+      newAllowReserve
     );
 
     if (pw) {
@@ -158,6 +176,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setCanManageRules(false);
       setHasChutiAccess(true);
       setHasQuotesAccess(false);
+      setNewNeedsApproval(true);
+      setNewSupervisorIds([]);
+      setNewEligibleGovtHoliday(true);
+      setNewEligibleOfficeLeave(true);
+      setNewAllowOvertime(false);
+      setNewAllowReserve(false);
       fetchProfiles();
     }
   };
@@ -182,7 +206,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       editUserCanManageRules,
       editHasChutiAccess,
       editHasQuotesAccess,
-      profile?.role === 'supervisor' ? 'supervisor' : 'admin'
+      profile?.role === 'supervisor' ? 'supervisor' : 'admin',
+      editNeedsApproval,
+      editNeedsApproval ? editSupervisorIds : [],
+      editEligibleGovtHoliday,
+      editEligibleOfficeLeave,
+      editAllowOvertime,
+      editAllowReserve
     );
 
     if (success) {
@@ -296,11 +326,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-900/40 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
                   <th className="py-3 px-4">Name / Codename</th>
-                  <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4 text-center">Role</th>
                   <th className="py-3 px-4 text-center">Leave Tracker</th>
                   <th className="py-3 px-4 text-center">Quotes Tracker</th>
-                  <th className="py-3 px-4">Quotes Allowed File Types</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4 text-center">File Type</th>
+                  <th className="py-3 px-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-850 text-xs text-slate-300">
@@ -324,11 +354,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <tr key={u.id} className="hover:bg-slate-900/25 transition-colors">
                       <td className="py-3 px-4">
                         <div className="font-semibold text-white">{u.full_name || '—'}</div>
-                        <div className="text-[10px] text-slate-450 uppercase mt-0.5 tracking-wider font-mono">
+                        <div className="text-[10px] text-slate-455 uppercase mt-0.5 tracking-wider font-mono">
                           {u.username}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-center">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
                           u.role === 'admin'
                             ? 'bg-red-950/40 border-red-900/50 text-red-400'
@@ -354,19 +384,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                           <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
                         )}
                       </td>
-                      <td className="py-3 px-4 max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
+                      <td className="py-3 px-4 text-center max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
                         {!u.has_quotes_access ? (
                           <span className="text-slate-600 italic text-[11px]">No access</span>
                         ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === ALL_FILE_TYPES.length ? (
-                          <span className="text-blue-400 font-medium text-[11px]">All Categories</span>
+                          <span className="text-blue-400 font-medium text-[11px] block text-center">All Categories</span>
                         ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === 0 ? (
-                          <span className="text-red-400/80 font-medium text-[11px]">None Allowed</span>
+                          <span className="text-red-400/80 font-medium text-[11px] block text-center">None Allowed</span>
                         ) : (
-                          <span className="text-slate-400 text-[11px]">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
+                          <span className="text-slate-400 text-[11px] block text-center">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => {
                               setEditingProfile(u);
@@ -376,6 +406,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                               setEditHasQuotesAccess(!!u.has_quotes_access);
                               setEditUserAllowedTypes((u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
                               setEditUserCanManageRules(!!u.can_manage_rules);
+                              setEditNeedsApproval(u.needs_supervisor_approval !== false);
+                              setEditSupervisorIds(u.supervisor_ids || []);
+                              setEditEligibleGovtHoliday(u.eligible_govt_holiday !== false);
+                              setEditEligibleOfficeLeave(u.eligible_office_leave !== false);
+                              setEditAllowOvertime(!!u.allow_overtime);
+                              setEditAllowReserve(!!u.allow_reserve);
                             }}
                             className="p-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
                             title="Edit permissions"
@@ -434,6 +470,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setHasChutiAccess(true);
                   setHasQuotesAccess(false);
                   setAllowedTypes([]);
+                  setNewNeedsApproval(true);
+                  setNewSupervisorIds([]);
+                  setNewEligibleGovtHoliday(true);
+                  setNewEligibleOfficeLeave(true);
+                  setNewAllowOvertime(false);
+                  setNewAllowReserve(false);
                 }}
                 onCopyPassword={() => {
                   if (generatedPassword) {
@@ -441,6 +483,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     toast.success('Password copied to clipboard!');
                   }
                 }}
+                supervisors={profiles.filter(p => p.role === 'supervisor')}
+                needsSupervisorApproval={newNeedsApproval}
+                setNeedsSupervisorApproval={setNewNeedsApproval}
+                supervisorIds={newSupervisorIds}
+                setSupervisorIds={setNewSupervisorIds}
+                eligibleGovtHoliday={newEligibleGovtHoliday}
+                setEligibleGovtHoliday={setNewEligibleGovtHoliday}
+                eligibleOfficeLeave={newEligibleOfficeLeave}
+                setEligibleOfficeLeave={setNewEligibleOfficeLeave}
+                allowOvertime={newAllowOvertime}
+                setAllowOvertime={setNewAllowOvertime}
+                allowReserve={newAllowReserve}
+                setAllowReserve={setNewAllowReserve}
               />
             )}
 
@@ -464,6 +519,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 onClose={() => setEditingProfile(null)}
                 onSave={handleUpdateUser}
                 editorRole={profile?.role === 'supervisor' ? 'supervisor' : 'admin'}
+                supervisors={profiles.filter(p => p.role === 'supervisor')}
+                needsSupervisorApproval={editNeedsApproval}
+                setNeedsSupervisorApproval={setEditNeedsApproval}
+                supervisorIds={editSupervisorIds}
+                setSupervisorIds={setEditSupervisorIds}
+                eligibleGovtHoliday={editEligibleGovtHoliday}
+                setEligibleGovtHoliday={setEditEligibleGovtHoliday}
+                eligibleOfficeLeave={editEligibleOfficeLeave}
+                setEligibleOfficeLeave={setEditEligibleOfficeLeave}
+                allowOvertime={editAllowOvertime}
+                setAllowOvertime={setEditAllowOvertime}
+                allowReserve={editAllowReserve}
+                setAllowReserve={setEditAllowReserve}
               />
             )}
 

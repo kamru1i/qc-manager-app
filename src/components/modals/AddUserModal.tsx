@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { X, Loader2, UserPlus, Clipboard, Plus, Check } from 'lucide-react';
 import { CategoryCheckboxList } from '../CategoryCheckboxList';
+import { Profile } from '@/types';
 
 interface AddUserModalProps {
   newCodename: string;
@@ -22,6 +23,21 @@ interface AddUserModalProps {
   generatedPassword: string | null;
   onClose: () => void;
   onCopyPassword: () => void;
+
+  // Leave Tracker Permissions Settings
+  supervisors: Profile[];
+  needsSupervisorApproval: boolean;
+  setNeedsSupervisorApproval: (val: boolean) => void;
+  supervisorIds: string[];
+  setSupervisorIds: (ids: string[]) => void;
+  eligibleGovtHoliday: boolean;
+  setEligibleGovtHoliday: (val: boolean) => void;
+  eligibleOfficeLeave: boolean;
+  setEligibleOfficeLeave: (val: boolean) => void;
+  allowOvertime: boolean;
+  setAllowOvertime: (val: boolean) => void;
+  allowReserve: boolean;
+  setAllowReserve: (val: boolean) => void;
 }
 
 export const AddUserModal: React.FC<AddUserModalProps> = ({
@@ -43,7 +59,21 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   onSubmit,
   generatedPassword,
   onClose,
-  onCopyPassword
+  onCopyPassword,
+
+  supervisors,
+  needsSupervisorApproval,
+  setNeedsSupervisorApproval,
+  supervisorIds,
+  setSupervisorIds,
+  eligibleGovtHoliday,
+  setEligibleGovtHoliday,
+  eligibleOfficeLeave,
+  setEligibleOfficeLeave,
+  allowOvertime,
+  setAllowOvertime,
+  allowReserve,
+  setAllowReserve
 }) => {
   // Close on Escape key press
   const handleEscape = useCallback((e: KeyboardEvent) => {
@@ -163,6 +193,203 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                 <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
                   Quotes Tracker
                 </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Leave Tracker Permissions */}
+          <div className="border-t border-slate-800/80 pt-3 space-y-3">
+            <label className="block text-[11px] font-semibold text-slate-355">
+              Leave Tracker Permissions
+            </label>
+            <div className="grid grid-cols-1 gap-2.5">
+              {/* Supervisor Approval */}
+              <label className="flex items-start gap-2.5 cursor-pointer group select-none">
+                <div className="relative flex items-center mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={needsSupervisorApproval}
+                    onChange={(e) => setNeedsSupervisorApproval(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    needsSupervisorApproval
+                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      : 'border-slate-700 bg-slate-900 text-transparent'
+                  }`}>
+                    {needsSupervisorApproval && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    Supervisor Approval Required?
+                  </span>
+                  <span className="text-[10px] text-slate-500 block leading-tight">
+                    Requires supervisor approval for leaves
+                  </span>
+                </div>
+              </label>
+
+              {/* Supervisors Multiselect (if approval is enabled) */}
+              {needsSupervisorApproval && supervisors.length > 0 && (
+                <div className="space-y-2 bg-slate-955/40 p-2.5 rounded-lg border border-slate-800/80 ml-6.5">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-semibold text-slate-400">Select Supervisors</span>
+                    <span className="text-slate-500 font-mono">
+                      {supervisorIds.length > 0 ? `${supervisorIds.length} Selected` : 'All Selected'}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto pr-1">
+                    <label className={`flex items-center gap-1.5 px-2 py-0.5 rounded border cursor-pointer transition-all select-none text-[10px] ${
+                      supervisorIds.length === 0 
+                        ? 'border-orange-600 bg-orange-955/20 text-orange-400 font-semibold' 
+                        : 'border-slate-800 bg-slate-900 text-slate-400'
+                    }`}>
+                      <input
+                        type="checkbox"
+                        checked={supervisorIds.length === 0}
+                        onChange={() => setSupervisorIds([])}
+                        className="sr-only"
+                      />
+                      <span>All</span>
+                    </label>
+                    {supervisors.map(sup => {
+                      const isChecked = supervisorIds.includes(sup.id);
+                      return (
+                        <label 
+                          key={sup.id} 
+                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded border cursor-pointer transition-all select-none text-[10px] ${
+                            isChecked 
+                              ? 'border-orange-600 bg-orange-955/20 text-orange-400 font-semibold' 
+                              : 'border-slate-800 bg-slate-900 text-slate-400'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              if (isChecked) {
+                                setSupervisorIds(supervisorIds.filter(id => id !== sup.id));
+                              } else {
+                                setSupervisorIds([...supervisorIds, sup.id]);
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <span>{sup.username}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Office Leave Eligible */}
+              <label className="flex items-start gap-2.5 cursor-pointer group select-none">
+                <div className="relative flex items-center mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={eligibleOfficeLeave}
+                    onChange={(e) => setEligibleOfficeLeave(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    eligibleOfficeLeave
+                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      : 'border-slate-700 bg-slate-900 text-transparent'
+                  }`}>
+                    {eligibleOfficeLeave && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    Office Leave Eligible?
+                  </span>
+                  <span className="text-[10px] text-slate-500 block leading-tight">
+                    Eligible for annual office leaves & Eid holidays
+                  </span>
+                </div>
+              </label>
+
+              {/* Govt Holiday Eligible */}
+              <label className="flex items-start gap-2.5 cursor-pointer group select-none">
+                <div className="relative flex items-center mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={eligibleGovtHoliday}
+                    onChange={(e) => setEligibleGovtHoliday(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    eligibleGovtHoliday
+                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      : 'border-slate-700 bg-slate-900 text-transparent'
+                  }`}>
+                    {eligibleGovtHoliday && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    Govt Holiday Eligible?
+                  </span>
+                  <span className="text-[10px] text-slate-500 block leading-tight">
+                    Eligible for government list holidays
+                  </span>
+                </div>
+              </label>
+
+              {/* Overtime Category */}
+              <label className="flex items-start gap-2.5 cursor-pointer group select-none">
+                <div className="relative flex items-center mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={allowOvertime}
+                    onChange={(e) => setAllowOvertime(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    allowOvertime
+                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      : 'border-slate-700 bg-slate-900 text-transparent'
+                  }`}>
+                    {allowOvertime && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    Overtime Category?
+                  </span>
+                  <span className="text-[10px] text-slate-500 block leading-tight">
+                    Allows overtime leave category
+                  </span>
+                </div>
+              </label>
+
+              {/* Reserve Govt Holiday */}
+              <label className="flex items-start gap-2.5 cursor-pointer group select-none">
+                <div className="relative flex items-center mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={allowReserve}
+                    onChange={(e) => setAllowReserve(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    allowReserve
+                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      : 'border-slate-700 bg-slate-900 text-transparent'
+                  }`}>
+                    {allowReserve && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    Reserve Govt Holiday?
+                  </span>
+                  <span className="text-[10px] text-slate-500 block leading-tight">
+                    Option to reserve government holidays
+                  </span>
+                </div>
               </label>
             </div>
           </div>

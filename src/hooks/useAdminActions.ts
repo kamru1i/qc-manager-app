@@ -31,7 +31,13 @@ export const useAdminActions = ({
     canManageRules: boolean,
     hasChutiAccess: boolean,
     hasQuotesAccess: boolean,
-    password?: string
+    password?: string,
+    needsSupervisorApproval?: boolean,
+    supervisorIds?: string[] | null,
+    eligibleGovtHoliday?: boolean,
+    eligibleOfficeLeave?: boolean,
+    allowOvertime?: boolean,
+    allowReserve?: boolean
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -73,7 +79,13 @@ export const useAdminActions = ({
           .update({ 
             can_manage_rules: canManageRules,
             has_chuti_access: hasChutiAccess,
-            has_quotes_access: hasQuotesAccess
+            has_quotes_access: hasQuotesAccess,
+            needs_supervisor_approval: needsSupervisorApproval,
+            supervisor_ids: supervisorIds,
+            eligible_govt_holiday: eligibleGovtHoliday,
+            eligible_office_leave: eligibleOfficeLeave,
+            allow_overtime: allowOvertime,
+            allow_reserve: allowReserve
           })
           .eq('id', newProfile.id);
       }
@@ -190,7 +202,13 @@ export const useAdminActions = ({
     canManageRules: boolean,
     hasChutiAccess: boolean,
     hasQuotesAccess: boolean,
-    editorRole: 'admin' | 'supervisor'
+    editorRole: 'admin' | 'supervisor',
+    needsSupervisorApproval?: boolean,
+    supervisorIds?: string[] | null,
+    eligibleGovtHoliday?: boolean,
+    eligibleOfficeLeave?: boolean,
+    allowOvertime?: boolean,
+    allowReserve?: boolean
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -207,6 +225,12 @@ export const useAdminActions = ({
         updatePayload.can_manage_rules = canManageRules;
         updatePayload.has_chuti_access = hasChutiAccess;
         updatePayload.has_quotes_access = hasQuotesAccess;
+        updatePayload.needs_supervisor_approval = needsSupervisorApproval;
+        updatePayload.supervisor_ids = supervisorIds;
+        updatePayload.eligible_govt_holiday = eligibleGovtHoliday;
+        updatePayload.eligible_office_leave = eligibleOfficeLeave;
+        updatePayload.allow_overtime = allowOvertime;
+        updatePayload.allow_reserve = allowReserve;
       } else {
         // Supervisor can ONLY update allowed_types (file permissions)
         updatePayload.allowed_types = allowedTypes;
