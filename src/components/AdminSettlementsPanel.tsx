@@ -5,7 +5,7 @@ import { RotateCcw, CheckCircle2, AlertCircle, Send, BellOff, Edit3, HelpCircle,
 import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { sendPushNotification } from '@/utils/webPushHelper';
 import { ChutiRecord } from '@/utils/offlineSync';
-import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getSettlementLabel } from '@/utils/dashboardHelpers';
+import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getSettlementLabel, formatDaysAndHours } from '@/utils/dashboardHelpers';
 import { AdminSettleUserModal } from './modals/AdminSettleUserModal';
 import { toast } from 'react-hot-toast';
 import { Modal } from './Modal';
@@ -536,8 +536,37 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                           {staff.username} • {staff.job_role || (staff.role === 'supervisor' ? 'Supervisor' : 'Staff')}
                         </div>
                       </td>
-                      <td className={`px-6 py-4 whitespace-nowrap font-mono font-bold text-sm ${remaining < 0 ? 'text-red-500 font-extrabold' : 'text-orange-400'}`}>
-                        {remaining < 0 ? `${Math.abs(remaining)} days` : `${remaining} days`}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {(() => {
+                          const totalMins = Math.round(remaining * (staff.working_hours || 9.5) * 60);
+                          const isNegative = totalMins < 0;
+                          const absMins = Math.abs(totalMins);
+                          
+                          const minutesPerDay = Math.round((staff.working_hours || 9.5) * 60);
+                          const wholeDays = Math.floor(absMins / minutesPerDay);
+                          const remainingMins = absMins % minutesPerDay;
+                          const hours = Math.floor(remainingMins / 60);
+                          const mins = remainingMins % 60;
+                          
+                          const sign = isNegative ? '-' : '';
+                          const dayStr = `${sign}${wholeDays} Day${wholeDays !== 1 ? 's' : ''}`;
+                          const timeStr = `${sign}${hours}:${mins.toString().padStart(2, '0')} Hrs`;
+                          
+                          const dayColor = isNegative ? 'text-red-500 font-extrabold' : 'text-orange-400';
+                          
+                          return (
+                            <div className="flex flex-col font-mono select-none">
+                              <span className={`text-sm font-bold ${dayColor}`}>
+                                {dayStr}
+                              </span>
+                              {(hours > 0 || mins > 0) && (
+                                <span className="text-[10px] font-semibold text-slate-500 mt-0.5 block">
+                                  {timeStr}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       <td className="px-6 py-4">
