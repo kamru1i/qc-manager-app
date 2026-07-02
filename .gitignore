@@ -52,5 +52,5 @@ AGENTS.md
 CLAUDE.md
 
 # db migrations & backups
-/migration_output.sql
+/migration_output*.sql
 /supabase data/
