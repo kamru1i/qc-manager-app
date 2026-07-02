@@ -4,15 +4,16 @@ import { BadgeInfo } from "@/utils/leaderboardHelper";
 interface VerifiedBadgeProps {
   badge: BadgeInfo;
   position?: 'top' | 'bottom';
+  forceBlue?: boolean;
 }
 
-export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 'top' }) => {
+export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 'top', forceBlue = false }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isBlue = badge.badgeType === "blue";
+  const isBlue = badge.badgeType === "blue" || forceBlue;
   const colorClass = isBlue
-    ? "text-blue-500 hover:text-blue-400"
+    ? "text-[#3b82f6] hover:text-[#60a5fa]"
     : "text-slate-400 hover:text-slate-300";
 
   const tooltipPositionClass = position === 'bottom'

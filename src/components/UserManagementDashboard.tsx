@@ -12,6 +12,8 @@ import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import toast from 'react-hot-toast';
 import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2, X } from 'lucide-react';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { BadgeInfo } from '@/utils/leaderboardHelper';
 
 interface UserManagementDashboardProps {
   sessionUser: { id: string } | null;
@@ -21,6 +23,7 @@ interface UserManagementDashboardProps {
   onThemeToggle: () => void;
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
+  topPerformerBadges?: Record<string, BadgeInfo>;
 }
 
 const ALL_FILE_TYPES = [
@@ -35,6 +38,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   onThemeToggle,
   isSidebarCollapsed,
   onSidebarToggle,
+  topPerformerBadges = {},
 }) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -359,7 +363,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   visibleProfiles.map((u: Profile) => (
                     <tr key={u.id} className="hover:bg-slate-900/25 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-white">{u.full_name || '—'}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-white">{u.full_name || '—'}</span>
+                          {topPerformerBadges[u.id] && (
+                            <VerifiedBadge badge={topPerformerBadges[u.id]} />
+                          )}
+                        </div>
                         <div className="text-[10px] text-slate-455 uppercase mt-0.5 tracking-wider font-mono">
                           {u.username}
                         </div>

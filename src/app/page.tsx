@@ -99,9 +99,35 @@ export default function AppPortal() {
     };
 
     const fetchRecords = async () => {
-      const { data, error } = await supabase.from('records').select('user_id, submitted_at');
-      if (data && !error) {
-        setQuotesRecords(data);
+      let allRecords: any[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      try {
+        while (hasMore) {
+          const from = page * pageSize;
+          const to = from + pageSize - 1;
+          const { data, error } = await supabase
+            .from('records')
+            .select('user_id, submitted_at')
+            .range(from, to);
+
+          if (error) throw error;
+          if (data && data.length > 0) {
+            allRecords = [...allRecords, ...data];
+            if (data.length < pageSize) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+        setQuotesRecords(allRecords);
+      } catch (err) {
+        console.error('Error fetching all records:', err);
       }
     };
 
@@ -496,6 +522,7 @@ export default function AppPortal() {
                 onThemeToggle={handleThemeToggle}
                 isSidebarCollapsed={isSidebarCollapsed}
                 onSidebarToggle={handleSidebarToggle}
+                topPerformerBadges={topPerformerBadges}
               />
             </div>
             <div className={activeTab === 'todo' ? 'block' : 'hidden'}>
