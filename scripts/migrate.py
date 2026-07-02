@@ -8,25 +8,29 @@ def main():
     print("   Chuti + Quotes Unified DB Migration Script")
     print("==================================================")
 
-    # File names
-    CHUTI_AUTH_FILE = "chuti_auth_users.json"
-    QUOTES_AUTH_FILE = "quotes_auth_users.json"
-    CHUTI_PROFILES_FILE = "chuti_profiles.json"
-    QUOTES_PROFILES_FILE = "quotes_profiles.json"
+    # Directories
+    CHUTI_DIR = os.path.join("supabase data", "Chuti Supabase Project")
+    QUOTES_DIR = os.path.join("supabase data", "Quotes Supabase Project")
+
+    # File paths
+    CHUTI_AUTH_FILE = os.path.join(CHUTI_DIR, "chuti_auth_users.json")
+    QUOTES_AUTH_FILE = os.path.join(QUOTES_DIR, "quotes_auth_users.json")
+    CHUTI_PROFILES_FILE = os.path.join(CHUTI_DIR, "chuti_profiles.json")
+    QUOTES_PROFILES_FILE = os.path.join(QUOTES_DIR, "quotes_profiles.json")
     
     # Quotes-specific data files
-    QUOTES_RECORDS_FILE = "quotes_records.json"
-    QUOTES_TODOS_FILE = "quotes_todos.json"
-    QUOTES_COMPLIANCE_RULES_FILE = "quotes_compliance_rules.json"
-    QUOTES_LOGIN_CODES_FILE = "quotes_login_codes.json"
-    QUOTES_AUDIT_LOGS_FILE = "quotes_audit_logs.json"
-    QUOTES_RULES_HISTORY_FILE = "quotes_rules_history.json"
+    QUOTES_RECORDS_FILE = os.path.join(QUOTES_DIR, "quotes_records.json")
+    QUOTES_TODOS_FILE = os.path.join(QUOTES_DIR, "quotes_todos.json")
+    QUOTES_COMPLIANCE_RULES_FILE = os.path.join(QUOTES_DIR, "quotes_compliance_rules.json")
+    QUOTES_LOGIN_CODES_FILE = os.path.join(QUOTES_DIR, "quotes_login_codes.json")
+    QUOTES_AUDIT_LOGS_FILE = os.path.join(QUOTES_DIR, "quotes_audit_logs.json")
+    QUOTES_RULES_HISTORY_FILE = os.path.join(QUOTES_DIR, "quotes_rules_history.json")
     
     # Chuti-specific data files
-    CHUTI_LEAVES_FILE = "chuti_records.json"
-    CHUTI_HOLIDAYS_FILE = "chuti_govt_holiday_responses.json"
-    CHUTI_SETTLEMENTS_FILE = "chuti_leave_settlements.json"
-    CHUTI_PUSH_FILE = "chuti_push_subscriptions.json"
+    CHUTI_LEAVES_FILE = os.path.join(CHUTI_DIR, "chuti_records.json")
+    CHUTI_HOLIDAYS_FILE = os.path.join(CHUTI_DIR, "chuti_govt_holiday_responses.json")
+    CHUTI_SETTLEMENTS_FILE = os.path.join(CHUTI_DIR, "chuti_leave_settlements.json")
+    CHUTI_PUSH_FILE = os.path.join(CHUTI_DIR, "chuti_push_subscriptions.json")
 
     # Core user files MUST exist
     core_files = [CHUTI_AUTH_FILE, QUOTES_AUTH_FILE, CHUTI_PROFILES_FILE, QUOTES_PROFILES_FILE]
@@ -50,7 +54,15 @@ def main():
 
     # Helper function to parse rows inside wrapper structures
     def parse_rows(data):
+        if data is None:
+            return []
+        if isinstance(data, list) and len(data) == 1 and isinstance(data[0], dict) and "json_agg" in data[0]:
+            val = data[0]["json_agg"]
+            return val if val is not None else []
         if isinstance(data, dict):
+            if "json_agg" in data:
+                val = data["json_agg"]
+                return val if val is not None else []
             if "rows" in data:
                 return data["rows"]
             return [data]
@@ -205,7 +217,7 @@ VALUES ('{r_id}', '{new_uid}', '{file_name}', '{branch_name}', '{codename}', '{f
         sql_statements.append("\n")
         print(f" - Created SQL for {len(records_inserts)} quotes records.")
     else:
-        print(" - [SKIP] No quotes_records.json file found.")
+        print(f" - [SKIP] No {QUOTES_RECORDS_FILE} file found.")
 
     # 5. Todos
     if os.path.exists(QUOTES_TODOS_FILE):
@@ -239,7 +251,7 @@ VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{
         sql_statements.append("\n")
         print(f" - Created SQL for {len(todos_inserts)} todos.")
     else:
-        print(" - [SKIP] No quotes_todos.json file found.")
+        print(f" - [SKIP] No {QUOTES_TODOS_FILE} file found.")
 
     # 6. Compliance Rules
     if os.path.exists(QUOTES_COMPLIANCE_RULES_FILE):
@@ -288,7 +300,7 @@ VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {t
         sql_statements.append("\n")
         print(f" - Created SQL for {len(rules_inserts)} compliance rules.")
     else:
-        print(" - [SKIP] No quotes_compliance_rules.json file found.")
+        print(f" - [SKIP] No {QUOTES_COMPLIANCE_RULES_FILE} file found.")
 
     # 7. Rules History
     if os.path.exists(QUOTES_RULES_HISTORY_FILE):
@@ -339,7 +351,7 @@ VALUES ('{h_id}', '{rule_id}', '{category}', '{sub_category}', {company_name}, {
         sql_statements.append("\n")
         print(f" - Created SQL for {len(history_inserts)} rules history items.")
     else:
-        print(" - [SKIP] No quotes_rules_history.json file found.")
+        print(f" - [SKIP] No {QUOTES_RULES_HISTORY_FILE} file found.")
 
     # 8. Login Codes
     if os.path.exists(QUOTES_LOGIN_CODES_FILE):
@@ -364,7 +376,7 @@ VALUES ('{login_id}', '{code}', {name}, '{updated_at}') ON CONFLICT (login_id) D
         sql_statements.append("\n")
         print(f" - Created SQL for {len(codes_inserts)} login codes.")
     else:
-        print(" - [SKIP] No quotes_login_codes.json file found.")
+        print(f" - [SKIP] No {QUOTES_LOGIN_CODES_FILE} file found.")
 
     # 9. Audit Logs
     if os.path.exists(QUOTES_AUDIT_LOGS_FILE):
@@ -384,7 +396,11 @@ VALUES ('{login_id}', '{code}', {name}, '{updated_at}') ON CONFLICT (login_id) D
             action_type = row["action_type"].replace("'", "''")
             
             target_id = row.get("target_id")
-            target_id_sql = f"'{target_id.replace(\"'\", \"''\")}'" if target_id else "NULL"
+            if target_id:
+                target_id_escaped = target_id.replace("'", "''")
+                target_id_sql = f"'{target_id_escaped}'"
+            else:
+                target_id_sql = "NULL"
             
             details = row["details"].replace("'", "''")
             created_at = row.get("created_at", "NOW()")
@@ -398,7 +414,7 @@ VALUES ('{a_id}', {actor_id_sql}, '{actor_codename}', '{action_type}', {target_i
         sql_statements.append("\n")
         print(f" - Created SQL for {len(audit_inserts)} audit logs.")
     else:
-        print(" - [SKIP] No quotes_audit_logs.json file found.")
+        print(f" - [SKIP] No {QUOTES_AUDIT_LOGS_FILE} file found.")
 
 
     # ------------------ Chuti Data Copying & SQL ------------------
@@ -426,7 +442,13 @@ VALUES ('{a_id}', {actor_id_sql}, '{actor_codename}', '{action_type}', {target_i
             leave_hour = row.get("leave_hour")
             leave_hour_sql = f"'{leave_hour}'::INTERVAL" if leave_hour else "NULL"
             
-            reserve_holiday = f"'{row['reserve_holiday'].replace(\"'\", \"''\")}'" if row.get("reserve_holiday") else "NULL"
+            reserve_holiday = row.get("reserve_holiday")
+            if reserve_holiday:
+                reserve_holiday_escaped = reserve_holiday.replace("'", "''")
+                reserve_holiday_sql = f"'{reserve_holiday_escaped}'"
+            else:
+                reserve_holiday_sql = "NULL"
+
             reserve_adjustment_status = f"'{row.get('reserve_adjustment_status', 'none')}'"
             status = f"'{row.get('status', 'pending_supervisor')}'"
             
@@ -437,14 +459,20 @@ VALUES ('{a_id}', {actor_id_sql}, '{actor_codename}', '{action_type}', {target_i
             is_edited = "TRUE" if row.get("is_edited") else "FALSE"
             adjust_short_leave = "TRUE" if row.get("adjust_short_leave") else "FALSE"
             
-            comment = f"'{row['comment'].replace(\"'\", \"''\")}'" if row.get("comment") else "NULL"
+            comment = row.get("comment")
+            if comment:
+                comment_escaped = comment.replace("'", "''")
+                comment_sql = f"'{comment_escaped}'"
+            else:
+                comment_sql = "NULL"
+
             created_at = row.get("created_at", "NOW()")
             bulk_id = f"'{row['bulk_id']}'" if row.get("bulk_id") else "NULL"
             updated_at = row.get("updated_at", "NOW()")
             deleted_at = f"'{row['deleted_at']}'" if row.get("deleted_at") else "NULL"
 
             ins_sql = f"""INSERT INTO public.chuti (id, user_id, date, leave_type, adjustment, adjusted_hour, sign_in_time, sign_out_time, leave_hour, reserve_holiday, reserve_adjustment_status, status, admin_edit_request, admin_edit_status, is_edited, adjust_short_leave, comment, created_at, bulk_id, updated_at, deleted_at)
-VALUES ('{c_id}', '{user_id}', '{date}', '{leave_type}', {adjustment}, {adjusted_hour_sql}, {sign_in_time}, {sign_out_time}, {leave_hour_sql}, {reserve_holiday}, {reserve_adjustment_status}, {status}, {admin_edit_request_sql}, {admin_edit_status}, {is_edited}, {adjust_short_leave}, {comment}, '{created_at}', {bulk_id}, '{updated_at}', {deleted_at});"""
+VALUES ('{c_id}', '{user_id}', '{date}', '{leave_type}', {adjustment}, {adjusted_hour_sql}, {sign_in_time}, {sign_out_time}, {leave_hour_sql}, {reserve_holiday_sql}, {reserve_adjustment_status}, {status}, {admin_edit_request_sql}, {admin_edit_status}, {is_edited}, {adjust_short_leave}, {comment_sql}, '{created_at}', {bulk_id}, '{updated_at}', {deleted_at});"""
             chuti_inserts.append(ins_sql)
 
         sql_statements.append("-- 11. Insert Chuti Leave Records")
@@ -452,7 +480,7 @@ VALUES ('{c_id}', '{user_id}', '{date}', '{leave_type}', {adjustment}, {adjusted
         sql_statements.append("\n")
         print(f" - Created SQL for {len(chuti_inserts)} chuti leave records.")
     else:
-        print(" - [SKIP] No chuti_records.json file found.")
+        print(f" - [SKIP] No {CHUTI_LEAVES_FILE} file found.")
 
     # 11. Government holiday choices
     if os.path.exists(CHUTI_HOLIDAYS_FILE):
@@ -478,7 +506,7 @@ VALUES ('{h_id}', '{user_id}', '{holiday_date}', '{holiday_name}', '{response}',
         sql_statements.append("\n")
         print(f" - Created SQL for {len(holiday_inserts)} holiday choice responses.")
     else:
-        print(" - [SKIP] No chuti_govt_holiday_responses.json file found.")
+        print(f" - [SKIP] No {CHUTI_HOLIDAYS_FILE} file found.")
 
     # 12. Leave settlements
     if os.path.exists(CHUTI_SETTLEMENTS_FILE):
@@ -514,7 +542,7 @@ VALUES ('{s_id}', '{user_id}', '{year}', '{period}', '{leave_category}', {remain
         sql_statements.append("\n")
         print(f" - Created SQL for {len(settlement_inserts)} leave settlements.")
     else:
-        print(" - [SKIP] No chuti_leave_settlements.json file found.")
+        print(f" - [SKIP] No {CHUTI_SETTLEMENTS_FILE} file found.")
 
     # 13. Push subscriptions
     if os.path.exists(CHUTI_PUSH_FILE):
@@ -539,7 +567,7 @@ VALUES ('{p_id}', {user_id}, '{endpoint}', '{p256dh}', '{auth}', '{created_at}')
         sql_statements.append("\n")
         print(f" - Created SQL for {len(push_inserts)} push subscriptions.")
     else:
-        print(" - [SKIP] No chuti_push_subscriptions.json file found.")
+        print(f" - [SKIP] No {CHUTI_PUSH_FILE} file found.")
 
 
     # Write output to SQL file
