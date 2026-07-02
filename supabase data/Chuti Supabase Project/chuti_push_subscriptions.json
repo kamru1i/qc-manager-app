@@ -1,0 +1,38 @@
+[
+  {
+    "json_agg": [
+      {
+        "id": "36872ff8-8446-4a55-9390-0a74ac3b525e",
+        "user_id": "aec1b58a-7adc-4e29-95e1-8794e8e8b560",
+        "endpoint": "https://fcm.googleapis.com/fcm/send/dUFxgJ_KHKU:APA91bEWdABzQmd9RC9SbhhXbSRnj8rBGE8iGHIqR_bDE_nZmeS5HfZkV3u4oTntBglW4_RLBMwlFu3wKYEZsoMRp0kv5OXhexmCvuM4-Sz8l5Sqc7GATdOBZRSGHEJcw6B7N2qoWelT",
+        "p256dh": "BDha7mgrs1KSUpo9osCFKXgrgfLQ2QGLcsMJD5psZnhBfy9UbDkDETTUPmvalB5-W-Q0FW6RXDRekvZgWwZEBE0",
+        "auth": "sWBengYx-KKo3CfugPjYPA",
+        "created_at": "2026-07-01T08:36:02.375044+00:00"
+      },
+      {
+        "id": "54aca718-46a6-4977-9862-9a861ca759bd",
+        "user_id": "f15594ca-7aa8-4592-b6c7-5dc4062cbb75",
+        "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABqNrIkzbi-cs4muLo5BR64d6qVXQ0iyXE7TYSYkgSEO1IgLxNfwfl8rByNf1yh2tD-UTnD_fxAQnj3KB8UGDaGRqn_GRLerP5s4sg12bt6fIqSFRCXzEirktS216K-qiRIcEGZbfDn6LlyrkRnthWdf5wR5Fs8jF9A0qLRILLkd4mN2d8",
+        "p256dh": "BD_YneTiBOicQtfjUtjDctCYOuQrc2HAUEwqVe2jI_107IvDJeGOGt2Wvu8S3nor_FUuxo2pzxomWoeCyhW8AD0",
+        "auth": "hXMlSFns7TV9VRsmcV3nbA",
+        "created_at": "2026-06-20T15:46:40.968334+00:00"
+      },
+      {
+        "id": "d96b8ebb-bb5a-4d22-a8bc-57b5c096213d",
+        "user_id": "ce92ddd9-20cb-4e34-8368-45e7be53cd1d",
+        "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABqQ_eVUtjaSQGuFCuUSjU_KuuM0ldLnNIoRMVJ39rcq3pNBrvBaUZubZ5zJWjDqHS-cgD21llrqwMrMMJYCl79PuyulMV8S-_ACyZ1JIJ-OU5Nw4-Y3sOzMG-15qmCoRa92_EXmFfz2jmMiTfSNAqndHLxmJbzJbM1dJ5gW38ThivGtD0",
+        "p256dh": "BCYecflQe7wJXvncJghtpTixAw1De-jMCYsoqoOhdAvEzPj0rUQIhYtVs_zsViOXRh0yP67KB0lXEnZvc1Sx2Uc",
+        "auth": "Sq_xCnpreembLlEuS45kRA",
+        "created_at": "2026-06-30T17:06:30.621082+00:00"
+      },
+      {
+        "id": "94d7e9ba-b092-4e57-ac1c-79e66fdd4237",
+        "user_id": "3fe6011f-8c70-4ff0-8d8c-55040e54b942",
+        "endpoint": "https://fcm.googleapis.com/fcm/send/dSHcRQBObKg:APA91bGj9t4nOEVWNFwxD-MJaiuZfcQVc_rlcTv1lBw3QbaOYVOjMWivgQDag8BBPSkKCgF6iobYODIiW59K1XEiBF9ULIg7BCSaBhXCMdMB9JPjVyLiOl3UAI0tdhGdbOkYK92k8ChY",
+        "p256dh": "BPWA2zMnuDN4DbGzdXVF1N5dNsa7ETk68I8kU6Jy8_xNM80GByJjJNhBr0Eu64X4y1PbnxAWVFTWEoPITas-B4A",
+        "auth": "oK55JbGQwh-Eka8eIn1Cgw",
+        "created_at": "2026-07-01T08:33:45.169299+00:00"
+      }
+    ]
+  }
+]

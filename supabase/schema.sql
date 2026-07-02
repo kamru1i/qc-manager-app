@@ -1000,3 +1000,31 @@ CREATE INDEX IF NOT EXISTS idx_todos_todo_date ON public.todos(todo_date);
 ALTER PUBLICATION supabase_realtime ADD TABLE public.records;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.todos;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.compliance_rules;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.rules_history;
+
+-- ==========================================
+-- 11. Audit Logs Table
+-- ==========================================
+CREATE TABLE public.audit_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  actor_codename TEXT NOT NULL,
+  action_type TEXT NOT NULL,
+  target_id TEXT,
+  details TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS on audit_logs
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow admins to read all audit logs" ON public.audit_logs
+  FOR SELECT TO authenticated USING (public.is_admin());
+
+CREATE POLICY "Allow authenticated users to insert audit logs" ON public.audit_logs
+  FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_id ON public.audit_logs(actor_id);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.audit_logs;

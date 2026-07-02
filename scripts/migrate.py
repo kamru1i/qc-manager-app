@@ -13,33 +13,32 @@ def main():
     QUOTES_AUTH_FILE = "quotes_auth_users.json"
     CHUTI_PROFILES_FILE = "chuti_profiles.json"
     QUOTES_PROFILES_FILE = "quotes_profiles.json"
+    
+    # Quotes-specific data files
     QUOTES_RECORDS_FILE = "quotes_records.json"
     QUOTES_TODOS_FILE = "quotes_todos.json"
     QUOTES_COMPLIANCE_RULES_FILE = "quotes_compliance_rules.json"
     QUOTES_LOGIN_CODES_FILE = "quotes_login_codes.json"
+    QUOTES_AUDIT_LOGS_FILE = "quotes_audit_logs.json"
+    QUOTES_RULES_HISTORY_FILE = "quotes_rules_history.json"
+    
+    # Chuti-specific data files
+    CHUTI_LEAVES_FILE = "chuti_records.json"
+    CHUTI_HOLIDAYS_FILE = "chuti_govt_holiday_responses.json"
+    CHUTI_SETTLEMENTS_FILE = "chuti_leave_settlements.json"
+    CHUTI_PUSH_FILE = "chuti_push_subscriptions.json"
 
-    # Check if files exist
-    required_files = [
-        CHUTI_AUTH_FILE, QUOTES_AUTH_FILE,
-        CHUTI_PROFILES_FILE, QUOTES_PROFILES_FILE,
-        QUOTES_RECORDS_FILE, QUOTES_TODOS_FILE,
-        QUOTES_COMPLIANCE_RULES_FILE, QUOTES_LOGIN_CODES_FILE
-    ]
-
-    missing_files = [f for f in required_files if not os.path.exists(f)]
-    if missing_files:
-        print("\n[ERROR] Missing required JSON export files:")
-        for f in missing_files:
+    # Core user files MUST exist
+    core_files = [CHUTI_AUTH_FILE, QUOTES_AUTH_FILE, CHUTI_PROFILES_FILE, QUOTES_PROFILES_FILE]
+    missing_core = [f for f in core_files if not os.path.exists(f)]
+    if missing_core:
+        print("\n[ERROR] Missing core user JSON export files:")
+        for f in missing_core:
             print(f" - {f}")
-        print("\nPlease export the tables from Supabase as JSON and place them in this folder.")
-        print("To export, run in Supabase SQL editor: ")
-        print("  SELECT json_agg(t) FROM auth.users t; (Save as JSON)")
-        print("  SELECT json_agg(t) FROM public.profiles t; (Save as JSON)")
-        print("  SELECT json_agg(t) FROM public.records t; (Save as JSON)")
-        print("  ...")
+        print("\nPlease export at least the auth.users and profiles tables from both projects.")
         sys.exit(1)
 
-    print("\n[1/5] Loading JSON data...")
+    print("\n[1/5] Loading user JSON data...")
     with open(CHUTI_AUTH_FILE, "r") as f:
         chuti_auth = json.load(f)
     with open(QUOTES_AUTH_FILE, "r") as f:
@@ -48,16 +47,8 @@ def main():
         chuti_profiles = json.load(f)
     with open(QUOTES_PROFILES_FILE, "r") as f:
         quotes_profiles = json.load(f)
-    with open(QUOTES_RECORDS_FILE, "r") as f:
-        quotes_records = json.load(f)
-    with open(QUOTES_TODOS_FILE, "r") as f:
-        quotes_todos = json.load(f)
-    with open(QUOTES_COMPLIANCE_RULES_FILE, "r") as f:
-        quotes_rules = json.load(f)
-    with open(QUOTES_LOGIN_CODES_FILE, "r") as f:
-        quotes_login_codes = json.load(f)
 
-    # If tables are nested inside a single key, handle it
+    # Helper function to parse rows inside wrapper structures
     def parse_rows(data):
         if isinstance(data, dict):
             if "rows" in data:
@@ -69,10 +60,6 @@ def main():
     quotes_auth = parse_rows(quotes_auth)
     chuti_profiles = parse_rows(chuti_profiles)
     quotes_profiles = parse_rows(quotes_profiles)
-    quotes_records = parse_rows(quotes_records)
-    quotes_todos = parse_rows(quotes_todos)
-    quotes_rules = parse_rows(quotes_rules)
-    quotes_login_codes = parse_rows(quotes_login_codes)
 
     print(f"Loaded {len(chuti_auth)} Chuti auth users, {len(quotes_auth)} Quotes auth users.")
 
@@ -92,43 +79,29 @@ def main():
 
     print("\n[2/5] Processing users and roles mapping...")
     
-    # Track which quotes users are migrated
     new_auth_inserts = []
     profile_updates = []
     profile_inserts = []
-
-    # Identify Quotes-only admin (who is not in Chuti) to make them admin in Chuti
-    quotes_admins_emails = []
-    for q_profile in quotes_profiles:
-        if q_profile.get("role") == "admin":
-            q_user = quotes_users_by_id.get(q_profile["id"])
-            if q_user and q_user.get("email"):
-                quotes_admins_emails.append(q_user["email"].lower())
+    chuti_updates = []
 
     for q_user in quotes_auth:
         q_id = q_user["id"]
         q_email = q_user.get("email", "").lower()
         q_profile = quotes_profiles_by_id.get(q_id, {})
 
-        # 1. Match common user by email
         if q_email in chuti_users_by_email:
             master_user = chuti_users_by_email[q_email]
             master_id = master_user["id"]
             user_id_map[q_id] = master_id
             
-            # Common user gets both access
             quotes_role = q_profile.get("role", "user")
             allowed_types = q_profile.get("allowed_types", ["Quote", "Requote", "Requote Van", "Requote Bike", "Review", "Review Van", "Review Bike", "Individual Review", "Other Site", 'Van', 'Bike', 'Sale'])
             allowed_types_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in allowed_types]) + "]::TEXT[]"
             
-            # Check if this user is a supervisor in Chuti
             master_profile = chuti_profiles_by_id.get(master_id, {})
             chuti_role = master_profile.get("role", "user")
             
-            # For Chuti supervisors, they remain supervisor, but quotes_role is admin if they were admin in Quotes
-            # Otherwise, keep standard roles
             if chuti_role == "supervisor":
-                # As per request, supervisors get Quotes admin privileges, so we set quotes_role to 'admin'
                 final_quotes_role = 'admin'
             else:
                 final_quotes_role = quotes_role
@@ -142,18 +115,13 @@ WHERE id = '{master_id}';"""
             profile_updates.append(update_sql)
             
         else:
-            # 2. Quotes-Only User: Create new user in master auth.users and profiles
-            new_id = q_id # Keep old ID to prevent remapping records if we want, or generate a new one.
-            # Keeping the old ID is safer and cleaner, we just insert it directly into auth.users!
+            new_id = q_id
             user_id_map[q_id] = new_id
 
-            # Parse columns for auth.users insert
-            # We copy email, encrypted_password, raw_app_meta_data, raw_user_meta_data, aud, role
             email = q_user["email"]
             enc_password = q_user["encrypted_password"]
             raw_app_metadata = json.dumps(q_user.get("raw_app_meta_data", {"provider": "email", "providers": ["email"]}))
             
-            # If they are quotes admin and not in Chuti, we make them admin in both!
             is_quotes_admin = q_profile.get("role") == "admin"
             final_chuti_role = "admin" if is_quotes_admin else "user"
             
@@ -168,37 +136,29 @@ WHERE id = '{master_id}';"""
 VALUES ('{new_id}', '00000000-0000-0000-0000-000000000000', '{email}', '{enc_password}', NOW(), NOW(), NOW(), '{raw_app_metadata}'::jsonb, '{raw_user_metadata_str}'::jsonb, '{aud}', '{user_role}');"""
             new_auth_inserts.append(auth_sql)
 
-            # Profile insert for Quotes-only user
             username = q_profile.get("username", email.split('@')[0].upper())
             full_name = q_profile.get("full_name", "")
             allowed_types = q_profile.get("allowed_types", ["Quote", "Requote", "Requote Van", "Requote Bike", "Review", "Review Van", "Review Bike", "Individual Review", "Other Site", 'Van', 'Bike', 'Sale'])
             allowed_types_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in allowed_types]) + "]::TEXT[]"
             
-            # Quotes-only admin gets has_chuti_access = true, others false
             has_chuti_access = "TRUE" if is_quotes_admin else "FALSE"
             has_quotes_access = "TRUE"
             
-            # Default sign-in/out times are null for Quotes-only user, quotas default
             profile_sql = f"""INSERT INTO public.profiles (id, username, role, full_name, allowed_types, has_chuti_access, has_quotes_access, quotes_role, is_setup_completed)
 VALUES ('{new_id}', '{username}', '{final_chuti_role}', '{full_name}', {allowed_types_sql}, {has_chuti_access}, {has_quotes_access}, '{q_profile.get("role", "user")}', TRUE);"""
             profile_inserts.append(profile_sql)
 
-    # 3. Handle Chuti-Only Users (who didn't get processed)
     chuti_processed_ids = set(user_id_map.values())
-    chuti_updates = []
     for c_profile in chuti_profiles:
         c_id = c_profile["id"]
         if c_id not in chuti_processed_ids:
-            # Chuti-only user: has_chuti_access = TRUE, has_quotes_access = FALSE
             chuti_update_sql = f"UPDATE public.profiles SET has_chuti_access = TRUE, has_quotes_access = FALSE WHERE id = '{c_id}';"
             chuti_updates.append(chuti_update_sql)
 
-    # Write auth users first
     sql_statements.append("-- 1. Insert New Auth Users (Quotes-Only Users)")
     sql_statements.extend(new_auth_inserts)
     sql_statements.append("\n")
 
-    # Write profile inserts and updates
     sql_statements.append("-- 2. Update Common Users Access Flags")
     sql_statements.extend(profile_updates)
     sql_statements.append("\n")
@@ -213,132 +173,381 @@ VALUES ('{new_id}', '{username}', '{final_chuti_role}', '{full_name}', {allowed_
 
     print(f"Created SQL to merge users: {len(new_auth_inserts)} new users, {len(profile_updates)} common user updates, {len(chuti_updates)} chuti-only updates.")
 
-    # 4. Migrate Quotes Records
-    print("\n[3/5] Remapping quotes records...")
-    records_inserts = []
-    for record in quotes_records:
-        old_uid = record["user_id"]
-        new_uid = user_id_map.get(old_uid)
-        if not new_uid:
-            print(f"[WARNING] Record {record.get('id')} has unknown user_id {old_uid}. Skipping.")
-            continue
+    # ------------------ Quotes Data Remapping & SQL ------------------
+    print("\n[3/5] Processing Quotes app records...")
+    
+    # 4. Records
+    if os.path.exists(QUOTES_RECORDS_FILE):
+        with open(QUOTES_RECORDS_FILE, "r") as f:
+            quotes_records = parse_rows(json.load(f))
         
-        file_name = record["file_name"].replace("'", "''")
-        branch_name = record["branch_name"]
-        codename = record["codename"]
-        file_type = record["file_type"]
-        submitted_at = record["submitted_at"]
-        created_at = record["created_at"]
-        r_id = record.get("id", str(uuid.uuid4()))
+        records_inserts = []
+        for record in quotes_records:
+            old_uid = record["user_id"]
+            new_uid = user_id_map.get(old_uid)
+            if not new_uid:
+                continue
+            
+            file_name = record["file_name"].replace("'", "''")
+            branch_name = record["branch_name"]
+            codename = record["codename"]
+            file_type = record["file_type"]
+            submitted_at = record["submitted_at"]
+            created_at = record["created_at"]
+            r_id = record.get("id", str(uuid.uuid4()))
 
-        rec_sql = f"""INSERT INTO public.records (id, user_id, file_name, branch_name, codename, file_type, submitted_at, created_at) 
+            rec_sql = f"""INSERT INTO public.records (id, user_id, file_name, branch_name, codename, file_type, submitted_at, created_at) 
 VALUES ('{r_id}', '{new_uid}', '{file_name}', '{branch_name}', '{codename}', '{file_type}', '{submitted_at}', '{created_at}');"""
-        records_inserts.append(rec_sql)
+            records_inserts.append(rec_sql)
 
-    sql_statements.append("-- 5. Insert Remapped Quotes Records")
-    sql_statements.extend(records_inserts)
-    sql_statements.append("\n")
-    print(f"Created SQL for {len(records_inserts)} quotes records.")
+        sql_statements.append("-- 5. Insert Remapped Quotes Records")
+        sql_statements.extend(records_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(records_inserts)} quotes records.")
+    else:
+        print(" - [SKIP] No quotes_records.json file found.")
 
-    # 5. Migrate Todos
-    print("\n[4/5] Remapping todos...")
-    todos_inserts = []
-    for todo in quotes_todos:
-        old_uid = todo["user_id"]
-        new_uid = user_id_map.get(old_uid)
-        if not new_uid:
-            print(f"[WARNING] Todo {todo.get('id')} has unknown user_id {old_uid}. Skipping.")
-            continue
+    # 5. Todos
+    if os.path.exists(QUOTES_TODOS_FILE):
+        with open(QUOTES_TODOS_FILE, "r") as f:
+            quotes_todos = parse_rows(json.load(f))
         
-        task = todo["task"].replace("'", "''")
-        status = todo["status"]
-        comment = todo["comment"].replace("'", "''") if todo.get("comment") else "NULL"
-        if comment != "NULL":
-            comment = f"'{comment}'"
-        todo_date = todo["todo_date"]
-        is_all_time = "TRUE" if todo["is_all_time"] else "FALSE"
-        created_at = todo["created_at"]
-        t_id = todo.get("id", str(uuid.uuid4()))
-        codename = todo["codename"]
+        todos_inserts = []
+        for todo in quotes_todos:
+            old_uid = todo["user_id"]
+            new_uid = user_id_map.get(old_uid)
+            if not new_uid:
+                continue
+            
+            task = todo["task"].replace("'", "''")
+            status = todo["status"]
+            comment = todo["comment"].replace("'", "''") if todo.get("comment") else "NULL"
+            if comment != "NULL":
+                comment = f"'{comment}'"
+            todo_date = todo["todo_date"]
+            is_all_time = "TRUE" if todo["is_all_time"] else "FALSE"
+            created_at = todo["created_at"]
+            t_id = todo.get("id", str(uuid.uuid4()))
+            codename = todo["codename"]
 
-        todo_sql = f"""INSERT INTO public.todos (id, user_id, codename, task, status, comment, todo_date, is_all_time, created_at) 
+            todo_sql = f"""INSERT INTO public.todos (id, user_id, codename, task, status, comment, todo_date, is_all_time, created_at) 
 VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{todo_date}', {is_all_time}, '{created_at}');"""
-        todos_inserts.append(todo_sql)
+            todos_inserts.append(todo_sql)
 
-    sql_statements.append("-- 6. Insert Remapped Todos")
-    sql_statements.extend(todos_inserts)
-    sql_statements.append("\n")
-    print(f"Created SQL for {len(todos_inserts)} todos.")
+        sql_statements.append("-- 6. Insert Remapped Todos")
+        sql_statements.extend(todos_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(todos_inserts)} todos.")
+    else:
+        print(" - [SKIP] No quotes_todos.json file found.")
 
-    # 6. Migrate Compliance Rules
-    print("\n[5/5] Remapping compliance rules...")
-    rules_inserts = []
-    for rule in quotes_rules:
-        r_id = rule["id"]
-        category = rule["category"]
-        sub_category = rule["sub_category"]
-        company_name = rule["company_name"].replace("'", "''") if rule.get("company_name") else "NULL"
-        if company_name != "NULL":
-            company_name = f"'{company_name}'"
+    # 6. Compliance Rules
+    if os.path.exists(QUOTES_COMPLIANCE_RULES_FILE):
+        with open(QUOTES_COMPLIANCE_RULES_FILE, "r") as f:
+            quotes_rules = parse_rows(json.load(f))
         
-        tags = rule.get("company_tags", [])
-        if tags:
-            tags_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in tags]) + "]::TEXT[]"
-        else:
-            tags_sql = "NULL"
-
-        title = rule["title"].replace("'", "''") if rule.get("title") else "NULL"
-        if title != "NULL":
-            title = f"'{title}'"
+        rules_inserts = []
+        for rule in quotes_rules:
+            r_id = rule["id"]
+            category = rule["category"]
+            sub_category = rule["sub_category"]
+            company_name = rule["company_name"].replace("'", "''") if rule.get("company_name") else "NULL"
+            if company_name != "NULL":
+                company_name = f"'{company_name}'"
             
-        content = rule["content"].replace("'", "''")
-        extra_info = rule["extra_info"].replace("'", "''") if rule.get("extra_info") else "NULL"
-        if extra_info != "NULL":
-            extra_info = f"'{extra_info}'"
-            
-        is_deleted = "TRUE" if rule["is_deleted"] else "FALSE"
-        created_at = rule["created_at"]
-        updated_at = rule["updated_at"]
-        updated_by = rule.get("updated_by")
-        if updated_by and updated_by in user_id_map:
-            updated_by_sql = f"'{user_id_map[updated_by]}'"
-        else:
-            updated_by_sql = "NULL"
+            tags = rule.get("company_tags", [])
+            if tags:
+                tags_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in tags]) + "]::TEXT[]"
+            else:
+                tags_sql = "NULL"
 
-        rule_sql = f"""INSERT INTO public.compliance_rules (id, category, sub_category, company_name, company_tags, title, content, extra_info, is_deleted, created_at, updated_at, updated_by) 
+            title = rule["title"].replace("'", "''") if rule.get("title") else "NULL"
+            if title != "NULL":
+                title = f"'{title}'"
+                
+            content = rule["content"].replace("'", "''")
+            extra_info = rule["extra_info"].replace("'", "''") if rule.get("extra_info") else "NULL"
+            if extra_info != "NULL":
+                extra_info = f"'{extra_info}'"
+                
+            is_deleted = "TRUE" if rule["is_deleted"] else "FALSE"
+            created_at = rule["created_at"]
+            updated_at = rule["updated_at"]
+            updated_by = rule.get("updated_by")
+            if updated_by and updated_by in user_id_map:
+                updated_by_sql = f"'{user_id_map[updated_by]}'"
+            else:
+                updated_by_sql = "NULL"
+
+            rule_sql = f"""INSERT INTO public.compliance_rules (id, category, sub_category, company_name, company_tags, title, content, extra_info, is_deleted, created_at, updated_at, updated_by) 
 VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, {is_deleted}, '{created_at}', '{updated_at}', {updated_by_sql});"""
-        rules_inserts.append(rule_sql)
+            rules_inserts.append(rule_sql)
 
-    sql_statements.append("-- 7. Insert Compliance Rules")
-    sql_statements.extend(rules_inserts)
-    sql_statements.append("\n")
-    print(f"Created SQL for {len(rules_inserts)} compliance rules.")
+        sql_statements.append("-- 7. Insert Compliance Rules")
+        sql_statements.extend(rules_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(rules_inserts)} compliance rules.")
+    else:
+        print(" - [SKIP] No quotes_compliance_rules.json file found.")
 
-    # 7. Migrate Login Codes (Direct Copy, no user mappings needed)
-    print("Remapping login codes...")
-    codes_inserts = []
-    for code_row in quotes_login_codes:
-        login_id = code_row["login_id"]
-        code = code_row["code"]
-        name = code_row["name"].replace("'", "''") if code_row.get("name") else "NULL"
-        if name != "NULL":
-            name = f"'{name}'"
-        updated_at = code_row["updated_at"]
+    # 7. Rules History
+    if os.path.exists(QUOTES_RULES_HISTORY_FILE):
+        with open(QUOTES_RULES_HISTORY_FILE, "r") as f:
+            quotes_history = parse_rows(json.load(f))
+        
+        history_inserts = []
+        for h in quotes_history:
+            h_id = h["id"]
+            rule_id = h["rule_id"]
+            category = h["category"]
+            sub_category = h["sub_category"]
+            
+            company_name = h["company_name"].replace("'", "''") if h.get("company_name") else "NULL"
+            if company_name != "NULL":
+                company_name = f"'{company_name}'"
+                
+            tags = h.get("company_tags", [])
+            if tags:
+                tags_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in tags]) + "]::TEXT[]"
+            else:
+                tags_sql = "NULL"
+                
+            title = h["title"].replace("'", "''") if h.get("title") else "NULL"
+            if title != "NULL":
+                title = f"'{title}'"
+                
+            content = h["content"].replace("'", "''")
+            extra_info = h["extra_info"].replace("'", "''") if h.get("extra_info") else "NULL"
+            if extra_info != "NULL":
+                extra_info = f"'{extra_info}'"
+                
+            action_type = h["action_type"]
+            archived_at = h["archived_at"]
+            
+            archived_by = h.get("archived_by")
+            if archived_by and archived_by in user_id_map:
+                archived_by_sql = f"'{user_id_map[archived_by]}'"
+            else:
+                archived_by_sql = "NULL"
+                
+            hist_sql = f"""INSERT INTO public.rules_history (id, rule_id, category, sub_category, company_name, company_tags, title, content, extra_info, action_type, archived_at, archived_by)
+VALUES ('{h_id}', '{rule_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, '{action_type}', '{archived_at}', {archived_by_sql});"""
+            history_inserts.append(hist_sql)
+            
+        sql_statements.append("-- 8. Insert Rules History")
+        sql_statements.extend(history_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(history_inserts)} rules history items.")
+    else:
+        print(" - [SKIP] No quotes_rules_history.json file found.")
 
-        code_sql = f"""INSERT INTO public.login_codes (login_id, code, name, updated_at) 
+    # 8. Login Codes
+    if os.path.exists(QUOTES_LOGIN_CODES_FILE):
+        with open(QUOTES_LOGIN_CODES_FILE, "r") as f:
+            quotes_login_codes = parse_rows(json.load(f))
+        
+        codes_inserts = []
+        for code_row in quotes_login_codes:
+            login_id = code_row["login_id"]
+            code = code_row["code"]
+            name = code_row["name"].replace("'", "''") if code_row.get("name") else "NULL"
+            if name != "NULL":
+                name = f"'{name}'"
+            updated_at = code_row["updated_at"]
+
+            code_sql = f"""INSERT INTO public.login_codes (login_id, code, name, updated_at) 
 VALUES ('{login_id}', '{code}', {name}, '{updated_at}') ON CONFLICT (login_id) DO NOTHING;"""
-        codes_inserts.append(code_sql)
+            codes_inserts.append(code_sql)
 
-    sql_statements.append("-- 8. Insert Login Codes")
-    sql_statements.extend(codes_inserts)
-    sql_statements.append("\n")
-    print(f"Created SQL for {len(codes_inserts)} login codes.")
+        sql_statements.append("-- 9. Insert Login Codes")
+        sql_statements.extend(codes_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(codes_inserts)} login codes.")
+    else:
+        print(" - [SKIP] No quotes_login_codes.json file found.")
+
+    # 9. Audit Logs
+    if os.path.exists(QUOTES_AUDIT_LOGS_FILE):
+        with open(QUOTES_AUDIT_LOGS_FILE, "r") as f:
+            quotes_audit_logs = parse_rows(json.load(f))
+            
+        audit_inserts = []
+        for row in quotes_audit_logs:
+            a_id = row["id"]
+            actor_id = row.get("actor_id")
+            if actor_id and actor_id in user_id_map:
+                actor_id_sql = f"'{user_id_map[actor_id]}'"
+            else:
+                actor_id_sql = "NULL"
+                
+            actor_codename = row["actor_codename"].replace("'", "''")
+            action_type = row["action_type"].replace("'", "''")
+            
+            target_id = row.get("target_id")
+            target_id_sql = f"'{target_id.replace(\"'\", \"''\")}'" if target_id else "NULL"
+            
+            details = row["details"].replace("'", "''")
+            created_at = row.get("created_at", "NOW()")
+            
+            aud_sql = f"""INSERT INTO public.audit_logs (id, actor_id, actor_codename, action_type, target_id, details, created_at)
+VALUES ('{a_id}', {actor_id_sql}, '{actor_codename}', '{action_type}', {target_id_sql}, '{details}', '{created_at}');"""
+            audit_inserts.append(aud_sql)
+            
+        sql_statements.append("-- 10. Insert Quotes Audit Logs")
+        sql_statements.extend(audit_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(audit_inserts)} audit logs.")
+    else:
+        print(" - [SKIP] No quotes_audit_logs.json file found.")
+
+
+    # ------------------ Chuti Data Copying & SQL ------------------
+    print("\n[4/5] Processing Chuti app records...")
+
+    # 10. Chuti leaves records
+    if os.path.exists(CHUTI_LEAVES_FILE):
+        with open(CHUTI_LEAVES_FILE, "r") as f:
+            chuti_leaves = parse_rows(json.load(f))
+        
+        chuti_inserts = []
+        for row in chuti_leaves:
+            c_id = row["id"]
+            user_id = row["user_id"]
+            date = row["date"]
+            leave_type = row["leave_type"]
+            adjustment = "TRUE" if row.get("adjustment") else "FALSE"
+            
+            adjusted_hour = row.get("adjusted_hour")
+            adjusted_hour_sql = f"'{adjusted_hour}'::INTERVAL" if adjusted_hour else "NULL"
+            
+            sign_in_time = f"'{row['sign_in_time']}'" if row.get("sign_in_time") else "NULL"
+            sign_out_time = f"'{row['sign_out_time']}'" if row.get("sign_out_time") else "NULL"
+            
+            leave_hour = row.get("leave_hour")
+            leave_hour_sql = f"'{leave_hour}'::INTERVAL" if leave_hour else "NULL"
+            
+            reserve_holiday = f"'{row['reserve_holiday'].replace(\"'\", \"''\")}'" if row.get("reserve_holiday") else "NULL"
+            reserve_adjustment_status = f"'{row.get('reserve_adjustment_status', 'none')}'"
+            status = f"'{row.get('status', 'pending_supervisor')}'"
+            
+            admin_edit_request = json.dumps(row["admin_edit_request"]) if row.get("admin_edit_request") else "NULL"
+            admin_edit_request_sql = f"'{admin_edit_request}'::jsonb" if admin_edit_request != "NULL" else "NULL"
+            
+            admin_edit_status = f"'{row.get('admin_edit_status', 'none')}'"
+            is_edited = "TRUE" if row.get("is_edited") else "FALSE"
+            adjust_short_leave = "TRUE" if row.get("adjust_short_leave") else "FALSE"
+            
+            comment = f"'{row['comment'].replace(\"'\", \"''\")}'" if row.get("comment") else "NULL"
+            created_at = row.get("created_at", "NOW()")
+            bulk_id = f"'{row['bulk_id']}'" if row.get("bulk_id") else "NULL"
+            updated_at = row.get("updated_at", "NOW()")
+            deleted_at = f"'{row['deleted_at']}'" if row.get("deleted_at") else "NULL"
+
+            ins_sql = f"""INSERT INTO public.chuti (id, user_id, date, leave_type, adjustment, adjusted_hour, sign_in_time, sign_out_time, leave_hour, reserve_holiday, reserve_adjustment_status, status, admin_edit_request, admin_edit_status, is_edited, adjust_short_leave, comment, created_at, bulk_id, updated_at, deleted_at)
+VALUES ('{c_id}', '{user_id}', '{date}', '{leave_type}', {adjustment}, {adjusted_hour_sql}, {sign_in_time}, {sign_out_time}, {leave_hour_sql}, {reserve_holiday}, {reserve_adjustment_status}, {status}, {admin_edit_request_sql}, {admin_edit_status}, {is_edited}, {adjust_short_leave}, {comment}, '{created_at}', {bulk_id}, '{updated_at}', {deleted_at});"""
+            chuti_inserts.append(ins_sql)
+
+        sql_statements.append("-- 11. Insert Chuti Leave Records")
+        sql_statements.extend(chuti_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(chuti_inserts)} chuti leave records.")
+    else:
+        print(" - [SKIP] No chuti_records.json file found.")
+
+    # 11. Government holiday choices
+    if os.path.exists(CHUTI_HOLIDAYS_FILE):
+        with open(CHUTI_HOLIDAYS_FILE, "r") as f:
+            chuti_holidays = parse_rows(json.load(f))
+        
+        holiday_inserts = []
+        for row in chuti_holidays:
+            h_id = row["id"]
+            user_id = row["user_id"]
+            holiday_date = row["holiday_date"]
+            holiday_name = row["holiday_name"].replace("'", "''")
+            response = row["response"]
+            created_at = row.get("created_at", "NOW()")
+            updated_by_admin = "TRUE" if row.get("updated_by_admin") else "FALSE"
+            
+            ins_sql = f"""INSERT INTO public.govt_holiday_responses (id, user_id, holiday_date, holiday_name, response, created_at, updated_by_admin)
+VALUES ('{h_id}', '{user_id}', '{holiday_date}', '{holiday_name}', '{response}', '{created_at}', {updated_by_admin});"""
+            holiday_inserts.append(ins_sql)
+
+        sql_statements.append("-- 12. Insert Chuti Govt Holiday Choices")
+        sql_statements.extend(holiday_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(holiday_inserts)} holiday choice responses.")
+    else:
+        print(" - [SKIP] No chuti_govt_holiday_responses.json file found.")
+
+    # 12. Leave settlements
+    if os.path.exists(CHUTI_SETTLEMENTS_FILE):
+        with open(CHUTI_SETTLEMENTS_FILE, "r") as f:
+            chuti_settlements = parse_rows(json.load(f))
+        
+        settlement_inserts = []
+        for row in chuti_settlements:
+            s_id = row["id"]
+            user_id = row["user_id"]
+            year = row["year"]
+            period = row.get("period", "H2")
+            leave_category = row["leave_category"]
+            remaining_days = row["remaining_days"]
+            action_type = row["action_type"]
+            status = row.get("status", "initiated")
+            
+            processed_by = f"'{row['processed_by']}'" if row.get("processed_by") else "NULL"
+            processed_at = f"'{row['processed_at']}'" if row.get("processed_at") else "NULL"
+            action_by = f"'{row['action_by']}'" if row.get("action_by") else "NULL"
+            created_at = row.get("created_at", "NOW()")
+            
+            carry_forward_days = row.get("carry_forward_days", 0)
+            payment_days = row.get("payment_days", 0)
+            adjust_leave_days = row.get("adjust_leave_days", 0)
+            
+            ins_sql = f"""INSERT INTO public.leave_settlements (id, user_id, year, period, leave_category, remaining_days, action_type, status, processed_by, processed_at, action_by, created_at, carry_forward_days, payment_days, adjust_leave_days)
+VALUES ('{s_id}', '{user_id}', '{year}', '{period}', '{leave_category}', {remaining_days}, '{action_type}', '{status}', {processed_by}, {processed_at}, {action_by}, '{created_at}', {carry_forward_days}, {payment_days}, {adjust_leave_days});"""
+            settlement_inserts.append(ins_sql)
+
+        sql_statements.append("-- 13. Insert Chuti Leave Settlements")
+        sql_statements.extend(settlement_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(settlement_inserts)} leave settlements.")
+    else:
+        print(" - [SKIP] No chuti_leave_settlements.json file found.")
+
+    # 13. Push subscriptions
+    if os.path.exists(CHUTI_PUSH_FILE):
+        with open(CHUTI_PUSH_FILE, "r") as f:
+            chuti_push = parse_rows(json.load(f))
+        
+        push_inserts = []
+        for row in chuti_push:
+            p_id = row["id"]
+            user_id = f"'{row['user_id']}'" if row.get("user_id") else "NULL"
+            endpoint = row["endpoint"].replace("'", "''")
+            p256dh = row["p256dh"]
+            auth = row["auth"]
+            created_at = row.get("created_at", "NOW()")
+            
+            ins_sql = f"""INSERT INTO public.push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at)
+VALUES ('{p_id}', {user_id}, '{endpoint}', '{p256dh}', '{auth}', '{created_at}') ON CONFLICT (endpoint) DO NOTHING;"""
+            push_inserts.append(ins_sql)
+
+        sql_statements.append("-- 14. Insert Push Subscriptions")
+        sql_statements.extend(push_inserts)
+        sql_statements.append("\n")
+        print(f" - Created SQL for {len(push_inserts)} push subscriptions.")
+    else:
+        print(" - [SKIP] No chuti_push_subscriptions.json file found.")
+
 
     # Write output to SQL file
     OUTPUT_FILE = "migration_output.sql"
     with open(OUTPUT_FILE, "w") as f:
         f.write("\n".join(sql_statements))
 
+    print("\n[5/5] Finalizing...")
     print("==================================================")
     print(f"[SUCCESS] Unified migration script written to: {OUTPUT_FILE}")
     print("Run this SQL script in your NEW Supabase project's SQL Editor.")
