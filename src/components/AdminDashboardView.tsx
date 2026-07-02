@@ -245,8 +245,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   // Half-yearly split calculations using shared hook
   const { halfYearlyStats } = useHalfYearlyStats(
     unfilteredStaffRecords,
-    globalSettings.office_leave_h1,
-    globalSettings.office_leave_h2,
+    isOfficeLeaveEligible ? globalSettings.office_leave_h1 : 0,
+    isOfficeLeaveEligible ? globalSettings.office_leave_h2 : 0,
     selectedYear,
     leaveSettlements,
     staffProfile?.id,

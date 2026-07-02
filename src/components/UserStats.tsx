@@ -154,7 +154,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
   }, [showHistoryModal, showOfficeDetailsModal, showEditPrefModal]);
 
   // Office leave display determinations based on half-yearly split
-  const showOfficeCard = eligibleOfficeLeave !== false && officeLeaveStats;
+  const showOfficeCard = !!officeLeaveStats;
   const showGovtCard = eligibleGovtHoliday !== false && govtHolidayStats;
 
   const h1Carryover = halfYearlyStats ? halfYearlyStats.h1Total - halfYearlyStats.h1Base : 0;
