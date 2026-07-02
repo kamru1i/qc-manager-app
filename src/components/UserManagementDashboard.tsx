@@ -431,7 +431,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     placeholder="e.g. Kamrul Islam"
                     value={editUserFullName}
                     onChange={(e) => setEditUserFullName(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50"
+                    className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50"
                   />
                 </div>
 
@@ -446,7 +446,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                         setEditUserCanManageRules(true);
                       }
                     }}
-                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50 cursor-pointer"
+                    className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50 cursor-pointer"
                   >
                     <option value="user">User</option>
                     <option value="supervisor">Supervisor</option>
@@ -734,7 +734,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                           onChange={(e) => setEditUserCanManageRules(e.target.checked)}
                           className="sr-only"
                         />
-                        <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
+                        <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                           (editUserCanManageRules || editUserRole === 'admin')
                             ? 'bg-orange-600 border-orange-500 text-white font-bold'
                             : 'border-slate-700 bg-slate-955 text-transparent'

@@ -15,7 +15,7 @@ export default function AppUpdater() {
       ((window as any).__TAURI_INTERNALS__ !== undefined || 
        window.location.protocol === 'tauri:');
 
-    if (!isTauri) return;
+    if (!isTauri || process.env.NODE_ENV === 'development') return;
 
     let isCheckingOrDownloading = false;
 

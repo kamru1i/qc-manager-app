@@ -116,7 +116,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
               placeholder="e.g. KI1024"
               value={newCodename}
               onChange={(e) => setNewCodename(e.target.value.toUpperCase())}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
@@ -128,7 +128,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
               required
               value={newFullName}
               onChange={(e) => setNewFullName(e.target.value)}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
@@ -137,7 +137,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value as any)}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
               <option value="user">User</option>
               <option value="supervisor">Supervisor</option>
