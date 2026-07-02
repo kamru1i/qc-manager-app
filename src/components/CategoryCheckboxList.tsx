@@ -60,6 +60,8 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
   onChange,
   label = 'Permitted File Entry Types (Categories)'
 }) => {
+  const isAllSelected = ALL_FILE_TYPES.every(type => allowedTypes.includes(type));
+
   const handleToggleCategory = (type: string) => {
     const nextTypes = allowedTypes.includes(type)
       ? allowedTypes.filter((t) => t !== type)
@@ -68,25 +70,26 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
   };
 
   const handleToggleAll = () => {
-    if (allowedTypes.length === ALL_FILE_TYPES.length) {
-      onChange([]);
+    if (isAllSelected) {
+      onChange(allowedTypes.filter(t => !ALL_FILE_TYPES.includes(t as any)));
     } else {
-      onChange(ALL_FILE_TYPES);
+      const otherTypes = allowedTypes.filter(t => !ALL_FILE_TYPES.includes(t as any));
+      onChange([...otherTypes, ...ALL_FILE_TYPES]);
     }
   };
 
   return (
     <div className="space-y-2 border-t border-slate-800/80 pt-3">
       <div className="flex items-center justify-between">
-        <label className="block text-[11px] font-semibold text-slate-330">
+        <label className="block text-[11px] font-semibold text-slate-300">
           {label}
         </label>
         <button
           type="button"
           onClick={handleToggleAll}
-          className="text-[10px] text-blue-500 hover:text-blue-400 font-semibold transition-colors cursor-pointer"
+          className="text-[10px] text-orange-500 hover:text-orange-400 font-semibold transition-colors cursor-pointer"
         >
-          {allowedTypes.length === ALL_FILE_TYPES.length ? 'Clear All' : 'Select All'}
+          {isAllSelected ? 'Unselect All' : 'Select All'}
         </button>
       </div>
       <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">

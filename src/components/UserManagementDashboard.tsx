@@ -11,7 +11,7 @@ import { AddUserModal } from '@/components/modals/AddUserModal';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import toast from 'react-hot-toast';
-import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2, X } from 'lucide-react';
 
 interface UserManagementDashboardProps {
   sessionUser: { id: string } | null;
@@ -24,7 +24,7 @@ interface UserManagementDashboardProps {
 }
 
 const ALL_FILE_TYPES = [
-  'Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review', 'Review Van', 'Review Bike', 'Individual Review', 'Other Site', 'Van', 'Bike', 'Sale'
+  'Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review', 'Individual Review', 'Other Site', 'Van', 'Bike', 'Sale'
 ];
 
 export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = ({
@@ -50,11 +50,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [newCodename, setNewCodename] = useState('');
   const [newFullName, setNewFullName] = useState('');
-  const [newPassword, setNewPassword] = useState('1234');
   const [newRole, setNewRole] = useState<'admin' | 'supervisor' | 'user'>('user');
-  const [hasChutiAccess, setHasChutiAccess] = useState(false);
+  const [hasChutiAccess, setHasChutiAccess] = useState(true);
   const [hasQuotesAccess, setHasQuotesAccess] = useState(false);
-  const [allowedTypes, setAllowedTypes] = useState<string[]>(ALL_FILE_TYPES);
+  const [allowedTypes, setAllowedTypes] = useState<string[]>([]);
   const [canManageRules, setCanManageRules] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
@@ -130,10 +129,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       toast.error('Codename can only contain letters, numbers, - and _.');
       return;
     }
-    if (newPassword.length < 4) {
-      toast.error('Password must be at least 4 characters long.');
-      return;
-    }
     if (hasQuotesAccess && allowedTypes.length === 0) {
       toast.error('Please select at least one permitted file type for Quotes.');
       return;
@@ -151,7 +146,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       canManageRules,
       hasChutiAccess,
       hasQuotesAccess,
-      newPassword
+      '1234'
     );
 
     if (pw) {
@@ -159,10 +154,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setNewCodename('');
       setNewFullName('');
       setNewRole('user');
-      setNewPassword('1234');
-      setAllowedTypes(ALL_FILE_TYPES);
+      setAllowedTypes([]);
       setCanManageRules(false);
-      setHasChutiAccess(false);
+      setHasChutiAccess(true);
       setHasQuotesAccess(false);
       fetchProfiles();
     }
@@ -249,11 +243,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 onClick={() => {
                   setNewCodename('');
                   setNewFullName('');
-                  setNewPassword('');
                   setNewRole('user');
-                  setHasChutiAccess(false);
+                  setHasChutiAccess(true);
                   setHasQuotesAccess(false);
-                  setAllowedTypes([...ALL_FILE_TYPES]);
+                  setAllowedTypes([]);
                   setCanManageRules(false);
                   setGeneratedPassword(null);
                   setIsAddUserModalOpen(true);
@@ -278,8 +271,17 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               placeholder="Search by name or codename..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+              className="w-full pl-9 pr-8 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-350 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <div className="text-[11px] text-slate-400">
@@ -352,15 +354,15 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                           <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
                         )}
                       </td>
-                      <td className="py-3 px-4 max-w-xs truncate" title={(u.allowed_types || []).join(', ')}>
+                      <td className="py-3 px-4 max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
                         {!u.has_quotes_access ? (
                           <span className="text-slate-600 italic text-[11px]">No access</span>
-                        ) : (u.allowed_types || []).length === ALL_FILE_TYPES.length ? (
+                        ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === ALL_FILE_TYPES.length ? (
                           <span className="text-blue-400 font-medium text-[11px]">All Categories</span>
-                        ) : (u.allowed_types || []).length === 0 ? (
+                        ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === 0 ? (
                           <span className="text-red-400/80 font-medium text-[11px]">None Allowed</span>
                         ) : (
-                          <span className="text-slate-400 text-[11px]">{(u.allowed_types || []).join(', ')}</span>
+                          <span className="text-slate-400 text-[11px]">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -372,7 +374,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                               setEditUserRole(u.role || 'user');
                               setEditHasChutiAccess(!!u.has_chuti_access);
                               setEditHasQuotesAccess(!!u.has_quotes_access);
-                              setEditUserAllowedTypes(u.allowed_types || [...ALL_FILE_TYPES]);
+                              setEditUserAllowedTypes((u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
                               setEditUserCanManageRules(!!u.can_manage_rules);
                             }}
                             className="p-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
@@ -412,8 +414,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 setNewCodename={setNewCodename}
                 newFullName={newFullName}
                 setNewFullName={setNewFullName}
-                newPassword={newPassword}
-                setNewPassword={setNewPassword}
                 newRole={newRole}
                 setNewRole={setNewRole}
                 hasChutiAccess={hasChutiAccess}
@@ -431,8 +431,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setIsAddUserModalOpen(false);
                   setGeneratedPassword(null);
                   setCanManageRules(false);
-                  setHasChutiAccess(false);
+                  setHasChutiAccess(true);
                   setHasQuotesAccess(false);
+                  setAllowedTypes([]);
                 }}
                 onCopyPassword={() => {
                   if (generatedPassword) {

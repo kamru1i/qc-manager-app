@@ -41,11 +41,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onSave,
   editorRole
 }) => {
-  const [changePassword, setChangePassword] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [resetPassword, setResetPassword] = useState(false);
 
   // Close on Escape key press
   const handleEscape = useCallback((e: KeyboardEvent) => {
@@ -64,17 +60,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
   }, [role, canManageRules, setCanManageRules]);
 
-  const isPasswordValid = !changePassword || (newPassword.length >= 6 && newPassword.length <= 12 && newPassword === confirmPassword);
+  const isPasswordValid = true;
 
   const handleUpdate = () => {
-    if (changePassword && newPassword) {
-      if (newPassword.length < 6 || newPassword.length > 12) {
-        return;
-      }
-      if (newPassword !== confirmPassword) {
-        return;
-      }
-      onSave(newPassword);
+    if (resetPassword) {
+      onSave('1234');
     } else {
       onSave();
     }
@@ -124,7 +114,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   }}
                   className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                 >
-                  <option value="user">User (Staff)</option>
+                  <option value="user">User</option>
                   <option value="supervisor">Supervisor</option>
                   <option value="admin">Admin</option>
                 </select>
@@ -134,23 +124,19 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               <div className="border-t border-slate-800/80 pt-3">
                 <label className="block text-[11px] font-semibold text-slate-355 mb-2">Workspace Access</label>
                 <div className="grid grid-cols-2 gap-4">
-                  <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                  <label className="flex items-center gap-2.5 cursor-not-allowed group select-none opacity-80">
                     <div className="relative flex items-center">
                       <input
                         type="checkbox"
-                        checked={hasChutiAccess}
-                        onChange={(e) => setHasChutiAccess(e.target.checked)}
+                        checked={true}
+                        disabled={true}
                         className="sr-only"
                       />
-                      <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
-                        hasChutiAccess
-                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                          : 'border-slate-700 bg-slate-900 text-transparent'
-                      }`}>
-                        {hasChutiAccess && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      <div className="h-4 w-4 rounded-full flex items-center justify-center border border-orange-500 bg-orange-600 text-white font-bold transition-all shrink-0">
+                        <Check className="h-2.5 w-2.5 stroke-[3]" />
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                    <span className="text-xs font-semibold text-slate-300 transition-colors">
                       Leave Tracker
                     </span>
                   </label>
@@ -163,7 +149,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         onChange={(e) => setHasQuotesAccess(e.target.checked)}
                         className="sr-only"
                       />
-                      <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
+                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         hasQuotesAccess
                           ? 'bg-blue-600 border-blue-500 text-white font-bold'
                           : 'border-slate-700 bg-slate-900 text-transparent'
@@ -220,94 +206,28 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           )}
 
           {editorRole === 'admin' && (
-            <div className="border-t border-slate-800/80 pt-3 space-y-3">
+            <div className="border-t border-slate-800/80 pt-3">
               <label className="flex items-center gap-2.5 cursor-pointer group select-none">
                 <div className="relative flex items-center">
                   <input
                     type="checkbox"
-                    checked={changePassword}
-                    onChange={(e) => {
-                      setChangePassword(e.target.checked);
-                      if (!e.target.checked) {
-                        setNewPassword('');
-                        setConfirmPassword('');
-                      }
-                    }}
+                    checked={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.checked)}
                     className="sr-only"
                   />
                   <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                    changePassword
+                    resetPassword
                       ? 'bg-blue-600 border-blue-500 text-white font-bold'
                       : 'border-slate-700 bg-slate-900 text-transparent'
                   }`}>
-                    {changePassword && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                    {resetPassword && <Check className="h-2.5 w-2.5 stroke-[3]" />}
                   </div>
                 </div>
                 <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5">
                   <KeyRound className="h-4 w-4 text-blue-500" />
-                  Change Password?
+                  Reset Password to 1234?
                 </span>
               </label>
-
-              {changePassword && (
-                <div className="space-y-3 pt-1 animate-fade-in">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPass ? 'text' : 'password'}
-                        autoComplete="new-password"
-                        placeholder="6 to 12 character password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      {newPassword && (
-                        <button
-                          type="button"
-                          onClick={() => setShowPass(!showPass)}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
-                        >
-                          {showPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">Confirm New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPass ? 'text' : 'password'}
-                        autoComplete="new-password"
-                        placeholder="Re-enter new password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPass(!showConfirmPass)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
-                      >
-                        {showConfirmPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="text-[11px] font-medium mt-1.5">
-                    {newPassword.length < 6 || newPassword.length > 12 ? (
-                      <p className="text-red-400">Password must be 6 to 12 characters</p>
-                    ) : confirmPassword && newPassword !== confirmPassword ? (
-                      <p className="text-red-400">Passwords do not match</p>
-                    ) : confirmPassword && newPassword === confirmPassword ? (
-                      <p className="text-emerald-400">Passwords match!</p>
-                    ) : (
-                      <p className="text-slate-455">Confirm password to proceed</p>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

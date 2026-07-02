@@ -7,8 +7,6 @@ interface AddUserModalProps {
   setNewCodename: (val: string) => void;
   newFullName: string;
   setNewFullName: (val: string) => void;
-  newPassword: string;
-  setNewPassword: (val: string) => void;
   newRole: 'admin' | 'supervisor' | 'user';
   setNewRole: (val: 'admin' | 'supervisor' | 'user') => void;
   hasChutiAccess: boolean;
@@ -31,8 +29,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   setNewCodename,
   newFullName,
   setNewFullName,
-  newPassword,
-  setNewPassword,
   newRole,
   setNewRole,
   hasChutiAccess,
@@ -109,18 +105,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-355 mb-1">Password</label>
-            <input
-              type="text"
-              required
-              placeholder="Default Password: 1234"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
             <label className="block text-[11px] font-semibold text-slate-355 mb-1">Account Role</label>
             <select
               value={newRole}
@@ -133,7 +117,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
               }}
               className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
-              <option value="user">User (Staff)</option>
+              <option value="user">User</option>
               <option value="supervisor">Supervisor</option>
               <option value="admin">Admin</option>
             </select>
@@ -143,23 +127,19 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
           <div className="border-t border-slate-800/80 pt-3">
             <label className="block text-[11px] font-semibold text-slate-355 mb-2">Workspace Access</label>
             <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+              <label className="flex items-center gap-2.5 cursor-not-allowed group select-none opacity-80">
                 <div className="relative flex items-center">
                   <input
                     type="checkbox"
-                    checked={hasChutiAccess}
-                    onChange={(e) => setHasChutiAccess(e.target.checked)}
+                    checked={true}
+                    disabled={true}
                     className="sr-only"
                   />
-                  <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
-                    hasChutiAccess
-                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                      : 'border-slate-700 bg-slate-900 text-transparent'
-                  }`}>
-                    {hasChutiAccess && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  <div className="h-4 w-4 rounded-full flex items-center justify-center border border-orange-500 bg-orange-600 text-white font-bold transition-all shrink-0">
+                    <Check className="h-2.5 w-2.5 stroke-[3]" />
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                <span className="text-xs font-semibold text-slate-300 transition-colors">
                   Leave Tracker
                 </span>
               </label>
@@ -172,7 +152,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                     onChange={(e) => setHasQuotesAccess(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                     hasQuotesAccess
                       ? 'bg-blue-600 border-blue-500 text-white font-bold'
                       : 'border-slate-700 bg-slate-900 text-transparent'
