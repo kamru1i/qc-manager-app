@@ -1064,58 +1064,78 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <p className="text-xs">No active staff records found.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-              {leaderboardData.map((user, idx) => {
-                const medalColors = [
-                  'bg-amber-500/10 border-amber-500/30 text-amber-500 shadow-amber-900/5',
-                  'bg-slate-400/10 border-slate-400/30 text-slate-350 shadow-slate-900/5',
-                  'bg-amber-700/10 border-amber-700/30 text-amber-700 shadow-amber-900/5',
-                  'bg-slate-900 border-slate-800 text-slate-400',
-                  'bg-slate-900 border-slate-800 text-slate-400',
-                ];
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                {leaderboardData.map((user, idx) => {
+                  const medalColors = [
+                    'bg-amber-500/10 border-amber-500/30 text-amber-500 shadow-amber-900/5',
+                    'bg-slate-400/10 border-slate-400/30 text-slate-350 shadow-slate-900/5',
+                    'bg-amber-700/10 border-amber-700/30 text-amber-700 shadow-amber-900/5',
+                    'bg-slate-900 border-slate-800 text-slate-400',
+                    'bg-slate-900 border-slate-800 text-slate-400',
+                  ];
 
-                return (
-                  <div
-                    key={user.codename}
-                    className="relative overflow-hidden bg-slate-950/50 border border-slate-850 hover:border-slate-800 p-4 rounded-xl flex flex-col justify-between items-center text-center shadow-lg transition-all duration-300 hover:scale-[1.02] group"
-                  >
-                    {/* Rank Medal */}
-                    <span className={`w-8 h-8 rounded-full border text-xs font-extrabold flex items-center justify-center shadow-md ${idx < 5 ? medalColors[idx] : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
-                      {idx + 1}
-                    </span>
+                  return (
+                    <div
+                      key={user.codename}
+                      className="relative overflow-hidden bg-slate-950/50 border border-slate-850 hover:border-slate-800 p-4 rounded-xl flex flex-col justify-between items-center text-center shadow-lg transition-all duration-300 hover:scale-[1.02] group"
+                    >
+                      {/* Rank Medal */}
+                      <span className={`w-8 h-8 rounded-full border text-xs font-extrabold flex items-center justify-center shadow-md ${idx < 5 ? medalColors[idx] : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
+                        {idx + 1}
+                      </span>
 
-                    <div className="mt-3.5 space-y-1">
-                      <h5 className="text-xs font-extrabold text-white truncate max-w-full group-hover:text-blue-400 transition-colors flex items-center justify-center">
-                        <span>{user.name}</span>
-                        {topPerformerBadges[user.userId] && (
-                          <VerifiedBadge badge={topPerformerBadges[user.userId]} />
-                        )}
-                      </h5>
-                      <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">{user.codename}</p>
-                    </div>
-
-                    {/* Streak & Wins Tracking Block */}
-                    {topPerformerBadges[user.userId] && (
-                      <div className="mt-2 text-[9px] text-slate-400 bg-slate-950/50 border border-slate-850/60 px-2 py-1 rounded-lg w-full space-y-0.5 select-none">
-                        <div className="flex justify-between font-semibold">
-                          <span>Streak:</span>
-                          <span className="text-blue-400 font-bold">{topPerformerBadges[user.userId].consecutiveMonths} mo</span>
-                        </div>
-                        <div className="flex justify-between font-semibold">
-                          <span>Yearly Wins:</span>
-                          <span className="text-amber-400 font-bold">{topPerformerBadges[user.userId].yearlyTopPerformances}x</span>
-                        </div>
+                      <div className="mt-3.5 space-y-1">
+                        <h5 className="text-xs font-extrabold text-white truncate max-w-full group-hover:text-blue-400 transition-colors flex items-center justify-center">
+                          <span>{user.name}</span>
+                          {topPerformerBadges[user.userId] && (
+                            <VerifiedBadge badge={topPerformerBadges[user.userId]} />
+                          )}
+                        </h5>
+                        <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">{user.codename}</p>
                       </div>
-                    )}
 
-                    <div className="mt-4 pt-3.5 border-t border-slate-900/30 w-full">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Submissions</span>
-                      <span className="text-lg font-extrabold text-blue-400 mt-1 block">{user.count}</span>
+                      <div className="mt-4 pt-3.5 border-t border-slate-900/30 w-full">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Submissions</span>
+                        <span className="text-lg font-extrabold text-blue-400 mt-1 block">{user.count}</span>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Streak & Wins Highlights Box */}
+              {leaderboardData.some(u => topPerformerBadges[u.userId]) && (
+                <div className="mt-6 bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl">
+                  <h5 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    🏆 Streak & Performance Highlights
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {leaderboardData
+                      .filter(u => topPerformerBadges[u.userId])
+                      .map(user => {
+                        const badge = topPerformerBadges[user.userId];
+                        return (
+                          <div key={user.userId} className="bg-slate-950/45 border border-slate-850/50 p-3 rounded-lg flex flex-col justify-center space-y-1">
+                            <div className="flex items-center justify-between text-xs border-b border-slate-900 pb-1.5 mb-1.5">
+                              <span className="font-bold text-white truncate">{user.name}</span>
+                              <span className="text-[9px] font-mono text-slate-500 uppercase">{user.codename}</span>
+                            </div>
+                            <div className="flex justify-between text-[11px] text-slate-400">
+                              <span>Consecutive:</span>
+                              <span className="text-blue-400 font-bold">{badge.consecutiveMonths} mo</span>
+                            </div>
+                            <div className="flex justify-between text-[11px] text-slate-400">
+                              <span>Yearly Wins:</span>
+                              <span className="text-amber-400 font-bold">{badge.yearlyTopPerformances}x</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -1,22 +1,36 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/utils/supabase';
-import { Profile } from '@/types';
-import { Loader2 } from 'lucide-react';
-import LoginPage from '@/app/login/page';
-import { lazy, Suspense, useMemo } from 'react';
-import { UnifiedSidebar } from '@/components/UnifiedSidebar';
-import { Navbar } from '@/components/Navbar';
-import { calculateTopPerformerBadges } from '@/utils/leaderboardHelper';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase";
+import { Profile } from "@/types";
+import { Loader2 } from "lucide-react";
+import LoginPage from "@/app/login/page";
+import { lazy, Suspense, useMemo } from "react";
+import { UnifiedSidebar } from "@/components/UnifiedSidebar";
+import { Navbar } from "@/components/Navbar";
+import { calculateTopPerformerBadges } from "@/utils/leaderboardHelper";
 
-const ChutiDashboard = lazy(() => import('@/app/chuti/page'));
-const QuotesDashboard = lazy(() => import('@/app/quotes/page'));
-const UserManagementDashboard = lazy(() => import('@/components/UserManagementDashboard').then(m => ({ default: m.UserManagementDashboard })));
-const TodoPanel = lazy(() => import('@/components/TodoPanel').then(m => ({ default: m.TodoPanel })));
-const AnalyticsPanel = lazy(() => import('@/components/AnalyticsPanel').then(m => ({ default: m.AnalyticsPanel })));
-const AuditLogsPanel = lazy(() => import('@/components/AuditLogsPanel').then(m => ({ default: m.AuditLogsPanel })));
+const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
+const QuotesDashboard = lazy(() => import("@/app/quotes/page"));
+const UserManagementDashboard = lazy(() =>
+  import("@/components/UserManagementDashboard").then((m) => ({
+    default: m.UserManagementDashboard,
+  })),
+);
+const TodoPanel = lazy(() =>
+  import("@/components/TodoPanel").then((m) => ({ default: m.TodoPanel })),
+);
+const AnalyticsPanel = lazy(() =>
+  import("@/components/AnalyticsPanel").then((m) => ({
+    default: m.AnalyticsPanel,
+  })),
+);
+const AuditLogsPanel = lazy(() =>
+  import("@/components/AuditLogsPanel").then((m) => ({
+    default: m.AuditLogsPanel,
+  })),
+);
 
 export default function AppPortal() {
   const router = useRouter();
@@ -24,45 +38,76 @@ export default function AppPortal() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chuti' | 'quotes' | 'user_management' | 'todo' | 'analytics' | 'audit_logs' | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    | "chuti"
+    | "quotes"
+    | "user_management"
+    | "todo"
+    | "analytics"
+    | "audit_logs"
+    | null
+  >(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
 
-  const [activeQuotesTab, setActiveQuotesTab] = useState<'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('quotes_sales_active_tab');
-      if (saved === 'entry' || saved === 'monthly' || saved === 'analytics' || saved === 'audit_logs' || saved === 'rules') {
-        return saved as 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules';
+  const [activeQuotesTab, setActiveQuotesTab] = useState<
+    "entry" | "monthly" | "analytics" | "audit_logs" | "rules"
+  >(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("quotes_sales_active_tab");
+      if (
+        saved === "entry" ||
+        saved === "monthly" ||
+        saved === "analytics" ||
+        saved === "audit_logs" ||
+        saved === "rules"
+      ) {
+        return saved as
+          | "entry"
+          | "monthly"
+          | "analytics"
+          | "audit_logs"
+          | "rules";
       }
     }
-    return 'entry';
+    return "entry";
   });
 
-  const [activeChutiTab, setActiveChutiTab] = useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('adminActiveTab');
-      if (saved === 'staff_master' || saved === 'govt_responses' || saved === 'settlement') {
-        return saved as 'staff_master' | 'govt_responses' | 'settlement';
+  const [activeChutiTab, setActiveChutiTab] = useState<
+    "staff_master" | "govt_responses" | "settlement"
+  >(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("adminActiveTab");
+      if (
+        saved === "staff_master" ||
+        saved === "govt_responses" ||
+        saved === "settlement"
+      ) {
+        return saved as "staff_master" | "govt_responses" | "settlement";
       }
     }
-    return 'staff_master';
+    return "staff_master";
   });
 
-  const handleQuotesTabChange = (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules') => {
-    if (tab === 'analytics' || tab === 'audit_logs') {
+  const handleQuotesTabChange = (
+    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules",
+  ) => {
+    if (tab === "analytics" || tab === "audit_logs") {
       setActiveTab(tab);
-      localStorage.setItem('last_active_dashboard', tab);
+      localStorage.setItem("last_active_dashboard", tab);
     } else {
-      setActiveTab('quotes');
-      localStorage.setItem('last_active_dashboard', 'quotes');
+      setActiveTab("quotes");
+      localStorage.setItem("last_active_dashboard", "quotes");
       setActiveQuotesTab(tab);
-      localStorage.setItem('quotes_sales_active_tab', tab);
+      localStorage.setItem("quotes_sales_active_tab", tab);
     }
   };
 
-  const handleChutiTabChange = (tab: 'staff_master' | 'govt_responses' | 'settlement') => {
+  const handleChutiTabChange = (
+    tab: "staff_master" | "govt_responses" | "settlement",
+  ) => {
     setActiveChutiTab(tab);
-    sessionStorage.setItem('adminActiveTab', tab);
+    sessionStorage.setItem("adminActiveTab", tab);
   };
 
   const handleLogout = async () => {
@@ -75,15 +120,15 @@ export default function AppPortal() {
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       setIsOnline(navigator.onLine);
       const onlineHandler = () => setIsOnline(true);
       const offlineHandler = () => setIsOnline(false);
-      window.addEventListener('online', onlineHandler);
-      window.addEventListener('offline', offlineHandler);
+      window.addEventListener("online", onlineHandler);
+      window.addEventListener("offline", offlineHandler);
       return () => {
-        window.removeEventListener('online', onlineHandler);
-        window.removeEventListener('offline', offlineHandler);
+        window.removeEventListener("online", onlineHandler);
+        window.removeEventListener("offline", offlineHandler);
       };
     }
   }, []);
@@ -92,7 +137,7 @@ export default function AppPortal() {
     if (!sessionUser) return;
 
     const fetchProfiles = async () => {
-      const { data, error } = await supabase.from('profiles').select('*');
+      const { data, error } = await supabase.from("profiles").select("*");
       if (data && !error) {
         setProfilesList(data);
       }
@@ -109,8 +154,8 @@ export default function AppPortal() {
           const from = page * pageSize;
           const to = from + pageSize - 1;
           const { data, error } = await supabase
-            .from('records')
-            .select('user_id, submitted_at')
+            .from("records")
+            .select("user_id, submitted_at")
             .range(from, to);
 
           if (error) throw error;
@@ -127,7 +172,7 @@ export default function AppPortal() {
         }
         setQuotesRecords(allRecords);
       } catch (err) {
-        console.error('Error fetching all records:', err);
+        console.error("Error fetching all records:", err);
       }
     };
 
@@ -136,10 +181,14 @@ export default function AppPortal() {
 
     // Subscribe to supabase changes on records table to dynamically refresh badges
     const channel = supabase
-      .channel('records_root_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'records' }, (payload) => {
-        fetchRecords();
-      })
+      .channel("records_root_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "records" },
+        (payload) => {
+          fetchRecords();
+        },
+      )
       .subscribe();
 
     return () => {
@@ -147,8 +196,30 @@ export default function AppPortal() {
     };
   }, [sessionUser]);
 
-  const topPerformerBadges = useMemo(() => {
-    return calculateTopPerformerBadges(quotesRecords, profilesList);
+  const [topPerformerBadges, setTopPerformerBadges] = useState<Record<string, any>>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('cached_top_performer_badges');
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {
+          return {};
+        }
+      }
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    // We can compute badges even if records are empty initially, but once they load, it updates.
+    // Also, if profilesList is loaded, we can instantly guarantee Kamrul gets his badge.
+    const calculated = calculateTopPerformerBadges(quotesRecords, profilesList);
+
+    // Only update and cache if we actually have computed data (to prevent resetting cache on fresh mount before load)
+    if (quotesRecords.length > 0 || profilesList.length > 0) {
+      setTopPerformerBadges(calculated);
+      localStorage.setItem('cached_top_performer_badges', JSON.stringify(calculated));
+    }
   }, [quotesRecords, profilesList]);
 
   const [chutiNotificationCount, setChutiNotificationCount] = useState(0);
@@ -161,46 +232,58 @@ export default function AppPortal() {
     const handleOfflineCountChange = (e: Event) => {
       setChutiOfflineCount((e as CustomEvent).detail || 0);
     };
-    window.addEventListener('chuti-notification-count-change', handleCountChange);
-    window.addEventListener('chuti-offline-count-change', handleOfflineCountChange);
+    window.addEventListener(
+      "chuti-notification-count-change",
+      handleCountChange,
+    );
+    window.addEventListener(
+      "chuti-offline-count-change",
+      handleOfflineCountChange,
+    );
     return () => {
-      window.removeEventListener('chuti-notification-count-change', handleCountChange);
-      window.removeEventListener('chuti-offline-count-change', handleOfflineCountChange);
+      window.removeEventListener(
+        "chuti-notification-count-change",
+        handleCountChange,
+      );
+      window.removeEventListener(
+        "chuti-offline-count-change",
+        handleOfflineCountChange,
+      );
     };
   }, []);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('sidebar_collapsed') === 'true';
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("sidebar_collapsed") === "true";
     }
     return false;
   });
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme") as "dark" | "light") || "dark";
     }
-    return 'dark';
+    return "dark";
   });
 
   const handleSidebarToggle = () => {
-    setIsSidebarCollapsed(prev => {
+    setIsSidebarCollapsed((prev) => {
       const next = !prev;
-      localStorage.setItem('sidebar_collapsed', String(next));
+      localStorage.setItem("sidebar_collapsed", String(next));
       return next;
     });
   };
 
   const handleThemeToggle = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('theme', next);
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", next);
       return next;
     });
   };
 
   const addLog = (msg: string) => {
     console.log(`[AppPortal] ${msg}`);
-    setLogLines(prev => [...prev, msg]);
+    setLogLines((prev) => [...prev, msg]);
   };
 
   const loadUserProfile = useCallback(async (userId: string) => {
@@ -229,17 +312,28 @@ export default function AppPortal() {
       setProfile(cachedProfile);
       const hasChuti = !!cachedProfile.has_chuti_access;
       const hasQuotes = !!cachedProfile.has_quotes_access;
-      
-      const showTodo = cachedProfile.username?.toUpperCase() === 'KAMRUL' || cachedProfile.full_name === 'Kamrul Islam';
-      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | 'todo' | null;
-      if (lastActive === 'chuti' && !hasChuti) lastActive = null;
-      if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
-      if (lastActive === 'user_management' && !(cachedProfile.role === 'admin' || cachedProfile.role === 'supervisor')) lastActive = null;
-      if (lastActive === 'todo' && !showTodo) lastActive = null;
+
+      const showTodo =
+        cachedProfile.username?.toUpperCase() === "KAMRUL" ||
+        cachedProfile.full_name === "Kamrul Islam";
+      let lastActive = localStorage.getItem("last_active_dashboard") as
+        | "chuti"
+        | "quotes"
+        | "user_management"
+        | "todo"
+        | null;
+      if (lastActive === "chuti" && !hasChuti) lastActive = null;
+      if (lastActive === "quotes" && !hasQuotes) lastActive = null;
+      if (
+        lastActive === "user_management" &&
+        !(cachedProfile.role === "admin" || cachedProfile.role === "supervisor")
+      )
+        lastActive = null;
+      if (lastActive === "todo" && !showTodo) lastActive = null;
 
       if (!lastActive) {
-        lastActive = hasChuti ? 'chuti' : 'quotes';
-        localStorage.setItem('last_active_dashboard', lastActive);
+        lastActive = hasChuti ? "chuti" : "quotes";
+        localStorage.setItem("last_active_dashboard", lastActive);
       }
 
       addLog(`[SWR] Restored cache, activeTab: ${lastActive}. Hiding spinner.`);
@@ -253,42 +347,49 @@ export default function AppPortal() {
     try {
       // 5-second timeout safeguard for the database query
       const fetchPromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Database query timed out')), 5000)
+        setTimeout(() => reject(new Error("Database query timed out")), 5000),
       );
 
-      addLog('Background query to profiles table started...');
+      addLog("Background query to profiles table started...");
       const result = await Promise.race([fetchPromise, timeoutPromise]);
-      
+
       // Promise.race might return the result of the fetchPromise directly
-      const { data: profileData, error: profileError } = result as { data: any; error: any };
+      const { data: profileData, error: profileError } = result as {
+        data: any;
+        error: any;
+      };
       addLog(`Background query completed (hasProfileData: ${!!profileData})`);
 
       if (profileError) {
         addLog(`Query error: ${profileError.message}`);
         if (!cachedProfile) {
-          setErrorMsg('Profile settings not found. Please contact administrator.');
+          setErrorMsg(
+            "Profile settings not found. Please contact administrator.",
+          );
           setLoading(false);
         }
         return;
       }
 
       if (!profileData) {
-        addLog('No profile record returned');
+        addLog("No profile record returned");
         if (!cachedProfile) {
-          setErrorMsg('Profile settings not found. Please contact administrator.');
+          setErrorMsg(
+            "Profile settings not found. Please contact administrator.",
+          );
           setLoading(false);
         }
         return;
       }
 
       const userProfile = profileData as Profile;
-      
+
       // Update cache
       localStorage.setItem(cacheKey, JSON.stringify(userProfile));
 
@@ -299,22 +400,35 @@ export default function AppPortal() {
       const hasQuotes = !!userProfile.has_quotes_access;
 
       if (!hasChuti && !hasQuotes) {
-        setErrorMsg('You do not have access to any workspace. Please contact your manager.');
+        setErrorMsg(
+          "You do not have access to any workspace. Please contact your manager.",
+        );
         setLoading(false);
         return;
       }
 
       // Choose active workspace tab
-      const showTodo = userProfile.username?.toUpperCase() === 'KAMRUL' || userProfile.full_name === 'Kamrul Islam';
-      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | 'todo' | null;
-      if (lastActive === 'chuti' && !hasChuti) lastActive = null;
-      if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
-      if (lastActive === 'user_management' && !(userProfile.role === 'admin' || userProfile.role === 'supervisor')) lastActive = null;
-      if (lastActive === 'todo' && !showTodo) lastActive = null;
+      const showTodo =
+        userProfile.username?.toUpperCase() === "KAMRUL" ||
+        userProfile.full_name === "Kamrul Islam";
+      let lastActive = localStorage.getItem("last_active_dashboard") as
+        | "chuti"
+        | "quotes"
+        | "user_management"
+        | "todo"
+        | null;
+      if (lastActive === "chuti" && !hasChuti) lastActive = null;
+      if (lastActive === "quotes" && !hasQuotes) lastActive = null;
+      if (
+        lastActive === "user_management" &&
+        !(userProfile.role === "admin" || userProfile.role === "supervisor")
+      )
+        lastActive = null;
+      if (lastActive === "todo" && !showTodo) lastActive = null;
 
       if (!lastActive) {
-        lastActive = hasChuti ? 'chuti' : 'quotes';
-        localStorage.setItem('last_active_dashboard', lastActive);
+        lastActive = hasChuti ? "chuti" : "quotes";
+        localStorage.setItem("last_active_dashboard", lastActive);
       }
 
       setActiveTab(lastActive);
@@ -323,7 +437,7 @@ export default function AppPortal() {
     } catch (err: any) {
       addLog(`Background fetch error: ${err?.message || err}`);
       if (!cachedProfile) {
-        setErrorMsg('Error loading profile settings.');
+        setErrorMsg("Error loading profile settings.");
         setLoading(false);
       }
     } finally {
@@ -334,12 +448,14 @@ export default function AppPortal() {
   }, []);
 
   useEffect(() => {
-    addLog('AppPortal: Mounted');
+    addLog("AppPortal: Mounted");
     let active = true;
 
     // Listen for auth state changes to dynamically switch rendering between Login and App Dashboard
     // onAuthStateChange fires automatically on subscribe with the current session (if any).
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       addLog(`onAuthStateChange event: ${event} (hasSession: ${!!session})`);
       if (!active) return;
 
@@ -347,7 +463,7 @@ export default function AppPortal() {
         setSessionUser(session.user);
         await loadUserProfile(session.user.id);
       } else {
-        addLog('onAuthStateChange no session, setting loading to false');
+        addLog("onAuthStateChange no session, setting loading to false");
         setSessionUser(null);
         setProfile(null);
         setActiveTab(null);
@@ -364,25 +480,36 @@ export default function AppPortal() {
   // Listen for custom workspace-change event dispatched by sidebar
   useEffect(() => {
     const handleWorkspaceChange = (e: Event) => {
-      const targetWorkspace = (e as CustomEvent).detail as 'chuti' | 'quotes' | 'user_management' | 'todo';
+      const targetWorkspace = (e as CustomEvent).detail as
+        | "chuti"
+        | "quotes"
+        | "user_management"
+        | "todo";
       addLog(`custom workspace-change event detected: ${targetWorkspace}`);
-      
+
       // Safety check: ensure user has access before switching
       if (profile) {
-        if (targetWorkspace === 'chuti' && !profile.has_chuti_access) return;
-        if (targetWorkspace === 'quotes' && !profile.has_quotes_access) return;
-        if (targetWorkspace === 'user_management' && !(profile.role === 'admin' || profile.role === 'supervisor')) return;
-        if (targetWorkspace === 'todo') {
-          const showTodo = profile.username?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
+        if (targetWorkspace === "chuti" && !profile.has_chuti_access) return;
+        if (targetWorkspace === "quotes" && !profile.has_quotes_access) return;
+        if (
+          targetWorkspace === "user_management" &&
+          !(profile.role === "admin" || profile.role === "supervisor")
+        )
+          return;
+        if (targetWorkspace === "todo") {
+          const showTodo =
+            profile.username?.toUpperCase() === "KAMRUL" ||
+            profile.full_name === "Kamrul Islam";
           if (!showTodo) return;
         }
       }
-      
+
       setActiveTab(targetWorkspace);
     };
 
-    window.addEventListener('workspace-change', handleWorkspaceChange);
-    return () => window.removeEventListener('workspace-change', handleWorkspaceChange);
+    window.addEventListener("workspace-change", handleWorkspaceChange);
+    return () =>
+      window.removeEventListener("workspace-change", handleWorkspaceChange);
   }, [profile]);
 
   if (loading) {
@@ -407,10 +534,12 @@ export default function AppPortal() {
                   Configuring your workspaces...
                 </p>
               </div>
-              
+
               {/* Dynamic logs display */}
               <div className="text-[10px] text-slate-400 font-mono text-left max-h-48 overflow-y-auto mt-4 space-y-1 bg-slate-950/80 p-3 rounded-xl border border-slate-850/80 w-full select-text">
-                <div className="text-slate-500 font-bold border-b border-slate-800/50 pb-1 mb-1 uppercase tracking-wider">System Logs</div>
+                <div className="text-slate-500 font-bold border-b border-slate-800/50 pb-1 mb-1 uppercase tracking-wider">
+                  System Logs
+                </div>
                 {logLines.map((line, i) => (
                   <div key={i} className="break-all">{`> ${line}`}</div>
                 ))}
@@ -431,8 +560,12 @@ export default function AppPortal() {
               <div className="h-16 w-16 bg-red-950/40 border border-red-500/20 text-red-400 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner animate-bounce">
                 ⚠️
               </div>
-              <h2 className="text-xl font-semibold text-slate-100">Access Restricted</h2>
-              <p className="text-sm text-slate-400 leading-relaxed px-2">{errorMsg}</p>
+              <h2 className="text-xl font-semibold text-slate-100">
+                Access Restricted
+              </h2>
+              <p className="text-sm text-slate-400 leading-relaxed px-2">
+                {errorMsg}
+              </p>
               <button
                 onClick={async () => {
                   setErrorMsg(null);
@@ -452,7 +585,7 @@ export default function AppPortal() {
 
   // Unauthenticated -> Render Login Page
   if (!sessionUser) {
-    console.log('[AppPortal] Rendering LoginPage');
+    console.log("[AppPortal] Rendering LoginPage");
     return <LoginPage />;
   }
 
@@ -471,9 +604,15 @@ export default function AppPortal() {
         onThemeToggle={handleThemeToggle}
         onLogout={handleLogout}
         badges={topPerformerBadges}
-        onProfileSettingsClick={() => window.dispatchEvent(new CustomEvent('open-profile-settings'))}
-        onNotificationClick={() => window.dispatchEvent(new CustomEvent('open-notifications'))}
-        onManualSync={() => window.dispatchEvent(new CustomEvent('trigger-manual-sync'))}
+        onProfileSettingsClick={() =>
+          window.dispatchEvent(new CustomEvent("open-profile-settings"))
+        }
+        onNotificationClick={() =>
+          window.dispatchEvent(new CustomEvent("open-notifications"))
+        }
+        onManualSync={() =>
+          window.dispatchEvent(new CustomEvent("trigger-manual-sync"))
+        }
         notificationCount={chutiNotificationCount}
         offlineCount={chutiOfflineCount}
       />
@@ -484,7 +623,19 @@ export default function AppPortal() {
       {/* Main container with Sidebar and Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start">
         <UnifiedSidebar
-          activeSection={activeTab === 'user_management' ? 'user_management' : activeTab === 'todo' ? 'todo' : activeTab === 'analytics' ? 'analytics' : activeTab === 'audit_logs' ? 'audit_logs' : activeTab === 'quotes' ? 'quotes' : 'chuti'}
+          activeSection={
+            activeTab === "user_management"
+              ? "user_management"
+              : activeTab === "todo"
+                ? "todo"
+                : activeTab === "analytics"
+                  ? "analytics"
+                  : activeTab === "audit_logs"
+                    ? "audit_logs"
+                    : activeTab === "quotes"
+                      ? "quotes"
+                      : "chuti"
+          }
           profile={profile}
           activeQuotesTab={activeQuotesTab}
           onQuotesTabChange={handleQuotesTabChange}
@@ -495,25 +646,39 @@ export default function AppPortal() {
         />
 
         <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
-          <Suspense fallback={
-            <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
-              <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
-              <p className="text-xs text-slate-400">Loading workspace...</p>
-            </div>
-          }>
-            <div className={(activeTab === 'quotes' || activeTab === 'analytics' || activeTab === 'audit_logs') ? 'block' : 'hidden'}>
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+                <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                <p className="text-xs text-slate-400">Loading workspace...</p>
+              </div>
+            }
+          >
+            <div
+              className={
+                activeTab === "quotes" ||
+                activeTab === "analytics" ||
+                activeTab === "audit_logs"
+                  ? "block"
+                  : "hidden"
+              }
+            >
               <QuotesDashboard
-                activeTab={activeTab === 'quotes' ? activeQuotesTab : (activeTab as any)}
+                activeTab={
+                  activeTab === "quotes" ? activeQuotesTab : (activeTab as any)
+                }
                 onTabChange={handleQuotesTabChange}
               />
             </div>
-            <div className={activeTab === 'chuti' ? 'block' : 'hidden'}>
+            <div className={activeTab === "chuti" ? "block" : "hidden"}>
               <ChutiDashboard
                 activeChutiTab={activeChutiTab}
                 onChutiTabChange={handleChutiTabChange}
               />
             </div>
-            <div className={activeTab === 'user_management' ? 'block' : 'hidden'}>
+            <div
+              className={activeTab === "user_management" ? "block" : "hidden"}
+            >
               <UserManagementDashboard
                 sessionUser={sessionUser}
                 profile={profile}
@@ -525,10 +690,8 @@ export default function AppPortal() {
                 topPerformerBadges={topPerformerBadges}
               />
             </div>
-            <div className={activeTab === 'todo' ? 'block' : 'hidden'}>
-              <TodoPanel
-                profile={profile}
-              />
+            <div className={activeTab === "todo" ? "block" : "hidden"}>
+              <TodoPanel profile={profile} />
             </div>
           </Suspense>
         </section>
