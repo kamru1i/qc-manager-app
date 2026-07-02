@@ -91,108 +91,214 @@ def main():
 
     print("\n[2/5] Processing users and roles mapping...")
     
-    new_auth_inserts = []
-    profile_updates = []
-    profile_inserts = []
-    chuti_updates = []
-
+    # 1. We will insert ALL auth users from Chuti and Quotes
+    auth_users_inserted = set()
+    auth_inserts_sql = []
+    
+    # Insert Chuti Auth Users first
+    for c_user in chuti_auth:
+        c_id = c_user["id"]
+        email = c_user["email"]
+        enc_password = c_user["encrypted_password"]
+        raw_app_metadata = json.dumps(c_user.get("raw_app_meta_data", {"provider": "email", "providers": ["email"]}))
+        raw_user_metadata = json.dumps(c_user.get("raw_user_meta_data", {}))
+        aud = c_user.get("aud", "authenticated")
+        user_role = c_user.get("role", "authenticated")
+        
+        auth_sql = f"""INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role) 
+VALUES ('{c_id}', '00000000-0000-0000-0000-000000000000', '{email}', '{enc_password}', NOW(), NOW(), NOW(), '{raw_app_metadata}'::jsonb, '{raw_user_metadata}'::jsonb, '{aud}', '{user_role}') ON CONFLICT (id) DO NOTHING;"""
+        auth_inserts_sql.append(auth_sql)
+        auth_users_inserted.add(email.lower())
+        
+    # Insert Quotes-Only Auth Users
     for q_user in quotes_auth:
+        email = q_user.get("email", "").lower()
+        if email in auth_users_inserted:
+            # Common user, already added under Chuti ID
+            old_id = q_user["id"]
+            # Find the corresponding Chuti ID
+            master_user = chuti_users_by_email[email]
+            user_id_map[old_id] = master_user["id"]
+            continue
+            
         q_id = q_user["id"]
-        q_email = q_user.get("email", "").lower()
+        user_id_map[q_id] = q_id
+        
+        enc_password = q_user["encrypted_password"]
+        raw_app_metadata = json.dumps(q_user.get("raw_app_meta_data", {"provider": "email", "providers": ["email"]}))
+        
         q_profile = quotes_profiles_by_id.get(q_id, {})
+        is_quotes_admin = q_profile.get("role") == "admin"
+        final_chuti_role = "admin" if is_quotes_admin else "user"
+        
+        raw_user_metadata = q_user.get("raw_user_meta_data", {})
+        raw_user_metadata["role"] = final_chuti_role
+        raw_user_metadata_str = json.dumps(raw_user_metadata)
+        
+        aud = q_user.get("aud", "authenticated")
+        user_role = q_user.get("role", "authenticated")
 
-        if q_email in chuti_users_by_email:
-            master_user = chuti_users_by_email[q_email]
-            master_id = master_user["id"]
-            user_id_map[q_id] = master_id
-            
-            quotes_role = q_profile.get("role", "user")
-            allowed_types = q_profile.get("allowed_types", ["Quote", "Requote", "Requote Van", "Requote Bike", "Review", "Review Van", "Review Bike", "Individual Review", "Other Site", 'Van', 'Bike', 'Sale'])
-            allowed_types_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in allowed_types]) + "]::TEXT[]"
-            
-            master_profile = chuti_profiles_by_id.get(master_id, {})
-            chuti_role = master_profile.get("role", "user")
-            
-            if chuti_role == "supervisor":
-                final_quotes_role = 'admin'
-            else:
-                final_quotes_role = quotes_role
+        auth_sql = f"""INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role) 
+VALUES ('{q_id}', '00000000-0000-0000-0000-000000000000', '{q_user["email"]}', '{enc_password}', NOW(), NOW(), NOW(), '{raw_app_metadata}'::jsonb, '{raw_user_metadata_str}'::jsonb, '{aud}', '{user_role}') ON CONFLICT (id) DO NOTHING;"""
+        auth_inserts_sql.append(auth_sql)
+        auth_users_inserted.add(email)
 
-            update_sql = f"""UPDATE public.profiles SET 
-  has_chuti_access = TRUE, 
-  has_quotes_access = TRUE,
-  quotes_role = '{final_quotes_role}',
-  allowed_types = {allowed_types_sql}
-WHERE id = '{master_id}';"""
-            profile_updates.append(update_sql)
+    sql_statements.append("-- 1. Insert All Auth Users")
+    sql_statements.extend(auth_inserts_sql)
+    sql_statements.append("\n")
+
+    # 2. Build Master Profile Dictionary
+    master_profiles = {}
+    
+    # Process Chuti profiles first
+    for c_profile in chuti_profiles:
+        p_id = c_profile["id"]
+        
+        # Default flags for Chuti profile
+        c_profile["has_chuti_access"] = True
+        c_profile["has_quotes_access"] = False
+        c_profile["quotes_role"] = "user"
+        c_profile["allowed_types"] = ["Quote", "Requote", "Requote Van", "Requote Bike", "Review", "Review Van", "Review Bike", "Individual Review", "Other Site", 'Van', 'Bike', 'Sale']
+        c_profile["can_manage_rules"] = False
+        
+        # Check if they match a Quotes user by email
+        # Find email from Chuti auth users list
+        c_user = next((u for u in chuti_auth if u["id"] == p_id), None)
+        if c_user and c_user.get("email"):
+            email = c_user["email"].lower()
+            # Find if there is a Quotes auth user with this email
+            q_user = next((u for u in quotes_auth if u.get("email", "").lower() == email), None)
+            if q_user:
+                q_id = q_user["id"]
+                q_profile = quotes_profiles_by_id.get(q_id, {})
+                
+                # Merge Quotes details into Chuti profile
+                c_profile["has_quotes_access"] = True
+                c_profile["allowed_types"] = q_profile.get("allowed_types", c_profile["allowed_types"])
+                c_profile["can_manage_rules"] = q_profile.get("can_manage_rules", False)
+                
+                # Role check logic: supervisor in Chuti gets Quotes admin
+                if c_profile.get("role") == "supervisor":
+                    c_profile["quotes_role"] = "admin"
+                else:
+                    c_profile["quotes_role"] = q_profile.get("role", "user")
+                    
+        master_profiles[p_id] = c_profile
+
+    # Process Quotes-only profiles next
+    for q_profile in quotes_profiles:
+        q_id = q_profile["id"]
+        q_user = quotes_users_by_id.get(q_id)
+        if not q_user or not q_user.get("email"):
+            continue
             
+        email = q_user["email"].lower()
+        # If already added under Chuti, skip
+        if email in chuti_users_by_email:
+            continue
+            
+        # Quotes-only user setup
+        is_quotes_admin = q_profile.get("role") == "admin"
+        final_chuti_role = "admin" if is_quotes_admin else "user"
+        
+        new_profile = {
+            "id": q_id,
+            "username": q_profile.get("username", email.split('@')[0].upper()),
+            "role": final_chuti_role,
+            "full_name": q_profile.get("full_name", ""),
+            "is_setup_completed": True,
+            "has_chuti_access": True if is_quotes_admin else False, # Quotes-only admin gets Chuti admin access
+            "has_quotes_access": True,
+            "quotes_role": q_profile.get("role", "user"),
+            "can_manage_rules": q_profile.get("can_manage_rules", False),
+            "allowed_types": q_profile.get("allowed_types", ["Quote", "Requote", "Requote Van", "Requote Bike", "Review", "Review Van", "Review Bike", "Individual Review", "Other Site", 'Van', 'Bike', 'Sale']),
+            # Chuti default values
+            "working_hours": 9.5,
+            "break_time": 0,
+            "max_full_leaves": 15,
+            "max_short_leaves": 15,
+            "eligible_office_leave": True,
+            "eligible_govt_holiday": True,
+            "converted_short_leaves_days": 0,
+            "converted_short_leaves_hours": 0,
+            "global_settings": {"office_leave_default": 14, "eid_fitr_leave": 0, "eid_adha_leave": 0, "govt_holidays": []}
+        }
+        master_profiles[q_id] = new_profile
+
+    # Generate Profile Insert SQL statements
+    profile_inserts_sql = []
+    for p_id, p in master_profiles.items():
+        username = p["username"]
+        role = p["role"]
+        full_name = p.get("full_name", "").replace("'", "''") if p.get("full_name") else ""
+        is_setup_completed = "TRUE" if p.get("is_setup_completed") else "FALSE"
+        has_chuti_access = "TRUE" if p.get("has_chuti_access") else "FALSE"
+        has_quotes_access = "TRUE" if p.get("has_quotes_access") else "FALSE"
+        quotes_role = p.get("quotes_role", "user")
+        can_manage_rules = "TRUE" if p.get("can_manage_rules") else "FALSE"
+        
+        allowed_types = p.get("allowed_types", [])
+        allowed_types_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in allowed_types]) + "]::TEXT[]"
+        
+        working_hours = p.get("working_hours", 9.5)
+        break_time = p.get("break_time", 0)
+        max_full_leaves = p.get("max_full_leaves", 15)
+        max_short_leaves = p.get("max_short_leaves", 15)
+        eligible_office_leave = "TRUE" if p.get("eligible_office_leave", True) else "FALSE"
+        eligible_govt_holiday = "TRUE" if p.get("eligible_govt_holiday", True) else "FALSE"
+        converted_short_leaves_days = p.get("converted_short_leaves_days", 0)
+        converted_short_leaves_hours = p.get("converted_short_leaves_hours", 0)
+        
+        global_settings = json.dumps(p.get("global_settings", {"office_leave_default": 14, "eid_fitr_leave": 0, "eid_adha_leave": 0, "govt_holidays": []}))
+        
+        job_role = p.get("job_role")
+        if job_role:
+            job_role_escaped = job_role.replace("'", "''")
+            job_role_sql = f"'{job_role_escaped}'"
         else:
-            new_id = q_id
-            user_id_map[q_id] = new_id
+            job_role_sql = "NULL"
 
-            email = q_user["email"]
-            enc_password = q_user["encrypted_password"]
-            raw_app_metadata = json.dumps(q_user.get("raw_app_meta_data", {"provider": "email", "providers": ["email"]}))
-            
-            is_quotes_admin = q_profile.get("role") == "admin"
-            final_chuti_role = "admin" if is_quotes_admin else "user"
-            
-            raw_user_metadata = q_user.get("raw_user_meta_data", {})
-            raw_user_metadata["role"] = final_chuti_role
-            raw_user_metadata_str = json.dumps(raw_user_metadata)
-            
-            aud = q_user.get("aud", "authenticated")
-            user_role = q_user.get("role", "authenticated")
+        default_sign_in = f"'{p['default_sign_in']}'" if p.get("default_sign_in") else "NULL"
+        default_sign_out = f"'{p['default_sign_out']}'" if p.get("default_sign_out") else "NULL"
+        
+        supervisor_ids = p.get("supervisor_ids")
+        if supervisor_ids:
+            supervisor_ids_sql = "ARRAY[" + ", ".join([f"'{s}'" for s in supervisor_ids]) + "]::UUID[]"
+        else:
+            supervisor_ids_sql = "NULL"
 
-            auth_sql = f"""INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role) 
-VALUES ('{new_id}', '00000000-0000-0000-0000-000000000000', '{email}', '{enc_password}', NOW(), NOW(), NOW(), '{raw_app_metadata}'::jsonb, '{raw_user_metadata_str}'::jsonb, '{aud}', '{user_role}');"""
-            new_auth_inserts.append(auth_sql)
-
-            username = q_profile.get("username", email.split('@')[0].upper())
-            full_name = q_profile.get("full_name", "")
-            allowed_types = q_profile.get("allowed_types", ["Quote", "Requote", "Requote Van", "Requote Bike", "Review", "Review Van", "Review Bike", "Individual Review", "Other Site", 'Van', 'Bike', 'Sale'])
-            allowed_types_sql = "ARRAY[" + ", ".join([f"'{t}'" for t in allowed_types]) + "]::TEXT[]"
-            
-            has_chuti_access = "TRUE" if is_quotes_admin else "FALSE"
-            has_quotes_access = "TRUE"
-            
-            profile_sql = f"""INSERT INTO public.profiles (id, username, role, full_name, allowed_types, has_chuti_access, has_quotes_access, quotes_role, is_setup_completed)
-VALUES ('{new_id}', '{username}', '{final_chuti_role}', '{full_name}', {allowed_types_sql}, {has_chuti_access}, {has_quotes_access}, '{q_profile.get("role", "user")}', TRUE)
+        prof_sql = f"""INSERT INTO public.profiles (id, username, role, full_name, working_hours, break_time, is_setup_completed, job_role, default_sign_in, default_sign_out, max_full_leaves, max_short_leaves, eligible_office_leave, eligible_govt_holiday, converted_short_leaves_days, converted_short_leaves_hours, global_settings, supervisor_ids, allowed_types, can_manage_rules, quotes_role, has_chuti_access, has_quotes_access)
+VALUES ('{p_id}', '{username}', '{role}', '{full_name}', {working_hours}, {break_time}, {is_setup_completed}, {job_role_sql}, {default_sign_in}, {default_sign_out}, {max_full_leaves}, {max_short_leaves}, {eligible_office_leave}, {eligible_govt_holiday}, {converted_short_leaves_days}, {converted_short_leaves_hours}, '{global_settings}'::jsonb, {supervisor_ids_sql}, {allowed_types_sql}, {can_manage_rules}, '{quotes_role}', {has_chuti_access}, {has_quotes_access})
 ON CONFLICT (id) DO UPDATE SET
   username = EXCLUDED.username,
   role = EXCLUDED.role,
   full_name = EXCLUDED.full_name,
+  working_hours = EXCLUDED.working_hours,
+  break_time = EXCLUDED.break_time,
+  is_setup_completed = EXCLUDED.is_setup_completed,
+  job_role = EXCLUDED.job_role,
+  default_sign_in = EXCLUDED.default_sign_in,
+  default_sign_out = EXCLUDED.default_sign_out,
+  max_full_leaves = EXCLUDED.max_full_leaves,
+  max_short_leaves = EXCLUDED.max_short_leaves,
+  eligible_office_leave = EXCLUDED.eligible_office_leave,
+  eligible_govt_holiday = EXCLUDED.eligible_govt_holiday,
+  converted_short_leaves_days = EXCLUDED.converted_short_leaves_days,
+  converted_short_leaves_hours = EXCLUDED.converted_short_leaves_hours,
+  global_settings = EXCLUDED.global_settings,
+  supervisor_ids = EXCLUDED.supervisor_ids,
   allowed_types = EXCLUDED.allowed_types,
-  has_chuti_access = EXCLUDED.has_chuti_access,
-  has_quotes_access = EXCLUDED.has_quotes_access,
+  can_manage_rules = EXCLUDED.can_manage_rules,
   quotes_role = EXCLUDED.quotes_role,
-  is_setup_completed = EXCLUDED.is_setup_completed;"""
-            profile_inserts.append(profile_sql)
+  has_chuti_access = EXCLUDED.has_chuti_access,
+  has_quotes_access = EXCLUDED.has_quotes_access;"""
+        profile_inserts_sql.append(prof_sql)
 
-    chuti_processed_ids = set(user_id_map.values())
-    for c_profile in chuti_profiles:
-        c_id = c_profile["id"]
-        if c_id not in chuti_processed_ids:
-            chuti_update_sql = f"UPDATE public.profiles SET has_chuti_access = TRUE, has_quotes_access = FALSE WHERE id = '{c_id}';"
-            chuti_updates.append(chuti_update_sql)
-
-    sql_statements.append("-- 1. Insert New Auth Users (Quotes-Only Users)")
-    sql_statements.extend(new_auth_inserts)
+    sql_statements.append("-- 2. Insert All Profiles")
+    sql_statements.extend(profile_inserts_sql)
     sql_statements.append("\n")
 
-    sql_statements.append("-- 2. Update Common Users Access Flags")
-    sql_statements.extend(profile_updates)
-    sql_statements.append("\n")
-
-    sql_statements.append("-- 3. Insert Quotes-Only User Profiles")
-    sql_statements.extend(profile_inserts)
-    sql_statements.append("\n")
-
-    sql_statements.append("-- 4. Update Chuti-Only Users Access Flags")
-    sql_statements.extend(chuti_updates)
-    sql_statements.append("\n")
-
-    print(f"Created SQL to merge users: {len(new_auth_inserts)} new users, {len(profile_updates)} common user updates, {len(chuti_updates)} chuti-only updates.")
+    print(f"Mapped {len(master_profiles)} total master profiles.")
 
     # ------------------ Quotes Data Remapping & SQL ------------------
     print("\n[3/5] Processing Quotes app records...")
@@ -205,9 +311,7 @@ ON CONFLICT (id) DO UPDATE SET
         records_inserts = []
         for record in quotes_records:
             old_uid = record["user_id"]
-            new_uid = user_id_map.get(old_uid)
-            if not new_uid:
-                continue
+            new_uid = user_id_map.get(old_uid, old_uid)
             
             file_name = record["file_name"].replace("'", "''")
             branch_name = record["branch_name"]
@@ -218,15 +322,15 @@ ON CONFLICT (id) DO UPDATE SET
             r_id = record.get("id", str(uuid.uuid4()))
 
             rec_sql = f"""INSERT INTO public.records (id, user_id, file_name, branch_name, codename, file_type, submitted_at, created_at) 
-VALUES ('{r_id}', '{new_uid}', '{file_name}', '{branch_name}', '{codename}', '{file_type}', '{submitted_at}', '{created_at}');"""
+VALUES ('{r_id}', '{new_uid}', '{file_name}', '{branch_name}', '{codename}', '{file_type}', '{submitted_at}', '{created_at}') ON CONFLICT (id) DO NOTHING;"""
             records_inserts.append(rec_sql)
 
-        sql_statements.append("-- 5. Insert Remapped Quotes Records")
+        sql_statements.append("-- 3. Insert Remapped Quotes Records")
         sql_statements.extend(records_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(records_inserts)} quotes records.")
     else:
-        print(f" - [SKIP] No {QUOTES_RECORDS_FILE} file found.")
+        print(" - [SKIP] No {QUOTES_RECORDS_FILE} file found.")
 
     # 5. Todos
     if os.path.exists(QUOTES_TODOS_FILE):
@@ -236,9 +340,7 @@ VALUES ('{r_id}', '{new_uid}', '{file_name}', '{branch_name}', '{codename}', '{f
         todos_inserts = []
         for todo in quotes_todos:
             old_uid = todo["user_id"]
-            new_uid = user_id_map.get(old_uid)
-            if not new_uid:
-                continue
+            new_uid = user_id_map.get(old_uid, old_uid)
             
             task = todo["task"].replace("'", "''")
             status = todo["status"]
@@ -252,15 +354,15 @@ VALUES ('{r_id}', '{new_uid}', '{file_name}', '{branch_name}', '{codename}', '{f
             codename = todo["codename"]
 
             todo_sql = f"""INSERT INTO public.todos (id, user_id, codename, task, status, comment, todo_date, is_all_time, created_at) 
-VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{todo_date}', {is_all_time}, '{created_at}');"""
+VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{todo_date}', {is_all_time}, '{created_at}') ON CONFLICT (id) DO NOTHING;"""
             todos_inserts.append(todo_sql)
 
-        sql_statements.append("-- 6. Insert Remapped Todos")
+        sql_statements.append("-- 4. Insert Remapped Todos")
         sql_statements.extend(todos_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(todos_inserts)} todos.")
     else:
-        print(f" - [SKIP] No {QUOTES_TODOS_FILE} file found.")
+        print(" - [SKIP] No {QUOTES_TODOS_FILE} file found.")
 
     # 6. Compliance Rules
     if os.path.exists(QUOTES_COMPLIANCE_RULES_FILE):
@@ -297,19 +399,21 @@ VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{
             updated_by = rule.get("updated_by")
             if updated_by and updated_by in user_id_map:
                 updated_by_sql = f"'{user_id_map[updated_by]}'"
+            elif updated_by:
+                updated_by_sql = f"'{updated_by}'"
             else:
                 updated_by_sql = "NULL"
 
             rule_sql = f"""INSERT INTO public.compliance_rules (id, category, sub_category, company_name, company_tags, title, content, extra_info, is_deleted, created_at, updated_at, updated_by) 
-VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, {is_deleted}, '{created_at}', '{updated_at}', {updated_by_sql});"""
+VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, {is_deleted}, '{created_at}', '{updated_at}', {updated_by_sql}) ON CONFLICT (id) DO NOTHING;"""
             rules_inserts.append(rule_sql)
 
-        sql_statements.append("-- 7. Insert Compliance Rules")
+        sql_statements.append("-- 5. Insert Compliance Rules")
         sql_statements.extend(rules_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(rules_inserts)} compliance rules.")
     else:
-        print(f" - [SKIP] No {QUOTES_COMPLIANCE_RULES_FILE} file found.")
+        print(" - [SKIP] No {QUOTES_COMPLIANCE_RULES_FILE} file found.")
 
     # 7. Rules History
     if os.path.exists(QUOTES_RULES_HISTORY_FILE):
@@ -348,19 +452,21 @@ VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {t
             archived_by = h.get("archived_by")
             if archived_by and archived_by in user_id_map:
                 archived_by_sql = f"'{user_id_map[archived_by]}'"
+            elif archived_by:
+                archived_by_sql = f"'{archived_by}'"
             else:
                 archived_by_sql = "NULL"
                 
             hist_sql = f"""INSERT INTO public.rules_history (id, rule_id, category, sub_category, company_name, company_tags, title, content, extra_info, action_type, archived_at, archived_by)
-VALUES ('{h_id}', '{rule_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, '{action_type}', '{archived_at}', {archived_by_sql});"""
+VALUES ('{h_id}', '{rule_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, '{action_type}', '{archived_at}', {archived_by_sql}) ON CONFLICT (id) DO NOTHING;"""
             history_inserts.append(hist_sql)
             
-        sql_statements.append("-- 8. Insert Rules History")
+        sql_statements.append("-- 6. Insert Rules History")
         sql_statements.extend(history_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(history_inserts)} rules history items.")
     else:
-        print(f" - [SKIP] No {QUOTES_RULES_HISTORY_FILE} file found.")
+        print(" - [SKIP] No {QUOTES_RULES_HISTORY_FILE} file found.")
 
     # 8. Login Codes
     if os.path.exists(QUOTES_LOGIN_CODES_FILE):
@@ -380,12 +486,12 @@ VALUES ('{h_id}', '{rule_id}', '{category}', '{sub_category}', {company_name}, {
 VALUES ('{login_id}', '{code}', {name}, '{updated_at}') ON CONFLICT (login_id) DO NOTHING;"""
             codes_inserts.append(code_sql)
 
-        sql_statements.append("-- 9. Insert Login Codes")
+        sql_statements.append("-- 7. Insert Login Codes")
         sql_statements.extend(codes_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(codes_inserts)} login codes.")
     else:
-        print(f" - [SKIP] No {QUOTES_LOGIN_CODES_FILE} file found.")
+        print(" - [SKIP] No {QUOTES_LOGIN_CODES_FILE} file found.")
 
     # 9. Audit Logs
     if os.path.exists(QUOTES_AUDIT_LOGS_FILE):
@@ -398,6 +504,8 @@ VALUES ('{login_id}', '{code}', {name}, '{updated_at}') ON CONFLICT (login_id) D
             actor_id = row.get("actor_id")
             if actor_id and actor_id in user_id_map:
                 actor_id_sql = f"'{user_id_map[actor_id]}'"
+            elif actor_id:
+                actor_id_sql = f"'{actor_id}'"
             else:
                 actor_id_sql = "NULL"
                 
@@ -415,15 +523,15 @@ VALUES ('{login_id}', '{code}', {name}, '{updated_at}') ON CONFLICT (login_id) D
             created_at = row.get("created_at", "NOW()")
             
             aud_sql = f"""INSERT INTO public.audit_logs (id, actor_id, actor_codename, action_type, target_id, details, created_at)
-VALUES ('{a_id}', {actor_id_sql}, '{actor_codename}', '{action_type}', {target_id_sql}, '{details}', '{created_at}');"""
+VALUES ('{a_id}', {actor_id_sql}, '{actor_codename}', '{action_type}', {target_id_sql}, '{details}', '{created_at}') ON CONFLICT (id) DO NOTHING;"""
             audit_inserts.append(aud_sql)
             
-        sql_statements.append("-- 10. Insert Quotes Audit Logs")
+        sql_statements.append("-- 8. Insert Quotes Audit Logs")
         sql_statements.extend(audit_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(audit_inserts)} audit logs.")
     else:
-        print(f" - [SKIP] No {QUOTES_AUDIT_LOGS_FILE} file found.")
+        print(" - [SKIP] No {QUOTES_AUDIT_LOGS_FILE} file found.")
 
 
     # ------------------ Chuti Data Copying & SQL ------------------
@@ -481,15 +589,15 @@ VALUES ('{a_id}', {actor_id_sql}, '{actor_codename}', '{action_type}', {target_i
             deleted_at = f"'{row['deleted_at']}'" if row.get("deleted_at") else "NULL"
 
             ins_sql = f"""INSERT INTO public.chuti (id, user_id, date, leave_type, adjustment, adjusted_hour, sign_in_time, sign_out_time, leave_hour, reserve_holiday, reserve_adjustment_status, status, admin_edit_request, admin_edit_status, is_edited, adjust_short_leave, comment, created_at, bulk_id, updated_at, deleted_at)
-VALUES ('{c_id}', '{user_id}', '{date}', '{leave_type}', {adjustment}, {adjusted_hour_sql}, {sign_in_time}, {sign_out_time}, {leave_hour_sql}, {reserve_holiday_sql}, {reserve_adjustment_status}, {status}, {admin_edit_request_sql}, {admin_edit_status}, {is_edited}, {adjust_short_leave}, {comment_sql}, '{created_at}', {bulk_id}, '{updated_at}', {deleted_at});"""
+VALUES ('{c_id}', '{user_id}', '{date}', '{leave_type}', {adjustment}, {adjusted_hour_sql}, {sign_in_time}, {sign_out_time}, {leave_hour_sql}, {reserve_holiday_sql}, {reserve_adjustment_status}, {status}, {admin_edit_request_sql}, {admin_edit_status}, {is_edited}, {adjust_short_leave}, {comment_sql}, '{created_at}', {bulk_id}, '{updated_at}', {deleted_at}) ON CONFLICT (id) DO NOTHING;"""
             chuti_inserts.append(ins_sql)
 
-        sql_statements.append("-- 11. Insert Chuti Leave Records")
+        sql_statements.append("-- 9. Insert Chuti Leave Records")
         sql_statements.extend(chuti_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(chuti_inserts)} chuti leave records.")
     else:
-        print(f" - [SKIP] No {CHUTI_LEAVES_FILE} file found.")
+        print(" - [SKIP] No {CHUTI_LEAVES_FILE} file found.")
 
     # 11. Government holiday choices
     if os.path.exists(CHUTI_HOLIDAYS_FILE):
@@ -507,15 +615,15 @@ VALUES ('{c_id}', '{user_id}', '{date}', '{leave_type}', {adjustment}, {adjusted
             updated_by_admin = "TRUE" if row.get("updated_by_admin") else "FALSE"
             
             ins_sql = f"""INSERT INTO public.govt_holiday_responses (id, user_id, holiday_date, holiday_name, response, created_at, updated_by_admin)
-VALUES ('{h_id}', '{user_id}', '{holiday_date}', '{holiday_name}', '{response}', '{created_at}', {updated_by_admin});"""
+VALUES ('{h_id}', '{user_id}', '{holiday_date}', '{holiday_name}', '{response}', '{created_at}', {updated_by_admin}) ON CONFLICT (id) DO NOTHING;"""
             holiday_inserts.append(ins_sql)
 
-        sql_statements.append("-- 12. Insert Chuti Govt Holiday Choices")
+        sql_statements.append("-- 10. Insert Chuti Govt Holiday Choices")
         sql_statements.extend(holiday_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(holiday_inserts)} holiday choice responses.")
     else:
-        print(f" - [SKIP] No {CHUTI_HOLIDAYS_FILE} file found.")
+        print(" - [SKIP] No {CHUTI_HOLIDAYS_FILE} file found.")
 
     # 12. Leave settlements
     if os.path.exists(CHUTI_SETTLEMENTS_FILE):
@@ -543,15 +651,15 @@ VALUES ('{h_id}', '{user_id}', '{holiday_date}', '{holiday_name}', '{response}',
             adjust_leave_days = row.get("adjust_leave_days", 0)
             
             ins_sql = f"""INSERT INTO public.leave_settlements (id, user_id, year, period, leave_category, remaining_days, action_type, status, processed_by, processed_at, action_by, created_at, carry_forward_days, payment_days, adjust_leave_days)
-VALUES ('{s_id}', '{user_id}', '{year}', '{period}', '{leave_category}', {remaining_days}, '{action_type}', '{status}', {processed_by}, {processed_at}, {action_by}, '{created_at}', {carry_forward_days}, {payment_days}, {adjust_leave_days});"""
+VALUES ('{s_id}', '{user_id}', '{year}', '{period}', '{leave_category}', {remaining_days}, '{action_type}', '{status}', {processed_by}, {processed_at}, {action_by}, '{created_at}', {carry_forward_days}, {payment_days}, {adjust_leave_days}) ON CONFLICT (id) DO NOTHING;"""
             settlement_inserts.append(ins_sql)
 
-        sql_statements.append("-- 13. Insert Chuti Leave Settlements")
+        sql_statements.append("-- 11. Insert Chuti Leave Settlements")
         sql_statements.extend(settlement_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(settlement_inserts)} leave settlements.")
     else:
-        print(f" - [SKIP] No {CHUTI_SETTLEMENTS_FILE} file found.")
+        print(" - [SKIP] No {CHUTI_SETTLEMENTS_FILE} file found.")
 
     # 13. Push subscriptions
     if os.path.exists(CHUTI_PUSH_FILE):
@@ -571,12 +679,12 @@ VALUES ('{s_id}', '{user_id}', '{year}', '{period}', '{leave_category}', {remain
 VALUES ('{p_id}', {user_id}, '{endpoint}', '{p256dh}', '{auth}', '{created_at}') ON CONFLICT (endpoint) DO NOTHING;"""
             push_inserts.append(ins_sql)
 
-        sql_statements.append("-- 14. Insert Push Subscriptions")
+        sql_statements.append("-- 12. Insert Push Subscriptions")
         sql_statements.extend(push_inserts)
         sql_statements.append("\n")
         print(f" - Created SQL for {len(push_inserts)} push subscriptions.")
     else:
-        print(f" - [SKIP] No {CHUTI_PUSH_FILE} file found.")
+        print(" - [SKIP] No {CHUTI_PUSH_FILE} file found.")
 
 
     # Write output to SQL file
