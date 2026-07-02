@@ -13,6 +13,14 @@ DROP TABLE IF EXISTS public.push_subscriptions CASCADE;
 DROP TABLE IF EXISTS public.leave_settlements CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
 
+-- Drop Quotes tables
+DROP TABLE IF EXISTS public.records CASCADE;
+DROP TABLE IF EXISTS public.todos CASCADE;
+DROP TABLE IF EXISTS public.compliance_rules CASCADE;
+DROP TABLE IF EXISTS public.rules_history CASCADE;
+DROP TABLE IF EXISTS public.login_codes CASCADE;
+DROP TABLE IF EXISTS public.audit_logs CASCADE;
+
 -- Drop trigger on auth.users
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
