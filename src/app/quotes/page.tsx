@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, usePathname } from "next/navigation";
 import { useQuotesDashboardData } from "@/hooks/useQuotesDashboardData";
 import { useSaveFileHelper } from "@/hooks/useSaveFileHelper";
@@ -72,7 +73,15 @@ const ALL_10_FILE_TYPES = [
   "Sale",
 ];
 
-export default function Dashboard() {
+interface DashboardProps {
+  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo";
+  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo") => void;
+}
+
+export default function Dashboard({
+  activeTab,
+  onTabChange,
+}: DashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
   useEffect(() => {
@@ -80,6 +89,11 @@ export default function Dashboard() {
       router.replace("/");
     }
   }, [pathname, router]);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const specificDateRef = useRef<HTMLInputElement>(null);
   const dashboardData = useQuotesDashboardData();
@@ -118,44 +132,6 @@ export default function Dashboard() {
     logActivity,
   } = dashboardData;
 
-  // Tabs: 'entry' (Daily Entry), 'monthly' (Month's Data), 'analytics' (Analytics), 'audit_logs' (Audit Logs), 'rules' (Quote Rules), 'todo' (Superadmin Todos)
-  const [activeTab, setActiveTab] = useState<
-    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo"
-  >(() => {
-    if (typeof window !== "undefined") {
-      const savedTab = localStorage.getItem("quotes_sales_active_tab");
-      if (
-        savedTab &&
-        (savedTab === "entry" ||
-          savedTab === "monthly" ||
-          savedTab === "analytics" ||
-          savedTab === "audit_logs" ||
-          savedTab === "rules" ||
-          savedTab === "todo")
-      ) {
-        // Safe check for role restriction using cached profile to prevent initial flash of admin tabs for regular users
-        const cachedProfileStr = localStorage.getItem("quotes_sales_profile");
-        if (cachedProfileStr) {
-          try {
-            const cachedProfile = JSON.parse(cachedProfileStr);
-            if (
-              (savedTab === "analytics" || savedTab === "audit_logs") &&
-              (cachedProfile?.role !== "admin" && cachedProfile?.role !== "supervisor")
-            ) {
-              return "entry";
-            }
-            if (savedTab === "todo" && cachedProfile?.username?.toUpperCase() !== "KI1024") {
-              return "entry";
-            }
-          } catch {}
-        }
-        return savedTab as "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo";
-      }
-    }
-    return "entry";
-  });
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
   const [isMd, setIsMd] = useState(false);
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
@@ -164,46 +140,6 @@ export default function Dashboard() {
     media.addEventListener("change", listener);
     return () => media.removeEventListener("change", listener);
   }, []);
-
-  const sidebarStyle = useMemo(() => {
-    if (!isMd) return {};
-    const widthVal = isSidebarCollapsed ? "80px" : "256px";
-    return {
-      width: widthVal,
-      minWidth: widthVal,
-      maxWidth: widthVal,
-      transition: "width 300ms ease-out, min-width 300ms ease-out, max-width 300ms ease-out",
-    };
-  }, [isSidebarCollapsed, isMd]);
-
-  // Load active tab preference in localStorage on mount or when profile loads
-  useEffect(() => {
-    if (!profile) return; // Do not check or update active tab until profile is fully loaded to prevent flickering
-    
-    const savedTab = localStorage.getItem("quotes_sales_active_tab");
-    if (
-      savedTab &&
-      (savedTab === "entry" ||
-        savedTab === "monthly" ||
-        savedTab === "analytics" ||
-        savedTab === "audit_logs" ||
-        savedTab === "rules" ||
-        savedTab === "todo")
-    ) {
-      if (
-        (savedTab === "analytics" || savedTab === "audit_logs") &&
-        (profile.role !== "admin" && profile.role !== "supervisor")
-      ) {
-        setActiveTab("entry");
-      } else if (savedTab === "todo" && profile.username?.toUpperCase() !== "KI1024") {
-        setActiveTab("entry");
-      } else {
-        setActiveTab(
-          savedTab as "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo",
-        );
-      }
-    }
-  }, [profile]);
 
   const handleTabChange = (
     tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo",
@@ -217,8 +153,7 @@ export default function Dashboard() {
     if (tab === "todo" && profile?.username?.toUpperCase() !== "KI1024") {
       return;
     }
-    setActiveTab(tab);
-    localStorage.setItem("quotes_sales_active_tab", tab);
+    onTabChange(tab);
   };
 
   // Fetch audit logs when activeTab becomes 'audit_logs'
@@ -227,24 +162,6 @@ export default function Dashboard() {
       fetchAuditLogs();
     }
   }, [activeTab, profile, fetchAuditLogs]);
-
-  // Load and save sidebar width preference
-  useEffect(() => {
-    const savedSidebarState = localStorage.getItem(
-      "quotes_sales_sidebar_collapsed",
-    );
-    if (savedSidebarState === "true" || savedSidebarState === "false") {
-      setIsSidebarCollapsed(savedSidebarState === "true");
-    }
-  }, []);
-
-  const handleSidebarToggle = () => {
-    setIsSidebarCollapsed((current) => {
-      const next = !current;
-      localStorage.setItem("quotes_sales_sidebar_collapsed", String(next));
-      return next;
-    });
-  };
 
   // Daily Entry Form State
   const [fileName, setFileName] = useState("");
@@ -1305,33 +1222,20 @@ export default function Dashboard() {
   const allowedCategories = profile?.allowed_types || ALL_10_FILE_TYPES;
 
   return (
-    <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12">
-      {/* Glow background blobs */}
-      <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-violet-900/10 blur-[120px] pointer-events-none" />
-
-      {/* Navbar Component */}
-      <Navbar
-        profile={profile}
-        isOnline={isOnline}
-        theme={theme}
-        onThemeToggle={toggleTheme}
-        onLogout={handleLogout}
-        badges={topPerformerBadges}
-      />
-      {/* Main Body Layout */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start">
-        <UnifiedSidebar
-          activeSection="quotes"
-          profile={profile}
-          activeQuotesTab={activeTab}
-          onQuotesTabChange={handleTabChange}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onSidebarToggle={handleSidebarToggle}
-        />
-
-        {/* Content Area */}
-        <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
+    <>
+      {mounted && typeof window !== "undefined" && document.getElementById("root-navbar-portal") ? (
+        createPortal(
+          <Navbar
+            profile={profile}
+            isOnline={isOnline}
+            theme={theme}
+            onThemeToggle={toggleTheme}
+            onLogout={handleLogout}
+            badges={topPerformerBadges}
+          />,
+          document.getElementById("root-navbar-portal")!
+        )
+      ) : null}
           {/* TAB 1: DAILY ENTRY */}
           {activeTab === "entry" && (
             <div className="space-y-6">
@@ -1807,114 +1711,120 @@ export default function Dashboard() {
               <TodoPanel profile={profile} />
             </Suspense>
           )}
-        </section>
-      </main>
-
-      {/* MODAL 0: SOLD/UNSOLD CHOICE */}
-      <SaleStatusModal
-        isOpen={showSaleModal}
-        fileName={saleFormDetails?.fileName || ""}
-        onConfirm={handleConfirmSaleStatus}
-        onClose={() => setShowSaleModal(false)}
-      />
-
-      {/* MODAL 1: EDIT RECORD */}
-      {editingRecord && (
-        <EditRecordModal
-          editFileName={editFileName}
-          setEditFileName={setEditFileName}
-          editBranchName={editBranchName}
-          setEditBranchName={setEditBranchName}
-          editCodename={editCodename}
-          setEditCodename={setEditCodename}
-          editFileType={editFileType}
-          setEditFileType={setEditFileType}
-          canEditSubmittedAt={editCanChangeSubmittedAt}
-          editSubmittedDate={editSubmittedDate}
-          setEditSubmittedDate={setEditSubmittedDate}
-          editSubmittedTime={editSubmittedTime}
-          setEditSubmittedTime={setEditSubmittedTime}
-          allowedCategories={allowedCategories}
-          onClose={() => setEditingRecord(null)}
-          onSave={handleSaveEdit}
-          editSaleStatus={editSaleStatus}
-          setEditSaleStatus={setEditSaleStatus}
-          submitting={submitting}
-        />
-      )}
 
 
+      {mounted && typeof window !== "undefined" && document.getElementById("root-modals-portal") ? (
+        createPortal(
+          <>
+            {/* MODAL 0: SOLD/UNSOLD CHOICE */}
+            <SaleStatusModal
+              isOpen={showSaleModal}
+              fileName={saleFormDetails?.fileName || ""}
+              onConfirm={handleConfirmSaleStatus}
+              onClose={() => setShowSaleModal(false)}
+            />
 
-      {/* MODAL 6: DELETE RECORD CONFIRMATION */}
-      <ConfirmModal
-        isOpen={!!deletingRecordId}
-        onClose={() => setDeletingRecordId(null)}
-        onConfirm={() => {
-          if (deletingRecordId) {
-            deleteRecord(deletingRecordId);
-            setDeletingRecordId(null);
-          }
-        }}
-        title="Delete File Record"
-        message="Are you sure you want to permanently delete this file record? This action cannot be undone."
-        confirmText="Delete Record"
-        cancelText="Cancel"
-        isDanger={true}
-      />
+            {/* MODAL 1: EDIT RECORD */}
+            {editingRecord && (
+              <EditRecordModal
+                editFileName={editFileName}
+                setEditFileName={setEditFileName}
+                editBranchName={editBranchName}
+                setEditBranchName={setEditBranchName}
+                editCodename={editCodename}
+                setEditCodename={setEditCodename}
+                editFileType={editFileType}
+                setEditFileType={setEditFileType}
+                canEditSubmittedAt={editCanChangeSubmittedAt}
+                editSubmittedDate={editSubmittedDate}
+                setEditSubmittedDate={setEditSubmittedDate}
+                editSubmittedTime={editSubmittedTime}
+                setEditSubmittedTime={setEditSubmittedTime}
+                allowedCategories={allowedCategories}
+                onClose={() => setEditingRecord(null)}
+                onSave={handleSaveEdit}
+                editSaleStatus={editSaleStatus}
+                setEditSaleStatus={setEditSaleStatus}
+                submitting={submitting}
+              />
+            )}
 
-      {/* MODAL 6b: BULK DELETE RECORD CONFIRMATION */}
-      <ConfirmModal
-        isOpen={!!bulkDeletingRecordIds}
-        onClose={() => setBulkDeletingRecordIds(null)}
-        onConfirm={async () => {
-          if (bulkDeletingRecordIds) {
-            const idsToDelete = [...bulkDeletingRecordIds];
-            setBulkDeletingRecordIds(null);
-            setIsBulkDeletingInProgress(true);
-            try {
-              await deleteRecords(idsToDelete);
-            } catch (err) {
-              console.error("Bulk delete failed:", err);
-            } finally {
-              setIsBulkDeletingInProgress(false);
-            }
-          }
-        }}
-        title="Delete Selected Records"
-        message={`Are you sure you want to permanently delete the ${bulkDeletingRecordIds?.length} selected file records? This action cannot be undone.`}
-        confirmText="Delete Records"
-        cancelText="Cancel"
-        isDanger={true}
-      />
 
-      {/* MODAL 7: CUSTOM DATE ENTRY */}
-      <CustomEntryModal
-        isOpen={isCustomEntryModalOpen}
-        onClose={() => setIsCustomEntryModalOpen(false)}
-        profilesList={profilesList}
-        currentUserProfile={profile}
-        submitting={submitting}
-        adminMode={(profile?.role === "admin" || profile?.role === "supervisor") && adminViewMode === "all"}
-        onSubmit={handleAdminCustomEntrySubmit}
-      />
 
-      {/* BULK DELETING OVERLAY */}
-      {isBulkDeletingInProgress && (
-        <div className="fixed inset-0 bg-slate-955/70 backdrop-blur-xs z-9999 flex flex-col items-center justify-center select-none">
-          <div className="flex flex-col items-center p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl animate-fade-in max-w-sm w-full mx-4 text-center">
-            <div className="relative w-12 h-12 flex items-center justify-center">
-              <div className="w-10 h-10 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin"></div>
-            </div>
-            <h4 className="text-sm font-bold text-white mt-4 uppercase tracking-wider">Deleting Records...</h4>
-            <p className="text-xs text-slate-400 mt-2">
-              Please wait while the selected entries are being permanently removed from the database.
-            </p>
-            <p className="text-[10px] text-slate-500 mt-4 italic">
-              You can reload the page if it hangs.
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
+            {/* MODAL 6: DELETE RECORD CONFIRMATION */}
+            <ConfirmModal
+              isOpen={!!deletingRecordId}
+              onClose={() => setDeletingRecordId(null)}
+              onConfirm={() => {
+                if (deletingRecordId) {
+                  deleteRecord(deletingRecordId);
+                  setDeletingRecordId(null);
+                }
+              }}
+              title="Delete File Record"
+              message="Are you sure you want to permanently delete this file record? This action cannot be undone."
+              confirmText="Delete Record"
+              cancelText="Cancel"
+              isDanger={true}
+            />
+
+            {/* MODAL 6b: BULK DELETE RECORD CONFIRMATION */}
+            <ConfirmModal
+              isOpen={!!bulkDeletingRecordIds}
+              onClose={() => setBulkDeletingRecordIds(null)}
+              onConfirm={async () => {
+                if (bulkDeletingRecordIds) {
+                  const idsToDelete = [...bulkDeletingRecordIds];
+                  setBulkDeletingRecordIds(null);
+                  setIsBulkDeletingInProgress(true);
+                  try {
+                    await deleteRecords(idsToDelete);
+                  } catch (err) {
+                    console.error("Bulk delete failed:", err);
+                  } finally {
+                    setIsBulkDeletingInProgress(false);
+                  }
+                }
+              }}
+              title="Delete Selected Records"
+              message={`Are you sure you want to permanently delete the ${bulkDeletingRecordIds?.length} selected file records? This action cannot be undone.`}
+              confirmText="Delete Records"
+              cancelText="Cancel"
+              isDanger={true}
+            />
+
+            {/* MODAL 7: CUSTOM DATE ENTRY */}
+            <CustomEntryModal
+              isOpen={isCustomEntryModalOpen}
+              onClose={() => setIsCustomEntryModalOpen(false)}
+              profilesList={profilesList}
+              currentUserProfile={profile}
+              submitting={submitting}
+              adminMode={(profile?.role === "admin" || profile?.role === "supervisor") && adminViewMode === "all"}
+              onSubmit={handleAdminCustomEntrySubmit}
+            />
+
+            {/* BULK DELETING OVERLAY */}
+            {isBulkDeletingInProgress && (
+              <div className="fixed inset-0 bg-slate-955/70 backdrop-blur-xs z-9999 flex flex-col items-center justify-center select-none">
+                <div className="flex flex-col items-center p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl animate-fade-in max-w-sm w-full mx-4 text-center">
+                  <div className="relative w-12 h-12 flex items-center justify-center">
+                    <div className="w-10 h-10 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                  <h4 className="text-sm font-bold text-white mt-4 uppercase tracking-wider">Deleting Records...</h4>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Please wait while the selected entries are being permanently removed from the database.
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-4 italic">
+                    You can reload the page if it hangs.
+                  </p>
+                </div>
+              </div>
+            )}
+          </>,
+          document.getElementById("root-modals-portal")!
+        )
+      ) : null}
+    </>
   );
 }

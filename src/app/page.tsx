@@ -6,9 +6,12 @@ import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { Loader2 } from 'lucide-react';
 import LoginPage from '@/app/login/page';
-import ChutiDashboard from '@/app/chuti/page';
-import QuotesDashboard from '@/app/quotes/page';
-import { UserManagementDashboard } from '@/components/UserManagementDashboard';
+import { lazy, Suspense } from 'react';
+import { UnifiedSidebar } from '@/components/UnifiedSidebar';
+
+const ChutiDashboard = lazy(() => import('@/app/chuti/page'));
+const QuotesDashboard = lazy(() => import('@/app/quotes/page'));
+const UserManagementDashboard = lazy(() => import('@/components/UserManagementDashboard').then(m => ({ default: m.UserManagementDashboard })));
 
 export default function AppPortal() {
   const router = useRouter();
@@ -19,6 +22,41 @@ export default function AppPortal() {
   const [activeTab, setActiveTab] = useState<'chuti' | 'quotes' | 'user_management' | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
+
+  const [activeQuotesTab, setActiveQuotesTab] = useState<'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('quotes_sales_active_tab');
+      if (saved === 'entry' || saved === 'monthly' || saved === 'analytics' || saved === 'audit_logs' || saved === 'rules' || saved === 'todo') {
+        return saved as 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo';
+      }
+    }
+    return 'entry';
+  });
+
+  const [activeChutiTab, setActiveChutiTab] = useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('adminActiveTab');
+      if (saved === 'staff_master' || saved === 'govt_responses' || saved === 'settlement') {
+        return saved as 'staff_master' | 'govt_responses' | 'settlement';
+      }
+    }
+    return 'staff_master';
+  });
+
+  const handleQuotesTabChange = (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo') => {
+    setActiveQuotesTab(tab);
+    localStorage.setItem('quotes_sales_active_tab', tab);
+  };
+
+  const handleChutiTabChange = (tab: 'staff_master' | 'govt_responses' | 'settlement') => {
+    setActiveChutiTab(tab);
+    sessionStorage.setItem('adminActiveTab', tab);
+  };
+
+  const handleLogout = async () => {
+    setLoading(true);
+    await supabase.auth.signOut();
+  };
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -299,30 +337,66 @@ export default function AppPortal() {
     return <LoginPage />;
   }
 
-  // Authenticated -> Render active workspace dashboard
-  if (activeTab === 'quotes') {
-    console.log('[AppPortal] Rendering QuotesDashboard');
-    return <QuotesDashboard />;
-  }
+  // Authenticated -> Render single layout shell wrapping active workspace component
+  return (
+    <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12 text-white selection:bg-purple-650 selection:text-white">
+      {/* Glow background blobs */}
+      <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-violet-900/10 blur-[120px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-35 pointer-events-none" />
 
-  if (activeTab === 'user_management') {
-    console.log('[AppPortal] Rendering UserManagementDashboard');
-    return (
-      <UserManagementDashboard
-        sessionUser={sessionUser}
-        profile={profile}
-        onLogout={async () => {
-          setLoading(true);
-          await supabase.auth.signOut();
-        }}
-        theme={theme}
-        onThemeToggle={handleThemeToggle}
-        isSidebarCollapsed={isSidebarCollapsed}
-        onSidebarToggle={handleSidebarToggle}
-      />
-    );
-  }
+      {/* Portal Target for Navbar */}
+      <div id="root-navbar-portal" className="w-full relative z-30" />
 
-  console.log('[AppPortal] Rendering ChutiDashboard');
-  return <ChutiDashboard />;
+      {/* Portal Target for Modals */}
+      <div id="root-modals-portal" className="relative z-50" />
+
+      {/* Main container with Sidebar and Section */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start">
+        <UnifiedSidebar
+          activeSection={activeTab === 'user_management' ? 'user_management' : activeTab === 'quotes' ? 'quotes' : 'chuti'}
+          profile={profile}
+          activeQuotesTab={activeQuotesTab}
+          onQuotesTabChange={handleQuotesTabChange}
+          activeChutiTab={activeChutiTab}
+          onChutiTabChange={handleChutiTabChange}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onSidebarToggle={handleSidebarToggle}
+        />
+
+        <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
+          <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+              <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+              <p className="text-xs text-slate-400">Loading workspace...</p>
+            </div>
+          }>
+            {activeTab === 'quotes' && (
+              <QuotesDashboard
+                activeTab={activeQuotesTab}
+                onTabChange={handleQuotesTabChange}
+              />
+            )}
+            {activeTab === 'chuti' && (
+              <ChutiDashboard
+                activeChutiTab={activeChutiTab}
+                onChutiTabChange={handleChutiTabChange}
+              />
+            )}
+            {activeTab === 'user_management' && (
+              <UserManagementDashboard
+                sessionUser={sessionUser}
+                profile={profile}
+                onLogout={handleLogout}
+                theme={theme}
+                onThemeToggle={handleThemeToggle}
+                isSidebarCollapsed={isSidebarCollapsed}
+                onSidebarToggle={handleSidebarToggle}
+              />
+            )}
+          </Suspense>
+        </section>
+      </main>
+    </div>
+  );
 }

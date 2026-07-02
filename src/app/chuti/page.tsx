@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { UnifiedSidebar } from '@/components/UnifiedSidebar';
@@ -22,7 +23,15 @@ import { useExportOperations } from '@/hooks/useExportOperations';
 import { useModalHandlers } from '@/hooks/useModalHandlers';
 import { useDesktopNotifications } from '@/hooks/useDesktopNotifications';
 
-export default function Dashboard() {
+interface DashboardProps {
+  activeChutiTab: 'staff_master' | 'govt_responses' | 'settlement';
+  onChutiTabChange: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
+}
+
+export default function Dashboard({
+  activeChutiTab,
+  onChutiTabChange,
+}: DashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -31,6 +40,11 @@ export default function Dashboard() {
       router.replace('/');
     }
   }, [pathname, router]);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Core Dashboard State & Real-time monitors
   const dashboardData = useDashboardData();
@@ -96,44 +110,15 @@ export default function Dashboard() {
   const [filterEndDate, setFilterEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdminAddLeaveModal, setShowAdminAddLeaveModal] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const [activeChutiTab, setActiveChutiTab] = useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('adminActiveTab');
-      if (saved === 'staff_master' || saved === 'govt_responses' || saved === 'settlement') {
-        return saved as 'staff_master' | 'govt_responses' | 'settlement';
-      }
-    }
-    return 'staff_master';
-  });
 
   const handleChutiTabChange = (tab: 'staff_master' | 'govt_responses' | 'settlement') => {
-    setActiveChutiTab(tab);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('adminActiveTab', tab);
-    }
+    onChutiTabChange(tab);
     if (adminActiveTab !== 'admin') {
       setAdminActiveTab('admin');
       if (typeof window !== 'undefined' && profile?.id) {
         localStorage.setItem('admin_mode_' + profile.id, 'admin');
       }
     }
-  };
-
-  useEffect(() => {
-    const savedSidebarState = localStorage.getItem('quotes_sales_sidebar_collapsed');
-    if (savedSidebarState === 'true' || savedSidebarState === 'false') {
-      setIsSidebarCollapsed(savedSidebarState === 'true');
-    }
-  }, []);
-
-  const handleSidebarToggle = () => {
-    setIsSidebarCollapsed((current) => {
-      const next = !current;
-      localStorage.setItem('quotes_sales_sidebar_collapsed', String(next));
-      return next;
-    });
   };
 
   const [selectedYear, setSelectedYear] = useState<string>(() => {
@@ -799,33 +784,31 @@ export default function Dashboard() {
 
   return (
     <DashboardProvider value={contextValue}>
-      <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12">
-        {/* Glow backgrounds */}
-        <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
+      {mounted && typeof window !== 'undefined' && document.getElementById('root-navbar-portal') ? (
+        createPortal(
+          <Navbar
+            profile={profile}
+            isOnline={isOnline}
+            offlineCount={offlineCount}
+            theme={theme}
+            onThemeToggle={toggleTheme}
+            onManualSync={handleManualSync}
+            onLogout={handleLogout}
+            onProfileSettingsClick={handleOpenProfileSettingsForSelf}
+            onNotificationClick={handleNotificationClick}
+            unreadUserNotificationsCount={unreadUserNotificationsCount}
+            groupedSupervisorRequestsCount={groupedSupervisorRequests.length}
+            groupedChutiRequestsCount={groupedChutiRequests.length}
+            pendingReserveRequestsCount={pendingReserveRequests.length}
+            pendingProfileRequestsCount={pendingProfileRequests.length}
+            adminActiveTab={adminActiveTab}
+            adminHolidayNotificationsCount={adminHolidayNotifications.length}
+            pendingPasswordResetRequestsCount={pendingPasswordResetRequests.length}
+          />,
+          document.getElementById('root-navbar-portal')!
+        )
+      ) : null}
 
-        {/* 1. Header Bar */}
-      <Navbar
-        profile={profile}
-        isOnline={isOnline}
-        offlineCount={offlineCount}
-        theme={theme}
-        onThemeToggle={toggleTheme}
-        onManualSync={handleManualSync}
-        onLogout={handleLogout}
-        onProfileSettingsClick={handleOpenProfileSettingsForSelf}
-        onNotificationClick={handleNotificationClick}
-        unreadUserNotificationsCount={unreadUserNotificationsCount}
-        groupedSupervisorRequestsCount={groupedSupervisorRequests.length}
-        groupedChutiRequestsCount={groupedChutiRequests.length}
-        pendingReserveRequestsCount={pendingReserveRequests.length}
-        pendingProfileRequestsCount={pendingProfileRequests.length}
-        adminActiveTab={adminActiveTab}
-        adminHolidayNotificationsCount={adminHolidayNotifications.length}
-        pendingPasswordResetRequestsCount={pendingPasswordResetRequests.length}
-      />
-
-      {/* Alert Messages */}
       <Toaster
         position="top-center"
         toastOptions={{
@@ -853,18 +836,6 @@ export default function Dashboard() {
           },
         }}
       />
-
-      {/* 2. Main Content Body */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start">
-        <UnifiedSidebar
-          activeSection="chuti"
-          profile={profile}
-          activeChutiTab={activeChutiTab}
-          onChutiTabChange={handleChutiTabChange}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onSidebarToggle={handleSidebarToggle}
-        />
-        <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
         
         {/* ================= STAFF VIEW ================= */}
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && (profile?.role !== 'admin' || adminActiveTab === 'user') && (
@@ -958,11 +929,7 @@ export default function Dashboard() {
           />
         )}
 
-        </section>
-      </main>
-      
       <DashboardModals />
-      </div>
     </DashboardProvider>
   );
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useDashboardContext } from '@/contexts/DashboardContext';
 
 import { WelcomeModals } from '@/components/modals/WelcomeModals';
@@ -19,6 +20,11 @@ import { AdminDeleteUserModal } from '@/components/modals/AdminDeleteUserModal';
 
 export const DashboardModals = () => {
   const { dashboardData, derivedState, chutiOps, adjustmentOps, adminStaffOps } = useDashboardContext();
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     sessionUser,
@@ -299,7 +305,11 @@ export const DashboardModals = () => {
     setEditSupervisorIds,
   } = adminStaffOps;
 
-  return (
+  if (!mounted || typeof window === 'undefined') return null;
+  const portalTarget = document.getElementById('root-modals-portal');
+  if (!portalTarget) return null;
+
+  return createPortal(
     <>
       <WelcomeModals
         showWelcomePopup={showWelcomePopup}
@@ -642,6 +652,7 @@ export const DashboardModals = () => {
         handleDeleteUser={handleDeleteUser}
         profile={profile}
       />
-    </>
+    </>,
+    portalTarget
   );
 };

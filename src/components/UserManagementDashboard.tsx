@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { useAdminActions } from '@/hooks/useAdminActions';
@@ -39,6 +40,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Add User State
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
@@ -226,285 +232,273 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const isAdmin = profile?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-slate-955 text-white font-sans selection:bg-purple-650 selection:text-white pb-10">
-      {/* Dynamic Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-35 pointer-events-none" />
+    <>
+      {mounted && typeof window !== 'undefined' && document.getElementById('root-navbar-portal') ? (
+        createPortal(
+          <Navbar
+            profile={profile}
+            isOnline={true}
+            theme={theme}
+            onThemeToggle={onThemeToggle}
+            onLogout={onLogout}
+          />,
+          document.getElementById('root-navbar-portal')!
+        )
+      ) : null}
 
-      {/* Navbar Component */}
-      <Navbar
-        profile={profile}
-        isOnline={true}
-        theme={theme}
-        onThemeToggle={onThemeToggle}
-        onLogout={onLogout}
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start relative">
-        {/* Unified Sidebar */}
-        <UnifiedSidebar
-          activeSection="user_management"
-          profile={profile}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onSidebarToggle={onSidebarToggle}
-        />
-
-        {/* Central Work Space */}
-        <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                  <Shield className="h-6 w-6 text-purple-500" />
-                  User & Permissions Directory
-                </h1>
-                <p className="text-xs text-slate-455 mt-1">
-                  Manage user authentication roles, leave system access, and permitted categories.
-                </p>
-              </div>
-
-              {isAdmin && (
-                <button
-                  onClick={() => setIsAddUserModalOpen(true)}
-                  className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-205 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  Add User
-                </button>
-              )}
-            </div>
-
-            {/* Directory Filter Bar */}
-            <div className="bg-slate-900/40 border border-slate-900 shadow-2xl rounded-2xl p-4 flex flex-col md:flex-row items-center gap-4">
-              <div className="relative w-full md:max-w-xs">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                  <Search className="h-4 w-4" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search by name or codename..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-10 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors cursor-pointer text-sm font-semibold"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              <div className="text-xs text-slate-500 font-medium md:ml-auto">
-                Showing {visibleProfiles.length} of {profiles.length} registered profiles
-              </div>
-            </div>
-
-            {/* Users Directory Directory Grid/Table */}
-            <div className="bg-slate-900/40 border border-slate-900 shadow-2xl rounded-2xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-950 text-slate-400 font-bold border-b border-slate-850">
-                      <th className="px-5 py-4">Codename</th>
-                      <th className="px-5 py-4">Full Name</th>
-                      <th className="px-5 py-4">Role</th>
-                      <th className="px-5 py-4 text-center">Leave Tracker</th>
-                      <th className="px-5 py-4 text-center">Quotes Tracker</th>
-                      <th className="px-5 py-4">Permitted Categories</th>
-                      <th className="px-5 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-850/60 text-slate-300">
-                    {isLoading ? (
-                      Array.from({ length: 4 }).map((_, idx) => (
-                        <tr key={idx} className="border-b border-slate-850/40 animate-pulse">
-                          <td className="px-5 py-4"><div className="h-3 w-12 bg-slate-850 rounded" /></td>
-                          <td className="px-5 py-4"><div className="h-3 w-28 bg-slate-850 rounded" /></td>
-                          <td className="px-5 py-4"><div className="h-4.5 w-14 bg-slate-850/80 rounded-full" /></td>
-                          <td className="px-5 py-4 text-center"><div className="h-5 w-5 mx-auto bg-slate-850 rounded-full" /></td>
-                          <td className="px-5 py-4 text-center"><div className="h-5 w-5 mx-auto bg-slate-850 rounded-full" /></td>
-                          <td className="px-5 py-4"><div className="h-3 w-40 bg-slate-850 rounded" /></td>
-                          <td className="px-5 py-4 text-right"><div className="h-6 w-12 ml-auto bg-slate-850 rounded" /></td>
-                        </tr>
-                      ))
-                    ) : visibleProfiles.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-5 py-12 text-center text-slate-500 font-medium">
-                          No user profiles matched your filters.
-                        </td>
-                      </tr>
-                    ) : (
-                      visibleProfiles.map((u) => (
-                        <tr key={u.id} className="hover:bg-slate-900/30 transition-all duration-150">
-                          <td className="px-5 py-4 font-bold text-white tracking-wider">
-                            {u.username.toUpperCase()}
-                          </td>
-                          <td className="px-5 py-4 font-medium text-slate-200">
-                            {u.full_name || '-'}
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                              u.role === 'admin'
-                                ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                                : u.role === 'supervisor'
-                                ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-                                : 'bg-slate-500/10 border-slate-700 text-slate-400'
-                            }`}>
-                              {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : 'User'}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            <div className="flex justify-center">
-                              {u.has_chuti_access ? (
-                                <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500" />
-                              ) : (
-                                <XCircle className="h-4.5 w-4.5 text-slate-700" />
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            <div className="flex justify-center">
-                              {u.has_quotes_access ? (
-                                <CheckCircle2 className="h-4.5 w-4.5 text-blue-500" />
-                              ) : (
-                                <XCircle className="h-4.5 w-4.5 text-slate-700" />
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 max-w-xs">
-                            {u.has_quotes_access ? (
-                              <div className="flex flex-wrap gap-1">
-                                {(u.allowed_types || []).map((t) => (
-                                  <span key={t} className="bg-slate-955 border border-slate-800 text-slate-400 text-[9px] px-1.5 py-0.5 rounded">
-                                    {t}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-slate-500 italic text-[10px]">No Quotes Access</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 text-right">
-                            <div className="flex justify-end gap-2 items-center">
-                              <button
-                                onClick={() => {
-                                  setEditingProfile(u);
-                                  setEditUserFullName(u.full_name || '');
-                                  setEditUserRole(u.role);
-                                  setEditHasChutiAccess(!!u.has_chuti_access);
-                                  setEditHasQuotesAccess(!!u.has_quotes_access);
-                                  setEditUserAllowedTypes(u.allowed_types || []);
-                                  setEditUserCanManageRules(u.role === 'admin' ? true : !!u.can_manage_rules);
-                                }}
-                                className="p-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                                title="Edit permissions"
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                              </button>
-
-                              {isAdmin && (
-                                <button
-                                  onClick={() => setDeletingUserAccount({ id: u.id, username: u.username })}
-                                  disabled={u.id === sessionUser?.id}
-                                  className="p-1.5 bg-slate-900 border border-slate-800 text-slate-500 hover:text-red-400 hover:border-red-950 rounded-lg transition-colors cursor-not-allowed disabled:opacity-30 disabled:hover:text-slate-500 cursor-pointer"
-                                  title="Delete user"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">User Management</h2>
+            <p className="text-xs text-slate-450 mt-1">
+              Add new staff members, set roles (Admin, Supervisor, User), and configure Leave and Quotes Tracker access permissions.
+            </p>
           </div>
-        </section>
+
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setNewCodename('');
+                  setNewFullName('');
+                  setNewPassword('');
+                  setNewRole('user');
+                  setHasChutiAccess(false);
+                  setHasQuotesAccess(false);
+                  setAllowedTypes([...ALL_FILE_TYPES]);
+                  setCanManageRules(false);
+                  setGeneratedPassword(null);
+                  setIsAddUserModalOpen(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-orange-950/20 active:scale-95 transition-all cursor-pointer"
+              >
+                <UserPlus className="h-4 w-4" />
+                Add New Staff
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-950/45 p-4 rounded-xl border border-slate-800/40">
+          <div className="relative w-full md:max-w-xs">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+              <Search className="h-4 w-4" />
+            </span>
+            <input
+              type="text"
+              placeholder="Search by name or codename..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+            />
+          </div>
+
+          <div className="text-[11px] text-slate-400">
+            Showing <span className="text-white font-semibold">{visibleProfiles.length}</span> users
+          </div>
+        </div>
+
+        {/* Users Table */}
+        <div className="bg-slate-955/20 rounded-xl border border-slate-850 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 bg-slate-900/40 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                  <th className="py-3 px-4">Name / Codename</th>
+                  <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4 text-center">Leave Tracker</th>
+                  <th className="py-3 px-4 text-center">Quotes Tracker</th>
+                  <th className="py-3 px-4">Quotes Allowed File Types</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850 text-xs text-slate-300">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                        <span>Loading user directory...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : visibleProfiles.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-500">
+                      No users found.
+                    </td>
+                  </tr>
+                ) : (
+                  visibleProfiles.map((u: Profile) => (
+                    <tr key={u.id} className="hover:bg-slate-900/25 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-white">{u.full_name || '—'}</div>
+                        <div className="text-[10px] text-slate-450 uppercase mt-0.5 tracking-wider font-mono">
+                          {u.username}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
+                          u.role === 'admin'
+                            ? 'bg-red-950/40 border-red-900/50 text-red-400'
+                            : u.role === 'supervisor'
+                            ? 'bg-amber-955/40 border-amber-800/50 text-amber-400'
+                            : 'bg-slate-850 border-slate-750 text-slate-400'
+                        }`}>
+                          <Shield className="h-3 w-3 shrink-0" />
+                          {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : 'User'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {u.has_chuti_access ? (
+                          <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
+                        ) : (
+                          <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {u.has_quotes_access ? (
+                          <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
+                        ) : (
+                          <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
+                        )}
+                      </td>
+                      <td className="py-3 px-4 max-w-xs truncate" title={(u.allowed_types || []).join(', ')}>
+                        {!u.has_quotes_access ? (
+                          <span className="text-slate-600 italic text-[11px]">No access</span>
+                        ) : (u.allowed_types || []).length === ALL_FILE_TYPES.length ? (
+                          <span className="text-blue-400 font-medium text-[11px]">All Categories</span>
+                        ) : (u.allowed_types || []).length === 0 ? (
+                          <span className="text-red-400/80 font-medium text-[11px]">None Allowed</span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">{(u.allowed_types || []).join(', ')}</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingProfile(u);
+                              setEditUserFullName(u.full_name || '');
+                              setEditUserRole(u.role || 'user');
+                              setEditHasChutiAccess(!!u.has_chuti_access);
+                              setEditHasQuotesAccess(!!u.has_quotes_access);
+                              setEditUserAllowedTypes(u.allowed_types || [...ALL_FILE_TYPES]);
+                              setEditUserCanManageRules(!!u.can_manage_rules);
+                            }}
+                            className="p-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                            title="Edit permissions"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+
+                          {isAdmin && (
+                            <button
+                              onClick={() => setDeletingUserAccount({ id: u.id, username: u.username })}
+                              disabled={u.id === sessionUser?.id}
+                              className="p-1.5 bg-slate-900 border border-slate-800 text-slate-500 hover:text-red-400 hover:border-red-950 rounded-lg transition-colors cursor-not-allowed disabled:opacity-30 disabled:hover:text-slate-500 cursor-pointer"
+                              title="Delete user"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      {/* Add User Modal */}
-      {isAddUserModalOpen && (
-        <AddUserModal
-          newCodename={newCodename}
-          setNewCodename={setNewCodename}
-          newFullName={newFullName}
-          setNewFullName={setNewFullName}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          newRole={newRole}
-          setNewRole={setNewRole}
-          hasChutiAccess={hasChutiAccess}
-          setHasChutiAccess={setHasChutiAccess}
-          hasQuotesAccess={hasQuotesAccess}
-          setHasQuotesAccess={setHasQuotesAccess}
-          allowedTypes={allowedTypes}
-          setAllowedTypes={setAllowedTypes}
-          canManageRules={canManageRules}
-          setCanManageRules={setCanManageRules}
-          submitting={submitting}
-          onSubmit={handleCreateUser}
-          generatedPassword={generatedPassword}
-          onClose={() => {
-            setIsAddUserModalOpen(false);
-            setGeneratedPassword(null);
-            setCanManageRules(false);
-            setHasChutiAccess(false);
-            setHasQuotesAccess(false);
-          }}
-          onCopyPassword={() => {
-            if (generatedPassword) {
-              navigator.clipboard.writeText(generatedPassword);
-              toast.success('Password copied to clipboard!');
-            }
-          }}
-        />
-      )}
+      {mounted && typeof window !== "undefined" && document.getElementById("root-modals-portal") ? (
+        createPortal(
+          <>
+            {/* Add User Modal */}
+            {isAddUserModalOpen && (
+              <AddUserModal
+                newCodename={newCodename}
+                setNewCodename={setNewCodename}
+                newFullName={newFullName}
+                setNewFullName={setNewFullName}
+                newPassword={newPassword}
+                setNewPassword={setNewPassword}
+                newRole={newRole}
+                setNewRole={setNewRole}
+                hasChutiAccess={hasChutiAccess}
+                setHasChutiAccess={setHasChutiAccess}
+                hasQuotesAccess={hasQuotesAccess}
+                setHasQuotesAccess={setHasQuotesAccess}
+                allowedTypes={allowedTypes}
+                setAllowedTypes={setAllowedTypes}
+                canManageRules={canManageRules}
+                setCanManageRules={setCanManageRules}
+                submitting={submitting}
+                onSubmit={handleCreateUser}
+                generatedPassword={generatedPassword}
+                onClose={() => {
+                  setIsAddUserModalOpen(false);
+                  setGeneratedPassword(null);
+                  setCanManageRules(false);
+                  setHasChutiAccess(false);
+                  setHasQuotesAccess(false);
+                }}
+                onCopyPassword={() => {
+                  if (generatedPassword) {
+                    navigator.clipboard.writeText(generatedPassword);
+                    toast.success('Password copied to clipboard!');
+                  }
+                }}
+              />
+            )}
 
-      {/* Edit User Modal */}
-      {editingProfile && (
-        <EditProfileModal
-          username={editingProfile.username}
-          fullName={editUserFullName}
-          setFullName={setEditUserFullName}
-          role={editUserRole}
-          setRole={setEditUserRole}
-          hasChutiAccess={editHasChutiAccess}
-          setHasChutiAccess={setEditHasChutiAccess}
-          hasQuotesAccess={editHasQuotesAccess}
-          setHasQuotesAccess={setEditHasQuotesAccess}
-          allowedTypes={editUserAllowedTypes}
-          setAllowedTypes={setEditUserAllowedTypes}
-          canManageRules={editUserCanManageRules}
-          setCanManageRules={setEditUserCanManageRules}
-          submitting={submitting}
-          onClose={() => setEditingProfile(null)}
-          onSave={handleUpdateUser}
-          editorRole={profile?.role === 'supervisor' ? 'supervisor' : 'admin'}
-        />
-      )}
+            {/* Edit User Modal */}
+            {editingProfile && (
+              <EditProfileModal
+                username={editingProfile.username}
+                fullName={editUserFullName}
+                setFullName={setEditUserFullName}
+                role={editUserRole}
+                setRole={setEditUserRole}
+                hasChutiAccess={editHasChutiAccess}
+                setHasChutiAccess={setEditHasChutiAccess}
+                hasQuotesAccess={editHasQuotesAccess}
+                setHasQuotesAccess={setEditHasQuotesAccess}
+                allowedTypes={editUserAllowedTypes}
+                setAllowedTypes={setEditUserAllowedTypes}
+                canManageRules={editUserCanManageRules}
+                setCanManageRules={setEditUserCanManageRules}
+                submitting={submitting}
+                onClose={() => setEditingProfile(null)}
+                onSave={handleUpdateUser}
+                editorRole={profile?.role === 'supervisor' ? 'supervisor' : 'admin'}
+              />
+            )}
 
-      {/* Delete User Confirmation Modal */}
-      <ConfirmModal
-        isOpen={!!deletingUserAccount}
-        onClose={() => setDeletingUserAccount(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete User Account"
-        message={
-          <div>
-            Are you sure you want to permanently delete the user account{' '}
-            <strong className="text-white">{(deletingUserAccount?.username || '').toUpperCase()}</strong>?
-            This will delete all corresponding profile info, leaves, and activity records. This action cannot be undone.
-          </div>
-        }
-        confirmText="Permanently Delete"
-        cancelText="Cancel"
-        isDanger={true}
-      />
-    </div>
+            {/* Delete User Confirmation Modal */}
+            <ConfirmModal
+              isOpen={!!deletingUserAccount}
+              onClose={() => setDeletingUserAccount(null)}
+              onConfirm={handleDeleteConfirm}
+              title="Delete User Account"
+              message={
+                <div>
+                  Are you sure you want to permanently delete the user account{' '}
+                  <strong className="text-white">{(deletingUserAccount?.username || '').toUpperCase()}</strong>?
+                  This will delete all corresponding profile info, leaves, and activity records. This action cannot be undone.
+                </div>
+              }
+              confirmText="Permanently Delete"
+              cancelText="Cancel"
+              isDanger={true}
+            />
+          </>,
+          document.getElementById("root-modals-portal")!
+        )
+      ) : null}
+    </>
   );
 };
