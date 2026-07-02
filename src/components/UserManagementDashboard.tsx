@@ -7,7 +7,6 @@ import { Profile } from '@/types';
 import { useAdminActions } from '@/hooks/useAdminActions';
 import { Navbar } from '@/components/Navbar';
 import { UnifiedSidebar } from '@/components/UnifiedSidebar';
-import { AddUserModal } from '@/components/modals/AddUserModal';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { Modal } from '@/components/Modal';
@@ -17,6 +16,7 @@ import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { CategoryCheckboxList } from '@/components/CategoryCheckboxList';
 import { Toggle } from '@/components/Toggle';
+import { StaffSettingsForm } from '@/components/StaffSettingsForm';
 
 interface UserManagementDashboardProps {
   sessionUser: { id: string } | null;
@@ -54,7 +54,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   }, []);
 
   // Add User State
-  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isCreatingNewUser, setIsCreatingNewUser] = useState(false);
   const [newCodename, setNewCodename] = useState('');
   const [newFullName, setNewFullName] = useState('');
   const [newRole, setNewRole] = useState<'admin' | 'supervisor' | 'user'>('user');
@@ -133,7 +133,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Backspace to go back from details view
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!viewingStaff) return;
+      if (!viewingStaff && !isCreatingNewUser) return;
       const activeEl = document.activeElement;
       if (activeEl) {
         const tagName = activeEl.tagName.toUpperCase();
@@ -144,11 +144,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (e.key === 'Backspace') {
         e.preventDefault();
         setViewingStaff(null);
+        setIsCreatingNewUser(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [viewingStaff]);
+  }, [viewingStaff, isCreatingNewUser]);
 
   // No database load required since leave record table is removed from User Management details view.
 
@@ -273,7 +274,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
 
     const pw = await createUser(
-      newCodename,
+      newCodename.trim(),
       newRole,
       newFullName,
       hasQuotesAccess ? allowedTypes : [],
@@ -303,7 +304,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setNewEligibleOfficeLeave(false);
       setNewAllowOvertime(false);
       setNewAllowReserve(false);
-      setIsAddUserModalOpen(false);
+      setIsCreatingNewUser(false);
       fetchProfiles();
     }
   };
@@ -387,13 +388,16 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   return (
     <>
-      {viewingStaff ? (
+      {(viewingStaff || isCreatingNewUser) ? (
         <div className="space-y-6 animate-modal-content">
           {/* Header/Top Box */}
           <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setViewingStaff(null)}
+                onClick={() => {
+                  setViewingStaff(null);
+                  setIsCreatingNewUser(false);
+                }}
                 className="p-2.5 bg-slate-850 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-750 transition-all cursor-pointer"
                 title="Go Back"
               >
@@ -401,411 +405,192 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               </button>
               <div>
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  {viewingStaff.full_name || 'Staff User'}{viewingStaff.username ? ` (${viewingStaff.username.toUpperCase()})` : ''}
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
-                    viewingStaff.role === 'admin'
-                      ? 'bg-red-950/60 border-red-900 text-red-300'
-                      : viewingStaff.role === 'supervisor'
-                        ? 'bg-amber-955/60 border-amber-805 text-amber-300'
-                        : 'bg-slate-850 border-slate-750 text-slate-400'
-                  }`}>
-                    {viewingStaff.role === 'admin' ? 'Admin' : (viewingStaff.role === 'supervisor' ? 'Supervisor' : 'Staff')}
-                  </span>
+                  {isCreatingNewUser ? (
+                    'Add New Staff'
+                  ) : (
+                    <>
+                      {viewingStaff?.full_name || 'Staff User'}{viewingStaff?.username ? ` (${viewingStaff.username.trim().toUpperCase()})` : ''}
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
+                        viewingStaff?.role === 'admin'
+                          ? 'bg-red-950/60 border-red-900 text-red-300'
+                          : viewingStaff?.role === 'supervisor'
+                            ? 'bg-amber-955/60 border-amber-805 text-amber-300'
+                            : 'bg-slate-850 border-slate-750 text-slate-400'
+                      }`}>
+                        {viewingStaff?.role === 'admin' ? 'Admin' : (viewingStaff?.role === 'supervisor' ? 'Supervisor' : 'Staff')}
+                      </span>
+                    </>
+                  )}
                 </h2>
-                <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-405">
-                  <div>Working Hours: <strong className="text-white">{viewingStaff.working_hours || 9.5} hrs</strong></div>
-                  <div>Break Time: <strong className="text-white">{viewingStaff.break_time || 0} mins</strong></div>
-                </div>
+                {!isCreatingNewUser && viewingStaff && (
+                  <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-405">
+                    <div>Working Hours: <strong className="text-white">{viewingStaff.working_hours || 9.5} hrs</strong></div>
+                    <div>Break Time: <strong className="text-white">{viewingStaff.break_time || 0} mins</strong></div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Profile Details Fields */}
-          <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-4">
-            {isAdmin ? (
+          {/* Reusable settings form */}
+          {isCreatingNewUser ? (
+            <StaffSettingsForm
+              isNewUser={true}
+              codename={newCodename}
+              setCodename={setNewCodename}
+              fullName={newFullName}
+              setFullName={setNewFullName}
+              role={newRole}
+              setRole={setNewRole}
+              hasChutiAccess={hasChutiAccess}
+              setHasChutiAccess={setHasChutiAccess}
+              needsApproval={newNeedsApproval}
+              setNeedsApproval={setNewNeedsApproval}
+              supervisors={profiles.filter(p => p.role === 'supervisor')}
+              supervisorIds={newSupervisorIds}
+              setSupervisorIds={setNewSupervisorIds}
+              eligibleOfficeLeave={newEligibleOfficeLeave}
+              setEligibleOfficeLeave={setNewEligibleOfficeLeave}
+              eligibleGovtHoliday={newEligibleGovtHoliday}
+              setEligibleGovtHoliday={setNewEligibleGovtHoliday}
+              allowOvertime={newAllowOvertime}
+              setAllowOvertime={setNewAllowOvertime}
+              allowReserve={newAllowReserve}
+              setAllowReserve={setNewAllowReserve}
+              hasQuotesAccess={hasQuotesAccess}
+              setHasQuotesAccess={setHasQuotesAccess}
+              allowedTypes={allowedTypes}
+              setAllowedTypes={setAllowedTypes}
+              canManageRules={canManageRules}
+              setCanManageRules={setCanManageRules}
+              isAdmin={isAdmin}
+            />
+          ) : (
+            <StaffSettingsForm
+              isNewUser={false}
+              fullName={editUserFullName}
+              setFullName={setEditUserFullName}
+              role={editUserRole}
+              setRole={setEditUserRole}
+              hasChutiAccess={editHasChutiAccess}
+              setHasChutiAccess={setEditHasChutiAccess}
+              needsApproval={editNeedsApproval}
+              setNeedsApproval={setEditNeedsApproval}
+              supervisors={profiles.filter(p => p.role === 'supervisor')}
+              supervisorIds={editSupervisorIds}
+              setSupervisorIds={setEditSupervisorIds}
+              eligibleOfficeLeave={editEligibleOfficeLeave}
+              setEligibleOfficeLeave={setEditEligibleOfficeLeave}
+              eligibleGovtHoliday={editEligibleGovtHoliday}
+              setEligibleGovtHoliday={setEditEligibleGovtHoliday}
+              allowOvertime={editAllowOvertime}
+              setAllowOvertime={setEditAllowOvertime}
+              allowReserve={editAllowReserve}
+              setAllowReserve={setEditAllowReserve}
+              hasQuotesAccess={editHasQuotesAccess}
+              setHasQuotesAccess={setEditHasQuotesAccess}
+              allowedTypes={editUserAllowedTypes}
+              setAllowedTypes={setEditUserAllowedTypes}
+              canManageRules={editUserCanManageRules}
+              setCanManageRules={setEditUserCanManageRules}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          {/* Action Buttons at the Bottom */}
+          <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
+            {isCreatingNewUser ? (
               <>
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Kamrul Islam"
-                    value={editUserFullName}
-                    onChange={(e) => setEditUserFullName(e.target.value)}
-                    className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50"
-                  />
+                {/* Left side actions (Cancel) */}
+                <div className="flex flex-wrap gap-2.5 font-sans">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingNewUser(false);
+                      setNewCodename('');
+                      setNewFullName('');
+                      setNewRole('user');
+                      setAllowedTypes([]);
+                      setCanManageRules(false);
+                      setHasChutiAccess(true);
+                      setHasQuotesAccess(false);
+                      setNewNeedsApproval(false);
+                      setNewSupervisorIds([]);
+                      setNewEligibleGovtHoliday(false);
+                      setNewEligibleOfficeLeave(false);
+                      setNewAllowOvertime(false);
+                      setNewAllowReserve(false);
+                    }}
+                    className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+                  >
+                    <X className="h-3.5 w-3.5 text-red-400" /> Cancel
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Account Role</label>
-                  <select
-                    value={editUserRole}
-                    onChange={(e) => {
-                      const val = e.target.value as 'admin' | 'user' | 'supervisor';
-                      setEditUserRole(val);
-                      if (val === 'admin') {
-                        setEditUserCanManageRules(true);
-                      }
-                    }}
-                    className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50 cursor-pointer"
+                {/* Right side actions (Create User button) */}
+                <div className="font-sans">
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={handleCreateUser}
+                    className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-orange-950/20 border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                   >
-                    <option value="user">User</option>
-                    <option value="supervisor">Supervisor</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {submitting ? 'Creating...' : 'Create User'}
+                  </button>
                 </div>
               </>
             ) : (
               <>
-                <div>
-                  <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</span>
-                  <span className="text-white text-sm font-semibold">{viewingStaff.full_name || '—'}</span>
+                {/* Left side actions (Reset & Change Pass, Delete User) */}
+                <div className="flex flex-wrap gap-2.5 font-sans">
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setShowResetConfirmModal(true)}
+                      className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 text-amber-500" /> Reset Password?
+                    </button>
+                  )}
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCredNewPassword('');
+                      setCredConfirmPassword('');
+                      setShowCredentialsModal(true);
+                    }}
+                    className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+                  >
+                    <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
+                  </button>
+
+                  {isAdmin && viewingStaff && viewingStaff.role !== 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
+                      className="px-4 py-2.5 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete Account
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Account Role</span>
-                  <span className="text-white text-sm font-semibold capitalize">{viewingStaff.role || '—'}</span>
+
+                {/* Right side actions (Save Changes button) */}
+                <div className="font-sans">
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={handleUpdateUser}
+                    className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-orange-950/20 border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                  >
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {submitting ? 'Saving...' : 'Save Changes'}
+                  </button>
                 </div>
               </>
             )}
-          </div>
-
-          {/* Workspace Access & Permissions Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Leave Tracker Access Card */}
-            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${editHasChutiAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
-                  <h3 className="text-sm font-bold text-white">Leave Tracker Workspace</h3>
-                </div>
-                {isAdmin && (
-                  <Toggle
-                    checked={editHasChutiAccess}
-                    onChange={setEditHasChutiAccess}
-                    label="Access"
-                  />
-                )}
-              </div>
-
-              {editHasChutiAccess ? (
-                <div className="space-y-4 text-xs text-slate-350">
-                  {/* Supervisor Approval Required */}
-                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
-                    <div className="relative flex items-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={editNeedsApproval}
-                        disabled={!isAdmin}
-                        onChange={(e) => setEditNeedsApproval(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                        editNeedsApproval
-                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                          : 'border-slate-700 bg-slate-955 text-transparent'
-                      }`}>
-                        {editNeedsApproval && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
-                        Supervisor Approval Required?
-                      </span>
-                      <span className="text-[10px] text-slate-500 block leading-tight">
-                        Requires approval from a supervisor for any leave submissions.
-                      </span>
-                    </div>
-                  </label>
-
-                  {/* Supervisors List Selection */}
-                  {editNeedsApproval && profiles.filter(p => p.role === 'supervisor').length > 0 && (
-                    <div className="space-y-2 bg-slate-955/40 p-3 rounded-xl border border-slate-850 ml-6.5">
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="font-semibold text-slate-400">Select Supervisors</span>
-                        <span className="text-slate-500 font-mono">
-                          {editSupervisorIds.length > 0 ? `${editSupervisorIds.length} Selected` : 'All Selected'}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
-                        <label className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-all select-none text-[10px] ${
-                          isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
-                        } ${
-                          editSupervisorIds.length === 0 
-                            ? 'border-orange-600/60 bg-orange-955/20 text-orange-400 font-semibold' 
-                            : 'border-slate-800 bg-slate-955 text-slate-400'
-                        }`}>
-                          <input
-                            type="checkbox"
-                            checked={editSupervisorIds.length === 0}
-                            disabled={!isAdmin}
-                            onChange={() => setEditSupervisorIds([])}
-                            className="shrink-0 scale-75 cursor-pointer"
-                          />
-                          <span>All</span>
-                        </label>
-                        {profiles.filter(p => p.role === 'supervisor').map(sup => {
-                          const isChecked = editSupervisorIds.includes(sup.id);
-                          return (
-                            <label 
-                              key={sup.id} 
-                              className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-all select-none text-[10px] ${
-                                isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
-                              } ${
-                                isChecked 
-                                  ? 'border-orange-600/60 bg-orange-955/20 text-orange-400 font-semibold' 
-                                  : 'border-slate-800 bg-slate-955 text-slate-400'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                disabled={!isAdmin}
-                                onChange={() => {
-                                  if (isChecked) {
-                                    setEditSupervisorIds(editSupervisorIds.filter(id => id !== sup.id));
-                                  } else {
-                                    setEditSupervisorIds([...editSupervisorIds, sup.id]);
-                                  }
-                                }}
-                                className="shrink-0 scale-75 cursor-pointer"
-                              />
-                              <span>{sup.username.toUpperCase()}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Office Leave Eligible */}
-                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
-                    <div className="relative flex items-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={editEligibleOfficeLeave}
-                        disabled={!isAdmin}
-                        onChange={(e) => setEditEligibleOfficeLeave(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                        editEligibleOfficeLeave
-                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                          : 'border-slate-700 bg-slate-955 text-transparent'
-                      }`}>
-                        {editEligibleOfficeLeave && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                      </div>
-
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
-                        Office Leave Eligible?
-                      </span>
-                      <span className="text-[10px] text-slate-500 block leading-tight">
-                        Eligible for annual office leaves & Eid holidays.
-                      </span>
-                    </div>
-                  </label>
-
-                  {/* Govt Holiday Eligible */}
-                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
-                    <div className="relative flex items-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={editEligibleGovtHoliday}
-                        disabled={!isAdmin}
-                        onChange={(e) => setEditEligibleGovtHoliday(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                        editEligibleGovtHoliday
-                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                          : 'border-slate-700 bg-slate-955 text-transparent'
-                      }`}>
-                        {editEligibleGovtHoliday && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                      </div>
-
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
-                        Govt Holiday Eligible?
-                      </span>
-                      <span className="text-[10px] text-slate-500 block leading-tight">
-                        Eligible for government list holidays.
-                      </span>
-                    </div>
-                  </label>
-
-                  {/* Overtime Category */}
-                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
-                    <div className="relative flex items-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={editAllowOvertime}
-                        disabled={!isAdmin}
-                        onChange={(e) => setEditAllowOvertime(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                        editAllowOvertime
-                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                          : 'border-slate-700 bg-slate-955 text-transparent'
-                      }`}>
-                        {editAllowOvertime && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                      </div>
-
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
-                        Overtime Category?
-                      </span>
-                      <span className="text-[10px] text-slate-500 block leading-tight">
-                        Allows overtime submission category.
-                      </span>
-                    </div>
-                  </label>
-
-                  {/* Reserve Govt Holiday */}
-                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
-                    <div className="relative flex items-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={editAllowReserve}
-                        disabled={!isAdmin}
-                        onChange={(e) => setEditAllowReserve(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                        editAllowReserve
-                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                          : 'border-slate-700 bg-slate-955 text-transparent'
-                      }`}>
-                        {editAllowReserve && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                      </div>
-
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
-                        Reserve Govt Holiday?
-                      </span>
-                      <span className="text-[10px] text-slate-500 block leading-tight">
-                        Provides option to reserve government list holidays.
-                      </span>
-                    </div>
-                  </label>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 italic py-4 text-center">This user does not have access to the Leave Tracker workspace.</p>
-              )}
-            </div>
-
-            {/* Quotes Manager Access Card */}
-            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${editHasQuotesAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
-                  <h3 className="text-sm font-bold text-white">Quotes Manager Workspace</h3>
-                </div>
-                {isAdmin && (
-                  <Toggle
-                    checked={editHasQuotesAccess}
-                    onChange={setEditHasQuotesAccess}
-                    label="Access"
-                  />
-                )}
-              </div>
-
-              {editHasQuotesAccess ? (
-                <div className="space-y-4">
-                  {/* Category Checklist */}
-                  <CategoryCheckboxList
-                    allowedTypes={editUserAllowedTypes}
-                    onChange={setEditUserAllowedTypes}
-                  />
-
-                  {/* Can Manage Quote Rules (Only Admin edits) */}
-                  <div className="border-t border-slate-850/70 pt-3">
-                    <label className={`flex items-center gap-2.5 select-none ${
-                      isAdmin && editUserRole !== 'admin' ? 'cursor-pointer group' : 'opacity-70 pointer-events-none'
-                    }`}>
-                      <div className="relative flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={editUserCanManageRules || editUserRole === 'admin'}
-                          disabled={!isAdmin || editUserRole === 'admin'}
-                          onChange={(e) => setEditUserCanManageRules(e.target.checked)}
-                          className="sr-only"
-                        />
-                        <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                          (editUserCanManageRules || editUserRole === 'admin')
-                            ? 'bg-orange-600 border-orange-500 text-white font-bold'
-                            : 'border-slate-700 bg-slate-955 text-transparent'
-                        }`}>
-                          {(editUserCanManageRules || editUserRole === 'admin') && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                        </div>
-                      </div>
-                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
-                        Can Manage Quote Rules? {editUserRole === 'admin' && <span className="text-[10px] text-slate-500 font-normal italic ml-1">(Always Allowed for Admin)</span>}
-                      </span>
-                    </label>
-                    <p className="text-[10px] text-slate-500 mt-1 ml-6.5">
-                      Allows user to add, edit, or delete compliance rules and view history.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 italic py-4 text-center">This user does not have access to the Quotes Manager workspace.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons at the Bottom */}
-          <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
-            {/* Left side actions (Reset & Change Pass, Delete User) */}
-            <div className="flex flex-wrap gap-2.5 font-sans">
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setShowResetConfirmModal(true)}
-                  className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-                >
-                  <RefreshCw className="h-3.5 w-3.5 text-amber-500" /> Reset Password?
-                </button>
-              )}
-              
-              <button
-                type="button"
-                onClick={() => {
-                  setCredNewPassword('');
-                  setCredConfirmPassword('');
-                  setShowCredentialsModal(true);
-                }}
-                className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-              >
-                <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
-              </button>
-
-              {isAdmin && viewingStaff.role !== 'admin' && (
-                <button
-                  type="button"
-                  onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
-                  className="px-4 py-2.5 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Delete Account
-                </button>
-              )}
-            </div>
-
-            {/* Right side actions (Save Changes button) */}
-            <div className="font-sans">
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={handleUpdateUser}
-                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-orange-950/20 border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
-              >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {submitting ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
           </div>
         </div>
       ) : (
@@ -836,7 +621,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     setNewEligibleOfficeLeave(false);
                     setNewAllowOvertime(false);
                     setNewAllowReserve(false);
-                    setIsAddUserModalOpen(true);
+                    setIsCreatingNewUser(true);
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-orange-950/20 active:scale-95 transition-all cursor-pointer"
                 >
@@ -923,7 +708,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                             )}
                           </div>
                           <div className="text-[10px] text-slate-455 uppercase mt-0.5 tracking-wider font-mono">
-                            {u.username}
+                            {u.username.trim()}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -976,54 +761,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       {mounted && typeof window !== "undefined" && document.getElementById("root-modals-portal") ? (
         createPortal(
           <>
-            {/* Add User Modal */}
-            {isAddUserModalOpen && (
-              <AddUserModal
-                newCodename={newCodename}
-                setNewCodename={setNewCodename}
-                newFullName={newFullName}
-                setNewFullName={setNewFullName}
-                newRole={newRole}
-                setNewRole={setNewRole}
-                hasChutiAccess={hasChutiAccess}
-                setHasChutiAccess={setHasChutiAccess}
-                hasQuotesAccess={hasQuotesAccess}
-                setHasQuotesAccess={setHasQuotesAccess}
-                allowedTypes={allowedTypes}
-                setAllowedTypes={setAllowedTypes}
-                canManageRules={canManageRules}
-                setCanManageRules={setCanManageRules}
-                submitting={submitting}
-                onSubmit={handleCreateUser}
-                onClose={() => {
-                  setIsAddUserModalOpen(false);
-                  setGeneratedPassword(null);
-                  setCanManageRules(false);
-                  setHasChutiAccess(true);
-                  setHasQuotesAccess(false);
-                  setAllowedTypes([]);
-                  setNewNeedsApproval(false);
-                  setNewSupervisorIds([]);
-                  setNewEligibleGovtHoliday(false);
-                  setNewEligibleOfficeLeave(false);
-                  setNewAllowOvertime(false);
-                  setNewAllowReserve(false);
-                }}
-                supervisors={profiles.filter(p => p.role === 'supervisor')}
-                needsSupervisorApproval={newNeedsApproval}
-                setNeedsSupervisorApproval={setNewNeedsApproval}
-                supervisorIds={newSupervisorIds}
-                setSupervisorIds={setNewSupervisorIds}
-                eligibleGovtHoliday={newEligibleGovtHoliday}
-                setEligibleGovtHoliday={setNewEligibleGovtHoliday}
-                eligibleOfficeLeave={newEligibleOfficeLeave}
-                setEligibleOfficeLeave={setNewEligibleOfficeLeave}
-                allowOvertime={newAllowOvertime}
-                setAllowOvertime={setNewAllowOvertime}
-                allowReserve={newAllowReserve}
-                setAllowReserve={setNewAllowReserve}
-              />
-            )}
+
 
             {/* Reset Password Confirmation Modal */}
             <ConfirmModal
