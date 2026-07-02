@@ -1,0 +1,590 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-slate-955: var(--slate-955);
+  --color-slate-950: var(--slate-950);
+  --color-slate-900: var(--slate-900);
+  --color-slate-850: var(--slate-850);
+  --color-slate-800: var(--slate-800);
+  --color-slate-700: var(--slate-700);
+  --color-slate-500: var(--slate-500);
+  --color-slate-450: var(--slate-450);
+  --color-slate-400: var(--slate-400);
+  --color-slate-350: var(--slate-350);
+  --color-slate-300: var(--slate-300);
+  --color-slate-200: var(--slate-200);
+  --color-slate-100: var(--slate-100);
+  --color-slate-50: var(--slate-50);
+  --color-slate-455: var(--slate-455);
+
+  --color-blue-300: var(--blue-300);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-550: var(--blue-550);
+  --color-blue-600: var(--blue-600);
+  --color-blue-650: var(--blue-650);
+  --color-blue-700: var(--blue-700);
+  --color-blue-800: var(--blue-800);
+  --color-blue-900: var(--blue-900);
+  --color-blue-950: var(--blue-950);
+  --color-blue-955: var(--blue-955);
+
+  --color-emerald-300: var(--emerald-300);
+  --color-emerald-400: var(--emerald-400);
+  --color-emerald-450: var(--emerald-450);
+  --color-emerald-500: var(--emerald-500);
+  --color-emerald-950: var(--emerald-950);
+
+  --color-amber-300: var(--amber-300);
+  --color-amber-400: var(--amber-400);
+  --color-amber-500: var(--amber-500);
+  --color-amber-950: var(--amber-950);
+  --color-amber-955: var(--amber-955);
+
+  --color-red-300: var(--red-300);
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-950: var(--red-950);
+
+  --color-purple-300: var(--purple-300);
+  --color-purple-400: var(--purple-400);
+  --color-purple-500: var(--purple-500);
+  --color-purple-550: var(--purple-550);
+  --color-purple-600: var(--purple-600);
+  --color-purple-700: var(--purple-700);
+  --color-purple-800: var(--purple-800);
+  --color-purple-900: var(--purple-900);
+  --color-purple-950: var(--purple-950);
+  --color-purple-955: var(--purple-955);
+
+  --color-blue-805: var(--blue-805);
+
+  --color-violet-400: var(--violet-400);
+  --color-violet-500: var(--violet-500);
+  --color-violet-900: var(--violet-900);
+
+  --color-indigo-300: var(--indigo-300);
+  --color-indigo-400: var(--indigo-400);
+  --color-indigo-500: var(--indigo-500);
+  --color-indigo-600: var(--indigo-600);
+  --color-indigo-900: var(--indigo-900);
+  --color-indigo-955: var(--indigo-955);
+
+  --color-cyan-400: var(--cyan-400);
+}
+
+:root {
+  /* Light Mode Palette - Light backgrounds, dark text with orange accents */
+  --slate-955: #fcfcfc; /* page background */
+  --slate-950: #f7f7f7; /* card container background */
+  --slate-900: #ffffff; /* card background */
+  --slate-850: #e5e5e5; /* table/divider borders */
+  --slate-800: #d4d4d4; /* inputs/toggle borders */
+  --slate-700: #a3a3a3; /* active/hover borders */
+  --slate-500: #525252; /* medium gray - enhanced contrast */
+  --slate-450: #404040;
+  --slate-400: #404040; /* labels/muted text */
+  --slate-350: #404040; /* secondary table cell text */
+  --slate-300: #262626; /* secondary body text */
+  --slate-200: #171717; /* headings */
+  --slate-100: #0a0a0a; /* primary body text */
+  --slate-50: #000000;  /* extra dark text */
+  --slate-455: #262626; /* form labels */
+
+  /* Orange/Coral main theme colors replacing Blue */
+  --blue-300: #ea580d; /* Brand orange text */
+  --blue-400: #ea580d; /* Main theme color */
+  --blue-500: #c2410c; /* Darker orange hover */
+  --blue-550: #c2410c; /* Focus ring */
+  --blue-600: #ea580d; /* Primary button bg */
+  --blue-650: #c2410c; /* Darker button bg */
+  --blue-700: #9a3412; /* Border accents */
+  --blue-800: #7c2d12; /* Deep border */
+  --blue-900: #431407; /* Deep bg accents */
+  --blue-950: #fff7ed; /* Light orange background */
+  --blue-955: #fff7ed; /* Light orange bg variant */
+
+  /* Emerald colors (for approvals / positive stats) */
+  --emerald-300: #047857;
+  --emerald-400: #059669;
+  --emerald-450: #059669;
+  --emerald-500: #065f46;
+  --emerald-950: #ecfdf5;
+
+  /* Amber colors */
+  --amber-300: #b45309;
+  --amber-400: #d97706;
+  --amber-500: #92400e;
+  --amber-950: #fffbeb;
+  --amber-955: #fffbeb;
+
+  /* Red colors */
+  --red-300: #b91c1c;
+  --red-400: #dc2626;
+  --red-500: #991b1b;
+  --red-950: #fef2f2;
+
+  /* Purple / Violet / Indigo / Cyan (All mapped to Orange/Amber for brand consistency) */
+  --purple-300: #ea580d;
+  --purple-400: #f97316;
+  --purple-500: #c2410c;
+  --purple-550: #c2410c;
+  --purple-600: #ea580d;
+  --purple-700: #9a3412;
+  --purple-800: #7c2d12;
+  --purple-900: #431407;
+  --purple-950: #fff7ed;
+  --purple-955: #fff7ed;
+  --blue-805: #7c2d12;
+  --violet-400: #f97316;
+  --violet-500: #c2410c;
+  --violet-900: #431407;
+  --indigo-300: #ea580d;
+  --indigo-400: #ea580d;
+  --indigo-500: #c2410c;
+  --indigo-600: #ea580d;
+  --indigo-900: #431407;
+  --indigo-955: #fff7ed;
+  --cyan-400: #fdba74;
+}
+
+.dark {
+  /* Dark Mode Palette - Pure black background and neutral dark grey components */
+  --slate-955: #000000; /* Pure black background */
+  --slate-950: #050505; /* Card container background */
+  --slate-900: #0a0a0a; /* Card background */
+  --slate-850: #171717; /* Table/divider borders */
+  --slate-800: #262626; /* Inputs/toggle borders */
+  --slate-700: #404040;
+  --slate-500: #737373;
+  --slate-450: #737373;
+  --slate-400: #a3a3a3;
+  --slate-350: #a3a3a3;
+  --slate-300: #d4d4d4;
+  --slate-200: #e5e5e5;
+  --slate-100: #f5f5f5;
+  --slate-50: #fafafa;
+  --slate-455: #a3a3a3;
+
+  /* Orange/Coral main theme colors replacing Blue */
+  --blue-300: #fed7aa; /* Light orange text */
+  --blue-400: #f97316; /* Bright orange */
+  --blue-500: #ea580d; /* Brand orange accent */
+  --blue-550: #ea580d; /* Focus ring */
+  --blue-600: #ea580d; /* Primary button bg */
+  --blue-650: #c2410c; /* Darker button bg */
+  --blue-700: #c2410c; /* Border accents */
+  --blue-800: #9a3412; /* Deep border */
+  --blue-900: #7c2d12; /* Deep bg accents */
+  --blue-950: #431407; /* Deep orange/brown background */
+  --blue-955: #431407; /* Deep orange bg variant */
+
+  /* Emerald colors */
+  --emerald-300: #34d399;
+  --emerald-400: #10b981;
+  --emerald-450: #34d399;
+  --emerald-500: #059669;
+  --emerald-950: #062f22;
+
+  /* Amber colors */
+  --amber-300: #fcd34d;
+  --amber-400: #f59e0b;
+  --amber-500: #d97706;
+  --amber-950: #451a03;
+  --amber-955: #451a03;
+
+  /* Red colors */
+  --red-300: #fca5a5;
+  --red-400: #ef4444;
+  --red-500: #dc2626;
+  --red-950: #450a0a;
+
+  /* Purple / Violet / Indigo / All mapped to Orange/Amber */
+  --purple-300: #fdba74;
+  --purple-400: #f97316;
+  --purple-500: #ea580d;
+  --purple-550: #ea580d;
+  --purple-600: #ea580d;
+  --purple-700: #c2410c;
+  --purple-800: #9a3412;
+  --purple-900: #7c2d12;
+  --purple-950: #431407;
+  --purple-955: #431407;
+  --blue-805: #9a3412;
+  --violet-400: #f97316;
+  --violet-500: #ea580d;
+  --violet-900: #7c2d12;
+  --indigo-300: #ffedd5;
+  --indigo-400: #fdba74;
+  --indigo-500: #ea580d;
+  --indigo-600: #ea580d;
+  --indigo-900: #7c2d12;
+  --indigo-955: #431407;
+  --cyan-400: #f97316;
+}
+
+body {
+  background: var(--color-slate-955);
+  color: var(--color-slate-300);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Smooth theme transition for backgrounds, borders and text colors */
+body, header, main, section, table, tr, td, th, button, input, select, textarea, p, span, h1, h2, h3, h4, h5, h6, a {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, text-decoration-color 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+}
+
+/* Make date and time picker calendar/clock icons inverted only in dark mode */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Light mode overrides for text-white headings so they are readable on light background */
+:root:not(.dark) .text-white {
+  color: #0f172a !important;
+}
+
+/* Exclude buttons, badges, or colored/filled containers in light mode to keep their contrast text as white */
+:root:not(.dark) button.text-white,
+:root:not(.dark) button .text-white,
+:root:not(.dark) a.text-white,
+:root:not(.dark) .bg-blue-600.text-white,
+:root:not(.dark) .bg-blue-600 .text-white,
+:root:not(.dark) .bg-purple-600.text-white,
+:root:not(.dark) .bg-purple-600 .text-white,
+:root:not(.dark) .bg-emerald-600.text-white,
+:root:not(.dark) .bg-emerald-600 .text-white,
+:root:not(.dark) .bg-red-600.text-white,
+:root:not(.dark) .bg-red-600 .text-white,
+:root:not(.dark) .bg-amber-600.text-white,
+:root:not(.dark) .bg-amber-600 .text-white,
+:root:not(.dark) .bg-indigo-600.text-white,
+:root:not(.dark) .bg-indigo-600 .text-white,
+:root:not(.dark) .bg-blue-650.text-white,
+:root:not(.dark) .bg-blue-650 .text-white,
+:root:not(.dark) .bg-amber-650.text-white,
+:root:not(.dark) .bg-amber-650 .text-white,
+:root:not(.dark) .bg-purple-950.text-white,
+:root:not(.dark) .bg-purple-950 .text-white,
+:root:not(.dark) [class*="bg-blue-"] .text-white,
+:root:not(.dark) [class*="bg-purple-"] .text-white,
+:root:not(.dark) [class*="bg-emerald-"] .text-white,
+:root:not(.dark) [class*="bg-red-"] .text-white,
+:root:not(.dark) [class*="bg-amber-"] .text-white,
+:root:not(.dark) [class*="bg-indigo-"] .text-white,
+:root:not(.dark) [class*="bg-slate-700"] .text-white,
+:root:not(.dark) [class*="bg-slate-800"] .text-white {
+  color: #ffffff !important;
+}
+
+/* Light mode support for specific glassmorphism or hover states */
+:root:not(.dark) .bg-slate-900\/20 {
+  background-color: rgba(241, 245, 249, 0.6) !important;
+}
+:root:not(.dark) .bg-slate-900\/40 {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+}
+:root:not(.dark) .bg-slate-950\/60 {
+  background-color: rgba(248, 250, 252, 0.8) !important;
+}
+:root:not(.dark) .bg-slate-950\/80 {
+  background-color: rgba(241, 245, 249, 0.9) !important;
+}
+:root:not(.dark) .bg-slate-955\/80 {
+  background-color: rgba(15, 23, 42, 0.3) !important; /* backdrop dim */
+}
+:root:not(.dark) .bg-slate-955\/90 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+:root:not(.dark) .bg-purple-950\/45 {
+  background-color: rgba(234, 88, 13, 0.08) !important;
+  border-color: rgba(234, 88, 13, 0.2) !important;
+}
+:root:not(.dark) .bg-blue-950\/20 {
+  background-color: rgba(234, 88, 13, 0.06) !important;
+  border-color: rgba(234, 88, 13, 0.15) !important;
+}
+:root:not(.dark) .bg-amber-950\/50 {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+  border-color: rgba(217, 119, 6, 0.2) !important;
+}
+:root:not(.dark) .bg-emerald-950\/50 {
+  background-color: rgba(5, 150, 105, 0.08) !important;
+  border-color: rgba(5, 150, 105, 0.2) !important;
+}
+:root:not(.dark) .bg-red-950\/50 {
+  background-color: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.2) !important;
+}
+:root:not(.dark) .bg-slate-955\/20 {
+  background-color: rgba(248, 250, 252, 0.2) !important;
+}
+
+/* Ensure card borders are visible and crisp in light mode */
+:root:not(.dark) [class*="border-slate-900"] {
+  border-color: var(--slate-800) !important;
+}
+
+/* Make card titles (e.g. Unadjusted labels) much clearer and more readable in light mode */
+:root:not(.dark) [class*="bg-slate-900"] .text-slate-400 {
+  color: var(--slate-300) !important;
+  font-weight: 600;
+}
+
+/* Ensure text in the admin mode card is highly readable in light mode */
+:root:not(.dark) .admin-mode-banner .text-white {
+  color: #9a3412 !important; /* Brand dark orange */
+  font-weight: 700;
+}
+:root:not(.dark) .admin-mode-banner .text-slate-400 {
+  color: #7c2d12 !important; /* Deep orange */
+  font-weight: 500;
+}
+/* Ensure text in the push notification card is highly readable in light mode */
+:root:not(.dark) .push-notification-banner .text-white {
+  color: #9a3412 !important; /* Brand dark orange */
+  font-weight: 700;
+}
+:root:not(.dark) .push-notification-banner .text-slate-400 {
+  color: #c2410c !important; /* Medium orange */
+  font-weight: 500;
+}
+:root:not(.dark) .bg-slate-950\/20 {
+  background-color: rgba(248, 250, 252, 0.2) !important;
+}
+
+/* ===== COMPREHENSIVE LIGHT MODE TEXT VISIBILITY FIXES ===== */
+
+/* Ensure ALL text on card backgrounds (bg-slate-900/40 → white bg in light) has high contrast */
+:root:not(.dark) .text-slate-100 {
+  color: #0f172a !important;
+}
+:root:not(.dark) .text-slate-200 {
+  color: #1e293b !important;
+}
+:root:not(.dark) .text-slate-300 {
+  color: #334155 !important;
+}
+
+/* Input text in light mode must be dark */
+:root:not(.dark) input,
+:root:not(.dark) select,
+:root:not(.dark) textarea {
+  color: #0f172a !important;
+}
+
+/* Stat card text on light backgrounds */
+:root:not(.dark) .text-blue-300 {
+  color: #c2410c !important;
+}
+:root:not(.dark) .text-emerald-300 {
+  color: #047857 !important;
+}
+:root:not(.dark) .text-amber-300 {
+  color: #b45309 !important;
+}
+:root:not(.dark) .text-red-300 {
+  color: #b91c1c !important;
+}
+:root:not(.dark) .text-purple-300 {
+  color: #c2410c !important;
+}
+:root:not(.dark) .text-indigo-300 {
+  color: #c2410c !important;
+}
+
+/* Table headers and cells readability in light mode */
+:root:not(.dark) th {
+  color: #1e293b !important;
+  font-weight: 700;
+}
+:root:not(.dark) td {
+  color: #334155 !important;
+}
+
+/* Ensure modal backdrop overlay is visible in light mode */
+:root:not(.dark) .bg-slate-955\/80,
+:root:not(.dark) .bg-slate-955\/90 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+/* Modal card backgrounds - white and readable */
+:root:not(.dark) .bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Ensure labels/meta text on blue/colored stat cards remain visible */
+:root:not(.dark) [class*="bg-blue-950"] .text-slate-300,
+:root:not(.dark) [class*="bg-blue-950"] .text-slate-400 {
+  color: #9a3412 !important;
+  font-weight: 600;
+}
+:root:not(.dark) [class*="bg-emerald-950"] .text-slate-300,
+:root:not(.dark) [class*="bg-emerald-950"] .text-slate-400 {
+  color: #047857 !important;
+  font-weight: 600;
+}
+:root:not(.dark) [class*="bg-amber-950"] .text-slate-300,
+:root:not(.dark) [class*="bg-amber-950"] .text-slate-400 {
+  color: #92400e !important;
+  font-weight: 600;
+}
+:root:not(.dark) [class*="bg-red-950"] .text-slate-300,
+:root:not(.dark) [class*="bg-red-950"] .text-slate-400 {
+  color: #991b1b !important;
+  font-weight: 600;
+}
+
+/* Ensure toggle/switch labels are clearly readable in light mode */
+:root:not(.dark) .text-slate-455 {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+/* Fix notification section heading on colored backgrounds */
+:root:not(.dark) [class*="bg-blue-950/"] .text-white {
+  color: #9a3412 !important;
+  font-weight: 700;
+}
+:root:not(.dark) [class*="bg-amber-950/"] .text-white {
+  color: #92400e !important;
+  font-weight: 700;
+}
+:root:not(.dark) [class*="bg-emerald-950/"] .text-white {
+  color: #065f46 !important;
+  font-weight: 700;
+}
+:root:not(.dark) [class*="bg-red-950/"] .text-white {
+  color: #991b1b !important;
+  font-weight: 700;
+}
+:root:not(.dark) [class*="bg-purple-950/"] .text-white {
+  color: #9a3412 !important;
+  font-weight: 700;
+}
+
+/* Light mode status text colors for leave statuses */
+:root:not(.dark) .text-emerald-400 {
+  color: #059669 !important;
+}
+:root:not(.dark) .text-amber-400 {
+  color: #d97706 !important;
+}
+:root:not(.dark) .text-red-400 {
+  color: #dc2626 !important;
+}
+:root:not(.dark) .text-blue-400 {
+  color: #ea580d !important;
+}
+:root:not(.dark) .text-purple-400 {
+  color: #ea580d !important;
+}
+
+/* Header text in light mode - ensure full contrast */
+:root:not(.dark) .text-slate-50 {
+  color: #020617 !important;
+}
+
+/* Small meta text (text-xs, text-[10px], text-[11px]) readability */
+:root:not(.dark) .text-slate-450 {
+  color: #475569 !important;
+  font-weight: 500;
+}
+:root:not(.dark) .text-slate-500 {
+  color: #475569 !important;
+}
+
+/* Ensure "pending" / status badge text is readable on their respective colored backgrounds */
+:root:not(.dark) [class*="bg-amber-"] .text-amber-300 {
+  color: #92400e !important;
+}
+:root:not(.dark) [class*="bg-emerald-"] .text-emerald-300 {
+  color: #047857 !important;
+}
+:root:not(.dark) [class*="bg-red-"] .text-red-300 {
+  color: #991b1b !important;
+}
+:root:not(.dark) [class*="bg-blue-"] .text-blue-300 {
+  color: #9a3412 !important;
+}
+
+/* Profile settings modal - labels and values clearly readable */
+:root:not(.dark) .text-slate-350 {
+  color: #475569 !important;
+  font-weight: 500;
+}
+
+/* Prevent layout shift/theme transition flash on page load */
+.preload,
+.preload * {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -ms-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
+}
+
+/* Force all checkboxes to be circular with custom tick mark */
+input[type="checkbox"] {
+  border-radius: 9999px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 1.125rem !important; /* 18px */
+  height: 1.125rem !important; /* 18px */
+  border: 1.5px solid #475569 !important; /* Default slate-600 */
+  background-color: transparent !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+  outline: none !important;
+  position: relative !important;
+}
+
+.dark input[type="checkbox"] {
+  border-color: #4b5563 !important; /* gray-600 */
+}
+
+input[type="checkbox"]:checked {
+  background-color: #ea580d !important; /* Brand orange */
+  border-color: #ea580d !important;
+}
+
+input[type="checkbox"]::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 5px !important;
+  width: 5px !important;
+  height: 9px !important;
+  border: solid white !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) scale(0) !important;
+  transition: transform 100ms ease-in-out !important;
+}
+
+input[type="checkbox"]:checked::after {
+  transform: rotate(45deg) scale(1) !important;
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid #c2410c !important;
+  outline-offset: 2px !important;
+}
+

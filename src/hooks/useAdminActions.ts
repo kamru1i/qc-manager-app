@@ -1,0 +1,274 @@
+'use client';
+
+import { useCallback } from 'react';
+import { supabase } from '@/utils/supabase';
+import { Profile } from '@/types';
+
+interface UseAdminActionsOptions {
+  profilesList: Profile[];
+  setProfilesList: React.Dispatch<React.SetStateAction<Profile[]>>;
+  showToast: (type: 'success' | 'error', text: string) => void;
+  logActivity: (actionType: string, targetId: string | null, details: string) => Promise<void>;
+  setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
+  updateLastActivity: () => void;
+}
+
+export const useAdminActions = ({
+  profilesList,
+  setProfilesList,
+  showToast,
+  logActivity,
+  setSubmitting,
+  updateLastActivity,
+}: UseAdminActionsOptions) => {
+
+  // Admin: Create a new user account
+  const createUser = useCallback(async (username: string, role: 'admin' | 'user', fullName: string, allowedTypes: string[], canManageRules: boolean, password?: string) => {
+    if (!navigator.onLine) {
+      showToast('error', 'This action requires an active internet connection.');
+      return null;
+    }
+    const activePassword = password || '1234';
+    setSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.rpc('create_new_user', {
+        p_username: username.toUpperCase().trim(),
+        p_password: activePassword,
+        p_role: role,
+        p_full_name: fullName,
+        p_allowed_types: allowedTypes
+      });
+
+      if (error) throw error;
+
+      // Handle the return format from the function (array of { success, message })
+      const result = Array.isArray(data) ? data[0] : data;
+
+      if (result && result.success === false) {
+        showToast('error', result.message || 'Failed to create user.');
+        setSubmitting(false);
+        return null;
+      }
+
+      // Update the newly created user profile with can_manage_rules
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username.toUpperCase().trim())
+        .single();
+      
+      if (newProfile && canManageRules) {
+        await supabase
+          .from('profiles')
+          .update({ can_manage_rules: true })
+          .eq('id', newProfile.id);
+      }
+
+      // Audit Log
+      await logActivity(
+        'CREATE_USER',
+        null,
+        `Created new user account '${username.toUpperCase().trim()}' (${fullName}) with role '${role}'${canManageRules ? ' [Quote Rules Permission Granted]' : ''}`
+      );
+
+      // Refresh the profiles list
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('username', { ascending: true });
+      if (profiles) setProfilesList(profiles);
+
+      showToast('success', `User created successfully! Password: ${activePassword}`);
+
+      setSubmitting(false);
+      return activePassword; // return the password so admin can copy it
+    } catch (err) {
+      console.error('Error creating user:', err);
+      showToast('error', 'Error creating user: ' + (err instanceof Error ? err.message : String(err)));
+      setSubmitting(false);
+      return null;
+    }
+  }, [showToast, logActivity, setProfilesList, setSubmitting]);
+
+  // Admin: Reset password of another user
+  const resetUserPassword = useCallback(async (userId: string, newPassword: string) => {
+    if (!navigator.onLine) {
+      showToast('error', 'This action requires an active internet connection.');
+      return false;
+    }
+    try {
+      const { data, error } = await supabase.rpc('admin_update_user_credentials', {
+        p_user_id: userId,
+        p_new_password: newPassword
+      });
+
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+
+      if (result && result.success === false) {
+        showToast('error', result.message || 'Failed to reset password.');
+        return false;
+      }
+
+      // Audit Log
+      const targetProfile = profilesList.find(p => p.id === userId);
+      const targetName = targetProfile ? `${targetProfile.username} (${targetProfile.full_name || 'N/A'})` : `ID ${userId}`;
+      await logActivity(
+        'RESET_PASSWORD',
+        userId,
+        `Reset password for user: ${targetName}`
+      );
+
+      showToast('success', 'Password changed successfully!');
+      return true;
+    } catch (err) {
+      console.error('Error resetting password:', err);
+      showToast('error', 'Error changing password: ' + (err instanceof Error ? err.message : String(err)));
+      return false;
+    }
+  }, [showToast, logActivity, profilesList]);
+
+  // Admin: Delete user
+  const deleteUser = useCallback(async (userId: string) => {
+    if (!navigator.onLine) {
+      showToast('error', 'This action requires an active internet connection.');
+      return false;
+    }
+    updateLastActivity();
+    try {
+      const { data, error } = await supabase.rpc('delete_user_by_id', {
+        p_user_id: userId
+      });
+
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+
+      if (result && result.success === false) {
+        showToast('error', result.message || 'Failed to delete user.');
+        return false;
+      }
+
+      // Audit Log
+      const targetProfile = profilesList.find(p => p.id === userId);
+      const targetName = targetProfile ? `${targetProfile.username} (${targetProfile.full_name || 'N/A'})` : `ID ${userId}`;
+      await logActivity(
+        'DELETE_USER',
+        userId,
+        `Deleted user account: ${targetName}`
+      );
+
+      setProfilesList(prev => prev.filter(p => p.id !== userId));
+      showToast('success', 'User deleted successfully!');
+      return true;
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      showToast('error', 'Error deleting user: ' + (err instanceof Error ? err.message : String(err)));
+      return false;
+    }
+  }, [showToast, logActivity, profilesList, setProfilesList, updateLastActivity]);
+
+  // Admin: Update user profile details
+  const adminUpdateUserProfile = useCallback(async (userId: string, fullName: string, role: 'admin' | 'user' | 'supervisor', allowedTypes: string[], canManageRules: boolean) => {
+    if (!navigator.onLine) {
+      showToast('error', 'This action requires an active internet connection.');
+      return false;
+    }
+    updateLastActivity();
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName.trim() || null,
+          role,
+          allowed_types: allowedTypes,
+          can_manage_rules: canManageRules
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Try to resolve target user info and track specific changes
+      const targetProfile = profilesList.find(p => p.id === userId);
+      const targetName = targetProfile ? `${targetProfile.username}` : `ID ${userId}`;
+
+      const changes: string[] = [];
+      if (targetProfile) {
+        const oldName = (targetProfile.full_name || '').trim();
+        const newName = fullName.trim();
+        if (oldName !== newName) {
+          changes.push(`Name: '${oldName}' → '${newName}'`);
+        }
+
+        const oldRole = targetProfile.role;
+        const newRole = role;
+        if (oldRole !== newRole) {
+          changes.push(`Role: '${oldRole}' → '${newRole}'`);
+        }
+
+        const oldAllowed = [...(targetProfile.allowed_types || [])].sort();
+        const newAllowed = [...allowedTypes].sort();
+        const oldAllowedStr = oldAllowed.join(', ');
+        const newAllowedStr = newAllowed.join(', ');
+
+        if (oldAllowedStr !== newAllowedStr) {
+          const added = allowedTypes.filter(x => !(targetProfile.allowed_types || []).includes(x));
+          const removed = (targetProfile.allowed_types || []).filter(x => !allowedTypes.includes(x));
+
+          const permChanges: string[] = [];
+          if (added.length > 0) {
+            permChanges.push(`Granted: [${added.join(', ')}]`);
+          }
+          if (removed.length > 0) {
+            permChanges.push(`Revoked: [${removed.join(', ')}]`);
+          }
+          changes.push(`Permissions: ${permChanges.join(' & ')}`);
+        }
+
+        const oldCanManage = !!targetProfile.can_manage_rules;
+        const newCanManage = canManageRules;
+        if (oldCanManage !== newCanManage) {
+          changes.push(`Quote Rules Permission: '${oldCanManage}' → '${newCanManage}'`);
+        }
+      } else {
+        changes.push(`Name: '${fullName.trim()}', Role: '${role}', Allowed Types: [${allowedTypes.join(', ')}], Quote Rules Permission: ${canManageRules}`);
+      }
+
+      const logDetails = changes.length > 0 
+        ? `Updated user '${targetName}' properties (${changes.join(' | ')})`
+        : `Updated user '${targetName}' (no changes made)`;
+
+      // Audit Log
+      await logActivity(
+        'UPDATE_USER',
+        userId,
+        logDetails
+      );
+
+      // Refresh profiles list
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('username', { ascending: true });
+      if (profiles) setProfilesList(profiles);
+
+      showToast('success', 'User profile updated successfully!');
+
+      setSubmitting(false);
+      return true;
+    } catch (err) {
+      console.error('Error updating user profile:', err);
+      showToast('error', 'Error updating profile: ' + (err instanceof Error ? err.message : String(err)));
+      setSubmitting(false);
+      return false;
+    }
+  }, [showToast, logActivity, profilesList, setProfilesList, setSubmitting, updateLastActivity]);
+
+  return {
+    createUser,
+    resetUserPassword,
+    deleteUser,
+    adminUpdateUserProfile,
+  };
+};
