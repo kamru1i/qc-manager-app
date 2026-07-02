@@ -18,7 +18,9 @@ jobs:
       matrix:
         include:
           - platform: 'windows-latest'
-            target: ''
+            target: 'x86_64-pc-windows-msvc'
+          - platform: 'windows-latest'
+            target: 'i686-pc-windows-msvc'
           - platform: 'macos-latest'
             target: 'x86_64-apple-darwin'
           - platform: 'macos-latest'
@@ -68,18 +70,25 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
         with:
           tagName: v__VERSION__
-          releaseName: "Chuti v__VERSION__"
+          releaseName: "QC App v__VERSION__"
           releaseBody: |
-            ### Chuti v__VERSION__ 🚀
+            ### QC App v__VERSION__ 🚀
+
+            Welcome to the first official **1.0.0** release of the unified **QC App** (formerly Chuti tracker)! This version integrates our role-based Leave Tracker and Quotes Manager workspaces into a single premium desktop utility.
 
             #### 🌟 What's New in v__VERSION__:
-            - **Dynamic Review Period Defaults**: Added dynamic fallback selection for review periods under the Review & Settlements panel based on the current calendar month.
-            - **Leave Carryover Calculations Fix**: Resolved carryover calculation anomalies where H1 leaves were automatically carried over to H2 without a processed H1 settlement.
+            - **Unified Dual-Workspace Architecture**: Seamlessly switch between the **Leave Tracker (Chuti)** and **Quotes Manager** workspaces with fully independent access controls and permissions.
+            - **Modern Inline User Configuration**: Replaced old add-user modals with a clean, inline settings panel (`StaffSettingsForm`) for editing or adding new staff accounts with uniform styling and alignment.
+            - **Circular Inputs & Smooth Transitions**: Custom checkboxes inside lists and permissions panels are now styled as clean circles, accompanied by smooth sliding transition animations for access toggles.
+            - **Resilient Password Setup Workflows**: Enforced automated credentials modal when users log in with the default password `1234`, locking workspace views until they configure their own secure credentials.
+            - **System-Wide Fixes**: Cleaned up layout spacing inside supervisor checklists and disabled dev mode console clutter from update checking.
+            - **Robust Data Protection**: Implemented cascade deletion routines to safely remove all associated attendance logs, settlements, and preferences when deleting a staff profile.
 
-            #### 📦 Installation:
-            - **Windows**: Download the `.exe` installer (x64), run it, and follow the setup wizard.
-            - **macOS (Intel)**: Download the `x86_64` `.dmg`, drag to Applications.
-            - **macOS (Apple Silicon)**: Download the `aarch64` `.dmg` (M1/M2/M3/M4), drag to Applications.
+            #### 📦 Installation Instructions:
+            - **Windows (64-bit)**: Download the `x86_64` `.exe` installer or `.msi` package, run it, and follow the setup wizard.
+            - **Windows (32-bit)**: Download the `i686` `.exe` installer or `.msi` package for legacy 32-bit architectures.
+            - **macOS (Intel)**: Download the `x86_64` `.dmg` and drag to your Applications folder.
+            - **macOS (Apple Silicon)**: Download the `aarch64` `.dmg` (M1/M2/M3/M4/M5) and drag to your Applications folder.
 
             *Developed by Kamrul Islam, IT Officer, B&F Corporate.*
           releaseDraft: false

@@ -27,7 +27,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "msi", "dmg"],
     "createUpdaterArtifacts": true,
     "publisher": "Kamrul Islam, IT Officer, B&F Corporate",
     "copyright": "Developed by Kamrul Islam, IT Officer, B&F Corporate",
