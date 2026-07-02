@@ -70,12 +70,7 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Redirect to '/' if accessed directly on /login route
-  useEffect(() => {
-    if (pathname === '/login') {
-      router.replace('/');
-    }
-  }, [pathname, router]);
+
 
   // Redirect if already logged in
   useEffect(() => {
