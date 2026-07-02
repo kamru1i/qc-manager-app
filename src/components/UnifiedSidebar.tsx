@@ -19,10 +19,10 @@ import {
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
-  activeSection: 'chuti' | 'quotes' | 'user_management';
+  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo';
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules') => void;
   activeChutiTab?: 'staff_master' | 'govt_responses' | 'settlement';
   onChutiTabChange?: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
   isSidebarCollapsed: boolean;
@@ -45,6 +45,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   const hasChutiAccess = !!profile.has_chuti_access;
   const hasQuotesAccess = !!profile.has_quotes_access;
+  const showTodoTab = profile.username?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
 
   // Navigation handlers
   const handleChutiNav = () => {
@@ -62,6 +63,12 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   const handleUserManagementNav = () => {
     localStorage.setItem('last_active_dashboard', 'user_management');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'user_management' }));
+    router.push('/');
+  };
+
+  const handleTodoNav = () => {
+    localStorage.setItem('last_active_dashboard', 'todo');
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'todo' }));
     router.push('/');
   };
 
@@ -219,21 +226,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   {!isSidebarCollapsed && <span className="whitespace-nowrap">Monthly List</span>}
                 </button>
 
-                {/* 3. Todo Panel */}
-                <button
-                  onClick={() => onQuotesTabChange('todo')}
-                  title={isSidebarCollapsed ? 'Todos' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'todo'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <ListTodo className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Todos</span>}
-                </button>
+
 
                 {/* 4. Quote Rules */}
                 <button
@@ -288,6 +281,26 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Workspace: Todos (Only for superadmin Kamrul) */}
+        {showTodoTab && (
+          <div className="space-y-1">
+            <button
+              onClick={handleTodoNav}
+              title={isSidebarCollapsed ? 'Todos' : undefined}
+              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
+              } ${
+                activeSection === 'todo'
+                  ? 'bg-orange-600/15 border border-orange-500/30 text-orange-400 shadow-md shadow-orange-950/5'
+                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+              }`}
+            >
+              <ListTodo className="h-5 w-5 shrink-0" />
+              {!isSidebarCollapsed && <span className="whitespace-nowrap">Todos</span>}
+            </button>
           </div>
         )}
 

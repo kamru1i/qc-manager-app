@@ -14,6 +14,7 @@ import { calculateTopPerformerBadges } from '@/utils/leaderboardHelper';
 const ChutiDashboard = lazy(() => import('@/app/chuti/page'));
 const QuotesDashboard = lazy(() => import('@/app/quotes/page'));
 const UserManagementDashboard = lazy(() => import('@/components/UserManagementDashboard').then(m => ({ default: m.UserManagementDashboard })));
+const TodoPanel = lazy(() => import('@/components/TodoPanel').then(m => ({ default: m.TodoPanel })));
 
 export default function AppPortal() {
   const router = useRouter();
@@ -21,15 +22,15 @@ export default function AppPortal() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chuti' | 'quotes' | 'user_management' | null>(null);
+  const [activeTab, setActiveTab] = useState<'chuti' | 'quotes' | 'user_management' | 'todo' | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
 
-  const [activeQuotesTab, setActiveQuotesTab] = useState<'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo'>(() => {
+  const [activeQuotesTab, setActiveQuotesTab] = useState<'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('quotes_sales_active_tab');
-      if (saved === 'entry' || saved === 'monthly' || saved === 'analytics' || saved === 'audit_logs' || saved === 'rules' || saved === 'todo') {
-        return saved as 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo';
+      if (saved === 'entry' || saved === 'monthly' || saved === 'analytics' || saved === 'audit_logs' || saved === 'rules') {
+        return saved as 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules';
       }
     }
     return 'entry';
@@ -45,7 +46,7 @@ export default function AppPortal() {
     return 'staff_master';
   });
 
-  const handleQuotesTabChange = (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'todo') => {
+  const handleQuotesTabChange = (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules') => {
     setActiveQuotesTab(tab);
     localStorage.setItem('quotes_sales_active_tab', tab);
   };
@@ -194,10 +195,12 @@ export default function AppPortal() {
       const hasChuti = !!cachedProfile.has_chuti_access;
       const hasQuotes = !!cachedProfile.has_quotes_access;
       
-      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | null;
+      const showTodo = cachedProfile.username?.toUpperCase() === 'KAMRUL' || cachedProfile.full_name === 'Kamrul Islam';
+      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | 'todo' | null;
       if (lastActive === 'chuti' && !hasChuti) lastActive = null;
       if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
       if (lastActive === 'user_management' && !(cachedProfile.role === 'admin' || cachedProfile.role === 'supervisor')) lastActive = null;
+      if (lastActive === 'todo' && !showTodo) lastActive = null;
 
       if (!lastActive) {
         lastActive = hasChuti ? 'chuti' : 'quotes';
@@ -267,10 +270,12 @@ export default function AppPortal() {
       }
 
       // Choose active workspace tab
-      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | null;
+      const showTodo = userProfile.username?.toUpperCase() === 'KAMRUL' || userProfile.full_name === 'Kamrul Islam';
+      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | 'user_management' | 'todo' | null;
       if (lastActive === 'chuti' && !hasChuti) lastActive = null;
       if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
       if (lastActive === 'user_management' && !(userProfile.role === 'admin' || userProfile.role === 'supervisor')) lastActive = null;
+      if (lastActive === 'todo' && !showTodo) lastActive = null;
 
       if (!lastActive) {
         lastActive = hasChuti ? 'chuti' : 'quotes';
@@ -324,7 +329,7 @@ export default function AppPortal() {
   // Listen for custom workspace-change event dispatched by sidebar
   useEffect(() => {
     const handleWorkspaceChange = (e: Event) => {
-      const targetWorkspace = (e as CustomEvent).detail as 'chuti' | 'quotes' | 'user_management';
+      const targetWorkspace = (e as CustomEvent).detail as 'chuti' | 'quotes' | 'user_management' | 'todo';
       addLog(`custom workspace-change event detected: ${targetWorkspace}`);
       
       // Safety check: ensure user has access before switching
@@ -332,6 +337,10 @@ export default function AppPortal() {
         if (targetWorkspace === 'chuti' && !profile.has_chuti_access) return;
         if (targetWorkspace === 'quotes' && !profile.has_quotes_access) return;
         if (targetWorkspace === 'user_management' && !(profile.role === 'admin' || profile.role === 'supervisor')) return;
+        if (targetWorkspace === 'todo') {
+          const showTodo = profile.username?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
+          if (!showTodo) return;
+        }
       }
       
       setActiveTab(targetWorkspace);
@@ -440,7 +449,7 @@ export default function AppPortal() {
       {/* Main container with Sidebar and Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start">
         <UnifiedSidebar
-          activeSection={activeTab === 'user_management' ? 'user_management' : activeTab === 'quotes' ? 'quotes' : 'chuti'}
+          activeSection={activeTab === 'user_management' ? 'user_management' : activeTab === 'todo' ? 'todo' : activeTab === 'quotes' ? 'quotes' : 'chuti'}
           profile={profile}
           activeQuotesTab={activeQuotesTab}
           onQuotesTabChange={handleQuotesTabChange}
@@ -478,6 +487,11 @@ export default function AppPortal() {
                 onThemeToggle={handleThemeToggle}
                 isSidebarCollapsed={isSidebarCollapsed}
                 onSidebarToggle={handleSidebarToggle}
+              />
+            </div>
+            <div className={activeTab === 'todo' ? 'block' : 'hidden'}>
+              <TodoPanel
+                profile={profile}
               />
             </div>
           </Suspense>

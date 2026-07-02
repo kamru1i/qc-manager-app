@@ -26,7 +26,6 @@ const AuditLogsPanel = lazy(() => import("@/components/AuditLogsPanel").then(m =
 const QuoteRulesPanel = lazy(() => import("@/components/QuoteRulesPanel").then(m => ({ default: m.QuoteRulesPanel })));
 const CopyHelperPanel = lazy(() => import("@/components/CopyHelperPanel").then(m => ({ default: m.CopyHelperPanel })));
 const SaveFileHelperPanel = lazy(() => import("@/components/SaveFileHelperPanel").then(m => ({ default: m.SaveFileHelperPanel })));
-const TodoPanel = lazy(() => import("@/components/TodoPanel").then(m => ({ default: m.TodoPanel })));
 import { validator } from "@/utils/quotesValidator";
 import {
   calculateSummaryStats,
@@ -74,8 +73,8 @@ const ALL_10_FILE_TYPES = [
 ];
 
 interface DashboardProps {
-  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo";
-  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo") => void;
+  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules";
+  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules") => void;
 }
 
 export default function Dashboard({
@@ -142,15 +141,12 @@ export default function Dashboard({
   }, []);
 
   const handleTabChange = (
-    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "todo",
+    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules",
   ) => {
     if (
       (tab === "analytics" || tab === "audit_logs") &&
       (profile?.role !== "admin" && profile?.role !== "supervisor")
     ) {
-      return;
-    }
-    if (tab === "todo" && profile?.username?.toUpperCase() !== "KI1024") {
       return;
     }
     onTabChange(tab);
@@ -1689,13 +1685,6 @@ export default function Dashboard({
                 isOnline={isOnline}
                 showToast={showToast}
               />
-            </Suspense>
-          )}
-
-          {/* TAB 7: SUPERADMIN TODO */}
-          {activeTab === "todo" && profile?.username?.toUpperCase() === "KI1024" && (
-            <Suspense fallback={<div className="h-48 flex items-center justify-center"><Loader2 className="w-8 h-8 text-blue-500 animate-spin" /></div>}>
-              <TodoPanel profile={profile} />
             </Suspense>
           )}
 

@@ -79,7 +79,7 @@ const DEFAULT_LOGIN_CODES: LoginCode[] = [
   { login_id: 'MI924', code: 'i', name: 'Mominul Islam' },
   { login_id: 'RT623', code: 'T', name: 'Rehunuma Akhter tanz' },
   { login_id: 'ST425', code: 't', name: 'Sabbir Alam Tuhin' },
-  { login_id: 'KI1024', code: 'k', name: 'Kamrul Islam – IT' },
+  { login_id: 'KAMRUL', code: 'k', name: 'Kamrul Islam – IT' },
   { login_id: 'KK525', code: 'k', name: 'Kapil Karmakar' },
   { login_id: 'AAN425', code: 'N', name: 'Md Ali Akbor Hossain Newton' },
   { login_id: 'OS525', code: 'S', name: 'Md Omar Faruque Sunny' }
