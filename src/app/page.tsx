@@ -20,6 +20,35 @@ export default function AppPortal() {
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sidebar_collapsed') === 'true';
+    }
+    return false;
+  });
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+    }
+    return 'dark';
+  });
+
+  const handleSidebarToggle = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('sidebar_collapsed', String(next));
+      return next;
+    });
+  };
+
+  const handleThemeToggle = () => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', next);
+      return next;
+    });
+  };
+
   const addLog = (msg: string) => {
     console.log(`[AppPortal] ${msg}`);
     setLogLines(prev => [...prev, msg]);
@@ -286,10 +315,10 @@ export default function AppPortal() {
           setLoading(true);
           await supabase.auth.signOut();
         }}
-        theme="dark"
-        onThemeToggle={() => {}}
-        isSidebarCollapsed={false}
-        onSidebarToggle={() => {}}
+        theme={theme}
+        onThemeToggle={handleThemeToggle}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onSidebarToggle={handleSidebarToggle}
       />
     );
   }

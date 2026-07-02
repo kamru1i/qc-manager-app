@@ -239,7 +239,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         onLogout={onLogout}
       />
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex gap-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start relative">
         {/* Unified Sidebar */}
         <UnifiedSidebar
           activeSection="user_management"
@@ -249,7 +249,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         />
 
         {/* Central Work Space */}
-        <main className="flex-1 min-w-0">
+        <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -424,7 +424,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               </div>
             </div>
           </div>
-        </main>
+        </section>
       </div>
 
       {/* Add User Modal */}
