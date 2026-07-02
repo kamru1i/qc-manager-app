@@ -627,6 +627,59 @@ export default function Dashboard({
     }
   }, [sessionUser, loading, router]);
 
+  // Synchronize notification counts to root page
+  useEffect(() => {
+    let count = 0;
+    if (profile) {
+      if (profile.role === 'supervisor') {
+        count = groupedSupervisorRequests.length + unreadUserNotificationsCount;
+      } else if (profile.role === 'admin' && adminActiveTab === 'admin') {
+        count = groupedChutiRequests.length + pendingReserveRequests.length + pendingProfileRequests.length + pendingPasswordResetRequests.length + adminHolidayNotifications.length;
+      } else {
+        count = unreadUserNotificationsCount;
+      }
+    }
+    window.dispatchEvent(new CustomEvent('chuti-notification-count-change', { detail: count }));
+  }, [
+    profile,
+    groupedSupervisorRequests,
+    unreadUserNotificationsCount,
+    adminActiveTab,
+    groupedChutiRequests,
+    pendingReserveRequests,
+    pendingProfileRequests,
+    pendingPasswordResetRequests,
+    adminHolidayNotifications
+  ]);
+
+  // Synchronize offline count to root page
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('chuti-offline-count-change', { detail: offlineCount }));
+  }, [offlineCount]);
+
+  // Handle events from unified root Navbar
+  useEffect(() => {
+    const handleOpenNotifications = () => {
+      setShowUserNotificationsModal(true);
+    };
+    const handleOpenProfileSettings = () => {
+      handleOpenProfileSettingsForSelf();
+    };
+    const handleTriggerSync = () => {
+      handleManualSync();
+    };
+
+    window.addEventListener('open-notifications', handleOpenNotifications);
+    window.addEventListener('open-profile-settings', handleOpenProfileSettings);
+    window.addEventListener('trigger-manual-sync', handleTriggerSync);
+
+    return () => {
+      window.removeEventListener('open-notifications', handleOpenNotifications);
+      window.removeEventListener('open-profile-settings', handleOpenProfileSettings);
+      window.removeEventListener('trigger-manual-sync', handleTriggerSync);
+    };
+  }, [handleOpenProfileSettingsForSelf, setShowUserNotificationsModal, handleManualSync]);
+
   if (!sessionUser && !loading) {
     return (
       <div className="flex-1 min-h-screen flex flex-col bg-slate-955 items-center justify-center">
@@ -784,30 +837,6 @@ export default function Dashboard({
 
   return (
     <DashboardProvider value={contextValue}>
-      {mounted && typeof window !== 'undefined' && document.getElementById('root-navbar-portal') ? (
-        createPortal(
-          <Navbar
-            profile={profile}
-            isOnline={isOnline}
-            offlineCount={offlineCount}
-            theme={theme}
-            onThemeToggle={toggleTheme}
-            onManualSync={handleManualSync}
-            onLogout={handleLogout}
-            onProfileSettingsClick={handleOpenProfileSettingsForSelf}
-            onNotificationClick={handleNotificationClick}
-            unreadUserNotificationsCount={unreadUserNotificationsCount}
-            groupedSupervisorRequestsCount={groupedSupervisorRequests.length}
-            groupedChutiRequestsCount={groupedChutiRequests.length}
-            pendingReserveRequestsCount={pendingReserveRequests.length}
-            pendingProfileRequestsCount={pendingProfileRequests.length}
-            adminActiveTab={adminActiveTab}
-            adminHolidayNotificationsCount={adminHolidayNotifications.length}
-            pendingPasswordResetRequestsCount={pendingPasswordResetRequests.length}
-          />,
-          document.getElementById('root-navbar-portal')!
-        )
-      ) : null}
 
       <Toaster
         position="top-center"

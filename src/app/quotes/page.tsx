@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useQuotesDashboardData } from "@/hooks/useQuotesDashboardData";
 import { useSaveFileHelper } from "@/hooks/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/useCopyHelper";
-import { Navbar } from "@/components/QuotesNavbar";
+import { Navbar } from "@/components/Navbar";
 import { UnifiedSidebar } from "@/components/UnifiedSidebar";
 import { getCacheData } from "@/utils/quotesOfflineSync";
 import { calculateTopPerformerBadges } from "@/utils/leaderboardHelper";
@@ -1223,19 +1223,6 @@ export default function Dashboard({
 
   return (
     <>
-      {mounted && typeof window !== "undefined" && document.getElementById("root-navbar-portal") ? (
-        createPortal(
-          <Navbar
-            profile={profile}
-            isOnline={isOnline}
-            theme={theme}
-            onThemeToggle={toggleTheme}
-            onLogout={handleLogout}
-            badges={topPerformerBadges}
-          />,
-          document.getElementById("root-navbar-portal")!
-        )
-      ) : null}
           {/* TAB 1: DAILY ENTRY */}
           {activeTab === "entry" && (
             <div className="space-y-6">

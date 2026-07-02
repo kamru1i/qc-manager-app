@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { useAdminActions } from '@/hooks/useAdminActions';
-import { Navbar } from '@/components/QuotesNavbar';
+import { Navbar } from '@/components/Navbar';
 import { UnifiedSidebar } from '@/components/UnifiedSidebar';
 import { AddUserModal } from '@/components/modals/AddUserModal';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
@@ -233,18 +233,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   return (
     <>
-      {mounted && typeof window !== 'undefined' && document.getElementById('root-navbar-portal') ? (
-        createPortal(
-          <Navbar
-            profile={profile}
-            isOnline={true}
-            theme={theme}
-            onThemeToggle={onThemeToggle}
-            onLogout={onLogout}
-          />,
-          document.getElementById('root-navbar-portal')!
-        )
-      ) : null}
 
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

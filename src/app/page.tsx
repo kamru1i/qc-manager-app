@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { Loader2 } from 'lucide-react';
 import LoginPage from '@/app/login/page';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { UnifiedSidebar } from '@/components/UnifiedSidebar';
+import { Navbar } from '@/components/Navbar';
+import { calculateTopPerformerBadges } from '@/utils/leaderboardHelper';
 
 const ChutiDashboard = lazy(() => import('@/app/chuti/page'));
 const QuotesDashboard = lazy(() => import('@/app/quotes/page'));
@@ -58,6 +60,79 @@ export default function AppPortal() {
     await supabase.auth.signOut();
   };
 
+  const [isOnline, setIsOnline] = useState(true);
+  const [quotesRecords, setQuotesRecords] = useState<any[]>([]);
+  const [profilesList, setProfilesList] = useState<Profile[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const onlineHandler = () => setIsOnline(true);
+      const offlineHandler = () => setIsOnline(false);
+      window.addEventListener('online', onlineHandler);
+      window.addEventListener('offline', offlineHandler);
+      return () => {
+        window.removeEventListener('online', onlineHandler);
+        window.removeEventListener('offline', offlineHandler);
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!sessionUser) return;
+
+    const fetchProfiles = async () => {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (data && !error) {
+        setProfilesList(data);
+      }
+    };
+
+    const fetchRecords = async () => {
+      const { data, error } = await supabase.from('records').select('user_id, submitted_at');
+      if (data && !error) {
+        setQuotesRecords(data);
+      }
+    };
+
+    fetchProfiles();
+    fetchRecords();
+
+    // Subscribe to supabase changes on records table to dynamically refresh badges
+    const channel = supabase
+      .channel('records_root_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'records' }, (payload) => {
+        fetchRecords();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionUser]);
+
+  const topPerformerBadges = useMemo(() => {
+    return calculateTopPerformerBadges(quotesRecords, profilesList);
+  }, [quotesRecords, profilesList]);
+
+  const [chutiNotificationCount, setChutiNotificationCount] = useState(0);
+  const [chutiOfflineCount, setChutiOfflineCount] = useState(0);
+
+  useEffect(() => {
+    const handleCountChange = (e: Event) => {
+      setChutiNotificationCount((e as CustomEvent).detail || 0);
+    };
+    const handleOfflineCountChange = (e: Event) => {
+      setChutiOfflineCount((e as CustomEvent).detail || 0);
+    };
+    window.addEventListener('chuti-notification-count-change', handleCountChange);
+    window.addEventListener('chuti-offline-count-change', handleOfflineCountChange);
+    return () => {
+      window.removeEventListener('chuti-notification-count-change', handleCountChange);
+      window.removeEventListener('chuti-offline-count-change', handleOfflineCountChange);
+    };
+  }, []);
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('sidebar_collapsed') === 'true';
@@ -92,35 +167,7 @@ export default function AppPortal() {
     setLogLines(prev => [...prev, msg]);
   };
 
-  useEffect(() => {
-    addLog('AppPortal: Mounted');
-    let active = true;
-
-    // Listen for auth state changes to dynamically switch rendering between Login and App Dashboard
-    // onAuthStateChange fires automatically on subscribe with the current session (if any).
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      addLog(`onAuthStateChange event: ${event} (hasSession: ${!!session})`);
-      if (!active) return;
-
-      if (session) {
-        setSessionUser(session.user);
-        await loadUserProfile(session.user.id);
-      } else {
-        addLog('onAuthStateChange no session, setting loading to false');
-        setSessionUser(null);
-        setProfile(null);
-        setActiveTab(null);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  async function loadUserProfile(userId: string) {
+  const loadUserProfile = useCallback(async (userId: string) => {
     if (fetchingRef.current === userId) {
       addLog(`loadUserProfile duplicate call skipped for ${userId}`);
       return;
@@ -244,7 +291,35 @@ export default function AppPortal() {
         fetchingRef.current = null;
       }
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    addLog('AppPortal: Mounted');
+    let active = true;
+
+    // Listen for auth state changes to dynamically switch rendering between Login and App Dashboard
+    // onAuthStateChange fires automatically on subscribe with the current session (if any).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      addLog(`onAuthStateChange event: ${event} (hasSession: ${!!session})`);
+      if (!active) return;
+
+      if (session) {
+        setSessionUser(session.user);
+        await loadUserProfile(session.user.id);
+      } else {
+        addLog('onAuthStateChange no session, setting loading to false');
+        setSessionUser(null);
+        setProfile(null);
+        setActiveTab(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [loadUserProfile]);
 
   // Listen for custom workspace-change event dispatched by sidebar
   useEffect(() => {
@@ -343,10 +418,21 @@ export default function AppPortal() {
       {/* Glow background blobs */}
       <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-violet-900/10 blur-[120px] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-35 pointer-events-none" />
 
-      {/* Portal Target for Navbar */}
-      <div id="root-navbar-portal" className="w-full relative z-30" />
+      {/* Shared Unified Navbar */}
+      <Navbar
+        profile={profile}
+        isOnline={isOnline}
+        theme={theme}
+        onThemeToggle={handleThemeToggle}
+        onLogout={handleLogout}
+        badges={topPerformerBadges}
+        onProfileSettingsClick={() => window.dispatchEvent(new CustomEvent('open-profile-settings'))}
+        onNotificationClick={() => window.dispatchEvent(new CustomEvent('open-notifications'))}
+        onManualSync={() => window.dispatchEvent(new CustomEvent('trigger-manual-sync'))}
+        notificationCount={chutiNotificationCount}
+        offlineCount={chutiOfflineCount}
+      />
 
       {/* Portal Target for Modals */}
       <div id="root-modals-portal" className="relative z-50" />
@@ -371,19 +457,19 @@ export default function AppPortal() {
               <p className="text-xs text-slate-400">Loading workspace...</p>
             </div>
           }>
-            {activeTab === 'quotes' && (
+            <div className={activeTab === 'quotes' ? 'block' : 'hidden'}>
               <QuotesDashboard
                 activeTab={activeQuotesTab}
                 onTabChange={handleQuotesTabChange}
               />
-            )}
-            {activeTab === 'chuti' && (
+            </div>
+            <div className={activeTab === 'chuti' ? 'block' : 'hidden'}>
               <ChutiDashboard
                 activeChutiTab={activeChutiTab}
                 onChutiTabChange={handleChutiTabChange}
               />
-            )}
-            {activeTab === 'user_management' && (
+            </div>
+            <div className={activeTab === 'user_management' ? 'block' : 'hidden'}>
               <UserManagementDashboard
                 sessionUser={sessionUser}
                 profile={profile}
@@ -393,7 +479,7 @@ export default function AppPortal() {
                 isSidebarCollapsed={isSidebarCollapsed}
                 onSidebarToggle={handleSidebarToggle}
               />
-            )}
+            </div>
           </Suspense>
         </section>
       </main>
