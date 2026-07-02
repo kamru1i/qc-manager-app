@@ -157,7 +157,16 @@ VALUES ('{new_id}', '00000000-0000-0000-0000-000000000000', '{email}', '{enc_pas
             has_quotes_access = "TRUE"
             
             profile_sql = f"""INSERT INTO public.profiles (id, username, role, full_name, allowed_types, has_chuti_access, has_quotes_access, quotes_role, is_setup_completed)
-VALUES ('{new_id}', '{username}', '{final_chuti_role}', '{full_name}', {allowed_types_sql}, {has_chuti_access}, {has_quotes_access}, '{q_profile.get("role", "user")}', TRUE);"""
+VALUES ('{new_id}', '{username}', '{final_chuti_role}', '{full_name}', {allowed_types_sql}, {has_chuti_access}, {has_quotes_access}, '{q_profile.get("role", "user")}', TRUE)
+ON CONFLICT (id) DO UPDATE SET
+  username = EXCLUDED.username,
+  role = EXCLUDED.role,
+  full_name = EXCLUDED.full_name,
+  allowed_types = EXCLUDED.allowed_types,
+  has_chuti_access = EXCLUDED.has_chuti_access,
+  has_quotes_access = EXCLUDED.has_quotes_access,
+  quotes_role = EXCLUDED.quotes_role,
+  is_setup_completed = EXCLUDED.is_setup_completed;"""
             profile_inserts.append(profile_sql)
 
     chuti_processed_ids = set(user_id_map.values())
