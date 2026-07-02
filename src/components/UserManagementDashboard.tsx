@@ -172,7 +172,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     );
 
     if (pw) {
-      setGeneratedPassword(pw);
       setNewCodename('');
       setNewFullName('');
       setNewRole('user');
@@ -186,6 +185,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setNewEligibleOfficeLeave(false);
       setNewAllowOvertime(false);
       setNewAllowReserve(false);
+      setIsAddUserModalOpen(false);
       fetchProfiles();
     }
   };
@@ -477,7 +477,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 setCanManageRules={setCanManageRules}
                 submitting={submitting}
                 onSubmit={handleCreateUser}
-                generatedPassword={generatedPassword}
                 onClose={() => {
                   setIsAddUserModalOpen(false);
                   setGeneratedPassword(null);
@@ -491,12 +490,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setNewEligibleOfficeLeave(false);
                   setNewAllowOvertime(false);
                   setNewAllowReserve(false);
-                }}
-                onCopyPassword={() => {
-                  if (generatedPassword) {
-                    navigator.clipboard.writeText(generatedPassword);
-                    toast.success('Password copied to clipboard!');
-                  }
                 }}
                 supervisors={profiles.filter(p => p.role === 'supervisor')}
                 needsSupervisorApproval={newNeedsApproval}

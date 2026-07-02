@@ -47,24 +47,22 @@ export const useAdminActions = ({
     setSubmitting(true);
 
     try {
+      const derivedEmail = `${username.toLowerCase().trim()}@office.local`;
       const { data, error } = await supabase.rpc('create_new_user', {
-        p_username: username.toUpperCase().trim(),
+        p_email: derivedEmail,
         p_password: activePassword,
+        p_username: username.toUpperCase().trim(),
         p_role: role,
         p_full_name: fullName,
-        p_allowed_types: allowedTypes
+        p_needs_supervisor_approval: needsSupervisorApproval ?? false,
+        p_allow_reserve: allowReserve ?? false,
+        p_allow_overtime: allowOvertime ?? false,
+        p_supervisor_ids: supervisorIds ?? null,
       });
 
       if (error) throw error;
 
-      // Handle the return format from the function (array of { success, message })
-      const result = Array.isArray(data) ? data[0] : data;
-
-      if (result && result.success === false) {
-        showToast('error', result.message || 'Failed to create user.');
-        setSubmitting(false);
-        return null;
-      }
+      const newUserId = data;
 
       // Update the newly created user profile with permissions and access flags
       const { data: newProfile } = await supabase
@@ -108,9 +106,10 @@ export const useAdminActions = ({
 
       setSubmitting(false);
       return activePassword; // return the password so admin can copy it
-    } catch (err) {
-      console.error('Error creating user:', err);
-      showToast('error', 'Error creating user: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: any) {
+      const errMsg = err?.message || err?.details || err?.hint || (err instanceof Error ? err.message : JSON.stringify(err));
+      console.error('Error creating user:', errMsg, err);
+      showToast('error', 'Error creating user: ' + errMsg);
       setSubmitting(false);
       return null;
     }

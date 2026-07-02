@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { X, Loader2, UserPlus, Clipboard, Plus, Check } from 'lucide-react';
+import { X, Loader2, UserPlus, Plus, Check } from 'lucide-react';
 import { CategoryCheckboxList } from '../CategoryCheckboxList';
 import { Profile } from '@/types';
 
@@ -20,9 +20,7 @@ interface AddUserModalProps {
   setCanManageRules: (val: boolean) => void;
   submitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
-  generatedPassword: string | null;
   onClose: () => void;
-  onCopyPassword: () => void;
 
   // Leave Tracker Permissions Settings
   supervisors: Profile[];
@@ -57,9 +55,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   setCanManageRules,
   submitting,
   onSubmit,
-  generatedPassword,
   onClose,
-  onCopyPassword,
 
   supervisors,
   needsSupervisorApproval,
@@ -128,6 +124,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             <input
               type="text"
               placeholder="e.g. Kamrul Islam"
+              required
               value={newFullName}
               onChange={(e) => setNewFullName(e.target.value)}
               className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -138,14 +135,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             <label className="block text-[11px] font-semibold text-slate-355 mb-1">Account Role</label>
             <select
               value={newRole}
-              onChange={(e) => {
-                const val = e.target.value as 'user' | 'supervisor' | 'admin';
-                setNewRole(val);
-                if (val === 'admin') {
-                  setCanManageRules(true);
-                }
-              }}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              onChange={(e) => setNewRole(e.target.value as any)}
+              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value="user">User</option>
               <option value="supervisor">Supervisor</option>
@@ -153,23 +144,26 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             </select>
           </div>
 
-          {/* Leave / Quotes Workspace Toggles */}
           <div className="border-t border-slate-800/80 pt-3">
-            <label className="block text-[11px] font-semibold text-slate-355 mb-2">Workspace Access</label>
+            <span className="block text-[11px] font-semibold text-slate-355 mb-2">Workspace Access</span>
             <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center gap-2.5 cursor-not-allowed group select-none opacity-80">
+              <label className="flex items-center gap-2.5 cursor-pointer group select-none">
                 <div className="relative flex items-center">
                   <input
                     type="checkbox"
-                    checked={true}
-                    disabled={true}
+                    checked={hasChutiAccess}
+                    onChange={(e) => setHasChutiAccess(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className="h-4 w-4 rounded-full flex items-center justify-center border border-orange-500 bg-orange-600 text-white font-bold transition-all shrink-0">
-                    <Check className="h-2.5 w-2.5 stroke-[3]" />
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    hasChutiAccess
+                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      : 'border-slate-700 bg-slate-900 text-transparent'
+                  }`}>
+                    {hasChutiAccess && <Check className="h-2.5 w-2.5 stroke-[3]" />}
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-300 transition-colors">
+                <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
                   Leave Tracker
                 </span>
               </label>
@@ -197,13 +191,11 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             </div>
           </div>
 
-          {/* Leave Tracker Permissions */}
-          <div className="border-t border-slate-800/80 pt-3 space-y-3">
-            <label className="block text-[11px] font-semibold text-slate-355">
-              Leave Tracker Permissions
-            </label>
-            <div className="grid grid-cols-1 gap-2.5">
-              {/* Supervisor Approval */}
+          {/* Leave Tracker Permissions Box */}
+          <div className="border-t border-slate-800/80 pt-3">
+            <span className="block text-[11px] font-semibold text-slate-355 mb-2">Leave Tracker Permissions</span>
+            <div className="space-y-2.5">
+              {/* Needs Supervisor Approval */}
               <label className="flex items-start gap-2.5 cursor-pointer group select-none">
                 <div className="relative flex items-center mt-0.5">
                   <input
@@ -230,56 +222,41 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                 </div>
               </label>
 
-              {/* Supervisors Multiselect (if approval is enabled) */}
-              {needsSupervisorApproval && supervisors.length > 0 && (
-                <div className="space-y-2 bg-slate-955/40 p-2.5 rounded-lg border border-slate-800/80 ml-6.5">
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="font-semibold text-slate-400">Select Supervisors</span>
-                    <span className="text-slate-500 font-mono">
-                      {supervisorIds.length > 0 ? `${supervisorIds.length} Selected` : 'All Selected'}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto pr-1">
-                    <label className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[10px] ${
-                      supervisorIds.length === 0 
-                        ? 'border-orange-600 bg-orange-950/20 text-orange-400 font-semibold' 
-                        : 'border-slate-800 bg-slate-900 text-slate-405'
-                    }`}>
-                      <input
-                        type="checkbox"
-                        checked={supervisorIds.length === 0}
-                        onChange={() => setSupervisorIds([])}
-                        className="cursor-pointer shrink-0 scale-75"
-                      />
-                      <span>All</span>
-                    </label>
-                    {supervisors.map(sup => {
-                      const isChecked = supervisorIds.includes(sup.id);
-                      return (
-                        <label 
-                          key={sup.id} 
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[10px] ${
-                            isChecked 
-                              ? 'border-orange-600 bg-orange-950/20 text-orange-400 font-semibold' 
-                              : 'border-slate-800 bg-slate-900 text-slate-405'
-                          }`}
-                        >
+              {/* Conditional Supervisor Selection Dropdown */}
+              {needsSupervisorApproval && (
+                <div className="pl-6.5 space-y-1.5 animate-fade-in">
+                  <label className="block text-[10px] font-semibold text-slate-450">Select Supervisors</label>
+                  <div className="max-h-24 overflow-y-auto border border-slate-800 bg-slate-955 rounded-lg p-2 space-y-1">
+                    {supervisors.length === 0 ? (
+                      <span className="text-[10px] text-slate-500 italic block">No supervisors found</span>
+                    ) : (
+                      supervisors.map((sup) => (
+                        <label key={sup.id} className="flex items-center gap-2 cursor-pointer group select-none">
                           <input
                             type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              if (isChecked) {
-                                setSupervisorIds(supervisorIds.filter(id => id !== sup.id));
-                              } else {
+                            checked={supervisorIds.includes(sup.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
                                 setSupervisorIds([...supervisorIds, sup.id]);
+                              } else {
+                                setSupervisorIds(supervisorIds.filter(id => id !== sup.id));
                               }
                             }}
-                            className="cursor-pointer shrink-0 scale-75"
+                            className="sr-only"
                           />
-                          <span>{sup.username}</span>
+                          <div className={`h-3.5 w-3.5 rounded flex items-center justify-center border transition-all shrink-0 ${
+                            supervisorIds.includes(sup.id)
+                              ? 'bg-orange-600 border-orange-500 text-white'
+                              : 'border-slate-800 bg-slate-900 text-transparent'
+                          }`}>
+                            {supervisorIds.includes(sup.id) && <Check className="h-2 w-2 stroke-[3]" />}
+                          </div>
+                          <span className="text-[10px] text-slate-400 group-hover:text-white transition-colors">
+                            {sup.full_name} ({sup.username})
+                          </span>
                         </label>
-                      );
-                    })}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -457,28 +434,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             </button>
           </div>
         </form>
-
-        {/* Temporary Password Display Box */}
-        {generatedPassword && (
-          <div className="bg-emerald-950/40 border border-emerald-800/60 p-4 rounded-xl space-y-2.5 text-xs animate-fade-in mt-4">
-            <p className="text-emerald-355 font-semibold">Account created successfully!</p>
-            <div className="bg-slate-955 p-2.5 rounded-lg border border-slate-850 font-mono text-center flex items-center justify-between text-white">
-              <span>
-                Password: <strong>{generatedPassword}</strong>
-              </span>
-              <button
-                onClick={onCopyPassword}
-                className="p-1 hover:bg-slate-855 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
-                title="Copy"
-              >
-                <Clipboard className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <p className="text-[10px] text-slate-450 leading-relaxed text-center">
-              * Please copy this password. The user will be required to customize their password on their first login.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
