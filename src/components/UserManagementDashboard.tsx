@@ -129,73 +129,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingStaff]);
 
-  // Load records and stats for double-clicked user
-  useEffect(() => {
-    if (!viewingStaff) {
-      setViewingStaffRecords([]);
-      setViewingStaffStats(null);
-      return;
-    }
-
-    const loadStaffData = async () => {
-      try {
-        const { data: records, error: recordsError } = await supabase
-          .from('leave_records')
-          .select('*')
-          .eq('user_id', viewingStaff.id)
-          .order('date', { ascending: false });
-        if (recordsError) throw recordsError;
-
-        const { data: settlements, error: settlementsError } = await supabase
-          .from('leave_settlements')
-          .select('*')
-          .eq('user_id', viewingStaff.id);
-        if (settlementsError) throw settlementsError;
-
-        const { data: settings, error: settingsError } = await supabase
-          .from('settings')
-          .select('*')
-          .single();
-        if (settingsError) throw settingsError;
-
-        const currentYear = new Date().getFullYear().toString();
-        const yearRecords = (records || []).filter((r: any) => {
-          const d = new Date(r.date);
-          return d.getFullYear().toString() === currentYear && r.status === 'approved';
-        });
-
-        let shortHours = 0;
-        let fullLeaves = 0;
-        yearRecords.forEach((r: any) => {
-          if (r.leave_type === 'short') {
-            shortHours += parseFloat(r.leave_hour) || 0;
-          } else if (r.leave_type === 'full') {
-            fullLeaves += 1;
-          }
-        });
-
-        const officeAllocated = viewingStaff.eligible_office_leave !== false ? (settings?.office_leave_quota || 10) : 0;
-        const officeTaken = yearRecords.filter((r: any) => r.category === 'Office Leave').length;
-
-        const govtAllocated = viewingStaff.eligible_govt_holiday !== false ? (settings?.govt_holiday_quota || 22) : 0;
-        const govtTaken = yearRecords.filter((r: any) => r.category === 'Govt Holiday').length;
-
-        setViewingStaffRecords(records || []);
-        setViewingStaffStats({
-          shortHours,
-          fullLeaves,
-          officeAllocated,
-          officeTaken,
-          govtAllocated,
-          govtTaken,
-        });
-      } catch (e) {
-        console.error('Failed to load viewing staff details:', e);
-      }
-    };
-
-    loadStaffData();
-  }, [viewingStaff]);
+  // No database load required since leave record table is removed from User Management details view.
 
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
     if (type === 'success') toast.success(text);
@@ -427,133 +361,113 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex gap-2">
-              {isAdmin && (
-                <button
-                  onClick={() => setShowCredentialsModal(true)}
-                  className="px-3.5 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Change Password
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  setEditingProfile(viewingStaff);
-                  setEditUserFullName(viewingStaff.full_name || '');
-                  setEditUserRole(viewingStaff.role || 'user');
-                  setEditHasChutiAccess(!!viewingStaff.has_chuti_access);
-                  setEditHasQuotesAccess(!!viewingStaff.has_quotes_access);
-                  setEditUserAllowedTypes((viewingStaff.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
-                  setEditUserCanManageRules(!!viewingStaff.can_manage_rules);
-                  setEditNeedsApproval(viewingStaff.needs_supervisor_approval !== false);
-                  setEditSupervisorIds(viewingStaff.supervisor_ids || []);
-                  setEditEligibleGovtHoliday(viewingStaff.eligible_govt_holiday !== false);
-                  setEditEligibleOfficeLeave(viewingStaff.eligible_office_leave !== false);
-                  setEditAllowOvertime(!!viewingStaff.allow_overtime);
-                  setEditAllowReserve(!!viewingStaff.allow_reserve);
-                }}
-                className="px-3.5 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md shadow-orange-950/10 border border-orange-700 flex items-center gap-1.5"
-              >
-                <Edit className="h-3.5 w-3.5" /> Edit Profile
-              </button>
-              {isAdmin && viewingStaff.role !== 'admin' && (
-                <button
-                  onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
-                  className="px-3.5 py-2 bg-red-600/90 hover:bg-red-700 border border-red-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Delete User
-                </button>
-              )}
+          {/* Workspace Access & Permissions Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Leave Tracker Access Card */}
+            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`h-2.5 w-2.5 rounded-full ${viewingStaff.has_chuti_access ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
+                  <h3 className="text-sm font-bold text-white">Leave Tracker Workspace</h3>
+                </div>
+                {viewingStaff.has_chuti_access ? (
+                  <div className="space-y-2.5 text-xs text-slate-350">
+                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
+                      <span>Needs Supervisor Approval:</span>
+                      <strong className="text-white">{viewingStaff.needs_supervisor_approval !== false ? 'Yes' : 'No'}</strong>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
+                      <span>Eligible for Govt Holiday:</span>
+                      <strong className="text-white">{viewingStaff.eligible_govt_holiday !== false ? 'Yes' : 'No'}</strong>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
+                      <span>Eligible for Office Leave:</span>
+                      <strong className="text-white">{viewingStaff.eligible_office_leave !== false ? 'Yes' : 'No'}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Overtime & Reserve:</span>
+                      <strong className="text-white font-semibold">
+                        {[
+                          viewingStaff.allow_overtime ? 'Overtime' : null,
+                          viewingStaff.allow_reserve ? 'Reserve' : null
+                        ].filter(Boolean).join(', ') || 'None'}
+                      </strong>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">This user does not have access to the Leave Tracker workspace.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Quotes Manager Access Card */}
+            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`h-2.5 w-2.5 rounded-full ${viewingStaff.has_quotes_access ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
+                  <h3 className="text-sm font-bold text-white">Quotes Manager Workspace</h3>
+                </div>
+                {viewingStaff.has_quotes_access ? (
+                  <div className="space-y-2.5 text-xs text-slate-350">
+                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
+                      <span>Can Manage Rules:</span>
+                      <strong className="text-white">{viewingStaff.can_manage_rules ? 'Yes' : 'No'}</strong>
+                    </div>
+                    <div className="flex justify-between items-start">
+                      <span>Permitted File Types:</span>
+                      <span className="text-right text-white font-medium max-w-[180px] break-words block font-mono">
+                        {(viewingStaff.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ') || 'None'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">This user does not have access to the Quotes Manager workspace.</p>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Leave Stats Cards */}
-          {viewingStaff.has_chuti_access && viewingStaffStats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
-                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Office Leave (Yearly)</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-white">{viewingStaffStats.officeTaken}</span>
-                  <span className="text-xs text-slate-505">/ {viewingStaffStats.officeAllocated} days taken</span>
-                </div>
-              </div>
-              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
-                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Govt Holiday</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-white">{viewingStaffStats.govtTaken}</span>
-                  <span className="text-xs text-slate-505">/ {viewingStaffStats.govtAllocated} days taken</span>
-                </div>
-              </div>
-              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
-                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Short Leave</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-white">{viewingStaffStats.shortHours.toFixed(1)}</span>
-                  <span className="text-xs text-slate-505">hrs taken</span>
-                </div>
-              </div>
-              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
-                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Full Leave</h4>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-white">{viewingStaffStats.fullLeaves}</span>
-                  <span className="text-xs text-slate-505">days taken</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Leave Records Table */}
-          {viewingStaff.has_chuti_access && (
-            <div className="bg-slate-900/40 border border-slate-850 rounded-xl overflow-hidden shadow-xl">
-              <div className="px-4 py-3 border-b border-slate-850">
-                <h4 className="text-xs font-bold text-white">Leave Records ({viewingStaffRecords.length})</h4>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-800 bg-slate-955/40 text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
-                      <th className="py-2.5 px-4">Date</th>
-                      <th className="py-2.5 px-4 text-center">Type</th>
-                      <th className="py-2.5 px-4">Category</th>
-                      <th className="py-2.5 px-4 text-center">Hours / Time</th>
-                      <th className="py-2.5 px-4">Comment</th>
-                      <th className="py-2.5 px-4 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-850 text-slate-300">
-                    {viewingStaffRecords.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="py-8 text-center text-slate-500 italic">No leave records found.</td>
-                      </tr>
-                    ) : (
-                      viewingStaffRecords.map((r: any) => (
-                        <tr key={r.id} className="hover:bg-slate-900/10 animate-fade-in">
-                          <td className="py-2.5 px-4 font-mono">{r.date}</td>
-                          <td className="py-2.5 px-4 text-center capitalize">{r.leave_type}</td>
-                          <td className="py-2.5 px-4">{r.category || '—'}</td>
-                          <td className="py-2.5 px-4 text-center font-mono">
-                            {r.leave_type === 'short' ? `${r.leave_hour} hrs (${r.sign_in || ''} - ${r.sign_out || ''})` : '—'}
-                          </td>
-                          <td className="py-2.5 px-4 truncate max-w-xs">{r.comment || '—'}</td>
-                          <td className="py-2.5 px-4 text-center">
-                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
-                              r.status === 'approved'
-                                ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/30'
-                                : r.status === 'rejected'
-                                ? 'bg-red-950/50 text-red-400 border border-red-900/30'
-                                : 'bg-amber-955/50 text-amber-400 border border-amber-900/30'
-                            }`}>
-                              {r.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {/* Action Buttons at the Bottom */}
+          <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-end gap-3 mt-6">
+            {isAdmin && (
+              <button
+                onClick={() => setShowCredentialsModal(true)}
+                className="px-4 py-2.5 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <AlertTriangle className="h-4 w-4 text-amber-500" /> Change Password
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setEditingProfile(viewingStaff);
+                setEditUserFullName(viewingStaff.full_name || '');
+                setEditUserRole(viewingStaff.role || 'user');
+                setEditHasChutiAccess(!!viewingStaff.has_chuti_access);
+                setEditHasQuotesAccess(!!viewingStaff.has_quotes_access);
+                setEditUserAllowedTypes((viewingStaff.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
+                setEditUserCanManageRules(!!viewingStaff.can_manage_rules);
+                setEditNeedsApproval(viewingStaff.needs_supervisor_approval !== false);
+                setEditSupervisorIds(viewingStaff.supervisor_ids || []);
+                setEditEligibleGovtHoliday(viewingStaff.eligible_govt_holiday !== false);
+                setEditEligibleOfficeLeave(viewingStaff.eligible_office_leave !== false);
+                setEditAllowOvertime(!!viewingStaff.allow_overtime);
+                setEditAllowReserve(!!viewingStaff.allow_reserve);
+              }}
+              className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]"
+            >
+              <Edit className="h-4 w-4" /> Edit Profile Settings
+            </button>
+            {isAdmin && viewingStaff.role !== 'admin' && (
+              <button
+                onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
+                className="px-4 py-2.5 bg-red-650/90 hover:bg-red-700 border border-red-700/80 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <Trash2 className="h-4 w-4" /> Delete User Account
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
