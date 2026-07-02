@@ -1,6 +1,6 @@
 {
-  "name": "Chuti - Leave Tracker",
-  "short_name": "Chuti",
+  "name": "QC App",
+  "short_name": "QC App",
   "description": "Secure attendance and leave tracking system for office staff",
   "start_url": "/",
   "display": "standalone",

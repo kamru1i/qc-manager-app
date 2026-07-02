@@ -26,7 +26,7 @@ pub fn run() {
             }
             
             // Set up system tray menu
-            let open_item = MenuItem::with_id(app, "open", "Open Chuti", true, None::<&str>)?;
+            let open_item = MenuItem::with_id(app, "open", "Open QC App", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open_item, &quit_item])?;
 
@@ -52,9 +52,9 @@ pub fn run() {
                                 #[cfg(target_os = "macos")]
                                 let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
                                 
-                                // Update menu text to "Open Chuti"
+                                // Update menu text to "Open QC App"
                                 let state: State<TrayMenuState> = app.state();
-                                let _ = state.open_item.set_text("Open Chuti");
+                                let _ = state.open_item.set_text("Open QC App");
                             } else {
                                 // Show the window
                                 #[cfg(target_os = "macos")]
@@ -63,9 +63,9 @@ pub fn run() {
                                 window.show().unwrap();
                                 window.set_focus().unwrap();
                                 
-                                // Update menu text to "Close Chuti"
+                                // Update menu text to "Close QC App"
                                 let state: State<TrayMenuState> = app.state();
-                                let _ = state.open_item.set_text("Close Chuti");
+                                let _ = state.open_item.set_text("Close QC App");
                             }
                         }
                     }
@@ -83,9 +83,9 @@ pub fn run() {
                                 window.show().unwrap();
                                 window.set_focus().unwrap();
                                 
-                                // Update menu text to "Close Chuti"
+                                // Update menu text to "Close QC App"
                                 let state: State<TrayMenuState> = app.state();
-                                let _ = state.open_item.set_text("Close Chuti");
+                                let _ = state.open_item.set_text("Close QC App");
                             }
                         }
                     }
@@ -105,9 +105,9 @@ pub fn run() {
                 #[cfg(target_os = "macos")]
                 let _ = window.app_handle().set_activation_policy(tauri::ActivationPolicy::Accessory);
                 
-                // Update menu text to "Open Chuti"
+                // Update menu text to "Open QC App"
                 let state: State<TrayMenuState> = window.state();
-                let _ = state.open_item.set_text("Open Chuti");
+                let _ = state.open_item.set_text("Open QC App");
             }
             _ => {}
         })

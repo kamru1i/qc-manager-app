@@ -33,7 +33,7 @@ export function getApiUrl(path: string): string {
     }
 
     // Default to the stable git branch deployment URL on Vercel, or override via Env variable
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://chuti-git-main-kamrulislam2s-projects.vercel.app';
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://qc-manager-app.vercel.app';
     return `${baseUrl.replace(/\/$/, '')}${path}`;
   }
   

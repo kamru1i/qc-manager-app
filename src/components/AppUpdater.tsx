@@ -50,7 +50,7 @@ export default function AppUpdater() {
           isCheckingOrDownloading = false;
         }
       } catch (err) {
-        console.error('[Updater] Update error:', err);
+        console.warn('[Updater] Update check skipped or offline:', err);
         setDownloading(false);
         isCheckingOrDownloading = false;
       }

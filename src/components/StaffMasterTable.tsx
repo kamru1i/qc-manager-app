@@ -130,7 +130,6 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Full Leave</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Short Leave</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Overtime</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-850 bg-slate-900/20">
@@ -142,7 +141,12 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
                 .map((p) => {
                   const stats = getUserSummaryStats(p.id);
                   return (
-                    <tr key={p.id} className="hover:bg-slate-900/30 transition-all">
+                    <tr 
+                      key={p.id} 
+                      onDoubleClick={() => onViewDetails(p.id)}
+                      className="hover:bg-slate-900/30 transition-all cursor-pointer select-none"
+                      title="Double-click to view details"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white">
                         {p.full_name || '-'}
                       </td>
@@ -157,14 +161,6 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300 font-bold font-mono text-center">
                         {p.allow_overtime ? `${stats.overtime} hrs` : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => onViewDetails(p.id)}
-                          className="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-semibold cursor-pointer border border-orange-700 transition-all"
-                        >
-                          View Details
-                        </button>
                       </td>
                     </tr>
                   );

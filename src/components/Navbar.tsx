@@ -62,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     return `${h} hours`;
   };
 
-  const [isTauri, setIsTauri] = React.useState(true);
+  const [isTauri, setIsTauri] = React.useState(false);
   const [downloadLoading, setDownloadLoading] = React.useState(false);
   const [showDownloadDropdown, setShowDownloadDropdown] = React.useState(false);
   const [showNameTooltip, setShowNameTooltip] = React.useState(false);

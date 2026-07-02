@@ -131,32 +131,68 @@ export default function LoginPage() {
     // Try resolving username/codename to registered email first
     let loginEmail = email.trim();
     if (!loginEmail.includes('@')) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 seconds timeout
+
+      let resolvedEmail = null;
       try {
         const res = await fetch(getApiUrl('/api/resolve-email'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: loginEmail }),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         
         if (res.ok) {
-          const { email: resolvedEmail } = await res.json();
-          if (resolvedEmail) {
-            loginEmail = resolvedEmail;
-          } else {
-            setError('Codename not found. Please check and try again.');
-            setLoading(false);
-            return;
+          const data = await res.json();
+          resolvedEmail = data.email;
+        }
+      } catch {
+        clearTimeout(timeoutId);
+      }
+
+      if (resolvedEmail) {
+        loginEmail = resolvedEmail;
+      } else {
+        // Fallback list of suffixes (different user roles were created under different local domains)
+        const suffixes = ['@admin.local', '@office.local', '@user.local'];
+        const baseName = loginEmail.toLowerCase().trim();
+        
+        let authSuccess = false;
+        let lastAuthError: any = null;
+        
+        for (const suffix of suffixes) {
+          try {
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+              email: baseName + suffix,
+              password: password,
+            });
+            if (!authError && data.session) {
+              const userId = data.session.user.id;
+              localStorage.setItem(`session_start_time_${userId}`, Date.now().toString());
+              localStorage.setItem(`last_access_time_${userId}`, Date.now().toString());
+              router.push('/');
+              router.refresh();
+              authSuccess = true;
+              break;
+            } else {
+              lastAuthError = authError;
+            }
+          } catch (e) {
+            lastAuthError = e;
           }
+        }
+        
+        if (authSuccess) {
+          return;
         } else {
-          const errData = await res.json().catch(() => ({}));
-          setError(errData.error || 'Failed to resolve login credentials.');
+          setError(lastAuthError?.message === 'Invalid login credentials' 
+            ? 'Invalid codename or password...' 
+            : lastAuthError?.message || 'Failed to login.');
           setLoading(false);
           return;
         }
-      } catch {
-        setError('Network error resolving login credentials.');
-        setLoading(false);
-        return;
       }
     }
 
@@ -195,7 +231,7 @@ export default function LoginPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
         <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-orange-400 to-amber-450">
-          QC Management App
+          QC App
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400 font-medium">
           Sign in to submit quotation files and track leaves

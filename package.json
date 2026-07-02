@@ -1,6 +1,6 @@
 {
-  "name": "Chuti",
-  "version": "2.1.0",
+  "name": "qc-app",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

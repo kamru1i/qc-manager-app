@@ -6,7 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
-  title: "QC Management",
+  title: "QC App",
   description: "Secure leave tracking system for office staff",
   manifest: "/manifest.json",
   appleWebApp: {
