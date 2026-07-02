@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
+
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
@@ -709,22 +709,6 @@ export default function Dashboard({
           {/* Background gradients */}
           <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-orange-600/10 blur-[120px] pointer-events-none" />
           <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-amber-600/10 blur-[120px] pointer-events-none" />
-          
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#0f172a',
-                color: '#cbd5e1',
-                border: '1px solid #1e293b',
-                fontSize: '12px',
-                borderRadius: '12px',
-                fontFamily: 'sans-serif',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              },
-            }}
-          />
 
           <DashboardModals />
         </div>
@@ -838,33 +822,7 @@ export default function Dashboard({
   return (
     <DashboardProvider value={contextValue}>
 
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#0f172a',
-            color: '#cbd5e1',
-            border: '1px solid #1e293b',
-            fontSize: '12px',
-            borderRadius: '12px',
-            fontFamily: 'sans-serif',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#0f172a',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#0f172a',
-            },
-          },
-        }}
-      />
+
         
         {/* ================= STAFF VIEW ================= */}
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && (profile?.role !== 'admin' || adminActiveTab === 'user') && (

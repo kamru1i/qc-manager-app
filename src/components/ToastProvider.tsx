@@ -7,6 +7,9 @@ export const ToastProvider = () => {
     <Toaster
       position="top-right"
       reverseOrder={false}
+      containerStyle={{
+        zIndex: 99999,
+      }}
       toastOptions={{
         duration: 4000,
         style: {

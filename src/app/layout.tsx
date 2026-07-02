@@ -4,6 +4,7 @@ import PWARegister from "./pwa-register";
 import AppUpdater from "@/components/AppUpdater";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { ToastProvider } from "@/components/ToastProvider";
 
 export const metadata: Metadata = {
   title: "QC Management",
@@ -55,6 +56,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-slate-955 text-slate-100">
+        <ToastProvider />
         <PWARegister />
         <AppUpdater />
         {children}
