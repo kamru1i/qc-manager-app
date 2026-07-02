@@ -394,10 +394,9 @@ VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{
             if title != "NULL":
                 title = f"'{title}'"
                 
-            content = rule["content"].replace("'", "''")
-            extra_info = rule["extra_info"].replace("'", "''") if rule.get("extra_info") else "NULL"
-            if extra_info != "NULL":
-                extra_info = f"'{extra_info}'"
+            content_sql = f"$content${rule['content']}$content$" if rule.get("content") else "NULL"
+            extra_info = rule.get("extra_info")
+            extra_info_sql = f"$ext${extra_info}$ext$" if extra_info else "NULL"
                 
             is_deleted = "TRUE" if rule["is_deleted"] else "FALSE"
             created_at = rule["created_at"]
@@ -412,7 +411,7 @@ VALUES ('{t_id}', '{new_uid}', '{codename}', '{task}', '{status}', {comment}, '{
                 updated_by_sql = "NULL"
 
             rule_sql = f"""INSERT INTO public.compliance_rules (id, category, sub_category, company_name, company_tags, title, content, extra_info, is_deleted, created_at, updated_at, updated_by) 
-VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, {is_deleted}, '{created_at}', '{updated_at}', {updated_by_sql}) ON CONFLICT (id) DO NOTHING;"""
+VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, {content_sql}, {extra_info_sql}, {is_deleted}, '{created_at}', '{updated_at}', {updated_by_sql}) ON CONFLICT (id) DO NOTHING;"""
             rules_inserts.append(rule_sql)
 
         sql_statements.append("-- 5. Insert Compliance Rules")
@@ -448,10 +447,9 @@ VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {t
             if title != "NULL":
                 title = f"'{title}'"
                 
-            content = h["content"].replace("'", "''")
-            extra_info = h["extra_info"].replace("'", "''") if h.get("extra_info") else "NULL"
-            if extra_info != "NULL":
-                extra_info = f"'{extra_info}'"
+            content_sql = f"$content${h['content']}$content$" if h.get("content") else "NULL"
+            extra_info = h.get("extra_info")
+            extra_info_sql = f"$ext${extra_info}$ext$" if extra_info else "NULL"
                 
             action_type = h["action_type"]
             archived_at = h["archived_at"]
@@ -465,7 +463,7 @@ VALUES ('{r_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {t
                 archived_by_sql = "NULL"
                 
             hist_sql = f"""INSERT INTO public.rules_history (id, rule_id, category, sub_category, company_name, company_tags, title, content, extra_info, action_type, archived_at, archived_by)
-VALUES ('{h_id}', '{rule_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, '{content}', {extra_info}, '{action_type}', '{archived_at}', {archived_by_sql}) ON CONFLICT (id) DO NOTHING;"""
+VALUES ('{h_id}', '{rule_id}', '{category}', '{sub_category}', {company_name}, {tags_sql}, {title}, {content_sql}, {extra_info_sql}, '{action_type}', '{archived_at}', {archived_by_sql}) ON CONFLICT (id) DO NOTHING;"""
             history_inserts.append(hist_sql)
             
         sql_statements.append("-- 6. Insert Rules History")
