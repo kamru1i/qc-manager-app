@@ -67,10 +67,6 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
   return (
     <div className="bg-slate-900/40 border border-slate-900 shadow-2xl rounded-2xl overflow-hidden flex flex-col">
       <div className="px-6 py-4 border-b border-slate-800/80 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <h3 className="text-base font-bold text-white flex items-center gap-2">
-          <User className="h-5 w-5 text-orange-500" /> Staff Leave Master Database
-        </h3>
-
         {/* Search Input */}
         <div className="relative w-full sm:max-w-xs">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 dark:text-slate-500">
@@ -95,7 +91,7 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
         </div>
 
         {/* Master Export Summary buttons */}
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
           <button
             onClick={onAddStaffClick}
             className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-orange-600 text-orange-600 dark:border-orange-500 dark:text-orange-500 hover:bg-orange-600/10 dark:hover:bg-orange-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
@@ -138,7 +134,6 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Codename</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Full Leave</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Short Leave</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Overtime</th>
@@ -160,11 +155,6 @@ export const StaffMasterTable: React.FC<StaffMasterTableProps> = ({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 font-mono text-center">
                         {p.username ? p.username.toUpperCase() : ''}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-slate-900 border-slate-800 text-slate-300">
-                          {p.job_role || (p.role === 'admin' ? 'Admin' : (p.role === 'supervisor' ? 'Supervisor' : 'Staff'))}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300 font-bold font-mono text-center">
                         {stats.full} days
