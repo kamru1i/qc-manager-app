@@ -12,9 +12,11 @@ import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { Modal } from '@/components/Modal';
 import toast from 'react-hot-toast';
-import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2, X, ArrowLeft, AlertTriangle, KeyRound } from 'lucide-react';
+import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2, X, ArrowLeft, AlertTriangle, KeyRound, Check, RefreshCw } from 'lucide-react';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
+import { CategoryCheckboxList } from '@/components/CategoryCheckboxList';
+import { Toggle } from '@/components/Toggle';
 
 interface UserManagementDashboardProps {
   sessionUser: { id: string } | null;
@@ -96,6 +98,25 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [credNewPassword, setCredNewPassword] = useState('');
   const [credConfirmPassword, setCredConfirmPassword] = useState('');
   const [updatingCredentials, setUpdatingCredentials] = useState(false);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+
+  // Sync edit states when viewingStaff changes
+  useEffect(() => {
+    if (viewingStaff) {
+      setEditUserFullName(viewingStaff.full_name || '');
+      setEditUserRole(viewingStaff.role || 'user');
+      setEditHasChutiAccess(!!viewingStaff.has_chuti_access);
+      setEditHasQuotesAccess(!!viewingStaff.has_quotes_access);
+      setEditUserAllowedTypes((viewingStaff.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
+      setEditUserCanManageRules(!!viewingStaff.can_manage_rules);
+      setEditNeedsApproval(viewingStaff.needs_supervisor_approval !== false);
+      setEditSupervisorIds(viewingStaff.supervisor_ids || []);
+      setEditEligibleGovtHoliday(viewingStaff.eligible_govt_holiday !== false);
+      setEditEligibleOfficeLeave(viewingStaff.eligible_office_leave !== false);
+      setEditAllowOvertime(!!viewingStaff.allow_overtime);
+      setEditAllowReserve(!!viewingStaff.allow_reserve);
+    }
+  }, [viewingStaff]);
 
   // Synchronize viewingStaff with latest data from profiles list
   useEffect(() => {
@@ -176,11 +197,39 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     const success = await resetUserPassword(viewingStaff.id, credNewPassword);
     setUpdatingCredentials(false);
     if (success) {
+      // Also update has_changed_password to true since admin updated it to a custom one
+      await supabase
+        .from('profiles')
+        .update({ has_changed_password: true, is_setup_completed: true })
+        .eq('id', viewingStaff.id);
+
       toast.success('Password updated successfully.');
       setShowCredentialsModal(false);
       setCredNewPassword('');
       setCredConfirmPassword('');
+      fetchProfiles();
     }
+  };
+
+  const handleResetPasswordDefault = async () => {
+    if (!viewingStaff) return;
+    setSubmitting(true);
+    const success = await resetUserPassword(viewingStaff.id, '1234');
+    if (success) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ has_changed_password: false, is_setup_completed: false })
+        .eq('id', viewingStaff.id);
+      
+      if (error) {
+        console.error('Error updating profiles has_changed_password flag:', error);
+      } else {
+        toast.success('Password reset to default (1234). User must change it next login.');
+        fetchProfiles();
+      }
+      setShowResetConfirmModal(false);
+    }
+    setSubmitting(false);
   };
 
   const fetchProfiles = useCallback(async () => {
@@ -259,8 +308,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   };
 
-  const handleUpdateUser = async (newPasswordToSet?: string) => {
-    if (!editingProfile) return;
+  const handleUpdateUser = async () => {
+    if (!viewingStaff) return;
 
     if (editHasQuotesAccess && editUserAllowedTypes.length === 0) {
       toast.error('Please select at least one permitted file type for Quotes.');
@@ -271,8 +320,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       return;
     }
 
+    setSubmitting(true);
     const success = await adminUpdateUserProfile(
-      editingProfile.id,
+      viewingStaff.id,
       editUserFullName,
       editUserRole,
       editHasQuotesAccess ? editUserAllowedTypes : [],
@@ -288,15 +338,22 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       editAllowReserve
     );
 
+    setSubmitting(false);
+
     if (success) {
-      if (newPasswordToSet) {
-        const resetSuccess = await resetUserPassword(editingProfile.id, newPasswordToSet);
-        if (resetSuccess) {
-          toast.success('Password updated successfully.');
+      toast.success('Profile settings updated successfully.');
+      // Refresh profiles list
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('username', { ascending: true });
+      if (data) {
+        setProfiles(data);
+        const updated = data.find(p => p.id === viewingStaff.id);
+        if (updated) {
+          setViewingStaff(updated);
         }
       }
-      setEditingProfile(null);
-      fetchProfiles();
     }
   };
 
@@ -363,110 +420,392 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
             </div>
           </div>
 
+          {/* Profile Details Fields */}
+          <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-4">
+            {isAdmin ? (
+              <>
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Kamrul Islam"
+                    value={editUserFullName}
+                    onChange={(e) => setEditUserFullName(e.target.value)}
+                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Account Role</label>
+                  <select
+                    value={editUserRole}
+                    onChange={(e) => {
+                      const val = e.target.value as 'admin' | 'user' | 'supervisor';
+                      setEditUserRole(val);
+                      if (val === 'admin') {
+                        setEditUserCanManageRules(true);
+                      }
+                    }}
+                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50 cursor-pointer"
+                  >
+                    <option value="user">User</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</span>
+                  <span className="text-white text-sm font-semibold">{viewingStaff.full_name || '—'}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Account Role</span>
+                  <span className="text-white text-sm font-semibold capitalize">{viewingStaff.role || '—'}</span>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Workspace Access & Permissions Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Leave Tracker Access Card */}
-            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`h-2.5 w-2.5 rounded-full ${viewingStaff.has_chuti_access ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
+            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${editHasChutiAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
                   <h3 className="text-sm font-bold text-white">Leave Tracker Workspace</h3>
                 </div>
-                {viewingStaff.has_chuti_access ? (
-                  <div className="space-y-2.5 text-xs text-slate-350">
-                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
-                      <span>Needs Supervisor Approval:</span>
-                      <strong className="text-white">{viewingStaff.needs_supervisor_approval !== false ? 'Yes' : 'No'}</strong>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
-                      <span>Eligible for Govt Holiday:</span>
-                      <strong className="text-white">{viewingStaff.eligible_govt_holiday !== false ? 'Yes' : 'No'}</strong>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
-                      <span>Eligible for Office Leave:</span>
-                      <strong className="text-white">{viewingStaff.eligible_office_leave !== false ? 'Yes' : 'No'}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Overtime & Reserve:</span>
-                      <strong className="text-white font-semibold">
-                        {[
-                          viewingStaff.allow_overtime ? 'Overtime' : null,
-                          viewingStaff.allow_reserve ? 'Reserve' : null
-                        ].filter(Boolean).join(', ') || 'None'}
-                      </strong>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500 italic">This user does not have access to the Leave Tracker workspace.</p>
+                {isAdmin && (
+                  <Toggle
+                    checked={editHasChutiAccess}
+                    onChange={setEditHasChutiAccess}
+                    label="Access"
+                  />
                 )}
               </div>
+
+              {editHasChutiAccess ? (
+                <div className="space-y-4 text-xs text-slate-350">
+                  {/* Supervisor Approval Required */}
+                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+                    <div className="relative flex items-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={editNeedsApproval}
+                        disabled={!isAdmin}
+                        onChange={(e) => setEditNeedsApproval(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        editNeedsApproval
+                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-955 text-transparent'
+                      }`}>
+                        {editNeedsApproval && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                        Supervisor Approval Required?
+                      </span>
+                      <span className="text-[10px] text-slate-500 block leading-tight">
+                        Requires approval from a supervisor for any leave submissions.
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Supervisors List Selection */}
+                  {editNeedsApproval && profiles.filter(p => p.role === 'supervisor').length > 0 && (
+                    <div className="space-y-2 bg-slate-955/40 p-3 rounded-xl border border-slate-850 ml-6.5">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="font-semibold text-slate-400">Select Supervisors</span>
+                        <span className="text-slate-500 font-mono">
+                          {editSupervisorIds.length > 0 ? `${editSupervisorIds.length} Selected` : 'All Selected'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
+                        <label className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-all select-none text-[10px] ${
+                          isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
+                        } ${
+                          editSupervisorIds.length === 0 
+                            ? 'border-orange-600/60 bg-orange-955/20 text-orange-400 font-semibold' 
+                            : 'border-slate-800 bg-slate-955 text-slate-400'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={editSupervisorIds.length === 0}
+                            disabled={!isAdmin}
+                            onChange={() => setEditSupervisorIds([])}
+                            className="shrink-0 scale-75 cursor-pointer"
+                          />
+                          <span>All</span>
+                        </label>
+                        {profiles.filter(p => p.role === 'supervisor').map(sup => {
+                          const isChecked = editSupervisorIds.includes(sup.id);
+                          return (
+                            <label 
+                              key={sup.id} 
+                              className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-all select-none text-[10px] ${
+                                isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
+                              } ${
+                                isChecked 
+                                  ? 'border-orange-600/60 bg-orange-955/20 text-orange-400 font-semibold' 
+                                  : 'border-slate-800 bg-slate-955 text-slate-400'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                disabled={!isAdmin}
+                                onChange={() => {
+                                  if (isChecked) {
+                                    setEditSupervisorIds(editSupervisorIds.filter(id => id !== sup.id));
+                                  } else {
+                                    setEditSupervisorIds([...editSupervisorIds, sup.id]);
+                                  }
+                                }}
+                                className="shrink-0 scale-75 cursor-pointer"
+                              />
+                              <span>{sup.username.toUpperCase()}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Office Leave Eligible */}
+                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+                    <div className="relative flex items-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={editEligibleOfficeLeave}
+                        disabled={!isAdmin}
+                        onChange={(e) => setEditEligibleOfficeLeave(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        editEligibleOfficeLeave
+                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-955 text-transparent'
+                      }`}>
+                        {editEligibleOfficeLeave && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                        Office Leave Eligible?
+                      </span>
+                      <span className="text-[10px] text-slate-500 block leading-tight">
+                        Eligible for annual office leaves & Eid holidays.
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Govt Holiday Eligible */}
+                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+                    <div className="relative flex items-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={editEligibleGovtHoliday}
+                        disabled={!isAdmin}
+                        onChange={(e) => setEditEligibleGovtHoliday(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        editEligibleGovtHoliday
+                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-955 text-transparent'
+                      }`}>
+                        {editEligibleGovtHoliday && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                        Govt Holiday Eligible?
+                      </span>
+                      <span className="text-[10px] text-slate-500 block leading-tight">
+                        Eligible for government list holidays.
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Overtime Category */}
+                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+                    <div className="relative flex items-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={editAllowOvertime}
+                        disabled={!isAdmin}
+                        onChange={(e) => setEditAllowOvertime(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        editAllowOvertime
+                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-955 text-transparent'
+                      }`}>
+                        {editAllowOvertime && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                        Overtime Category?
+                      </span>
+                      <span className="text-[10px] text-slate-500 block leading-tight">
+                        Allows overtime submission category.
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* Reserve Govt Holiday */}
+                  <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+                    <div className="relative flex items-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={editAllowReserve}
+                        disabled={!isAdmin}
+                        onChange={(e) => setEditAllowReserve(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        editAllowReserve
+                          ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                          : 'border-slate-700 bg-slate-955 text-transparent'
+                      }`}>
+                        {editAllowReserve && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                        Reserve Govt Holiday?
+                      </span>
+                      <span className="text-[10px] text-slate-500 block leading-tight">
+                        Provides option to reserve government list holidays.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 italic py-4 text-center">This user does not have access to the Leave Tracker workspace.</p>
+              )}
             </div>
 
             {/* Quotes Manager Access Card */}
-            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`h-2.5 w-2.5 rounded-full ${viewingStaff.has_quotes_access ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
+            <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${editHasQuotesAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
                   <h3 className="text-sm font-bold text-white">Quotes Manager Workspace</h3>
                 </div>
-                {viewingStaff.has_quotes_access ? (
-                  <div className="space-y-2.5 text-xs text-slate-350">
-                    <div className="flex justify-between border-b border-slate-850/50 pb-1.5">
-                      <span>Can Manage Rules:</span>
-                      <strong className="text-white">{viewingStaff.can_manage_rules ? 'Yes' : 'No'}</strong>
-                    </div>
-                    <div className="flex justify-between items-start">
-                      <span>Permitted File Types:</span>
-                      <span className="text-right text-white font-medium max-w-[180px] break-words block font-mono">
-                        {(viewingStaff.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ') || 'None'}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500 italic">This user does not have access to the Quotes Manager workspace.</p>
+                {isAdmin && (
+                  <Toggle
+                    checked={editHasQuotesAccess}
+                    onChange={setEditHasQuotesAccess}
+                    label="Access"
+                  />
                 )}
               </div>
+
+              {editHasQuotesAccess ? (
+                <div className="space-y-4">
+                  {/* Category Checklist */}
+                  <CategoryCheckboxList
+                    allowedTypes={editUserAllowedTypes}
+                    onChange={setEditUserAllowedTypes}
+                  />
+
+                  {/* Can Manage Quote Rules (Only Admin edits) */}
+                  <div className="border-t border-slate-850/70 pt-3">
+                    <label className={`flex items-center gap-2.5 select-none ${
+                      isAdmin && editUserRole !== 'admin' ? 'cursor-pointer group' : 'opacity-70 pointer-events-none'
+                    }`}>
+                      <div className="relative flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={editUserCanManageRules || editUserRole === 'admin'}
+                          disabled={!isAdmin || editUserRole === 'admin'}
+                          onChange={(e) => setEditUserCanManageRules(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={`h-4 w-4 rounded flex items-center justify-center border transition-all shrink-0 ${
+                          (editUserCanManageRules || editUserRole === 'admin')
+                            ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                            : 'border-slate-700 bg-slate-955 text-transparent'
+                        }`}>
+                          {(editUserCanManageRules || editUserRole === 'admin') && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                        Can Manage Quote Rules? {editUserRole === 'admin' && <span className="text-[10px] text-slate-500 font-normal italic ml-1">(Always Allowed for Admin)</span>}
+                      </span>
+                    </label>
+                    <p className="text-[10px] text-slate-500 mt-1 ml-6.5">
+                      Allows user to add, edit, or delete compliance rules and view history.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 italic py-4 text-center">This user does not have access to the Quotes Manager workspace.</p>
+              )}
             </div>
           </div>
 
           {/* Action Buttons at the Bottom */}
-          <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-end gap-3 mt-6">
-            {isAdmin && (
+          <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
+            {/* Left side actions (Reset & Change Pass, Delete User) */}
+            <div className="flex flex-wrap gap-2.5 font-sans">
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirmModal(true)}
+                  className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+                >
+                  <RefreshCw className="h-3.5 w-3.5 text-amber-500" /> Reset Password?
+                </button>
+              )}
+              
               <button
-                onClick={() => setShowCredentialsModal(true)}
-                className="px-4 py-2.5 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]"
+                type="button"
+                onClick={() => {
+                  setCredNewPassword('');
+                  setCredConfirmPassword('');
+                  setShowCredentialsModal(true);
+                }}
+                className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
               >
-                <AlertTriangle className="h-4 w-4 text-amber-500" /> Change Password
+                <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
               </button>
-            )}
-            <button
-              onClick={() => {
-                setEditingProfile(viewingStaff);
-                setEditUserFullName(viewingStaff.full_name || '');
-                setEditUserRole(viewingStaff.role || 'user');
-                setEditHasChutiAccess(!!viewingStaff.has_chuti_access);
-                setEditHasQuotesAccess(!!viewingStaff.has_quotes_access);
-                setEditUserAllowedTypes((viewingStaff.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
-                setEditUserCanManageRules(!!viewingStaff.can_manage_rules);
-                setEditNeedsApproval(viewingStaff.needs_supervisor_approval !== false);
-                setEditSupervisorIds(viewingStaff.supervisor_ids || []);
-                setEditEligibleGovtHoliday(viewingStaff.eligible_govt_holiday !== false);
-                setEditEligibleOfficeLeave(viewingStaff.eligible_office_leave !== false);
-                setEditAllowOvertime(!!viewingStaff.allow_overtime);
-                setEditAllowReserve(!!viewingStaff.allow_reserve);
-              }}
-              className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <Edit className="h-4 w-4" /> Edit Profile Settings
-            </button>
-            {isAdmin && viewingStaff.role !== 'admin' && (
+
+              {isAdmin && viewingStaff.role !== 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
+                  className="px-4 py-2.5 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete Account
+                </button>
+              )}
+            </div>
+
+            {/* Right side actions (Save Changes button) */}
+            <div className="font-sans">
               <button
-                onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
-                className="px-4 py-2.5 bg-red-650/90 hover:bg-red-700 border border-red-700/80 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]"
+                type="button"
+                disabled={submitting}
+                onClick={handleUpdateUser}
+                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-orange-950/20 border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
               >
-                <Trash2 className="h-4 w-4" /> Delete User Account
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                {submitting ? 'Saving...' : 'Save Changes'}
               </button>
-            )}
+            </div>
           </div>
         </div>
       ) : (
@@ -686,41 +1025,22 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               />
             )}
 
-            {/* Edit User Modal */}
-            {editingProfile && (
-              <EditProfileModal
-                username={editingProfile.username}
-                fullName={editUserFullName}
-                setFullName={setEditUserFullName}
-                role={editUserRole}
-                setRole={setEditUserRole}
-                hasChutiAccess={editHasChutiAccess}
-                setHasChutiAccess={setEditHasChutiAccess}
-                hasQuotesAccess={editHasQuotesAccess}
-                setHasQuotesAccess={setEditHasQuotesAccess}
-                allowedTypes={editUserAllowedTypes}
-                setAllowedTypes={setEditUserAllowedTypes}
-                canManageRules={editUserCanManageRules}
-                setCanManageRules={setEditUserCanManageRules}
-                submitting={submitting}
-                onClose={() => setEditingProfile(null)}
-                onSave={handleUpdateUser}
-                editorRole={profile?.role === 'supervisor' ? 'supervisor' : 'admin'}
-                supervisors={profiles.filter(p => p.role === 'supervisor')}
-                needsSupervisorApproval={editNeedsApproval}
-                setNeedsSupervisorApproval={setEditNeedsApproval}
-                supervisorIds={editSupervisorIds}
-                setSupervisorIds={setEditSupervisorIds}
-                eligibleGovtHoliday={editEligibleGovtHoliday}
-                setEligibleGovtHoliday={setEditEligibleGovtHoliday}
-                eligibleOfficeLeave={editEligibleOfficeLeave}
-                setEligibleOfficeLeave={setEditEligibleOfficeLeave}
-                allowOvertime={editAllowOvertime}
-                setAllowOvertime={setEditAllowOvertime}
-                allowReserve={editAllowReserve}
-                setAllowReserve={setEditAllowReserve}
-              />
-            )}
+            {/* Reset Password Confirmation Modal */}
+            <ConfirmModal
+              isOpen={showResetConfirmModal}
+              onClose={() => setShowResetConfirmModal(false)}
+              onConfirm={handleResetPasswordDefault}
+              title="Reset Password to Default"
+              message={
+                <div className="text-xs text-slate-300">
+                  Are you sure you want to reset the password for <strong className="text-white">{(viewingStaff?.username || '').toUpperCase()}</strong> to the default <strong className="text-orange-400">1234</strong>?
+                  <p className="text-[11px] text-slate-500 mt-2">The user will be forced to change this default password on their next login.</p>
+                </div>
+              }
+              confirmText="Reset to 1234"
+              cancelText="Cancel"
+              isDanger={false}
+            />
 
             {/* Change Password Credentials Modal */}
             {showCredentialsModal && viewingStaff && (
