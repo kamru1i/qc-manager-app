@@ -1085,7 +1085,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                     </span>
 
                     <div className="mt-3.5 space-y-1">
-                      <h5 className="text-xs font-extrabold text-white truncate max-w-full group-hover:text-blue-400 transition-colors flex items-center justify-center gap-0.5">
+                      <h5 className="text-xs font-extrabold text-white truncate max-w-full group-hover:text-blue-400 transition-colors flex items-center justify-center">
                         <span>{user.name}</span>
                         {topPerformerBadges[user.userId] && (
                           <VerifiedBadge badge={topPerformerBadges[user.userId]} />

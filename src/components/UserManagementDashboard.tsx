@@ -363,7 +363,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   visibleProfiles.map((u: Profile) => (
                     <tr key={u.id} className="hover:bg-slate-900/25 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center">
                           <span className="font-semibold text-white">{u.full_name || '—'}</span>
                           {topPerformerBadges[u.id] && (
                             <VerifiedBadge badge={topPerformerBadges[u.id]} />
