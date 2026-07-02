@@ -316,17 +316,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       {/* Summary Cards */}
       {!viewingStaffId && (
         <div className="flex flex-wrap justify-center gap-4 w-full animate-fade-in">
-          {/* Card 1: Total Staff */}
-          <StatCard
-            icon={User}
-            iconBgClass="bg-orange-500/10"
-            iconColorClass="text-orange-400"
-            iconBorderClass="border-orange-500/20"
-            title="Total Staff"
-            value={`${profilesList.length} ${profilesList.length === 1 ? 'person' : 'people'}`}
-            className="w-full max-w-xs"
-            loading={!initialFetchDone}
-          />
 
           {/* Card 2: Office Allocated Leave */}
           <StatCard
