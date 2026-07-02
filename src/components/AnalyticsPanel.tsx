@@ -367,6 +367,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       fullName: monthsList[i].name,
       quotes: 0,
       requotes: 0,
+      reviews: 0,
       sales: 0,
       total: 0
     }));
@@ -377,11 +378,13 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       const monthIdx = date.getMonth();
       if (monthIdx >= 0 && monthIdx < 12) {
         months[monthIdx].total++;
-        const type = r.file_type;
+        const type = r.file_type || '';
         if (type === 'Quote') {
           months[monthIdx].quotes++;
         } else if (type === 'Requote') {
           months[monthIdx].requotes++;
+        } else if (type.toLowerCase().includes('review')) {
+          months[monthIdx].reviews++;
         } else if (type === 'Sale') {
           months[monthIdx].sales++;
         }
@@ -395,7 +398,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   const maxMonthlyVal = useMemo(() => {
     let max = 10; // minimum scale limit
     monthlyData.forEach(m => {
-      const val = Math.max(m.quotes, m.requotes, m.sales);
+      const val = Math.max(m.quotes, m.requotes, m.reviews, m.sales);
       if (val > max) max = val;
     });
     // Round to next multiple of 5 for clean gridlines
@@ -646,8 +649,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       {/* Grid: Key Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Card 1: Total Quotes */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-blue-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-blue-950/10">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 rounded-full blur-2xl group-hover:bg-blue-600/10 transition-all duration-300"></div>
+        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#3b82f6]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#3b82f6]/5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#3b82f6]/5 rounded-full blur-2xl group-hover:bg-[#3b82f6]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
               <p className="text-xs font-semibold text-slate-400">Total Quotes</p>
@@ -658,7 +661,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 </div>
               </div>
             </div>
-            <div className="p-2.5 bg-blue-600/15 border border-blue-500/20 text-blue-400 rounded-xl shrink-0">
+            <div className="p-2.5 bg-[#3b82f6]/15 border border-[#3b82f6]/20 text-[#3b82f6] rounded-xl shrink-0">
               <FileText className="h-5 w-5" />
             </div>
           </div>
@@ -669,8 +672,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         </div>
 
         {/* Card 2: Total Requotes */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-purple-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-purple-950/10">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/5 rounded-full blur-2xl group-hover:bg-purple-600/10 transition-all duration-300"></div>
+        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#a855f7]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#a855f7]/5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#a855f7]/5 rounded-full blur-2xl group-hover:bg-[#a855f7]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
               <p className="text-xs font-semibold text-slate-400">Total Requotes</p>
@@ -681,7 +684,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 </div>
               </div>
             </div>
-            <div className="p-2.5 bg-purple-600/15 border border-purple-500/20 text-purple-400 rounded-xl shrink-0">
+            <div className="p-2.5 bg-[#a855f7]/15 border border-[#a855f7]/20 text-[#a855f7] rounded-xl shrink-0">
               <Clock className="h-5 w-5" />
             </div>
           </div>
@@ -692,8 +695,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         </div>
 
         {/* Card 3: Total Reviews */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-pink-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-pink-950/10">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-pink-600/5 rounded-full blur-2xl group-hover:bg-pink-600/10 transition-all duration-300"></div>
+        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#ec4899]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#ec4899]/5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#ec4899]/5 rounded-full blur-2xl group-hover:bg-[#ec4899]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
               <p className="text-xs font-semibold text-slate-400">Total Reviews</p>
@@ -704,7 +707,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 </div>
               </div>
             </div>
-            <div className="p-2.5 bg-pink-600/15 border border-pink-500/20 text-pink-400 rounded-xl shrink-0">
+            <div className="p-2.5 bg-[#ec4899]/15 border border-[#ec4899]/20 text-[#ec4899] rounded-xl shrink-0">
               <Eye className="h-5 w-5" />
             </div>
           </div>
@@ -715,8 +718,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         </div>
 
         {/* Card 4: Total Sales */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-emerald-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-emerald-950/10">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-600/5 rounded-full blur-2xl group-hover:bg-emerald-600/10 transition-all duration-300"></div>
+        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#10b981]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#10b981]/5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#10b981]/5 rounded-full blur-2xl group-hover:bg-[#10b981]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
               <p className="text-xs font-semibold text-slate-400">Total Sales</p>
@@ -727,7 +730,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 </div>
               </div>
             </div>
-            <div className="p-2.5 bg-emerald-600/15 border border-emerald-500/20 text-emerald-400 rounded-xl shrink-0">
+            <div className="p-2.5 bg-[#10b981]/15 border border-[#10b981]/20 text-[#10b981] rounded-xl shrink-0">
               <CheckCircle className="h-5 w-5" />
             </div>
           </div>
@@ -789,11 +792,14 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                   <stop offset="0%" stopColor="#a855f7" stopOpacity="0.85" />
                   <stop offset="100%" stopColor="#7e22ce" stopOpacity="0.4" />
                 </linearGradient>
+                <linearGradient id="reviewGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ec4899" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#be185d" stopOpacity="0.4" />
+                </linearGradient>
                 <linearGradient id="saleGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#10b981" stopOpacity="0.85" />
                   <stop offset="100%" stopColor="#047857" stopOpacity="0.4" />
                 </linearGradient>
-
               </defs>
 
               {/* Horizontal Grid lines */}
@@ -835,15 +841,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 const chartHeight = 200; // 230 - 30
                 const qHeight = maxMonthlyVal > 0 ? (data.quotes / maxMonthlyVal) * chartHeight : 0;
                 const rHeight = maxMonthlyVal > 0 ? (data.requotes / maxMonthlyVal) * chartHeight : 0;
+                const revHeight = maxMonthlyVal > 0 ? (data.reviews / maxMonthlyVal) * chartHeight : 0;
                 const sHeight = maxMonthlyVal > 0 ? (data.sales / maxMonthlyVal) * chartHeight : 0;
 
-                const barWidth = 10;
-                const gap = 3;
+                const barWidth = 8;
+                const gap = 2;
+                const xCenter = xStart + monthWidth / 2;
 
-                // X offsets inside the month group
-                const qX = xStart + (monthWidth / 2) - barWidth - barWidth / 2 - gap;
-                const rX = xStart + (monthWidth / 2) - barWidth / 2;
-                const sX = xStart + (monthWidth / 2) + barWidth / 2 + gap;
+                // X offsets inside the month group for 4 bars
+                const qX = xCenter - 2 * barWidth - 1.5 * gap;
+                const rX = xCenter - barWidth - 0.5 * gap;
+                const revX = xCenter + 0.5 * gap;
+                const sX = xCenter + barWidth + 1.5 * gap;
 
                 const baseLineY = 230;
 
@@ -918,6 +927,34 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                         />
                       )}
 
+                      {/* Review Bar */}
+                      {data.reviews > 0 && (
+                        <rect
+                          x={revX}
+                          y={baseLineY - revHeight}
+                          width={barWidth}
+                          height={revHeight}
+                          fill="url(#reviewGrad)"
+                          rx="2"
+                          ry="2"
+                          className="cursor-pointer transition-all duration-250 hover:brightness-125"
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const container = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                            if (rect && container) {
+                              setHoveredBar({
+                                x: rect.left - container.left + barWidth / 2,
+                                y: rect.top - container.top - 40,
+                                month: data.fullName,
+                                label: 'Reviews',
+                                value: data.reviews,
+                                color: '#ec4899'
+                              });
+                            }
+                          }}
+                        />
+                      )}
+
                       {/* Sale Bar */}
                       {data.sales > 0 && (
                         <rect
@@ -976,7 +1013,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: hoveredBar.color }}></span>
                   <span className="font-semibold">{hoveredBar.label}:</span>
-                  <span className="font-extrabold text-blue-400">{hoveredBar.value} files</span>
+                  <span className="font-extrabold" style={{ color: hoveredBar.color }}>{hoveredBar.value} files</span>
                 </div>
               </div>
             )}
@@ -985,15 +1022,19 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           {/* Legends */}
           <div className="flex justify-center items-center gap-6 mt-2 text-xs">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded bg-blue-500 border border-blue-600/50"></span>
+              <span className="w-3 h-3 rounded bg-[#3b82f6] border border-[#1d4ed8]/50"></span>
               <span className="text-slate-400 font-medium">Quotes</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded bg-purple-500 border border-purple-600/50"></span>
+              <span className="w-3 h-3 rounded bg-[#a855f7] border border-[#7e22ce]/50"></span>
               <span className="text-slate-400 font-medium">Requotes</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded bg-emerald-500 border border-emerald-600/50"></span>
+              <span className="w-3 h-3 rounded bg-[#ec4899] border border-[#be185d]/50"></span>
+              <span className="text-slate-400 font-medium">Reviews</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded bg-[#10b981] border border-[#047857]/50"></span>
               <span className="text-slate-400 font-medium">Sales</span>
             </div>
           </div>
