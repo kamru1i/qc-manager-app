@@ -10,6 +10,7 @@ import { lazy, Suspense, useMemo } from "react";
 import { UnifiedSidebar } from "@/components/UnifiedSidebar";
 import { Navbar } from "@/components/Navbar";
 import { calculateTopPerformerBadges } from "@/utils/leaderboardHelper";
+import { Toaster } from 'react-hot-toast';
 
 
 const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
@@ -593,6 +594,29 @@ export default function AppPortal() {
   // Authenticated -> Render single layout shell wrapping active workspace component
   return (
     <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12 text-white selection:bg-purple-650 selection:text-white">
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        containerStyle={{ zIndex: 99999 }}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#0f172a',
+            color: '#f1f5f9',
+            border: '1px solid #1e293b',
+            borderRadius: '12px',
+            fontSize: '13px',
+            padding: '12px 16px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3)',
+          },
+          success: {
+            iconTheme: { primary: '#10b981', secondary: '#0f172a' },
+          },
+          error: {
+            iconTheme: { primary: '#ef4444', secondary: '#0f172a' },
+          },
+        }}
+      />
       {/* Glow background blobs */}
       <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-violet-900/10 blur-[120px] pointer-events-none" />
