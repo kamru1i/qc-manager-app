@@ -28,6 +28,7 @@ import {
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/useLeaveQuotaStats';
 import { AdminOfficeLeaveSettingsModal } from './modals/AdminOfficeLeaveSettingsModal';
+import { AdminEidLeaveSettingsModal } from './modals/AdminEidLeaveSettingsModal';
 import { AdminGovtHolidaysSettingsModal } from './modals/AdminGovtHolidaysSettingsModal';
 import { StatCard } from './StatCard';
 import { UserStats } from './UserStats';
@@ -148,6 +149,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   // Local settings modals visibility
   const [showOfficeModal, setShowOfficeModal] = React.useState(false);
+  const [showEidModal, setShowEidModal] = React.useState(false);
   const [showGovtModal, setShowGovtModal] = React.useState(false);
   
   const [localActiveTab, setLocalActiveTab] = React.useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
@@ -324,7 +326,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             iconColorClass="text-orange-400"
             iconBorderClass="border-orange-500/20"
             title="Allocated Office Leave"
-            value={`${(globalSettings.office_leave_h1 + globalSettings.office_leave_h2) + (globalSettings.eid_fitr_leave ?? 0) + (globalSettings.eid_adha_leave ?? 0)} days`}
+            value={`${globalSettings.office_leave_h1 + globalSettings.office_leave_h2} days`}
             action={
               <button
                 onClick={() => setShowOfficeModal(true)}
@@ -338,7 +340,28 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             loading={!initialFetchDone}
           />
 
-          {/* Card 3: Govt Holiday */}
+          {/* Card 3: Eid Leave */}
+          <StatCard
+            icon={Calendar}
+            iconBgClass="bg-orange-500/10"
+            iconColorClass="text-orange-400"
+            iconBorderClass="border-orange-500/20"
+            title="Eid Leave"
+            value={`${(globalSettings.eid_fitr_leave ?? 0) + (globalSettings.eid_adha_leave ?? 0)} days`}
+            action={
+              <button
+                onClick={() => setShowEidModal(true)}
+                className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer border border-transparent hover:border-slate-700"
+                title="Eid Leave Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            }
+            className="w-full max-w-xs"
+            loading={!initialFetchDone}
+          />
+
+          {/* Card 4: Govt Holiday */}
           <StatCard
             icon={Calendar}
             iconBgClass="bg-teal-500/10"
@@ -663,6 +686,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       <AdminOfficeLeaveSettingsModal
         showModal={showOfficeModal}
         setShowModal={setShowOfficeModal}
+        globalSettings={globalSettings}
+        onSave={onSaveGlobalSettings}
+      />
+      <AdminEidLeaveSettingsModal
+        showModal={showEidModal}
+        setShowModal={setShowEidModal}
         globalSettings={globalSettings}
         onSave={onSaveGlobalSettings}
       />
