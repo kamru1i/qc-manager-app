@@ -52,7 +52,7 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://github.com/kamrulislam2/chuti-leave-tracker/releases/latest/download/latest.json"
+        "https://github.com/kamrulislam2/qc-manager-app/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY3ODhDMDE3MTI2RUMwREQKUldUZHdHNFNGOENJOXhQa2taajRDbG1BcWRkRG5iWVpnYTh0ZUI4S0QzN1RESFpWK3dsQkNobG4K"
     }
