@@ -3,8 +3,8 @@
  * Used in both Navbar.tsx and login/page.tsx to eliminate code duplication.
  */
 
-const GITHUB_RELEASES_URL = "https://api.github.com/repos/kamrulislam2/quotes-and-sales-tracker/releases/latest";
-const GITHUB_RELEASES_FALLBACK = "https://github.com/kamrulislam2/quotes-and-sales-tracker/releases/latest";
+const GITHUB_RELEASES_URL = "https://api.github.com/repos/kamrulislam2/qc-manager-app/releases/latest";
+const GITHUB_RELEASES_FALLBACK = "https://github.com/kamrulislam2/qc-manager-app/releases/latest";
 
 interface ReleaseAsset {
   name: string;

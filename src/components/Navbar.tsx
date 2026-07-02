@@ -69,7 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const nameHoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
-    const isTauriEnv = typeof window !== 'undefined' && (window as unknown as { __TAURI__?: unknown }).__TAURI__ !== undefined;
+    const isTauriEnv = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || (window as any).__TAURI__ !== undefined);
     setIsTauri(isTauriEnv);
   }, []);
 
