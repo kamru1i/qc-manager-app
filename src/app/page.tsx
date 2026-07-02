@@ -489,6 +489,13 @@ export default function AppPortal() {
         | "todo";
       addLog(`custom workspace-change event detected: ${targetWorkspace}`);
 
+      // Clear flag when navigating to any workspace from the sidebar
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('viewingStaffFromUserManagement');
+        sessionStorage.removeItem('viewingStaffId');
+        window.dispatchEvent(new CustomEvent('trigger-viewing-staff', { detail: null }));
+      }
+
       // Safety check: ensure user has access before switching
       if (profile) {
         if (targetWorkspace === "chuti" && !profile.has_chuti_access) return;
@@ -649,17 +656,20 @@ export default function AppPortal() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row gap-6 items-start">
         <UnifiedSidebar
           activeSection={
-            activeTab === "user_management"
+            (typeof window !== "undefined" &&
+            sessionStorage.getItem("viewingStaffFromUserManagement") === "true")
               ? "user_management"
-              : activeTab === "todo"
-                ? "todo"
-                : activeTab === "analytics"
-                  ? "analytics"
-                  : activeTab === "audit_logs"
-                    ? "audit_logs"
-                    : activeTab === "quotes"
-                      ? "quotes"
-                      : "chuti"
+              : activeTab === "user_management"
+                ? "user_management"
+                : activeTab === "todo"
+                  ? "todo"
+                  : activeTab === "analytics"
+                    ? "analytics"
+                    : activeTab === "audit_logs"
+                      ? "audit_logs"
+                      : activeTab === "quotes"
+                        ? "quotes"
+                        : "chuti"
           }
           profile={profile}
           activeQuotesTab={activeQuotesTab}

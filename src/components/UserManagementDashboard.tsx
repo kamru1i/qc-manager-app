@@ -10,8 +10,9 @@ import { UnifiedSidebar } from '@/components/UnifiedSidebar';
 import { AddUserModal } from '@/components/modals/AddUserModal';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
+import { Modal } from '@/components/Modal';
 import toast from 'react-hot-toast';
-import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2, X } from 'lucide-react';
+import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2, X, ArrowLeft, AlertTriangle, KeyRound } from 'lucide-react';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 
@@ -85,6 +86,117 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
 
+  // Double-click viewing state
+  const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
+  const [viewingStaffRecords, setViewingStaffRecords] = useState<any[]>([]);
+  const [viewingStaffStats, setViewingStaffStats] = useState<any>(null);
+
+  // Change Credentials Modal State
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credNewPassword, setCredNewPassword] = useState('');
+  const [credConfirmPassword, setCredConfirmPassword] = useState('');
+  const [updatingCredentials, setUpdatingCredentials] = useState(false);
+
+  // Synchronize viewingStaff with latest data from profiles list
+  useEffect(() => {
+    if (viewingStaff) {
+      const updated = profiles.find(p => p.id === viewingStaff.id);
+      if (updated) {
+        setViewingStaff(updated);
+      } else {
+        setViewingStaff(null); // User was deleted
+      }
+    }
+  }, [profiles, viewingStaff]);
+
+  // Backspace to go back from details view
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!viewingStaff) return;
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        const tagName = activeEl.tagName.toUpperCase();
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA' || activeEl.getAttribute('contenteditable') === 'true') {
+          return;
+        }
+      }
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        setViewingStaff(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewingStaff]);
+
+  // Load records and stats for double-clicked user
+  useEffect(() => {
+    if (!viewingStaff) {
+      setViewingStaffRecords([]);
+      setViewingStaffStats(null);
+      return;
+    }
+
+    const loadStaffData = async () => {
+      try {
+        const { data: records, error: recordsError } = await supabase
+          .from('leave_records')
+          .select('*')
+          .eq('user_id', viewingStaff.id)
+          .order('date', { ascending: false });
+        if (recordsError) throw recordsError;
+
+        const { data: settlements, error: settlementsError } = await supabase
+          .from('leave_settlements')
+          .select('*')
+          .eq('user_id', viewingStaff.id);
+        if (settlementsError) throw settlementsError;
+
+        const { data: settings, error: settingsError } = await supabase
+          .from('settings')
+          .select('*')
+          .single();
+        if (settingsError) throw settingsError;
+
+        const currentYear = new Date().getFullYear().toString();
+        const yearRecords = (records || []).filter((r: any) => {
+          const d = new Date(r.date);
+          return d.getFullYear().toString() === currentYear && r.status === 'approved';
+        });
+
+        let shortHours = 0;
+        let fullLeaves = 0;
+        yearRecords.forEach((r: any) => {
+          if (r.leave_type === 'short') {
+            shortHours += parseFloat(r.leave_hour) || 0;
+          } else if (r.leave_type === 'full') {
+            fullLeaves += 1;
+          }
+        });
+
+        const officeAllocated = viewingStaff.eligible_office_leave !== false ? (settings?.office_leave_quota || 10) : 0;
+        const officeTaken = yearRecords.filter((r: any) => r.category === 'Office Leave').length;
+
+        const govtAllocated = viewingStaff.eligible_govt_holiday !== false ? (settings?.govt_holiday_quota || 22) : 0;
+        const govtTaken = yearRecords.filter((r: any) => r.category === 'Govt Holiday').length;
+
+        setViewingStaffRecords(records || []);
+        setViewingStaffStats({
+          shortHours,
+          fullLeaves,
+          officeAllocated,
+          officeTaken,
+          govtAllocated,
+          govtTaken,
+        });
+      } catch (e) {
+        console.error('Failed to load viewing staff details:', e);
+      }
+    };
+
+    loadStaffData();
+  }, [viewingStaff]);
+
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
     if (type === 'success') toast.success(text);
     else toast.error(text);
@@ -113,6 +225,29 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     setSubmitting,
     updateLastActivity: () => {},
   });
+
+  // Handle password update for viewingStaff
+  const handleUpdatePassword = async () => {
+    if (!viewingStaff) return;
+    if (credNewPassword !== credConfirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (credNewPassword.length < 4) {
+      toast.error('Password must be at least 4 characters');
+      return;
+    }
+
+    setUpdatingCredentials(true);
+    const success = await resetUserPassword(viewingStaff.id, credNewPassword);
+    setUpdatingCredentials(false);
+    if (success) {
+      toast.success('Password updated successfully.');
+      setShowCredentialsModal(false);
+      setCredNewPassword('');
+      setCredConfirmPassword('');
+    }
+  };
 
   const fetchProfiles = useCallback(async () => {
     setIsLoading(true);
@@ -261,199 +396,329 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   return (
     <>
+      {viewingStaff ? (
+        <div className="space-y-6 animate-modal-content">
+          {/* Header/Top Box */}
+          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setViewingStaff(null)}
+                className="p-2.5 bg-slate-850 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-750 transition-all cursor-pointer"
+                title="Go Back"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  {viewingStaff.full_name || 'Staff User'}{viewingStaff.username ? ` (${viewingStaff.username.toUpperCase()})` : ''}
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
+                    viewingStaff.role === 'admin'
+                      ? 'bg-red-950/60 border-red-900 text-red-300'
+                      : viewingStaff.role === 'supervisor'
+                        ? 'bg-amber-955/60 border-amber-805 text-amber-300'
+                        : 'bg-slate-850 border-slate-750 text-slate-400'
+                  }`}>
+                    {viewingStaff.role === 'admin' ? 'Admin' : (viewingStaff.role === 'supervisor' ? 'Supervisor' : 'Staff')}
+                  </span>
+                </h2>
+                <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-405">
+                  <div>Working Hours: <strong className="text-white">{viewingStaff.working_hours || 9.5} hrs</strong></div>
+                  <div>Break Time: <strong className="text-white">{viewingStaff.break_time || 0} mins</strong></div>
+                </div>
+              </div>
+            </div>
 
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white">User Management</h2>
-            <p className="text-xs text-slate-450 mt-1">
-              Add new staff members, set roles (Admin, Supervisor, User), and configure Leave and Quotes Tracker access permissions.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isAdmin && (
+            <div className="flex gap-2">
+              {isAdmin && (
+                <button
+                  onClick={() => setShowCredentialsModal(true)}
+                  className="px-3.5 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Change Password
+                </button>
+              )}
               <button
                 onClick={() => {
-                  setNewCodename('');
-                  setNewFullName('');
-                  setNewRole('user');
-                  setHasChutiAccess(true);
-                  setHasQuotesAccess(false);
-                  setAllowedTypes([]);
-                  setCanManageRules(false);
-                  setGeneratedPassword(null);
-                  setNewNeedsApproval(false);
-                  setNewSupervisorIds([]);
-                  setNewEligibleGovtHoliday(false);
-                  setNewEligibleOfficeLeave(false);
-                  setNewAllowOvertime(false);
-                  setNewAllowReserve(false);
-                  setIsAddUserModalOpen(true);
+                  setEditingProfile(viewingStaff);
+                  setEditUserFullName(viewingStaff.full_name || '');
+                  setEditUserRole(viewingStaff.role || 'user');
+                  setEditHasChutiAccess(!!viewingStaff.has_chuti_access);
+                  setEditHasQuotesAccess(!!viewingStaff.has_quotes_access);
+                  setEditUserAllowedTypes((viewingStaff.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
+                  setEditUserCanManageRules(!!viewingStaff.can_manage_rules);
+                  setEditNeedsApproval(viewingStaff.needs_supervisor_approval !== false);
+                  setEditSupervisorIds(viewingStaff.supervisor_ids || []);
+                  setEditEligibleGovtHoliday(viewingStaff.eligible_govt_holiday !== false);
+                  setEditEligibleOfficeLeave(viewingStaff.eligible_office_leave !== false);
+                  setEditAllowOvertime(!!viewingStaff.allow_overtime);
+                  setEditAllowReserve(!!viewingStaff.allow_reserve);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-orange-950/20 active:scale-95 transition-all cursor-pointer"
+                className="px-3.5 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md shadow-orange-950/10 border border-orange-700 flex items-center gap-1.5"
               >
-                <UserPlus className="h-4 w-4" />
-                Add New Staff
+                <Edit className="h-3.5 w-3.5" /> Edit Profile
               </button>
-            )}
+              {isAdmin && viewingStaff.role !== 'admin' && (
+                <button
+                  onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
+                  className="px-3.5 py-2 bg-red-600/90 hover:bg-red-700 border border-red-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete User
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Leave Stats Cards */}
+          {viewingStaff.has_chuti_access && viewingStaffStats && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Office Leave (Yearly)</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-white">{viewingStaffStats.officeTaken}</span>
+                  <span className="text-xs text-slate-505">/ {viewingStaffStats.officeAllocated} days taken</span>
+                </div>
+              </div>
+              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Govt Holiday</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-white">{viewingStaffStats.govtTaken}</span>
+                  <span className="text-xs text-slate-505">/ {viewingStaffStats.govtAllocated} days taken</span>
+                </div>
+              </div>
+              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Short Leave</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-white">{viewingStaffStats.shortHours.toFixed(1)}</span>
+                  <span className="text-xs text-slate-505">hrs taken</span>
+                </div>
+              </div>
+              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl shadow">
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Full Leave</h4>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-white">{viewingStaffStats.fullLeaves}</span>
+                  <span className="text-xs text-slate-505">days taken</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Leave Records Table */}
+          {viewingStaff.has_chuti_access && (
+            <div className="bg-slate-900/40 border border-slate-850 rounded-xl overflow-hidden shadow-xl">
+              <div className="px-4 py-3 border-b border-slate-850">
+                <h4 className="text-xs font-bold text-white">Leave Records ({viewingStaffRecords.length})</h4>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-955/40 text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
+                      <th className="py-2.5 px-4">Date</th>
+                      <th className="py-2.5 px-4 text-center">Type</th>
+                      <th className="py-2.5 px-4">Category</th>
+                      <th className="py-2.5 px-4 text-center">Hours / Time</th>
+                      <th className="py-2.5 px-4">Comment</th>
+                      <th className="py-2.5 px-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-850 text-slate-300">
+                    {viewingStaffRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-slate-500 italic">No leave records found.</td>
+                      </tr>
+                    ) : (
+                      viewingStaffRecords.map((r: any) => (
+                        <tr key={r.id} className="hover:bg-slate-900/10 animate-fade-in">
+                          <td className="py-2.5 px-4 font-mono">{r.date}</td>
+                          <td className="py-2.5 px-4 text-center capitalize">{r.leave_type}</td>
+                          <td className="py-2.5 px-4">{r.category || '—'}</td>
+                          <td className="py-2.5 px-4 text-center font-mono">
+                            {r.leave_type === 'short' ? `${r.leave_hour} hrs (${r.sign_in || ''} - ${r.sign_out || ''})` : '—'}
+                          </td>
+                          <td className="py-2.5 px-4 truncate max-w-xs">{r.comment || '—'}</td>
+                          <td className="py-2.5 px-4 text-center">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                              r.status === 'approved'
+                                ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/30'
+                                : r.status === 'rejected'
+                                ? 'bg-red-950/50 text-red-400 border border-red-900/30'
+                                : 'bg-amber-955/50 text-amber-400 border border-amber-900/30'
+                            }`}>
+                              {r.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-white">User Management</h2>
+              <p className="text-xs text-slate-450 mt-1">
+                Add new staff members, set roles (Admin, Supervisor, User), and configure Leave and Quotes Tracker access permissions.
+              </p>
+            </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-950/45 p-4 rounded-xl border border-slate-800/40">
-          <div className="relative w-full md:max-w-xs">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
-              <Search className="h-4 w-4" />
-            </span>
-            <input
-              type="text"
-              placeholder="Search by name or codename..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-350 cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setNewCodename('');
+                    setNewFullName('');
+                    setNewRole('user');
+                    setHasChutiAccess(true);
+                    setHasQuotesAccess(false);
+                    setAllowedTypes([]);
+                    setCanManageRules(false);
+                    setGeneratedPassword(null);
+                    setNewNeedsApproval(false);
+                    setNewSupervisorIds([]);
+                    setNewEligibleGovtHoliday(false);
+                    setNewEligibleOfficeLeave(false);
+                    setNewAllowOvertime(false);
+                    setNewAllowReserve(false);
+                    setIsAddUserModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-orange-950/20 active:scale-95 transition-all cursor-pointer"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add New Staff
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="text-[11px] text-slate-400">
-            Showing <span className="text-white font-semibold">{visibleProfiles.length}</span> users
+          {/* Search and Filters */}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-955/45 p-4 rounded-xl border border-slate-800/40">
+            <div className="relative w-full md:max-w-xs">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search by name or codename..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-350 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="text-[11px] text-slate-400">
+              Showing <span className="text-white font-semibold">{visibleProfiles.length}</span> users
+            </div>
           </div>
-        </div>
 
-        {/* Users Table */}
-        <div className="bg-slate-955/20 rounded-xl border border-slate-850 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-800 bg-slate-900/40 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                  <th className="py-3 px-4">Name / Codename</th>
-                  <th className="py-3 px-4 text-center">Role</th>
-                  <th className="py-3 px-4 text-center">Leave Tracker</th>
-                  <th className="py-3 px-4 text-center">Quotes Tracker</th>
-                  <th className="py-3 px-4 text-center">File Type</th>
-                  <th className="py-3 px-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-850 text-xs text-slate-300">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-500">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
-                        <span>Loading user directory...</span>
-                      </div>
-                    </td>
+          {/* Users Table */}
+          <div className="bg-slate-955/20 rounded-xl border border-slate-850 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-900/40 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                    <th className="py-3 px-4">Name / Codename</th>
+                    <th className="py-3 px-4 text-center">Role</th>
+                    <th className="py-3 px-4 text-center">Leave Tracker</th>
+                    <th className="py-3 px-4 text-center">Quotes Tracker</th>
+                    <th className="py-3 px-4 text-center">File Type</th>
                   </tr>
-                ) : visibleProfiles.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-500">
-                      No users found.
-                    </td>
-                  </tr>
-                ) : (
-                  visibleProfiles.map((u: Profile) => (
-                    <tr key={u.id} className="hover:bg-slate-900/25 transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <span className="font-semibold text-white">{u.full_name || '—'}</span>
-                          {topPerformerBadges[u.id] && (
-                            <VerifiedBadge badge={topPerformerBadges[u.id]} />
-                          )}
-                        </div>
-                        <div className="text-[10px] text-slate-455 uppercase mt-0.5 tracking-wider font-mono">
-                          {u.username}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
-                          u.role === 'admin'
-                            ? 'bg-red-950/40 border-red-900/50 text-red-400'
-                            : u.role === 'supervisor'
-                            ? 'bg-amber-955/40 border-amber-800/50 text-amber-400'
-                            : 'bg-slate-850 border-slate-750 text-slate-400'
-                        }`}>
-                          <Shield className="h-3 w-3 shrink-0" />
-                          {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : 'User'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {u.has_chuti_access ? (
-                          <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
-                        ) : (
-                          <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {u.has_quotes_access ? (
-                          <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
-                        ) : (
-                          <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
-                        {!u.has_quotes_access ? (
-                          <span className="text-slate-600 italic text-[11px]">No access</span>
-                        ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === ALL_FILE_TYPES.length ? (
-                          <span className="text-blue-400 font-medium text-[11px] block text-center">All Categories</span>
-                        ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === 0 ? (
-                          <span className="text-red-400/80 font-medium text-[11px] block text-center">None Allowed</span>
-                        ) : (
-                          <span className="text-slate-400 text-[11px] block text-center">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingProfile(u);
-                              setEditUserFullName(u.full_name || '');
-                              setEditUserRole(u.role || 'user');
-                              setEditHasChutiAccess(!!u.has_chuti_access);
-                              setEditHasQuotesAccess(!!u.has_quotes_access);
-                              setEditUserAllowedTypes((u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike'));
-                              setEditUserCanManageRules(!!u.can_manage_rules);
-                              setEditNeedsApproval(u.needs_supervisor_approval !== false);
-                              setEditSupervisorIds(u.supervisor_ids || []);
-                              setEditEligibleGovtHoliday(u.eligible_govt_holiday !== false);
-                              setEditEligibleOfficeLeave(u.eligible_office_leave !== false);
-                              setEditAllowOvertime(!!u.allow_overtime);
-                              setEditAllowReserve(!!u.allow_reserve);
-                            }}
-                            className="p-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                            title="Edit permissions"
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </button>
-
-                          {isAdmin && (
-                            <button
-                              onClick={() => setDeletingUserAccount({ id: u.id, username: u.username })}
-                              disabled={u.id === sessionUser?.id}
-                              className="p-1.5 bg-slate-900 border border-slate-800 text-slate-500 hover:text-red-400 hover:border-red-950 rounded-lg transition-colors cursor-not-allowed disabled:opacity-30 disabled:hover:text-slate-500 cursor-pointer"
-                              title="Delete user"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          )}
+                </thead>
+                <tbody className="divide-y divide-slate-850 text-xs text-slate-300">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-slate-500">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                          <span>Loading user directory...</span>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : visibleProfiles.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-slate-500">
+                        No users found.
+                      </td>
+                    </tr>
+                  ) : (
+                    visibleProfiles.map((u: Profile) => (
+                      <tr 
+                        key={u.id} 
+                        onDoubleClick={() => {
+                          setViewingStaff(u);
+                        }}
+                        className="hover:bg-slate-900/25 transition-colors cursor-pointer select-none"
+                        title="Double-click to view details"
+                      >
+                        <td className="py-3 px-4">
+                          <div className="flex items-center">
+                            <span className="font-semibold text-white">{u.full_name || '—'}</span>
+                            {topPerformerBadges[u.id] && (
+                              <VerifiedBadge badge={topPerformerBadges[u.id]} />
+                            )}
+                          </div>
+                          <div className="text-[10px] text-slate-455 uppercase mt-0.5 tracking-wider font-mono">
+                            {u.username}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
+                            u.role === 'admin'
+                              ? 'bg-red-950/40 border-red-900/50 text-red-400'
+                              : u.role === 'supervisor'
+                              ? 'bg-amber-955/40 border-amber-800/50 text-amber-400'
+                              : 'bg-slate-850 border-slate-750 text-slate-400'
+                          }`}>
+                            <Shield className="h-3 w-3 shrink-0" />
+                            {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : 'User'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {u.has_chuti_access ? (
+                            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
+                          ) : (
+                            <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {u.has_quotes_access ? (
+                            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
+                          ) : (
+                            <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
+                          {!u.has_quotes_access ? (
+                            <span className="text-slate-600 italic text-[11px]">No access</span>
+                          ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === ALL_FILE_TYPES.length ? (
+                            <span className="text-blue-400 font-medium text-[11px] block text-center">All Categories</span>
+                          ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === 0 ? (
+                            <span className="text-red-400/80 font-medium text-[11px] block text-center">None Allowed</span>
+                          ) : (
+                            <span className="text-slate-400 text-[11px] block text-center">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {mounted && typeof window !== "undefined" && document.getElementById("root-modals-portal") ? (
         createPortal(
@@ -541,6 +806,65 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 allowReserve={editAllowReserve}
                 setAllowReserve={setEditAllowReserve}
               />
+            )}
+
+            {/* Change Password Credentials Modal */}
+            {showCredentialsModal && viewingStaff && (
+              <Modal
+                isOpen={showCredentialsModal}
+                onClose={() => setShowCredentialsModal(false)}
+                title="Change Password Panel"
+                icon={<KeyRound className="h-5 w-5 text-orange-500" />}
+                maxWidthClass="max-w-md"
+                glowClass="bg-orange-900/10"
+              >
+                <div className="space-y-4 font-sans">
+                  <div className="p-3 bg-orange-955/20 border border-orange-900/30 rounded-xl text-xs text-orange-355">
+                    <p>💡 Here you can set a new <strong>password</strong> for <strong className="text-white">{viewingStaff.username.toUpperCase()}</strong>.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">New Password</label>
+                    <input
+                      type="password"
+                      placeholder="Enter new password"
+                      value={credNewPassword}
+                      onChange={(e) => setCredNewPassword(e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-550"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Confirm New Password</label>
+                    <input
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={credConfirmPassword}
+                      onChange={(e) => setCredConfirmPassword(e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-550"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t border-slate-800/80 font-sans">
+                    <button
+                      type="button"
+                      onClick={() => setShowCredentialsModal(false)}
+                      className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleUpdatePassword}
+                      disabled={updatingCredentials || !credNewPassword || credNewPassword !== credConfirmPassword || credNewPassword.length < 4}
+                      className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                      {updatingCredentials && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      {updatingCredentials ? 'Saving...' : 'Update Password'}
+                    </button>
+                  </div>
+                </div>
+              </Modal>
             )}
 
             {/* Delete User Confirmation Modal */}

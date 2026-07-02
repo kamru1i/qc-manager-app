@@ -169,6 +169,44 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     sessionStorage.setItem('adminActiveTab', activeTab);
   }, [activeTab]);
 
+  // Listen for backspace key to navigate back from profile details
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only execute if we are currently viewing a staff's profile
+      if (!viewingStaffId) return;
+
+      // Do not go back if user is typing inside an input, textarea, or contenteditable element
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        const tagName = activeEl.tagName.toUpperCase();
+        if (
+          tagName === 'INPUT' ||
+          tagName === 'TEXTAREA' ||
+          activeEl.getAttribute('contenteditable') === 'true'
+        ) {
+          return;
+        }
+      }
+
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        if (typeof window !== 'undefined' && sessionStorage.getItem('viewingStaffFromUserManagement') === 'true') {
+          sessionStorage.removeItem('viewingStaffFromUserManagement');
+          sessionStorage.removeItem('viewingStaffId');
+          setViewingStaffId(null);
+          window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'user_management' }));
+        } else {
+          setViewingStaffId(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [viewingStaffId, setViewingStaffId]);
+
   // Holiday search filters state
   const [holidaySearchQuery, setHolidaySearchQuery] = React.useState('');
   const [holidaySearchDate, setHolidaySearchDate] = React.useState('');
@@ -423,28 +461,30 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onChangePasswordClick(staffProfile?.id || '', staffProfile?.username || '')}
-                    className="px-3.5 py-2 bg-slate-855 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
-                  >
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Change Password
-                  </button>
-                  <button
-                    onClick={() => staffProfile && onEditProfileClick(staffProfile)}
-                    className="px-3.5 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md shadow-orange-950/10 border border-orange-700 flex items-center gap-1.5"
-                  >
-                    <Edit className="h-3.5 w-3.5" /> Edit Profile
-                  </button>
-                  {staffProfile?.role !== 'admin' && (
+                {typeof window !== 'undefined' && sessionStorage.getItem('viewingStaffFromUserManagement') === 'true' && (
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => staffProfile && onDeleteUserClick(staffProfile)}
-                      className="px-3.5 py-2 bg-red-600/90 hover:bg-red-700 border border-red-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
+                      onClick={() => onChangePasswordClick(staffProfile?.id || '', staffProfile?.username || '')}
+                      className="px-3.5 py-2 bg-slate-855 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete User
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Change Password
                     </button>
-                  )}
-                </div>
+                    <button
+                      onClick={() => staffProfile && onEditProfileClick(staffProfile)}
+                      className="px-3.5 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md shadow-orange-950/10 border border-orange-700 flex items-center gap-1.5"
+                    >
+                      <Edit className="h-3.5 w-3.5" /> Edit Profile
+                    </button>
+                    {staffProfile?.role !== 'admin' && (
+                      <button
+                        onClick={() => staffProfile && onDeleteUserClick(staffProfile)}
+                        className="px-3.5 py-2 bg-red-600/90 hover:bg-red-700 border border-red-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete User
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Stats for the viewed staff */}

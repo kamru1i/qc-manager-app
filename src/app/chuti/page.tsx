@@ -155,6 +155,16 @@ export default function Dashboard({
     }
   }, []);
 
+  // Listen for view details events dispatched from User Management
+  useEffect(() => {
+    const handleTrigger = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setViewingStaffId(customEvent.detail);
+    };
+    window.addEventListener('trigger-viewing-staff', handleTrigger);
+    return () => window.removeEventListener('trigger-viewing-staff', handleTrigger);
+  }, [setViewingStaffId]);
+
   // Start Tauri Desktop Notification Listener
   useDesktopNotifications(profile?.id);
 
