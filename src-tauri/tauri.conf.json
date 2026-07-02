@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Chuti",
+  "productName": "QC-Manager-App",
   "version": "2.1.0",
-  "identifier": "com.chuti.tracker",
+  "identifier": "com.qc.manager",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Chuti",
+        "title": "QC Management App",
         "width": 800,
         "height": 600,
         "resizable": true,

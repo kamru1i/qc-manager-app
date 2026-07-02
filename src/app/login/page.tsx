@@ -72,6 +72,13 @@ export default function LoginPage() {
 
 
 
+  // Redirect to root / if on explicit /login path (as login is unified at root /)
+  useEffect(() => {
+    if (pathname === '/login') {
+      router.replace('/');
+    }
+  }, [pathname, router]);
+
   // Redirect if already logged in
   useEffect(() => {
     const checkUser = async () => {
@@ -188,10 +195,10 @@ export default function LoginPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
         <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-orange-400 to-amber-450">
-          Chuti
+          QC Management App
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400 font-medium">
-          Sign in to track and manage your leaves
+          Sign in to submit quotation files and track leaves
         </p>
       </div>
 
@@ -299,10 +306,10 @@ export default function LoginPage() {
           <div className="mt-6">
             <div className="bg-slate-900/30 backdrop-blur-xl border border-slate-800/50 p-6 shadow-xl rounded-2xl text-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Submit leaves faster with the
+                Submit Quotation Files and Leaves Faster with
               </p>
               <h3 className="text-sm font-bold text-slate-200 mt-1">
-                Chuti Desktop Application
+                QC Desktop Application
               </h3>
               <div className="grid grid-cols-3 gap-2 mt-4">
                 <a

@@ -5,15 +5,14 @@ import AppUpdater from "@/components/AppUpdater";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
-
 export const metadata: Metadata = {
-  title: "Chuti",
+  title: "QC Management",
   description: "Secure leave tracking system for office staff",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Chuti",
+    title: "QC App",
   },
 };
 
@@ -51,7 +50,7 @@ export default function RootLayout({
                   }
                 } catch (e) {}
               })();
-            `
+            `,
           }}
         />
       </head>
@@ -65,4 +64,3 @@ export default function RootLayout({
     </html>
   );
 }
-

@@ -49,12 +49,14 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   // Navigation handlers
   const handleChutiNav = () => {
     localStorage.setItem('last_active_dashboard', 'chuti');
-    router.push('/chuti');
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'chuti' }));
+    router.push('/');
   };
 
   const handleQuotesNav = () => {
     localStorage.setItem('last_active_dashboard', 'quotes');
-    router.push('/quotes');
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'quotes' }));
+    router.push('/');
   };
 
   // Quotes admin role helper (supervisors and admins both access Quotes admin panel)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, lazy, Suspense } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useQuotesDashboardData } from "@/hooks/useQuotesDashboardData";
 import { useSaveFileHelper } from "@/hooks/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/useCopyHelper";
@@ -73,6 +74,14 @@ const ALL_10_FILE_TYPES = [
 ];
 
 export default function Dashboard() {
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    if (pathname === "/quotes") {
+      router.replace("/");
+    }
+  }, [pathname, router]);
+
   const specificDateRef = useRef<HTMLInputElement>(null);
   const dashboardData = useQuotesDashboardData();
   const {

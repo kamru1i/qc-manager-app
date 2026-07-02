@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { UnifiedSidebar } from '@/components/UnifiedSidebar';
 import { UserDashboardView } from '@/components/UserDashboardView';
@@ -24,6 +24,13 @@ import { useDesktopNotifications } from '@/hooks/useDesktopNotifications';
 
 export default function Dashboard() {
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname === '/chuti') {
+      router.replace('/');
+    }
+  }, [pathname, router]);
 
   // Core Dashboard State & Real-time monitors
   const dashboardData = useDashboardData();
@@ -628,8 +635,22 @@ export default function Dashboard() {
     modalHandlers
   };
 
+  // Redirect to login if unauthenticated
+  useEffect(() => {
+    if (!sessionUser && !loading) {
+      router.replace('/login');
+    }
+  }, [sessionUser, loading, router]);
+
   if (!sessionUser && !loading) {
-    return <LoginPage />;
+    return (
+      <div className="flex-1 min-h-screen flex flex-col bg-slate-955 items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-slate-400">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <p className="text-sm font-medium tracking-wide">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   if (sessionUser && !profile) {

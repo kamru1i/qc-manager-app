@@ -1,98 +1,210 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { Loader2 } from 'lucide-react';
+import LoginPage from '@/app/login/page';
+import ChutiDashboard from '@/app/chuti/page';
+import QuotesDashboard from '@/app/quotes/page';
 
 export default function AppPortal() {
   const router = useRouter();
+  const [sessionUser, setSessionUser] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'chuti' | 'quotes' | null>(null);
+  const [logLines, setLogLines] = useState<string[]>([]);
+  const fetchingRef = useRef<string | null>(null);
+
+  const addLog = (msg: string) => {
+    console.log(`[AppPortal] ${msg}`);
+    setLogLines(prev => [...prev, msg]);
+  };
 
   useEffect(() => {
-    async function checkAuthAndAccess() {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session) {
-          router.replace('/login');
-          return;
-        }
+    addLog('AppPortal: Mounted');
+    let active = true;
 
-        const userId = session.user.id;
+    // Listen for auth state changes to dynamically switch rendering between Login and App Dashboard
+    // onAuthStateChange fires automatically on subscribe with the current session (if any).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      addLog(`onAuthStateChange event: ${event} (hasSession: ${!!session})`);
+      if (!active) return;
 
-        // Fetch user profile from the database
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
-        if (profileError || !profileData) {
-          console.error('Failed to fetch profile:', profileError);
-          setErrorMsg('Profile settings not found. Please contact administrator.');
-          return;
-        }
-
-        const profile = profileData as Profile;
-        const hasChuti = !!profile.has_chuti_access;
-        const hasQuotes = !!profile.has_quotes_access;
-
-        if (!hasChuti && !hasQuotes) {
-          setErrorMsg('You do not have access to any workspace. Please contact your manager.');
-          return;
-        }
-
-        // Logic for redirecting based on access
-        if (hasChuti && hasQuotes) {
-          const lastActive = localStorage.getItem('last_active_dashboard');
-          if (lastActive === 'quotes') {
-            router.replace('/quotes');
-          } else {
-            router.replace('/chuti');
-          }
-        } else if (hasChuti) {
-          router.replace('/chuti');
-        } else {
-          router.replace('/quotes');
-        }
-      } catch (err) {
-        console.error('Workspace routing error:', err);
-        setErrorMsg('Something went wrong while loading your workspace.');
+      if (session) {
+        setSessionUser(session.user);
+        await loadUserProfile(session.user.id);
+      } else {
+        addLog('onAuthStateChange no session, setting loading to false');
+        setSessionUser(null);
+        setProfile(null);
+        setActiveTab(null);
+        setLoading(false);
       }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  async function loadUserProfile(userId: string) {
+    if (fetchingRef.current === userId) {
+      addLog(`loadUserProfile duplicate call skipped for ${userId}`);
+      return;
     }
 
-    checkAuthAndAccess();
-  }, [router]);
+    addLog(`loadUserProfile started for ${userId}`);
 
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
-      {/* Background ambient glows */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700"></div>
+    // Try loading from localStorage cache first (Stale-While-Revalidate pattern)
+    const cacheKey = `cached_profile_${userId}`;
+    let cachedProfile: Profile | null = null;
+    try {
+      const cachedStr = localStorage.getItem(cacheKey);
+      if (cachedStr) {
+        cachedProfile = JSON.parse(cachedStr);
+        addLog(`Restoring profile from localStorage cache...`);
+      }
+    } catch (e) {
+      addLog(`Failed to parse cached profile: ${e}`);
+    }
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center">
-          {errorMsg ? (
-            <div className="space-y-4">
-              <div className="h-16 w-16 bg-red-950/40 border border-red-500/20 text-red-400 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner animate-bounce">
-                ⚠️
-              </div>
-              <h2 className="text-xl font-semibold text-slate-100">Access Restricted</h2>
-              <p className="text-sm text-slate-400 leading-relaxed px-2">{errorMsg}</p>
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  router.replace('/login');
-                }}
-                className="mt-6 px-6 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-medium rounded-xl transition-all shadow-lg shadow-red-600/20 cursor-pointer"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Spinner */}
+    // Apply cache immediately if found to hide loading spinner instantly
+    if (cachedProfile) {
+      setProfile(cachedProfile);
+      const hasChuti = !!cachedProfile.has_chuti_access;
+      const hasQuotes = !!cachedProfile.has_quotes_access;
+      
+      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | null;
+      if (lastActive === 'chuti' && !hasChuti) lastActive = null;
+      if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
+
+      if (!lastActive) {
+        lastActive = hasChuti ? 'chuti' : 'quotes';
+        localStorage.setItem('last_active_dashboard', lastActive);
+      }
+
+      addLog(`[SWR] Restored cache, activeTab: ${lastActive}. Hiding spinner.`);
+      setActiveTab(lastActive);
+      setErrorMsg(null);
+      setLoading(false);
+    }
+
+    // Fetch fresh profile in the background
+    fetchingRef.current = userId;
+    try {
+      // 5-second timeout safeguard for the database query
+      const fetchPromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Database query timed out')), 5000)
+      );
+
+      addLog('Background query to profiles table started...');
+      const result = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      // Promise.race might return the result of the fetchPromise directly
+      const { data: profileData, error: profileError } = result as { data: any; error: any };
+      addLog(`Background query completed (hasProfileData: ${!!profileData})`);
+
+      if (profileError) {
+        addLog(`Query error: ${profileError.message}`);
+        if (!cachedProfile) {
+          setErrorMsg('Profile settings not found. Please contact administrator.');
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!profileData) {
+        addLog('No profile record returned');
+        if (!cachedProfile) {
+          setErrorMsg('Profile settings not found. Please contact administrator.');
+          setLoading(false);
+        }
+        return;
+      }
+
+      const userProfile = profileData as Profile;
+      
+      // Update cache
+      localStorage.setItem(cacheKey, JSON.stringify(userProfile));
+
+      // Update state
+      setProfile(userProfile);
+
+      const hasChuti = !!userProfile.has_chuti_access;
+      const hasQuotes = !!userProfile.has_quotes_access;
+
+      if (!hasChuti && !hasQuotes) {
+        setErrorMsg('You do not have access to any workspace. Please contact your manager.');
+        setLoading(false);
+        return;
+      }
+
+      // Choose active workspace tab
+      let lastActive = localStorage.getItem('last_active_dashboard') as 'chuti' | 'quotes' | null;
+      if (lastActive === 'chuti' && !hasChuti) lastActive = null;
+      if (lastActive === 'quotes' && !hasQuotes) lastActive = null;
+
+      if (!lastActive) {
+        lastActive = hasChuti ? 'chuti' : 'quotes';
+        localStorage.setItem('last_active_dashboard', lastActive);
+      }
+
+      setActiveTab(lastActive);
+      setErrorMsg(null);
+      setLoading(false);
+    } catch (err: any) {
+      addLog(`Background fetch error: ${err?.message || err}`);
+      if (!cachedProfile) {
+        setErrorMsg('Error loading profile settings.');
+        setLoading(false);
+      }
+    } finally {
+      if (fetchingRef.current === userId) {
+        fetchingRef.current = null;
+      }
+    }
+  }
+
+  // Listen for custom workspace-change event dispatched by sidebar
+  useEffect(() => {
+    const handleWorkspaceChange = (e: Event) => {
+      const targetWorkspace = (e as CustomEvent).detail as 'chuti' | 'quotes';
+      addLog(`custom workspace-change event detected: ${targetWorkspace}`);
+      
+      // Safety check: ensure user has access before switching
+      if (profile) {
+        if (targetWorkspace === 'chuti' && !profile.has_chuti_access) return;
+        if (targetWorkspace === 'quotes' && !profile.has_quotes_access) return;
+      }
+      
+      setActiveTab(targetWorkspace);
+    };
+
+    window.addEventListener('workspace-change', handleWorkspaceChange);
+    return () => window.removeEventListener('workspace-change', handleWorkspaceChange);
+  }, [profile]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
+        {/* Background ambient glows */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700"></div>
+
+        <div className="w-full max-w-md relative z-10">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center">
+            <div className="space-y-6 w-full">
               <div className="relative flex items-center justify-center">
                 <div className="h-20 w-20 border-2 border-purple-500/20 rounded-full absolute"></div>
                 <Loader2 className="h-12 w-12 text-purple-400 animate-spin" />
@@ -105,10 +217,61 @@ export default function AppPortal() {
                   Configuring your workspaces...
                 </p>
               </div>
+              
+              {/* Dynamic logs display */}
+              <div className="text-[10px] text-slate-400 font-mono text-left max-h-48 overflow-y-auto mt-4 space-y-1 bg-slate-950/80 p-3 rounded-xl border border-slate-850/80 w-full select-text">
+                <div className="text-slate-500 font-bold border-b border-slate-800/50 pb-1 mb-1 uppercase tracking-wider">System Logs</div>
+                {logLines.map((line, i) => (
+                  <div key={i} className="break-all">{`> ${line}`}</div>
+                ))}
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </main>
-  );
+      </main>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
+        <div className="w-full max-w-md relative z-10">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center">
+            <div className="space-y-4">
+              <div className="h-16 w-16 bg-red-950/40 border border-red-500/20 text-red-400 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner animate-bounce">
+                ⚠️
+              </div>
+              <h2 className="text-xl font-semibold text-slate-100">Access Restricted</h2>
+              <p className="text-sm text-slate-400 leading-relaxed px-2">{errorMsg}</p>
+              <button
+                onClick={async () => {
+                  setErrorMsg(null);
+                  setLoading(true);
+                  await supabase.auth.signOut();
+                }}
+                className="mt-6 px-6 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-medium rounded-xl transition-all shadow-lg shadow-red-600/20 cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Unauthenticated -> Render Login Page
+  if (!sessionUser) {
+    console.log('[AppPortal] Rendering LoginPage');
+    return <LoginPage />;
+  }
+
+  // Authenticated -> Render active workspace dashboard
+  if (activeTab === 'quotes') {
+    console.log('[AppPortal] Rendering QuotesDashboard');
+    return <QuotesDashboard />;
+  }
+
+  console.log('[AppPortal] Rendering ChutiDashboard');
+  return <ChutiDashboard />;
 }

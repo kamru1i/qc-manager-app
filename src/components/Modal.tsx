@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -21,6 +22,12 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const [shouldRender, setShouldRender] = React.useState(isOpen);
   const [isAnimated, setIsAnimated] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -50,9 +57,9 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  if (!shouldRender) return null;
+  if (!shouldRender || !mounted) return null;
 
-  return (
+  return createPortal(
     <div 
       className={`fixed inset-0 z-[100] overflow-y-auto bg-slate-955/80 backdrop-blur-md transition-opacity duration-200 ease-out ${
         isAnimated ? 'opacity-100' : 'opacity-0'
@@ -91,6 +98,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

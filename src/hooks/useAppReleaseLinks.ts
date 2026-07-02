@@ -8,7 +8,7 @@ export interface ReleaseLinks {
   version: string;
 }
 
-const REPO = "kamrulislam2/chuti-leave-tracker";
+const REPO = "kamrulislam2/qc-manager-app";
 const DEFAULT_VERSION = "2.1.0";
 
 export function useAppReleaseLinks(): ReleaseLinks {
@@ -62,22 +62,22 @@ export function useAppReleaseLinks(): ReleaseLinks {
 
         setLinks({
           windows:
-            windowsLink || `${fallbackBase}/Chuti_${versionStr}_x64-setup.exe`,
+            windowsLink || `${fallbackBase}/QC-Manager-App_${versionStr}_x64-setup.exe`,
           macSilicon:
-            siliconLink || `${fallbackBase}/Chuti_${versionStr}_aarch64.dmg`,
-          macIntel: intelLink || `${fallbackBase}/Chuti_${versionStr}_x64.dmg`,
+            siliconLink || `${fallbackBase}/QC-Manager-App_${versionStr}_aarch64.dmg`,
+          macIntel: intelLink || `${fallbackBase}/QC-Manager-App_${versionStr}_x64.dmg`,
           loading: false,
           version: versionStr,
         });
-      } catch (err) {
-        console.error("Error fetching release assets:", err);
+      } catch (err: any) {
+        console.warn("Using local fallback release links:", err?.message || err);
         if (active) {
           // Hardcoded fallback using default version
           const fallbackBase = `https://github.com/${REPO}/releases/download/v${DEFAULT_VERSION}`;
           setLinks({
-            windows: `${fallbackBase}/Chuti_${DEFAULT_VERSION}_x64-setup.exe`,
-            macSilicon: `${fallbackBase}/Chuti_${DEFAULT_VERSION}_aarch64.dmg`,
-            macIntel: `${fallbackBase}/Chuti_${DEFAULT_VERSION}_x64.dmg`,
+            windows: `${fallbackBase}/QC-Manager-App_${DEFAULT_VERSION}_x64-setup.exe`,
+            macSilicon: `${fallbackBase}/QC-Manager-App_${DEFAULT_VERSION}_aarch64.dmg`,
+            macIntel: `${fallbackBase}/QC-Manager-App_${DEFAULT_VERSION}_x64.dmg`,
             loading: false,
             version: DEFAULT_VERSION,
           });

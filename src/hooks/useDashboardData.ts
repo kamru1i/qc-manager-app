@@ -1031,11 +1031,7 @@ export const useDashboardData = () => {
         setLoading(true);
         let session = sessionParam;
         if (session === undefined) {
-          const getSessionPromise = supabase.auth.getSession();
-          const timeoutPromise = new Promise<any>((_, reject) =>
-            setTimeout(() => reject(new Error('Supabase session fetch timed out')), 4000)
-          );
-          const { data, error: sessionError } = await Promise.race([getSessionPromise, timeoutPromise]);
+          const { data, error: sessionError } = await supabase.auth.getSession();
 
           if (sessionError) {
             console.error('Supabase session fetch error:', sessionError);
