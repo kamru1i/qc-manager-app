@@ -41,7 +41,6 @@ def clean_key_and_pass():
     # Standard minisign key starts with "untrusted comment:"
     if not comment.startswith("untrusted comment"):
         print("Warning: Private key does not start with 'untrusted comment'. Writing as-is.")
-        # If it doesn't match standard format, fallback to joining lines
         clean_key = "\n".join(lines)
     else:
         # Join all subsequent lines into one clean base64 data string
@@ -49,15 +48,19 @@ def clean_key_and_pass():
         data = "".join(data_lines).replace("\r", "").replace("\n", "").replace(" ", "")
         clean_key = f"{comment}\n{data}"
 
+    # Write key to a local file in the workspace
+    key_file_path = os.path.abspath("signing.key")
+    with open(key_file_path, "w", encoding="utf-8") as f:
+        f.write(clean_key)
+    print(f"Successfully wrote signing key to: {key_file_path}")
+
     # Write to GITHUB_ENV
     github_env_path = os.environ.get("GITHUB_ENV")
     if github_env_path:
         with open(github_env_path, "a", encoding="utf-8") as f:
-            f.write("TAURI_SIGNING_PRIVATE_KEY<<EOF\n")
-            f.write(f"{clean_key}\n")
-            f.write("EOF\n")
+            f.write(f"TAURI_SIGNING_PRIVATE_KEY={key_file_path}\n")
             f.write(f"TAURI_SIGNING_PRIVATE_KEY_PASSWORD={clean_pass}\n")
-        print("Successfully prepared signing key and password and wrote to GITHUB_ENV.")
+        print("Successfully exported key path and password to GITHUB_ENV.")
     else:
         print("Error: GITHUB_ENV is not set.")
         sys.exit(1)
