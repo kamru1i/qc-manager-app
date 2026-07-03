@@ -313,32 +313,7 @@ export function AdminProfileSettingsModal({
             </div>
           )}
 
-          {profile?.role === 'admin' && !editingStaffProfileId && (
-            <div className="admin-mode-banner flex items-center justify-between p-3 bg-blue-955/45 rounded-lg border border-blue-900/35 mb-4 shadow-inner">
-              <div>
-                <span className="block text-sm font-semibold text-white">Admin Mode</span>
-                <span className="block text-[11px] text-slate-400">Enabling this activates the admin panel and approval features</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const nextVal = adminActiveTab === 'admin' ? 'user' : 'admin';
-                  setAdminActiveTab(nextVal);
-                  setViewingStaffId(null);
-                  if (sessionUser?.id) {
-                    localStorage.setItem('admin_mode_' + sessionUser.id, nextVal);
-                  }
-                }}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${adminActiveTab === 'admin' ? 'bg-blue-600' : 'bg-slate-800'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${adminActiveTab === 'admin' ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-          )}
+
 
           <div>
             <div className="flex items-center justify-between mb-1">

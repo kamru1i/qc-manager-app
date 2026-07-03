@@ -8,6 +8,8 @@ import { Navbar } from '@/components/Navbar';
 import { UnifiedSidebar } from '@/components/UnifiedSidebar';
 import { UserDashboardView } from '@/components/UserDashboardView';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
+import { AddLeaveInline } from '@/components/AddLeaveInline';
+import { AdminLeaveSettings } from '@/components/AdminLeaveSettings';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { DashboardProvider } from '@/contexts/DashboardContext';
 import { DashboardModals } from '@/components/DashboardModals';
@@ -24,8 +26,8 @@ import { useModalHandlers } from '@/hooks/useModalHandlers';
 import { useDesktopNotifications } from '@/hooks/useDesktopNotifications';
 
 interface DashboardProps {
-  activeChutiTab: 'staff_master' | 'govt_responses' | 'settlement';
-  onChutiTabChange: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
+  activeChutiTab: 'add_leave' | 'staff_master' | 'govt_responses' | 'settlement' | 'leave_settings';
+  onChutiTabChange: (tab: 'add_leave' | 'staff_master' | 'govt_responses' | 'settlement' | 'leave_settings') => void;
 }
 
 export default function Dashboard({
@@ -111,9 +113,9 @@ export default function Dashboard({
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdminAddLeaveModal, setShowAdminAddLeaveModal] = useState(false);
 
-  const handleChutiTabChange = (tab: 'staff_master' | 'govt_responses' | 'settlement') => {
+  const handleChutiTabChange = (tab: 'add_leave' | 'staff_master' | 'govt_responses' | 'settlement' | 'leave_settings') => {
     onChutiTabChange(tab);
-    if (adminActiveTab !== 'admin') {
+    if (adminActiveTab !== 'admin' && tab !== 'add_leave' && tab !== 'leave_settings') {
       setAdminActiveTab('admin');
       if (typeof window !== 'undefined' && profile?.id) {
         localStorage.setItem('admin_mode_' + profile.id, 'admin');
@@ -871,8 +873,32 @@ export default function Dashboard({
 
 
         
+        {/* ================= ADD LEAVE INLINE VIEW ================= */}
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab === 'add_leave' && (
+          <AddLeaveInline
+            profile={profile}
+            profilesList={profilesList}
+            records={profile?.role === 'admin' ? adminRecords : userRecords}
+            globalSettings={globalSettings}
+            leaveSettlements={leaveSettlements}
+            onSuccess={fetchRecords}
+            onConvertShortLeaveToFullLeave={handleConvertShortLeaveToFullLeave}
+            holidayResponses={holidayResponses}
+            initialFetchDone={initialFetchDone}
+          />
+        )}
+
+        {/* ================= LEAVE SETTINGS INLINE VIEW ================= */}
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && activeChutiTab === 'leave_settings' && (
+          <AdminLeaveSettings
+            globalSettings={globalSettings}
+            onSaveGlobalSettings={handleSaveGlobalSettings}
+            initialFetchDone={initialFetchDone}
+          />
+        )}
+
         {/* ================= STAFF VIEW ================= */}
-        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && (profile?.role !== 'admin' || adminActiveTab === 'user') && (
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab !== 'add_leave' && activeChutiTab !== 'leave_settings' && (profile?.role !== 'admin' || adminActiveTab === 'user') && (
           <UserDashboardView
             profile={profile}
             userStats={userStats}
@@ -894,7 +920,9 @@ export default function Dashboard({
             onResetFilters={() => handleResetFilters(setFilterType, setFilterStartDate, setFilterEndDate)}
             onExportExcel={(filtered, term) => handleExportIndividualExcel(sessionUser?.id || '', filtered, term)}
             onExportPDF={(filtered, term) => handleExportIndividualPDF(sessionUser?.id || '', filtered, term)}
-            onAddLeaveClick={handleOpenAddLeaveModal}
+            onAddLeaveClick={() => {
+              onChutiTabChange('add_leave');
+            }}
             onToggleAdjustment={handleToggleAdjustmentClick}
             onDeleteClick={triggerDeleteRecord}
             onRevisionClick={handleOpenRevisionModal}
@@ -908,7 +936,7 @@ export default function Dashboard({
         )}
 
         {/* ================= ADMIN VIEW ================= */}
-        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && adminActiveTab === 'admin' && (
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && adminActiveTab === 'admin' && activeChutiTab !== 'add_leave' && activeChutiTab !== 'leave_settings' && (
           <AdminDashboardView
             activeTab={activeChutiTab}
             setActiveTab={handleChutiTabChange}
@@ -946,7 +974,12 @@ export default function Dashboard({
             onAddStaffClick={() => setShowCreateUserModal(true)}
             onExportSummaryExcel={handleExportSummaryExcel}
             onExportSummaryPDF={handleExportSummaryPDF}
-            onAddLeaveClick={() => setShowAdminAddLeaveModal(true)}
+            onAddLeaveClick={() => {
+              if (viewingStaffId) {
+                sessionStorage.setItem('addLeaveTargetUserId', viewingStaffId);
+              }
+              onChutiTabChange('add_leave');
+            }}
             globalSettings={globalSettings}
             onSaveGlobalSettings={handleSaveGlobalSettings}
             onConvertShortLeaveToFullLeave={handleConvertShortLeaveToFullLeave}

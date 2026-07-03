@@ -15,7 +15,9 @@ import {
   ScrollText,
   ListTodo,
   User,
-  RotateCcw
+  RotateCcw,
+  Plus,
+  Settings
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
@@ -23,8 +25,8 @@ interface UnifiedSidebarProps {
   profile: Profile | null;
   activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules';
   onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules') => void;
-  activeChutiTab?: 'staff_master' | 'govt_responses' | 'settlement';
-  onChutiTabChange?: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
+  activeChutiTab?: 'add_leave' | 'staff_master' | 'govt_responses' | 'settlement' | 'leave_settings';
+  onChutiTabChange?: (tab: 'add_leave' | 'staff_master' | 'govt_responses' | 'settlement' | 'leave_settings') => void;
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
 }
@@ -130,10 +132,26 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Tracker</span>}
             </button>
 
-            {/* Embedded Chuti sub-tabs when chuti section is active and user is admin */}
-            {activeSection === 'chuti' && onChutiTabChange && activeChutiTab && profile?.role === 'admin' && (
+            {/* Embedded Chuti sub-tabs when chuti section is active */}
+            {activeSection === 'chuti' && onChutiTabChange && activeChutiTab && (
               <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-slate-800/80 ml-6'}`}>
-                {/* 1. Leave Dashboard */}
+                {/* 1. Add Leave */}
+                <button
+                  onClick={() => onChutiTabChange('add_leave')}
+                  title={isSidebarCollapsed ? 'Add Leave' : undefined}
+                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                  } ${
+                    activeChutiTab === 'add_leave'
+                      ? 'bg-blue-500/10 text-blue-400'
+                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                  }`}
+                >
+                  <Plus className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Add Leave</span>}
+                </button>
+
+                {/* 2. Leave Dashboard */}
                 <button
                   onClick={() => onChutiTabChange('staff_master')}
                   title={isSidebarCollapsed ? 'Leave Dashboard' : undefined}
@@ -149,37 +167,59 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Dashboard</span>}
                 </button>
 
-                {/* 2. Govt Holiday Response */}
-                <button
-                  onClick={() => onChutiTabChange('govt_responses')}
-                  title={isSidebarCollapsed ? 'Govt Holiday Response' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeChutiTab === 'govt_responses'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <Calendar className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Govt Holiday Response</span>}
-                </button>
+                {/* 3. Govt Holiday Response (Admin Only) */}
+                {profile?.role === 'admin' && (
+                  <button
+                    onClick={() => onChutiTabChange('govt_responses')}
+                    title={isSidebarCollapsed ? 'Govt Holiday Response' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeChutiTab === 'govt_responses'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Govt Holiday Response</span>}
+                  </button>
+                )}
 
-                {/* 3. Review & Settlements */}
-                <button
-                  onClick={() => onChutiTabChange('settlement')}
-                  title={isSidebarCollapsed ? 'Review & Settlements' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeChutiTab === 'settlement'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <RotateCcw className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Review & Settlements</span>}
-                </button>
+                {/* 4. Review & Settlements (Admin Only) */}
+                {profile?.role === 'admin' && (
+                  <button
+                    onClick={() => onChutiTabChange('settlement')}
+                    title={isSidebarCollapsed ? 'Review & Settlements' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeChutiTab === 'settlement'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <RotateCcw className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Review & Settlements</span>}
+                  </button>
+                )}
+
+                {/* 5. Leave Settings (Admin Only) */}
+                {profile?.role === 'admin' && (
+                  <button
+                    onClick={() => onChutiTabChange('leave_settings')}
+                    title={isSidebarCollapsed ? 'Leave Settings' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeChutiTab === 'leave_settings'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <Settings className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Settings</span>}
+                  </button>
+                )}
               </div>
             )}
           </div>

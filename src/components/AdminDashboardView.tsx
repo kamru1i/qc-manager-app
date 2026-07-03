@@ -147,10 +147,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   setActiveTab: propSetActiveTab,
 }) => {
 
-  // Local settings modals visibility
-  const [showOfficeModal, setShowOfficeModal] = React.useState(false);
-  const [showEidModal, setShowEidModal] = React.useState(false);
-  const [showGovtModal, setShowGovtModal] = React.useState(false);
+
   
   const [localActiveTab, setLocalActiveTab] = React.useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
     if (typeof window !== 'undefined') {
@@ -353,74 +350,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Summary Cards */}
-      {!viewingStaffId && (
-        <div className="flex flex-wrap justify-center gap-4 w-full animate-fade-in">
 
-          {/* Card 2: Office Allocated Leave */}
-          <StatCard
-            icon={Calendar}
-            iconBgClass="bg-blue-500/10"
-            iconColorClass="text-blue-400"
-            iconBorderClass="border-blue-500/20"
-            title="Allocated Office Leave"
-            value={`${globalSettings.office_leave_h1 + globalSettings.office_leave_h2} days`}
-            action={
-              <button
-                onClick={() => setShowOfficeModal(true)}
-                className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer border border-transparent hover:border-slate-700"
-                title="Leave Quota Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </button>
-            }
-            className="w-full max-w-xs"
-            loading={!initialFetchDone}
-          />
-
-          {/* Card 3: Eid Leave */}
-          <StatCard
-            icon={Calendar}
-            iconBgClass="bg-blue-500/10"
-            iconColorClass="text-blue-400"
-            iconBorderClass="border-blue-500/20"
-            title="Eid Leave"
-            value={`${(globalSettings.eid_fitr_leave ?? 0) + (globalSettings.eid_adha_leave ?? 0)} days`}
-            action={
-              <button
-                onClick={() => setShowEidModal(true)}
-                className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer border border-transparent hover:border-slate-700"
-                title="Eid Leave Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </button>
-            }
-            className="w-full max-w-xs"
-            loading={!initialFetchDone}
-          />
-
-          {/* Card 4: Govt Holiday */}
-          <StatCard
-            icon={Calendar}
-            iconBgClass="bg-teal-500/10"
-            iconColorClass="text-teal-400"
-            iconBorderClass="border-teal-500/20"
-            title="Govt Holiday"
-            value={`${globalSettings.govt_holidays?.length ?? 0} days`}
-            action={
-              <button
-                onClick={() => setShowGovtModal(true)}
-                className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer border border-transparent hover:border-slate-700"
-                title="Govt Holiday Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </button>
-            }
-            className="w-full max-w-xs"
-            loading={!initialFetchDone}
-          />
-        </div>
-      )}
 
       {viewingStaffId ? (
         <div className="flex flex-col gap-6">
@@ -722,25 +652,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </div>
       )}
 
-      {/* Admin Settings Modals */}
-      <AdminOfficeLeaveSettingsModal
-        showModal={showOfficeModal}
-        setShowModal={setShowOfficeModal}
-        globalSettings={globalSettings}
-        onSave={onSaveGlobalSettings}
-      />
-      <AdminEidLeaveSettingsModal
-        showModal={showEidModal}
-        setShowModal={setShowEidModal}
-        globalSettings={globalSettings}
-        onSave={onSaveGlobalSettings}
-      />
-      <AdminGovtHolidaysSettingsModal
-        showModal={showGovtModal}
-        setShowModal={setShowGovtModal}
-        globalSettings={globalSettings}
-        onSave={onSaveGlobalSettings}
-      />
+
     </div>
   );
 };
