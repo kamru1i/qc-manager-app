@@ -1,0 +1,66 @@
+import os
+import sys
+import base64
+
+def clean_key_and_pass():
+    raw_key = os.environ.get("RAW_KEY", "")
+    raw_pass = os.environ.get("RAW_PASS", "")
+
+    # Clean password by stripping newlines/carriage returns
+    clean_pass = raw_pass.strip("\r\n")
+
+    # Inspect and clean raw_key
+    # Check if the raw_key is a single-line base64 encoded string
+    key_lines = [line.strip() for line in raw_key.splitlines() if line.strip()]
+    
+    actual_key_content = raw_key
+    
+    if len(key_lines) == 1:
+        # It's a single line. Let's check if it is base64 encoded
+        single_line = key_lines[0]
+        if not single_line.startswith("untrusted comment"):
+            try:
+                decoded = base64.b64decode(single_line)
+                if decoded.startswith(b"untrusted comment"):
+                    print("Auto-detected base64-encoded private key. Decoding it...")
+                    actual_key_content = decoded.decode('utf-8', errors='ignore')
+            except Exception as e:
+                print(f"Attempted to base64 decode single-line key but failed: {e}")
+
+    # Now parse the actual key content
+    lines = [line for line in actual_key_content.splitlines() if line.strip()]
+    if not lines:
+        print("Error: The signing private key is empty.")
+        sys.exit(1)
+
+    # Reconstruct the minisign key:
+    # Line 1: Comment (must start with 'untrusted comment')
+    # Line 2: Decoded base64 data (should be a single clean line)
+    comment = lines[0].replace("\r", "").replace("\n", "")
+    
+    # Standard minisign key starts with "untrusted comment:"
+    if not comment.startswith("untrusted comment"):
+        print("Warning: Private key does not start with 'untrusted comment'. Writing as-is.")
+        # If it doesn't match standard format, fallback to joining lines
+        clean_key = "\n".join(lines)
+    else:
+        # Join all subsequent lines into one clean base64 data string
+        data_lines = lines[1:]
+        data = "".join(data_lines).replace("\r", "").replace("\n", "").replace(" ", "")
+        clean_key = f"{comment}\n{data}"
+
+    # Write to GITHUB_ENV
+    github_env_path = os.environ.get("GITHUB_ENV")
+    if github_env_path:
+        with open(github_env_path, "a", encoding="utf-8") as f:
+            f.write("TAURI_SIGNING_PRIVATE_KEY<<EOF\n")
+            f.write(f"{clean_key}\n")
+            f.write("EOF\n")
+            f.write(f"TAURI_SIGNING_PRIVATE_KEY_PASSWORD={clean_pass}\n")
+        print("Successfully prepared signing key and password and wrote to GITHUB_ENV.")
+    else:
+        print("Error: GITHUB_ENV is not set.")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    clean_key_and_pass()

@@ -70,18 +70,7 @@ jobs:
         env:
           RAW_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           RAW_PASS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          COMMENT=$(printf '%s' "$RAW_KEY" | head -n 1 | tr -d '\r')
-          DATA=$(printf '%s' "$RAW_KEY" | tail -n +2 | tr -d '\r\n ')
-          CLEAN_KEY=$(printf '%s\n%s' "$COMMENT" "$DATA")
-          CLEAN_PASS=$(printf '%s' "$RAW_PASS" | tr -d '\r\n')
-          
-          # Set as multi-line environment variable safely
-          echo "TAURI_SIGNING_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          echo "$CLEAN_KEY" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          
-          echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$CLEAN_PASS" >> $GITHUB_ENV
+        run: python prepare_key.py
 
       - name: Build desktop application
         uses: tauri-apps/tauri-action@v0

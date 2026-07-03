@@ -20,12 +20,20 @@ def main():
         print(f"  Line {i+1} has carriage return: {'\r' in line}")
         
         # Test base64 decode of non-comment lines
-        if not line.startswith('untrusted comment') and len(line) > 0:
-            try:
-                decoded = base64.b64decode(line.strip())
-                print(f"  Line {i+1} base64 decode: SUCCESS (decoded length {len(decoded)})")
-            except Exception as e:
-                print(f"  Line {i+1} base64 decode: FAILED ({str(e)})")
+        try:
+            decoded = base64.b64decode(line.strip())
+            print(f"  Line {i+1} base64 decode: SUCCESS (decoded length {len(decoded)})")
+            
+            # Check if decoded data starts with untrusted comment
+            if decoded.startswith(b"untrusted comment"):
+                print(f"  Line {i+1} DECODED data starts with 'untrusted comment'! This means the secret is double-base64 encoded.")
+                try:
+                    decoded_str = decoded.decode('utf-8', errors='ignore')
+                    print(f"  Decoded content number of lines: {len(decoded_str.splitlines())}")
+                except Exception as e:
+                    print(f"  Failed to decode decoded data as string: {e}")
+        except Exception as e:
+            print(f"  Line {i+1} base64 decode: FAILED ({str(e)})")
 
     # Check password
     if password:
