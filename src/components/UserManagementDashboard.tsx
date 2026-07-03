@@ -205,10 +205,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, [viewingStaff, activeSubTab]);
 
-  // Reset subtab selection when viewingStaff is closed
+  // Reset subtab selection to 'leave' when viewingStaff is closed
   useEffect(() => {
     if (!viewingStaff) {
-      setActiveSubTab('profile');
+      setActiveSubTab('leave');
     }
   }, [viewingStaff]);
 
@@ -930,6 +930,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       <tr 
                         key={u.id} 
                         onDoubleClick={() => {
+                          setActiveSubTab('leave');
                           setViewingStaff(u);
                         }}
                         className="hover:bg-slate-900/25 transition-colors cursor-pointer select-none"
