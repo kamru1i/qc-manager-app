@@ -118,6 +118,18 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
 
+  const [showDetailNameTooltip, setShowDetailNameTooltip] = useState(false);
+  const detailNameHoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Clear name tooltip timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (detailNameHoverTimeoutRef.current) {
+        clearTimeout(detailNameHoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Double-click viewing state (Employee 360 Hub)
   const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>(() => {
@@ -588,16 +600,45 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       'Add New Staff'
                     ) : (
                       <>
-                        {viewingStaff?.full_name || 'Staff User'}{viewingStaff?.username ? ` (${viewingStaff.username.trim().toUpperCase()})` : ''}
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
-                          viewingStaff?.role === 'admin'
-                            ? 'bg-red-950/60 border-red-900 text-red-300'
-                            : viewingStaff?.role === 'supervisor'
-                              ? 'bg-purple-955/60 border-purple-805 text-purple-300'
-                              : 'bg-slate-850 border-slate-750 text-slate-400'
-                        }`}>
-                          {viewingStaff?.role === 'admin' ? 'Admin' : (viewingStaff?.role === 'supervisor' ? 'Supervisor' : 'Staff')}
+                        <span 
+                          onMouseEnter={() => {
+                            detailNameHoverTimeoutRef.current = setTimeout(() => {
+                              setShowDetailNameTooltip(true);
+                            }, 2000);
+                          }}
+                          onMouseLeave={() => {
+                            if (detailNameHoverTimeoutRef.current) {
+                              clearTimeout(detailNameHoverTimeoutRef.current);
+                              detailNameHoverTimeoutRef.current = null;
+                            }
+                            setShowDetailNameTooltip(false);
+                          }}
+                          className="relative group inline-flex items-center select-none cursor-help pb-0.5"
+                        >
+                          {viewingStaff?.full_name || 'Staff User'}
+                          
+                          {showDetailNameTooltip && (
+                            <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-40 p-2.5 text-[11px] leading-relaxed text-slate-350 bg-slate-950/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto">
+                              <div className="font-semibold text-white">
+                                Codename: <span className="text-blue-400 font-mono select-all ml-1">{viewingStaff?.username ? viewingStaff.username.toUpperCase() : ''}</span>
+                              </div>
+                              <div className="border-t border-slate-850 my-0.5"></div>
+                              <div className="text-slate-400 flex items-center gap-1.5 font-sans">
+                                <span>Role:</span>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold border ${
+                                  viewingStaff?.role === 'admin'
+                                    ? 'bg-purple-955 border-purple-800 text-purple-300' 
+                                    : 'bg-blue-955 border-blue-800 text-blue-300'
+                                }`}>
+                                  {viewingStaff?.role === 'admin' ? 'Admin' : (viewingStaff?.role === 'supervisor' ? 'Supervisor' : 'Staff')}
+                                </span>
+                              </div>
+                            </span>
+                          )}
                         </span>
+                        {viewingStaff && topPerformerBadges[viewingStaff.id] && (
+                          <VerifiedBadge badge={topPerformerBadges[viewingStaff.id]} position="bottom" />
+                        )}
                       </>
                     )}
                   </h2>
