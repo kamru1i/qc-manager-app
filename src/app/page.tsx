@@ -281,7 +281,7 @@ export default function AppPortal() {
   }, []);
 
   useEffect(() => {
-    if (activeTab !== "chuti" || activeChutiTab !== "leave_history") return;
+    if (activeTab !== "chuti" || (activeChutiTab !== "leave_history" && activeChutiTab !== "govt_responses" && activeChutiTab !== "settlement")) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -734,8 +734,9 @@ export default function AppPortal() {
       {/* Main container with Sidebar and Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row items-start">
         <div
-          className={`transition-all duration-300 ease-in-out shrink-0 ${
-            (activeTab === "user_management" && isUserManagementFullView) || (activeTab === "chuti" && activeChutiTab === "leave_history")
+          className={`shrink-0 ${
+            (activeTab === "user_management" && isUserManagementFullView) || 
+            (activeTab === "chuti" && (activeChutiTab === "leave_history" || activeChutiTab === "govt_responses" || activeChutiTab === "settlement"))
               ? "w-0 h-0 opacity-0 pointer-events-none overflow-hidden mb-0 md:mb-0 md:mr-0"
               : "w-full md:w-auto opacity-100 mb-6 md:mb-0 md:mr-6"
           }`}

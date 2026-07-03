@@ -350,7 +350,21 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   return (
     <div className="flex flex-col gap-6">
-
+      {!viewingStaffId && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              if (setActiveTab) {
+                setActiveTab('add_leave' as any);
+              }
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] font-sans"
+            title="Back to Leave Tracker"
+          >
+            <ArrowLeft className="h-4 w-4 text-blue-400" /> Back
+          </button>
+        </div>
+      )}
 
       {viewingStaffId ? (
         <div className="flex flex-col gap-6">
