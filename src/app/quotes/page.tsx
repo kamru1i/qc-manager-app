@@ -720,9 +720,9 @@ export default function Dashboard({
       return false;
     }
 
-    // For non-admin mode, use currentUserProfile; for admin mode, look up in profilesList
+    // For non-admin mode, use currentUserProfile; for admin/supervisor mode, look up in profilesList
     const targetProfile =
-      profile?.role === "admin"
+      (profile?.role === "admin" || profile?.role === "supervisor")
         ? profilesList.find((p) => p.id === userId)
         : userId === profile?.id
           ? profile

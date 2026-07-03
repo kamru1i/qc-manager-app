@@ -9,6 +9,7 @@ interface ModalProps {
   maxWidthClass?: string; // defaults to 'max-w-md'
   glowClass?: string; // defaults to 'bg-blue-900/10'
   children: React.ReactNode;
+  headerExtra?: React.ReactNode;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,6 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidthClass = 'max-w-md',
   glowClass = 'bg-blue-900/10',
   children,
+  headerExtra,
 }) => {
   const [shouldRender, setShouldRender] = React.useState(isOpen);
   const [isAnimated, setIsAnimated] = React.useState(false);
@@ -82,14 +84,17 @@ export const Modal: React.FC<ModalProps> = ({
               {icon}
               {title}
             </h3>
-            <button 
-              type="button"
-              onClick={onClose}
-              className="text-slate-450 hover:text-white text-sm cursor-pointer focus:outline-none"
-              aria-label="Close modal"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-3">
+              {headerExtra}
+              <button 
+                type="button"
+                onClick={onClose}
+                className="text-slate-450 hover:text-white text-sm cursor-pointer focus:outline-none"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {/* Content */}

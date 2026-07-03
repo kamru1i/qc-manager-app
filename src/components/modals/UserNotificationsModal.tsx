@@ -21,6 +21,7 @@ interface UserNotificationsModalProps {
   approvingIds?: Set<string>;
   reviewingIds?: Set<string>;
   approvedIds?: Set<string>;
+  onSwitchToAdminPanel?: () => void;
 }
 
 export function UserNotificationsModal({
@@ -38,6 +39,7 @@ export function UserNotificationsModal({
   approvingIds = new Set(),
   reviewingIds = new Set(),
   approvedIds = new Set(),
+  onSwitchToAdminPanel,
 }: UserNotificationsModalProps) {
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
@@ -57,6 +59,16 @@ export function UserNotificationsModal({
       title="Notifications"
       icon={<Bell className="h-5 w-5 text-purple-400" />}
       maxWidthClass="max-w-lg"
+      headerExtra={
+        profile?.role === 'admin' && onSwitchToAdminPanel ? (
+          <button
+            onClick={onSwitchToAdminPanel}
+            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer hover:bg-slate-800 transition-all font-sans"
+          >
+            Go to Admin Panel
+          </button>
+        ) : undefined
+      }
     >
       <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
         {userNotificationsList.length === 0 ? (

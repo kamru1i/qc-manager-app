@@ -24,6 +24,7 @@ interface AdminLeaveApprovalModalProps {
   adminHolidayNotifications?: any[];
   pendingPasswordResetRequests?: Profile[];
   handleApprovePasswordResetRequest?: (id: string, approve: boolean) => void;
+  onSwitchToUserPanel?: () => void;
 }
 
 export function AdminLeaveApprovalModal({
@@ -43,6 +44,7 @@ export function AdminLeaveApprovalModal({
   pendingPasswordResetRequests = [],
   handleApprovePasswordResetRequest = () => {},
   adminHolidayNotifications = [],
+  onSwitchToUserPanel,
 }: AdminLeaveApprovalModalProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [notificationTypeFilter, setNotificationTypeFilter] = React.useState('all');
@@ -590,6 +592,16 @@ export function AdminLeaveApprovalModal({
       icon={<Bell className="h-5 w-5 text-purple-400 font-semibold" />}
       maxWidthClass="max-w-3xl"
       glowClass="bg-purple-900/10"
+      headerExtra={
+        onSwitchToUserPanel ? (
+          <button
+            onClick={onSwitchToUserPanel}
+            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer hover:bg-slate-800 transition-all font-sans"
+          >
+            Go to User Panel
+          </button>
+        ) : undefined
+      }
     >
       <div className="space-y-6 pr-1 font-sans">
         <div className="p-4 rounded-xl bg-slate-955/40 border border-slate-800/80 text-xs text-slate-400 space-y-1">

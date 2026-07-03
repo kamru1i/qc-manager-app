@@ -252,6 +252,9 @@ export default function AppPortal() {
     const handleListSync = (e: Event) => {
       setChutiNotificationsList((e as CustomEvent).detail || []);
     };
+    const handleOpenUserNotif = () => {
+      setShowNotificationsModal(true);
+    };
     window.addEventListener(
       "chuti-notification-count-change",
       handleCountChange,
@@ -263,6 +266,10 @@ export default function AppPortal() {
     window.addEventListener(
       "chuti-notification-list-sync",
       handleListSync,
+    );
+    window.addEventListener(
+      "open-user-notifications-modal",
+      handleOpenUserNotif,
     );
     return () => {
       window.removeEventListener(
@@ -277,8 +284,12 @@ export default function AppPortal() {
         "chuti-notification-list-sync",
         handleListSync,
       );
+      window.removeEventListener(
+        "open-user-notifications-modal",
+        handleOpenUserNotif,
+      );
     };
-  }, []);
+  }, [setShowNotificationsModal]);
 
   useEffect(() => {
     if (activeTab !== "chuti" || (activeChutiTab !== "leave_history" && activeChutiTab !== "govt_responses" && activeChutiTab !== "settlement")) return;
@@ -689,9 +700,18 @@ export default function AppPortal() {
         onProfileSettingsClick={() =>
           window.dispatchEvent(new CustomEvent("open-profile-settings"))
         }
-        onNotificationClick={() =>
-          setShowNotificationsModal(true)
-        }
+        onNotificationClick={() => {
+          if (profile?.role === 'admin') {
+            const mode = sessionStorage.getItem('adminNotificationMode') || 'user';
+            if (mode === 'admin') {
+              window.dispatchEvent(new CustomEvent('open-admin-approvals-modal'));
+            } else {
+              setShowNotificationsModal(true);
+            }
+          } else {
+            setShowNotificationsModal(true);
+          }
+        }}
         onManualSync={() =>
           window.dispatchEvent(new CustomEvent("trigger-manual-sync"))
         }
@@ -727,6 +747,18 @@ export default function AppPortal() {
           }}
           onSupervisorApproveChuti={(id, approve) => {
             window.dispatchEvent(new CustomEvent('supervisor-approve-chuti', { detail: { id, approve } }));
+          }}
+          onSwitchToAdminPanel={() => {
+            sessionStorage.setItem('adminNotificationMode', 'admin');
+            setShowNotificationsModal(false);
+            if (activeTab !== 'chuti') {
+              setActiveTab('chuti');
+              localStorage.setItem('last_active_dashboard', 'chuti');
+              window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'chuti' }));
+            }
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('open-admin-approvals-modal'));
+            }, 100);
           }}
         />
       )}

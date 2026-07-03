@@ -495,6 +495,13 @@ export const DashboardModals = () => {
         adminHolidayNotifications={adminHolidayNotifications}
         pendingPasswordResetRequests={pendingPasswordResetRequests}
         handleApprovePasswordResetRequest={handleApprovePasswordResetRequest}
+        onSwitchToUserPanel={() => {
+          sessionStorage.setItem('adminNotificationMode', 'user');
+          setShowLeaveApprovalModal(false);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('open-user-notifications-modal'));
+          }, 50);
+        }}
       />
 
       <AdminEditRecordModal

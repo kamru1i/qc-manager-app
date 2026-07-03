@@ -268,7 +268,8 @@ export function useModalHandlers({
     if (!profile) return;
     const isAdmin = profile.role === 'admin';
     if (isAdmin) {
-      if (adminActiveTab === 'admin') {
+      const mode = sessionStorage.getItem('adminNotificationMode') || 'user';
+      if (mode === 'admin') {
         setShowLeaveApprovalModal(true);
       } else {
         handleOpenNotifications();
@@ -282,7 +283,7 @@ export function useModalHandlers({
     } else {
       handleOpenNotifications();
     }
-  }, [profile, adminActiveTab, unreadUserNotificationsCount, setShowLeaveApprovalModal, setShowSupervisorApprovalModal, handleOpenNotifications]);
+  }, [profile, unreadUserNotificationsCount, setShowLeaveApprovalModal, setShowSupervisorApprovalModal, handleOpenNotifications]);
 
   // Reset filters
   const handleResetFilters = useCallback((

@@ -160,7 +160,7 @@ export const useQuotesDashboardData = () => {
                 .gte('updated_at', bufferedSyncTimestamp)
                 .range(from, to);
 
-              if (profile.role !== 'admin') {
+              if (profile.role !== 'admin' && profile.role !== 'supervisor') {
                 query = query.eq('user_id', sessionUser.id);
               }
 
@@ -206,7 +206,7 @@ export const useQuotesDashboardData = () => {
                 .range(from, to);
 
               // If user is a normal user, only fetch their own records
-              if (profile.role !== 'admin') {
+              if (profile.role !== 'admin' && profile.role !== 'supervisor') {
                 query = query.eq('user_id', sessionUser.id);
               }
 
@@ -273,7 +273,7 @@ export const useQuotesDashboardData = () => {
                 .lte('submitted_at', endDate)
                 .range(from, to);
           
-              if (profile.role !== 'admin') {
+              if (profile.role !== 'admin' && profile.role !== 'supervisor') {
                 pageQuery = pageQuery.eq('user_id', sessionUser.id);
               }
           
@@ -298,7 +298,7 @@ export const useQuotesDashboardData = () => {
             // Reuse this read later for the main records load to avoid redundant IndexedDB reads
             const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
             const localMonthRecords = localCachedForPrune.filter(r => {
-              if (profile.role !== 'admin' && r.user_id !== sessionUser.id) return false;
+              if (profile.role !== 'admin' && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
               if (!r.submitted_at) return false;
               const date = new Date(r.submitted_at);
               const y = date.getFullYear().toString();
@@ -375,7 +375,7 @@ export const useQuotesDashboardData = () => {
         if (!r.submitted_at) return false;
         
         // Check role permission
-        if (profile.role !== 'admin' && r.user_id !== sessionUser.id) return false;
+        if (profile.role !== 'admin' && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
         
         // Check year-month matching
         const date = new Date(r.submitted_at);
@@ -434,7 +434,7 @@ export const useQuotesDashboardData = () => {
             .order('submitted_at', { ascending: false })
             .limit(1);
 
-          if (profile.role !== 'admin') {
+          if (profile.role !== 'admin' && profile.role !== 'supervisor') {
             earliestQuery = earliestQuery.eq('user_id', sessionUser.id);
             latestQuery = latestQuery.eq('user_id', sessionUser.id);
           }
@@ -508,9 +508,9 @@ export const useQuotesDashboardData = () => {
     }
   }, [sessionUser, profile]);
 
-  // Fetch System Audit Logs (Admins only)
+  // Fetch System Audit Logs (Admins & Supervisors)
   const fetchAuditLogs = useCallback(async () => {
-    if (!sessionUser || !profile || profile.role !== 'admin') return;
+    if (!sessionUser || !profile || (profile.role !== 'admin' && profile.role !== 'supervisor')) return;
     setAuditLogsLoading(true);
     try {
       const { data, error } = await supabase

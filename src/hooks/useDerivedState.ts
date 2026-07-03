@@ -249,153 +249,26 @@ export function useDerivedState({
       });
     }
 
-    // For Admin / Supervisor: inject relevant pending staff requests into notify feed
+    // For Supervisor: inject relevant pending staff requests into notify feed
     if (initialFetchDone) {
-      const isAdminMode = profile.role === 'admin';
       const isSupervisor = profile.role === 'supervisor';
 
-      if (isAdminMode || isSupervisor) {
+      if (isSupervisor) {
         // 1. Pending Supervisor Verification Requests (For Supervisors only)
-        if (isSupervisor) {
-          groupedSupervisorRequests.forEach(r => {
-            const staff = profilesList.find(p => p.id === r.user_id);
-            const staffName = staff?.full_name || 'Staff';
-            const staffCode = staff?.username?.toUpperCase() || 'N/A';
-            const datesLabel = r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date);
-            list.push({
-              id: `sup-req-${r.id}`,
-              type: 'pending_supervisor_request',
-              timestamp: r.created_at || r.date || currentSessionTime,
-              title: 'Leave Verification Needed 🔔',
-              body: `${staffName} (${staffCode}) applied for ${r.leave_type} (Date: ${datesLabel}).`,
-              record: r
-            });
+        groupedSupervisorRequests.forEach(r => {
+          const staff = profilesList.find(p => p.id === r.user_id);
+          const staffName = staff?.full_name || 'Staff';
+          const staffCode = staff?.username?.toUpperCase() || 'N/A';
+          const datesLabel = r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date);
+          list.push({
+            id: `sup-req-${r.id}`,
+            type: 'pending_supervisor_request',
+            timestamp: r.created_at || r.date || currentSessionTime,
+            title: 'Leave Verification Needed 🔔',
+            body: `${staffName} (${staffCode}) applied for ${r.leave_type} (Date: ${datesLabel}).`,
+            record: r
           });
-        }
-
-        // 2. Pending Admin Actions (For Admin Mode only)
-        if (isAdminMode) {
-          // Holiday responses
-          holidayResponses.forEach((r: any) => {
-            const staff = profilesList.find(p => p.id === r.user_id);
-            const isReserveEnabled = staff ? staff.allow_reserve !== false : true;
-            if (isReserveEnabled) {
-              const staffName = r.profiles?.full_name || 'Staff';
-              const staffCode = r.profiles?.username?.toUpperCase() || 'N/A';
-              const title = r.response === 'reserve' ? 'Govt Holiday Reserve Request 🔔' : 'Govt Holiday Payment Request 🔔';
-              const body = `${staffName} (${staffCode}) ${r.holiday_name} (${formatDate(r.holiday_date)}) ${
-                r.response === 'reserve' ? 'has requested to reserve the leave.' : 'has requested to get paid for the holiday.'
-              }`;
-              list.push({
-                id: `admin-holiday-resp-${r.id}`,
-                type: 'admin_holiday_response',
-                timestamp: r.created_at || currentSessionTime,
-                title,
-                body
-              });
-            }
-          });
-
-          // Settlements responded
-          leaveSettlements.forEach((s) => {
-            if (s.status === 'responded') {
-              const staff = profilesList.find(p => p.id === s.user_id);
-              const staffName = staff?.full_name || staff?.username || 'Staff';
-              const staffCode = staff?.username?.toUpperCase() || 'N/A';
-              const periodLabel = s.period === 'H1' ? 'January-June (H1)' : s.period === 'H2' ? 'July-December (H2)' : 'Instant';
-              
-              let choiceLabel = '';
-              const cf = s.carry_forward_days ?? 0;
-              const pay = s.payment_days ?? 0;
-              const adj = s.adjust_leave_days ?? 0;
-              
-              if (s.remaining_days < 0) {
-                if (s.action_type === 'payment') {
-                  choiceLabel = `Salary Deduction`;
-                } else if (s.action_type === 'carry_forward') {
-                  choiceLabel = s.period === 'H1' ? 'Adjust with H2' : "Adjust with Next Year's H1";
-                } else if (s.action_type === 'adjust_leave') {
-                  choiceLabel = 'Adjust with Holiday/Eid Reserve';
-                }
-              } else {
-                if (s.action_type === 'split') {
-                  const parts = [];
-                  if (cf > 0) parts.push(`${cf}d CF`);
-                  if (pay > 0) parts.push(`${pay}d Cash`);
-                  if (adj > 0) parts.push(`${adj}d Adj`);
-                  choiceLabel = parts.join(', ');
-                } else {
-                  choiceLabel = s.action_type === 'carry_forward' ? 'Carry Forward' : s.action_type === 'payment' ? 'Cash Out' : 'Adjust Leaves';
-                }
-              }
-
-              list.push({
-                id: `admin-settlement-resp-${s.id}`,
-                type: 'admin_settlement_response',
-                timestamp: s.created_at || currentSessionTime,
-                title: 'Leave Preference Responded 📥',
-                body: `${staffName} (${staffCode}) responded for ${s.leave_category} (${periodLabel}): ${choiceLabel}.`
-              });
-            }
-          });
-
-          // Pending Leave Requests
-          groupedChutiRequests.forEach(r => {
-            const staff = profilesList.find(p => p.id === r.user_id);
-            const staffName = staff?.full_name || 'Staff';
-            const staffCode = staff?.username?.toUpperCase() || 'N/A';
-            const datesLabel = r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date);
-            list.push({
-              id: `admin-leave-req-${r.id}`,
-              type: 'pending_admin_chuti_request',
-              timestamp: r.created_at || r.date || currentSessionTime,
-              title: 'Leave Approval Required 🔔',
-              body: `${staffName} (${staffCode}) leave request for ${r.leave_type} (Date: ${datesLabel}) is pending final approval.`,
-              record: r
-            });
-          });
-
-          // Pending Reserve & Overtime Adjustment Requests
-          pendingReserveRequests.forEach(r => {
-            const staff = profilesList.find(p => p.id === r.user_id);
-            const staffName = staff?.full_name || 'Staff';
-            const staffCode = staff?.username?.toUpperCase() || 'N/A';
-            const isAdjustmentRequest = r.reserve_adjustment_status === 'pending';
-            const label = isAdjustmentRequest ? 'Adjustment Request' : 'Reserve Request';
-            list.push({
-              id: `admin-reserve-req-${r.id}`,
-              type: 'pending_admin_reserve_request',
-              timestamp: r.created_at || r.date || currentSessionTime,
-              title: `${label} Pending 🔄`,
-              body: `${staffName} (${staffCode}) requested ${r.leave_type} ${label.toLowerCase()} (Date: ${formatDate(r.date)}).`,
-              record: r
-            });
-          });
-
-          // Pending Profile Edit Requests
-          pendingProfileRequests.forEach(p => {
-            list.push({
-              id: `admin-profile-req-${p.id}`,
-              type: 'pending_admin_profile_request',
-              timestamp: (p as any).created_at || currentSessionTime,
-              title: 'Profile Change Request 👤',
-              body: `${p.full_name || p.username} (@${p.username?.toUpperCase()}) requested profile details update.`,
-              profileRecord: p
-            });
-          });
-
-          // Pending Password Reset Requests
-          pendingPasswordResetRequests.forEach(p => {
-            list.push({
-              id: `admin-password-req-${p.id}`,
-              type: 'pending_admin_password_request',
-              timestamp: (p as any).created_at || currentSessionTime,
-              title: 'Password Reset Request 🔑',
-              body: `${p.full_name || p.username} (@${p.username?.toUpperCase()}) requested password reset.`,
-              profileRecord: p
-            });
-          });
-        }
+        });
       }
     }
 
