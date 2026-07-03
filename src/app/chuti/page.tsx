@@ -965,7 +965,8 @@ export default function Dashboard({
         )}
 
         {/* ================= ADMIN STAFF VIEW (Leave Dashboard) ================= */}
-        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && activeChutiTab === 'staff_master' && (
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && 
+          (activeChutiTab === 'staff_master' || activeChutiTab === 'govt_responses' || activeChutiTab === 'settlement') && (
           <AdminDashboardView
             activeTab={activeChutiTab}
             setActiveTab={handleChutiTabChange}
