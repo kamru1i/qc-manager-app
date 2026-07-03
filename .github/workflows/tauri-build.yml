@@ -97,15 +97,19 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            Welcome to the first official **1.0.0** release of the unified **QC App** (formerly Chuti tracker)! This version integrates our role-based Leave Tracker and Quotes Manager workspaces into a single premium desktop utility.
+            **v2.0.0** is a major milestone release delivering the **Employee 360° Profile Hub**, comprehensive UI/UX overhauls, persistent dual-panel notification system, theme system fixes, and a suite of data integrity and stability improvements.
 
-            #### 🌟 What's New in v__VERSION__:
-            - **Unified Dual-Workspace Architecture**: Seamlessly switch between the **Leave Tracker (Chuti)** and **Quotes Manager** workspaces with fully independent access controls and permissions.
-            - **Modern Inline User Configuration**: Replaced old add-user modals with a clean, inline settings panel (`StaffSettingsForm`) for editing or adding new staff accounts with uniform styling and alignment.
-            - **Circular Inputs & Smooth Transitions**: Custom checkboxes inside lists and permissions panels are now styled as clean circles, accompanied by smooth sliding transition animations for access toggles.
-            - **Resilient Password Setup Workflows**: Enforced automated credentials modal when users log in with the default password `1234`, locking workspace views until they configure their own secure credentials.
-            - **System-Wide Fixes**: Cleaned up layout spacing inside supervisor checklists and disabled dev mode console clutter from update checking.
-            - **Robust Data Protection**: Implemented cascade deletion routines to safely remove all associated attendance logs, settlements, and preferences when deleting a staff profile.
+            #### 🌟 What's New in v2.0.0:
+
+            - **Employee 360° Profile Hub**: Clicking any staff member in User Management now opens a full-featured hub with sub-tabs — Leave History, Quotes History, KPI & Performance, and Profile Settings — giving admins a complete employee overview in one screen.
+            - **Switchable Admin/User Notification Panels**: Admins can now switch between a detailed Admin Approval Panel (full leave/profile/password request cards with actions) and a personal User Notification Panel. The last-opened panel is remembered per session.
+            - **Newest-First Todo Ordering**: Newly added tasks always appear at the top of the todo list across all views.
+            - **Profile Change Detection Guard**: Profile update submissions are now blocked if no fields were actually changed, preventing empty approval cards from appearing in the admin queue.
+            - **Isolated Admin Personal Notifications**: Admin user notification panel now only shows their own personal notifications. All administrative requests (leave approvals, password resets, profile changes) are exclusively shown in the Admin Panel.
+            - **Supervisor Quotes & Audit Log Access**: Supervisors can now view all users' quotes, monthly/daily entry lists, and system audit logs — matching admin-level data visibility for the Quotes workspace.
+            - **Light/Dark Theme Sync**: The theme toggle in the Navbar now correctly propagates across all sub-workspaces (Chuti, Quotes) in real-time without requiring page reloads.
+            - **Comprehensive Light Mode Text Visibility**: All text elements across profile settings, checkboxes, form fields, tables, and modals are now fully readable in Light Mode using properly resolved CSS variable-based color theming.
+            - **Password Reset False Recovery Fix**: Fixed a bug where changing a password triggered the RECOVERY system to falsely attempt a database restore due to a transient auth token refresh window.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` installer or `.msi` package, run it, and follow the setup wizard.
