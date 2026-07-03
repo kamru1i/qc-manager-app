@@ -897,8 +897,8 @@ export default function Dashboard({
           />
         )}
 
-        {/* ================= STAFF VIEW ================= */}
-        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab !== 'add_leave' && activeChutiTab !== 'leave_settings' && (profile?.role !== 'admin' || adminActiveTab === 'user') && (
+        {/* ================= USER'S OWN LEAVE VIEW (Everyone) ================= */}
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab !== 'add_leave' && activeChutiTab !== 'leave_settings' && (
           <UserDashboardView
             profile={profile}
             userStats={userStats}
@@ -935,8 +935,8 @@ export default function Dashboard({
           />
         )}
 
-        {/* ================= ADMIN VIEW ================= */}
-        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && adminActiveTab === 'admin' && activeChutiTab !== 'add_leave' && activeChutiTab !== 'leave_settings' && (
+        {/* ================= ADMIN STAFF VIEW (Below user's own view) ================= */}
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && activeChutiTab !== 'add_leave' && activeChutiTab !== 'leave_settings' && (
           <AdminDashboardView
             activeTab={activeChutiTab}
             setActiveTab={handleChutiTabChange}

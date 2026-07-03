@@ -251,7 +251,7 @@ export function useDerivedState({
 
     // For Admin / Supervisor: inject relevant pending staff requests into notify feed
     if (initialFetchDone) {
-      const isAdminMode = profile.role === 'admin' && adminActiveTab === 'admin';
+      const isAdminMode = profile.role === 'admin';
       const isSupervisor = profile.role === 'supervisor';
 
       if (isAdminMode || isSupervisor) {

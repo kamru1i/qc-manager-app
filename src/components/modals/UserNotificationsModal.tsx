@@ -149,7 +149,7 @@ export function UserNotificationsModal({
       </div>
       
       <div className="flex justify-between items-center pt-4 border-t border-slate-800/80 mt-5">
-        {((profile?.role === 'admin' && adminActiveTab === 'admin') || profile?.role === 'supervisor') && (
+        {(profile?.role === 'admin' || profile?.role === 'supervisor') && (
           <button
             onClick={() => {
               setShowUserNotificationsModal(false);
