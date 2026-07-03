@@ -77,11 +77,8 @@ jobs:
         run: |
           echo "=== ENV VARIABLES ==="
           env | grep TAURI || true
-          echo "=== SIGNING.KEY PROPERTIES ==="
-          wc -l signing.key || true
-          wc -c signing.key || true
           echo "Test content" > mock.txt
-          npx tauri signer sign -f signing.key -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" mock.txt
+          npx tauri signer sign -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" mock.txt
           rm mock.txt
 
       - name: Build desktop application
