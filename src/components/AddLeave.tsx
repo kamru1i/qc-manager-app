@@ -344,7 +344,7 @@ export function AddLeave({
     // Prepare records list to insert
     const insertData: any[] = [];
     const bypassSupervisor = profile?.role === 'admin' || targetProfile.needs_supervisor_approval === false;
-    const finalStatus = bypassSupervisor ? 'approved' : 'pending';
+    const finalStatus = bypassSupervisor ? 'approved_by_supervisor' : 'pending_supervisor';
 
     let finalAdjustment = false;
     let finalAdjustedHour: string | null = null;
@@ -384,6 +384,21 @@ export function AddLeave({
     const bulkId = allDates.length > 1 ? generateUUID() : null;
 
     datesWithAdjustment.forEach(item => {
+      let commentWithCategory = comment.trim();
+      if (leaveType === 'Full Leave') {
+        commentWithCategory = (item.adjustment && adjustmentCategory !== 'None')
+          ? `Adjusted: ${adjustmentCategory} | ${comment.trim()}`
+          : comment.trim();
+      } else if (leaveType === 'Short Leave' && finalAdjustment) {
+        commentWithCategory = `Adjusted: ${adjustmentCategory} | ${comment.trim()}`;
+      } else if (leaveType === 'Short Leave' && finalAdjustedHour) {
+        commentWithCategory = `Partially Adjusted with Overtime (${finalAdjustedHour.substring(0, 5)}) | ${comment.trim()}`;
+      } else if (leaveType === 'Overtime' && finalAdjustment) {
+        commentWithCategory = `Adjusted with Short Leave | ${comment.trim()}`;
+      } else if (leaveType === 'Overtime' && finalAdjustedHour) {
+        commentWithCategory = `Partially Adjusted with Short Leave (${finalAdjustedHour.substring(0, 5)}) | ${comment.trim()}`;
+      }
+
       insertData.push({
         user_id: targetProfile.id,
         date: item.date,
@@ -391,13 +406,17 @@ export function AddLeave({
         sign_in_time: leaveType === 'Full Leave' ? null : `${signInTime}:00`,
         sign_out_time: leaveType === 'Full Leave' ? null : `${signOutTime}:00`,
         leave_hour: leaveType === 'Full Leave' ? null : `${leaveHour}:00`,
-        comment: comment.trim(),
+        comment: commentWithCategory || null,
         status: finalStatus,
         adjustment: leaveType === 'Full Leave' ? item.adjustment : finalAdjustment,
         adjusted_hour: finalAdjustedHour,
         adjust_short_leave: finalAdjustShortLeave,
         bulk_id: bulkId,
-        untrusted_comment: leaveType === 'Full Leave' && item.adjustment ? adjustmentCategory : null,
+        reserve_holiday: leaveType === 'Short Leave' && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && item.adjustment && adjustmentCategory !== 'None' ? adjustmentCategory : null),
+        reserve_adjustment_status: 'none',
+        admin_edit_request: (!bypassSupervisor && targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0)
+          ? { supervisor_ids: targetProfile.supervisor_ids }
+          : null
       });
     });
 
@@ -412,7 +431,7 @@ export function AddLeave({
       toast.success(allDates.length > 1 ? `Successfully added ${allDates.length} bulk leaves!` : 'Leave added successfully!');
       
       // Send notifications to supervisors if pending approval
-      if (finalStatus === 'pending' && selectedSupervisors.length > 0 && data && data.length > 0) {
+      if (finalStatus === 'pending_supervisor' && selectedSupervisors.length > 0 && data && data.length > 0) {
         const notifInsert = selectedSupervisors.map(supId => ({
           user_id: supId,
           title: `New Leave Request`,
