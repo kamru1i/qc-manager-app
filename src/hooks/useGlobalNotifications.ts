@@ -15,6 +15,7 @@ export function useGlobalNotifications(
 ) {
   const [userRecords, setUserRecords] = useState<ChutiRecord[]>([]);
   const [holidayResponses, setHolidayResponses] = useState<any[]>([]);
+  const [rulesRecords, setRulesRecords] = useState<any[]>([]);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
@@ -47,6 +48,16 @@ export function useGlobalNotifications(
 
       if (!holidayError && holidayData) {
         setHolidayResponses(holidayData);
+      }
+
+      // 3. Fetch active compliance rules
+      const { data: rulesData, error: rulesError } = await supabase
+        .from('compliance_rules')
+        .select('*')
+        .eq('is_deleted', false);
+
+      if (!rulesError && rulesData) {
+        setRulesRecords(rulesData);
       }
     } catch (err) {
       console.error('Failed to fetch global notifications data:', err);
@@ -91,7 +102,7 @@ export function useGlobalNotifications(
     }
   }, [sessionUser, profile, fetchNotificationsData]);
 
-  // Subscribe to changes in chuti and holiday responses for real-time notifications
+  // Subscribe to changes for real-time notifications
   useEffect(() => {
     if (!sessionUser) return;
 
@@ -117,9 +128,21 @@ export function useGlobalNotifications(
       )
       .subscribe();
 
+    const rulesChannel = supabase
+      .channel('global-rules-notif-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'compliance_rules' },
+        () => {
+          fetchNotificationsData();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(chutiChannel);
       supabase.removeChannel(holidayChannel);
+      supabase.removeChannel(rulesChannel);
     };
   }, [sessionUser, fetchNotificationsData]);
 
@@ -210,9 +233,20 @@ export function useGlobalNotifications(
       }
     });
 
+    // 3. Compliance Rules Notifications (New & Updates)
+    rulesRecords.forEach(r => {
+      list.push({
+        id: `rule-${r.id}`,
+        type: 'compliance_rule',
+        timestamp: r.updated_at || r.created_at || currentSessionTime,
+        title: `Compliance Rule Added/Updated 🚨`,
+        body: `Category: ${r.category.toUpperCase()} -> ${r.sub_category.toUpperCase()}\n\n${r.content}`,
+      });
+    });
+
     const filtered = list.filter(n => !dismissedNotificationIds?.has(n.id));
     return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [sessionUser, profile, userRecords, holidayResponses, globalSettings.govt_holidays, currentSessionTime, dismissedNotificationIds]);
+  }, [sessionUser, profile, userRecords, holidayResponses, rulesRecords, globalSettings.govt_holidays, currentSessionTime, dismissedNotificationIds]);
 
   // Compute unread count
   const unreadCount = useMemo(() => {

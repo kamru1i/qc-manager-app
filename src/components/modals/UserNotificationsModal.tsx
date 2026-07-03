@@ -55,7 +55,9 @@ export function UserNotificationsModal({
                     {n.timestamp ? new Date(n.timestamp).toLocaleString('en-US', { hour12: true }) : ''}
                   </span>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold w-fit ${
-                    n.type === 'govt_holiday_prompt'
+                    n.type === 'compliance_rule'
+                      ? 'bg-blue-955 border border-blue-900/50 text-blue-300'
+                    : n.type === 'govt_holiday_prompt'
                       ? 'bg-amber-955 border border-amber-900/50 text-amber-300'
                     : n.type === 'govt_holiday_choice'
                       ? 'bg-teal-955 border border-teal-900/50 text-teal-300'
@@ -85,7 +87,8 @@ export function UserNotificationsModal({
                       ? 'bg-amber-955 border border-amber-900 text-amber-400'
                     : 'bg-slate-955 border border-slate-900 text-slate-400'
                   }`}>
-                    {n.type === 'govt_holiday_prompt' ? 'Govt Holiday (Choice)'
+                    {n.type === 'compliance_rule' ? 'Compliance Rule'
+                     : n.type === 'govt_holiday_prompt' ? 'Govt Holiday (Choice)'
                      : n.type === 'govt_holiday_choice' ? 'Govt Holiday (Response)'
                      : n.type === 'admin_holiday_response' ? 'Govt Holiday Response (Staff)'
                      : n.type === 'admin_settlement_response' ? 'Settle Response (Staff)'
@@ -115,7 +118,7 @@ export function UserNotificationsModal({
                 )}
               </div>
 
-              <div className="p-3 bg-slate-900/60 border border-slate-800/80 text-slate-300 rounded-lg text-xs leading-relaxed font-sans">
+              <div className="p-3 bg-slate-900/60 border border-slate-800/80 text-slate-300 rounded-lg text-xs leading-relaxed font-sans whitespace-pre-wrap">
                 <span className="font-semibold text-slate-200 block mb-1">{n.title}</span>
                 {n.body || n.text}
               </div>

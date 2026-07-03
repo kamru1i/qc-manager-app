@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile, ComplianceRule, RuleHistory } from '@/types';
+import { sendPushNotification } from '@/utils/webPushHelper';
 import { LoginCodesModal } from './LoginCodesModal';
 import { IPCheckerModal } from './IPCheckerModal';
 import { INSURANCE_DATABASE } from '@/utils/initialRulesData';
@@ -550,6 +551,22 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         details: `Added new rule in category '${formCategory}' -> '${formSubCategory}'`
       });
 
+      // Send push notification to all users
+      try {
+        const { data: usersData } = await supabase.from('profiles').select('id');
+        if (usersData) {
+          const userIds = usersData.map(u => u.id);
+          await sendPushNotification({
+            userIds,
+            title: 'New Compliance Rule Added 🚨',
+            body: `Category: ${formCategory.toUpperCase()} -> ${formSubCategory.toUpperCase()}\n\n${formContent.substring(0, 100)}${formContent.length > 100 ? '...' : ''}`,
+            url: '/quotes'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to send push notifications for new rule:', err);
+      }
+
       showToast('success', 'Rule added successfully!');
       setIsAddModalOpen(false);
       resetForm();
@@ -601,6 +618,22 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         target_id: ruleToEdit.id,
         details: `Updated compliance rule details for ID '${ruleToEdit.id}'`
       });
+
+      // Send push notification to all users
+      try {
+        const { data: usersData } = await supabase.from('profiles').select('id');
+        if (usersData) {
+          const userIds = usersData.map(u => u.id);
+          await sendPushNotification({
+            userIds,
+            title: 'Compliance Rule Updated ⚠️',
+            body: `Category: ${ruleToEdit.category.toUpperCase()} -> ${ruleToEdit.sub_category.toUpperCase()}\n\n${formContent.substring(0, 100)}${formContent.length > 100 ? '...' : ''}`,
+            url: '/quotes'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to send push notifications for updated rule:', err);
+      }
 
       showToast('success', 'Rule updated successfully!');
       setIsEditModalOpen(false);
