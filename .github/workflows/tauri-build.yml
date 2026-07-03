@@ -72,6 +72,13 @@ jobs:
           RAW_PASS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: python prepare_key.py
 
+      - name: Verify signing key and password work
+        shell: bash
+        run: |
+          echo "Test content" > mock.txt
+          npx tauri signer sign -f signing.key -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" mock.txt
+          rm mock.txt
+
       - name: Build desktop application
         uses: tauri-apps/tauri-action@v0
         env:
