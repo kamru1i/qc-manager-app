@@ -276,6 +276,21 @@ export const useAdminStaffOperations = ({
         setMessage({ type: 'success', text: 'Your profile successfully updated!' });
         setShowProfileSettingsModal(false);
       } else {
+        const isFullNameChanged = editFullName.trim() !== (profile.full_name || '').trim();
+        const isWorkingHoursChanged = (parseFloat(editWorkingHours) || 9.5) !== (profile.working_hours ?? 9.5);
+        const isBreakTimeChanged = (parseInt(editBreakTime) || 0) !== (profile.break_time ?? 0);
+        const isJobRoleChanged = editJobRole.trim() !== (profile.job_role || '').trim();
+        const isSignInChanged = (profileSignInTime || '') !== (profile.default_sign_in || '');
+        const isSignOutChanged = (profileSignOutTime || '') !== (profile.default_sign_out || '');
+
+        const hasChanges = isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || isJobRoleChanged || isSignInChanged || isSignOutChanged;
+
+        if (!hasChanges) {
+          setMessage({ type: 'error', text: 'No changes detected. Profile was not submitted.' });
+          setProfileSubmitting(false);
+          return;
+        }
+
         if (!profile?.has_edited_profile) {
           const updates = {
             full_name: editFullName,
