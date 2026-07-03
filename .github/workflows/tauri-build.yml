@@ -81,6 +81,13 @@ jobs:
           npx tauri signer sign -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" mock.txt
           rm mock.txt
 
+      - name: Fix bundle script permissions (macOS only)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          chmod +x src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/bundle_dmg.sh 2>/dev/null || true
+          chmod +x src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/bundle_dmg.sh 2>/dev/null || true
+
       - name: Build desktop application
         uses: tauri-apps/tauri-action@v0
         env:
