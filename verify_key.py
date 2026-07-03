@@ -29,7 +29,11 @@ def main():
                 print(f"  Line {i+1} DECODED data starts with 'untrusted comment'! This means the secret is double-base64 encoded.")
                 try:
                     decoded_str = decoded.decode('utf-8', errors='ignore')
-                    print(f"  Decoded content number of lines: {len(decoded_str.splitlines())}")
+                    decoded_lines = decoded_str.splitlines()
+                    print(f"  Decoded content number of lines: {len(decoded_lines)}")
+                    for j, dl in enumerate(decoded_lines):
+                        print(f"    Decoded Line {j+1} length: {len(dl)}")
+                        print(f"    Decoded Line {j+1} repr: {repr(dl)}")
                 except Exception as e:
                     print(f"  Failed to decode decoded data as string: {e}")
         except Exception as e:
@@ -44,6 +48,24 @@ def main():
         print(f"RAW_PASS is alphanumeric: {password.isalnum()}")
     else:
         print("RAW_PASS is empty!")
+
+    # Check signing.key if it exists
+    if os.path.exists("signing.key"):
+        print("--- SIGNING.KEY FILE DIAGNOSTICS ---")
+        try:
+            with open("signing.key", "rb") as f:
+                content = f.read()
+            print(f"  signing.key file size in bytes: {len(content)}")
+            print(f"  signing.key file repr: {repr(content)}")
+            
+            # Split by lines
+            split_lines = content.split(b"\n")
+            print(f"  signing.key split by b'\\n' has {len(split_lines)} parts:")
+            for idx, part in enumerate(split_lines):
+                print(f"    Part {idx+1} length: {len(part)}")
+                print(f"    Part {idx+1} repr: {repr(part)}")
+        except Exception as e:
+            print(f"  Error reading signing.key: {e}")
 
 if __name__ == "__main__":
     main()
