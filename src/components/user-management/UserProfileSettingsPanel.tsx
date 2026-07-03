@@ -1,0 +1,154 @@
+'use client';
+
+import React from 'react';
+import { Profile } from '@/types';
+import { StaffSettingsForm } from '@/components/StaffSettingsForm';
+import { RefreshCw, KeyRound, Trash2, Check, Loader2 } from 'lucide-react';
+
+interface UserProfileSettingsPanelProps {
+  isAdmin: boolean;
+  submitting: boolean;
+  profiles: Profile[];
+  viewingStaff: Profile;
+  editUserFullName: string;
+  setEditUserFullName: (val: string) => void;
+  editUserRole: 'admin' | 'supervisor' | 'user';
+  setEditUserRole: (val: 'admin' | 'supervisor' | 'user') => void;
+  editHasChutiAccess: boolean;
+  setEditHasChutiAccess: (val: boolean) => void;
+  editNeedsApproval: boolean;
+  setEditNeedsApproval: (val: boolean) => void;
+  editSupervisorIds: string[];
+  setEditSupervisorIds: (val: string[]) => void;
+  editEligibleOfficeLeave: boolean;
+  setEditEligibleOfficeLeave: (val: boolean) => void;
+  editEligibleGovtHoliday: boolean;
+  setEditEligibleGovtHoliday: (val: boolean) => void;
+  editAllowOvertime: boolean;
+  setEditAllowOvertime: (val: boolean) => void;
+  editAllowReserve: boolean;
+  setEditAllowReserve: (val: boolean) => void;
+  editHasQuotesAccess: boolean;
+  setEditHasQuotesAccess: (val: boolean) => void;
+  editUserAllowedTypes: string[];
+  setEditUserAllowedTypes: (val: string[]) => void;
+  editUserCanManageRules: boolean;
+  setEditUserCanManageRules: (val: boolean) => void;
+  onResetPasswordClick: () => void;
+  onChangePasswordClick: () => void;
+  onDeleteAccountClick: () => void;
+  onSaveProfileClick: () => void;
+}
+
+export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> = ({
+  isAdmin,
+  submitting,
+  profiles,
+  viewingStaff,
+  editUserFullName,
+  setEditUserFullName,
+  editUserRole,
+  setEditUserRole,
+  editHasChutiAccess,
+  setEditHasChutiAccess,
+  editNeedsApproval,
+  setEditNeedsApproval,
+  editSupervisorIds,
+  setEditSupervisorIds,
+  editEligibleOfficeLeave,
+  setEditEligibleOfficeLeave,
+  editEligibleGovtHoliday,
+  setEditEligibleGovtHoliday,
+  editAllowOvertime,
+  setEditAllowOvertime,
+  editAllowReserve,
+  setEditAllowReserve,
+  editHasQuotesAccess,
+  setEditHasQuotesAccess,
+  editUserAllowedTypes,
+  setEditUserAllowedTypes,
+  editUserCanManageRules,
+  setEditUserCanManageRules,
+  onResetPasswordClick,
+  onChangePasswordClick,
+  onDeleteAccountClick,
+  onSaveProfileClick,
+}) => {
+  return (
+    <div className="space-y-6">
+      <StaffSettingsForm
+        isNewUser={false}
+        fullName={editUserFullName}
+        setFullName={setEditUserFullName}
+        role={editUserRole}
+        setRole={setEditUserRole}
+        hasChutiAccess={editHasChutiAccess}
+        setHasChutiAccess={setEditHasChutiAccess}
+        needsApproval={editNeedsApproval}
+        setNeedsApproval={setEditNeedsApproval}
+        supervisors={profiles.filter(p => p.role === 'supervisor')}
+        supervisorIds={editSupervisorIds}
+        setSupervisorIds={setEditSupervisorIds}
+        eligibleOfficeLeave={editEligibleOfficeLeave}
+        setEligibleOfficeLeave={setEditEligibleOfficeLeave}
+        eligibleGovtHoliday={editEligibleGovtHoliday}
+        setEligibleGovtHoliday={setEditEligibleGovtHoliday}
+        allowOvertime={editAllowOvertime}
+        setAllowOvertime={setEditAllowOvertime}
+        allowReserve={editAllowReserve}
+        setAllowReserve={setEditAllowReserve}
+        hasQuotesAccess={editHasQuotesAccess}
+        setHasQuotesAccess={setEditHasQuotesAccess}
+        allowedTypes={editUserAllowedTypes}
+        setAllowedTypes={setEditUserAllowedTypes}
+        canManageRules={editUserCanManageRules}
+        setCanManageRules={setEditUserCanManageRules}
+        isAdmin={isAdmin}
+      />
+      
+      <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
+        <div className="flex flex-wrap gap-2.5">
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={onResetPasswordClick}
+              className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset Password?
+            </button>
+          )}
+          
+          <button
+            type="button"
+            onClick={onChangePasswordClick}
+            className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+          >
+            <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
+          </button>
+
+          {isAdmin && viewingStaff.role !== 'admin' && (
+            <button
+              type="button"
+              onClick={onDeleteAccountClick}
+              className="px-4 py-2.5 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete Account
+            </button>
+          )}
+        </div>
+
+        <div>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={onSaveProfileClick}
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+          >
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {submitting ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

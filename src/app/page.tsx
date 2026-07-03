@@ -281,7 +281,7 @@ export default function AppPortal() {
   }, []);
 
   useEffect(() => {
-    if (activeTab !== "chuti" || activeChutiTab !== "leave_history") return;
+    if (activeTab !== "user_management" && (activeTab !== "chuti" || activeChutiTab !== "leave_history")) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -293,8 +293,19 @@ export default function AppPortal() {
       }
 
       if (e.key === "Backspace") {
-        e.preventDefault();
-        handleChutiTabChange("add_leave");
+        if (activeTab === "chuti" && activeChutiTab === "leave_history") {
+          e.preventDefault();
+          handleChutiTabChange("add_leave");
+        } else if (activeTab === "user_management") {
+          // If viewing details or creating user, let UserManagementDashboard key listener handle it
+          const hasDetailBackBtn = document.getElementById("user-manage-detail-back");
+          if (hasDetailBackBtn) {
+            return;
+          }
+          e.preventDefault();
+          setActiveTab("chuti");
+          localStorage.setItem("last_active_dashboard", "chuti");
+        }
       }
     };
 
@@ -303,6 +314,17 @@ export default function AppPortal() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [activeTab, activeChutiTab]);
+
+  useEffect(() => {
+    const handleBackToChuti = () => {
+      setActiveTab("chuti");
+      localStorage.setItem("last_active_dashboard", "chuti");
+    };
+    window.addEventListener("user-management-back-to-chuti", handleBackToChuti);
+    return () => {
+      window.removeEventListener("user-management-back-to-chuti", handleBackToChuti);
+    };
+  }, []);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -735,7 +757,7 @@ export default function AppPortal() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row items-start">
         <div
           className={`transition-all duration-300 ease-in-out shrink-0 ${
-            activeTab === "chuti" && activeChutiTab === "leave_history"
+            activeTab === "user_management" || (activeTab === "chuti" && activeChutiTab === "leave_history")
               ? "w-0 h-0 opacity-0 pointer-events-none overflow-hidden mb-0 md:mb-0 md:mr-0"
               : "w-full md:w-auto opacity-100 mb-6 md:mb-0 md:mr-6"
           }`}

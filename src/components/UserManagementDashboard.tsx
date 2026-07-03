@@ -11,12 +11,40 @@ import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { Modal } from '@/components/Modal';
 import toast from 'react-hot-toast';
-import { Search, UserPlus, Shield, Edit, Trash2, CheckCircle2, XCircle, Loader2, X, ArrowLeft, AlertTriangle, KeyRound, Check, RefreshCw } from 'lucide-react';
+import {
+  Search,
+  UserPlus,
+  Shield,
+  Edit,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  X,
+  ArrowLeft,
+  AlertTriangle,
+  KeyRound,
+  Check,
+  RefreshCw,
+  Settings,
+  Calendar,
+  BarChart2,
+  FileText
+} from 'lucide-react';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { CategoryCheckboxList } from '@/components/CategoryCheckboxList';
 import { Toggle } from '@/components/Toggle';
 import { StaffSettingsForm } from '@/components/StaffSettingsForm';
+
+// Extracted Subtabs Panels
+import { UserProfileSettingsPanel } from '@/components/user-management/UserProfileSettingsPanel';
+import { UserLeaveHistoryPanel } from '@/components/user-management/UserLeaveHistoryPanel';
+import { UserQuotesHistoryPanel } from '@/components/user-management/UserQuotesHistoryPanel';
+import { UserKpiPerformancePanel } from '@/components/user-management/UserKpiPerformancePanel';
+import { ChutiRecord } from '@/utils/offlineSync';
+import { LeaveSettlement, GovtHolidayResponse } from '@/types';
+import { GlobalSettings } from '@/utils/dashboardHelpers';
 
 interface UserManagementDashboardProps {
   sessionUser: { id: string } | null;
@@ -88,10 +116,21 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
 
-  // Double-click viewing state
+  // Double-click viewing state (Employee 360 Hub)
   const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
-  const [viewingStaffRecords, setViewingStaffRecords] = useState<any[]>([]);
-  const [viewingStaffStats, setViewingStaffStats] = useState<any>(null);
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>('profile');
+  const [viewingStaffRecords, setViewingStaffRecords] = useState<ChutiRecord[]>([]);
+  const [viewingStaffSettlements, setViewingStaffSettlements] = useState<LeaveSettlement[]>([]);
+  const [viewingStaffHolidayResponses, setViewingStaffHolidayResponses] = useState<GovtHolidayResponse[]>([]);
+  const [globalSettings, setGlobalSettings] = useState<GlobalSettings | null>(null);
+  const [loadingLeaveData, setLoadingLeaveData] = useState(false);
+
+  // Leave Records Filter parameters
+  const [leaveFilterType, setLeaveFilterType] = useState('all');
+  const [leaveFilterStartDate, setLeaveFilterStartDate] = useState('');
+  const [leaveFilterEndDate, setLeaveFilterEndDate] = useState('');
+  const [leaveSearchQuery, setLeaveSearchQuery] = useState('');
+  const [selectedYear, setSelectedYear] = useState<string>(() => new Date().getFullYear().toString());
 
   // Change Credentials Modal State
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
@@ -151,7 +190,111 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingStaff, isCreatingNewUser]);
 
-  // No database load required since leave record table is removed from User Management details view.
+  // Reset subtab selection when viewingStaff is closed
+  useEffect(() => {
+    if (!viewingStaff) {
+      setActiveSubTab('profile');
+    }
+  }, [viewingStaff]);
+
+  // Fetch all leave records, settlements, and holiday responses for the selected staff member
+  const fetchStaffLeaveData = useCallback(async (staffId: string) => {
+    setLoadingLeaveData(true);
+    try {
+      // 1. Fetch chuti records
+      const { data: chutiData, error: chutiError } = await supabase
+        .from('chuti')
+        .select('*')
+        .eq('user_id', staffId)
+        .is('deleted_at', null)
+        .order('date', { ascending: false });
+
+      if (chutiError) throw chutiError;
+      setViewingStaffRecords(chutiData || []);
+
+      // 2. Fetch leave settlements
+      const { data: sData, error: sError } = await supabase
+        .from('leave_settlements')
+        .select('*')
+        .eq('user_id', staffId);
+
+      if (sError) throw sError;
+      setViewingStaffSettlements(sData || []);
+
+      // 3. Fetch holiday responses
+      const { data: hrData, error: hrError } = await supabase
+        .from('govt_holiday_responses')
+        .select('*')
+        .eq('user_id', staffId);
+
+      if (hrError) throw hrError;
+      setViewingStaffHolidayResponses(hrData || []);
+
+      // 4. Fetch global settings from admin profile
+      const { data: adminProfile, error: apError } = await supabase
+        .from('profiles')
+        .select('global_settings')
+        .eq('role', 'admin')
+        .limit(1)
+        .single();
+
+      if (!apError && adminProfile) {
+        setGlobalSettings(adminProfile.global_settings);
+      }
+    } catch (e) {
+      console.error('Failed to load staff leave data:', e);
+      toast.error('Failed to load leave history.');
+    } finally {
+      setLoadingLeaveData(false);
+    }
+  }, []);
+
+  // Fetch leave data on mount/change of selected staff member
+  useEffect(() => {
+    if (viewingStaff) {
+      fetchStaffLeaveData(viewingStaff.id);
+    }
+  }, [viewingStaff, fetchStaffLeaveData]);
+
+  // Toggle adjustment handler for leaves in details view
+  const handleToggleAdjustment = async (record: ChutiRecord) => {
+    try {
+      const { error } = await supabase
+        .from('chuti')
+        .update({ adjustment: !record.adjustment })
+        .eq('id', record.id);
+
+      if (error) throw error;
+      toast.success('Adjustment status updated.');
+      if (viewingStaff) {
+        fetchStaffLeaveData(viewingStaff.id);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Failed to update adjustment: ' + (err.message || 'unknown error'));
+    }
+  };
+
+  // Delete handler for leaves in details view
+  const handleDeleteRecord = async (record: ChutiRecord) => {
+    if (!confirm('Are you sure you want to permanently delete this leave entry?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('chuti')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', record.id);
+
+      if (error) throw error;
+      toast.success('Leave entry deleted successfully.');
+      if (viewingStaff) {
+        fetchStaffLeaveData(viewingStaff.id);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Failed to delete entry: ' + (err.message || 'unknown error'));
+    }
+  };
 
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
     if (type === 'success') toast.success(text);
@@ -386,122 +529,155 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   const isAdmin = profile?.role === 'admin';
 
+  // Available Years for viewed user
+  const availableYears = React.useMemo(() => {
+    const years = new Set([new Date().getFullYear().toString()]);
+    viewingStaffRecords.forEach(r => {
+      if (r.date) {
+        years.add(r.date.substring(0, 4));
+      }
+    });
+    return Array.from(years).sort().reverse();
+  }, [viewingStaffRecords]);
+
   return (
     <>
       {(viewingStaff || isCreatingNewUser) ? (
         <div className="space-y-6 animate-modal-content">
           {/* Header/Top Box */}
-          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => {
-                  setViewingStaff(null);
-                  setIsCreatingNewUser(false);
-                }}
-                className="p-2.5 bg-slate-850 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-750 transition-all cursor-pointer"
-                title="Go Back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  {isCreatingNewUser ? (
-                    'Add New Staff'
-                  ) : (
-                    <>
-                      {viewingStaff?.full_name || 'Staff User'}{viewingStaff?.username ? ` (${viewingStaff.username.trim().toUpperCase()})` : ''}
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
-                        viewingStaff?.role === 'admin'
-                          ? 'bg-red-950/60 border-red-900 text-red-300'
-                          : viewingStaff?.role === 'supervisor'
-                            ? 'bg-purple-955/60 border-purple-805 text-purple-300'
-                            : 'bg-slate-850 border-slate-750 text-slate-400'
-                      }`}>
-                        {viewingStaff?.role === 'admin' ? 'Admin' : (viewingStaff?.role === 'supervisor' ? 'Supervisor' : 'Staff')}
-                      </span>
-                    </>
+          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 flex flex-col gap-4">
+            <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-6 w-full">
+              <div className="flex items-center gap-4">
+                <button
+                  id="user-manage-detail-back"
+                  onClick={() => {
+                    setViewingStaff(null);
+                    setIsCreatingNewUser(false);
+                  }}
+                  className="p-2.5 bg-slate-850 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-750 transition-all cursor-pointer"
+                  title="Go Back"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    {isCreatingNewUser ? (
+                      'Add New Staff'
+                    ) : (
+                      <>
+                        {viewingStaff?.full_name || 'Staff User'}{viewingStaff?.username ? ` (${viewingStaff.username.trim().toUpperCase()})` : ''}
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
+                          viewingStaff?.role === 'admin'
+                            ? 'bg-red-950/60 border-red-900 text-red-300'
+                            : viewingStaff?.role === 'supervisor'
+                              ? 'bg-purple-955/60 border-purple-805 text-purple-300'
+                              : 'bg-slate-850 border-slate-750 text-slate-400'
+                        }`}>
+                          {viewingStaff?.role === 'admin' ? 'Admin' : (viewingStaff?.role === 'supervisor' ? 'Supervisor' : 'Staff')}
+                        </span>
+                      </>
+                    )}
+                  </h2>
+                  {!isCreatingNewUser && viewingStaff && (
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-405">
+                      <div>Working Hours: <strong className="text-white">{viewingStaff.working_hours || 9.5} hrs</strong></div>
+                      <div>Break Time: <strong className="text-white">{viewingStaff.break_time || 0} mins</strong></div>
+                    </div>
                   )}
-                </h2>
-                {!isCreatingNewUser && viewingStaff && (
-                  <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-405">
-                    <div>Working Hours: <strong className="text-white">{viewingStaff.working_hours || 9.5} hrs</strong></div>
-                    <div>Break Time: <strong className="text-white">{viewingStaff.break_time || 0} mins</strong></div>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
+
+            {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
+            {!isCreatingNewUser && viewingStaff && (
+              <div className="flex border-b border-slate-800 gap-1 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('profile')}
+                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeSubTab === 'profile'
+                      ? 'border-blue-500 text-blue-400 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Settings className="h-3.5 w-3.5" /> Profile Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('leave')}
+                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeSubTab === 'leave'
+                      ? 'border-blue-500 text-blue-400 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Calendar className="h-3.5 w-3.5" /> Leave Details
+                </button>
+                {viewingStaff.has_quotes_access && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTab('quotes')}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeSubTab === 'quotes'
+                        ? 'border-blue-500 text-blue-400 font-bold'
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <FileText className="h-3.5 w-3.5 text-purple-400" /> Quotes History
+                  </button>
+                )}
+                {viewingStaff.has_quotes_access && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTab('kpi')}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeSubTab === 'kpi'
+                        ? 'border-blue-500 text-blue-400 font-bold'
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Reusable settings form */}
+          {/* Form / Tab contents */}
           {isCreatingNewUser ? (
-            <StaffSettingsForm
-              isNewUser={true}
-              codename={newCodename}
-              setCodename={setNewCodename}
-              fullName={newFullName}
-              setFullName={setNewFullName}
-              role={newRole}
-              setRole={setNewRole}
-              hasChutiAccess={hasChutiAccess}
-              setHasChutiAccess={setHasChutiAccess}
-              needsApproval={newNeedsApproval}
-              setNeedsApproval={setNewNeedsApproval}
-              supervisors={profiles.filter(p => p.role === 'supervisor')}
-              supervisorIds={newSupervisorIds}
-              setSupervisorIds={setNewSupervisorIds}
-              eligibleOfficeLeave={newEligibleOfficeLeave}
-              setEligibleOfficeLeave={setNewEligibleOfficeLeave}
-              eligibleGovtHoliday={newEligibleGovtHoliday}
-              setEligibleGovtHoliday={setNewEligibleGovtHoliday}
-              allowOvertime={newAllowOvertime}
-              setAllowOvertime={setNewAllowOvertime}
-              allowReserve={newAllowReserve}
-              setAllowReserve={setNewAllowReserve}
-              hasQuotesAccess={hasQuotesAccess}
-              setHasQuotesAccess={setHasQuotesAccess}
-              allowedTypes={allowedTypes}
-              setAllowedTypes={setAllowedTypes}
-              canManageRules={canManageRules}
-              setCanManageRules={setCanManageRules}
-              isAdmin={isAdmin}
-            />
-          ) : (
-            <StaffSettingsForm
-              isNewUser={false}
-              fullName={editUserFullName}
-              setFullName={setEditUserFullName}
-              role={editUserRole}
-              setRole={setEditUserRole}
-              hasChutiAccess={editHasChutiAccess}
-              setHasChutiAccess={setEditHasChutiAccess}
-              needsApproval={editNeedsApproval}
-              setNeedsApproval={setEditNeedsApproval}
-              supervisors={profiles.filter(p => p.role === 'supervisor')}
-              supervisorIds={editSupervisorIds}
-              setSupervisorIds={setEditSupervisorIds}
-              eligibleOfficeLeave={editEligibleOfficeLeave}
-              setEligibleOfficeLeave={setEditEligibleOfficeLeave}
-              eligibleGovtHoliday={editEligibleGovtHoliday}
-              setEligibleGovtHoliday={setEditEligibleGovtHoliday}
-              allowOvertime={editAllowOvertime}
-              setAllowOvertime={setEditAllowOvertime}
-              allowReserve={editAllowReserve}
-              setAllowReserve={setEditAllowReserve}
-              hasQuotesAccess={editHasQuotesAccess}
-              setHasQuotesAccess={setEditHasQuotesAccess}
-              allowedTypes={editUserAllowedTypes}
-              setAllowedTypes={setEditUserAllowedTypes}
-              canManageRules={editUserCanManageRules}
-              setCanManageRules={setEditUserCanManageRules}
-              isAdmin={isAdmin}
-            />
-          )}
-
-          {/* Action Buttons at the Bottom */}
-          <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
-            {isCreatingNewUser ? (
-              <>
-                {/* Left side actions (Cancel) */}
+            <>
+              <StaffSettingsForm
+                isNewUser={true}
+                codename={newCodename}
+                setCodename={setNewCodename}
+                fullName={newFullName}
+                setFullName={setNewFullName}
+                role={newRole}
+                setRole={setNewRole}
+                hasChutiAccess={hasChutiAccess}
+                setHasChutiAccess={setHasChutiAccess}
+                needsApproval={newNeedsApproval}
+                setNeedsApproval={setNewNeedsApproval}
+                supervisors={profiles.filter(p => p.role === 'supervisor')}
+                supervisorIds={newSupervisorIds}
+                setSupervisorIds={setNewSupervisorIds}
+                eligibleOfficeLeave={newEligibleOfficeLeave}
+                setEligibleOfficeLeave={setNewEligibleOfficeLeave}
+                eligibleGovtHoliday={newEligibleGovtHoliday}
+                setEligibleGovtHoliday={setNewEligibleGovtHoliday}
+                allowOvertime={newAllowOvertime}
+                setAllowOvertime={setNewAllowOvertime}
+                allowReserve={newAllowReserve}
+                setAllowReserve={setNewAllowReserve}
+                hasQuotesAccess={hasQuotesAccess}
+                setHasQuotesAccess={setHasQuotesAccess}
+                allowedTypes={allowedTypes}
+                setAllowedTypes={setAllowedTypes}
+                canManageRules={canManageRules}
+                setCanManageRules={setCanManageRules}
+                isAdmin={isAdmin}
+              />
+              <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
                 <div className="flex flex-wrap gap-2.5 font-sans">
                   <button
                     type="button"
@@ -526,8 +702,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <X className="h-3.5 w-3.5 text-red-400" /> Cancel
                   </button>
                 </div>
-
-                {/* Right side actions (Create User button) */}
                 <div className="font-sans">
                   <button
                     type="button"
@@ -539,59 +713,84 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     {submitting ? 'Creating...' : 'Create User'}
                   </button>
                 </div>
-              </>
-            ) : (
-              <>
-                {/* Left side actions (Reset & Change Pass, Delete User) */}
-                <div className="flex flex-wrap gap-2.5 font-sans">
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => setShowResetConfirmModal(true)}
-                      className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-                    >
-                      <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset Password?
-                    </button>
-                  )}
-                  
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCredNewPassword('');
-                      setCredConfirmPassword('');
-                      setShowCredentialsModal(true);
-                    }}
-                    className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-                  >
-                    <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
-                  </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {activeSubTab === 'profile' && viewingStaff && (
+                <UserProfileSettingsPanel
+                  isAdmin={isAdmin}
+                  submitting={submitting}
+                  profiles={profiles}
+                  viewingStaff={viewingStaff}
+                  editUserFullName={editUserFullName}
+                  setEditUserFullName={setEditUserFullName}
+                  editUserRole={editUserRole}
+                  setEditUserRole={setEditUserRole}
+                  editHasChutiAccess={editHasChutiAccess}
+                  setEditHasChutiAccess={setEditHasChutiAccess}
+                  editNeedsApproval={editNeedsApproval}
+                  setEditNeedsApproval={setEditNeedsApproval}
+                  editSupervisorIds={editSupervisorIds}
+                  setEditSupervisorIds={setEditSupervisorIds}
+                  editEligibleOfficeLeave={editEligibleOfficeLeave}
+                  setEditEligibleOfficeLeave={setEditEligibleOfficeLeave}
+                  editEligibleGovtHoliday={editEligibleGovtHoliday}
+                  setEditEligibleGovtHoliday={setEditEligibleGovtHoliday}
+                  editAllowOvertime={editAllowOvertime}
+                  setEditAllowOvertime={setEditAllowOvertime}
+                  editAllowReserve={editAllowReserve}
+                  setEditAllowReserve={setEditAllowReserve}
+                  editHasQuotesAccess={editHasQuotesAccess}
+                  setEditHasQuotesAccess={setEditHasQuotesAccess}
+                  editUserAllowedTypes={editUserAllowedTypes}
+                  setEditUserAllowedTypes={setEditUserAllowedTypes}
+                  editUserCanManageRules={editUserCanManageRules}
+                  setEditUserCanManageRules={setEditUserCanManageRules}
+                  onResetPasswordClick={() => setShowResetConfirmModal(true)}
+                  onChangePasswordClick={() => {
+                    setCredNewPassword('');
+                    setCredConfirmPassword('');
+                    setShowCredentialsModal(true);
+                  }}
+                  onDeleteAccountClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
+                  onSaveProfileClick={handleUpdateUser}
+                />
+              )}
 
-                  {isAdmin && viewingStaff && viewingStaff.role !== 'admin' && (
-                    <button
-                      type="button"
-                      onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
-                      className="px-4 py-2.5 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete Account
-                    </button>
-                  )}
-                </div>
+              {activeSubTab === 'leave' && viewingStaff && (
+                <UserLeaveHistoryPanel
+                  viewingStaff={viewingStaff}
+                  viewingStaffRecords={viewingStaffRecords}
+                  viewingStaffSettlements={viewingStaffSettlements}
+                  viewingStaffHolidayResponses={viewingStaffHolidayResponses}
+                  globalSettings={globalSettings}
+                  loadingLeaveData={loadingLeaveData}
+                  selectedYear={selectedYear}
+                  setSelectedYear={setSelectedYear}
+                  availableYears={availableYears}
+                  leaveFilterType={leaveFilterType}
+                  setLeaveFilterType={setLeaveFilterType}
+                  leaveFilterStartDate={leaveFilterStartDate}
+                  setLeaveFilterStartDate={setLeaveFilterStartDate}
+                  leaveFilterEndDate={leaveFilterEndDate}
+                  setLeaveFilterEndDate={setLeaveFilterEndDate}
+                  leaveSearchQuery={leaveSearchQuery}
+                  setLeaveSearchQuery={setLeaveSearchQuery}
+                  onToggleAdjustment={handleToggleAdjustment}
+                  onDeleteRecord={handleDeleteRecord}
+                />
+              )}
 
-                {/* Right side actions (Save Changes button) */}
-                <div className="font-sans">
-                  <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={handleUpdateUser}
-                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
-                  >
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    {submitting ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+              {activeSubTab === 'quotes' && viewingStaff && viewingStaff.has_quotes_access && (
+                <UserQuotesHistoryPanel viewingStaff={viewingStaff} />
+              )}
+
+              {activeSubTab === 'kpi' && viewingStaff && (
+                <UserKpiPerformancePanel viewingStaff={viewingStaff} />
+              )}
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -603,7 +802,17 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 font-sans">
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('user-management-back-to-chuti'));
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-305 hover:text-white rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
+                title="Back to Leave Tracker"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 text-blue-400" /> Back
+              </button>
               {isAdmin && (
                 <button
                   onClick={() => {
