@@ -114,16 +114,16 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(|app_handle, event| match event {
+    app.run(|_app_handle, event| match event {
         #[cfg(target_os = "macos")]
         tauri::RunEvent::Reopen { .. } => {
-            if let Some(window) = app_handle.get_webview_window("main") {
-                let _ = app_handle.set_activation_policy(tauri::ActivationPolicy::Regular);
+            if let Some(window) = _app_handle.get_webview_window("main") {
+                let _ = _app_handle.set_activation_policy(tauri::ActivationPolicy::Regular);
                 window.show().unwrap();
                 let _ = window.set_focus();
                 
                 // Update menu text to "Close Chuti"
-                let state: State<TrayMenuState> = app_handle.state();
+                let state: State<TrayMenuState> = _app_handle.state();
                 let _ = state.open_item.set_text("Close Chuti");
             }
         }
