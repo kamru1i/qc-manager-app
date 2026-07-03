@@ -21,13 +21,13 @@ export default function ErrorBoundary({
     <div className="min-h-screen flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-950 relative overflow-hidden text-slate-100">
       {/* Background gradients */}
       <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-red-900/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-amber-900/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-900/10 blur-[120px] pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 text-center">
         <div className="inline-flex items-center justify-center p-4 bg-red-950/40 border border-red-800/40 rounded-full mb-4 shadow-lg animate-pulse">
           <AlertOctagon className="h-12 w-12 text-red-500" />
         </div>
-        <h2 className="text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-red-400 to-amber-400">
+        <h2 className="text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-red-400 to-purple-400">
           Failed to load the system!
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400 max-w-xs mx-auto">
@@ -46,7 +46,7 @@ export default function ErrorBoundary({
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => reset()}
-              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer transition-all duration-200"
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-600 to-purple-600 hover:from-red-500 hover:to-purple-500 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer transition-all duration-200"
             >
               <RotateCcw className="h-4 w-4" />
               <span>Try Again</span>

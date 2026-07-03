@@ -247,12 +247,12 @@ export function AdminLeaveApprovalModal({
         const user = profilesList.find(p => p.id === r.user_id);
         return (
           <div key={item.id} className="bg-slate-955/60 border border-slate-850 rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-orange-500" />
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
             <div className="space-y-1 text-xs text-slate-355 pl-2">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="font-bold text-white text-sm">{user?.full_name || 'No Name'}</span>
                 <span className="text-[10px] px-1.5 py-0.2 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">@{(user?.username || '').toUpperCase()}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-950/60 border border-orange-900/60 text-orange-400 font-bold tracking-wide uppercase">Leave Request</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-900/60 text-blue-400 font-bold tracking-wide uppercase">Leave Request</span>
                 {item.timestamp && (
                   <span className="text-[9px] text-slate-500 font-mono">
                     {new Date(item.timestamp).toLocaleString('en-US', { hour12: true })}
@@ -260,20 +260,20 @@ export function AdminLeaveApprovalModal({
                 )}
               </div>
               <p><span className="text-slate-500 font-medium">Date:</span> <span className="font-semibold text-slate-200">{r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date)}</span></p>
-              <p><span className="text-slate-500 font-medium">Leave Type:</span> <span className="font-bold text-orange-400">{r.leave_type}</span></p>
+              <p><span className="text-slate-500 font-medium">Leave Type:</span> <span className="font-bold text-blue-400">{r.leave_type}</span></p>
               {r.leave_type !== 'Full Leave' && (
                 <p><span className="text-slate-500 font-medium">Time & Hours:</span> <span className="font-mono text-slate-300">{formatTimeToAMPM(r.sign_in_time)} - {formatTimeToAMPM(r.sign_out_time)} ({r.leave_hour ? r.leave_hour.substring(0, 5) : '-'} hrs)</span></p>
               )}
               <p>
                 <span className="text-slate-500 font-medium">Adjustment:</span>{' '}
-                <span className={`font-semibold ${r.adjustment ? 'text-orange-400 font-bold' : r.adjusted_hour ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>
+                <span className={`font-semibold ${r.adjustment ? 'text-blue-400 font-bold' : r.adjusted_hour ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>
                   {r.adjustment ? 'Yes' : r.adjusted_hour ? `Partial (${r.adjusted_hour.toString().split('.')[0].substring(0, 5)} hrs)` : 'No'}
                 </span>
               </p>
               {r.leave_type === 'Overtime' && (
                 <p>
                   <span className="text-slate-500 font-medium">Short Leave Adj:</span>{' '}
-                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-orange-400 font-bold' : 'text-slate-400'}`}>
+                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
                     {r.adjust_short_leave ? 'Yes' : 'No'}
                   </span>
                 </p>
@@ -285,7 +285,7 @@ export function AdminLeaveApprovalModal({
               <button
                 onClick={() => handleApproveChutiRequest(r.id, false)}
                 disabled={reviewingIds.has(r.id) || approvedIds.has(r.id)}
-                className="px-3 py-1.5 border border-amber-500/30 hover:border-amber-500 bg-amber-955/20 hover:bg-amber-955/50 text-amber-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 {reviewingIds.has(r.id) && (
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -359,20 +359,20 @@ export function AdminLeaveApprovalModal({
               )}
               <p>
                 <span className="text-slate-500 font-medium">Adjustment:</span>{' '}
-                <span className={`font-semibold ${(r.adjustment || isAdjustmentRequest) ? 'text-orange-400 font-bold' : 'text-slate-400'}`}>
+                <span className={`font-semibold ${(r.adjustment || isAdjustmentRequest) ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
                   {(r.adjustment || isAdjustmentRequest) ? 'Yes' : 'No'}
                 </span>
               </p>
               {r.leave_type === 'Overtime' && (
                 <p>
                   <span className="text-slate-500 font-medium">Short Leave Adj:</span>{' '}
-                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-orange-400 font-bold' : 'text-slate-400'}`}>
+                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
                     {r.adjust_short_leave ? 'Yes' : 'No'}
                   </span>
                 </p>
               )}
               {isAdjustmentRequest && r.admin_edit_request && (
-                <div className="mt-1.5 p-2 bg-orange-955/40 border border-orange-900/40 rounded-lg text-orange-300 text-xs flex flex-col gap-0.5">
+                <div className="mt-1.5 p-2 bg-blue-955/40 border border-blue-900/40 rounded-lg text-blue-300 text-xs flex flex-col gap-0.5">
                   <div>
                     <span className="font-bold text-white">Requested Adjustment:</span>{' '}
                     {r.admin_edit_request.adjusted_hour ? (
@@ -380,7 +380,7 @@ export function AdminLeaveApprovalModal({
                     ) : r.admin_edit_request.adjustment === false ? (
                       <span className="font-semibold text-rose-400 font-bold">Cancel Adjustment</span>
                     ) : (
-                      <span className="font-semibold text-orange-400">Full Adjustment</span>
+                      <span className="font-semibold text-blue-400">Full Adjustment</span>
                     )}
                     {r.admin_edit_request.adjust_short_leave && (
                       <span className="text-emerald-400"> (From Short Leave)</span>
@@ -420,7 +420,7 @@ export function AdminLeaveApprovalModal({
                   <button
                     onClick={() => handleApproveChutiRequest(r.id, false)}
                     disabled={reviewingIds.has(r.id) || approvedIds.has(r.id)}
-                    className="px-3 py-1.5 border border-amber-500/30 hover:border-amber-500 bg-amber-955/20 hover:bg-amber-955/50 text-amber-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   >
                     {reviewingIds.has(r.id) && (
                       <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -465,7 +465,7 @@ export function AdminLeaveApprovalModal({
                 </h4>
                 <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Role: {p.job_role || '-'}</p>
               </div>
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-955 border border-amber-800 text-amber-400">
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-purple-955 border border-purple-800 text-purple-400">
                 Pending
               </span>
             </div>
@@ -483,25 +483,25 @@ export function AdminLeaveApprovalModal({
                 </div>
               </div>
 
-              <div className="bg-orange-955/20 p-2.5 rounded-lg border border-orange-900/30">
-                <span className="block font-bold text-orange-400 mb-1.5 border-b border-orange-900/30 pb-1 font-semibold">Requested New Information</span>
+              <div className="bg-blue-955/20 p-2.5 rounded-lg border border-blue-900/30">
+                <span className="block font-bold text-blue-400 mb-1.5 border-b border-blue-900/30 pb-1 font-semibold">Requested New Information</span>
                 <div className="space-y-1 text-slate-200 font-medium">
-                  <p className={p.requested_full_name && p.requested_full_name !== p.full_name ? 'text-orange-300 font-bold' : ''}>
+                  <p className={p.requested_full_name && p.requested_full_name !== p.full_name ? 'text-blue-300 font-bold' : ''}>
                     <span className="text-slate-500">Name:</span> {p.requested_full_name || p.full_name || '-'}
                   </p>
-                  <p className={p.requested_job_role && p.requested_job_role !== p.job_role ? 'text-orange-300 font-bold' : ''}>
+                  <p className={p.requested_job_role && p.requested_job_role !== p.job_role ? 'text-blue-300 font-bold' : ''}>
                     <span className="text-slate-500">Job Role:</span> {p.requested_job_role || p.job_role || '-'}
                   </p>
-                  <p className={p.requested_working_hours && p.requested_working_hours !== p.working_hours ? 'text-orange-300 font-bold' : ''}>
+                  <p className={p.requested_working_hours && p.requested_working_hours !== p.working_hours ? 'text-blue-300 font-bold' : ''}>
                     <span className="text-slate-500">Working Hours:</span> {p.requested_working_hours || p.working_hours} hrs
                   </p>
-                  <p className={p.requested_break_time && p.requested_break_time !== p.break_time ? 'text-orange-300 font-bold' : ''}>
+                  <p className={p.requested_break_time && p.requested_break_time !== p.break_time ? 'text-blue-300 font-bold' : ''}>
                     <span className="text-slate-500">Break Time:</span> {p.requested_break_time || p.break_time} mins
                   </p>
-                  <p className={p.requested_default_sign_in && p.requested_default_sign_in !== p.default_sign_in ? 'text-orange-300 font-bold' : ''}>
+                  <p className={p.requested_default_sign_in && p.requested_default_sign_in !== p.default_sign_in ? 'text-blue-300 font-bold' : ''}>
                     <span className="text-slate-500">Sign-In Time:</span> {formatTimeToAMPM(p.requested_default_sign_in || p.default_sign_in || null) || '-'}
                   </p>
-                  <p className={p.requested_default_sign_out && p.requested_default_sign_out !== p.default_sign_out ? 'text-orange-300 font-bold' : ''}>
+                  <p className={p.requested_default_sign_out && p.requested_default_sign_out !== p.default_sign_out ? 'text-blue-300 font-bold' : ''}>
                     <span className="text-slate-500">Sign-Out Time:</span> {formatTimeToAMPM(p.requested_default_sign_out || p.default_sign_out || null) || '-'}
                   </p>
                 </div>
@@ -549,7 +549,7 @@ export function AdminLeaveApprovalModal({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-1">Requesting password reset to default: <span className="font-mono text-orange-400 font-bold bg-slate-900 px-1 py-0.2 rounded border border-slate-800">123456</span></p>
+              <p className="text-xs text-slate-400 mt-1">Requesting password reset to default: <span className="font-mono text-blue-400 font-bold bg-slate-900 px-1 py-0.2 rounded border border-slate-800">123456</span></p>
             </div>
 
             <div className="flex gap-2 font-sans shrink-0 pl-2">
@@ -587,13 +587,13 @@ export function AdminLeaveApprovalModal({
       isOpen={showLeaveApprovalModal}
       onClose={handleClose}
       title="Notification Panel (Admin)"
-      icon={<Bell className="h-5 w-5 text-amber-400 font-semibold" />}
+      icon={<Bell className="h-5 w-5 text-purple-400 font-semibold" />}
       maxWidthClass="max-w-3xl"
-      glowClass="bg-amber-900/10"
+      glowClass="bg-purple-900/10"
     >
       <div className="space-y-6 pr-1 font-sans">
         <div className="p-4 rounded-xl bg-slate-955/40 border border-slate-800/80 text-xs text-slate-400 space-y-1">
-          <p className="font-semibold text-amber-400">💡 Guidelines for Modifying Information:</p>
+          <p className="font-semibold text-purple-400">💡 Guidelines for Modifying Information:</p>
           <p>Supervisors or Admins cannot directly reject a leave request. If there is an error or correction needed, click the <strong>'Needs Review'</strong> button to send it back to the user for correction. Once the user updates the information and resubmits, it will go back through the supervisor approval process and finally reach the admin.</p>
         </div>
 
@@ -609,7 +609,7 @@ export function AdminLeaveApprovalModal({
                 placeholder="Search by Name or codename (@username)."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs transition-all font-sans"
+                className="w-full pl-9 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-sans"
               />
               {searchQuery && (
                 <button
@@ -650,7 +650,7 @@ export function AdminLeaveApprovalModal({
 
         <div>
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5 border-b border-slate-800 pb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Notifications (Total: {combinedNotifications.length})
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Notifications (Total: {combinedNotifications.length})
           </h4>
           {combinedNotifications.length === 0 ? (
             <div className="text-center py-10 bg-slate-955/40 border border-slate-850 rounded-xl text-slate-500 text-xs font-medium font-sans">

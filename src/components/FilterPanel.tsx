@@ -40,7 +40,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   return (
     <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-900 shadow-2xl rounded-2xl p-6">
       <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800/80 pb-3 mb-4">
-        <SlidersHorizontal className="h-4 w-4 text-orange-500" /> Staff Leave Filter Panel
+        <SlidersHorizontal className="h-4 w-4 text-blue-500" /> Staff Leave Filter Panel
       </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -536,7 +536,7 @@ export default function AppPortal() {
       <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
         {/* Background ambient glows */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700"></div>
 
         <div className="w-full max-w-md relative z-10">
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center">
@@ -546,7 +546,7 @@ export default function AppPortal() {
                 <Loader2 className="h-12 w-12 text-purple-400 animate-spin" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-orange-400 to-amber-300 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
                   QC Manager
                 </h1>
                 <p className="text-sm text-slate-400 tracking-wide animate-pulse">

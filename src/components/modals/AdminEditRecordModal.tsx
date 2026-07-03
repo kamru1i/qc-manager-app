@@ -69,9 +69,9 @@ export function AdminEditRecordModal({
       isOpen={showAdminEditModal}
       onClose={handleClose}
       title="Edit Leave Entry (Admin Edit)"
-      icon={<Edit className="h-5 w-5 text-orange-500" />}
+      icon={<Edit className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-md"
-      glowClass="bg-orange-900/10"
+      glowClass="bg-blue-900/10"
     >
       <form onSubmit={handleAdminSaveEdit} className="space-y-4 font-sans">
         <ChutiFormFields
@@ -106,7 +106,7 @@ export function AdminEditRecordModal({
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
           >
             {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {submitting ? 'Saving...' : 'Save Changes'}

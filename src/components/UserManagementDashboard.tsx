@@ -414,7 +414,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                         viewingStaff?.role === 'admin'
                           ? 'bg-red-950/60 border-red-900 text-red-300'
                           : viewingStaff?.role === 'supervisor'
-                            ? 'bg-amber-955/60 border-amber-805 text-amber-300'
+                            ? 'bg-purple-955/60 border-purple-805 text-purple-300'
                             : 'bg-slate-850 border-slate-750 text-slate-400'
                       }`}>
                         {viewingStaff?.role === 'admin' ? 'Admin' : (viewingStaff?.role === 'supervisor' ? 'Supervisor' : 'Staff')}
@@ -533,7 +533,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     type="button"
                     disabled={submitting}
                     onClick={handleCreateUser}
-                    className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-orange-950/20 border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                   >
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     {submitting ? 'Creating...' : 'Create User'}
@@ -550,7 +550,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       onClick={() => setShowResetConfirmModal(true)}
                       className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
                     >
-                      <RefreshCw className="h-3.5 w-3.5 text-amber-500" /> Reset Password?
+                      <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset Password?
                     </button>
                   )}
                   
@@ -583,7 +583,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     type="button"
                     disabled={submitting}
                     onClick={handleUpdateUser}
-                    className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-orange-950/20 border border-orange-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                   >
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     {submitting ? 'Saving...' : 'Save Changes'}
@@ -623,7 +623,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     setNewAllowReserve(false);
                     setIsCreatingNewUser(true);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-orange-950/20 active:scale-95 transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer"
                 >
                   <UserPlus className="h-4 w-4" />
                   Add New Staff
@@ -643,7 +643,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 placeholder="Search by name or codename..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+                className="w-full pl-9 pr-8 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
               />
               {searchQuery && (
                 <button
@@ -679,7 +679,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-slate-500">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                          <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
                           <span>Loading user directory...</span>
                         </div>
                       </td>
@@ -716,7 +716,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                             u.role === 'admin'
                               ? 'bg-red-950/40 border-red-900/50 text-red-400'
                               : u.role === 'supervisor'
-                              ? 'bg-amber-955/40 border-amber-800/50 text-amber-400'
+                              ? 'bg-purple-955/40 border-purple-800/50 text-purple-400'
                               : 'bg-slate-850 border-slate-750 text-slate-400'
                           }`}>
                             <Shield className="h-3 w-3 shrink-0" />
@@ -771,7 +771,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               title="Reset Password to Default"
               message={
                 <div className="text-xs text-slate-300">
-                  Are you sure you want to reset the password for <strong className="text-white">{(viewingStaff?.username || '').toUpperCase()}</strong> to the default <strong className="text-orange-400">1234</strong>?
+                  Are you sure you want to reset the password for <strong className="text-white">{(viewingStaff?.username || '').toUpperCase()}</strong> to the default <strong className="text-blue-400">1234</strong>?
                   <p className="text-[11px] text-slate-500 mt-2">The user will be forced to change this default password on their next login.</p>
                 </div>
               }
@@ -786,12 +786,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 isOpen={showCredentialsModal}
                 onClose={() => setShowCredentialsModal(false)}
                 title="Change Password Panel"
-                icon={<KeyRound className="h-5 w-5 text-orange-500" />}
+                icon={<KeyRound className="h-5 w-5 text-blue-500" />}
                 maxWidthClass="max-w-md"
-                glowClass="bg-orange-900/10"
+                glowClass="bg-blue-900/10"
               >
                 <div className="space-y-4 font-sans">
-                  <div className="p-3 bg-orange-955/20 border border-orange-900/30 rounded-xl text-xs text-orange-355">
+                  <div className="p-3 bg-blue-955/20 border border-blue-900/30 rounded-xl text-xs text-blue-355">
                     <p>💡 Here you can set a new <strong>password</strong> for <strong className="text-white">{viewingStaff.username.toUpperCase()}</strong>.</p>
                   </div>
 
@@ -802,7 +802,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       placeholder="Enter new password"
                       value={credNewPassword}
                       onChange={(e) => setCredNewPassword(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-550"
+                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-550"
                     />
                   </div>
 
@@ -813,7 +813,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       placeholder="Confirm new password"
                       value={credConfirmPassword}
                       onChange={(e) => setCredConfirmPassword(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-550"
+                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-550"
                     />
                   </div>
 
@@ -829,7 +829,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       type="button"
                       onClick={handleUpdatePassword}
                       disabled={updatingCredentials || !credNewPassword || credNewPassword !== credConfirmPassword || credNewPassword.length < 4}
-                      className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
                       {updatingCredentials && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                       {updatingCredentials ? 'Saving...' : 'Update Password'}

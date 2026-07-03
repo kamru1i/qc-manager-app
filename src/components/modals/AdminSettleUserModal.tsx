@@ -332,7 +332,7 @@ export function AdminSettleUserModal({
       isOpen={showModal && staff !== null}
       onClose={() => setShowModal(false)}
       title={isNegative ? `Process Salary Deduction — ${staff?.full_name || staff?.username}` : `Process Settlement — ${staff?.full_name || staff?.username}`}
-      icon={<RotateCcw className="h-5 w-5 text-orange-500" />}
+      icon={<RotateCcw className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-xl"
     >
       <div className="space-y-5 font-sans text-xs text-slate-350">
@@ -346,7 +346,7 @@ export function AdminSettleUserModal({
               <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
                 {isNegative ? 'Outstanding Balance' : 'Unused Balance'}
               </span>
-              <span className={`text-base font-bold font-mono block mt-0.5 ${isNegative ? 'text-rose-500 font-extrabold' : 'text-orange-400'}`}>
+              <span className={`text-base font-bold font-mono block mt-0.5 ${isNegative ? 'text-rose-500 font-extrabold' : 'text-blue-400'}`}>
                 {isNegative ? `${Math.abs(total)} days` : `${total} days`}
               </span>
             </div>
@@ -361,8 +361,8 @@ export function AdminSettleUserModal({
         </div>
 
         {settlement.status === 'initiated' && !isNegative && (
-          <div className="p-3 bg-amber-955/15 border border-amber-900/40 rounded-xl flex items-start gap-2 text-amber-300">
-            <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-3 bg-purple-955/15 border border-purple-900/40 rounded-xl flex items-start gap-2 text-purple-300">
+            <ShieldAlert className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
             <p className="text-[10.5px] leading-relaxed">
               {isBroadcastActive
                 ? 'Staff has not submitted their preference yet. Settle manually or wait for their response.'
@@ -417,7 +417,7 @@ export function AdminSettleUserModal({
                     onClick={() => setNegativeResolutionType('adjust_h2')}
                     className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                       negativeResolutionType === 'adjust_h2'
-                        ? 'bg-amber-955/20 border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                        ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
                         : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
                     }`}
                   >
@@ -428,9 +428,9 @@ export function AdminSettleUserModal({
                       </span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      negativeResolutionType === 'adjust_h2' ? 'border-amber-500' : 'border-slate-600'
+                      negativeResolutionType === 'adjust_h2' ? 'border-purple-500' : 'border-slate-600'
                     }`}>
-                      {negativeResolutionType === 'adjust_h2' && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                      {negativeResolutionType === 'adjust_h2' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                     </div>
                   </button>
                 )}
@@ -442,7 +442,7 @@ export function AdminSettleUserModal({
                     onClick={() => setNegativeResolutionType('adjust_next_h1')}
                     className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                       negativeResolutionType === 'adjust_next_h1'
-                        ? 'bg-amber-955/20 border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                        ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
                         : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
                     }`}
                   >
@@ -453,9 +453,9 @@ export function AdminSettleUserModal({
                       </span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      negativeResolutionType === 'adjust_next_h1' ? 'border-amber-500' : 'border-slate-600'
+                      negativeResolutionType === 'adjust_next_h1' ? 'border-purple-500' : 'border-slate-600'
                     }`}>
-                      {negativeResolutionType === 'adjust_next_h1' && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                      {negativeResolutionType === 'adjust_next_h1' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                     </div>
                   </button>
                 )}
@@ -515,7 +515,7 @@ export function AdminSettleUserModal({
               <span className="text-slate-400">Total Adjustment/Deduction Days</span>
               <span className={`font-mono font-bold text-sm ${
                 negativeResolutionType === 'salary_deduction' ? 'text-rose-400' :
-                negativeResolutionType === 'adjust_reserve' ? 'text-teal-400' : 'text-amber-450'
+                negativeResolutionType === 'adjust_reserve' ? 'text-teal-400' : 'text-purple-450'
               }`}>
                 {Math.abs(total)} days
               </span>
@@ -536,11 +536,11 @@ export function AdminSettleUserModal({
             >
               <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                 isManualOverride
-                  ? 'border-orange-500 bg-orange-500/10'
+                  ? 'border-blue-500 bg-blue-500/10'
                   : 'border-slate-700 bg-slate-950'
               }`}>
                 {isManualOverride && (
-                  <Check className="h-2.5 w-2.5 text-orange-500 stroke-[3.5]" />
+                  <Check className="h-2.5 w-2.5 text-blue-500 stroke-[3.5]" />
                 )}
               </div>
               <span className="text-[11px] font-bold text-slate-300 cursor-pointer select-none">
@@ -809,9 +809,9 @@ export function AdminSettleUserModal({
 
                   {/* Adjust Leaves Option */}
                   {totalOutstandingOffice > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-amber-500/60 transition-all">
+                    <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-purple-500/60 transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-400/30 text-amber-400">
+                        <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-400/30 text-purple-400">
                           <ArrowRightLeft className="h-4 w-4" />
                         </div>
                         <div>
@@ -823,7 +823,7 @@ export function AdminSettleUserModal({
                         {(() => {
                           const { d: adjD, h: adjH, m: adjM } = getDaysHoursMins(adjustLeaveDays);
                           return (
-                            <div className="flex items-center gap-1 bg-slate-955 border border-slate-850 rounded-lg px-1.5 py-1 focus-within:border-amber-500 transition-all">
+                            <div className="flex items-center gap-1 bg-slate-955 border border-slate-850 rounded-lg px-1.5 py-1 focus-within:border-purple-500 transition-all">
                               <input
                                 type="number"
                                 min={0}
@@ -874,7 +874,7 @@ export function AdminSettleUserModal({
                         <button
                           type="button"
                           onClick={() => handleQuickAllocate('adjust_leave')}
-                          className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-455 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                          className="px-2 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-455 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                         >
                           All
                         </button>
@@ -902,7 +902,7 @@ export function AdminSettleUserModal({
                 <>
                   <div style={{ width: `${(carryForwardDays / total) * 100}%` }} className="bg-indigo-500 h-full transition-all duration-300" />
                   <div style={{ width: `${(paymentDays / total) * 100}%` }} className="bg-emerald-500 h-full transition-all duration-300" />
-                  <div style={{ width: `${(adjustLeaveDays / total) * 100}%` }} className="bg-amber-500 h-full transition-all duration-300" />
+                  <div style={{ width: `${(adjustLeaveDays / total) * 100}%` }} className="bg-purple-500 h-full transition-all duration-300" />
                 </>
               ) : null}
             </div>
@@ -932,7 +932,7 @@ export function AdminSettleUserModal({
             type="button"
             onClick={handleConfirm}
             disabled={submitting || !isAllocatedCorrectly}
-            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
           >
             {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {submitting ? 'Processing...' : 'Finalize & Process'}

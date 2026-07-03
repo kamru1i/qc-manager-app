@@ -7,7 +7,7 @@ interface ModalProps {
   title: string;
   icon?: React.ReactNode;
   maxWidthClass?: string; // defaults to 'max-w-md'
-  glowClass?: string; // defaults to 'bg-orange-900/10'
+  glowClass?: string; // defaults to 'bg-blue-900/10'
   children: React.ReactNode;
 }
 
@@ -17,7 +17,7 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   icon,
   maxWidthClass = 'max-w-md',
-  glowClass = 'bg-orange-900/10',
+  glowClass = 'bg-blue-900/10',
   children,
 }) => {
   const [shouldRender, setShouldRender] = React.useState(isOpen);

@@ -94,7 +94,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 placeholder="e.g. KI1024"
                 value={codename}
                 onChange={(e) => setCodename(e.target.value.toUpperCase())}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-orange-500/50"
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
               />
             </div>
           )}
@@ -107,7 +107,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 placeholder="e.g. Kamrul Islam"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-orange-500/50"
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
@@ -128,7 +128,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     setCanManageRules(true);
                   }
                 }}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50 cursor-pointer"
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer"
               >
                 <option value="user">User</option>
                 <option value="supervisor">Supervisor</option>
@@ -175,7 +175,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   />
                   <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                     needsApproval
-                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
                       : 'border-slate-700 bg-slate-955 text-transparent'
                   }`}>
                     {needsApproval && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -209,7 +209,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
                         } ${
                           supervisorIds.length === supervisors.length
-                            ? 'bg-orange-950/40 border-orange-700/60 text-orange-400'
+                            ? 'bg-blue-950/40 border-blue-700/60 text-blue-400'
                             : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                         }`}>
                           <input
@@ -227,7 +227,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           />
                           <div className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                             supervisorIds.length === supervisors.length
-                              ? 'bg-orange-600 border-orange-500 text-white'
+                              ? 'bg-blue-600 border-blue-500 text-white'
                               : 'border-slate-700 bg-transparent text-transparent'
                           }`}>
                             {supervisorIds.length === supervisors.length && <Check className="h-2 w-2 stroke-[3]" />}
@@ -244,7 +244,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                                 isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
                               } ${
                                 isSelected
-                                  ? 'bg-orange-950/40 border-orange-750/70 text-orange-400'
+                                  ? 'bg-blue-950/40 border-blue-750/70 text-blue-400'
                                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                               }`}
                             >
@@ -263,7 +263,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                               />
                               <div className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                                 isSelected
-                                  ? 'bg-orange-600 border-orange-500 text-white'
+                                  ? 'bg-blue-600 border-blue-500 text-white'
                                   : 'border-slate-700 bg-transparent text-transparent'
                               }`}>
                                 {isSelected && <Check className="h-2 w-2 stroke-[3]" />}
@@ -290,7 +290,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   />
                   <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                     eligibleOfficeLeave
-                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
                       : 'border-slate-700 bg-slate-955 text-transparent'
                   }`}>
                     {eligibleOfficeLeave && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -318,7 +318,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   />
                   <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                     eligibleGovtHoliday
-                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
                       : 'border-slate-700 bg-slate-955 text-transparent'
                   }`}>
                     {eligibleGovtHoliday && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -346,7 +346,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   />
                   <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                     allowOvertime
-                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
                       : 'border-slate-700 bg-slate-955 text-transparent'
                   }`}>
                     {allowOvertime && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -374,7 +374,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   />
                   <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                     allowReserve
-                      ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
                       : 'border-slate-700 bg-slate-955 text-transparent'
                   }`}>
                     {allowReserve && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -434,7 +434,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       (canManageRules || role === 'admin')
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-955 text-transparent'
                     }`}>
                       {(canManageRules || role === 'admin') && <Check className="h-2.5 w-2.5 stroke-[3]" />}

@@ -129,9 +129,9 @@ export function AdminGovtHolidaysSettingsModal({
         isOpen={showModal}
         onClose={handleClose}
         title="Govt Holidays List"
-        icon={<Calendar className="h-5 w-5 text-orange-500" />}
+        icon={<Calendar className="h-5 w-5 text-blue-500" />}
         maxWidthClass="max-w-md"
-        glowClass="bg-orange-900/10"
+        glowClass="bg-blue-900/10"
       >
 
         <div className="space-y-4 text-xs font-sans">
@@ -157,14 +157,14 @@ export function AdminGovtHolidaysSettingsModal({
                   onChange={(e) => {
                     setNewName(e.target.value);
                   }}
-                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 h-9"
+                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
                 />
               </div>
             </div>
             <button
               type="button"
               onClick={handleAddDate}
-              className="w-full py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer border border-orange-700 shadow-md h-9 text-xs font-bold gap-1"
+              className="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer border border-blue-700 shadow-md h-9 text-xs font-bold gap-1"
             >
               <Plus className="h-4 w-4" /> Add to List
             </button>
@@ -212,7 +212,7 @@ export function AdminGovtHolidaysSettingsModal({
               type="button"
               onClick={handleSave}
               disabled={submitting}
-              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
             >
               {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
               Save
@@ -237,7 +237,7 @@ export function AdminGovtHolidaysSettingsModal({
             <p className="text-slate-300 text-xs leading-relaxed mb-6">
               Deleting this government holiday (<span className="text-red-400 font-semibold font-mono">{formatDate(deleteConfirmInfo.date)}</span> - <span className="text-white font-semibold">{deleteConfirmInfo.name}</span>) will completely remove it from all staff choices, reserve records, and response reports.
               <br /><br />
-              <span className="text-amber-400 font-semibold">Are you sure you want to delete this?</span>
+              <span className="text-purple-400 font-semibold">Are you sure you want to delete this?</span>
             </p>
 
             <div className="flex gap-3">

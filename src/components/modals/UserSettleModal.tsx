@@ -324,7 +324,7 @@ export function UserSettleModal({
       isOpen={showModal && profile !== null}
       onClose={() => setShowModal(false)}
       title="Submit Leave Preference"
-      icon={<RotateCcw className="h-5 w-5 text-orange-500" />}
+      icon={<RotateCcw className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-xl"
     >
       <div className="space-y-6 font-sans text-xs text-slate-300">
@@ -374,7 +374,7 @@ export function UserSettleModal({
                         <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">
                           {item.remaining_days < 0 ? 'Outstanding Deficit' : 'Unused Balance'}
                         </span>
-                        <span className={`text-lg font-bold font-mono ${item.remaining_days < 0 ? 'text-rose-500' : 'text-orange-400'}`}>
+                        <span className={`text-lg font-bold font-mono ${item.remaining_days < 0 ? 'text-rose-500' : 'text-blue-400'}`}>
                           {formatDaysAndHours(Math.abs(item.remaining_days), workingHours)}
                         </span>
                       </div>
@@ -417,7 +417,7 @@ export function UserSettleModal({
                               onClick={() => handleNegativeSelect(item.id, 'carry_forward', item.remaining_days)}
                               className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                                 Math.abs(itemSplits.carryForward) > 0.01
-                                  ? 'bg-amber-955/20 border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                                  ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
                                   : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
                               }`}
                             >
@@ -428,9 +428,9 @@ export function UserSettleModal({
                                 </span>
                               </div>
                               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-amber-500' : 'border-slate-600'
+                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-purple-500' : 'border-slate-600'
                               }`}>
-                                {Math.abs(itemSplits.carryForward) > 0.01 && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                                {Math.abs(itemSplits.carryForward) > 0.01 && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                               </div>
                             </button>
                           )}
@@ -442,7 +442,7 @@ export function UserSettleModal({
                               onClick={() => handleNegativeSelect(item.id, 'carry_forward', item.remaining_days)}
                               className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                                 Math.abs(itemSplits.carryForward) > 0.01
-                                  ? 'bg-amber-955/20 border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                                  ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
                                   : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
                               }`}
                             >
@@ -453,9 +453,9 @@ export function UserSettleModal({
                                 </span>
                               </div>
                               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-amber-500' : 'border-slate-600'
+                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-purple-500' : 'border-slate-600'
                               }`}>
-                                {Math.abs(itemSplits.carryForward) > 0.01 && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                                {Math.abs(itemSplits.carryForward) > 0.01 && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                               </div>
                             </button>
                           )}
@@ -612,9 +612,9 @@ export function UserSettleModal({
 
                         {/* Adjust Option */}
                         {totalOutstandingOffice > 0 && (
-                          <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-amber-500/60 transition-all">
+                          <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-purple-500/60 transition-all">
                             <div className="flex items-center gap-3">
-                              <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-400/30 text-amber-450">
+                              <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-400/30 text-purple-450">
                                 <ArrowRightLeft className="h-4 w-4" />
                               </div>
                               <div>
@@ -626,7 +626,7 @@ export function UserSettleModal({
                               const { d: adjD, h: adjH, m: adjM } = getDaysHoursMins(itemSplits.adjustLeave);
                               return (
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <div className="flex items-center gap-1 bg-slate-955 border border-slate-850 rounded-lg px-1.5 py-1 focus-within:border-amber-500 transition-all">
+                                  <div className="flex items-center gap-1 bg-slate-955 border border-slate-850 rounded-lg px-1.5 py-1 focus-within:border-purple-500 transition-all">
                                     <input
                                       type="number"
                                       min={0}
@@ -675,7 +675,7 @@ export function UserSettleModal({
                                   <button
                                     type="button"
                                     onClick={() => handleQuickAllocate(item.id, 'adjustLeave', item.remaining_days)}
-                                    className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-455 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                                    className="px-2 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-455 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                                   >
                                     All
                                   </button>
@@ -702,7 +702,7 @@ export function UserSettleModal({
                             <>
                               <div style={{ width: `${(itemSplits.carryForward / item.remaining_days) * 100}%` }} className="bg-indigo-500 h-full transition-all duration-300" />
                               <div style={{ width: `${(itemSplits.payment / item.remaining_days) * 100}%` }} className="bg-emerald-500 h-full transition-all duration-300" />
-                              <div style={{ width: `${(itemSplits.adjustLeave / item.remaining_days) * 100}%` }} className="bg-amber-500 h-full transition-all duration-300" />
+                              <div style={{ width: `${(itemSplits.adjustLeave / item.remaining_days) * 100}%` }} className="bg-purple-500 h-full transition-all duration-300" />
                             </>
                           ) : null}
                         </div>
@@ -735,7 +735,7 @@ export function UserSettleModal({
             type="button"
             onClick={handleSave}
             disabled={submitting || displayItems.length === 0 || !isAllAllocatedCorrectly}
-            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
           >
             {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {submitting ? 'Submitting...' : 'Submit Preferences'}

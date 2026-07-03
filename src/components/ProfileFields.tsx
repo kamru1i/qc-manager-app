@@ -56,7 +56,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           disabled={disabled}
-          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -71,7 +71,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
           value={jobRole}
           onChange={(e) => setJobRole(e.target.value)}
           disabled={disabled}
-          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -100,7 +100,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
             value={breakTime}
             onChange={(e) => setBreakTime(e.target.value)}
             disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>
@@ -112,7 +112,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
               Sign-In
             </label>
             {signInTime && (
-              <span className="text-[10px] font-bold text-orange-450 tracking-wider">
+              <span className="text-[10px] font-bold text-blue-450 tracking-wider">
                 {formatTimeToAMPM(signInTime)}
               </span>
             )}
@@ -123,7 +123,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
             value={signInTime}
             onChange={(e) => setSignInTime(e.target.value)}
             disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
         <div>
@@ -132,7 +132,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
               Sign-Out
             </label>
             {signOutTime && (
-              <span className="text-[10px] font-bold text-orange-450 tracking-wider">
+              <span className="text-[10px] font-bold text-blue-450 tracking-wider">
                 {formatTimeToAMPM(signOutTime)}
               </span>
             )}
@@ -143,7 +143,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
             value={signOutTime}
             onChange={(e) => setSignOutTime(e.target.value)}
             disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>

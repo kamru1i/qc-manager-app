@@ -335,9 +335,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       case 'Review Bike':
         return 'from-fuchsia-600 to-fuchsia-400 border-fuchsia-500/25 bg-fuchsia-500';
       case 'Individual Review':
-        return 'from-amber-600 to-amber-400 border-amber-500/25 bg-amber-500';
+        return 'from-purple-600 to-purple-400 border-purple-500/25 bg-purple-500';
       case 'Other Site':
-        return 'from-orange-600 to-orange-400 border-orange-500/25 bg-orange-500';
+        return 'from-blue-600 to-blue-400 border-blue-500/25 bg-blue-500';
       case 'Van':
         return 'from-teal-600 to-teal-400 border-teal-500/25 bg-teal-500';
       case 'Bike':
@@ -742,8 +742,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
         {/* Card 5: Conversion Rate (Commented out) */}
         {/*
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-amber-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-amber-950/10">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-600/5 rounded-full blur-2xl group-hover:bg-amber-600/10 transition-all duration-300"></div>
+        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-purple-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-purple-950/10">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/5 rounded-full blur-2xl group-hover:bg-purple-600/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
               <p className="text-xs font-semibold text-slate-400">Conversion Rate</p>
@@ -754,7 +754,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 </div>
               </div>
             </div>
-            <div className="p-2.5 bg-amber-600/15 border border-amber-500/20 text-amber-400 rounded-xl shrink-0">
+            <div className="p-2.5 bg-purple-600/15 border border-purple-500/20 text-purple-400 rounded-xl shrink-0">
               <Percent className="h-5 w-5" />
             </div>
           </div>
@@ -1061,7 +1061,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                   'bg-blue-500 from-blue-600 to-blue-400',
                   'bg-emerald-500 from-emerald-600 to-emerald-400',
                   'bg-purple-500 from-purple-600 to-purple-400',
-                  'bg-amber-500 from-amber-600 to-amber-400',
+                  'bg-purple-500 from-purple-600 to-purple-400',
                   'bg-rose-500 from-rose-600 to-rose-400',
                 ];
 
@@ -1094,7 +1094,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
             <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              <Award className="h-4.5 w-4.5 text-amber-400" />
+              <Award className="h-4.5 w-4.5 text-purple-400" />
               Staff Performance Leaderboard ({metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name.substring(0, 3)} ${selectedYear}`})
             </h4>
           </div>
@@ -1109,9 +1109,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                 {leaderboardData.map((user, idx) => {
                   const medalColors = [
-                    'bg-amber-500/10 border-amber-500/30 text-amber-500 shadow-amber-900/5',
+                    'bg-purple-500/10 border-purple-500/30 text-purple-500 shadow-purple-900/5',
                     'bg-slate-400/10 border-slate-400/30 text-slate-350 shadow-slate-900/5',
-                    'bg-amber-700/10 border-amber-700/30 text-amber-700 shadow-amber-900/5',
+                    'bg-purple-700/10 border-purple-700/30 text-purple-700 shadow-purple-900/5',
                     'bg-slate-900 border-slate-800 text-slate-400',
                     'bg-slate-900 border-slate-800 text-slate-400',
                   ];
@@ -1168,7 +1168,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                             </div>
                             <div className="flex justify-between text-[11px] text-slate-400">
                               <span>Yearly Wins:</span>
-                              <span className="text-amber-400 font-bold">{badge.yearlyTopPerformances}x</span>
+                              <span className="text-purple-400 font-bold">{badge.yearlyTopPerformances}x</span>
                             </div>
                           </div>
                         );

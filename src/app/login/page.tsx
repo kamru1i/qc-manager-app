@@ -262,11 +262,11 @@ export default function LoginPage() {
   return (
     <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-955 relative overflow-hidden">
       {/* Background gradients */}
-      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-orange-600/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-amber-600/10 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-orange-400 to-amber-450">
+        <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-blue-400 to-purple-450">
           QC Manager App
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400 font-medium">
@@ -306,7 +306,7 @@ export default function LoginPage() {
                     const val = e.target.value;
                     setEmail(val.includes("@") ? val : val.toUpperCase());
                   }}
-                  className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm transition-all font-sans"
+                  className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
                 />
               </div>
             </div>
@@ -330,7 +330,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-2.5 bg-slate-955/85 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm transition-all font-sans"
+                  className="block w-full pl-10 pr-10 py-2.5 bg-slate-955/85 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
                 />
                 <button
                   type="button"
@@ -355,7 +355,7 @@ export default function LoginPage() {
                   setForgotError("");
                   setForgotUsername("");
                 }}
-                className="text-xs font-semibold text-orange-500 hover:text-orange-450 transition-colors cursor-pointer"
+                className="text-xs font-semibold text-blue-500 hover:text-blue-450 transition-colors cursor-pointer"
               >
                 Forgot Password?
               </button>
@@ -365,7 +365,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -434,9 +434,9 @@ export default function LoginPage() {
         isOpen={showForgotModal}
         onClose={() => setShowForgotModal(false)}
         title="Forgot Password"
-        icon={<Lock className="h-5 w-5 text-orange-500" />}
+        icon={<Lock className="h-5 w-5 text-blue-500" />}
         maxWidthClass="max-w-md"
-        glowClass="bg-orange-900/10"
+        glowClass="bg-blue-900/10"
       >
         <div className="font-sans">
           {forgotSuccess ? (
@@ -467,7 +467,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowForgotModal(false)}
-                className="mt-2 w-full py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-all border border-orange-700"
+                className="mt-2 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-all border border-blue-700"
               >
                 Close
               </button>
@@ -500,7 +500,7 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setForgotUsername(e.target.value.toUpperCase())
                   }
-                  className="mt-1.5 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs transition-all font-mono"
+                  className="mt-1.5 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-mono"
                 />
               </div>
 
@@ -515,7 +515,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="flex-1 flex justify-center py-2 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all items-center gap-1.5"
+                  className="flex-1 flex justify-center py-2 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all items-center gap-1.5"
                 >
                   {forgotLoading && (
                     <Loader className="animate-spin h-3.5 w-3.5 text-white" />

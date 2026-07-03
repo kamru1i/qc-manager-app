@@ -85,7 +85,7 @@ export const AuditLogsPanel: React.FC<AuditLogsPanelProps> = ({
         );
       case 'UPDATE_RECORD':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 border border-amber-500/20 text-amber-450 dark:text-amber-400">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 border border-purple-500/20 text-purple-450 dark:text-purple-400">
             Update Record
           </span>
         );

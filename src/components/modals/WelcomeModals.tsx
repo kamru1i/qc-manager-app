@@ -125,12 +125,12 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
           <div className="p-3.5 bg-slate-955/60 rounded-xl border border-slate-800/80 text-left text-xs text-slate-400 leading-relaxed space-y-2">
             {welcomePopupType === 'password_reset' ? (
               <>
-                <p className="font-semibold text-orange-400 font-sans">🔒 Security Confirmation:</p>
+                <p className="font-semibold text-blue-400 font-sans">🔒 Security Confirmation:</p>
                 <p>Your login credentials have been successfully updated. Use your new password to sign in next time.</p>
               </>
             ) : (
               <>
-                <p className="font-semibold text-orange-400 font-sans">💡 How to update details:</p>
+                <p className="font-semibold text-blue-400 font-sans">💡 How to update details:</p>
                 <p>If needed in the future, you can update your profile info again by clicking on <span className="font-bold text-white">Profile Settings</span> (user/gear icon) located at the top-left of the dashboard.</p>
               </>
             )}
@@ -150,13 +150,13 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
         isOpen={showFirstTimePasswordModal}
         onClose={handleCloseFirstTimePassword}
         title="Change Security Password"
-        icon={<Lock className="h-5 w-5 text-orange-500" />}
+        icon={<Lock className="h-5 w-5 text-blue-500" />}
         maxWidthClass="max-w-md"
-        glowClass="bg-orange-900/10"
+        glowClass="bg-blue-900/10"
       >
         <div className="font-sans">
           <div className="text-center mb-6">
-            <div className="inline-flex p-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 rounded-2xl mb-3">
+            <div className="inline-flex p-3 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-2xl mb-3">
               <Lock className="h-6 w-6 animate-pulse" />
             </div>
             <p className="text-xs text-slate-400 mt-1">Changing the security password is required after first login</p>
@@ -171,7 +171,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
 
           <form onSubmit={handleFirstTimeSetupSubmit} className="space-y-4">
             <div className="p-3 bg-slate-955/60 border border-slate-850 rounded-xl space-y-4">
-              <div className="text-xs font-semibold text-orange-400 border-b border-slate-850 pb-1.5 flex items-center gap-1.5">
+              <div className="text-xs font-semibold text-blue-400 border-b border-slate-850 pb-1.5 flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5" /> Change Password
               </div>
               <div>
@@ -182,7 +182,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
                   placeholder="At least 6 characters"
                   value={firstTimePassword}
                   onChange={(e) => setFirstTimePassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -194,7 +194,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
                   placeholder="Enter password again"
                   value={firstTimeConfirmPassword}
                   onChange={(e) => setFirstTimeConfirmPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <PasswordMatchIndicator password={firstTimePassword} confirmPassword={firstTimeConfirmPassword} />
               </div>
@@ -211,7 +211,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
               <button
                 type="submit"
                 disabled={firstTimePasswordSubmitting || firstTimePassword !== firstTimeConfirmPassword || firstTimePassword.length < 4}
-                className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-orange-600 hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
               >
                 {firstTimePasswordSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                 {firstTimePasswordSubmitting ? 'Updating...' : 'Update password'}
@@ -226,13 +226,13 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
         isOpen={!!showFirstLoginOnboarding}
         onClose={handleLogout}
         title="Complete Profile Setup"
-        icon={<User className="h-5 w-5 text-orange-500" />}
+        icon={<User className="h-5 w-5 text-blue-500" />}
         maxWidthClass="max-w-md"
-        glowClass="bg-orange-900/10"
+        glowClass="bg-blue-900/10"
       >
         <div className="font-sans">
           <div className="text-center mb-6">
-            <div className="inline-flex p-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 rounded-2xl mb-3">
+            <div className="inline-flex p-3 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-2xl mb-3">
               <User className="h-6 w-6" />
             </div>
             <p className="text-xs text-slate-400 mt-1">Please set your correct name and details before accessing the dashboard for the first time</p>
@@ -275,7 +275,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
             <button
               type="submit"
               disabled={setupSubmitting}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-orange-600 hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer disabled:opacity-50 transition-all mt-6 flex items-center justify-center gap-1.5"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 transition-all mt-6 flex items-center justify-center gap-1.5"
             >
               {setupSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
               {setupSubmitting ? 'Completing setup...' : 'Complete Setup'}

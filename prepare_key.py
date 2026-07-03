@@ -57,7 +57,7 @@ def clean_key_and_pass():
     github_env_path = os.environ.get("GITHUB_ENV")
     if github_env_path:
         with open(github_env_path, "a", encoding="utf-8") as f:
-            f.write(f"TAURI_SIGNING_PRIVATE_KEY_PATH={key_file_path}\n")
+            f.write(f"TAURI_SIGNING_PRIVATE_KEY={base64_key}\n")
             f.write(f"TAURI_SIGNING_PRIVATE_KEY_PASSWORD={clean_pass}\n")
         print("Successfully exported key path and password to GITHUB_ENV.")
     else:

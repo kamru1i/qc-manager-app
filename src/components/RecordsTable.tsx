@@ -438,7 +438,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       return "bg-emerald-950/50 border-emerald-900 text-emerald-450";
     if (type === "Quote") return "bg-blue-950/50 border-blue-900 text-blue-450";
     if (type.startsWith("Requote"))
-      return "bg-amber-950/50 border-amber-900 text-amber-450";
+      return "bg-purple-950/50 border-purple-900 text-purple-450";
     if (type.startsWith("Review") && type !== "Individual Review")
       return "bg-pink-950/50 border-pink-900 text-pink-450";
     if (type === "Individual Review")
@@ -714,7 +714,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                             : ""
                         } ${
                           editedRecords[r.id]?.file_name !== undefined
-                            ? "text-amber-400 border border-amber-500/25 bg-amber-500/5"
+                            ? "text-purple-400 border border-purple-500/25 bg-purple-500/5"
                             : ""
                         }`}
                         title={
@@ -794,7 +794,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                             : ""
                         } ${
                           editedRecords[r.id]?.branch_name !== undefined
-                            ? "text-amber-400 font-semibold border border-amber-500/25 bg-amber-500/5"
+                            ? "text-purple-400 font-semibold border border-purple-500/25 bg-purple-500/5"
                             : ""
                         }`}
                         title={
@@ -844,7 +844,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           isAdmin ? "cursor-text" : ""
                         } ${
                           editedRecords[r.id]?.codename !== undefined
-                            ? "text-amber-400 border border-amber-500/25 bg-amber-500/5"
+                            ? "text-purple-400 border border-purple-500/25 bg-purple-500/5"
                             : ""
                         }`}
                         title={isAdmin ? "Double-click to edit codename" : ""}
@@ -929,7 +929,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         <span
                           className={`inline-flex items-center whitespace-nowrap text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                             editedRecords[r.id]?.file_type !== undefined
-                              ? "bg-amber-950/40 border-amber-500/50 text-amber-400"
+                              ? "bg-purple-950/40 border-purple-500/50 text-purple-400"
                               : getBadgeClass(r.file_type)
                           }`}
                         >

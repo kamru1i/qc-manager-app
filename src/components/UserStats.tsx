@@ -216,9 +216,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
       {showOfficeCard && officeLeaveStats && (
         <StatCard
           icon={Calendar}
-          iconBgClass="bg-orange-500/10"
-          iconColorClass="text-orange-400"
-          iconBorderClass="border-orange-500/20"
+          iconBgClass="bg-blue-500/10"
+          iconColorClass="text-blue-400"
+          iconBorderClass="border-blue-500/20"
           title={halfYearlyStats ? `Allocated Office Leave (Remaining - H${halfYearlyStats.currentHalf})` : "Allocated Office Leave (Remaining)"}
           value={officeRemainingDisplay}
           subtitle={officeSubtitle}
@@ -226,7 +226,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
             <button
               type="button"
               onClick={() => setShowOfficeDetailsModal(true)}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
               title="Half-Yearly Leave Account"
             >
               <Info className="h-3.5 w-3.5" />
@@ -264,9 +264,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
       {eidFitrRemaining > 0 && (
         <StatCard
           icon={Calendar}
-          iconBgClass="bg-amber-500/10"
-          iconColorClass="text-amber-400"
-          iconBorderClass="border-amber-500/20"
+          iconBgClass="bg-purple-500/10"
+          iconColorClass="text-purple-400"
+          iconBorderClass="border-purple-500/20"
           title="Eid-ul-Fitr Holiday (Remaining)"
           value={`${eidFitrRemaining} days`}
           subtitle={`Total Eid-ul-Fitr Holiday: ${eidFitrTotal} days`}
@@ -278,9 +278,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
       {eidAdhaRemaining > 0 && (
         <StatCard
           icon={Calendar}
-          iconBgClass="bg-amber-500/10"
-          iconColorClass="text-amber-400"
-          iconBorderClass="border-amber-500/20"
+          iconBgClass="bg-purple-500/10"
+          iconColorClass="text-purple-400"
+          iconBorderClass="border-purple-500/20"
           title="Eid-ul-Adha Holiday (Remaining)"
           value={`${eidAdhaRemaining} days`}
           subtitle={`Total Eid-ul-Adha Holiday: ${eidAdhaTotal} days`}
@@ -291,9 +291,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
       {/* Short Leave */}
       <StatCard
         icon={Clock}
-        iconBgClass="bg-orange-500/10"
-        iconColorClass="text-orange-400"
-        iconBorderClass="border-orange-500/20"
+        iconBgClass="bg-blue-500/10"
+        iconColorClass="text-blue-400"
+        iconBorderClass="border-blue-500/20"
         title="Total Short Leave"
         value={`${stats.shortHours} hrs`}
         subtitle={convertedHours > 0 ? `Converted: ${convertedHours} hrs` : undefined}
@@ -301,7 +301,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
           <button
             type="button"
             onClick={onConvertToFullLeave}
-            className="px-2 py-1 bg-orange-600 hover:bg-orange-550 text-white rounded text-[10px] font-bold cursor-pointer transition-all border border-orange-700 shadow-sm flex items-center justify-center shrink-0"
+            className="px-2 py-1 bg-blue-600 hover:bg-blue-550 text-white rounded text-[10px] font-bold cursor-pointer transition-all border border-blue-700 shadow-sm flex items-center justify-center shrink-0"
             title="Convert to Full Leave"
           >
             Add to Full Leave
@@ -313,9 +313,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
       {/* Full Leave */}
       <StatCard
         icon={Calendar}
-        iconBgClass="bg-orange-500/10"
-        iconColorClass="text-orange-400"
-        iconBorderClass="border-orange-500/20"
+        iconBgClass="bg-blue-500/10"
+        iconColorClass="text-blue-400"
+        iconBorderClass="border-blue-500/20"
         title="Total Full Leave"
         value={`${stats.fullLeaves} days`}
         subtitle={convertedDays > 0 ? `Added from Short Leave: +${convertedDays} days` : undefined}
@@ -423,11 +423,11 @@ export const UserStats: React.FC<UserStatsProps> = ({
       {showOfficeDetailsModal && halfYearlyStats && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-955/80 backdrop-blur-md p-4">
           <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
-            <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-orange-900/10 blur-[80px] pointer-events-none" />
+            <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
 
             <div className="flex justify-between items-center border-b border-slate-800/80 pb-3 mb-4">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-orange-400" /> Half-Yearly Office Leave Details
+                <Calendar className="h-4 w-4 text-blue-400" /> Half-Yearly Office Leave Details
               </h3>
               <button
                 onClick={() => setShowOfficeDetailsModal(false)}
@@ -440,7 +440,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
             <div className="space-y-4">
               {/* H1 Section */}
               <div className="bg-slate-955/40 border border-slate-850 p-4 rounded-xl">
-                <h4 className="text-xs font-bold text-orange-400 mb-2 border-b border-slate-800 pb-1.5 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-slate-800 pb-1.5 uppercase tracking-wider">
                   H1 (January - June)
                 </h4>
                 <div className={`grid ${hasH1Carryover ? 'grid-cols-4' : 'grid-cols-3'} gap-2 text-center text-xs`}>
@@ -479,7 +479,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               {/* H2 Section */}
               <div className="bg-slate-955/40 border border-slate-850 p-4 rounded-xl">
-                <h4 className="text-xs font-bold text-orange-400 mb-2 border-b border-slate-800 pb-1.5 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-slate-800 pb-1.5 uppercase tracking-wider">
                   H2 (July - December)
                 </h4>
                 <div className={`grid ${hasH2Carryover ? 'grid-cols-4' : 'grid-cols-3'} gap-2 text-center text-xs`}>
@@ -613,10 +613,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               {/* Warning box if changing from Reserve to Paid */}
               {editPrefHoliday.response === 'reserve' && selectedPref === 'paid' && (
-                <div className="bg-amber-955/20 border border-amber-900/50 p-3.5 rounded-xl flex items-start gap-2.5 animate-in slide-in-from-top-1 duration-200">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <div className="text-[10.5px] text-amber-300 leading-relaxed font-medium">
-                    <span className="font-bold text-amber-400 block mb-0.5">⚠️ Warning: Unadjusting Leaves</span>
+                <div className="bg-purple-955/20 border border-purple-900/50 p-3.5 rounded-xl flex items-start gap-2.5 animate-in slide-in-from-top-1 duration-200">
+                  <AlertTriangle className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
+                  <div className="text-[10.5px] text-purple-300 leading-relaxed font-medium">
+                    <span className="font-bold text-purple-400 block mb-0.5">⚠️ Warning: Unadjusting Leaves</span>
                     Changing to 'Get Paid' will set any leaves previously adjusted against this holiday to 'No Adjustment'. These leaves will now count as standard Full Leave days instead.
                   </div>
                 </div>

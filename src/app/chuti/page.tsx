@@ -731,7 +731,7 @@ export default function Dashboard({
     return (
       <div className="flex-1 min-h-screen flex flex-col bg-slate-955 items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-slate-400">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           <p className="text-sm font-medium tracking-wide">Redirecting to login...</p>
         </div>
       </div>
@@ -742,7 +742,7 @@ export default function Dashboard({
     return (
       <div className="flex-1 min-h-screen flex flex-col bg-slate-955 items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-slate-400">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           <p className="text-sm font-medium tracking-wide">Loading...</p>
         </div>
       </div>
@@ -754,8 +754,8 @@ export default function Dashboard({
       <DashboardProvider value={contextValue}>
         <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
           {/* Background gradients */}
-          <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-orange-600/10 blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-amber-600/10 blur-[120px] pointer-events-none" />
+          <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
 
           <DashboardModals />
         </div>
@@ -768,7 +768,7 @@ export default function Dashboard({
       return (
         <div className="flex-1 min-h-screen flex flex-col bg-slate-955 items-center justify-center">
           <div className="flex flex-col items-center gap-4 text-slate-400">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             <p className="text-sm font-medium tracking-wide">Loading...</p>
           </div>
         </div>
@@ -780,8 +780,8 @@ export default function Dashboard({
         return (
           <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12">
             {/* Glow backgrounds */}
-            <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
+            <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
 
             {/* Placeholder Navbar */}
             <div className="w-full bg-slate-900/40 backdrop-blur-xl border-b border-slate-850 px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center animate-pulse">
@@ -812,8 +812,8 @@ export default function Dashboard({
       return (
         <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12">
           {/* Glow backgrounds */}
-          <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
+          <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
 
           {/* Placeholder Navbar */}
           <div className="w-full bg-slate-900/40 backdrop-blur-xl border-b border-slate-850 px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center animate-pulse">
@@ -841,8 +841,8 @@ export default function Dashboard({
     return (
       <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12">
         {/* Glow backgrounds */}
-        <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-orange-900/10 blur-[120px] pointer-events-none" />
+        <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
 
         {/* Placeholder Navbar */}
         <div className="w-full bg-slate-900/40 backdrop-blur-xl border-b border-slate-850 px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center animate-pulse">

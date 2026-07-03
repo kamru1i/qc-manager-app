@@ -38,12 +38,12 @@ export function AdminCancelAdjustmentModal({
         setCancelAdjustmentRecord(null);
       }}
       title={isDirectCancel ? 'Confirm Adjustment Cancellation' : 'Request Adjustment Cancellation'}
-      icon={<AlertTriangle className="h-5 w-5 text-amber-500" />}
-      glowClass="bg-amber-900/10"
+      icon={<AlertTriangle className="h-5 w-5 text-purple-500" />}
+      glowClass="bg-purple-900/10"
       maxWidthClass="max-w-md"
     >
       <div className="text-center mb-6">
-        <div className="inline-flex p-3 bg-amber-600/10 border border-amber-500/20 text-amber-400 rounded-2xl mb-3">
+        <div className="inline-flex p-3 bg-purple-600/10 border border-purple-500/20 text-purple-400 rounded-2xl mb-3">
           <AlertTriangle className="h-6 w-6" />
         </div>
         <p className="text-xs text-slate-400 mt-1">
@@ -68,7 +68,7 @@ export function AdminCancelAdjustmentModal({
           type="button"
           disabled={submitting}
           onClick={handleConfirmCancelAdjustment}
-          className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
+          className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
         >
           {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
           {submitting

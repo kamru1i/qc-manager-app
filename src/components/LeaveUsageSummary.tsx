@@ -92,10 +92,10 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
       <div className="space-y-3">
         {/* Office Leave Balance */}
         <div className="bg-slate-900/30 p-2.5 rounded-lg border border-slate-850">
-          <span className="text-orange-400 block text-[9px] uppercase font-semibold">Allocated Office Leave</span>
+          <span className="text-blue-400 block text-[9px] uppercase font-semibold">Allocated Office Leave</span>
           <div className="flex justify-between items-center mt-1">
             {isOfficeChanged ? (
-              <span className="text-orange-400 text-xs font-bold font-mono animate-pulse">
+              <span className="text-blue-400 text-xs font-bold font-mono animate-pulse">
                 Remaining: {formatDaysAndHours(finalOfficeRemaining, workingHours)} (-{formatDaysAndHours(officeDeduction, workingHours)})
               </span>
             ) : (
@@ -135,10 +135,10 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
         {/* Eid-ul-Fitr Balance */}
         {eidFitrRemaining > 0 && (
           <div className="bg-slate-900/30 p-2.5 rounded-lg border border-slate-850">
-            <span className="text-amber-400 block text-[9px] uppercase font-semibold">Eid-ul-Fitr Leave</span>
+            <span className="text-purple-400 block text-[9px] uppercase font-semibold">Eid-ul-Fitr Leave</span>
             <div className="flex justify-between items-center mt-1">
               {isEidFitrChanged ? (
-                <span className="text-amber-400 text-xs font-bold font-mono animate-pulse">
+                <span className="text-purple-400 text-xs font-bold font-mono animate-pulse">
                   Remaining: {finalEidFitrRemaining} days (-{eidFitrDeduction})
                 </span>
               ) : (
@@ -154,10 +154,10 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
         {/* Eid-ul-Adha Balance */}
         {eidAdhaRemaining > 0 && (
           <div className="bg-slate-900/30 p-2.5 rounded-lg border border-slate-850">
-            <span className="text-amber-400 block text-[9px] uppercase font-semibold">Eid-ul-Adha Leave</span>
+            <span className="text-purple-400 block text-[9px] uppercase font-semibold">Eid-ul-Adha Leave</span>
             <div className="flex justify-between items-center mt-1">
               {isEidAdhaChanged ? (
-                <span className="text-amber-400 text-xs font-bold font-mono animate-pulse">
+                <span className="text-purple-400 text-xs font-bold font-mono animate-pulse">
                   Remaining: {finalEidAdhaRemaining} days (-{eidAdhaDeduction})
                 </span>
               ) : (

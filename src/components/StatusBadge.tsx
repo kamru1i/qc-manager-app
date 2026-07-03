@@ -14,8 +14,8 @@ export function StatusBadge({ record: r }: StatusBadgeProps) {
   }
   if (r.status === 'approved_by_supervisor') {
     return (
-      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-950/60 border border-amber-950/80 text-amber-400" title="Supervisor Approved">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block animate-pulse"></span>
+      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-950/60 border border-purple-950/80 text-purple-400" title="Supervisor Approved">
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block animate-pulse"></span>
       </span>
     );
   }

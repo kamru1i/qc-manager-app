@@ -130,7 +130,7 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
               {baseDirectory ? (
                 <span className="font-mono text-blue-400 break-all select-all font-semibold" title={baseDirectory}>{baseDirectory}</span>
               ) : (
-                <span className="text-amber-400 italic">No save directory chosen for today yet. (Will prompt on Save)</span>
+                <span className="text-purple-400 italic">No save directory chosen for today yet. (Will prompt on Save)</span>
               )}
             </div>
             <button

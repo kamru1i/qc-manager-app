@@ -38,7 +38,7 @@ export function UserNotificationsModal({
       isOpen={showUserNotificationsModal}
       onClose={() => setShowUserNotificationsModal(false)}
       title="Leave Notifications"
-      icon={<Bell className="h-5 w-5 text-amber-400" />}
+      icon={<Bell className="h-5 w-5 text-purple-400" />}
       maxWidthClass="max-w-lg"
     >
       <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
@@ -58,19 +58,19 @@ export function UserNotificationsModal({
                     n.type === 'compliance_rule'
                       ? 'bg-blue-955 border border-blue-900/50 text-blue-300'
                     : n.type === 'govt_holiday_prompt'
-                      ? 'bg-amber-955 border border-amber-900/50 text-amber-300'
+                      ? 'bg-purple-955 border border-purple-900/50 text-purple-300'
                     : n.type === 'govt_holiday_choice'
                       ? 'bg-teal-955 border border-teal-900/50 text-teal-300'
                     : n.type === 'admin_holiday_response'
-                      ? 'bg-orange-955 border border-orange-900/50 text-orange-300'
+                      ? 'bg-blue-955 border border-blue-900/50 text-blue-300'
                     : n.type === 'admin_settlement_response'
                       ? 'bg-indigo-955 border border-indigo-900/50 text-indigo-300'
                     : n.type === 'settlement_processed'
                       ? 'bg-emerald-950/20 border border-emerald-900/40 text-emerald-400'
                     : n.type === 'pending_supervisor_request'
-                      ? 'bg-orange-955 border border-orange-900/50 text-orange-300'
+                      ? 'bg-blue-955 border border-blue-900/50 text-blue-300'
                     : n.type === 'pending_admin_chuti_request'
-                      ? 'bg-orange-955 border border-orange-900/50 text-orange-300'
+                      ? 'bg-blue-955 border border-blue-900/50 text-blue-300'
                     : n.type === 'pending_admin_reserve_request'
                       ? 'bg-emerald-955 border border-emerald-900/50 text-emerald-300'
                     : n.type === 'pending_admin_profile_request'
@@ -82,9 +82,9 @@ export function UserNotificationsModal({
                     : n.record?.leave_type === 'Full Leave' 
                       ? 'bg-red-955 border border-red-900 text-red-400' 
                     : n.record?.leave_type === 'Overtime'
-                      ? 'bg-orange-955 border border-orange-900 text-orange-400'
+                      ? 'bg-blue-955 border border-blue-900 text-blue-400'
                     : n.record?.leave_type === 'Short Leave'
-                      ? 'bg-amber-955 border border-amber-900 text-amber-400'
+                      ? 'bg-purple-955 border border-purple-900 text-purple-400'
                     : 'bg-slate-955 border border-slate-900 text-slate-400'
                   }`}>
                     {n.type === 'compliance_rule' ? 'Compliance Rule'
@@ -111,7 +111,7 @@ export function UserNotificationsModal({
                         onRevisionClick(n.record);
                       }
                     }}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all border border-amber-700 shadow-md shrink-0 font-sans"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all border border-purple-700 shadow-md shrink-0 font-sans"
                   >
                     <Edit className="h-3.5 w-3.5" /> Modify
                   </button>

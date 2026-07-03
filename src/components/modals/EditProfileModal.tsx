@@ -162,7 +162,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         disabled={true}
                         className="sr-only"
                       />
-                      <div className="h-4 w-4 rounded-full flex items-center justify-center border border-orange-500 bg-orange-600 text-white font-bold transition-all shrink-0">
+                      <div className="h-4 w-4 rounded-full flex items-center justify-center border border-blue-500 bg-blue-600 text-white font-bold transition-all shrink-0">
                         <Check className="h-2.5 w-2.5 stroke-[3]" />
                       </div>
                     </div>
@@ -214,7 +214,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       needsSupervisorApproval
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {needsSupervisorApproval && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -242,7 +242,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto pr-1">
                       <label className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[10px] ${
                         supervisorIds.length === 0 
-                          ? 'border-orange-600 bg-orange-955/20 text-orange-400 font-semibold' 
+                          ? 'border-blue-600 bg-blue-955/20 text-blue-400 font-semibold' 
                           : 'border-slate-800 bg-slate-900 text-slate-405'
                       }`}>
                         <input
@@ -260,7 +260,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             key={sup.id} 
                             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[10px] ${
                               isChecked 
-                                ? 'border-orange-600 bg-orange-955/20 text-orange-400 font-semibold' 
+                                ? 'border-blue-600 bg-blue-955/20 text-blue-400 font-semibold' 
                                 : 'border-slate-800 bg-slate-900 text-slate-405'
                             }`}
                           >
@@ -295,7 +295,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       eligibleOfficeLeave
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {eligibleOfficeLeave && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -322,7 +322,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       eligibleGovtHoliday
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                       }`}>
                       {eligibleGovtHoliday && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -349,7 +349,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       allowOvertime
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {allowOvertime && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -376,7 +376,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       allowReserve
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {allowReserve && <Check className="h-2.5 w-2.5 stroke-[3]" />}

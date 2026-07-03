@@ -52,12 +52,12 @@ export function AdminCredentialsModal({
       isOpen={showCredentialsModal}
       onClose={handleClose}
       title="Change Password Panel"
-      icon={<Edit className="h-5 w-5 text-orange-500" />}
+      icon={<Edit className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-md"
-      glowClass="bg-orange-900/10"
+      glowClass="bg-blue-900/10"
     >
       <div className="space-y-4 font-sans">
-        <div className="p-3 bg-orange-955/20 border border-orange-900/30 rounded-xl text-xs text-orange-300">
+        <div className="p-3 bg-blue-955/20 border border-blue-900/30 rounded-xl text-xs text-blue-300">
           <p>💡 Here you can set a new <strong>codename (Username)</strong> or a new <strong>password</strong> for this staff. If the password is changed, the staff must log in with the new password next time.</p>
         </div>
 
@@ -68,7 +68,7 @@ export function AdminCredentialsModal({
             placeholder="e.g., KMH"
             value={credNewUsername}
             onChange={(e) => setCredNewUsername(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 uppercase font-mono"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono"
           />
         </div>
 
@@ -79,7 +79,7 @@ export function AdminCredentialsModal({
             placeholder="Leave blank to keep current password"
             value={credNewPassword}
             onChange={(e) => setCredNewPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -90,7 +90,7 @@ export function AdminCredentialsModal({
             placeholder="Enter the new password again"
             value={credConfirmPassword}
             onChange={(e) => setCredConfirmPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <PasswordMatchIndicator password={credNewPassword} confirmPassword={credConfirmPassword} />
         </div>
@@ -107,7 +107,7 @@ export function AdminCredentialsModal({
             type="button"
             onClick={handleUpdateCredentials}
             disabled={updatingCredentials || (credNewPassword ? (credNewPassword !== credConfirmPassword || credNewPassword.length < 4) : false)}
-            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             {updatingCredentials && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {updatingCredentials ? 'Saving...' : 'Update Credentials'}

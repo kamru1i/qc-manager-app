@@ -1068,7 +1068,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
                   <AccordionSection
                     title="Branch Priority Rules"
                     icon={<AlertCircle className="w-4 h-4" />}
-                    accent="text-amber-400"
+                    accent="text-purple-400"
                     count={selectedCompanyRules?.branch_priority.length}
                     defaultOpen={true}
                   >
@@ -1099,8 +1099,8 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
 
                 {/* DOC extensions */}
                 {(selectedCompanyRules?.doc_extensions.length || 0) > 0 && (
-                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.02] p-4.5 space-y-3">
-                    <h4 className="text-xs font-bold text-amber-400 tracking-wider uppercase">DOC — Driving Other Cars</h4>
+                  <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.02] p-4.5 space-y-3">
+                    <h4 className="text-xs font-bold text-purple-400 tracking-wider uppercase">DOC — Driving Other Cars</h4>
                     <div className="space-y-1">
                       {selectedCompanyRules?.doc_extensions.map((rule) => (
                         <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
@@ -1156,10 +1156,10 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
 
             {/* Admin Fines */}
             {adminFines.length > 0 && (
-              <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.02] p-5 space-y-4">
+              <div className="rounded-2xl border border-purple-500/15 bg-purple-500/[0.02] p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-amber-300 tracking-wider uppercase flex items-center gap-2">
-                    <ShieldAlert className="h-4.5 w-4.5 text-amber-500" />
+                  <h3 className="text-xs font-bold text-purple-300 tracking-wider uppercase flex items-center gap-2">
+                    <ShieldAlert className="h-4.5 w-4.5 text-purple-500" />
                     Admin Fines & Penalties
                   </h3>
                   {canEdit && (
@@ -1169,13 +1169,13 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {adminFines.map((fine, idx) => (
                     <div key={fine.id} className="group relative flex items-start gap-3 p-3.5 bg-slate-900/30 border border-slate-850 rounded-xl hover:bg-slate-850/30 transition-all duration-200" onContextMenu={(e) => handleContextMenu(e, fine)}>
-                      <span className="shrink-0 mt-0.5 w-5 h-5 rounded-md bg-amber-500/10 flex items-center justify-center text-[10px] font-bold text-amber-400">
+                      <span className="shrink-0 mt-0.5 w-5 h-5 rounded-md bg-purple-500/10 flex items-center justify-center text-[10px] font-bold text-purple-400">
                         {idx + 1}
                       </span>
                       <div className="flex-1 min-w-0 pr-6">
                         <div className="flex items-start justify-between gap-3">
-                          <h4 className="text-[12.5px] font-semibold text-amber-300/90 truncate">{fine.title}</h4>
-                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 whitespace-nowrap">{fine.extra_info}</span>
+                          <h4 className="text-[12.5px] font-semibold text-purple-300/90 truncate">{fine.title}</h4>
+                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/20 whitespace-nowrap">{fine.extra_info}</span>
                         </div>
                         <p className="mt-1 text-[11.5px] text-slate-400 leading-relaxed">{fine.content}</p>
                       </div>

@@ -177,7 +177,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       needsSupervisorApproval
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {needsSupervisorApproval && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -217,7 +217,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                             />
                             <div className={`h-3.5 w-3.5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                               supervisorIds.includes(sup.id)
-                                ? 'bg-orange-600 border-orange-500 text-white'
+                                ? 'bg-blue-600 border-blue-500 text-white'
                                 : 'border-slate-800 bg-slate-900 text-transparent'
                             }`}>
                               {supervisorIds.includes(sup.id) && <Check className="h-2 w-2 stroke-[3]" />}
@@ -243,7 +243,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       eligibleOfficeLeave
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {eligibleOfficeLeave && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -270,7 +270,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       eligibleGovtHoliday
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {eligibleGovtHoliday && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -297,7 +297,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       allowOvertime
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {allowOvertime && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -324,7 +324,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                     />
                     <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       allowReserve
-                        ? 'bg-orange-600 border-orange-500 text-white font-bold'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
                         : 'border-slate-700 bg-slate-900 text-transparent'
                     }`}>
                       {allowReserve && <Check className="h-2.5 w-2.5 stroke-[3]" />}

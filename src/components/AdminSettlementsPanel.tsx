@@ -360,7 +360,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
       <div className="px-6 py-5 border-b border-slate-800/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-955/20">
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <RotateCcw className="h-5 w-5 text-orange-500" />
+            <RotateCcw className="h-5 w-5 text-blue-500" />
             Unified Leave Review & Settlements ({selectedYear})
           </h3>
           <p className="text-slate-400 text-[11px] mt-1">
@@ -450,7 +450,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
               onClick={handleToggleBroadcast}
               disabled={!isBroadcastActive && !hasEligibleStaffForBroadcast}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0 ${isBroadcastActive
-                  ? 'bg-amber-600/10 border border-amber-500/30 text-amber-400 hover:bg-amber-600/20'
+                  ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400 hover:bg-purple-600/20'
                   : !hasEligibleStaffForBroadcast
                     ? 'bg-slate-800/40 border border-slate-700/60 text-slate-500 cursor-not-allowed opacity-50'
                     : 'bg-indigo-600 border border-indigo-500 text-white hover:bg-indigo-500'
@@ -484,7 +484,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                   }, { silent: true });
                   if (success) toast.success('Settlement broadcast deactivated!');
                 }}
-                className="ml-1 text-amber-400 hover:text-amber-300 underline cursor-pointer shrink-0"
+                className="ml-1 text-purple-400 hover:text-purple-300 underline cursor-pointer shrink-0"
               >
                 Deactivate
               </button>
@@ -552,7 +552,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                           const dayStr = `${sign}${wholeDays} Day${wholeDays !== 1 ? 's' : ''}`;
                           const timeStr = `${sign}${hours}:${mins.toString().padStart(2, '0')} Hrs`;
                           
-                          const dayColor = isNegative ? 'text-red-500 font-extrabold' : 'text-orange-400';
+                          const dayColor = isNegative ? 'text-red-500 font-extrabold' : 'text-blue-400';
                           
                           return (
                             <div className="flex flex-col font-mono select-none">
@@ -585,7 +585,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                               </span>
                             ) : null}
                             {(settlement.adjust_leave_days && settlement.adjust_leave_days > 0) ? (
-                              <span className="px-1.5 py-0.5 rounded border text-[9px] font-semibold flex items-center gap-1 bg-amber-955/20 border-amber-900/60 text-amber-400">
+                              <span className="px-1.5 py-0.5 rounded border text-[9px] font-semibold flex items-center gap-1 bg-purple-955/20 border-purple-900/60 text-purple-400">
                                 <ArrowRightLeft className="h-2.5 w-2.5" /> {settlement.adjust_leave_days}d Adjust
                               </span>
                             ) : null}
@@ -602,7 +602,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                                   ? 'bg-indigo-955/20 border-indigo-900/60 text-indigo-400'
                                   : settlement.action_type === 'payment'
                                     ? 'bg-teal-955/20 border-teal-900/60 text-teal-400'
-                                    : 'bg-amber-955/20 border-amber-900/60 text-amber-400'
+                                    : 'bg-purple-955/20 border-purple-900/60 text-purple-400'
                               }`}
                           >
                             {settlement.remaining_days < 0 ? (
@@ -650,7 +650,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                         ) : settlement.status === 'initiated' ? (
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 border rounded font-semibold text-[10px] animate-pulse ${remaining < 0
                               ? 'bg-rose-955/25 border-rose-900/40 text-rose-455'
-                              : 'bg-amber-955/25 border-amber-900/40 text-amber-400'
+                              : 'bg-purple-955/25 border-purple-900/40 text-purple-400'
                             }`}>
                             <AlertCircle className="h-3 w-3" /> Preference Pending
                           </span>
@@ -704,7 +704,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                               title={remaining < 0 ? "Settle Unpaid/Deduction" : "Direct Settle"}
                               className={`p-2 rounded-xl border transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center ${remaining < 0
                                   ? 'bg-rose-655/15 hover:bg-rose-600 text-rose-400 hover:text-white border-rose-500/20'
-                                  : 'bg-orange-655/15 hover:bg-orange-655 text-orange-400 hover:text-white border-orange-500/20'
+                                  : 'bg-blue-655/15 hover:bg-blue-655 text-blue-400 hover:text-white border-blue-500/20'
                                 }`}
                             >
                               <CheckCircle2 className="h-4 w-4" />
@@ -740,7 +740,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                                   setShowSettleModal(true);
                                 }}
                                 title="Settle Leaves"
-                                className="p-2 bg-orange-655/15 hover:bg-orange-655 text-orange-400 hover:text-white rounded-xl border border-orange-500/20 transition-all cursor-pointer flex items-center justify-center"
+                                className="p-2 bg-blue-655/15 hover:bg-blue-655 text-blue-400 hover:text-white rounded-xl border border-blue-500/20 transition-all cursor-pointer flex items-center justify-center"
                               >
                                 <CheckCircle2 className="h-4 w-4" />
                               </button>

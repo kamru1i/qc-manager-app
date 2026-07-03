@@ -311,7 +311,7 @@ export function AdminAddLeaveModal({
       isOpen={showModal && staffProfile !== null}
       onClose={() => setShowModal(false)}
       title={`Add Leave (${staffProfile ? (staffProfile.full_name || staffProfile.username) : ''})`}
-      icon={<Calendar className="h-5 w-5 text-orange-500" />}
+      icon={<Calendar className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-4xl"
     >
       {staffProfile && (
@@ -319,8 +319,8 @@ export function AdminAddLeaveModal({
 
           {/* Warning Banner */}
           {isFullLeaveQuotaExceeded && (
-            <div className="p-3 bg-amber-955/50 border border-amber-900/50 text-amber-300 text-xs rounded-lg mb-4 flex items-start gap-2 animate-pulse">
-              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-purple-955/50 border border-purple-900/50 text-purple-300 text-xs rounded-lg mb-4 flex items-start gap-2 animate-pulse">
+              <AlertTriangle className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold block text-slate-200">Leave Quota Limit Exceeded!</span>
                 <span className="text-[11px] block mt-0.5 text-slate-305">
@@ -332,7 +332,7 @@ export function AdminAddLeaveModal({
 
           {loadingResponses ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <Loader className="h-8 w-8 animate-spin text-orange-500" />
+              <Loader className="h-8 w-8 animate-spin text-blue-500" />
               <p className="mt-2 text-xs text-slate-400 font-medium font-sans">Loading leave data and holidays...</p>
             </div>
           ) : (
@@ -389,7 +389,7 @@ export function AdminAddLeaveModal({
                   <button
                     type="submit"
                     disabled={submitting || !!validationError || isDuplicateDate}
-                    className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
                   >
                     {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                     {submitting ? 'Adding...' : 'Add Leave'}

@@ -17,7 +17,7 @@ export function PasswordMatchIndicator({ password, confirmPassword }: PasswordMa
   }
   if (password.length < 4) {
     return (
-      <div className="flex items-center gap-1.5 text-xs text-amber-500 mt-1 font-medium">
+      <div className="flex items-center gap-1.5 text-xs text-purple-500 mt-1 font-medium">
         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
         <span>Password must be at least 4 characters!</span>
       </div>

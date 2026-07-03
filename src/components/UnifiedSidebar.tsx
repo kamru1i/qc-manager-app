@@ -122,7 +122,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
               } ${
                 activeSection === 'chuti'
-                  ? 'bg-orange-600/15 border border-orange-500/30 text-orange-400 shadow-md shadow-orange-950/5'
+                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-950/5'
                   : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
               }`}
             >
@@ -141,7 +141,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
                   } ${
                     activeChutiTab === 'staff_master'
-                      ? 'bg-orange-500/10 text-orange-400'
+                      ? 'bg-blue-500/10 text-blue-400'
                       : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
                   }`}
                 >
@@ -157,7 +157,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
                   } ${
                     activeChutiTab === 'govt_responses'
-                      ? 'bg-orange-500/10 text-orange-400'
+                      ? 'bg-blue-500/10 text-blue-400'
                       : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
                   }`}
                 >
@@ -173,7 +173,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
                   } ${
                     activeChutiTab === 'settlement'
-                      ? 'bg-orange-500/10 text-orange-400'
+                      ? 'bg-blue-500/10 text-blue-400'
                       : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
                   }`}
                 >
@@ -271,7 +271,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
               } ${
                 activeSection === 'todo'
-                  ? 'bg-orange-600/15 border border-orange-500/30 text-orange-400 shadow-md shadow-orange-950/5'
+                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-950/5'
                   : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
               }`}
             >

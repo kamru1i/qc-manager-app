@@ -31,11 +31,11 @@ const getCategoryCheckboxStyle = (type: FileType, isChecked: boolean) => {
     case 'Quote':
       return 'bg-blue-600 border-blue-500 text-white';
     case 'Requote':
-      return 'bg-amber-500 border-amber-400 text-white';
+      return 'bg-purple-500 border-purple-400 text-white';
     case 'Requote Van':
-      return 'bg-amber-600 border-amber-500 text-white';
+      return 'bg-purple-600 border-purple-500 text-white';
     case 'Requote Bike':
-      return 'bg-orange-500 border-orange-400 text-white';
+      return 'bg-blue-500 border-blue-400 text-white';
     case 'Review':
       return 'bg-pink-500 border-pink-400 text-white';
     case 'Review Van':
@@ -87,7 +87,7 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
         <button
           type="button"
           onClick={handleToggleAll}
-          className="text-[10px] text-orange-500 hover:text-orange-400 font-semibold transition-colors cursor-pointer"
+          className="text-[10px] text-blue-500 hover:text-blue-400 font-semibold transition-colors cursor-pointer"
         >
           {isAllSelected ? 'Unselect All' : 'Select All'}
         </button>

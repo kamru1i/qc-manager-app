@@ -360,9 +360,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           {/* Card 2: Office Allocated Leave */}
           <StatCard
             icon={Calendar}
-            iconBgClass="bg-orange-500/10"
-            iconColorClass="text-orange-400"
-            iconBorderClass="border-orange-500/20"
+            iconBgClass="bg-blue-500/10"
+            iconColorClass="text-blue-400"
+            iconBorderClass="border-blue-500/20"
             title="Allocated Office Leave"
             value={`${globalSettings.office_leave_h1 + globalSettings.office_leave_h2} days`}
             action={
@@ -381,9 +381,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           {/* Card 3: Eid Leave */}
           <StatCard
             icon={Calendar}
-            iconBgClass="bg-orange-500/10"
-            iconColorClass="text-orange-400"
-            iconBorderClass="border-orange-500/20"
+            iconBgClass="bg-blue-500/10"
+            iconColorClass="text-blue-400"
+            iconBorderClass="border-blue-500/20"
             title="Eid Leave"
             value={`${(globalSettings.eid_fitr_leave ?? 0) + (globalSettings.eid_adha_leave ?? 0)} days`}
             action={
@@ -446,10 +446,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                       {staffProfile?.full_name || 'Staff User'}{staffProfile?.username ? ` (${staffProfile.username.toUpperCase()})` : ''}
                       <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${staffProfile?.role === 'admin'
-                        ? 'bg-orange-955/60 border-orange-800 text-orange-300'
+                        ? 'bg-blue-955/60 border-blue-800 text-blue-300'
                         : staffProfile?.role === 'supervisor'
-                          ? 'bg-amber-955/60 border-amber-805 text-amber-300'
-                          : 'bg-orange-955/60 border-orange-805 text-orange-300'
+                          ? 'bg-purple-955/60 border-purple-805 text-purple-300'
+                          : 'bg-blue-955/60 border-blue-805 text-blue-300'
                         }`}>
                         {staffProfile?.job_role || (staffProfile?.role === 'admin' ? 'Admin' : (staffProfile?.role === 'supervisor' ? 'Supervisor' : 'Staff'))}
                       </span>
@@ -467,11 +467,11 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       onClick={() => onChangePasswordClick(staffProfile?.id || '', staffProfile?.username || '')}
                       className="px-3.5 py-2 bg-slate-855 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
                     >
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Change Password
+                      <AlertTriangle className="h-3.5 w-3.5 text-purple-500" /> Change Password
                     </button>
                     <button
                       onClick={() => staffProfile && onEditProfileClick(staffProfile)}
-                      className="px-3.5 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md shadow-orange-950/10 border border-orange-700 flex items-center gap-1.5"
+                      className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md shadow-blue-950/10 border border-blue-700 flex items-center gap-1.5"
                     >
                       <Edit className="h-3.5 w-3.5" /> Edit Profile
                     </button>

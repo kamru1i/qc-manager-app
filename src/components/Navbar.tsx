@@ -121,7 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {onProfileSettingsClick && (
             <button
               onClick={onProfileSettingsClick}
-              className="p-2.5 bg-orange-600/15 hover:bg-orange-600/25 active:scale-95 border border-orange-500/20 text-orange-400 rounded-xl transition-all cursor-pointer shrink-0"
+              className="p-2.5 bg-blue-600/15 hover:bg-blue-600/25 active:scale-95 border border-blue-500/20 text-blue-400 rounded-xl transition-all cursor-pointer shrink-0"
               title="Profile Settings"
             >
               <Menu className="h-6 w-6" />
@@ -170,11 +170,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             {profile && (
               <div className="flex flex-wrap gap-2 mt-2">
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-lg px-2.5 py-1 text-[11px] text-slate-300 flex items-center gap-1.5 shadow-sm">
-                  <Clock className="h-3.5 w-3.5 text-orange-400" />
+                  <Clock className="h-3.5 w-3.5 text-blue-400" />
                   <span>Working Hours: <strong className="text-white">{formatWorkingHours(profile.working_hours || 9.5)}</strong></span>
                 </div>
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-lg px-2.5 py-1 text-[11px] text-slate-300 flex items-center gap-1.5 shadow-sm">
-                  <Coffee className="h-3.5 w-3.5 text-amber-400" />
+                  <Coffee className="h-3.5 w-3.5 text-purple-400" />
                   <span>Break Time: <strong className="text-white">{profile.break_time || 0} Mins</strong></span>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${
             isOnline 
               ? 'bg-emerald-950/50 border-emerald-800/80 text-emerald-400' 
-              : 'bg-amber-950/50 border-amber-800/80 text-amber-400'
+              : 'bg-purple-950/50 border-purple-800/80 text-purple-400'
           }`}>
             {isOnline ? (
               <>
@@ -204,7 +204,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {offlineCount > 0 && onManualSync && (
             <button
               onClick={onManualSync}
-              className="flex items-center gap-2 px-3.5 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-500 text-xs font-semibold cursor-pointer shadow-lg shadow-amber-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all border border-amber-700 shrink-0"
+              className="flex items-center gap-2 px-3.5 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-500 text-xs font-semibold cursor-pointer shadow-lg shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all border border-purple-700 shrink-0"
             >
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
               Sync ({offlineCount})
@@ -218,7 +218,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {theme === 'dark' ? (
-              <Sun className="h-4.5 w-4.5 text-amber-500" />
+              <Sun className="h-4.5 w-4.5 text-purple-500" />
             ) : (
               <Moon className="h-4.5 w-4.5 text-indigo-400" />
             )}

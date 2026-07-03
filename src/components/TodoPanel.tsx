@@ -790,7 +790,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                             todo.status === 'Completed'
                               ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
                               : todo.status === 'Working'
-                              ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                              ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
                               : 'border-slate-700 text-transparent hover:border-slate-500 hover:bg-slate-800/40 text-slate-500'
                           }`}
                           title={`Status: ${todo.status}. Click to cycle status.`}
@@ -798,7 +798,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                           {todo.status === 'Completed' ? (
                             <Check className="w-3.5 h-3.5 stroke-[3]" />
                           ) : todo.status === 'Working' ? (
-                            <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                            <Clock className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
                           ) : (
                             <Check className="w-3.5 h-3.5 opacity-0 hover:opacity-40 transition-opacity stroke-[3]" />
                           )}
@@ -929,7 +929,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                                 {item.status === 'Completed' ? (
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                 ) : (
-                                  <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
+                                  <Clock className="w-3.5 h-3.5 text-purple-500 shrink-0 animate-pulse" />
                                 )}
                                 <span className="truncate max-w-[400px]" title={item.task}>
                                   {item.task}
@@ -941,7 +941,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                                 className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wider border ${
                                   item.status === 'Completed'
                                     ? 'bg-emerald-600/10 text-emerald-400 border-emerald-500/10'
-                                    : 'bg-amber-600/10 text-amber-400 border-amber-500/10'
+                                    : 'bg-purple-600/10 text-purple-400 border-purple-500/10'
                                 }`}
                               >
                                 {item.status}

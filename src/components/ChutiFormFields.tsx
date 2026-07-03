@@ -88,7 +88,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                   Start Time
                 </label>
                 {signInTime && (
-                  <span className="text-[10px] font-bold text-orange-450 tracking-wider">
+                  <span className="text-[10px] font-bold text-blue-450 tracking-wider">
                     {formatTimeToAMPM(signInTime)}
                   </span>
                 )}
@@ -98,7 +98,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                 required
                 value={signInTime}
                 onChange={(e) => setSignInTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -107,7 +107,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                   End Time
                 </label>
                 {signOutTime && (
-                  <span className="text-[10px] font-bold text-orange-450 tracking-wider">
+                  <span className="text-[10px] font-bold text-blue-450 tracking-wider">
                     {formatTimeToAMPM(signOutTime)}
                   </span>
                 )}
@@ -117,7 +117,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                 required
                 value={signOutTime}
                 onChange={(e) => setSignOutTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -132,7 +132,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
               placeholder="e.g., 02:30"
               value={leaveHour}
               onChange={(e) => setLeaveHour(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono"
+              className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
           </div>
         </>
@@ -159,7 +159,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                 }
               }}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                adjustment ? 'bg-orange-600' : 'bg-slate-800'
+                adjustment ? 'bg-blue-600' : 'bg-slate-800'
               }`}
             >
               <span
@@ -206,7 +206,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
           placeholder="Write a brief description of the leave..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 h-20 resize-none"
+          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-20 resize-none"
         />
       </div>
     </>

@@ -118,13 +118,13 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
         isOpen={showSupervisorApprovalModal}
         onClose={handleCloseMain}
         title={`Pending Verification Panel (Supervisor) (Pending: ${filteredSupervisorRequests.length})`}
-        icon={<AlertTriangle className="h-5 w-5 text-orange-400 animate-pulse" />}
+        icon={<AlertTriangle className="h-5 w-5 text-blue-400 animate-pulse" />}
         maxWidthClass="max-w-3xl"
-        glowClass="bg-orange-900/10"
+        glowClass="bg-blue-900/10"
       >
         <div className="max-h-[70vh] overflow-y-auto space-y-4 pr-1 font-sans">
           <div className="p-4 rounded-xl bg-slate-955/40 border border-slate-800/80 text-xs text-slate-400 space-y-1 font-sans">
-            <p className="font-semibold text-amber-400 font-sans">💡 Instructions for Information Revision:</p>
+            <p className="font-semibold text-purple-400 font-sans">💡 Instructions for Information Revision:</p>
             <p>Supervisors cannot directly reject leave requests. If any correction is required, click <strong>'Needs Review'</strong> to return it to the user. Once the user updates and resubmits, it will come back for your approval.</p>
           </div>
 
@@ -140,7 +140,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
                   placeholder="Search by name or username..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs transition-all font-sans"
+                  className="w-full pl-9 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-sans"
                 />
                 {searchQuery && (
                   <button
@@ -184,7 +184,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
               No pending leaves for verification.
             </div>
           ) : filteredSupervisorRequests.length === 0 ? (
-            <div className="text-center py-12 bg-slate-955/40 border border-slate-850 rounded-xl text-amber-500/80 text-xs font-medium font-sans flex items-center justify-center gap-1.5 bg-amber-955/10 border-amber-950/20">
+            <div className="text-center py-12 bg-slate-955/40 border border-slate-850 rounded-xl text-purple-500/80 text-xs font-medium font-sans flex items-center justify-center gap-1.5 bg-purple-955/10 border-purple-950/20">
               <AlertTriangle className="h-4 w-4 shrink-0" /> No matching search results found.
             </div>
           ) : (
@@ -199,20 +199,20 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
                         <span className="text-[10px] px-1.5 py-0.2 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">@{(user?.username || '').toUpperCase()}</span>
                       </div>
                       <p><span className="text-slate-500 font-medium font-sans">Date:</span> <span className="font-semibold text-slate-200">{r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date)}</span></p>
-                      <p><span className="text-slate-500 font-medium font-sans">Leave Type:</span> <span className="font-bold text-orange-400">{r.leave_type}</span></p>
+                      <p><span className="text-slate-500 font-medium font-sans">Leave Type:</span> <span className="font-bold text-blue-400">{r.leave_type}</span></p>
                       {r.leave_type !== 'Full Leave' && (
                         <p><span className="text-slate-500 font-medium font-sans">Time & Hours:</span> <span className="font-mono text-slate-300">{formatTimeToAMPM(r.sign_in_time)} - {formatTimeToAMPM(r.sign_out_time)} ({r.leave_hour ? r.leave_hour.substring(0, 5) : '-'} hrs)</span></p>
                       )}
                       <p>
                         <span className="text-slate-500 font-medium font-sans">Adjustment:</span>{' '}
-                        <span className={`font-semibold ${r.adjustment ? 'text-orange-400 font-bold' : r.adjusted_hour ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>
+                        <span className={`font-semibold ${r.adjustment ? 'text-blue-400 font-bold' : r.adjusted_hour ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>
                           {r.adjustment ? 'Yes' : r.adjusted_hour ? `Partial (${r.adjusted_hour.toString().split('.')[0].substring(0, 5)} hrs)` : 'No'}
                         </span>
                       </p>
                       {r.leave_type === 'Overtime' && (
                         <p>
                           <span className="text-slate-500 font-medium font-sans">Short Leave Adj:</span>{' '}
-                          <span className={`font-semibold ${r.adjust_short_leave ? 'text-orange-400 font-bold' : 'text-slate-400'}`}>
+                          <span className={`font-semibold ${r.adjust_short_leave ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
                             {r.adjust_short_leave ? 'Yes' : 'No'}
                           </span>
                         </p>
@@ -224,7 +224,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
                       <button
                         onClick={() => handleSupervisorApproveChuti(r.id, false)}
                         disabled={reviewingIds.has(r.id) || approvedIds.has(r.id)}
-                        className="px-3 py-1.5 border border-amber-500/30 hover:border-amber-500 bg-amber-955/20 hover:bg-amber-955/50 text-amber-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                        className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                       >
                         {reviewingIds.has(r.id) && (
                           <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -258,9 +258,9 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
         isOpen={showRevisionPromptModal}
         onClose={handleCloseRevision}
         title="Reason for Revision"
-        icon={<AlertTriangle className="h-5 w-5 text-amber-500" />}
+        icon={<AlertTriangle className="h-5 w-5 text-purple-500" />}
         maxWidthClass="max-w-md"
-        glowClass="bg-amber-900/10"
+        glowClass="bg-purple-900/10"
       >
         <div className="space-y-4 font-sans">
           <p className="text-xs text-slate-400 leading-relaxed font-medium font-sans">
@@ -275,7 +275,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
               placeholder="e.g. Please change the date or select the correct leave type..."
               value={revisionPromptText}
               onChange={(e) => setRevisionPromptText(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 h-24 resize-none font-sans disabled:opacity-50"
+              className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 h-24 resize-none font-sans disabled:opacity-50"
             />
           </div>
 
@@ -292,7 +292,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
               type="button"
               disabled={submittingRevision || !revisionPromptText.trim()}
               onClick={submitRevisionWithReason}
-              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 cursor-pointer transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 cursor-pointer transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
             >
               {submittingRevision && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
               {submittingRevision ? 'Submitting...' : 'Submit'}

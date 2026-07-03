@@ -621,7 +621,7 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
                       safetyScore >= 80 
                         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
                         : safetyScore >= 50
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
                           : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                     }`}>
                       {safetyScore}% Safe / {riskScore}% Risk

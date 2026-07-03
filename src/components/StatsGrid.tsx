@@ -62,17 +62,17 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ stats, isLoading = false }
       )}
       {stats.requote > 0 && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-350 shadow-sm flex items-center gap-2">
-          Requote: <strong className="text-amber-400 text-sm">{formatValue(stats.requote)}</strong>
+          Requote: <strong className="text-purple-400 text-sm">{formatValue(stats.requote)}</strong>
         </div>
       )}
       {stats.requoteVan > 0 && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-350 shadow-sm flex items-center gap-2">
-          Requote Van: <strong className="text-amber-500 text-sm">{formatValue(stats.requoteVan)}</strong>
+          Requote Van: <strong className="text-purple-500 text-sm">{formatValue(stats.requoteVan)}</strong>
         </div>
       )}
       {stats.requoteBike > 0 && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-350 shadow-sm flex items-center gap-2">
-          Requote Bike: <strong className="text-orange-400 text-sm">{formatValue(stats.requoteBike)}</strong>
+          Requote Bike: <strong className="text-blue-400 text-sm">{formatValue(stats.requoteBike)}</strong>
         </div>
       )}
       {stats.review > 0 && (

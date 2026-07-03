@@ -91,14 +91,14 @@ export default function AppUpdater() {
       {downloading && (
         <div className="flex items-center gap-3 rounded-xl bg-slate-950/85 border border-slate-800/80 px-4 py-3 shadow-2xl backdrop-blur-md text-xs font-medium text-slate-200 animate-pulse pointer-events-auto">
           <div className="flex relative h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
           </div>
           <span>Downloading update in background...</span>
         </div>
       )}
       {readyToRestart && (
-        <div className="flex flex-col gap-3 rounded-xl bg-slate-950/90 border border-orange-500/40 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-lg max-w-sm pointer-events-auto transition-all duration-300 ease-out transform translate-y-0 opacity-100">
+        <div className="flex flex-col gap-3 rounded-xl bg-slate-950/90 border border-blue-500/40 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-lg max-w-sm pointer-events-auto transition-all duration-300 ease-out transform translate-y-0 opacity-100">
           <div className="flex items-start gap-3.5">
             <span className="text-2xl animate-bounce">✨</span>
             <div className="flex-1">
@@ -110,7 +110,7 @@ export default function AppUpdater() {
           </div>
           <button
             onClick={handleRestart}
-            className="mt-1 w-full py-2 px-4 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_4px_12px_rgba(234,88,13,0.25)] hover:shadow-[0_4px_16px_rgba(234,88,13,0.4)] cursor-pointer"
+            className="mt-1 w-full py-2 px-4 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 active:scale-[0.98] text-xs font-bold text-white transition-all shadow-[0_4px_12px_rgba(234,88,13,0.25)] hover:shadow-[0_4px_16px_rgba(234,88,13,0.4)] cursor-pointer"
           >
             Restart to Update
           </button>

@@ -313,7 +313,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
                       </>
                     ) : (
                       <>
-                        You have <span className="font-semibold text-orange-455 font-mono">{broadcastRemaining} days</span> remaining. Please submit your settlement preferences.
+                        You have <span className="font-semibold text-blue-455 font-mono">{broadcastRemaining} days</span> remaining. Please submit your settlement preferences.
                       </>
                     )}
                   </>
@@ -332,10 +332,10 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
 
       {/* Pending Govt Holiday Response Alert Banner */}
       {initialFetchDone && profile && profile.eligible_govt_holiday !== false && profile.allow_reserve !== false && pendingHolidays.length > 0 && (
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-amber-900/40 p-4 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-purple-900/40 p-4 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 bg-amber-600/10 border border-amber-500/20 text-amber-400 rounded-xl shrink-0 mt-0.5">
-              <Calendar className="h-5 w-5 text-amber-500" />
+            <div className="p-2.5 bg-purple-600/10 border border-purple-500/20 text-purple-400 rounded-xl shrink-0 mt-0.5">
+              <Calendar className="h-5 w-5 text-purple-500" />
             </div>
             <div>
               <h4 className="text-sm font-bold text-white">Government Holiday Preferences Pending 🔔</h4>
@@ -345,7 +345,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
               <div className="flex flex-wrap gap-2 mt-2.5">
                 {pendingHolidays.map((holiday, idx) => (
                   <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs font-semibold text-slate-300 gap-1.5 font-sans">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                     {holiday.name} ({formatDate(holiday.date)})
                   </span>
                 ))}

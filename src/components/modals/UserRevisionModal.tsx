@@ -68,8 +68,8 @@ export function UserRevisionModal({
         setRevisionRecord(null);
       }}
       title="Revise and Resubmit Leave Details"
-      icon={<Edit className="h-5 w-5 text-amber-500" />}
-      glowClass="bg-amber-900/10"
+      icon={<Edit className="h-5 w-5 text-purple-500" />}
+      glowClass="bg-purple-900/10"
       maxWidthClass="max-w-md"
     >
       {revisionRecord && (
@@ -95,7 +95,7 @@ export function UserRevisionModal({
           />
 
           {revisionRecord.comment && (
-            <div className="mt-2 p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-xs leading-relaxed">
+            <div className="mt-2 p-3 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-lg text-xs leading-relaxed">
               <div className="font-semibold flex items-center gap-1.5 mb-1">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Revision Instructions (Supervisor/Admin Remark):
               </div>
@@ -117,7 +117,7 @@ export function UserRevisionModal({
              <button
               type="submit"
               disabled={submitting}
-              className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
             >
               {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
               {submitting ? 'Submitting...' : 'Resubmit'}

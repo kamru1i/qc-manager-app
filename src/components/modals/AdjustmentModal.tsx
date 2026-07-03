@@ -72,8 +72,8 @@ export function AdjustmentModal({
         setAdjustmentRecord(null);
       }}
       title="Confirm Leave Adjustment"
-      icon={<SlidersHorizontal className="h-5 w-5 text-orange-500" />}
-      glowClass="bg-orange-900/10"
+      icon={<SlidersHorizontal className="h-5 w-5 text-blue-500" />}
+      glowClass="bg-blue-900/10"
       maxWidthClass="max-w-md"
     >
       {adjustmentRecord && (
@@ -88,7 +88,7 @@ export function AdjustmentModal({
                     name="adjustmentType"
                     checked={adjustmentType === 'full'}
                     onChange={() => setAdjustmentType('full')}
-                    className="text-orange-500 focus:ring-orange-500"
+                    className="text-blue-500 focus:ring-blue-500"
                   />
                   <span className="text-xs text-white font-medium">Full Duration ({adjustmentRecord.leave_hour ? adjustmentRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '-'})</span>
                 </label>
@@ -98,7 +98,7 @@ export function AdjustmentModal({
                     name="adjustmentType"
                     checked={adjustmentType === 'partial'}
                     onChange={() => setAdjustmentType('partial')}
-                    className="text-orange-500 focus:ring-orange-500"
+                    className="text-blue-500 focus:ring-blue-500"
                   />
                   <span className="text-xs text-white font-medium">Partial Duration</span>
                 </label>
@@ -112,7 +112,7 @@ export function AdjustmentModal({
                     placeholder="e.g., 02:00"
                     value={partialAdjustmentTime}
                     onChange={(e) => setPartialAdjustmentTime(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono"
+                    className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
                 </div>
               )}
@@ -133,7 +133,7 @@ export function AdjustmentModal({
                   type="button"
                   disabled={submitting}
                   onClick={() => handleSaveAdjustment()}
-                  className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {submitting ? 'Adjusting...' : 'Adjust Leave'}
@@ -163,7 +163,7 @@ export function AdjustmentModal({
                     setAdjustShortLeaveOption(false);
                     handleSaveAdjustment(false);
                   }}
-                  className="w-full flex justify-center py-2.5 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="w-full flex justify-center py-2.5 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {submitting ? 'Processing...' : 'No, just discard Overtime'}
@@ -195,11 +195,11 @@ export function AdjustmentModal({
                       </div>
                       <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-850">
                         <span className="text-slate-500 block text-[9px] uppercase font-bold font-sans">Eid-ul-Fitr</span>
-                        <span className="text-amber-400 font-bold font-mono">{eidFitrRemaining} days</span>
+                        <span className="text-purple-400 font-bold font-mono">{eidFitrRemaining} days</span>
                       </div>
                       <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-850">
                         <span className="text-slate-500 block text-[9px] uppercase font-bold font-sans">Eid-ul-Adha</span>
-                        <span className="text-amber-400 font-bold font-mono">{eidAdhaRemaining} days</span>
+                        <span className="text-purple-400 font-bold font-mono">{eidAdhaRemaining} days</span>
                       </div>
                     </div>
                   </div>
@@ -214,15 +214,15 @@ export function AdjustmentModal({
                         onClick={() => setSelectedCategory('None')}
                         className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                           selectedCategory === 'None'
-                            ? 'bg-orange-950/20 border-orange-500/80 shadow-[0_0_12px_rgba(249,115,22,0.15)]'
+                            ? 'bg-blue-950/20 border-blue-500/80 shadow-[0_0_12px_rgba(249,115,22,0.15)]'
                             : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
                         }`}
                       >
                         <span className="text-xs font-bold text-white font-sans">General Adjustment</span>
                         <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                          selectedCategory === 'None' ? 'border-orange-500' : 'border-slate-600'
+                          selectedCategory === 'None' ? 'border-blue-500' : 'border-slate-600'
                         }`}>
-                          {selectedCategory === 'None' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                          {selectedCategory === 'None' && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                         </div>
                       </button>
 
@@ -253,15 +253,15 @@ export function AdjustmentModal({
                           onClick={() => setSelectedCategory('Eid-ul-Fitr')}
                           className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                             selectedCategory === 'Eid-ul-Fitr'
-                              ? 'bg-amber-955/20 border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                              ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
                               : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
                           }`}
                         >
                           <span className="text-xs font-bold text-white font-sans">Eid-ul-Fitr</span>
                           <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                            selectedCategory === 'Eid-ul-Fitr' ? 'border-amber-500' : 'border-slate-600'
+                            selectedCategory === 'Eid-ul-Fitr' ? 'border-purple-500' : 'border-slate-600'
                           }`}>
-                            {selectedCategory === 'Eid-ul-Fitr' && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                            {selectedCategory === 'Eid-ul-Fitr' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                           </div>
                         </button>
                       )}
@@ -273,15 +273,15 @@ export function AdjustmentModal({
                           onClick={() => setSelectedCategory('Eid-ul-Adha')}
                           className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                             selectedCategory === 'Eid-ul-Adha'
-                              ? 'bg-amber-955/20 border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                              ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
                               : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
                           }`}
                         >
                           <span className="text-xs font-bold text-white font-sans">Eid-ul-Adha</span>
                           <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                            selectedCategory === 'Eid-ul-Adha' ? 'border-amber-500' : 'border-slate-600'
+                            selectedCategory === 'Eid-ul-Adha' ? 'border-purple-500' : 'border-slate-600'
                           }`}>
-                            {selectedCategory === 'Eid-ul-Adha' && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                            {selectedCategory === 'Eid-ul-Adha' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                           </div>
                         </button>
                       )}
@@ -311,7 +311,7 @@ export function AdjustmentModal({
                   type="button"
                   disabled={submitting}
                   onClick={() => handleSaveAdjustment(undefined, selectedCategory)}
-                  className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {submitting ? 'Adjusting...' : 'Adjust Leave'}

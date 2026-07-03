@@ -81,8 +81,8 @@ export function AdminCreateUserModal({
       isOpen={showCreateUserModal && profile?.role === 'admin'}
       onClose={handleClose}
       title="Add New Staff"
-      icon={<Plus className="h-5 w-5 text-orange-500" />}
-      glowClass="bg-orange-900/10"
+      icon={<Plus className="h-5 w-5 text-blue-500" />}
+      glowClass="bg-blue-900/10"
       maxWidthClass="max-w-md"
     >
       <div className="space-y-4">
@@ -93,7 +93,7 @@ export function AdminCreateUserModal({
             placeholder="e.g., KI1024"
             value={newStaffUsername}
             onChange={(e) => setNewStaffUsername(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 uppercase font-mono"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono"
           />
         </div>
 
@@ -115,7 +115,7 @@ export function AdminCreateUserModal({
               type="checkbox"
               checked={newStaffNeedsApproval}
               onChange={(e) => setNewStaffNeedsApproval(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-orange-600 accent-orange-600 focus:ring-orange-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
             />
             <div>
               <span className="block text-xs font-semibold text-white">Supervisor Approval?</span>
@@ -136,14 +136,14 @@ export function AdminCreateUserModal({
               <div className="flex flex-wrap gap-2 pt-1">
                 <label className={`flex items-center gap-2 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[11px] ${
                   newStaffSupervisorIds.length === 0 
-                    ? 'border-orange-600 bg-orange-955/20 text-orange-400' 
+                    ? 'border-blue-600 bg-blue-955/20 text-blue-400' 
                     : 'border-slate-850 bg-slate-900/60 text-slate-300'
                 }`}>
                   <input
                     type="checkbox"
                     checked={newStaffSupervisorIds.length === 0}
                     onChange={() => setNewStaffSupervisorIds([])}
-                    className="rounded-full border-slate-700 bg-slate-955 text-orange-600 accent-orange-600 focus:ring-orange-500 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
+                    className="rounded-full border-slate-700 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
                   />
                   <span className="font-semibold">All</span>
                 </label>
@@ -155,7 +155,7 @@ export function AdminCreateUserModal({
                       key={sup.id} 
                       className={`flex items-center gap-2 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[11px] ${
                         isChecked 
-                          ? 'border-orange-600 bg-orange-955/20 text-orange-400' 
+                          ? 'border-blue-600 bg-blue-955/20 text-blue-400' 
                           : 'border-slate-850 bg-slate-900/60 text-slate-300'
                       }`}
                     >
@@ -169,7 +169,7 @@ export function AdminCreateUserModal({
                             setNewStaffSupervisorIds([...newStaffSupervisorIds, sup.id]);
                           }
                         }}
-                        className="rounded-full border-slate-700 bg-slate-955 text-orange-600 accent-orange-600 focus:ring-orange-500 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
+                        className="rounded-full border-slate-700 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
                       />
                       <span className="font-semibold">
                         {sup.username} {sup.full_name ? `(${sup.full_name})` : ''}
@@ -186,7 +186,7 @@ export function AdminCreateUserModal({
               type="checkbox"
               checked={newStaffEligibleOfficeLeave}
               onChange={(e) => setNewStaffEligibleOfficeLeave(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-950 text-orange-600 accent-orange-600 focus:ring-orange-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-950 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
             />
             <div>
               <span className="block text-xs font-semibold text-white">Office Leave Eligible?</span>
@@ -199,7 +199,7 @@ export function AdminCreateUserModal({
               type="checkbox"
               checked={newStaffEligibleGovtHoliday}
               onChange={(e) => setNewStaffEligibleGovtHoliday(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-orange-600 accent-orange-600 focus:ring-orange-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
             />
             <div>
               <span className="block text-xs font-semibold text-white">Govt Holiday Eligible?</span>
@@ -212,7 +212,7 @@ export function AdminCreateUserModal({
               type="checkbox"
               checked={newStaffAllowReserve}
               onChange={(e) => setNewStaffAllowReserve(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-orange-600 accent-orange-600 focus:ring-orange-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
             />
             <div>
               <span className="block text-xs font-semibold text-white">Reserve Govt Holiday?</span>
@@ -225,7 +225,7 @@ export function AdminCreateUserModal({
               type="checkbox"
               checked={newStaffAllowOvertime}
               onChange={(e) => setNewStaffAllowOvertime(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-orange-600 accent-orange-600 focus:ring-orange-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
             />
             <div>
               <span className="block text-xs font-semibold text-white">Overtime Category?</span>
@@ -246,7 +246,7 @@ export function AdminCreateUserModal({
             type="button"
             onClick={handleCreateNewUser}
             disabled={creatingUser || !newStaffUsername}
-            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             {creatingUser && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {creatingUser ? 'Creating...' : 'Create Staff'}

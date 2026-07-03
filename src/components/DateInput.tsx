@@ -105,7 +105,7 @@ export const DateInput: React.FC<DateInputProps> = ({
         placeholder={placeholder}
         value={inputValue}
         onChange={handleTextChange}
-        className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono tracking-wider placeholder-slate-600 ${className}`}
+        className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wider placeholder-slate-600 ${className}`}
       />
       <div className="relative shrink-0 flex items-center justify-center">
         {/* Hidden native picker covering the calendar button */}

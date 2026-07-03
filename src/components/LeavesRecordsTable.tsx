@@ -120,7 +120,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               placeholder="Search by comment or leave type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-10 py-1.5 bg-white border border-slate-800 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs transition-all dark:bg-slate-955/80 dark:border-slate-800 dark:text-white dark:placeholder-slate-500"
+              className="w-full pl-9 pr-10 py-1.5 bg-white border border-slate-800 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all dark:bg-slate-955/80 dark:border-slate-800 dark:text-white dark:placeholder-slate-500"
             />
             {searchTerm && (
               <button
@@ -137,7 +137,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
           <div className="flex gap-2 shrink-0">
             <button
               onClick={onAddLeaveClick}
-              className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-orange-600 text-orange-600 dark:border-orange-500 dark:text-orange-500 hover:bg-orange-600/10 dark:hover:bg-orange-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
+              className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500 hover:bg-blue-600/10 dark:hover:bg-blue-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
             >
               <Plus className="h-3.5 w-3.5" /> Add Leave
             </button>
@@ -182,7 +182,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center justify-center gap-2">
                         {formatDate(r.date)}
                         {showPendingBadge && isTemp && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-955/80 border border-amber-800 text-amber-400 animate-pulse">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
                             Pending
                           </span>
                         )}
@@ -193,7 +193,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                             ? 'bg-red-955/50 border border-red-800 text-red-300' 
                             : r.leave_type === 'Overtime'
                             ? 'bg-emerald-955/50 border border-emerald-800 text-emerald-300'
-                            : 'bg-orange-955/50 border border-orange-800 text-orange-300'
+                            : 'bg-blue-955/50 border border-blue-800 text-blue-300'
                         }`}>
                           {r.leave_type}
                         </span>
@@ -204,7 +204,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                             type="button"
                             onClick={() => onToggleAdjustment(r)}
                             className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                              (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'bg-orange-600' : 'bg-slate-800'
+                              (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'bg-blue-600' : 'bg-slate-800'
                             }`}
                           >
                             <span
@@ -215,9 +215,9 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           </button>
                           <span className="text-xs font-semibold">
                             {r.reserve_adjustment_status === 'pending' ? (
-                              <span className="text-amber-400 animate-pulse font-semibold">Pending</span>
+                              <span className="text-purple-400 animate-pulse font-semibold">Pending</span>
                             ) : r.adjustment ? (
-                              <span className="text-orange-400">Yes</span>
+                              <span className="text-blue-400">Yes</span>
                             ) : r.adjusted_hour ? (
                               <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
                             ) : r.reserve_adjustment_status === 'rejected' ? (
@@ -248,7 +248,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           {r.status === 'needs_review' && onRevisionClick && (
                             <button
                               onClick={() => onRevisionClick(r)}
-                              className="text-amber-400 hover:text-amber-300 p-1.5 rounded-lg hover:bg-amber-500/10 cursor-pointer transition-all animate-pulse"
+                              className="text-purple-400 hover:text-purple-300 p-1.5 rounded-lg hover:bg-purple-500/10 cursor-pointer transition-all animate-pulse"
                               title="Needs Review (Revision)"
                             >
                               <Edit className="h-4 w-4" />
@@ -257,7 +257,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           {onEditClick && (
                             <button
                               onClick={() => onEditClick(r)}
-                              className="text-orange-400 hover:text-orange-300 p-1.5 rounded-lg hover:bg-orange-500/10 cursor-pointer transition-all"
+                              className="text-blue-400 hover:text-blue-300 p-1.5 rounded-lg hover:bg-blue-500/10 cursor-pointer transition-all"
                               title="Admin Edit"
                             >
                               <Edit className="h-4 w-4" />
@@ -276,7 +276,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         <div className="flex flex-col gap-1 items-center">
                           <StatusBadge record={r} />
                           {r.is_edited && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-955/40 border border-orange-800 text-orange-400">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-955/40 border border-blue-800 text-blue-400">
                               (Edited)
                             </span>
                           )}
