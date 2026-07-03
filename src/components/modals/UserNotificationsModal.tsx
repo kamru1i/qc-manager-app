@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Bell, Edit, RefreshCw } from 'lucide-react';
-import { Profile } from '@/types';
+import { Bell, Edit, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { Modal } from '@/components/Modal';
 
@@ -8,22 +8,36 @@ interface UserNotificationsModalProps {
   showUserNotificationsModal: boolean;
   setShowUserNotificationsModal: (val: boolean) => void;
   userNotificationsList: any[];
-  adminActiveTab: 'user' | 'admin';
   profile: Profile | null;
   onSaveHolidayResponse: (holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => Promise<boolean>;
   onRevisionClick?: (record: ChutiRecord) => void;
-  onGoToApprovalPanel?: () => void;
+  // Approval handlers (for admin/supervisor)
+  onApproveChutiRequest?: (id: string, approve: boolean) => void;
+  onApproveReserveAdjustment?: (record: ChutiRecordWithProfile, approve: boolean) => void;
+  onApproveProfileChangeRequest?: (id: string, approve: boolean) => void;
+  onApprovePasswordResetRequest?: (id: string, approve: boolean) => void;
+  onSupervisorApproveChuti?: (id: string, approve: boolean) => void;
+  // Track processing state
+  approvingIds?: Set<string>;
+  reviewingIds?: Set<string>;
+  approvedIds?: Set<string>;
 }
 
 export function UserNotificationsModal({
   showUserNotificationsModal,
   setShowUserNotificationsModal,
   userNotificationsList,
-  adminActiveTab,
   profile,
   onSaveHolidayResponse,
   onRevisionClick,
-  onGoToApprovalPanel,
+  onApproveChutiRequest,
+  onApproveReserveAdjustment,
+  onApproveProfileChangeRequest,
+  onApprovePasswordResetRequest,
+  onSupervisorApproveChuti,
+  approvingIds = new Set(),
+  reviewingIds = new Set(),
+  approvedIds = new Set(),
 }: UserNotificationsModalProps) {
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
@@ -33,15 +47,18 @@ export function UserNotificationsModal({
     setSubmittingId(null);
   };
 
+  const isProcessing = (id: string) => approvingIds.has(id) || reviewingIds.has(id);
+  const isDone = (id: string) => approvedIds.has(id);
+
   return (
     <Modal
       isOpen={showUserNotificationsModal}
       onClose={() => setShowUserNotificationsModal(false)}
-      title="Leave Notifications"
+      title="Notifications"
       icon={<Bell className="h-5 w-5 text-purple-400" />}
       maxWidthClass="max-w-lg"
     >
-      <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
         {userNotificationsList.length === 0 ? (
           <div className="py-8 text-center text-slate-500 text-sm">
             No notifications.
@@ -123,6 +140,7 @@ export function UserNotificationsModal({
                 {n.body || n.text}
               </div>
 
+              {/* Govt Holiday Prompt - Get Paid / Reserve */}
               {n.type === 'govt_holiday_prompt' && n.holidayDate && n.holidayName && (
                 <div className="flex gap-2 justify-end mt-1">
                   <button
@@ -143,28 +161,155 @@ export function UserNotificationsModal({
                   </button>
                 </div>
               )}
+
+              {/* Admin: Leave Approval - Approve / Reject */}
+              {n.type === 'pending_admin_chuti_request' && n.record && onApproveChutiRequest && (
+                <div className="flex gap-2 justify-end mt-1">
+                  {isDone(n.record.id) ? (
+                    <span className="flex items-center gap-1 text-xs text-emerald-400 font-semibold"><CheckCircle className="h-3.5 w-3.5" /> Done</span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.record.id)}
+                        onClick={() => onApproveChutiRequest(n.record.id, true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-555 text-white border border-emerald-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.record.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve</>}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.record.id)}
+                        onClick={() => onApproveChutiRequest(n.record.id, false)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-555 text-white border border-red-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.record.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><XCircle className="h-3.5 w-3.5 mr-1" /> Reject</>}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Admin: Reserve / Adjustment Approval */}
+              {n.type === 'pending_admin_reserve_request' && n.record && onApproveReserveAdjustment && (
+                <div className="flex gap-2 justify-end mt-1">
+                  {isDone(n.record.id) ? (
+                    <span className="flex items-center gap-1 text-xs text-emerald-400 font-semibold"><CheckCircle className="h-3.5 w-3.5" /> Done</span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.record.id)}
+                        onClick={() => onApproveReserveAdjustment(n.record, true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-555 text-white border border-emerald-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.record.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve</>}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.record.id)}
+                        onClick={() => onApproveReserveAdjustment(n.record, false)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-555 text-white border border-red-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.record.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><XCircle className="h-3.5 w-3.5 mr-1" /> Reject</>}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Admin: Profile Change Request Approval */}
+              {n.type === 'pending_admin_profile_request' && n.profileRecord && onApproveProfileChangeRequest && (
+                <div className="flex gap-2 justify-end mt-1">
+                  {isDone(n.profileRecord.id) ? (
+                    <span className="flex items-center gap-1 text-xs text-emerald-400 font-semibold"><CheckCircle className="h-3.5 w-3.5" /> Done</span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.profileRecord.id)}
+                        onClick={() => onApproveProfileChangeRequest(n.profileRecord.id, true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-555 text-white border border-emerald-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.profileRecord.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve</>}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.profileRecord.id)}
+                        onClick={() => onApproveProfileChangeRequest(n.profileRecord.id, false)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-555 text-white border border-red-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.profileRecord.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><XCircle className="h-3.5 w-3.5 mr-1" /> Reject</>}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Admin: Password Reset Request Approval */}
+              {n.type === 'pending_admin_password_request' && n.profileRecord && onApprovePasswordResetRequest && (
+                <div className="flex gap-2 justify-end mt-1">
+                  {isDone(n.profileRecord.id) ? (
+                    <span className="flex items-center gap-1 text-xs text-emerald-400 font-semibold"><CheckCircle className="h-3.5 w-3.5" /> Done</span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.profileRecord.id)}
+                        onClick={() => onApprovePasswordResetRequest(n.profileRecord.id, true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-555 text-white border border-emerald-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.profileRecord.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve</>}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.profileRecord.id)}
+                        onClick={() => onApprovePasswordResetRequest(n.profileRecord.id, false)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-555 text-white border border-red-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.profileRecord.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><XCircle className="h-3.5 w-3.5 mr-1" /> Reject</>}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Supervisor: Leave Verification - Verify / Reject */}
+              {n.type === 'pending_supervisor_request' && n.record && onSupervisorApproveChuti && (
+                <div className="flex gap-2 justify-end mt-1">
+                  {isDone(n.record.id) ? (
+                    <span className="flex items-center gap-1 text-xs text-emerald-400 font-semibold"><CheckCircle className="h-3.5 w-3.5" /> Done</span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.record.id)}
+                        onClick={() => onSupervisorApproveChuti(n.record.id, true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-555 text-white border border-emerald-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.record.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><CheckCircle className="h-3.5 w-3.5 mr-1" /> Verify</>}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isProcessing(n.record.id)}
+                        onClick={() => onSupervisorApproveChuti(n.record.id, false)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-555 text-white border border-red-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
+                      >
+                        {isProcessing(n.record.id) ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <><XCircle className="h-3.5 w-3.5 mr-1" /> Reject</>}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
       
-      <div className="flex justify-between items-center pt-4 border-t border-slate-800/80 mt-5">
-        {(profile?.role === 'admin' || profile?.role === 'supervisor') && (
-          <button
-            onClick={() => {
-              setShowUserNotificationsModal(false);
-              if (onGoToApprovalPanel) {
-                onGoToApprovalPanel();
-              }
-            }}
-            className="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-lg text-xs font-semibold text-slate-350 hover:text-white cursor-pointer transition-all flex items-center gap-1.5"
-          >
-            <Bell className="h-3.5 w-3.5" /> Go to Approval Panel
-          </button>
-        )}
+      <div className="flex justify-end items-center pt-4 border-t border-slate-800/80 mt-5">
         <button
           onClick={() => setShowUserNotificationsModal(false)}
-          className="px-4 py-2 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all ml-auto"
+          className="px-4 py-2 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
         >
           Close
         </button>

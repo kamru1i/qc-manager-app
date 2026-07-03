@@ -239,12 +239,17 @@ export default function AppPortal() {
     handleSaveHolidayResponse,
   } = useGlobalNotifications(sessionUser, profile, profilesList);
 
+  const [chutiNotificationsList, setChutiNotificationsList] = useState<any[] | null>(null);
+
   useEffect(() => {
     const handleCountChange = (e: Event) => {
       setChutiNotificationCount((e as CustomEvent).detail || 0);
     };
     const handleOfflineCountChange = (e: Event) => {
       setChutiOfflineCount((e as CustomEvent).detail || 0);
+    };
+    const handleListSync = (e: Event) => {
+      setChutiNotificationsList((e as CustomEvent).detail || []);
     };
     window.addEventListener(
       "chuti-notification-count-change",
@@ -254,6 +259,10 @@ export default function AppPortal() {
       "chuti-offline-count-change",
       handleOfflineCountChange,
     );
+    window.addEventListener(
+      "chuti-notification-list-sync",
+      handleListSync,
+    );
     return () => {
       window.removeEventListener(
         "chuti-notification-count-change",
@@ -262,6 +271,10 @@ export default function AppPortal() {
       window.removeEventListener(
         "chuti-offline-count-change",
         handleOfflineCountChange,
+      );
+      window.removeEventListener(
+        "chuti-notification-list-sync",
+        handleListSync,
       );
     };
   }, []);
@@ -664,20 +677,31 @@ export default function AppPortal() {
       {/* Portal Target for Modals */}
       <div id="root-modals-portal" className="relative z-50" />
 
-      {/* Global User Notifications Modal */}
+      {/* Global Unified Notifications Modal */}
       {sessionUser && profile && (
         <UserNotificationsModal
           showUserNotificationsModal={showNotificationsModal}
           setShowUserNotificationsModal={setShowNotificationsModal}
-          userNotificationsList={globalNotificationsList}
-          adminActiveTab={(typeof window !== 'undefined' ? sessionStorage.getItem('adminActiveTab') : 'admin') as any || 'admin'}
+          userNotificationsList={chutiNotificationsList ?? globalNotificationsList}
           profile={profile}
           onSaveHolidayResponse={handleSaveHolidayResponse}
           onRevisionClick={(record) => {
             window.dispatchEvent(new CustomEvent('open-revision-modal', { detail: record }));
           }}
-          onGoToApprovalPanel={() => {
-            window.dispatchEvent(new CustomEvent('open-approval-panel'));
+          onApproveChutiRequest={(id, approve) => {
+            window.dispatchEvent(new CustomEvent('approve-chuti-request', { detail: { id, approve } }));
+          }}
+          onApproveReserveAdjustment={(record, approve) => {
+            window.dispatchEvent(new CustomEvent('approve-reserve-adjustment', { detail: { record, approve } }));
+          }}
+          onApproveProfileChangeRequest={(id, approve) => {
+            window.dispatchEvent(new CustomEvent('approve-profile-change', { detail: { id, approve } }));
+          }}
+          onApprovePasswordResetRequest={(id, approve) => {
+            window.dispatchEvent(new CustomEvent('approve-password-reset', { detail: { id, approve } }));
+          }}
+          onSupervisorApproveChuti={(id, approve) => {
+            window.dispatchEvent(new CustomEvent('supervisor-approve-chuti', { detail: { id, approve } }));
           }}
         />
       )}

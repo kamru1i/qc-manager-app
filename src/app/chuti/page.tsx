@@ -515,6 +515,7 @@ export default function Dashboard({
 
     handleUpdateSettings,
     handleApproveProfileChangeRequest,
+    handleApprovePasswordResetRequest,
     handleConvertShortLeaveToFullLeave,
     newStaffSupervisorIds,
     setNewStaffSupervisorIds,
@@ -639,14 +640,14 @@ export default function Dashboard({
     }
   }, [sessionUser, loading, router]);
 
-  // Synchronize notification counts to root page
+  // Synchronize notification counts and full list to root page
   useEffect(() => {
     let count = 0;
     if (profile) {
       if (profile.role === 'supervisor') {
         count = groupedSupervisorRequests.length + unreadUserNotificationsCount;
-      } else if (profile.role === 'admin' && adminActiveTab === 'admin') {
-        count = groupedChutiRequests.length + pendingReserveRequests.length + pendingProfileRequests.length + pendingPasswordResetRequests.length + adminHolidayNotifications.length;
+      } else if (profile.role === 'admin') {
+        count = unreadUserNotificationsCount;
       } else {
         count = unreadUserNotificationsCount;
       }
@@ -656,13 +657,17 @@ export default function Dashboard({
     profile,
     groupedSupervisorRequests,
     unreadUserNotificationsCount,
-    adminActiveTab,
     groupedChutiRequests,
     pendingReserveRequests,
     pendingProfileRequests,
     pendingPasswordResetRequests,
     adminHolidayNotifications
   ]);
+
+  // Sync the full notifications list to root page for the global unified modal
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('chuti-notification-list-sync', { detail: userNotificationsList }));
+  }, [userNotificationsList]);
 
   // Synchronize offline count to root page
   useEffect(() => {
@@ -690,25 +695,46 @@ export default function Dashboard({
       setRevisionComment('');
       setShowUserRevisionModal(true);
     };
-    const handleOpenApprovalPanel = () => {
-      if (profile?.role === 'admin') {
-        setAdminActiveTab('admin');
-        setShowLeaveApprovalModal(true);
-      } else if (profile?.role === 'supervisor') {
-        setShowSupervisorApprovalModal(true);
-      }
+    // Approval action handlers dispatched from unified notification modal
+    const handleApproveChutiEvent = (e: Event) => {
+      const { id, approve } = (e as CustomEvent).detail;
+      handleApproveChutiRequest(id, approve);
+    };
+    const handleApproveReserveEvent = (e: Event) => {
+      const { record, approve } = (e as CustomEvent).detail;
+      handleApproveReserveAdjustment(record, approve);
+    };
+    const handleApproveProfileEvent = (e: Event) => {
+      const { id, approve } = (e as CustomEvent).detail;
+      handleApproveProfileChangeRequest(id, approve);
+    };
+    const handleApprovePasswordEvent = (e: Event) => {
+      const { id, approve } = (e as CustomEvent).detail;
+      handleApprovePasswordResetRequest(id, approve);
+    };
+    const handleSupervisorApproveEvent = (e: Event) => {
+      const { id, approve } = (e as CustomEvent).detail;
+      handleSupervisorApproveChuti(id, approve);
     };
 
     window.addEventListener('open-profile-settings', handleOpenProfileSettings);
     window.addEventListener('trigger-manual-sync', handleTriggerSync);
     window.addEventListener('open-revision-modal', handleOpenRevisionModal);
-    window.addEventListener('open-approval-panel', handleOpenApprovalPanel);
+    window.addEventListener('approve-chuti-request', handleApproveChutiEvent);
+    window.addEventListener('approve-reserve-adjustment', handleApproveReserveEvent);
+    window.addEventListener('approve-profile-change', handleApproveProfileEvent);
+    window.addEventListener('approve-password-reset', handleApprovePasswordEvent);
+    window.addEventListener('supervisor-approve-chuti', handleSupervisorApproveEvent);
 
     return () => {
       window.removeEventListener('open-profile-settings', handleOpenProfileSettings);
       window.removeEventListener('trigger-manual-sync', handleTriggerSync);
       window.removeEventListener('open-revision-modal', handleOpenRevisionModal);
-      window.removeEventListener('open-approval-panel', handleOpenApprovalPanel);
+      window.removeEventListener('approve-chuti-request', handleApproveChutiEvent);
+      window.removeEventListener('approve-reserve-adjustment', handleApproveReserveEvent);
+      window.removeEventListener('approve-profile-change', handleApproveProfileEvent);
+      window.removeEventListener('approve-password-reset', handleApprovePasswordEvent);
+      window.removeEventListener('supervisor-approve-chuti', handleSupervisorApproveEvent);
     };
   }, [
     handleOpenProfileSettingsForSelf,
@@ -724,9 +750,11 @@ export default function Dashboard({
     setRevisionLeaveHour,
     setRevisionComment,
     setShowUserRevisionModal,
-    setAdminActiveTab,
-    setShowLeaveApprovalModal,
-    setShowSupervisorApprovalModal
+    handleApproveChutiRequest,
+    handleApproveReserveAdjustment,
+    handleApproveProfileChangeRequest,
+    handleApprovePasswordResetRequest,
+    handleSupervisorApproveChuti,
   ]);
 
   if (!sessionUser && !loading) {
