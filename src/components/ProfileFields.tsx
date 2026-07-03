@@ -46,7 +46,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
   return (
     <>
       <div>
-        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <label className="block text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
           Full Name
         </label>
         <input
@@ -56,12 +56,12 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           disabled={disabled}
-          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <label className="block text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
           Job Role
         </label>
         <input
@@ -71,13 +71,13 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
           value={jobRole}
           onChange={(e) => setJobRole(e.target.value)}
           disabled={disabled}
-          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <label className="block text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
             Working Hours
           </label>
           <CustomSelect
@@ -90,7 +90,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <label className="block text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
             Break (Minutes)
           </label>
           <input
@@ -100,7 +100,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
             value={breakTime}
             onChange={(e) => setBreakTime(e.target.value)}
             disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>
@@ -108,7 +108,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <div className="flex justify-between items-center">
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <label className="block text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               Sign-In
             </label>
             {signInTime && (
@@ -123,12 +123,12 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
             value={signInTime}
             onChange={(e) => setSignInTime(e.target.value)}
             disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
         <div>
           <div className="flex justify-between items-center">
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <label className="block text-xs font-medium text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               Sign-Out
             </label>
             {signOutTime && (
@@ -143,7 +143,7 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
             value={signOutTime}
             onChange={(e) => setSignOutTime(e.target.value)}
             disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>

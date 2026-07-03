@@ -208,7 +208,7 @@ export function AdminProfileSettingsModal({
 
       {/* Header */}
       <div className="flex justify-between items-center border-b border-slate-800/80 px-6 py-4 shrink-0 relative z-10">
-        <h3 className="text-base font-bold text-white flex items-center gap-2">
+        <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
           <User className="h-5 w-5 text-blue-500" />
           Profile Settings
         </h3>
@@ -372,7 +372,7 @@ export function AdminProfileSettingsModal({
                   className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
                 />
                 <div>
-                  <span className="block text-xs font-semibold text-white">Supervisor Approval?</span>
+                  <span className="block text-xs font-semibold text-slate-100">Supervisor Approval?</span>
                   <span className="block text-[10px] text-slate-400">If checked, leaves will require supervisor approval</span>
                 </div>
               </label>
@@ -443,7 +443,7 @@ export function AdminProfileSettingsModal({
                   className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
                 />
                 <div>
-                  <span className="block text-xs font-semibold text-white">Office Leave Eligible?</span>
+                  <span className="block text-xs font-semibold text-slate-100">Office Leave Eligible?</span>
                   <span className="block text-[10px] text-slate-400">If enabled, eligible for annual office leaves and Eid holidays</span>
                 </div>
               </label>
@@ -456,7 +456,7 @@ export function AdminProfileSettingsModal({
                   className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
                 />
                 <div>
-                  <span className="block text-xs font-semibold text-white">Govt Holiday Eligible?</span>
+                  <span className="block text-xs font-semibold text-slate-100">Govt Holiday Eligible?</span>
                   <span className="block text-[10px] text-slate-400">If enabled, eligible for leaves according to the government holiday list</span>
                 </div>
               </label>
@@ -469,7 +469,7 @@ export function AdminProfileSettingsModal({
                   className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
                 />
                 <div>
-                  <span className="block text-xs font-semibold text-white">Reserve Govt Holiday?</span>
+                  <span className="block text-xs font-semibold text-slate-100">Reserve Govt Holiday?</span>
                   <span className="block text-[10px] text-slate-400">If checked, will have option to reserve government holidays</span>
                 </div>
               </label>
@@ -482,7 +482,7 @@ export function AdminProfileSettingsModal({
                   className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
                 />
                 <div>
-                  <span className="block text-xs font-semibold text-white">Overtime?</span>
+                  <span className="block text-xs font-semibold text-slate-100">Overtime?</span>
                   <span className="block text-[10px] text-slate-400">If checked, overtime leave category will be enabled</span>
                 </div>
               </label>
@@ -532,7 +532,7 @@ export function AdminProfileSettingsModal({
           <div className="mt-8 pt-6 border-t border-slate-800/80">
             <h4 
               onClick={() => setShowPasswordFields(!showPasswordFields)}
-              className="text-sm font-bold text-white flex items-center gap-2 cursor-pointer hover:text-blue-400 transition-colors select-none w-fit"
+              className="text-sm font-bold text-slate-100 flex items-center gap-2 cursor-pointer hover:text-blue-400 transition-colors select-none w-fit"
             >
               <Lock className="h-4 w-4 text-blue-500" />
               Change Password?
@@ -552,7 +552,7 @@ export function AdminProfileSettingsModal({
                     placeholder="Enter new password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-100"
                   />
                 </div>
                 <div>
@@ -562,7 +562,7 @@ export function AdminProfileSettingsModal({
                     placeholder="Confirm new password"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                    className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-100"
                   />
                 </div>
                 <button

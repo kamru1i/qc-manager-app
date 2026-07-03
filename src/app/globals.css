@@ -17,6 +17,8 @@
   --color-slate-100: var(--slate-100);
   --color-slate-50: var(--slate-50);
   --color-slate-455: var(--slate-455);
+  --color-slate-355: var(--slate-355);
+  --color-slate-405: var(--slate-405);
 
   --color-blue-300: var(--blue-300);
   --color-blue-400: var(--blue-400);
@@ -106,6 +108,8 @@
   --slate-100: #0a0a0a; /* primary body text */
   --slate-50: #000000;  /* extra dark text */
   --slate-455: #262626; /* form labels */
+  --slate-355: #334155;
+  --slate-405: #475569;
 
   /* Blue theme colors */
   --blue-300: #3b82f6; /* Brand blue text */
@@ -198,6 +202,8 @@
   --slate-100: #f5f5f5;
   --slate-50: #fafafa;
   --slate-455: #a3a3a3;
+  --slate-355: #94a3b8;
+  --slate-405: #64748b;
 
   /* Blue theme colors */
   --blue-300: #93c5fd; /* Light blue text */
@@ -303,309 +309,321 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* Light mode overrides for text-white headings so they are readable on light background */
-:root:not(.dark) .text-white {
+html:not(.dark) .text-white {
   color: #0f172a !important;
 }
 
 /* Exclude buttons, badges, or colored/filled containers in light mode to keep their contrast text as white */
-:root:not(.dark) button.text-white,
-:root:not(.dark) button .text-white,
-:root:not(.dark) a.text-white,
-:root:not(.dark) .bg-blue-600.text-white,
-:root:not(.dark) .bg-blue-600 .text-white,
-:root:not(.dark) .bg-purple-600.text-white,
-:root:not(.dark) .bg-purple-600 .text-white,
-:root:not(.dark) .bg-emerald-600.text-white,
-:root:not(.dark) .bg-emerald-600 .text-white,
-:root:not(.dark) .bg-red-600.text-white,
-:root:not(.dark) .bg-red-600 .text-white,
-:root:not(.dark) .bg-amber-600.text-white,
-:root:not(.dark) .bg-amber-600 .text-white,
-:root:not(.dark) .bg-indigo-600.text-white,
-:root:not(.dark) .bg-indigo-600 .text-white,
-:root:not(.dark) .bg-blue-650.text-white,
-:root:not(.dark) .bg-blue-650 .text-white,
-:root:not(.dark) .bg-amber-650.text-white,
-:root:not(.dark) .bg-amber-650 .text-white,
-:root:not(.dark) .bg-purple-950.text-white,
-:root:not(.dark) .bg-purple-950 .text-white,
-:root:not(.dark) [class*="bg-blue-"] .text-white,
-:root:not(.dark) [class*="bg-purple-"] .text-white,
-:root:not(.dark) [class*="bg-emerald-"] .text-white,
-:root:not(.dark) [class*="bg-red-"] .text-white,
-:root:not(.dark) [class*="bg-amber-"] .text-white,
-:root:not(.dark) [class*="bg-indigo-"] .text-white,
-:root:not(.dark) [class*="bg-slate-700"] .text-white,
-:root:not(.dark) [class*="bg-slate-800"] .text-white {
+html:not(.dark) button.text-white,
+html:not(.dark) button .text-white,
+html:not(.dark) a.text-white,
+html:not(.dark) .bg-blue-600.text-white,
+html:not(.dark) .bg-blue-600 .text-white,
+html:not(.dark) .bg-purple-600.text-white,
+html:not(.dark) .bg-purple-600 .text-white,
+html:not(.dark) .bg-emerald-600.text-white,
+html:not(.dark) .bg-emerald-600 .text-white,
+html:not(.dark) .bg-red-600.text-white,
+html:not(.dark) .bg-red-600 .text-white,
+html:not(.dark) .bg-amber-600.text-white,
+html:not(.dark) .bg-amber-600 .text-white,
+html:not(.dark) .bg-indigo-600.text-white,
+html:not(.dark) .bg-indigo-600 .text-white,
+html:not(.dark) .bg-blue-650.text-white,
+html:not(.dark) .bg-blue-650 .text-white,
+html:not(.dark) .bg-amber-650.text-white,
+html:not(.dark) .bg-amber-650 .text-white,
+html:not(.dark) .bg-purple-950.text-white,
+html:not(.dark) .bg-purple-950 .text-white,
+html:not(.dark) [class*="bg-blue-"] .text-white,
+html:not(.dark) [class*="bg-purple-"] .text-white,
+html:not(.dark) [class*="bg-emerald-"] .text-white,
+html:not(.dark) [class*="bg-red-"] .text-white,
+html:not(.dark) [class*="bg-amber-"] .text-white,
+html:not(.dark) [class*="bg-indigo-"] .text-white,
+html:not(.dark) [class*="bg-slate-700"] .text-white,
+html:not(.dark) [class*="bg-slate-800"] .text-white {
   color: #ffffff !important;
 }
 
 /* Light mode support for specific glassmorphism or hover states */
-:root:not(.dark) .bg-slate-900\/20 {
+html:not(.dark) .bg-slate-900\/20 {
   background-color: rgba(241, 245, 249, 0.6) !important;
 }
-:root:not(.dark) .bg-slate-900\/40 {
+html:not(.dark) .bg-slate-900\/40 {
   background-color: rgba(255, 255, 255, 0.7) !important;
 }
-:root:not(.dark) .bg-slate-950\/60 {
+html:not(.dark) .bg-slate-950\/60 {
   background-color: rgba(248, 250, 252, 0.8) !important;
 }
-:root:not(.dark) .bg-slate-950\/80 {
+html:not(.dark) .bg-slate-950\/80 {
   background-color: rgba(241, 245, 249, 0.9) !important;
 }
-:root:not(.dark) .bg-slate-955\/80 {
+html:not(.dark) .bg-slate-955\/80 {
   background-color: rgba(15, 23, 42, 0.3) !important; /* backdrop dim */
 }
-:root:not(.dark) .bg-slate-955\/90 {
+html:not(.dark) .bg-slate-955\/90 {
   background-color: rgba(15, 23, 42, 0.4) !important;
 }
-:root:not(.dark) .bg-purple-950\/45 {
+html:not(.dark) .bg-purple-950\/45 {
   background-color: rgba(124, 58, 237, 0.08) !important;
   border-color: rgba(124, 58, 237, 0.2) !important;
 }
-:root:not(.dark) .bg-blue-950\/20 {
+html:not(.dark) .bg-blue-950\/20 {
   background-color: rgba(37, 99, 235, 0.06) !important;
   border-color: rgba(37, 99, 235, 0.15) !important;
 }
-:root:not(.dark) .bg-amber-950\/50 {
+html:not(.dark) .bg-amber-950\/50 {
   background-color: rgba(124, 58, 237, 0.08) !important;
   border-color: rgba(124, 58, 237, 0.2) !important;
 }
-:root:not(.dark) .bg-emerald-950\/50 {
+html:not(.dark) .bg-emerald-950\/50 {
   background-color: rgba(5, 150, 105, 0.08) !important;
   border-color: rgba(5, 150, 105, 0.2) !important;
 }
-:root:not(.dark) .bg-red-950\/50 {
+html:not(.dark) .bg-red-950\/50 {
   background-color: rgba(220, 38, 38, 0.08) !important;
   border-color: rgba(220, 38, 38, 0.2) !important;
 }
-:root:not(.dark) .bg-slate-955\/20 {
+html:not(.dark) .bg-slate-955\/20 {
   background-color: rgba(248, 250, 252, 0.2) !important;
 }
 
 /* Ensure card borders are visible and crisp in light mode */
-:root:not(.dark) [class*="border-slate-900"] {
+html:not(.dark) [class*="border-slate-900"] {
   border-color: var(--slate-800) !important;
 }
 
 /* Make card titles (e.g. Unadjusted labels) much clearer and more readable in light mode */
-:root:not(.dark) [class*="bg-slate-900"] .text-slate-400 {
+html:not(.dark) [class*="bg-slate-900"] .text-slate-400 {
   color: var(--slate-300) !important;
   font-weight: 600;
 }
 
 /* Ensure text in the admin mode card is highly readable in light mode */
-:root:not(.dark) .admin-mode-banner .text-white {
+html:not(.dark) .admin-mode-banner .text-white {
   color: #1e40af !important; /* Blue-800 */
   font-weight: 700;
 }
-:root:not(.dark) .admin-mode-banner .text-slate-400 {
+html:not(.dark) .admin-mode-banner .text-slate-400 {
   color: #1e3a8a !important; /* Blue-900 */
   font-weight: 500;
 }
 /* Ensure text in the push notification card is highly readable in light mode */
-:root:not(.dark) .push-notification-banner .text-white {
+html:not(.dark) .push-notification-banner .text-white {
   color: #1e40af !important; /* Blue-800 */
   font-weight: 700;
 }
-:root:not(.dark) .push-notification-banner .text-slate-400 {
+html:not(.dark) .push-notification-banner .text-slate-400 {
   color: #1d4ed8 !important; /* Blue-600 */
   font-weight: 500;
 }
-:root:not(.dark) .bg-slate-950\/20 {
+html:not(.dark) .bg-slate-950\/20 {
   background-color: rgba(248, 250, 252, 0.2) !important;
 }
 
 /* ===== COMPREHENSIVE LIGHT MODE TEXT VISIBILITY FIXES ===== */
 
 /* Ensure ALL text on card backgrounds (bg-slate-900/40 → white bg in light) has high contrast */
-:root:not(.dark) .text-slate-100 {
+html:not(.dark) .text-slate-100 {
   color: #0f172a !important;
 }
-:root:not(.dark) .text-slate-200 {
+html:not(.dark) .text-slate-200 {
   color: #1e293b !important;
 }
-:root:not(.dark) .text-slate-300 {
+html:not(.dark) .text-slate-300 {
   color: #334155 !important;
 }
-:root:not(.dark) .text-slate-400 {
+html:not(.dark) .text-slate-400 {
+  color: #475569 !important;
+}
+html:not(.dark) .text-slate-355 {
+  color: #334155 !important;
+}
+html:not(.dark) .text-slate-405 {
   color: #475569 !important;
 }
 
 /* Hover text color overrides for light mode to prevent text from becoming unreadably white */
-:root:not(.dark) .hover\:text-white:hover {
+html:not(.dark) .hover\:text-white:hover {
   color: #0f172a !important;
 }
-:root:not(.dark) .hover\:text-slate-50:hover {
+html:not(.dark) .hover\:text-slate-50:hover {
   color: #020617 !important;
 }
-:root:not(.dark) .hover\:text-slate-100:hover {
+html:not(.dark) .hover\:text-slate-100:hover {
   color: #0f172a !important;
 }
-:root:not(.dark) .hover\:text-slate-200:hover {
+html:not(.dark) .hover\:text-slate-200:hover {
   color: #1e293b !important;
 }
-:root:not(.dark) .hover\:text-slate-300:hover {
+html:not(.dark) .hover\:text-slate-300:hover {
   color: #334155 !important;
 }
-:root:not(.dark) .hover\:text-slate-350:hover {
+html:not(.dark) .hover\:text-slate-350:hover {
   color: #475569 !important;
 }
-:root:not(.dark) .hover\:text-slate-400:hover {
+html:not(.dark) .hover\:text-slate-400:hover {
   color: #475569 !important;
 }
-:root:not(.dark) .hover\:text-slate-455:hover {
+html:not(.dark) .hover\:text-slate-455:hover {
   color: #334155 !important;
 }
-:root:not(.dark) .hover\:text-slate-450:hover {
+html:not(.dark) .hover\:text-slate-450:hover {
+  color: #475569 !important;
+}
+html:not(.dark) .hover\:text-slate-355:hover {
+  color: #334155 !important;
+}
+html:not(.dark) .hover\:text-slate-405:hover {
   color: #475569 !important;
 }
 
 /* Input text in light mode must be dark */
-:root:not(.dark) input,
-:root:not(.dark) select,
-:root:not(.dark) textarea {
+html:not(.dark) input,
+html:not(.dark) select,
+html:not(.dark) textarea {
   color: #0f172a !important;
 }
 
 /* Stat card text on light backgrounds */
-:root:not(.dark) .text-blue-300 {
+html:not(.dark) .text-blue-300 {
   color: #2563eb !important;
 }
-:root:not(.dark) .text-emerald-300 {
+html:not(.dark) .text-emerald-300 {
   color: #047857 !important;
 }
-:root:not(.dark) .text-amber-300 {
+html:not(.dark) .text-amber-300 {
   color: #7c3aed !important;
 }
-:root:not(.dark) .text-red-300 {
+html:not(.dark) .text-red-300 {
   color: #b91c1c !important;
 }
-:root:not(.dark) .text-purple-300 {
+html:not(.dark) .text-purple-300 {
   color: #7c3aed !important;
 }
-:root:not(.dark) .text-indigo-300 {
+html:not(.dark) .text-indigo-300 {
   color: #7c3aed !important;
 }
 
 /* Table headers and cells readability in light mode */
-:root:not(.dark) th {
+html:not(.dark) th {
   color: #1e293b !important;
   font-weight: 700;
 }
-:root:not(.dark) td {
+html:not(.dark) td {
   color: #334155 !important;
 }
 
 /* Ensure modal backdrop overlay is visible in light mode */
-:root:not(.dark) .bg-slate-955\/80,
-:root:not(.dark) .bg-slate-955\/90 {
+html:not(.dark) .bg-slate-955\/80,
+html:not(.dark) .bg-slate-955\/90 {
   background-color: rgba(15, 23, 42, 0.45) !important;
 }
 
 /* Modal card backgrounds - white and readable */
-:root:not(.dark) .bg-slate-900 {
+html:not(.dark) .bg-slate-900 {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
 }
 
 /* Ensure labels/meta text on blue/colored stat cards remain visible */
-:root:not(.dark) [class*="bg-blue-950"] .text-slate-300,
-:root:not(.dark) [class*="bg-blue-950"] .text-slate-400 {
+html:not(.dark) [class*="bg-blue-950"] .text-slate-300,
+html:not(.dark) [class*="bg-blue-950"] .text-slate-400 {
   color: #1e40af !important;
   font-weight: 600;
 }
-:root:not(.dark) [class*="bg-emerald-950"] .text-slate-300,
-:root:not(.dark) [class*="bg-emerald-950"] .text-slate-400 {
+html:not(.dark) [class*="bg-emerald-950"] .text-slate-300,
+html:not(.dark) [class*="bg-emerald-950"] .text-slate-400 {
   color: #047857 !important;
   font-weight: 600;
 }
-:root:not(.dark) [class*="bg-amber-950"] .text-slate-300,
-:root:not(.dark) [class*="bg-amber-950"] .text-slate-400 {
+html:not(.dark) [class*="bg-amber-950"] .text-slate-300,
+html:not(.dark) [class*="bg-amber-950"] .text-slate-400 {
   color: #5b21b6 !important;
   font-weight: 600;
 }
-:root:not(.dark) [class*="bg-red-950"] .text-slate-300,
-:root:not(.dark) [class*="bg-red-950"] .text-slate-400 {
+html:not(.dark) [class*="bg-red-950"] .text-slate-300,
+html:not(.dark) [class*="bg-red-950"] .text-slate-400 {
   color: #991b1b !important;
   font-weight: 600;
 }
 
 /* Ensure toggle/switch labels are clearly readable in light mode */
-:root:not(.dark) .text-slate-455 {
+html:not(.dark) .text-slate-455 {
   color: #334155 !important;
   font-weight: 600;
 }
 
 /* Fix notification section heading on colored backgrounds */
-:root:not(.dark) [class*="bg-blue-950/"] .text-white {
+html:not(.dark) [class*="bg-blue-950/"] .text-white {
   color: #1e40af !important;
   font-weight: 700;
 }
-:root:not(.dark) [class*="bg-amber-950/"] .text-white {
+html:not(.dark) [class*="bg-amber-950/"] .text-white {
   color: #5b21b6 !important;
   font-weight: 700;
 }
-:root:not(.dark) [class*="bg-emerald-950/"] .text-white {
+html:not(.dark) [class*="bg-emerald-950/"] .text-white {
   color: #065f46 !important;
   font-weight: 700;
 }
-:root:not(.dark) [class*="bg-red-950/"] .text-white {
+html:not(.dark) [class*="bg-red-950/"] .text-white {
   color: #991b1b !important;
   font-weight: 700;
 }
-:root:not(.dark) [class*="bg-purple-950/"] .text-white {
+html:not(.dark) [class*="bg-purple-950/"] .text-white {
   color: #1e40af !important;
   font-weight: 700;
 }
 
 /* Light mode status text colors for leave statuses */
-:root:not(.dark) .text-emerald-400 {
+html:not(.dark) .text-emerald-400 {
   color: #059669 !important;
 }
-:root:not(.dark) .text-amber-400 {
+html:not(.dark) .text-amber-400 {
   color: #d97706 !important;
 }
-:root:not(.dark) .text-red-400 {
+html:not(.dark) .text-red-400 {
   color: #dc2626 !important;
 }
-:root:not(.dark) .text-blue-400 {
+html:not(.dark) .text-blue-400 {
   color: #2563eb !important;
 }
-:root:not(.dark) .text-purple-400 {
+html:not(.dark) .text-purple-400 {
   color: #2563eb !important;
 }
 
 /* Header text in light mode - ensure full contrast */
-:root:not(.dark) .text-slate-50 {
+html:not(.dark) .text-slate-50 {
   color: #020617 !important;
 }
 
 /* Small meta text (text-xs, text-[10px], text-[11px]) readability */
-:root:not(.dark) .text-slate-450 {
+html:not(.dark) .text-slate-450 {
   color: #475569 !important;
   font-weight: 500;
 }
-:root:not(.dark) .text-slate-500 {
+html:not(.dark) .text-slate-500 {
   color: #475569 !important;
 }
 
 /* Ensure "pending" / status badge text is readable on their respective colored backgrounds */
-:root:not(.dark) [class*="bg-amber-"] .text-amber-300 {
+html:not(.dark) [class*="bg-amber-"] .text-amber-300 {
   color: #5b21b6 !important;
 }
-:root:not(.dark) [class*="bg-emerald-"] .text-emerald-300 {
+html:not(.dark) [class*="bg-emerald-"] .text-emerald-300 {
   color: #047857 !important;
 }
-:root:not(.dark) [class*="bg-red-"] .text-red-300 {
+html:not(.dark) [class*="bg-red-"] .text-red-300 {
   color: #991b1b !important;
 }
-:root:not(.dark) [class*="bg-blue-"] .text-blue-300 {
+html:not(.dark) [class*="bg-blue-"] .text-blue-300 {
   color: #1e40af !important;
 }
 
 /* Profile settings modal - labels and values clearly readable */
-:root:not(.dark) .text-slate-350 {
+html:not(.dark) .text-slate-350 {
   color: #475569 !important;
   font-weight: 500;
 }
@@ -719,3 +737,12 @@ input[type="checkbox"]:not(.hidden):not(.sr-only):focus-visible {
   animation: modal-content-in 0.28s cubic-bezier(0.34, 1.35, 0.7, 1) forwards;
 }
 
+
+/* Disabled inputs light mode override for WebKit/Tauri */
+html:not(.dark) input:disabled,
+html:not(.dark) select:disabled,
+html:not(.dark) textarea:disabled {
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+  opacity: 0.75 !important;
+}
