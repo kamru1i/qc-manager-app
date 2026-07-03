@@ -59,6 +59,19 @@ export const useQuotesTheme = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleGlobalThemeChange = (e: Event) => {
+        const nextTheme = (e as CustomEvent).detail;
+        setTheme(nextTheme);
+      };
+      window.addEventListener('theme-change', handleGlobalThemeChange);
+      return () => {
+        window.removeEventListener('theme-change', handleGlobalThemeChange);
+      };
+    }
+  }, []);
+
   const toggleTheme = useCallback(() => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);

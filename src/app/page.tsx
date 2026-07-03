@@ -328,6 +328,17 @@ export default function AppPortal() {
     return "dark";
   });
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (theme === "light") {
+        document.documentElement.classList.remove("dark");
+      } else {
+        document.documentElement.classList.add("dark");
+      }
+      window.dispatchEvent(new CustomEvent("theme-change", { detail: theme }));
+    }
+  }, [theme]);
+
   const handleSidebarToggle = () => {
     setIsSidebarCollapsed((prev) => {
       const next = !prev;

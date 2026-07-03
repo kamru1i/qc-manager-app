@@ -857,6 +857,19 @@ export const useDashboardData = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleGlobalThemeChange = (e: Event) => {
+        const nextTheme = (e as CustomEvent).detail;
+        setTheme(nextTheme);
+      };
+      window.addEventListener('theme-change', handleGlobalThemeChange);
+      return () => {
+        window.removeEventListener('theme-change', handleGlobalThemeChange);
+      };
+    }
+  }, []);
+
   // Theme toggle handler
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
