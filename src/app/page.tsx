@@ -183,8 +183,13 @@ export default function AppPortal() {
       }
     };
 
-    fetchProfiles();
-    fetchRecords();
+    // Defer background data fetches — these are only needed for leaderboard
+    // badges and user-management panels, not for the initial dashboard render.
+    // Using a 3s delay lets the main UI show first, then load supplementary data.
+    const deferTimer = setTimeout(() => {
+      fetchProfiles();
+      fetchRecords();
+    }, 3000);
 
     // Subscribe to supabase changes on records table to dynamically refresh badges
     const channel = supabase
@@ -192,13 +197,14 @@ export default function AppPortal() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "records" },
-        (payload) => {
+        () => {
           fetchRecords();
         },
       )
       .subscribe();
 
     return () => {
+      clearTimeout(deferTimer);
       supabase.removeChannel(channel);
     };
   }, [sessionUser]);
@@ -605,37 +611,19 @@ export default function AppPortal() {
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
-        {/* Background ambient glows */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700"></div>
-
-        <div className="w-full max-w-md relative z-10">
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center">
-            <div className="space-y-6 w-full">
-              <div className="relative flex items-center justify-center">
-                <div className="h-20 w-20 border-2 border-purple-500/20 rounded-full absolute"></div>
-                <Loader2 className="h-12 w-12 text-purple-400 animate-spin" />
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
-                  QC Manager
-                </h1>
-                <p className="text-sm text-slate-400 tracking-wide animate-pulse">
-                  Configuring your workspaces...
-                </p>
-              </div>
-
-              {/* Dynamic logs display */}
-              <div className="text-[10px] text-slate-400 font-mono text-left max-h-48 overflow-y-auto mt-4 space-y-1 bg-slate-950/80 p-3 rounded-xl border border-slate-850/80 w-full select-text">
-                <div className="text-slate-500 font-bold border-b border-slate-800/50 pb-1 mb-1 uppercase tracking-wider">
-                  System Logs
-                </div>
-                {logLines.map((line, i) => (
-                  <div key={i} className="break-all">{`> ${line}`}</div>
-                ))}
-              </div>
-            </div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="relative flex items-center justify-center">
+            <div className="h-20 w-20 border-2 border-purple-500/20 rounded-full absolute" />
+            <Loader2 className="h-12 w-12 text-purple-400 animate-spin" />
           </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
+            QC Manager
+          </h1>
+          <p className="text-sm text-slate-400 tracking-wide animate-pulse">
+            Configuring your workspaces...
+          </p>
         </div>
       </main>
     );
