@@ -58,13 +58,20 @@ jobs:
           NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
 
+      - name: Run key verification diagnostics
+        shell: bash
+        env:
+          RAW_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          RAW_PASS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: python verify_key.py
+
       - name: Prepare signing key and password
         shell: bash
         env:
           RAW_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           RAW_PASS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          COMMENT=$(printf '%s' "$RAW_KEY" | head -n 1)
+          COMMENT=$(printf '%s' "$RAW_KEY" | head -n 1 | tr -d '\r')
           DATA=$(printf '%s' "$RAW_KEY" | tail -n +2 | tr -d '\r\n ')
           CLEAN_KEY=$(printf '%s\n%s' "$COMMENT" "$DATA")
           CLEAN_PASS=$(printf '%s' "$RAW_PASS" | tr -d '\r\n')
