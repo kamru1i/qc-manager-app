@@ -118,7 +118,15 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   // Double-click viewing state (Employee 360 Hub)
   const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>('leave');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('user_management_active_subtab');
+      if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'kpi') {
+        return saved as 'profile' | 'leave' | 'quotes' | 'kpi';
+      }
+    }
+    return 'leave';
+  });
   const [viewingStaffRecords, setViewingStaffRecords] = useState<ChutiRecord[]>([]);
   const [viewingStaffSettlements, setViewingStaffSettlements] = useState<LeaveSettlement[]>([]);
   const [viewingStaffHolidayResponses, setViewingStaffHolidayResponses] = useState<GovtHolidayResponse[]>([]);
@@ -189,6 +197,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingStaff, isCreatingNewUser]);
+
+  // Fallback to 'leave' tab if viewingStaff has no quotes access and active tab is quotes/kpi
+  useEffect(() => {
+    if (viewingStaff && !viewingStaff.has_quotes_access && (activeSubTab === 'quotes' || activeSubTab === 'kpi')) {
+      setActiveSubTab('leave');
+    }
+  }, [viewingStaff, activeSubTab]);
 
   // Reset subtab selection when viewingStaff is closed
   useEffect(() => {
@@ -593,7 +608,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               <div className="flex border-b border-slate-800 gap-1 mt-2">
                 <button
                   type="button"
-                  onClick={() => setActiveSubTab('leave')}
+                  onClick={() => {
+                    setActiveSubTab('leave');
+                    localStorage.setItem('user_management_active_subtab', 'leave');
+                  }}
                   className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeSubTab === 'leave'
                       ? 'border-blue-500 text-blue-400 font-bold'
@@ -605,7 +623,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 {viewingStaff.has_quotes_access && (
                   <button
                     type="button"
-                    onClick={() => setActiveSubTab('quotes')}
+                    onClick={() => {
+                      setActiveSubTab('quotes');
+                      localStorage.setItem('user_management_active_subtab', 'quotes');
+                    }}
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'quotes'
                         ? 'border-blue-500 text-blue-400 font-bold'
@@ -618,7 +639,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 {viewingStaff.has_quotes_access && (
                   <button
                     type="button"
-                    onClick={() => setActiveSubTab('kpi')}
+                    onClick={() => {
+                      setActiveSubTab('kpi');
+                      localStorage.setItem('user_management_active_subtab', 'kpi');
+                    }}
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'kpi'
                         ? 'border-blue-500 text-blue-400 font-bold'
@@ -630,7 +654,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 )}
                 <button
                   type="button"
-                  onClick={() => setActiveSubTab('profile')}
+                  onClick={() => {
+                    setActiveSubTab('profile');
+                    localStorage.setItem('user_management_active_subtab', 'profile');
+                  }}
                   className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeSubTab === 'profile'
                       ? 'border-blue-500 text-blue-400 font-bold'
