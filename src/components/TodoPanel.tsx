@@ -59,6 +59,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Daily State
   const [todayStr] = useState(() => new Date().toLocaleDateString('en-CA')); // Local YYYY-MM-DD
+  const isCarryingOverRef = React.useRef(false);
 
   // Archive / All State
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear().toString());
@@ -103,64 +104,118 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
       let currentTodayTodos = todayData || [];
 
+      // A. Check for existing duplicates in today's list and clean them up
+      const uniqueTodayMap = new Map<string, TodoItem>();
+      const duplicateIdsToDelete: string[] = [];
+
+      currentTodayTodos.forEach((todo) => {
+        const key = todo.task.trim().toLowerCase();
+        const existing = uniqueTodayMap.get(key);
+        if (existing) {
+          // Merge status and is_all_time
+          if (todo.status === 'Completed' && existing.status !== 'Completed') {
+            existing.status = 'Completed';
+          } else if (todo.status === 'Working' && existing.status === 'Idle') {
+            existing.status = 'Working';
+          }
+          if (todo.is_all_time) {
+            existing.is_all_time = true;
+          }
+          duplicateIdsToDelete.push(todo.id);
+        } else {
+          uniqueTodayMap.set(key, { ...todo });
+        }
+      });
+
+      if (duplicateIdsToDelete.length > 0) {
+        // Delete duplicates in database
+        const { error: deleteErr } = await supabase
+          .from('todos')
+          .delete()
+          .in('id', duplicateIdsToDelete);
+        
+        if (deleteErr) console.error('Failed to auto-clean duplicate todos:', deleteErr);
+        currentTodayTodos = Array.from(uniqueTodayMap.values());
+      }
+
       // 2. If today has zero todos, perform the carry-over & all-time auto-population
       if (currentTodayTodos.length === 0) {
-        const tempInserted: Partial<TodoItem>[] = [];
-
-        // A. Find the most recent active day to carry over "Working" tasks
-        const { data: lastDateData, error: lastDateErr } = await supabase
-          .from('todos')
-          .select('todo_date')
-          .eq('user_id', profile.id)
-          .lt('todo_date', todayStr)
-          .order('todo_date', { ascending: false })
-          .limit(1);
-
-        if (lastDateErr) throw lastDateErr;
-
-        if (lastDateData && lastDateData.length > 0) {
-          const lastActiveDate = lastDateData[0].todo_date;
-          
-          const { data: lastTodos, error: lastErr } = await supabase
-            .from('todos')
-            .select('*')
-            .eq('user_id', profile.id)
-            .eq('todo_date', lastActiveDate)
-            .order('created_at', { ascending: true });
-
-          if (lastErr) throw lastErr;
-
-          const lastActiveTodos = lastTodos || [];
-
-          lastActiveTodos.forEach((task) => {
-            // Carry over if it was not completed ('Working' or 'Idle') OR if it is an 'All-Time' task (recreated daily)
-            const shouldCarryOver = task.status === 'Working' || task.status === 'Idle' || task.is_all_time;
-            
-            if (shouldCarryOver) {
-              tempInserted.push({
-                user_id: profile.id,
-                codename: profile.username.toUpperCase(),
-                task: task.task,
-                status: 'Idle', // Every carried over task starts as 'Idle' today
-                comment: task.is_all_time ? '' : (task.comment || ''), // reset comment for all-time tasks
-                todo_date: todayStr,
-                is_all_time: task.is_all_time
-              });
-            }
-          });
+        if (isCarryingOverRef.current) {
+          setLoading(false);
+          return;
         }
+        isCarryingOverRef.current = true;
 
-        // Insert carried-over and all-time tasks into database
-        if (tempInserted.length > 0) {
-          const { data: insertedData, error: insertErr } = await supabase
+        try {
+          // A. Find the most recent active day to carry over "Working" tasks
+          const { data: lastDateData, error: lastDateErr } = await supabase
             .from('todos')
-            .insert(tempInserted)
-            .select();
+            .select('todo_date')
+            .eq('user_id', profile.id)
+            .lt('todo_date', todayStr)
+            .order('todo_date', { ascending: false })
+            .limit(1);
 
-          if (insertErr) throw insertErr;
-          if (insertedData) {
-            currentTodayTodos = insertedData;
+          if (lastDateErr) throw lastDateErr;
+
+          if (lastDateData && lastDateData.length > 0) {
+            const lastActiveDate = lastDateData[0].todo_date;
+            
+            const { data: lastTodos, error: lastErr } = await supabase
+              .from('todos')
+              .select('*')
+              .eq('user_id', profile.id)
+              .eq('todo_date', lastActiveDate)
+              .order('created_at', { ascending: true });
+
+            if (lastErr) throw lastErr;
+
+            const lastActiveTodos = lastTodos || [];
+            const taskMap = new Map<string, Partial<TodoItem>>();
+
+            lastActiveTodos.forEach((task) => {
+              // Carry over if it was not completed ('Working' or 'Idle') OR if it is an 'All-Time' task (recreated daily)
+              const shouldCarryOver = task.status === 'Working' || task.status === 'Idle' || task.is_all_time;
+              
+              if (shouldCarryOver) {
+                const taskKey = task.task.trim().toLowerCase();
+                const existing = taskMap.get(taskKey);
+                if (existing) {
+                  // If the new one is permanent, ensure the combined one is also permanent
+                  if (task.is_all_time) {
+                    existing.is_all_time = true;
+                  }
+                } else {
+                  taskMap.set(taskKey, {
+                    user_id: profile.id,
+                    codename: profile.username.toUpperCase(),
+                    task: task.task.trim(),
+                    status: 'Idle', // Every carried over task starts as 'Idle' today
+                    comment: task.is_all_time ? '' : (task.comment || ''), // reset comment for all-time tasks
+                    todo_date: todayStr,
+                    is_all_time: task.is_all_time
+                  });
+                }
+              }
+            });
+
+            const tempInserted = Array.from(taskMap.values());
+
+            // Insert carried-over and all-time tasks into database
+            if (tempInserted.length > 0) {
+              const { data: insertedData, error: insertErr } = await supabase
+                .from('todos')
+                .insert(tempInserted)
+                .select();
+
+              if (insertErr) throw insertErr;
+              if (insertedData) {
+                currentTodayTodos = insertedData;
+              }
+            }
           }
+        } finally {
+          isCarryingOverRef.current = false;
         }
       }
 

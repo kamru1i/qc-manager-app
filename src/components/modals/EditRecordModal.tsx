@@ -103,6 +103,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
               value={editBranchName}
               onChange={setEditBranchName}
               required={true}
+              size="sm"
             />
           </div>
 

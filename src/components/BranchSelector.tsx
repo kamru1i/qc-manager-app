@@ -4,12 +4,14 @@ interface BranchSelectorProps {
   value: string;
   onChange: (val: string) => void;
   required?: boolean;
+  size?: 'sm' | 'md';
 }
 
 export const BranchSelector: React.FC<BranchSelectorProps> = ({
   value,
   onChange,
-  required = true
+  required = true,
+  size = 'md'
 }) => {
   // The select element value is 'PRIDE' for 'PRIDE COMPARE' and 'EAZY' for 'EAZY COMPARE' to keep the option select consistent
   const selectValue = value === 'PRIDE COMPARE' ? 'PRIDE' : (value === 'EAZY COMPARE' ? 'EAZY' : value);
@@ -39,13 +41,17 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
     onChange(val);
   };
 
+  const selectClass = size === 'sm'
+    ? "block w-full h-[34px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+    : "block w-full h-[42px] px-3.5 bg-slate-955 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer";
+
   return (
     <div className="space-y-2">
       <select
         required={required}
         value={selectValue}
         onChange={handleMainChange}
-        className="block w-full px-3.5 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+        className={selectClass}
       >
         <option value="" className="text-slate-500">-- Select Branch --</option>
         {mainBranches.map(b => (
