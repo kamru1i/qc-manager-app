@@ -500,7 +500,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     setSubmitting(false);
 
     if (success) {
-      toast.success('Profile settings updated successfully.');
       // Refresh profiles list
       const { data } = await supabase
         .from('profiles')
