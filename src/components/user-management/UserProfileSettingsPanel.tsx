@@ -3,7 +3,7 @@
 import React from 'react';
 import { Profile } from '@/types';
 import { StaffSettingsForm } from '@/components/StaffSettingsForm';
-import { RefreshCw, KeyRound, Trash2, Check, Loader2 } from 'lucide-react';
+import { RefreshCw, KeyRound, Trash2, Check, Loader2, AlertTriangle } from 'lucide-react';
 
 interface UserProfileSettingsPanelProps {
   isAdmin: boolean;
@@ -38,6 +38,7 @@ interface UserProfileSettingsPanelProps {
   onChangePasswordClick: () => void;
   onDeleteAccountClick: () => void;
   onSaveProfileClick: () => void;
+  isSupervisor?: boolean;
 }
 
 export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> = ({
@@ -73,9 +74,20 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
   onChangePasswordClick,
   onDeleteAccountClick,
   onSaveProfileClick,
+  isSupervisor = false
 }) => {
+  const isTargetAdmin = viewingStaff.role === 'admin';
+  const showSupervisorWarning = isSupervisor && isTargetAdmin;
+
   return (
     <div className="space-y-6">
+      {showSupervisorWarning && (
+        <div className="bg-amber-950/20 border border-amber-900/40 p-4 rounded-xl text-xs text-amber-300 font-semibold flex items-center gap-2 font-sans">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+          Supervisors cannot modify Admin profiles. All settings are read-only.
+        </div>
+      )}
+
       <StaffSettingsForm
         isNewUser={false}
         fullName={editUserFullName}
@@ -104,6 +116,7 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
         canManageRules={editUserCanManageRules}
         setCanManageRules={setEditUserCanManageRules}
         isAdmin={isAdmin}
+        isSupervisor={isSupervisor && !isTargetAdmin}
       />
       
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
@@ -118,13 +131,15 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
             </button>
           )}
           
-          <button
-            type="button"
-            onClick={onChangePasswordClick}
-            className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-          >
-            <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
-          </button>
+          {!showSupervisorWarning && (
+            <button
+              type="button"
+              onClick={onChangePasswordClick}
+              className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+            >
+              <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
+            </button>
+          )}
 
           {isAdmin && viewingStaff.role !== 'admin' && (
             <button
@@ -137,17 +152,19 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
           )}
         </div>
 
-        <div>
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={onSaveProfileClick}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
-          >
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            {submitting ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
+        {!showSupervisorWarning && (
+          <div>
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={onSaveProfileClick}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {submitting ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

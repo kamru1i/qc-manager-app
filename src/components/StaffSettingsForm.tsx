@@ -47,6 +47,7 @@ interface StaffSettingsFormProps {
   setCanManageRules: (val: boolean) => void;
 
   isAdmin: boolean; // whether current viewing user has admin access to modify these fields
+  isSupervisor?: boolean;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -78,7 +79,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setAllowedTypes,
   canManageRules,
   setCanManageRules,
-  isAdmin
+  isAdmin,
+  isSupervisor = false
 }) => {
   return (
     <div className="space-y-6">
@@ -147,21 +149,21 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Leave Tracker Access Card */}
         <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
-            <div className="flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${hasChutiAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
-              <h3 className="text-sm font-bold text-white">Leave Tracker Workspace</h3>
+            <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${hasChutiAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
+                <h3 className="text-sm font-bold text-white">Leave Tracker Workspace</h3>
+              </div>
+              {isAdmin && (
+                <Toggle
+                  checked={hasChutiAccess}
+                  onChange={setHasChutiAccess}
+                  label="Access"
+                />
+              )}
             </div>
-            {isAdmin && (
-              <Toggle
-                checked={hasChutiAccess}
-                onChange={setHasChutiAccess}
-                label="Access"
-              />
-            )}
-          </div>
 
-          {hasChutiAccess ? (
+          {hasChutiAccess && (
             <div className="space-y-4 text-xs text-slate-350 animate-fade-in">
               {/* Supervisor Approval Required */}
               <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
@@ -390,7 +392,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 </div>
               </label>
             </div>
-          ) : (
+          )}
+          {!hasChutiAccess && (
             <p className="text-xs text-slate-500 italic py-4 text-center">This user does not have access to the Leave Tracker workspace.</p>
           )}
         </div>
@@ -402,7 +405,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               <span className={`h-2.5 w-2.5 rounded-full ${hasQuotesAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
               <h3 className="text-sm font-bold text-white">Quotes Manager Workspace</h3>
             </div>
-            {isAdmin && (
+            {(isAdmin || isSupervisor) && (
               <Toggle
                 checked={hasQuotesAccess}
                 onChange={setHasQuotesAccess}
@@ -417,6 +420,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               <CategoryCheckboxList
                 allowedTypes={allowedTypes}
                 onChange={setAllowedTypes}
+                disabled={!isAdmin && !isSupervisor}
               />
 
               {/* Can Manage Quote Rules (Only Admin edits) */}

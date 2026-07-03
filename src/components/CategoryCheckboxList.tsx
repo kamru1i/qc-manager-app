@@ -6,6 +6,7 @@ interface CategoryCheckboxListProps {
   allowedTypes: string[];
   onChange: (types: string[]) => void;
   label?: string;
+  disabled?: boolean;
 }
 
 const ALL_FILE_TYPES: FileType[] = [
@@ -58,11 +59,13 @@ const getCategoryCheckboxStyle = (type: FileType, isChecked: boolean) => {
 export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
   allowedTypes,
   onChange,
-  label = 'Permitted File Entry Types (Categories)'
+  label = 'Permitted File Entry Types (Categories)',
+  disabled = false
 }) => {
   const isAllSelected = ALL_FILE_TYPES.every(type => allowedTypes.includes(type));
 
   const handleToggleCategory = (type: string) => {
+    if (disabled) return;
     const nextTypes = allowedTypes.includes(type)
       ? allowedTypes.filter((t) => t !== type)
       : [...allowedTypes, type];
@@ -70,6 +73,7 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
   };
 
   const handleToggleAll = () => {
+    if (disabled) return;
     if (isAllSelected) {
       onChange(allowedTypes.filter(t => !ALL_FILE_TYPES.includes(t as any)));
     } else {
@@ -84,13 +88,15 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
         <label className="block text-[11px] font-semibold text-slate-300">
           {label}
         </label>
-        <button
-          type="button"
-          onClick={handleToggleAll}
-          className="text-[10px] text-blue-500 hover:text-blue-400 font-semibold transition-colors cursor-pointer"
-        >
-          {isAllSelected ? 'Unselect All' : 'Select All'}
-        </button>
+        {!disabled && (
+          <button
+            type="button"
+            onClick={handleToggleAll}
+            className="text-[10px] text-blue-500 hover:text-blue-400 font-semibold transition-colors cursor-pointer"
+          >
+            {isAllSelected ? 'Unselect All' : 'Select All'}
+          </button>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
         {ALL_FILE_TYPES.map((type) => {
@@ -99,7 +105,11 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
             <label
               key={type}
               onClick={() => handleToggleCategory(type)}
-              className="flex items-center justify-between px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-955/50 text-[10px] font-semibold text-slate-400 hover:text-white cursor-pointer select-none transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className={`flex items-center justify-between px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-955/50 text-[10px] font-semibold text-slate-400 select-none transition-all duration-200 ${
+                disabled 
+                  ? 'opacity-70 pointer-events-none' 
+                  : 'hover:text-white cursor-pointer hover:scale-[1.02] active:scale-[0.98]'
+              }`}
             >
               <span className="truncate mr-1">{type}</span>
               <span className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${

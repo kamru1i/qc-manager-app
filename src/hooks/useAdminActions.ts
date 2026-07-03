@@ -143,8 +143,6 @@ export const useAdminActions = ({
         userId,
         `Reset password for user: ${targetName}`
       );
-
-      showToast('success', 'Password changed successfully!');
       return true;
     } catch (err) {
       console.error('Error resetting password:', err);

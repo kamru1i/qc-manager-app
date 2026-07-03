@@ -55,6 +55,7 @@ interface UserManagementDashboardProps {
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
   topPerformerBadges?: Record<string, BadgeInfo>;
+  onViewStateChange?: (isFullView: boolean) => void;
 }
 
 const ALL_FILE_TYPES = [
@@ -70,6 +71,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   isSidebarCollapsed,
   onSidebarToggle,
   topPerformerBadges = {},
+  onViewStateChange,
 }) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -198,12 +200,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingStaff, isCreatingNewUser]);
 
-  // Fallback to 'leave' tab if viewingStaff has no quotes access and active tab is quotes/kpi
+  // Fallback if viewingStaff has no quotes access and active tab is quotes/kpi
   useEffect(() => {
     if (viewingStaff && !viewingStaff.has_quotes_access && (activeSubTab === 'quotes' || activeSubTab === 'kpi')) {
-      setActiveSubTab('leave');
+      setActiveSubTab(profile?.role === 'supervisor' ? 'profile' : 'leave');
     }
-  }, [viewingStaff, activeSubTab]);
+  }, [viewingStaff, activeSubTab, profile]);
 
   // Reset subtab selection to 'leave' when viewingStaff is closed
   useEffect(() => {
@@ -211,6 +213,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setActiveSubTab('leave');
     }
   }, [viewingStaff]);
+
+  // Notify parent component when full-screen view state changes
+  useEffect(() => {
+    if (onViewStateChange) {
+      onViewStateChange(!!viewingStaff || isCreatingNewUser);
+    }
+  }, [viewingStaff, isCreatingNewUser, onViewStateChange]);
 
   // Fetch all leave records, settlements, and holiday responses for the selected staff member
   const fetchStaffLeaveData = useCallback(async (staffId: string) => {
@@ -605,20 +614,22 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
             {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
             {!isCreatingNewUser && viewingStaff && (
               <div className="flex border-b border-slate-800 gap-1 mt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSubTab('leave');
-                    localStorage.setItem('user_management_active_subtab', 'leave');
-                  }}
-                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeSubTab === 'leave'
-                      ? 'border-blue-500 text-blue-400 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Calendar className="h-3.5 w-3.5" /> Leave Details
-                </button>
+                {profile?.role !== 'supervisor' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSubTab('leave');
+                      localStorage.setItem('user_management_active_subtab', 'leave');
+                    }}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeSubTab === 'leave'
+                        ? 'border-blue-500 text-blue-400 font-bold'
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Calendar className="h-3.5 w-3.5" /> Leave History
+                  </button>
+                )}
                 {viewingStaff.has_quotes_access && (
                   <button
                     type="button"
@@ -781,6 +792,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   }}
                   onDeleteAccountClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
                   onSaveProfileClick={handleUpdateUser}
+                  isSupervisor={profile?.role === 'supervisor'}
                 />
               )}
 
@@ -829,16 +841,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
             </div>
 
             <div className="flex items-center gap-2 font-sans">
-              <button
-                type="button"
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('user-management-back-to-chuti'));
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-305 hover:text-white rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
-                title="Back to Leave Tracker"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 text-blue-400" /> Back
-              </button>
               {isAdmin && (
                 <button
                   onClick={() => {
@@ -930,7 +932,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       <tr 
                         key={u.id} 
                         onDoubleClick={() => {
-                          setActiveSubTab('leave');
+                          if (profile?.role === 'supervisor') {
+                            setActiveSubTab(u.has_quotes_access ? 'quotes' : 'profile');
+                          } else {
+                            setActiveSubTab('leave');
+                          }
                           setViewingStaff(u);
                         }}
                         className="hover:bg-slate-900/25 transition-colors cursor-pointer select-none"
