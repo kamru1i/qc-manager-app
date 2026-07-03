@@ -1,5 +1,6 @@
-import React from 'react';
-import { Edit, Trash2, Search, Plus } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { Edit, Trash2, Search, Plus, Loader2 } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { FilterPanel } from './FilterPanel';
 import { StatusBadge } from './StatusBadge';
@@ -64,7 +65,45 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   showPendingBadge = false,
   initialFetchDone = true,
 }) => {
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    record: ChutiRecord;
+  } | null>(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Dismiss context menu on click outside
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setContextMenu(null);
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => {
+      window.removeEventListener('click', handleOutsideClick);
+    };
+  }, []);
+
+  // Press Escape to exit Selection Mode and clear selection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const yearOptions = [
     { value: 'all', label: 'All' },
     ...availableYears.map((y) => ({ value: y, label: y })),
@@ -79,6 +118,116 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       return commentMatch || typeMatch;
     });
   }, [records, searchTerm]);
+
+  const showActionColumn = isSelectionMode;
+
+  const cellStyle = useMemo(
+    () => ({
+      width: showActionColumn ? '72px' : '0px',
+      minWidth: showActionColumn ? '72px' : '0px',
+      maxWidth: showActionColumn ? '72px' : '0px',
+      opacity: showActionColumn ? 1 : 0,
+      transition:
+        'width 300ms ease-out, min-width 300ms ease-out, max-width 300ms ease-out, opacity 300ms ease-out',
+    }),
+    [showActionColumn]
+  );
+
+  const getInnerStyle = (paddingTop: string, paddingBottom: string) => {
+    return {
+      width: showActionColumn ? '72px' : '0px',
+      minWidth: showActionColumn ? '72px' : '0px',
+      maxWidth: showActionColumn ? '72px' : '0px',
+      paddingLeft: showActionColumn ? '12px' : '0px',
+      paddingRight: showActionColumn ? '16px' : '0px',
+      paddingTop: showActionColumn ? paddingTop : '0px',
+      paddingBottom: showActionColumn ? paddingBottom : '0px',
+      transition:
+        'width 300ms ease-out, min-width 300ms ease-out, max-width 300ms ease-out, opacity 300ms ease-out, padding 300ms ease-out',
+    };
+  };
+
+  const handleSelectAllToggle = () => {
+    if (selectedIds.length === filteredRecords.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredRecords.map((r) => r.id || ''));
+    }
+  };
+
+  const handleRowClick = (record: ChutiRecord) => {
+    if (isSelectionMode && record.id) {
+      const rid = record.id;
+      setSelectedIds((prev) =>
+        prev.includes(rid) ? prev.filter((x) => x !== rid) : [...prev, rid]
+      );
+    }
+  };
+
+  const handleRowContextMenu = (e: React.MouseEvent, record: ChutiRecord) => {
+    e.preventDefault();
+    const menuWidth = 144;
+    const menuHeight = 120;
+    const x =
+      e.clientX + menuWidth > window.innerWidth
+        ? e.clientX - menuWidth
+        : e.clientX;
+    const y =
+      e.clientY + menuHeight > window.innerHeight
+        ? e.clientY - menuHeight
+        : e.clientY;
+
+    setContextMenu({
+      x,
+      y,
+      record,
+    });
+  };
+
+  const handleContextSelect = (record: ChutiRecord) => {
+    if (!record.id) return;
+    const rid = record.id;
+    setIsSelectionMode(true);
+    setSelectedIds((prev) => {
+      if (prev.includes(rid)) return prev;
+      return [...prev, rid];
+    });
+    setContextMenu(null);
+  };
+
+  const handleContextDeselect = (record: ChutiRecord) => {
+    if (!record.id) return;
+    const rid = record.id;
+    setSelectedIds((prev) => prev.filter((id) => id !== rid));
+    setContextMenu(null);
+  };
+
+  const handleContextEdit = (record: ChutiRecord) => {
+    setContextMenu(null);
+    if (onEditClick) {
+      onEditClick(record);
+    }
+  };
+
+  const handleContextDelete = (record: ChutiRecord) => {
+    setContextMenu(null);
+    onDeleteClick(record);
+  };
+
+  const handleBulkDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected records?`)) {
+      const idsToDelete = [...selectedIds];
+      setSelectedIds([]);
+      setIsSelectionMode(false);
+      
+      for (const id of idsToDelete) {
+        const record = records.find(r => r.id === id);
+        if (record) {
+          await onDeleteClick(record);
+        }
+      }
+    }
+  };
 
   const handleReset = () => {
     setSearchTerm('');
@@ -160,7 +309,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               {emptyMessage}
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-slate-800">
+            <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
               <thead className="bg-slate-955/60">
                 <tr>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
@@ -170,7 +319,43 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                   <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Leave Hours</th>
                   {allowOvertime && <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Overtime</th>}
                   <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Comment</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
+                  <th
+                    className="p-0 text-center overflow-hidden border-0"
+                    style={cellStyle}
+                  >
+                    <div
+                      className="flex items-center justify-center gap-2 overflow-hidden mx-auto"
+                      style={getInnerStyle("8px", "8px")}
+                    >
+                      <button
+                        type="button"
+                        onClick={handleBulkDelete}
+                        className={`p-1 text-red-500 hover:text-red-400 hover:bg-slate-800/80 rounded cursor-pointer flex items-center justify-center shrink-0 transition-all duration-300 transform ${
+                          selectedIds.length > 0
+                            ? "scale-100 opacity-100 w-6"
+                            : "scale-0 opacity-0 w-0"
+                        }`}
+                        title={`Delete ${selectedIds.length} selected records`}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500 stroke-[2.5] shrink-0" />
+                      </button>
+                      <input
+                        type="checkbox"
+                        checked={
+                          filteredRecords.length > 0 &&
+                          filteredRecords.every((r) =>
+                            selectedIds.includes(r.id || '')
+                          )
+                        }
+                        onChange={handleSelectAllToggle}
+                        className={`rounded-full border border-slate-700 bg-slate-955 text-blue-500 focus:ring-blue-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-blue-500 checked:border-blue-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 transform shrink-0 ${
+                          isSelectionMode
+                            ? "scale-100 opacity-100"
+                            : "scale-0 opacity-0"
+                        }`}
+                      />
+                    </div>
+                  </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
@@ -178,7 +363,14 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 {filteredRecords.map((r) => {
                   const isTemp = typeof r.id === 'string' && r.id.startsWith('temp-');
                   return (
-                    <tr key={r.id} className="hover:bg-slate-900/30 transition-all">
+                    <tr
+                      key={r.id}
+                      onContextMenu={(e) => handleRowContextMenu(e, r)}
+                      onClick={() => handleRowClick(r)}
+                      className={`hover:bg-slate-900/30 transition-all ${
+                        isSelectionMode ? "cursor-pointer select-none" : ""
+                      }`}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center justify-center gap-2">
                         {formatDate(r.date)}
                         {showPendingBadge && isTemp && (
@@ -202,7 +394,11 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
-                            onClick={() => onToggleAdjustment(r)}
+                            onClick={(e) => {
+                              if (isSelectionMode) return;
+                              e.stopPropagation();
+                              onToggleAdjustment(r);
+                            }}
                             className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                               (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'bg-blue-600' : 'bg-slate-800'
                             }`}
@@ -243,33 +439,31 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                       <td className="px-6 py-4 text-sm text-slate-400 max-w-[150px] truncate text-center" title={getCleanComment(r.comment)}>
                         {getCleanComment(r.comment) || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <div className="flex justify-center gap-1.5">
-                          {r.status === 'needs_review' && onRevisionClick && (
-                            <button
-                              onClick={() => onRevisionClick(r)}
-                              className="text-purple-400 hover:text-purple-300 p-1.5 rounded-lg hover:bg-purple-500/10 cursor-pointer transition-all animate-pulse"
-                              title="Needs Review (Revision)"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                          )}
-                          {onEditClick && (
-                            <button
-                              onClick={() => onEditClick(r)}
-                              className="text-blue-400 hover:text-blue-300 p-1.5 rounded-lg hover:bg-blue-500/10 cursor-pointer transition-all"
-                              title="Admin Edit"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => onDeleteClick(r)}
-                            className="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-red-500/10 cursor-pointer transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                      {/* Animated selection checkbox column in place of Action */}
+                      <td
+                        className="p-0 text-center overflow-hidden border-0"
+                        style={cellStyle}
+                      >
+                        <div
+                          className="flex justify-center items-center overflow-hidden mx-auto"
+                          style={getInnerStyle("12px", "12px")}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(r.id || '')}
+                            onChange={() => {
+                              if (!r.id) return;
+                              const rid = r.id;
+                              setSelectedIds((prev) =>
+                                prev.includes(rid) ? prev.filter((x) => x !== rid) : [...prev, rid]
+                              );
+                            }}
+                            className={`rounded-full border border-slate-700 bg-slate-955 text-blue-500 focus:ring-blue-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-blue-500 checked:border-blue-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 transform shrink-0 ${
+                              isSelectionMode
+                                ? "scale-100 opacity-100"
+                                : "scale-0 opacity-0"
+                            }`}
+                          />
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
@@ -290,6 +484,55 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
           )}
         </div>
       </div>
+
+      {/* Premium Glassmorphic Context Menu */}
+      {contextMenu &&
+        isMounted &&
+        createPortal(
+          <div
+            style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
+            className="fixed z-50 backdrop-blur-lg bg-slate-900/95 border border-slate-800 rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
+          >
+            {selectedIds.includes(contextMenu.record.id || '') ? (
+              <button
+                type="button"
+                onClick={() => handleContextDeselect(contextMenu.record)}
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              >
+                <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
+                Deselect
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleContextSelect(contextMenu.record)}
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              >
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                Select
+              </button>
+            )}
+            {onEditClick && (
+              <button
+                type="button"
+                onClick={() => handleContextEdit(contextMenu.record)}
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Edit className="h-3.5 w-3.5 text-slate-500" />
+                Edit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => handleContextDelete(contextMenu.record)}
+              className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-[2]" />
+              Delete
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

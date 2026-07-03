@@ -26,8 +26,8 @@ interface UnifiedSidebarProps {
   profile: Profile | null;
   activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules';
   onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules') => void;
-  activeChutiTab?: 'add_leave' | 'staff_master' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings';
-  onChutiTabChange?: (tab: 'add_leave' | 'staff_master' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings') => void;
+  activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings';
+  onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings') => void;
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
 }
@@ -152,23 +152,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   {!isSidebarCollapsed && <span className="whitespace-nowrap">Add Leave</span>}
                 </button>
 
-                {/* 2. Leave Dashboard (Admin Only) */}
-                {profile?.role === 'admin' && (
-                  <button
-                    onClick={() => onChutiTabChange('staff_master')}
-                    title={isSidebarCollapsed ? 'Leave Dashboard' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeChutiTab === 'staff_master'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                    }`}
-                  >
-                    <User className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Dashboard</span>}
-                  </button>
-                )}
 
                 {/* 3. Leave History (All Users) */}
                 <button

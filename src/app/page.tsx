@@ -78,19 +78,18 @@ export default function AppPortal() {
   });
 
   const [activeChutiTab, setActiveChutiTab] = useState<
-    "add_leave" | "staff_master" | "leave_history" | "govt_responses" | "settlement" | "leave_settings"
+    "add_leave" | "leave_history" | "govt_responses" | "settlement" | "leave_settings"
   >(() => {
     if (typeof window !== "undefined") {
       const saved = sessionStorage.getItem("adminActiveTab");
       if (
         saved === "add_leave" ||
-        saved === "staff_master" ||
         saved === "leave_history" ||
         saved === "govt_responses" ||
         saved === "settlement" ||
         saved === "leave_settings"
       ) {
-        return saved as "add_leave" | "staff_master" | "leave_history" | "govt_responses" | "settlement" | "leave_settings";
+        return saved as "add_leave" | "leave_history" | "govt_responses" | "settlement" | "leave_settings";
       }
     }
     return "add_leave";
@@ -111,7 +110,7 @@ export default function AppPortal() {
   };
 
   const handleChutiTabChange = (
-    tab: "add_leave" | "staff_master" | "leave_history" | "govt_responses" | "settlement" | "leave_settings",
+    tab: "add_leave" | "leave_history" | "govt_responses" | "settlement" | "leave_settings",
   ) => {
     setActiveChutiTab(tab);
     sessionStorage.setItem("adminActiveTab", tab);

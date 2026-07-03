@@ -26,8 +26,8 @@ import { useModalHandlers } from '@/hooks/useModalHandlers';
 import { useDesktopNotifications } from '@/hooks/useDesktopNotifications';
 
 interface DashboardProps {
-  activeChutiTab: 'add_leave' | 'staff_master' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings';
-  onChutiTabChange: (tab: 'add_leave' | 'staff_master' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings') => void;
+  activeChutiTab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings';
+  onChutiTabChange: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings') => void;
 }
 
 export default function Dashboard({
@@ -113,7 +113,7 @@ export default function Dashboard({
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdminAddLeaveModal, setShowAdminAddLeaveModal] = useState(false);
 
-  const handleChutiTabChange = (tab: 'add_leave' | 'staff_master' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings') => {
+  const handleChutiTabChange = (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings') => {
     onChutiTabChange(tab);
     if (adminActiveTab !== 'admin' && tab !== 'add_leave' && tab !== 'leave_settings') {
       setAdminActiveTab('admin');
@@ -966,10 +966,10 @@ export default function Dashboard({
 
         {/* ================= ADMIN STAFF VIEW (Leave Dashboard) ================= */}
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && 
-          (activeChutiTab === 'staff_master' || activeChutiTab === 'govt_responses' || activeChutiTab === 'settlement') && (
+          (activeChutiTab === 'govt_responses' || activeChutiTab === 'settlement') && (
           <AdminDashboardView
             activeTab={activeChutiTab}
-            setActiveTab={handleChutiTabChange}
+            setActiveTab={(tab) => handleChutiTabChange(tab)}
             profilesList={profilesList}
             viewingStaffId={viewingStaffId}
             setViewingStaffId={setViewingStaffId}

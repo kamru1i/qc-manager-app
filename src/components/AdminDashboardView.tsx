@@ -93,8 +93,8 @@ interface AdminDashboardViewProps {
   adminRecords: ChutiRecordWithProfile[];
   currentUserProfile: Profile | null;
   initialFetchDone: boolean;
-  activeTab?: 'staff_master' | 'govt_responses' | 'settlement';
-  setActiveTab?: (tab: 'staff_master' | 'govt_responses' | 'settlement') => void;
+  activeTab?: 'govt_responses' | 'settlement';
+  setActiveTab?: (tab: 'govt_responses' | 'settlement') => void;
 }
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
@@ -149,14 +149,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
 
   
-  const [localActiveTab, setLocalActiveTab] = React.useState<'staff_master' | 'govt_responses' | 'settlement'>(() => {
+  const [localActiveTab, setLocalActiveTab] = React.useState<'govt_responses' | 'settlement'>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('adminActiveTab');
-      if (saved === 'staff_master' || saved === 'govt_responses' || saved === 'settlement') {
+      if (saved === 'govt_responses' || saved === 'settlement') {
         return saved;
       }
     }
-    return 'staff_master';
+    return 'govt_responses';
   });
 
   const activeTab = propActiveTab || localActiveTab;
@@ -477,27 +477,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           )}
         </div>
       ) : (
-        /* ================= STAFF MASTER DATABASE SUMMARY TABLE ================= */
         <div className="flex flex-col gap-6">
-
-
-          {activeTab === 'staff_master' ? (
-            /* ================= STAFF MASTER DATABASE SUMMARY TABLE ================= */
-            <StaffMasterTable
-              profilesList={profilesList}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              getUserSummaryStats={getUserSummaryStats}
-              selectedYear={selectedYear}
-              setSelectedYear={setSelectedYear}
-              availableYears={availableYears}
-              onAddStaffClick={onAddStaffClick}
-              onExportExcel={onExportSummaryExcel}
-              onExportPDF={onExportSummaryPDF}
-              onViewDetails={setViewingStaffId}
-              initialFetchDone={initialFetchDone}
-            />
-          ) : activeTab === 'govt_responses' ? (
+          {activeTab === 'govt_responses' ? (
             /* ================= GOVT HOLIDAY RESPONSES TABLE REPORT ================= */
             <div className="bg-slate-900/40 backdrop-blur-xl  shadow-2xl rounded-2xl p-6 flex flex-col gap-4 animate-fade-in">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
