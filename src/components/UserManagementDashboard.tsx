@@ -118,7 +118,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   // Double-click viewing state (Employee 360 Hub)
   const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>('profile');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>('leave');
   const [viewingStaffRecords, setViewingStaffRecords] = useState<ChutiRecord[]>([]);
   const [viewingStaffSettlements, setViewingStaffSettlements] = useState<LeaveSettlement[]>([]);
   const [viewingStaffHolidayResponses, setViewingStaffHolidayResponses] = useState<GovtHolidayResponse[]>([]);
@@ -593,17 +593,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               <div className="flex border-b border-slate-800 gap-1 mt-2">
                 <button
                   type="button"
-                  onClick={() => setActiveSubTab('profile')}
-                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeSubTab === 'profile'
-                      ? 'border-blue-500 text-blue-400 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Settings className="h-3.5 w-3.5" /> Profile Settings
-                </button>
-                <button
-                  type="button"
                   onClick={() => setActiveSubTab('leave')}
                   className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeSubTab === 'leave'
@@ -639,6 +628,17 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('profile')}
+                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeSubTab === 'profile'
+                      ? 'border-blue-500 text-blue-400 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Settings className="h-3.5 w-3.5" /> Profile Settings
+                </button>
               </div>
             )}
           </div>
