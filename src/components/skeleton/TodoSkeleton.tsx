@@ -50,7 +50,7 @@ export const TodoSkeleton: React.FC<TodoSkeletonProps> = ({ className = '' }) =>
               <div className="flex items-center gap-2.5">
                 <div
                   className={`h-3.5 rounded-lg ${innerBg}`}
-                  style={{ width: `${45 + Math.random() * 35}%` }}
+                  style={{ width: `${45 + (i * 17) % 35}%` }}
                 />
                 {/* Permanent badge placeholder (shown on some items) */}
                 {i % 2 === 0 && (
