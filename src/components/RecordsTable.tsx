@@ -607,23 +607,23 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                 >
                   <td className="px-4 py-2.5 w-28">
                     <div className="flex flex-col gap-1">
-                      <div className="h-3 w-16 bg-slate-800 rounded animate-pulse" />
+                      <div className="h-3 w-16 bg-slate-800/40 rounded-lg animate-pulse" />
                       {showDate && (
-                        <div className="h-2 w-10 bg-slate-850 rounded animate-pulse" />
+                        <div className="h-2 w-10 bg-slate-850/30 rounded-lg animate-pulse" />
                       )}
                     </div>
                   </td>
                   <td className="px-4 py-2.5">
-                    <div className="h-3 w-40 bg-slate-800 rounded animate-pulse" />
+                    <div className="h-3 w-40 bg-slate-800/40 rounded-lg animate-pulse" />
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <div className="h-3 w-12 bg-slate-800 rounded animate-pulse mx-auto" />
+                    <div className="h-3 w-12 bg-slate-800/40 rounded-lg animate-pulse mx-auto" />
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <div className="h-3 w-16 bg-slate-800 rounded animate-pulse mx-auto" />
+                    <div className="h-3 w-16 bg-slate-800/40 rounded-lg animate-pulse mx-auto" />
                   </td>
                   <td className="px-4 py-2.5 w-32 text-center">
-                    <div className="h-5 w-20 bg-slate-800/80 rounded-full animate-pulse mx-auto" />
+                    <div className="h-5 w-20 bg-slate-800/30 rounded-full animate-pulse mx-auto" />
                   </td>
                   <td
                     className="p-0 text-right overflow-hidden border-0"
@@ -633,7 +633,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                       className="flex justify-end items-center overflow-hidden"
                       style={getInnerStyle("16px", "16px")}
                     >
-                      <div className="h-3.5 w-3.5 bg-slate-800 rounded-full animate-pulse shrink-0" />
+                      <div className="h-3.5 w-3.5 bg-slate-800/40 rounded-full animate-pulse shrink-0" />
                     </div>
                   </td>
                 </tr>
