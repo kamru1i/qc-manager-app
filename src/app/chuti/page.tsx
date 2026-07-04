@@ -23,7 +23,7 @@ import { useAdminStaffOperations } from '@/hooks/useAdminStaffOperations';
 import { useDerivedState } from '@/hooks/useDerivedState';
 import { useExportOperations } from '@/hooks/useExportOperations';
 import { useModalHandlers } from '@/hooks/useModalHandlers';
-import { useDesktopNotifications } from '@/hooks/useDesktopNotifications';
+
 
 interface DashboardProps {
   activeChutiTab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings';
@@ -167,8 +167,7 @@ export default function Dashboard({
     return () => window.removeEventListener('trigger-viewing-staff', handleTrigger);
   }, [setViewingStaffId]);
 
-  // Start Tauri Desktop Notification Listener
-  useDesktopNotifications(profile?.id);
+
 
   // Derived state (filtering, grouping, notifications, stats)
   const derivedState = useDerivedState({

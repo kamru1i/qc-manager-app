@@ -41,6 +41,7 @@ export interface Profile {
   can_manage_rules?: boolean;
   has_chuti_access?: boolean;
   has_quotes_access?: boolean;
+  created_at?: string;
 }
 
 export interface ChutiRecordWithProfile extends ChutiRecord {

@@ -319,6 +319,53 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, [viewingStaff, fetchStaffLeaveData, profile]);
 
+  // Real-time synchronization for viewed staff leave data
+  useEffect(() => {
+    if (!viewingStaff) return;
+
+    const isSupervisedByMe = profile?.role === 'admin' || (profile?.role === 'supervisor' && Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile?.id));
+    if (!isSupervisedByMe) return;
+
+    const chutiChannel = supabase
+      .channel(`rt-viewing-staff-chuti-${viewingStaff.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'chuti', filter: `user_id=eq.${viewingStaff.id}` },
+        () => {
+          fetchStaffLeaveData(viewingStaff.id);
+        }
+      )
+      .subscribe();
+
+    const settlementsChannel = supabase
+      .channel(`rt-viewing-staff-settlements-${viewingStaff.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leave_settlements', filter: `user_id=eq.${viewingStaff.id}` },
+        () => {
+          fetchStaffLeaveData(viewingStaff.id);
+        }
+      )
+      .subscribe();
+
+    const holidayResponsesChannel = supabase
+      .channel(`rt-viewing-staff-holidays-${viewingStaff.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'govt_holiday_responses', filter: `user_id=eq.${viewingStaff.id}` },
+        () => {
+          fetchStaffLeaveData(viewingStaff.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(chutiChannel);
+      supabase.removeChannel(settlementsChannel);
+      supabase.removeChannel(holidayResponsesChannel);
+    };
+  }, [viewingStaff, fetchStaffLeaveData, profile]);
+
   // Toggle adjustment handler for leaves in details view
   const handleToggleAdjustment = async (record: ChutiRecord) => {
     try {

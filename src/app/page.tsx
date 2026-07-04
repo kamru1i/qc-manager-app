@@ -15,6 +15,8 @@ import { useGlobalNotifications } from "@/hooks/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/modals/UserNotificationsModal";
 import { SkeletonLoader } from "@/components/SkeletonLoader";
 import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/QuotesSkeletonLoader";
+import { subscribeUserToPush } from "@/utils/webPushHelper";
+import { useDesktopNotifications } from "@/hooks/useDesktopNotifications";
 
 
 const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
@@ -352,25 +354,43 @@ export default function AppPortal() {
   const [chutiNotificationCount, setChutiNotificationCount] = useState(0);
   const [chutiOfflineCount, setChutiOfflineCount] = useState(0);
 
-  // Own local state for the global notification modal — plain and direct, works across all tabs
-  const [showNotificationsModal, setShowNotificationsModalRaw] = useState(false);
-
   const {
     unreadCount: globalUnreadCount,
     notificationsList: globalNotificationsList,
+    showNotificationsModal,
+    setShowNotificationsModal,
     handleSaveHolidayResponse,
   } = useGlobalNotifications(sessionUser, profile, profilesList);
 
-  // Wrapper that also stores last-viewed time
-  const setShowNotificationsModal = (val: boolean) => {
-    setShowNotificationsModalRaw(val);
-    if (val) {
-      const now = new Date().toISOString();
-      localStorage.setItem('last_viewed_notifications_time', now);
-    }
-  };
-
   const [chutiNotificationsList, setChutiNotificationsList] = useState<any[] | null>(null);
+
+  // Global Tauri Desktop Notification Listener (active on all tabs)
+  useDesktopNotifications(profile?.id);
+
+  // Background Web Push auto-subscription on load for browser users
+  useEffect(() => {
+    if (sessionUser && profile) {
+      const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+      if (isTauri) return;
+
+      const autoSubscribe = async () => {
+        try {
+          const permission = Notification.permission;
+          if (permission === 'granted' || permission === 'default') {
+            const success = await subscribeUserToPush(sessionUser.id);
+            if (success) {
+              localStorage.setItem('push_subscribed_pref_' + sessionUser.id, 'true');
+            }
+          }
+        } catch (err) {
+          console.error('Failed to auto-subscribe user to push notifications:', err);
+        }
+      };
+
+      const timer = setTimeout(autoSubscribe, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [sessionUser, profile]);
 
   useEffect(() => {
     const handleCountChange = (e: Event) => {
@@ -419,7 +439,7 @@ export default function AppPortal() {
         handleOpenUserNotif,
       );
     };
-  }, [setShowNotificationsModalRaw]);
+  }, [setShowNotificationsModal]);
 
   useEffect(() => {
     if (activeTab !== "chuti" || (activeChutiTab !== "leave_history" && activeChutiTab !== "govt_responses" && activeChutiTab !== "settlement")) return;
@@ -894,7 +914,7 @@ export default function AppPortal() {
         onManualSync={() =>
           window.dispatchEvent(new CustomEvent("trigger-manual-sync"))
         }
-        notificationCount={activeTab === 'chuti' ? chutiNotificationCount : globalUnreadCount}
+        notificationCount={globalUnreadCount}
         offlineCount={activeTab === 'chuti' ? chutiOfflineCount : 0}
       />
 
@@ -906,7 +926,7 @@ export default function AppPortal() {
         <UserNotificationsModal
           showUserNotificationsModal={showNotificationsModal}
           setShowUserNotificationsModal={setShowNotificationsModal}
-          userNotificationsList={activeTab === 'chuti' && chutiNotificationsList !== null ? chutiNotificationsList : globalNotificationsList}
+          userNotificationsList={globalNotificationsList}
           profile={profile}
           onSaveHolidayResponse={handleSaveHolidayResponse}
           onRevisionClick={(record) => {

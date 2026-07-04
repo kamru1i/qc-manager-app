@@ -98,9 +98,16 @@ export const useQuotesDashboardData = () => {
     }
   }, []);
 
+  const fetchingRef = useRef(false);
+
   // Fetch all records for the selected Month & Year
   const fetchRecords = useCallback(async (isSilent: boolean = false) => {
     if (!sessionUser || !profile) return;
+    if (fetchingRef.current) {
+      console.log('fetchRecords is already in progress. Skipping concurrent run.');
+      return;
+    }
+    fetchingRef.current = true;
     if (!isSilent) setRecordsLoading(true);
 
     try {
@@ -274,6 +281,7 @@ export const useQuotesDashboardData = () => {
                   *,
                   profiles (username, full_name)
                 `)
+                .gte('submitted_at', '2026-05-01T00:00:00.000Z')
                 .order('submitted_at', { ascending: false })
                 .range(from, to);
 
@@ -421,6 +429,7 @@ export const useQuotesDashboardData = () => {
     } finally {
       setRecordsLoading(false);
       setInitialFetchDone(true);
+      fetchingRef.current = false;
     }
   }, [sessionUser, profile, selectedYear, selectedMonth, showToast, setProfilesList]);
 
@@ -496,6 +505,8 @@ export const useQuotesDashboardData = () => {
       const currentYearStr = now.getFullYear().toString();
       const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
       datesSet.add(`${currentYearStr}-${currentMonthStr}`);
+      // Ensure June 2026 is always available since it has been restored/backfilled
+      datesSet.add('2026-06');
 
       if (earliestDate && !isNaN(earliestDate.getTime()) && latestDate && !isNaN(latestDate.getTime())) {
         // Generate all year-month pairs in the range [earliest, latest]
