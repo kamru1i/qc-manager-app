@@ -1,20 +1,19 @@
 'use client';
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { UnifiedSidebar } from '@/components/UnifiedSidebar';
+import { UserDashboardView } from '@/components/UserDashboardView';
+import { AdminDashboardView } from '@/components/AdminDashboardView';
+import { AddLeave } from '@/components/AddLeave';
+import { AdminLeaveSettings } from '@/components/AdminLeaveSettings';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { DashboardProvider } from '@/contexts/DashboardContext';
 import { DashboardModals } from '@/components/DashboardModals';
 import LoginPage from '@/app/login/page';
-
-const UserDashboardView = lazy(() => import('@/components/UserDashboardView').then(m => ({ default: m.UserDashboardView })));
-const AdminDashboardView = lazy(() => import('@/components/AdminDashboardView').then(m => ({ default: m.AdminDashboardView })));
-const AddLeave = lazy(() => import('@/components/AddLeave').then(m => ({ default: m.AddLeave })));
-const AdminLeaveSettings = lazy(() => import('@/components/AdminLeaveSettings').then(m => ({ default: m.AdminLeaveSettings })));
 
 
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -50,7 +49,7 @@ export default function Dashboard({
   }, []);
 
   // Core Dashboard State & Real-time monitors
-  const dashboardData = useDashboardData(activeChutiTab);
+  const dashboardData = useDashboardData();
   const {
     sessionUser,
     profile,
@@ -815,7 +814,9 @@ export default function Dashboard({
 
   return (
     <DashboardProvider value={contextValue}>
-      <Suspense fallback={<SkeletonLoader variant={activeChutiTab === 'add_leave' ? 'chuti-form' : 'leaves-table'} />}>
+
+
+        
         {/* ================= ADD LEAVE INLINE VIEW ================= */}
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab === 'add_leave' && (
           <AddLeave
@@ -940,7 +941,6 @@ export default function Dashboard({
             initialFetchDone={initialFetchDone}
           />
         )}
-      </Suspense>
 
       <DashboardModals />
     </DashboardProvider>
