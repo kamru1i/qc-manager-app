@@ -352,13 +352,23 @@ export default function AppPortal() {
   const [chutiNotificationCount, setChutiNotificationCount] = useState(0);
   const [chutiOfflineCount, setChutiOfflineCount] = useState(0);
 
+  // Own local state for the global notification modal — plain and direct, works across all tabs
+  const [showNotificationsModal, setShowNotificationsModalRaw] = useState(false);
+
   const {
     unreadCount: globalUnreadCount,
     notificationsList: globalNotificationsList,
-    showNotificationsModal,
-    setShowNotificationsModal,
     handleSaveHolidayResponse,
   } = useGlobalNotifications(sessionUser, profile, profilesList);
+
+  // Wrapper that also stores last-viewed time
+  const setShowNotificationsModal = (val: boolean) => {
+    setShowNotificationsModalRaw(val);
+    if (val) {
+      const now = new Date().toISOString();
+      localStorage.setItem('last_viewed_notifications_time', now);
+    }
+  };
 
   const [chutiNotificationsList, setChutiNotificationsList] = useState<any[] | null>(null);
 
@@ -409,7 +419,7 @@ export default function AppPortal() {
         handleOpenUserNotif,
       );
     };
-  }, [setShowNotificationsModal]);
+  }, [setShowNotificationsModalRaw]);
 
   useEffect(() => {
     if (activeTab !== "chuti" || (activeChutiTab !== "leave_history" && activeChutiTab !== "govt_responses" && activeChutiTab !== "settlement")) return;
@@ -884,8 +894,8 @@ export default function AppPortal() {
         onManualSync={() =>
           window.dispatchEvent(new CustomEvent("trigger-manual-sync"))
         }
-        notificationCount={chutiNotificationCount > 0 ? chutiNotificationCount : globalUnreadCount}
-        offlineCount={chutiOfflineCount}
+        notificationCount={activeTab === 'chuti' ? chutiNotificationCount : globalUnreadCount}
+        offlineCount={activeTab === 'chuti' ? chutiOfflineCount : 0}
       />
 
       {/* Portal Target for Modals */}
@@ -896,7 +906,7 @@ export default function AppPortal() {
         <UserNotificationsModal
           showUserNotificationsModal={showNotificationsModal}
           setShowUserNotificationsModal={setShowNotificationsModal}
-          userNotificationsList={chutiNotificationsList ?? globalNotificationsList}
+          userNotificationsList={activeTab === 'chuti' && chutiNotificationsList !== null ? chutiNotificationsList : globalNotificationsList}
           profile={profile}
           onSaveHolidayResponse={handleSaveHolidayResponse}
           onRevisionClick={(record) => {
@@ -920,14 +930,7 @@ export default function AppPortal() {
           onSwitchToAdminPanel={() => {
             sessionStorage.setItem('adminNotificationMode', 'admin');
             setShowNotificationsModal(false);
-            if (activeTab !== 'chuti') {
-              setActiveTab('chuti');
-              localStorage.setItem('last_active_dashboard', 'chuti');
-              window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'chuti' }));
-            }
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('open-admin-approvals-modal'));
-            }, 100);
+            window.dispatchEvent(new CustomEvent('open-admin-approvals-modal'));
           }}
         />
       )}
@@ -1015,11 +1018,14 @@ export default function AppPortal() {
                 onTabChange={handleQuotesTabChange}
               />
             )}
-            {activeTab === "chuti" && (
-              <ChutiDashboard
-                activeChutiTab={activeChutiTab}
-                onChutiTabChange={handleChutiTabChange}
-              />
+            {/* ChutiDashboard: always mounted for admin (needed for admin approval modal from any tab), else conditionally mounted */}
+            {(activeTab === "chuti" || profile?.role === 'admin') && (
+              <div className={activeTab !== 'chuti' ? 'hidden' : undefined}>
+                <ChutiDashboard
+                  activeChutiTab={activeChutiTab}
+                  onChutiTabChange={handleChutiTabChange}
+                />
+              </div>
             )}
             {activeTab === "user_management" && (
               <UserManagementDashboard
