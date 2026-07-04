@@ -50,12 +50,13 @@ export default function AppUpdater() {
           setDownloading(true);
           setDownloadProgress(0);
 
-          // Track download progress via the onChunkDownloaded callback
+          // Track download progress via the DownloadEvent callback
           let downloaded = 0;
-          const total = update.contentLength ?? 0;
+          let total = 0;
 
           await update.download((event) => {
             if (event.event === 'Started') {
+              total = event.data.contentLength ?? 0;
               downloaded = 0;
             } else if (event.event === 'Progress') {
               downloaded += event.data.chunkLength;
