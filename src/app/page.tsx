@@ -582,7 +582,9 @@ export default function AppPortal() {
         | "quotes"
         | "user_management"
         | "todo"
-        | "kpi";
+        | "kpi"
+        | "audit_logs"
+        | "analytics";
       addLog(`custom workspace-change event detected: ${targetWorkspace}`);
 
       // Clear flag when navigating to any workspace from the sidebar
@@ -599,6 +601,16 @@ export default function AppPortal() {
         if (targetWorkspace === "kpi" && !profile.has_quotes_access) return;
         if (
           targetWorkspace === "user_management" &&
+          !(profile.role === "admin" || profile.role === "supervisor")
+        )
+          return;
+        if (
+          targetWorkspace === "audit_logs" &&
+          !(profile.role === "admin" || profile.role === "supervisor")
+        )
+          return;
+        if (
+          targetWorkspace === "analytics" &&
           !(profile.role === "admin" || profile.role === "supervisor")
         )
           return;

@@ -140,9 +140,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {profile?.full_name || 'User'}
                   </span>
                   
-                  {/* Custom Hover Tooltip for Codename & Role */}
+                  {/* Custom Hover Tooltip for Codename, Role & Job Role */}
                   {showNameTooltip && (
-                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-40 p-2.5 text-[11px] leading-relaxed text-slate-350 bg-slate-950/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto">
+                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-44 p-2.5 text-[11px] leading-relaxed text-slate-350 bg-slate-955/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto">
                       <div className="font-semibold text-white">
                         Codename: <span className="text-blue-400 font-mono select-all ml-1">{profile?.username ? profile.username.toUpperCase() : ''}</span>
                       </div>
@@ -157,6 +157,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                           {profile?.role === 'admin' ? 'Admin' : 'Staff'}
                         </span>
                       </div>
+                      {profile?.job_role && (
+                        <>
+                          <div className="border-t border-slate-850 my-0.5"></div>
+                          <div className="text-slate-400">
+                            Job Role: <span className="text-slate-200 font-semibold ml-1">{profile.job_role}</span>
+                          </div>
+                        </>
+                      )}
                     </span>
                   )}
                 </span>
