@@ -81,9 +81,10 @@ export function calculateTopPerformerBadges(
   // Top 5 users get badges
   const top5LastMonth = lastMonthRankings.slice(0, 5);
 
-  // For each of the top 5, compute their streak and yearly stats
   top5LastMonth.forEach((user, index) => {
     const rank = index + 1;
+    if (rank > 5 || user.count <= 0) return;
+
     const badgeType = rank <= 3 ? ("blue" as const) : ("grey" as const);
 
     // Calculate Consecutive Months Streak ending at the previous month

@@ -452,9 +452,10 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       }
     });
 
-    const sortedLeaderboard = Object.values(usersCount)
-      .filter(u => u.count > 0)
-      .sort((a, b) => b.count - a.count);
+    const activeUsers = Object.values(usersCount).filter(u => u.count > 0);
+    
+    // Sort descending by count, then alphabetically by codename
+    const sortedLeaderboard = activeUsers.sort((a, b) => b.count - a.count || a.codename.localeCompare(b.codename));
 
     return sortedLeaderboard.slice(0, 5);
   }, [systemMetricsFilteredRecords, profilesList]);

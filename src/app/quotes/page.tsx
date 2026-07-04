@@ -197,10 +197,22 @@ export default function Dashboard({
     loadAllCachedRecords();
   }, [records]);
 
-  // Compute top performer badges from records cache
+  // Compute top performer badges from records cache or load from profiles List
   const topPerformerBadges = useMemo(() => {
+    if (!profile) return {};
+
+    if (profile.role !== "admin") {
+      const loadedBadges: Record<string, any> = {};
+      (profilesList || []).forEach((p) => {
+        if (p.global_settings?.top_performer_badge) {
+          loadedBadges[p.id] = p.global_settings.top_performer_badge;
+        }
+      });
+      return loadedBadges;
+    }
+
     return calculateTopPerformerBadges(allRecords, profilesList || []);
-  }, [allRecords, profilesList]);
+  }, [allRecords, profilesList, profile]);
 
   // Monthly Table Search Query
   const [searchQuery, setSearchQuery] = useState("");

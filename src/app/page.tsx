@@ -327,7 +327,7 @@ export default function AppPortal() {
 
   const [topPerformerBadges, setTopPerformerBadges] = useState<Record<string, any>>(() => {
     if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('cached_top_performer_badges');
+      const cached = localStorage.getItem('cached_top_performer_badges_v2');
       if (cached) {
         try {
           return JSON.parse(cached);
@@ -340,16 +340,65 @@ export default function AppPortal() {
   });
 
   useEffect(() => {
-    // We can compute badges even if records are empty initially, but once they load, it updates.
-    // Also, if profilesList is loaded, we can instantly guarantee Kamrul gets his badge.
-    const calculated = calculateTopPerformerBadges(quotesRecords, profilesList);
+    if (!profile) return;
 
-    // Only update and cache if we actually have computed data (to prevent resetting cache on fresh mount before load)
-    if (quotesRecords.length > 0 || profilesList.length > 0) {
-      setTopPerformerBadges(calculated);
-      localStorage.setItem('cached_top_performer_badges', JSON.stringify(calculated));
+    if (profile.role !== "admin") {
+      // Non-admins read badges directly from profiles list settings
+      const loadedBadges: Record<string, any> = {};
+      profilesList.forEach((p) => {
+        if (p.global_settings?.top_performer_badge) {
+          loadedBadges[p.id] = p.global_settings.top_performer_badge;
+        }
+      });
+      setTopPerformerBadges(loadedBadges);
+      return;
     }
-  }, [quotesRecords, profilesList]);
+
+    // Admins calculate badges client-side from raw records
+    const calculated = calculateTopPerformerBadges(quotesRecords, profilesList);
+    setTopPerformerBadges(calculated);
+    localStorage.setItem('cached_top_performer_badges_v2', JSON.stringify(calculated));
+
+    // Admin syncs computed badges to profiles in Supabase if changed
+    if (quotesRecords.length > 0 && profilesList.length > 0) {
+      const syncBadges = async () => {
+        try {
+          for (const p of profilesList) {
+            const currentBadge = p.global_settings?.top_performer_badge || null;
+            const newBadge = calculated[p.id] || null;
+
+            if (JSON.stringify(currentBadge) !== JSON.stringify(newBadge)) {
+              const updatedSettings = {
+                ...(p.global_settings || {}),
+                top_performer_badge: newBadge,
+              };
+
+              // Update in database
+              const { error } = await supabase
+                .from("profiles")
+                .update({ global_settings: updatedSettings })
+                .eq("id", p.id);
+
+              if (error) {
+                console.error(`Failed to sync badge for user ${p.id}:`, error.message);
+              } else {
+                // Dynamically update the local profiles list immutably so changes reflect in UI immediately
+                setProfilesList((prev) =>
+                  prev.map((item) =>
+                    item.id === p.id ? { ...item, global_settings: updatedSettings } : item
+                  )
+                );
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error syncing badges to Supabase profiles:", err);
+        }
+      };
+
+      syncBadges();
+    }
+  }, [quotesRecords, profilesList, profile]);
 
   const [chutiNotificationCount, setChutiNotificationCount] = useState(0);
   const [chutiOfflineCount, setChutiOfflineCount] = useState(0);

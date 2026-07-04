@@ -11,6 +11,14 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
   const [showTooltip, setShowTooltip] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   if (!badge) return null;
 
   const isBlue = badge.badgeType === "blue" || forceBlue;
@@ -35,14 +43,6 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
     }
     setShowTooltip(false);
   };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return (
     <span 
