@@ -34,6 +34,10 @@ interface AddLeaveProps {
   onConvertShortLeaveToFullLeave: (userId: string, workingHours: number, shortMins: number) => void;
   holidayResponses: GovtHolidayResponse[];
   initialFetchDone: boolean;
+  /** When set, supervisor is adding leave on behalf of this user */
+  targetUser?: Profile | null;
+  /** When true, bypasses supervisor approval — leave goes straight to admin queue */
+  addedBySupervisor?: boolean;
 }
 
 export function AddLeave({
@@ -46,9 +50,11 @@ export function AddLeave({
   onConvertShortLeaveToFullLeave,
   holidayResponses = [],
   initialFetchDone = true,
+  targetUser = null,
+  addedBySupervisor = false,
 }: AddLeaveProps) {
-  // Target profile is always the logged in user themselves
-  const targetProfile = profile;
+  // If supervisor is adding on behalf of a user, use that user as the target
+  const targetProfile = targetUser ?? profile;
 
   const [date, setDate] = useState('');
   const [leaveType, setLeaveType] = useState('Short Leave');
@@ -344,7 +350,8 @@ export function AddLeave({
 
     // Prepare records list to insert
     const insertData: any[] = [];
-    const bypassSupervisor = profile?.role === 'admin' || targetProfile.needs_supervisor_approval === false;
+    // Supervisor adding on behalf bypasses supervisor step — goes straight to admin
+    const bypassSupervisor = addedBySupervisor || profile?.role === 'admin' || targetProfile.needs_supervisor_approval === false;
     const finalStatus = bypassSupervisor ? 'approved_by_supervisor' : 'pending_supervisor';
 
     let finalAdjustment = false;
@@ -481,6 +488,19 @@ export function AddLeave({
           </p>
         </div>
 
+        {/* Supervisor on-behalf banner */}
+        {addedBySupervisor && targetProfile && (
+          <div className="p-3 bg-blue-950/40 border border-blue-800/40 text-blue-300 text-xs rounded-lg flex items-start gap-2">
+            <User className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold block text-slate-200">Adding leave on behalf of a user</span>
+              <span className="text-[11px] block mt-0.5 text-slate-400">
+                This leave will be submitted for <span className="text-white font-semibold">{targetProfile.full_name || targetProfile.username}</span> ({targetProfile.username?.toUpperCase()}) and sent directly to admin for approval.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Warning Banner */}
         {isFullLeaveQuotaExceeded && (
           <div className="p-3 bg-purple-955/50 border border-purple-900/50 text-purple-300 text-xs rounded-lg flex items-start gap-2 animate-pulse">
@@ -537,8 +557,8 @@ export function AddLeave({
                 globalSettings={globalSettings}
               />
 
-              {/* Supervisor Selector for regular users (needs approval) */}
-              {profile?.role !== 'admin' && targetProfile?.needs_supervisor_approval !== false && supervisors.length > 0 && (
+              {/* Supervisor Selector — hidden when supervisor is adding on behalf */}
+              {!addedBySupervisor && profile?.role !== 'admin' && targetProfile?.needs_supervisor_approval !== false && supervisors.length > 0 && (
                 <div className="pt-2">
                   <label className="block text-xs font-semibold text-slate-300 mb-2">Select Supervisors for Approval</label>
                   <div className="flex flex-wrap gap-2">
@@ -573,7 +593,7 @@ export function AddLeave({
               <div className="flex gap-3 pt-4 border-t border-slate-800">
                 <button
                   type="submit"
-                  disabled={submitting || !!validationError || isDuplicateDate || (profile?.role !== 'admin' && targetProfile?.needs_supervisor_approval !== false && selectedSupervisors.length === 0)}
+                  disabled={submitting || !!validationError || isDuplicateDate || (!addedBySupervisor && profile?.role !== 'admin' && targetProfile?.needs_supervisor_approval !== false && selectedSupervisors.length === 0)}
                   className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}

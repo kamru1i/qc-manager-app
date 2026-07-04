@@ -37,6 +37,10 @@ interface UserLeaveHistoryPanelProps {
   setLeaveSearchQuery: (val: string) => void;
   onToggleAdjustment: (r: ChutiRecord) => void;
   onDeleteRecord: (r: ChutiRecord) => void;
+  /** Called when supervisor clicks Add Leave for this user */
+  onAddLeaveClick?: () => void;
+  /** Whether the viewer is a supervisor (shows Add Leave button) */
+  isSupervisor?: boolean;
 }
 
 export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
@@ -59,6 +63,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   setLeaveSearchQuery,
   onToggleAdjustment,
   onDeleteRecord,
+  onAddLeaveClick,
+  isSupervisor = false,
 }) => {
   // Staff Stats and Quota calculations for the Leave History sub-tab
   const staffStatsData = React.useMemo(() => {
@@ -210,7 +216,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         }}
         onExportExcel={() => {}}
         onExportPDF={() => {}}
-        onAddLeaveClick={() => {}}
+        onAddLeaveClick={isSupervisor ? (onAddLeaveClick ?? (() => {})) : () => {}}
         onToggleAdjustment={onToggleAdjustment}
         onDeleteClick={onDeleteRecord}
         onRevisionClick={() => {}}

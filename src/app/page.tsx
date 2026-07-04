@@ -136,6 +136,8 @@ export default function AppPortal() {
   });
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
+  // Always-current ref for activeTab — used inside async callbacks to avoid stale closures
+  const activeTabRef = useRef<string>(activeTab);
 
   useEffect(() => {
     setMounted(true);
@@ -149,6 +151,7 @@ export default function AppPortal() {
     }
     if (state.initialTab) {
       setActiveTab(state.initialTab);
+      activeTabRef.current = state.initialTab;
     }
   }, []);
 
@@ -284,9 +287,13 @@ export default function AppPortal() {
     // Defer background data fetches — these are only needed for leaderboard
     // badges and user-management panels, not for the initial dashboard render.
     // Using a 3s delay lets the main UI show first, then load supplementary data.
+    // Skip fetchRecords on user_management tab — records are only for badges,
+    // not needed there, and the paginated loop exhausts the connection pool.
     const deferTimer = setTimeout(() => {
       fetchProfiles();
-      fetchRecords();
+      if (activeTabRef.current !== 'user_management') {
+        fetchRecords();
+      }
     }, 3000);
 
     // Subscribe to supabase changes on records table to dynamically refresh badges
@@ -296,7 +303,10 @@ export default function AppPortal() {
         "postgres_changes",
         { event: "*", schema: "public", table: "records" },
         () => {
-          fetchRecords();
+          // Skip real-time record refresh when on user_management — not needed
+          if (activeTabRef.current !== 'user_management') {
+            fetchRecords();
+          }
         },
       )
       .subscribe();
@@ -418,6 +428,11 @@ export default function AppPortal() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [activeTab, activeChutiTab]);
+
+  // Keep activeTabRef in sync so async callbacks don't use stale closures
+  useEffect(() => {
+    activeTabRef.current = activeTab ?? '';
+  }, [activeTab]);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {

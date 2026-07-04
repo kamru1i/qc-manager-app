@@ -44,6 +44,7 @@ import { UserProfileSettingsPanel } from '@/components/user-management/UserProfi
 import { UserLeaveHistoryPanel } from '@/components/user-management/UserLeaveHistoryPanel';
 import { UserQuotesHistoryPanel } from '@/components/user-management/UserQuotesHistoryPanel';
 import { UserKpiPerformancePanel } from '@/components/user-management/UserKpiPerformancePanel';
+import { AddLeave } from '@/components/AddLeave';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { GlobalSettings } from '@/utils/dashboardHelpers';
@@ -148,6 +149,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [viewingStaffHolidayResponses, setViewingStaffHolidayResponses] = useState<GovtHolidayResponse[]>([]);
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings | null>(null);
   const [loadingLeaveData, setLoadingLeaveData] = useState(false);
+  const [showAddLeaveForStaff, setShowAddLeaveForStaff] = useState(false);
 
   // Leave Records Filter parameters
   const [leaveFilterType, setLeaveFilterType] = useState('all');
@@ -225,8 +227,16 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   useEffect(() => {
     if (!viewingStaff) {
       setActiveSubTab('leave');
+      setShowAddLeaveForStaff(false);
     }
   }, [viewingStaff]);
+
+  // Reset add-leave view when subtab changes away from leave
+  useEffect(() => {
+    if (activeSubTab !== 'leave') {
+      setShowAddLeaveForStaff(false);
+    }
+  }, [activeSubTab]);
 
   // Notify parent component when full-screen view state changes
   useEffect(() => {
@@ -550,8 +560,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const visibleProfiles = profiles
     .filter((u) => {
       if (profile?.role === 'supervisor') {
-        // Supervisor only sees users who have quotes tracker access
-        return !!u.has_quotes_access;
+        // Supervisor only sees users who are assigned to them (supervisor_ids includes their own id)
+        return Array.isArray(u.supervisor_ids) && u.supervisor_ids.includes(profile.id);
       }
       return true;
     })
@@ -806,27 +816,69 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               )}
 
               {activeSubTab === 'leave' && viewingStaff && (
-                <UserLeaveHistoryPanel
-                  viewingStaff={viewingStaff}
-                  viewingStaffRecords={viewingStaffRecords}
-                  viewingStaffSettlements={viewingStaffSettlements}
-                  viewingStaffHolidayResponses={viewingStaffHolidayResponses}
-                  globalSettings={globalSettings}
-                  loadingLeaveData={loadingLeaveData}
-                  selectedYear={selectedYear}
-                  setSelectedYear={setSelectedYear}
-                  availableYears={availableYears}
-                  leaveFilterType={leaveFilterType}
-                  setLeaveFilterType={setLeaveFilterType}
-                  leaveFilterStartDate={leaveFilterStartDate}
-                  setLeaveFilterStartDate={setLeaveFilterStartDate}
-                  leaveFilterEndDate={leaveFilterEndDate}
-                  setLeaveFilterEndDate={setLeaveFilterEndDate}
-                  leaveSearchQuery={leaveSearchQuery}
-                  setLeaveSearchQuery={setLeaveSearchQuery}
-                  onToggleAdjustment={handleToggleAdjustment}
-                  onDeleteRecord={handleDeleteRecord}
-                />
+                showAddLeaveForStaff && profile?.role === 'supervisor' && globalSettings ? (
+                  // Full-page AddLeave view for supervisor adding on behalf
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 pb-3 border-b border-slate-800/60">
+                      <button
+                        onClick={() => setShowAddLeaveForStaff(false)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-350 hover:text-white transition-all cursor-pointer"
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" />
+                        Back to Leave History
+                      </button>
+                      <div>
+                        <p className="text-xs text-slate-400">
+                          Adding leave on behalf of{' '}
+                          <span className="text-white font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
+                          ({viewingStaff.username?.toUpperCase()})
+                        </p>
+                      </div>
+                    </div>
+                    <AddLeave
+                      profile={profile}
+                      profilesList={profiles}
+                      records={viewingStaffRecords}
+                      globalSettings={globalSettings}
+                      leaveSettlements={viewingStaffSettlements}
+                      onSuccess={() => {
+                        setShowAddLeaveForStaff(false);
+                        setActiveSubTab('leave');
+                        // Refresh leave data
+                        fetchStaffLeaveData(viewingStaff.id);
+                      }}
+                      onConvertShortLeaveToFullLeave={() => {}}
+                      holidayResponses={viewingStaffHolidayResponses}
+                      initialFetchDone={true}
+                      targetUser={viewingStaff}
+                      addedBySupervisor={true}
+                    />
+                  </div>
+                ) : (
+                  <UserLeaveHistoryPanel
+                    viewingStaff={viewingStaff}
+                    viewingStaffRecords={viewingStaffRecords}
+                    viewingStaffSettlements={viewingStaffSettlements}
+                    viewingStaffHolidayResponses={viewingStaffHolidayResponses}
+                    globalSettings={globalSettings}
+                    loadingLeaveData={loadingLeaveData}
+                    selectedYear={selectedYear}
+                    setSelectedYear={setSelectedYear}
+                    availableYears={availableYears}
+                    leaveFilterType={leaveFilterType}
+                    setLeaveFilterType={setLeaveFilterType}
+                    leaveFilterStartDate={leaveFilterStartDate}
+                    setLeaveFilterStartDate={setLeaveFilterStartDate}
+                    leaveFilterEndDate={leaveFilterEndDate}
+                    setLeaveFilterEndDate={setLeaveFilterEndDate}
+                    leaveSearchQuery={leaveSearchQuery}
+                    setLeaveSearchQuery={setLeaveSearchQuery}
+                    onToggleAdjustment={handleToggleAdjustment}
+                    onDeleteRecord={handleDeleteRecord}
+                    isSupervisor={profile?.role === 'supervisor'}
+                    onAddLeaveClick={() => setShowAddLeaveForStaff(true)}
+                  />
+                )
               )}
 
               {activeSubTab === 'quotes' && viewingStaff && viewingStaff.has_quotes_access && (
