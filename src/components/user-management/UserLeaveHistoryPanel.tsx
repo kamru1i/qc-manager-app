@@ -41,6 +41,10 @@ interface UserLeaveHistoryPanelProps {
   onAddLeaveClick?: () => void;
   /** Whether the viewer is a supervisor (shows Add Leave button) */
   isSupervisor?: boolean;
+  /** When true, hides delete controls */
+  hideDelete?: boolean;
+  /** When false, hides Add Leave button */
+  showAddLeave?: boolean;
 }
 
 export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
@@ -65,6 +69,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   onDeleteRecord,
   onAddLeaveClick,
   isSupervisor = false,
+  hideDelete = false,
+  showAddLeave = true,
 }) => {
   // Staff Stats and Quota calculations for the Leave History sub-tab
   const staffStatsData = React.useMemo(() => {
@@ -216,7 +222,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         }}
         onExportExcel={() => {}}
         onExportPDF={() => {}}
-        onAddLeaveClick={isSupervisor ? (onAddLeaveClick ?? (() => {})) : () => {}}
+        onAddLeaveClick={onAddLeaveClick ?? (() => {})}
         onToggleAdjustment={onToggleAdjustment}
         onDeleteClick={onDeleteRecord}
         onRevisionClick={() => {}}
@@ -226,6 +232,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         initialFetchDone={true}
         leaveSettlements={viewingStaffSettlements}
         onSaveLeaveSettlementsBulk={async () => true}
+        hideDelete={hideDelete}
+        showAddLeave={showAddLeave}
       />
     </div>
   );

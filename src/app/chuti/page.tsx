@@ -885,6 +885,7 @@ export default function Dashboard({
             leaveSettlements={leaveSettlements}
             onSaveLeaveSettlementsBulk={handleSaveLeaveSettlementsBulk}
             onBackClick={() => onChutiTabChange('add_leave')}
+            showAddLeave={false}
           />
         )}
 

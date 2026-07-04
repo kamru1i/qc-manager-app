@@ -219,7 +219,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Fallback if viewingStaff has no quotes access and active tab is quotes/kpi
   useEffect(() => {
     if (viewingStaff && !viewingStaff.has_quotes_access && (activeSubTab === 'quotes' || activeSubTab === 'kpi')) {
-      setActiveSubTab(profile?.role === 'supervisor' ? 'profile' : 'leave');
+      setActiveSubTab('leave');
     }
   }, [viewingStaff, activeSubTab, profile]);
 
@@ -633,22 +633,20 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
             {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
             {!isCreatingNewUser && viewingStaff && (
               <div className="flex border-b border-slate-800 gap-1 mt-2">
-                {profile?.role !== 'supervisor' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveSubTab('leave');
-                      localStorage.setItem('user_management_active_subtab', 'leave');
-                    }}
-                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-                      activeSubTab === 'leave'
-                        ? 'border-blue-500 text-blue-400 font-bold'
-                        : 'border-transparent text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Calendar className="h-3.5 w-3.5" /> Leave History
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSubTab('leave');
+                    localStorage.setItem('user_management_active_subtab', 'leave');
+                  }}
+                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeSubTab === 'leave'
+                      ? 'border-blue-500 text-blue-400 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Calendar className="h-3.5 w-3.5" /> Leave History
+                </button>
                 {viewingStaff.has_quotes_access && (
                   <button
                     type="button"
@@ -816,13 +814,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               )}
 
               {activeSubTab === 'leave' && viewingStaff && (
-                showAddLeaveForStaff && profile?.role === 'supervisor' && globalSettings ? (
-                  // Full-page AddLeave view for supervisor adding on behalf
+                showAddLeaveForStaff && (profile?.role === 'supervisor' || profile?.role === 'admin') && globalSettings ? (
+                  // Full-page AddLeave view for supervisor/admin adding on behalf
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 pb-3 border-b border-slate-800/60">
                       <button
                         onClick={() => setShowAddLeaveForStaff(false)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-350 hover:text-white transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-355 hover:text-white transition-all cursor-pointer"
                       >
                         <ArrowLeft className="h-3.5 w-3.5" />
                         Back to Leave History
@@ -851,7 +849,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       holidayResponses={viewingStaffHolidayResponses}
                       initialFetchDone={true}
                       targetUser={viewingStaff}
-                      addedBySupervisor={true}
+                      addedBySupervisor={profile?.role === 'supervisor'}
                     />
                   </div>
                 ) : (
@@ -877,6 +875,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     onDeleteRecord={handleDeleteRecord}
                     isSupervisor={profile?.role === 'supervisor'}
                     onAddLeaveClick={() => setShowAddLeaveForStaff(true)}
+                    hideDelete={profile?.role === 'supervisor'}
+                    showAddLeave={profile?.role === 'admin' || profile?.role === 'supervisor'}
                   />
                 )
               )}
@@ -986,11 +986,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       <tr 
                         key={u.id} 
                         onDoubleClick={() => {
-                          if (profile?.role === 'supervisor') {
-                            setActiveSubTab(u.has_quotes_access ? 'quotes' : 'profile');
-                          } else {
-                            setActiveSubTab('leave');
-                          }
+                          setActiveSubTab('leave');
                           setViewingStaff(u);
                         }}
                         className="hover:bg-slate-900/25 transition-colors cursor-pointer select-none"

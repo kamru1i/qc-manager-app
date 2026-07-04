@@ -56,6 +56,10 @@ interface UserDashboardViewProps {
   leaveSettlements: LeaveSettlement[];
   onSaveLeaveSettlementsBulk: (settlementsList: any[]) => Promise<boolean>;
   onBackClick?: () => void;
+  /** When true, hides delete controls (supervisor view) */
+  hideDelete?: boolean;
+  /** When false, hides Add Leave button (normal user view) */
+  showAddLeave?: boolean;
 }
 
 export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
@@ -87,6 +91,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   leaveSettlements,
   onSaveLeaveSettlementsBulk,
   onBackClick,
+  hideDelete = false,
+  showAddLeave = true,
 }) => {
   // Eligibility & Deduction
   const isOfficeLeaveEligible = profile?.eligible_office_leave !== false;
@@ -455,6 +461,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         emptyMessage="No leave records found. Submit a new entry."
         showPendingBadge={true}
         initialFetchDone={initialFetchDone}
+        hideDelete={hideDelete}
+        showAddLeave={showAddLeave}
       />
 
       {showUserSettleModal && (

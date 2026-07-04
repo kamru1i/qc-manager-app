@@ -35,6 +35,10 @@ interface LeavesRecordsTableProps {
   emptyMessage: string;
   showPendingBadge?: boolean;
   initialFetchDone?: boolean;
+  /** When true, hides delete button and checkbox column (supervisor view) */
+  hideDelete?: boolean;
+  /** When false, hides Add Leave button (normal user view) */
+  showAddLeave?: boolean;
 }
 
 export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
@@ -64,6 +68,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   emptyMessage,
   showPendingBadge = false,
   initialFetchDone = true,
+  hideDelete = false,
+  showAddLeave = true,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isMounted, setIsMounted] = useState(false);
@@ -119,7 +125,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     });
   }, [records, searchTerm]);
 
-  const showActionColumn = isSelectionMode;
+  const showActionColumn = isSelectionMode && !hideDelete;
 
   const cellStyle = useMemo(
     () => ({
@@ -156,6 +162,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   };
 
   const handleRowClick = (record: ChutiRecord) => {
+    if (hideDelete) return;
     if (isSelectionMode && record.id) {
       const rid = record.id;
       setSelectedIds((prev) =>
@@ -284,12 +291,14 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
 
           {/* Add Leave & Year Select */}
           <div className="flex gap-2 shrink-0">
-            <button
-              onClick={onAddLeaveClick}
-              className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500 hover:bg-blue-600/10 dark:hover:bg-blue-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add Leave
-            </button>
+            {showAddLeave && (
+              <button
+                onClick={onAddLeaveClick}
+                className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500 hover:bg-blue-600/10 dark:hover:bg-blue-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Leave
+              </button>
+            )}
             <CustomSelect
               value={selectedYear}
               onChange={setSelectedYear}
@@ -327,18 +336,20 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                       className="flex items-center justify-center gap-2 overflow-hidden mx-auto"
                       style={getInnerStyle("8px", "8px")}
                     >
-                      <button
-                        type="button"
-                        onClick={handleBulkDelete}
-                        className={`p-1 text-red-500 hover:text-red-400 hover:bg-slate-800/80 rounded cursor-pointer flex items-center justify-center shrink-0 transition-all duration-300 transform ${
-                          selectedIds.length > 0
-                            ? "scale-100 opacity-100 w-6"
-                            : "scale-0 opacity-0 w-0"
-                        }`}
-                        title={`Delete ${selectedIds.length} selected records`}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500 stroke-[2.5] shrink-0" />
-                      </button>
+                      {!hideDelete && (
+                        <button
+                          type="button"
+                          onClick={handleBulkDelete}
+                          className={`p-1 text-red-500 hover:text-red-400 hover:bg-slate-800/80 rounded cursor-pointer flex items-center justify-center shrink-0 transition-all duration-300 transform ${
+                            selectedIds.length > 0
+                              ? "scale-100 opacity-100 w-6"
+                              : "scale-0 opacity-0 w-0"
+                          }`}
+                          title={`Delete ${selectedIds.length} selected records`}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500 stroke-[2.5] shrink-0" />
+                        </button>
+                      )}
                       <input
                         type="checkbox"
                         checked={
@@ -522,14 +533,16 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 Edit
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => handleContextDelete(contextMenu.record)}
-              className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
-            >
-              <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-[2]" />
-              Delete
-            </button>
+            {!hideDelete && (
+              <button
+                type="button"
+                onClick={() => handleContextDelete(contextMenu.record)}
+                className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-[2]" />
+                Delete
+              </button>
+            )}
           </div>,
           document.body
         )}
