@@ -4,6 +4,7 @@ import React from "react";
 import { UserPlus, Search, X, Shield, Edit, Trash2 } from "lucide-react";
 import { Profile } from "@/types";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { UserDisplayName } from "./UserDisplayName";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
 
 interface UserManagementPanelProps {
@@ -145,12 +146,11 @@ export const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                     {u.username.toUpperCase()}
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className="flex items-center gap-1">
-                      <span>{u.full_name || "-"}</span>
-                      {badges && badges[u.id] && (
-                        <VerifiedBadge badge={badges[u.id]} />
-                      )}
-                    </span>
+                    <UserDisplayName
+                      profile={u}
+                      badge={badges ? badges[u.id] : null}
+                      tooltipPosition="top"
+                    />
                   </td>
                   <td className="px-4 py-2.5">
                     <span

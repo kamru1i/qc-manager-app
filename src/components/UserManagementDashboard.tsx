@@ -32,6 +32,7 @@ import {
   FileText
 } from 'lucide-react';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { UserDisplayName } from '@/components/UserDisplayName';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { CategoryCheckboxList } from '@/components/CategoryCheckboxList';
 import { Toggle } from '@/components/Toggle';
@@ -595,51 +596,17 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div>
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-white flex items-center">
                     {isCreatingNewUser ? (
                       'Add New Staff'
                     ) : (
-                      <>
-                        <span 
-                          onMouseEnter={() => {
-                            detailNameHoverTimeoutRef.current = setTimeout(() => {
-                              setShowDetailNameTooltip(true);
-                            }, 2000);
-                          }}
-                          onMouseLeave={() => {
-                            if (detailNameHoverTimeoutRef.current) {
-                              clearTimeout(detailNameHoverTimeoutRef.current);
-                              detailNameHoverTimeoutRef.current = null;
-                            }
-                            setShowDetailNameTooltip(false);
-                          }}
-                          className="relative group inline-flex items-center select-none cursor-help pb-0.5"
-                        >
-                          {viewingStaff?.full_name || 'Staff User'}
-                          
-                          {showDetailNameTooltip && (
-                            <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-40 p-2.5 text-[11px] leading-relaxed text-slate-350 bg-slate-950/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto">
-                              <div className="font-semibold text-white">
-                                Codename: <span className="text-blue-400 font-mono select-all ml-1">{viewingStaff?.username ? viewingStaff.username.toUpperCase() : ''}</span>
-                              </div>
-                              <div className="border-t border-slate-850 my-0.5"></div>
-                              <div className="text-slate-400 flex items-center gap-1.5 font-sans">
-                                <span>Role:</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold border ${
-                                  viewingStaff?.role === 'admin'
-                                    ? 'bg-purple-955 border-purple-800 text-purple-300' 
-                                    : 'bg-blue-955 border-blue-800 text-blue-300'
-                                }`}>
-                                  {viewingStaff?.role === 'admin' ? 'Admin' : (viewingStaff?.role === 'supervisor' ? 'Supervisor' : 'Staff')}
-                                </span>
-                              </div>
-                            </span>
-                          )}
-                        </span>
-                        {viewingStaff && topPerformerBadges[viewingStaff.id] && (
-                          <VerifiedBadge badge={topPerformerBadges[viewingStaff.id]} position="bottom" />
-                        )}
-                      </>
+                      viewingStaff && (
+                        <UserDisplayName
+                          profile={viewingStaff}
+                          badge={topPerformerBadges[viewingStaff.id]}
+                          tooltipPosition="bottom"
+                        />
+                      )
                     )}
                   </h2>
                   {!isCreatingNewUser && viewingStaff && (
@@ -985,10 +952,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center">
-                            <span className="font-semibold text-white">{u.full_name || '—'}</span>
-                            {topPerformerBadges[u.id] && (
-                              <VerifiedBadge badge={topPerformerBadges[u.id]} />
-                            )}
+                            <UserDisplayName
+                              profile={u}
+                              badge={topPerformerBadges[u.id]}
+                              tooltipPosition="top"
+                            />
                           </div>
                           <div className="text-[10px] text-slate-455 uppercase mt-0.5 tracking-wider font-mono">
                             {u.username.trim()}

@@ -19,6 +19,7 @@ import { Profile } from '@/types';
 import { downloadLatestRelease, DownloadPlatform } from '@/utils/downloadHelper';
 
 import { VerifiedBadge } from './VerifiedBadge';
+import { UserDisplayName } from './UserDisplayName';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 
 interface NavbarProps {
@@ -92,28 +93,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  const handleNameMouseEnter = () => {
-    nameHoverTimeoutRef.current = setTimeout(() => {
-      setShowNameTooltip(true);
-    }, 2000); // 2 seconds delay
-  };
-
-  const handleNameMouseLeave = () => {
-    if (nameHoverTimeoutRef.current) {
-      clearTimeout(nameHoverTimeoutRef.current);
-      nameHoverTimeoutRef.current = null;
-    }
-    setShowNameTooltip(false);
-  };
-
-  React.useEffect(() => {
-    return () => {
-      if (nameHoverTimeoutRef.current) {
-        clearTimeout(nameHoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <header className="bg-slate-900/40 backdrop-blur-md border-b border-slate-800/50 px-4 py-4 sm:px-6 lg:px-8 z-30">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -131,41 +110,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <span className="flex items-center">
                 Welcome,&nbsp;
-                <span 
-                  onMouseEnter={handleNameMouseEnter}
-                  onMouseLeave={handleNameMouseLeave}
-                  className="relative group inline-flex items-center select-none"
-                >
-                  <span className="cursor-help pb-0.5 inline-flex items-center">
-                    {profile?.full_name || 'User'}
-                  </span>
-                  
-                  {/* Custom Hover Tooltip for Codename & Job Role */}
-                  {showNameTooltip && (
-                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-44 p-2.5 text-[11px] leading-relaxed text-slate-350 bg-slate-955/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto">
-                      <div className="font-semibold text-white flex items-center flex-wrap gap-1">
-                        <span>Codename:</span>
-                        <span className="text-blue-400 font-mono select-all">{profile?.username ? profile.username.toUpperCase() : ''}</span>
-                        {profile?.role && (
-                          <span className="text-[10px] text-slate-400 font-normal">
-                            ({profile.role === 'admin' ? 'Admin' : profile.role === 'supervisor' ? 'Supervisor' : 'Staff'})
-                          </span>
-                        )}
-                      </div>
-                      {profile?.job_role && (
-                        <>
-                          <div className="border-t border-slate-850 my-0.5"></div>
-                          <div className="text-slate-400">
-                            Job Role: <span className="text-slate-200 font-semibold ml-1">{profile.job_role}</span>
-                          </div>
-                        </>
-                      )}
-                    </span>
-                  )}
-                </span>
-                {/* Real/Mock Verified Badge - placed outside name wrapper for independent hover states */}
-                {profile && badges && badges[profile.id] && (
-                  <VerifiedBadge badge={badges[profile.id]} position="bottom" />
+                {profile && (
+                  <UserDisplayName
+                    profile={profile}
+                    badge={badges ? badges[profile.id] : null}
+                    tooltipPosition="bottom"
+                  />
                 )}
               </span>
             </h1>
