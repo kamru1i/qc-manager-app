@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search, Globe, Shield, AlertTriangle, CheckCircle, RefreshCw, Loader2, Info } from 'lucide-react';
+import { IPCheckerSkeleton } from './skeleton/IPCheckerSkeleton';
 
 interface IPCheckerModalProps {
   isOpen: boolean;
@@ -657,37 +658,8 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
             </div>
           )}
 
-          {/* Skeleton Loader during search checks */}
-          {loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="p-4 rounded-xl border border-slate-800 bg-slate-950/10 animate-pulse flex flex-col justify-between h-[120px]">
-                  <div>
-                    {/* Header */}
-                    <div className="flex justify-between items-center mb-3.5">
-                      <div className="w-24 h-3.5 bg-slate-800/50 rounded-md" />
-                      <div className="w-12 h-4 bg-slate-800/35 rounded-md" />
-                    </div>
-                    {/* Details */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <div className="w-12 h-2 bg-slate-800/25 rounded" />
-                        <div className="w-20 h-2 bg-slate-800/40 rounded" />
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="w-14 h-2 bg-slate-800/25 rounded" />
-                        <div className="w-28 h-2 bg-slate-800/40 rounded" />
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="w-16 h-2 bg-slate-800/25 rounded" />
-                        <div className="w-24 h-2 bg-slate-800/40 rounded" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Skeleton Loader during search checks or initial detection */}
+          {(loading || detectingIP) && <IPCheckerSkeleton />}
 
           {/* Sources Detailed Grid */}
           {checkRan && !loading && (
@@ -780,7 +752,7 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
           )}
 
           {/* Initial State / Waiting */}
-          {!checkRan && !loading && (
+          {!checkRan && !loading && !detectingIP && (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-slate-950/15 border border-slate-850 rounded-2xl">
               <Globe className="w-12 h-12 text-slate-600 animate-pulse" />
               <div>
