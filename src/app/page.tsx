@@ -978,6 +978,8 @@ export default function AppPortal() {
                   <SkeletonLoader variant="todo" />
                 ) : activeTab === "analytics" ? (
                   <SkeletonLoader variant="analytics" />
+                ) : activeTab === "audit_logs" ? (
+                  <SkeletonLoader variant="audit-logs" />
                 ) : (
                   <SkeletonLoader variant="table" />
                 )}

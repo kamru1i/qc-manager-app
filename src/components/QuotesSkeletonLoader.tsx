@@ -4,6 +4,7 @@ import { DailyEntrySkeleton } from "./skeleton/DailyEntrySkeleton";
 import { MonthlyListSkeleton } from "./skeleton/MonthlyListSkeleton";
 import { QuoteRulesSkeleton } from "./skeleton/QuoteRulesSkeleton";
 import { AnalyticsSkeleton } from "./skeleton/AnalyticsSkeleton";
+import { AuditLogsSkeleton } from "./skeleton/AuditLogsSkeleton";
 
 interface SkeletonLoaderProps {
   type?:
@@ -183,31 +184,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
   }
 
   if (type === "audit-logs") {
-    return (
-      <div className="space-y-6 w-full">
-        <div className="space-y-1 animate-pulse">
-          <div className={`h-6 w-36 ${innerBg}`} />
-          <div className={`h-3 w-56 ${innerBg} mt-1`} />
-        </div>
-        <div className="space-y-3">
-          <div className={`h-9 w-full ${innerBg} animate-pulse`} />
-          <div className={`${cardBg} space-y-3.5`}>
-            {[...Array(rows)].map((_, i) => (
-              <div key={i} className="flex gap-3 py-2 border-b border-slate-850/40 last:border-0 items-start">
-                <div className={`h-7 w-7 rounded-full ${innerBg} shrink-0 mt-0.5`} />
-                <div className="space-y-2 flex-1">
-                  <div className="flex justify-between">
-                    <div className={`h-3 w-32 ${innerBg}`} />
-                    <div className={`h-2.5 w-20 ${innerBg}`} />
-                  </div>
-                  <div className={`h-3 w-5/6 ${innerBg}`} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <AuditLogsSkeleton />;
   }
 
   // default / generic
