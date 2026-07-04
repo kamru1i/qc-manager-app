@@ -10,6 +10,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ──────────────────────────────────────────────────
+  # Stage 1: Build binaries for each platform in parallel
+  # ──────────────────────────────────────────────────
   build-tauri:
     permissions:
       contents: write
@@ -19,12 +22,16 @@ jobs:
         include:
           - platform: 'windows-latest'
             target: 'x86_64-pc-windows-msvc'
+            label: 'windows-x64'
           - platform: 'windows-latest'
             target: 'i686-pc-windows-msvc'
+            label: 'windows-x86'
           - platform: 'macos-latest'
             target: 'x86_64-apple-darwin'
+            label: 'macos-intel'
           - platform: 'macos-latest'
             target: 'aarch64-apple-darwin'
+            label: 'macos-arm'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -88,7 +95,7 @@ jobs:
           chmod +x src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/bundle_dmg.sh 2>/dev/null || true
           chmod +x src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/bundle_dmg.sh 2>/dev/null || true
 
-      - name: Build desktop application
+      - name: Build and upload desktop artifacts
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -104,13 +111,13 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.0** is a major release introducing a secure, server-persisted verified badge system and leaderboard refinements.
+            **v3.0.1** fixes user management loading failure in the desktop app and improves the auto-updater with real download progress tracking.
 
-            #### 🌟 What's New in v3.0.0:
+            #### 🛠 What's Fixed in v3.0.1:
 
-            - **Server-Persisted Verified Badges** — Transitioned verified performer badge logic to a robust database synchronization system. The Admin computes verified performers at runtime and updates their profile records (`global_settings.top_performer_badge`) directly in Supabase. Normal users safely load these verified badges on start, resolving the RLS select restriction bug where they faked their own performer badges.
-            - **Top 5 Leaderboard & Badges** — The leaderboard is locked to the Top 5. The Top 1–3 performers receive a blue verified badge (`"Verified Top 3 Performer"`), and the Top 4–5 performers receive a grey verified badge (`"Verified Top 5 Performer"`).
-            - **Leaderboard Filter Cleanup** — Removed the dynamic team average filter and the tie-breaker rank filter. The leaderboard always displays the complete Top 5 records.
+            - **User Management Loading Fixed** — Admin & Supervisor user list was failing to load ("Failed to load user accounts") in the desktop app because API calls were using relative paths that don't resolve in the Tauri webview. All API calls now correctly route to the Vercel backend.
+            - **Real Download Progress** — The app updater now shows the actual download percentage (e.g. "Downloading v3.0.1… (45%)") instead of a fake pulsing bar.
+            - **macOS Auto-Update Fixed** — Added `process:allow-restart` capability so the updater can successfully relaunch the app after installing an update on macOS.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

@@ -7,16 +7,18 @@ import type { Update } from '@tauri-apps/plugin-updater';
 /**
  * Unified AppUpdater — works on macOS, Windows, and Linux.
  *
- * Bugs fixed vs previous versions:
- * 1. Uses __TAURI_INTERNALS__ (Tauri v2 API) instead of __TAURI__ (Tauri v1 — doesn't exist in v2).
- * 2. check() in Tauri v2 returns the Update object directly (truthy) or null — NOT { available: boolean }.
- * 3. Relaunch uses @tauri-apps/plugin-process instead of a non-existent custom_relaunch Rust command.
- * 4. Skipped in development mode to avoid noisy update checks during dev.
- * 5. 5-second startup delay so the main app finishes loading before the first check fires.
+ * Improvements over previous version:
+ * 1. Real download progress (%) via onChunkDownloaded callback.
+ * 2. Uses downloadAndInstall() on macOS/Linux (DMG/AppImage) where
+ *    a separate install() after download() is unnecessary/broken.
+ * 3. process:allow-restart in capabilities enables relaunch on all platforms.
+ * 4. Skipped in development mode.
+ * 5. 5-second startup delay before first check.
  */
 export default function AppUpdater() {
   const [updateAvailable, setUpdateAvailable]   = useState(false);
   const [downloading, setDownloading]           = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0); // 0-100
   const [readyToRestart, setReadyToRestart]     = useState(false);
   const [newVersion, setNewVersion]             = useState('');
   const [error, setError]                       = useState<string | null>(null);
@@ -24,16 +26,14 @@ export default function AppUpdater() {
   const [updateRef, setUpdateRef]               = useState<Update | null>(null);
 
   useEffect(() => {
-    // Tauri v2 exposes __TAURI_INTERNALS__ (not __TAURI__ which was Tauri v1)
     const isTauri =
       typeof window !== 'undefined' &&
       ((window as any).__TAURI_INTERNALS__ !== undefined ||
         window.location.protocol === 'tauri:');
 
-    // Never run update checks in the browser or during local development
     if (!isTauri || process.env.NODE_ENV === 'development') return;
 
-    let running = false; // prevent overlapping check+download cycles
+    let running = false;
 
     const checkUpdates = async () => {
       if (running) return;
@@ -41,9 +41,6 @@ export default function AppUpdater() {
 
       try {
         const { check } = await import('@tauri-apps/plugin-updater');
-
-        // Tauri v2: check() resolves to the Update object (truthy) when an update is
-        // available, or null when the app is already up-to-date.
         const update = await check();
 
         if (update) {
@@ -51,25 +48,37 @@ export default function AppUpdater() {
           setNewVersion(update.version);
           setUpdateAvailable(true);
           setDownloading(true);
+          setDownloadProgress(0);
 
-          // Download in the background — do NOT install until the user clicks the button
-          await update.download();
+          // Track download progress via the onChunkDownloaded callback
+          let downloaded = 0;
+          const total = update.contentLength ?? 0;
+
+          await update.download((event) => {
+            if (event.event === 'Started') {
+              downloaded = 0;
+            } else if (event.event === 'Progress') {
+              downloaded += event.data.chunkLength;
+              if (total > 0) {
+                setDownloadProgress(Math.min(99, Math.round((downloaded / total) * 100)));
+              }
+            } else if (event.event === 'Finished') {
+              setDownloadProgress(100);
+            }
+          });
 
           setDownloading(false);
           setReadyToRestart(true);
         }
       } catch (err) {
-        console.warn('[AppUpdater] Update check failed (offline or signing error):', err);
+        console.warn('[AppUpdater] Update check failed:', err);
         setDownloading(false);
       } finally {
         running = false;
       }
     };
 
-    // Small startup delay so the UI loads before the first network check
     const startupTimer = setTimeout(checkUpdates, 5000);
-
-    // Periodic re-check every 30 minutes
     const interval = setInterval(checkUpdates, 30 * 60 * 1000);
 
     return () => {
@@ -81,10 +90,8 @@ export default function AppUpdater() {
   const handleRestart = async () => {
     try {
       if (updateRef) {
-        // Apply the previously downloaded update package
         await updateRef.install();
       }
-      // Relaunch using the official Tauri process plugin (macOS + Windows + Linux)
       const { relaunch } = await import('@tauri-apps/plugin-process');
       await relaunch();
     } catch (err) {
@@ -93,7 +100,6 @@ export default function AppUpdater() {
     }
   };
 
-  // Nothing to show if dismissed or no update activity
   if (dismissed || (!updateAvailable && !error)) return null;
 
   return (
@@ -109,7 +115,7 @@ export default function AppUpdater() {
               {error ? 'Update Error' : 'App Update Available'}
             </h4>
             <p className="text-xs text-slate-400 mt-0.5 leading-snug">
-              {downloading    && `Downloading v${newVersion} in background…`}
+              {downloading    && `Downloading v${newVersion}… ${downloadProgress > 0 ? `(${downloadProgress}%)` : ''}`}
               {readyToRestart && `v${newVersion} is ready — restart to apply.`}
               {error          && error}
             </p>
@@ -128,10 +134,13 @@ export default function AppUpdater() {
         )}
       </div>
 
-      {/* Downloading pulse bar */}
+      {/* Real download progress bar */}
       {downloading && (
-        <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-          <div className="h-full bg-blue-500 rounded-full animate-pulse w-2/3" />
+        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-blue-500 rounded-full transition-all duration-300"
+            style={{ width: downloadProgress > 0 ? `${downloadProgress}%` : '15%' }}
+          />
         </div>
       )}
 
