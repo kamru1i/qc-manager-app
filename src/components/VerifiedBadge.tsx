@@ -11,10 +11,12 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
   const [showTooltip, setShowTooltip] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  if (!badge) return null;
+
   const isBlue = badge.badgeType === "blue" || forceBlue;
   const colorClass = isBlue
     ? "text-[#3b82f6] hover:text-[#60a5fa]"
-    : "text-slate-400 hover:text-slate-300";
+    : "text-slate-300 hover:text-slate-100";
 
   const tooltipPositionClass = position === 'bottom'
     ? 'top-full mt-2'
@@ -61,7 +63,7 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
       {showTooltip && (
         <span className={`absolute left-1/2 -translate-x-1/2 ${tooltipPositionClass} z-50 w-56 p-2 text-[10px] leading-relaxed text-slate-350 bg-slate-950/95 border border-slate-800 rounded-lg shadow-2xl backdrop-blur-md animate-fade-in`}>
           <div className="font-bold text-white mb-0.5 flex items-center gap-1">
-            <span className={isBlue ? "text-[#3b82f6]" : "text-slate-400"}>✓</span>
+            <span className={isBlue ? "text-[#3b82f6]" : "text-slate-300"}>✓</span>
             {isBlue ? "Verified Top 3 Performer" : "Verified Top 5 Performer"}
           </div>
           <div className="text-[9px] text-slate-500">for {badge.monthName}</div>

@@ -140,22 +140,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {profile?.full_name || 'User'}
                   </span>
                   
-                  {/* Custom Hover Tooltip for Codename, Role & Job Role */}
+                  {/* Custom Hover Tooltip for Codename & Job Role */}
                   {showNameTooltip && (
                     <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-44 p-2.5 text-[11px] leading-relaxed text-slate-350 bg-slate-955/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto">
-                      <div className="font-semibold text-white">
-                        Codename: <span className="text-blue-400 font-mono select-all ml-1">{profile?.username ? profile.username.toUpperCase() : ''}</span>
-                      </div>
-                      <div className="border-t border-slate-850 my-0.5"></div>
-                      <div className="text-slate-400 flex items-center gap-1.5">
-                        <span>Role:</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold border ${
-                          profile?.role === 'admin'
-                            ? 'bg-purple-950/60 border-purple-800 text-purple-300' 
-                            : 'bg-blue-950/60 border-blue-800 text-blue-300'
-                        }`}>
-                          {profile?.role === 'admin' ? 'Admin' : 'Staff'}
-                        </span>
+                      <div className="font-semibold text-white flex items-center flex-wrap gap-1">
+                        <span>Codename:</span>
+                        <span className="text-blue-400 font-mono select-all">{profile?.username ? profile.username.toUpperCase() : ''}</span>
+                        {profile?.role && (
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            ({profile.role === 'admin' ? 'Admin' : profile.role === 'supervisor' ? 'Supervisor' : 'Staff'})
+                          </span>
+                        )}
                       </div>
                       {profile?.job_role && (
                         <>
