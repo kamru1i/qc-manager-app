@@ -10,6 +10,7 @@ import { UnifiedSidebar } from '@/components/UnifiedSidebar';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { Modal } from '@/components/Modal';
+import { UserManagementSkeleton } from '@/components/skeleton/UserManagementSkeleton';
 import toast from 'react-hot-toast';
 import {
   Search,
@@ -838,6 +839,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
             </>
           )}
         </div>
+      ) : isLoading ? (
+        <UserManagementSkeleton rows={8} />
       ) : (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -920,16 +923,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-850 text-xs text-slate-300">
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-500">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
-                          <span>Loading user directory...</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : visibleProfiles.length === 0 ? (
+                  {visibleProfiles.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-slate-500">
                         No users found.

@@ -4,7 +4,7 @@ import { StatsSkeleton } from './skeleton/StatsSkeleton';
 import { ListSkeleton } from './skeleton/ListSkeleton';
 import { ProfileHeaderSkeleton } from './skeleton/ProfileHeaderSkeleton';
 import { LeavesTableSkeleton } from './skeleton/LeavesTableSkeleton';
-import { StaffTableSkeleton } from './skeleton/StaffTableSkeleton';
+import { UserManagementSkeleton } from './skeleton/UserManagementSkeleton';
 import { ResponsesTableSkeleton } from './skeleton/ResponsesTableSkeleton';
 import { SettlementsTableSkeleton } from './skeleton/SettlementsTableSkeleton';
 import { ChutiFormSkeleton } from './skeleton/ChutiFormSkeleton';
@@ -39,7 +39,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
     case 'leaves-table':
       return <LeavesTableSkeleton rows={rows} allowOvertime={allowOvertime} className={className} />;
     case 'staff-table':
-      return <StaffTableSkeleton rows={rows} className={className} />;
+      return <UserManagementSkeleton rows={rows} className={className} />;
     case 'responses-table':
       return <ResponsesTableSkeleton rows={rows} className={className} />;
     case 'settlements-table':

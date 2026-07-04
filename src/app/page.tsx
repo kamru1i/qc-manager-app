@@ -973,7 +973,7 @@ export default function AppPortal() {
                     "generic"
                   } />
                 ) : activeTab === "user_management" ? (
-                  <SkeletonLoader variant="staff-table" />
+                  null
                 ) : activeTab === "todo" ? (
                   <SkeletonLoader variant="todo" />
                 ) : activeTab === "analytics" ? (
