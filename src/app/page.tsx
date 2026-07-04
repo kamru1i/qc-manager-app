@@ -96,10 +96,10 @@ function getInitialState() {
 
 export default function AppPortal() {
   const router = useRouter();
-  const [initialState] = useState(() => getInitialState());
-  const [sessionUser, setSessionUser] = useState<any>(initialState.sessionUser);
-  const [profile, setProfile] = useState<Profile | null>(initialState.profile);
-  const [loading, setLoading] = useState(() => !initialState.profile);
+  const [mounted, setMounted] = useState(false);
+  const [sessionUser, setSessionUser] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
     | "chuti"
@@ -110,9 +110,24 @@ export default function AppPortal() {
     | "audit_logs"
     | "kpi"
     | null
-  >(initialState.initialTab);
+  >(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const state = getInitialState();
+    if (state.sessionUser) {
+      setSessionUser(state.sessionUser);
+    }
+    if (state.profile) {
+      setProfile(state.profile);
+      setLoading(false);
+    }
+    if (state.initialTab) {
+      setActiveTab(state.initialTab);
+    }
+  }, []);
 
   const [activeQuotesTab, setActiveQuotesTab] = useState<
     "entry" | "monthly" | "analytics" | "audit_logs" | "rules"
@@ -683,6 +698,10 @@ export default function AppPortal() {
     return () =>
       window.removeEventListener("workspace-change", handleWorkspaceChange);
   }, [profile]);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-slate-955" />;
+  }
 
   if (loading && !sessionUser) {
     return (
