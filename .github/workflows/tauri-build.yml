@@ -102,16 +102,15 @@ jobs:
           tagName: v__VERSION__
           releaseName: "QC App v__VERSION__"
           releaseBody: |
-            ### QC App v__VERSION__ 🔧
+            ### QC App v__VERSION__ 🚀
 
-            **v2.0.1** is a critical patch release fixing Tauri desktop app login failure and auto-update reliability.
+            **v3.0.0** is a major release introducing a secure, server-persisted verified badge system and leaderboard refinements.
 
-            #### 🐛 Fixes in v2.0.1:
+            #### 🌟 What's New in v3.0.0:
 
-            - **Critical: Tauri Login Fix** — Users were unable to log in on the desktop app (macOS/Windows) while the web version worked fine. Root cause was the Supabase client using default auth options incompatible with Tauri's static WebView (no server-side redirect). Fixed by setting `detectSessionInUrl: false`, `flowType: 'pkce'`, and explicit `localStorage` storage in the Supabase client.
-            - **Auto-Updater Unified & Fixed** — Removed duplicate `QuotesAppUpdater` component. The unified `AppUpdater` now correctly uses Tauri v2 environment detection (`__TAURI_INTERNALS__`), the correct `check()` API (returns object directly, not `{ available: boolean }`), and the standard `plugin-process relaunch()` instead of a missing Rust command.
-            - **macOS DMG Build Fix** — Added `chmod +x` step for `bundle_dmg.sh` in CI to fix `failed to bundle project` error on `aarch64-apple-darwin`.
-            - **Password Reset RECOVERY False Trigger Fix** — Changing password no longer falsely triggers the RECOVERY database restore system.
+            - **Server-Persisted Verified Badges** — Transitioned verified performer badge logic to a robust database synchronization system. The Admin computes verified performers at runtime and updates their profile records (`global_settings.top_performer_badge`) directly in Supabase. Normal users safely load these verified badges on start, resolving the RLS select restriction bug where they faked their own performer badges.
+            - **Top 5 Leaderboard & Badges** — The leaderboard is locked to the Top 5. The Top 1–3 performers receive a blue verified badge (`"Verified Top 3 Performer"`), and the Top 4–5 performers receive a grey verified badge (`"Verified Top 5 Performer"`).
+            - **Leaderboard Filter Cleanup** — Removed the dynamic team average filter and the tie-breaker rank filter. The leaderboard always displays the complete Top 5 records.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

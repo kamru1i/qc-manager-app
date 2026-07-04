@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "2.0.1"
+version = "3.0.0"
 description = "A Office Leave Tracker App by Kamrul Islam"
 authors = ["Kamrul Islam, IT Officer, B&F Corporate"]
 license = ""
