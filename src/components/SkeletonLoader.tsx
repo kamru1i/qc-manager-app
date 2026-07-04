@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface SkeletonLoaderProps {
-  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table';
+  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form';
   rows?: number;
   cards?: number;
   className?: string;
@@ -15,6 +15,62 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   className = '',
   allowOvertime = false,
 }) => {
+  if (variant === 'chuti-form') {
+    return (
+      <div className={`flex flex-col lg:flex-row gap-6 w-full animate-pulse ${className}`}>
+        {/* Left Side: Form */}
+        <div className="flex-1 space-y-6">
+          <div className="space-y-2">
+            <div className="h-5 w-48 bg-slate-800 rounded"></div>
+            <div className="h-3.5 w-72 bg-slate-800/60 rounded"></div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="h-3 w-16 bg-slate-800 rounded"></div>
+              <div className="h-10 w-full bg-slate-900/20 border border-slate-850 rounded-lg"></div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-20 bg-slate-800 rounded"></div>
+              <div className="h-10 w-full bg-slate-900/20 border border-slate-850 rounded-lg"></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="h-3 w-24 bg-slate-800 rounded"></div>
+              <div className="h-10 w-full bg-slate-900/20 border border-slate-850 rounded-lg"></div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-24 bg-slate-800 rounded"></div>
+              <div className="h-10 w-full bg-slate-900/20 border border-slate-850 rounded-lg"></div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="h-3 w-36 bg-slate-800 rounded"></div>
+            <div className="h-10 w-full bg-slate-900/20 border border-slate-850 rounded-lg"></div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="h-3 w-20 bg-slate-800 rounded"></div>
+            <div className="h-20 w-full bg-slate-900/20 border border-slate-850 rounded-lg"></div>
+          </div>
+
+          <div className="h-11 w-full bg-purple-900/10 border border-purple-900/20 rounded-xl"></div>
+        </div>
+
+        {/* Right Side: Usage Summary card */}
+        <div className="w-full lg:w-80 bg-slate-900/20 border border-slate-850 shadow-sm rounded-2xl p-5 flex flex-col gap-4 h-fit">
+          <div className="h-4 w-48 bg-slate-800 rounded"></div>
+          <div className="border-t border-slate-850/60 my-1"></div>
+          <div className="h-24 w-full bg-slate-900/20 border border-slate-850 rounded-xl"></div>
+          <div className="h-16 w-full bg-slate-900/20 border border-slate-850 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
+
   if (variant === 'stats') {
     return (
       <div className={`flex flex-wrap justify-center gap-4 w-full animate-pulse ${className}`}>

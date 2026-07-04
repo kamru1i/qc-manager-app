@@ -22,6 +22,7 @@ import { toast } from 'react-hot-toast';
 import { AddLeaveFormFields } from './AddLeaveFormFields';
 import { LeaveUsageSummary } from './LeaveUsageSummary';
 import { UserStats } from './UserStats';
+import { SkeletonLoader } from './SkeletonLoader';
 
 interface AddLeaveProps {
   profile: Profile | null;
@@ -494,10 +495,7 @@ export function AddLeave({
         )}
 
         {submitting && !initialFetchDone ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader className="h-8 w-8 animate-spin text-blue-500" />
-            <p className="mt-2 text-xs text-slate-400 font-medium font-sans">Loading leave data and holidays...</p>
-          </div>
+          <SkeletonLoader variant="chuti-form" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             <form onSubmit={handleSubmit} className="md:col-span-2 space-y-4 font-sans text-xs">

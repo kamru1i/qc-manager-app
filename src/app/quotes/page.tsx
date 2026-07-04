@@ -1048,12 +1048,16 @@ export default function Dashboard({
 
   // Loading Screen
   if (loading) {
+    let loaderType: "form" | "table" | "analytics" | "audit-logs" | "rules" | "generic" = "generic";
+    if (activeTab === "entry") loaderType = "form";
+    else if (activeTab === "monthly") loaderType = "table";
+    else if (activeTab === "analytics") loaderType = "analytics";
+    else if (activeTab === "audit_logs") loaderType = "audit-logs";
+    else if (activeTab === "rules") loaderType = "rules";
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
-        <span className="text-slate-400 text-xs font-semibold tracking-wider">
-          Loading, please wait...
-        </span>
+      <div className="w-full">
+        <SkeletonLoader type={loaderType} />
       </div>
     );
   }

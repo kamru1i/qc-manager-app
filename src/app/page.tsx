@@ -13,6 +13,7 @@ import { calculateTopPerformerBadges } from "@/utils/leaderboardHelper";
 import { Toaster } from 'react-hot-toast';
 import { useGlobalNotifications } from "@/hooks/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/modals/UserNotificationsModal";
+import { SkeletonLoader } from "@/components/SkeletonLoader";
 
 
 const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
@@ -41,11 +42,64 @@ const UserKpiPerformancePanel = lazy(() =>
   })),
 );
 
+function getInitialState() {
+  if (typeof window === "undefined") {
+    return { sessionUser: null, profile: null, initialTab: null };
+  }
+  try {
+    let authUser: any = null;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const val = localStorage.getItem(key);
+        if (val) {
+          const parsed = JSON.parse(val);
+          authUser = parsed?.user || parsed?.currentSession?.user;
+          break;
+        }
+      }
+    }
+    if (!authUser) return { sessionUser: null, profile: null, initialTab: null };
+
+    const cacheKey = `cached_profile_${authUser.id}`;
+    const cachedStr = localStorage.getItem(cacheKey);
+    if (cachedStr) {
+      const cachedProfile = JSON.parse(cachedStr);
+      const hasChuti = !!cachedProfile.has_chuti_access;
+      const hasQuotes = !!cachedProfile.has_quotes_access;
+      const showTodo =
+        cachedProfile.username?.toUpperCase() === "KAMRUL" ||
+        cachedProfile.full_name === "Kamrul Islam";
+      
+      let lastActive = localStorage.getItem("last_active_dashboard") as any;
+      if (lastActive === "chuti" && !hasChuti) lastActive = null;
+      if (lastActive === "quotes" && !hasQuotes) lastActive = null;
+      if (lastActive === "kpi" && !hasQuotes) lastActive = null;
+      if (
+        lastActive === "user_management" &&
+        !(cachedProfile.role === "admin" || cachedProfile.role === "supervisor")
+      )
+        lastActive = null;
+      if (lastActive === "todo" && !showTodo) lastActive = null;
+
+      if (!lastActive) {
+        lastActive = hasChuti ? "chuti" : "quotes";
+      }
+      return { sessionUser: authUser, profile: cachedProfile, initialTab: lastActive };
+    }
+    return { sessionUser: authUser, profile: null, initialTab: null };
+  } catch (e) {
+    console.error("Error loading initial synchronous state:", e);
+    return { sessionUser: null, profile: null, initialTab: null };
+  }
+}
+
 export default function AppPortal() {
   const router = useRouter();
-  const [sessionUser, setSessionUser] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialState] = useState(() => getInitialState());
+  const [sessionUser, setSessionUser] = useState<any>(initialState.sessionUser);
+  const [profile, setProfile] = useState<Profile | null>(initialState.profile);
+  const [loading, setLoading] = useState(() => !initialState.profile);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
     | "chuti"
@@ -56,7 +110,7 @@ export default function AppPortal() {
     | "audit_logs"
     | "kpi"
     | null
-  >(null);
+  >(initialState.initialTab);
   const [logLines, setLogLines] = useState<string[]>([]);
   const fetchingRef = useRef<string | null>(null);
 
@@ -630,7 +684,7 @@ export default function AppPortal() {
       window.removeEventListener("workspace-change", handleWorkspaceChange);
   }, [profile]);
 
-  if (loading) {
+  if (loading && !sessionUser) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
@@ -835,9 +889,16 @@ export default function AppPortal() {
         <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
           <Suspense
             fallback={
-              <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
-                <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
-                <p className="text-xs text-slate-400">Loading workspace...</p>
+              <div className="w-full">
+                {activeTab === "chuti" ? (
+                  <SkeletonLoader variant={activeChutiTab === "add_leave" ? "chuti-form" : "leaves-table"} />
+                ) : activeTab === "quotes" ? (
+                  <SkeletonLoader variant="table" />
+                ) : activeTab === "user_management" ? (
+                  <SkeletonLoader variant="staff-table" />
+                ) : (
+                  <SkeletonLoader variant="table" />
+                )}
               </div>
             }
           >

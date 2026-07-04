@@ -777,11 +777,8 @@ export default function Dashboard({
 
   if (sessionUser && !profile) {
     return (
-      <div className="flex-1 min-h-screen flex flex-col bg-slate-955 items-center justify-center">
-        <div className="flex flex-col items-center gap-4 text-slate-400">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          <p className="text-sm font-medium tracking-wide">Loading...</p>
-        </div>
+      <div className="w-full">
+        <SkeletonLoader variant={activeChutiTab === 'add_leave' ? 'chuti-form' : 'leaves-table'} />
       </div>
     );
   }
@@ -801,10 +798,15 @@ export default function Dashboard({
   }
 
   if (loading && !initialFetchDone) {
+    let loaderVariant: 'chuti-form' | 'leaves-table' | 'responses-table' | 'settlements-table' = 'leaves-table';
+    if (activeChutiTab === 'add_leave') loaderVariant = 'chuti-form';
+    else if (activeChutiTab === 'leave_history') loaderVariant = 'leaves-table';
+    else if (activeChutiTab === 'govt_responses') loaderVariant = 'responses-table';
+    else if (activeChutiTab === 'settlement') loaderVariant = 'settlements-table';
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <p className="text-xs text-slate-405">Loading leave tracker...</p>
+      <div className="w-full">
+        <SkeletonLoader variant={loaderVariant} />
       </div>
     );
   }
