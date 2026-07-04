@@ -2,6 +2,7 @@
 
 import { DailyEntrySkeleton } from "./skeleton/DailyEntrySkeleton";
 import { MonthlyListSkeleton } from "./skeleton/MonthlyListSkeleton";
+import { QuoteRulesSkeleton } from "./skeleton/QuoteRulesSkeleton";
 
 interface SkeletonLoaderProps {
   type?:
@@ -128,46 +129,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
   }
 
   if (type === "rules") {
-    return (
-      <div className="space-y-6 w-full">
-        <div className="space-y-1 animate-pulse">
-          <div className={`h-6 w-44 ${innerBg}`} />
-          <div className={`h-3 w-64 ${innerBg} mt-1`} />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Categories panel */}
-          <div className={`${cardBg} flex flex-col gap-4 lg:col-span-1`}>
-            <div className={`h-4 w-28 ${innerBg}`} />
-            <div className="space-y-2 mt-2">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className={`h-8 w-full ${innerBg}`} />
-              ))}
-            </div>
-          </div>
-          {/* Rules lists panel */}
-          <div className="lg:col-span-3 space-y-4">
-            <div className="flex gap-3 justify-between items-center animate-pulse">
-              <div className={`h-9 w-64 ${innerBg}`} />
-              <div className={`h-9 w-32 ${innerBg}`} />
-            </div>
-            <div className={`${cardBg} space-y-4`}>
-              <div className={`h-4 w-32 ${innerBg}`} />
-              <div className="space-y-3">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="p-4 bg-slate-900/40 border border-slate-850/50 rounded-xl space-y-2">
-                    <div className="flex justify-between">
-                      <div className={`h-3.5 w-48 ${innerBg}`} />
-                      <div className={`h-3 w-16 ${innerBg}`} />
-                    </div>
-                    <div className={`h-3 w-full ${innerBg} mt-2`} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <QuoteRulesSkeleton />;
   }
 
   if (type === "users") {
