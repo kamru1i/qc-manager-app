@@ -49,6 +49,7 @@ import { AddLeave } from '@/components/AddLeave';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
+import { getApiUrl } from '@/utils/apiUrlHelper';
 
 interface UserManagementDashboardProps {
   sessionUser: { id: string } | null;
@@ -250,7 +251,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     setLoadingLeaveData(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('/api/supervisor/staff-leave-data', {
+      const response = await fetch(getApiUrl('/api/supervisor/staff-leave-data'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -477,7 +478,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('/api/supervisor/profiles', {
+      const response = await fetch(getApiUrl('/api/supervisor/profiles'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

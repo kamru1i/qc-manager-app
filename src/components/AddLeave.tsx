@@ -18,6 +18,7 @@ import {
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/useLeaveQuotaStats';
 import { sendPushNotification } from '@/utils/webPushHelper';
+import { getApiUrl } from '@/utils/apiUrlHelper';
 import { toast } from 'react-hot-toast';
 import { AddLeaveFormFields } from './AddLeaveFormFields';
 import { LeaveUsageSummary } from './LeaveUsageSummary';
@@ -460,7 +461,7 @@ export function AddLeave({
 
       if (isAddingOnBehalf && isPrivilegedRole) {
         const { data: { session } } = await supabase.auth.getSession();
-        const response = await fetch('/api/supervisor/add-leave', {
+        const response = await fetch(getApiUrl('/api/supervisor/add-leave'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
