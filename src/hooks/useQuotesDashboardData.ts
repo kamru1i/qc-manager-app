@@ -132,7 +132,79 @@ export const useQuotesDashboardData = () => {
             console.error('Failed to sync offline data before fetch:', syncErr);
           }
 
-          // 2. Fetch data (Delta Pull vs Full Fetch)
+          // 2. Fetch data for the currently selected month and year to ensure absolute completeness
+          const yearNum = parseInt(selectedYear, 10);
+          const monthNum = parseInt(selectedMonth, 10);
+          const startDate = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0, 0)).toISOString();
+          const endDate = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59, 999)).toISOString();
+
+          let monthlyData: RecordItem[] = [];
+          let mPage = 0;
+          const mPageSize = 1000;
+          let mHasMore = true;
+
+          while (mHasMore) {
+            const from = mPage * mPageSize;
+            const to = from + mPageSize - 1;
+
+            let query = supabase
+              .from('records')
+              .select(`
+                *,
+                profiles (username, full_name)
+              `)
+              .gte('submitted_at', startDate)
+              .lte('submitted_at', endDate)
+              .order('submitted_at', { ascending: false })
+              .range(from, to);
+
+            if (profile.role !== 'admin' && profile.role !== 'supervisor') {
+              query = query.eq('user_id', sessionUser.id);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+              monthlyData = [...monthlyData, ...data];
+              if (data.length < mPageSize) {
+                mHasMore = false;
+              } else {
+                mPage++;
+              }
+            } else {
+              mHasMore = false;
+            }
+          }
+
+          // Merge this month's fresh server records into IndexedDB cache
+          await mergeCacheData('records_cache', monthlyData);
+
+          // Get cached records for the current user/admin matching selectedMonth & selectedYear for active pruning
+          const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
+          const localMonthRecords = localCachedForPrune.filter(r => {
+            if (profile.role !== 'admin' && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
+            if (!r.submitted_at) return false;
+            const date = new Date(r.submitted_at);
+            const y = date.getFullYear().toString();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            return y === selectedYear && m === selectedMonth;
+          });
+
+          // Delete cached records that are not on the server (deleted) and not in pending outbox
+          const serverIdSet = new Set(monthlyData.map(row => row.id));
+          const pending = await getOfflineRecords();
+          const pendingInsertIds = new Set(
+            pending.filter(p => p.action === 'insert').map(p => p.localId)
+          );
+
+          for (const r of localMonthRecords) {
+            if (!serverIdSet.has(r.id) && !pendingInsertIds.has(r.id)) {
+              await deleteCacheItem('records_cache', r.id);
+            }
+          }
+
+          // 3. Keep delta pull for other months in the background to keep offline capability working
           const lastSynced = await getSyncTimestamp('records');
 
           if (lastSynced) {
@@ -248,79 +320,6 @@ export const useQuotesDashboardData = () => {
             await setCacheData('profiles_cache', profiles || []);
             setProfilesList(profiles || []);
           }
-
-          // Active cache pruning (Re-enabled after database recovery)
-          try {
-            const yearNum = parseInt(selectedYear, 10);
-            const monthNum = parseInt(selectedMonth, 10);
-            const startDate = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0, 0)).toISOString();
-            const endDate = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59, 999)).toISOString();
-          
-            // Fetch valid server IDs for the current month and user role paginated to bypass PostgREST limit
-            let serverIds: { id: string }[] = [];
-            let idPage = 0;
-            const idPageSize = 1000;
-            let idHasMore = true;
-          
-            while (idHasMore) {
-              const from = idPage * idPageSize;
-              const to = from + idPageSize - 1;
-          
-              let pageQuery = supabase
-                .from('records')
-                .select('id')
-                .gte('submitted_at', startDate)
-                .lte('submitted_at', endDate)
-                .range(from, to);
-          
-              if (profile.role !== 'admin' && profile.role !== 'supervisor') {
-                pageQuery = pageQuery.eq('user_id', sessionUser.id);
-              }
-          
-              const { data: pageData, error: pageError } = await pageQuery;
-              if (pageError) throw pageError;
-          
-              if (pageData && pageData.length > 0) {
-                serverIds = [...serverIds, ...pageData];
-                if (pageData.length < idPageSize) {
-                  idHasMore = false;
-                } else {
-                  idPage++;
-                }
-              } else {
-                idHasMore = false;
-              }
-            }
-          
-            const serverIdSet = new Set(serverIds.map(row => row.id));
-            
-            // Get cached records for the current user/admin matching selectedMonth & selectedYear
-            // Reuse this read later for the main records load to avoid redundant IndexedDB reads
-            const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
-            const localMonthRecords = localCachedForPrune.filter(r => {
-              if (profile.role !== 'admin' && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
-              if (!r.submitted_at) return false;
-              const date = new Date(r.submitted_at);
-              const y = date.getFullYear().toString();
-              const m = String(date.getMonth() + 1).padStart(2, '0');
-              return y === selectedYear && m === selectedMonth;
-            });
-          
-            // Get pending unsynced insertions to make sure we don't prune them
-            const pending = await getOfflineRecords();
-            const pendingInsertIds = new Set(
-              pending.filter(p => p.action === 'insert').map(p => p.localId)
-            );
-          
-            // Delete cached records that are not on the server and not in pending outbox
-            for (const r of localMonthRecords) {
-              if (!serverIdSet.has(r.id) && !pendingInsertIds.has(r.id)) {
-                await deleteCacheItem('records_cache', r.id);
-              }
-            }
-          } catch (pruneErr) {
-            console.error('Active cache pruning failed:', pruneErr);
-          }
         } catch (netError: any) {
           console.error('Network sync/fetch failed, falling back to cache:', netError?.message || netError, netError);
           showToast('error', 'Network error. Loading offline cache...');
@@ -416,9 +415,9 @@ export const useQuotesDashboardData = () => {
         });
       }
 
-    } catch (err) {
-      console.error('Error fetching records:', err);
-      showToast('error', 'Error loading data: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: any) {
+      console.error('Error fetching records:', err?.message || err?.details || err);
+      showToast('error', 'Error loading data: ' + (err?.message || err?.details || String(err)));
     } finally {
       setRecordsLoading(false);
       setInitialFetchDone(true);
@@ -647,9 +646,9 @@ export const useQuotesDashboardData = () => {
 
       setSubmitting(false);
       return true;
-    } catch (err) {
-      console.error('Error completing first-time setup:', err);
-      showToast('error', 'Error during setup: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (err: any) {
+      console.error('Error completing first-time setup:', err?.message || err?.details || err);
+      showToast('error', 'Error during setup: ' + (err?.message || err?.details || String(err)));
       setSubmitting(false);
       return false;
     }

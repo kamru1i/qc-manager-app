@@ -178,8 +178,8 @@ export default function AppPortal() {
           }
         }
         setQuotesRecords(allRecords);
-      } catch (err) {
-        console.error("Error fetching all records:", err);
+      } catch (err: any) {
+        console.error("Error fetching all records:", err?.message || err?.details || err);
       }
     };
 
