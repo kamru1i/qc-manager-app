@@ -306,9 +306,18 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Fetch leave data on mount/change of selected staff member
   useEffect(() => {
     if (viewingStaff) {
-      fetchStaffLeaveData(viewingStaff.id);
+      const isSupervisedByMe = profile?.role === 'admin' || (profile?.role === 'supervisor' && Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile?.id));
+      if (isSupervisedByMe) {
+        fetchStaffLeaveData(viewingStaff.id);
+      } else {
+        // Reset states for non-supervised users so no old values linger
+        setViewingStaffRecords([]);
+        setViewingStaffSettlements([]);
+        setViewingStaffHolidayResponses([]);
+        setGlobalSettings(getGlobalSettingsFromProfile(profile));
+      }
     }
-  }, [viewingStaff, fetchStaffLeaveData]);
+  }, [viewingStaff, fetchStaffLeaveData, profile]);
 
   // Toggle adjustment handler for leaves in details view
   const handleToggleAdjustment = async (record: ChutiRecord) => {
