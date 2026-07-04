@@ -781,6 +781,8 @@ export default function Dashboard({
         <SkeletonLoader variant={
           activeChutiTab === 'add_leave' ? 'chuti-form' : 
           activeChutiTab === 'leave_history' ? 'leave-history' : 
+          activeChutiTab === 'govt_responses' ? 'responses-table' : 
+          activeChutiTab === 'settlement' ? 'settlements-table' : 
           'leaves-table'
         } />
       </div>

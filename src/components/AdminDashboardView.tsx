@@ -366,7 +366,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </div>
       )}
 
-      {viewingStaffId ? (
+      {viewingStaffId && activeTab === 'settlement' ? (
         <div className="flex flex-col gap-6">
           {!staffProfile ? (
             <div className="flex flex-col gap-6 w-full">
