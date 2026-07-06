@@ -253,7 +253,9 @@ export const useChutiOperations = ({
     const bypassSupervisor = 
       profile?.needs_supervisor_approval === false ||
       profile?.role === 'admin' ||
-      profile?.role === 'supervisor';
+      profile?.role === 'supervisor' ||
+      !profile?.supervisor_ids ||
+      profile.supervisor_ids.length === 0;
 
     // Calculate available overtime and short leave minutes
     const selectedYear = date ? date.substring(0, 4) : new Date().getFullYear().toString();

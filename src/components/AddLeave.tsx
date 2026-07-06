@@ -64,7 +64,6 @@ export function AddLeave({
   const [comment, setComment] = useState('');
   const [bulkDates, setBulkDates] = useState<string[]>([]);
   const [bulkAdjustments, setBulkAdjustments] = useState<boolean[]>([]);
-  const [selectedSupervisors, setSelectedSupervisors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   // Initialize today's date and default times
@@ -83,7 +82,6 @@ export function AddLeave({
       setComment('');
       setBulkDates([]);
       setBulkAdjustments([]);
-      setSelectedSupervisors([]);
     }
   }, [targetProfile]);
 
@@ -325,11 +323,16 @@ export function AddLeave({
 
     // Prepare records list to insert
     const insertData: Partial<ChutiRecord>[] = [];
-    const bypassSupervisor = addedBySupervisor || profile?.role === 'admin' || targetProfile.needs_supervisor_approval === false;
+    const bypassSupervisor =
+      addedBySupervisor ||
+      profile?.role === 'admin' ||
+      targetProfile.needs_supervisor_approval === false ||
+      !targetProfile.supervisor_ids ||
+      targetProfile.supervisor_ids.length === 0;
     let finalStatus = 'pending_supervisor';
     if (profile?.role === 'admin') {
       finalStatus = 'approved';
-    } else if (addedBySupervisor || targetProfile.needs_supervisor_approval === false) {
+    } else if (bypassSupervisor) {
       finalStatus = 'approved_by_supervisor';
     }
 
@@ -505,11 +508,12 @@ export function AddLeave({
       }
 
       // Send notifications to supervisors if pending approval (normal user request)
-      if (finalStatus === 'pending_supervisor' && selectedSupervisors.length > 0 && data && data.length > 0) {
-        const notifInsert = selectedSupervisors.map(supId => ({
+      const targetSupervisors = targetProfile.supervisor_ids || [];
+      if (finalStatus === 'pending_supervisor' && targetSupervisors.length > 0 && data && data.length > 0) {
+        const notifInsert = targetSupervisors.map(supId => ({
           user_id: supId,
           title: `New Leave Request`,
-          description: `${targetProfile.full_name} submitted a ${leaveType} request for ${formatDate(date)}.`,
+          description: `${targetProfile.full_name || targetProfile.username} submitted a ${leaveType} request for ${formatDate(date)}.`,
           type: 'supervisor_approval',
           target_chuti_id: data[0].id,
           status: 'unread'
@@ -522,9 +526,9 @@ export function AddLeave({
 
         // Send web pushes
         sendPushNotification({
-          userIds: selectedSupervisors,
+          userIds: targetSupervisors,
           title: 'New Leave Request',
-          body: `${targetProfile.full_name} submitted a ${leaveType} request for ${formatDate(date)}.`
+          body: `${targetProfile.full_name || targetProfile.username} submitted a ${leaveType} request for ${formatDate(date)}.`
         }).catch(err => console.error('Error sending push:', err));
       }
 
@@ -535,7 +539,6 @@ export function AddLeave({
       setComment('');
       setBulkDates([]);
       setBulkAdjustments([]);
-      setSelectedSupervisors([]);
     } catch (err: unknown) {
       console.error(err);
       toast.error((err as Error).message || 'Failed to add leave');
@@ -627,43 +630,11 @@ export function AddLeave({
                 globalSettings={globalSettings}
               />
 
-              {/* Supervisor Selector — hidden when supervisor is adding on behalf */}
-              {!addedBySupervisor && profile?.role !== 'admin' && targetProfile?.needs_supervisor_approval !== false && supervisors.length > 0 && (
-                <div className="pt-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Select Supervisors for Approval</label>
-                  <div className="flex flex-wrap gap-2">
-                    {supervisors.map(sup => {
-                      const isSelected = selectedSupervisors.includes(sup.id);
-                      return (
-                        <button
-                          key={sup.id}
-                          type="button"
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedSupervisors(prev => prev.filter(id => id !== sup.id));
-                            } else {
-                              setSelectedSupervisors(prev => [...prev, sup.id]);
-                            }
-                          }}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
-                            isSelected
-                              ? 'bg-blue-600 border-blue-500 text-white font-semibold'
-                              : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-                          }`}
-                        >
-                          {sup.full_name} ({sup.username?.toUpperCase()})
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t border-slate-800">
                 <button
                   type="submit"
-                  disabled={submitting || !!validationError || isDuplicateDate || (!addedBySupervisor && profile?.role !== 'admin' && targetProfile?.needs_supervisor_approval !== false && selectedSupervisors.length === 0)}
+                  disabled={submitting || !!validationError || isDuplicateDate}
                   className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
