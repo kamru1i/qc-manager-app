@@ -682,7 +682,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
       )}
 
       {/* Skeleton Loader during search checks or initial detection */}
-      {(loading || detectingIP) && <IPCheckerSkeleton />}
+      {(loading || detectingIP) && <IPCheckerSkeleton hideHeader={true} />}
 
       {/* Sources Detailed Grid */}
       {checkRan && !loading && (

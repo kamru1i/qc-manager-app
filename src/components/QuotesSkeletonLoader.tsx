@@ -5,6 +5,8 @@ import { MonthlyListSkeleton } from "./skeleton/MonthlyListSkeleton";
 import { QuoteRulesSkeleton } from "./skeleton/QuoteRulesSkeleton";
 import { AnalyticsSkeleton } from "./skeleton/AnalyticsSkeleton";
 import { AuditLogsSkeleton } from "./skeleton/AuditLogsSkeleton";
+import { IPCheckerSkeleton } from "./skeleton/IPCheckerSkeleton";
+import { LoginCodesSkeleton } from "./skeleton/LoginCodesSkeleton";
 
 interface SkeletonLoaderProps {
   type?:
@@ -18,6 +20,8 @@ interface SkeletonLoaderProps {
     | "users"
     | "analytics"
     | "audit-logs"
+    | "ip_checker"
+    | "login_codes"
     | "generic";
   rows?: number;
 }
@@ -185,6 +189,14 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
 
   if (type === "audit-logs") {
     return <AuditLogsSkeleton />;
+  }
+
+  if (type === "ip_checker") {
+    return <IPCheckerSkeleton />;
+  }
+
+  if (type === "login_codes") {
+    return <LoginCodesSkeleton />;
   }
 
   // default / generic

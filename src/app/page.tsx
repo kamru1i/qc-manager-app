@@ -1081,6 +1081,8 @@ export default function AppPortal() {
                     activeQuotesTab === "rules" ? "rules" : 
                     activeQuotesTab === "analytics" ? "analytics" : 
                     activeQuotesTab === "audit_logs" ? "audit-logs" : 
+                    activeQuotesTab === "ip_checker" ? "ip_checker" :
+                    activeQuotesTab === "login_codes" ? "login_codes" :
                     "generic"
                   } />
                 ) : activeTab === "user_management" ? (

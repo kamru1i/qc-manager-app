@@ -981,12 +981,14 @@ export default function Dashboard({
 
   // Loading Screen
   if (loading) {
-    let loaderType: "form" | "table" | "analytics" | "audit-logs" | "rules" | "generic" = "generic";
+    let loaderType: "form" | "table" | "analytics" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "generic" = "generic";
     if (activeTab === "entry") loaderType = "form";
     else if (activeTab === "monthly") loaderType = "table";
     else if (activeTab === "analytics") loaderType = "analytics";
     else if (activeTab === "audit_logs") loaderType = "audit-logs";
     else if (activeTab === "rules") loaderType = "rules";
+    else if (activeTab === "ip_checker") loaderType = "ip_checker";
+    else if (activeTab === "login_codes") loaderType = "login_codes";
 
     return (
       <div className="w-full">
