@@ -10,6 +10,8 @@ interface UserProfileSettingsPanelProps {
   submitting: boolean;
   profiles: Profile[];
   viewingStaff: Profile;
+  editUserCodename: string;
+  setEditUserCodename: (val: string) => void;
   editUserFullName: string;
   setEditUserFullName: (val: string) => void;
   editUserRole: 'admin' | 'supervisor' | 'user';
@@ -46,6 +48,8 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
   submitting,
   profiles,
   viewingStaff,
+  editUserCodename,
+  setEditUserCodename,
   editUserFullName,
   setEditUserFullName,
   editUserRole,
@@ -90,6 +94,8 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
 
       <StaffSettingsForm
         isNewUser={false}
+        codename={editUserCodename}
+        setCodename={setEditUserCodename}
         fullName={editUserFullName}
         setFullName={setEditUserFullName}
         role={editUserRole}

@@ -205,7 +205,8 @@ export const useAdminActions = ({
     eligibleGovtHoliday?: boolean,
     eligibleOfficeLeave?: boolean,
     allowOvertime?: boolean,
-    allowReserve?: boolean
+    allowReserve?: boolean,
+    newUsername?: string
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -214,6 +215,19 @@ export const useAdminActions = ({
     updateLastActivity();
     setSubmitting(true);
     try {
+      const targetProfile = profilesList.find(p => p.id === userId);
+      const oldUsername = targetProfile?.username || '';
+      const cleanUsername = newUsername?.trim().toUpperCase();
+
+      if (editorRole === 'admin' && cleanUsername && targetProfile && cleanUsername !== oldUsername) {
+        const { error: usernameError } = await supabase.rpc('admin_update_user_credentials', {
+          p_user_id: userId,
+          p_new_username: cleanUsername
+        });
+        if (usernameError) throw usernameError;
+        targetProfile.username = cleanUsername;
+      }
+
       const updatePayload: any = {};
       if (editorRole === 'admin') {
         updatePayload.full_name = fullName.trim() || null;
@@ -241,11 +255,13 @@ export const useAdminActions = ({
       if (error) throw error;
 
       // Try to resolve target user info and track specific changes
-      const targetProfile = profilesList.find(p => p.id === userId);
       const targetName = targetProfile ? `${targetProfile.username}` : `ID ${userId}`;
 
       const changes: string[] = [];
       if (targetProfile) {
+        if (editorRole === 'admin' && oldUsername && cleanUsername && oldUsername !== cleanUsername) {
+          changes.push(`Codename: '${oldUsername}' → '${cleanUsername}'`);
+        }
         const oldName = (targetProfile.full_name || '').trim();
         const newName = fullName.trim();
         if (oldName !== newName) {

@@ -76,6 +76,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [isCreatingNewUser, setIsCreatingNewUser] = useState(false);
 
   // Edit User State
+  const [editUserCodename, setEditUserCodename] = useState('');
   const [editUserFullName, setEditUserFullName] = useState('');
   const [editUserRole, setEditUserRole] = useState<'admin' | 'supervisor' | 'user'>('user');
   const [editHasChutiAccess, setEditHasChutiAccess] = useState(false);
@@ -128,6 +129,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Sync edit states when viewingStaff changes
   useEffect(() => {
     if (viewingStaff) {
+      setEditUserCodename(viewingStaff.username || '');
       setEditUserFullName(viewingStaff.full_name || '');
       setEditUserRole(viewingStaff.role || 'user');
       setEditHasChutiAccess(!!viewingStaff.has_chuti_access);
@@ -555,7 +557,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       editEligibleGovtHoliday,
       editEligibleOfficeLeave,
       editAllowOvertime,
-      editAllowReserve
+      editAllowReserve,
+      editUserCodename
     );
 
     setSubmitting(false);
@@ -753,6 +756,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   submitting={submitting}
                   profiles={profiles}
                   viewingStaff={viewingStaff}
+                  editUserCodename={editUserCodename}
+                  setEditUserCodename={setEditUserCodename}
                   editUserFullName={editUserFullName}
                   setEditUserFullName={setEditUserFullName}
                   editUserRole={editUserRole}

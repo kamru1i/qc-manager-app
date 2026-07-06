@@ -86,8 +86,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
     <div className="space-y-6">
       {/* Profile Details Fields */}
       <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl">
-        <div className={`grid grid-cols-1 gap-4 ${isNewUser ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-          {isNewUser && setCodename && (
+        <div className={`grid grid-cols-1 gap-4 ${(isNewUser || isAdmin) ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+          {(isNewUser || isAdmin) && setCodename && (
             <div>
               <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Codename</label>
               <input
@@ -96,7 +96,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 placeholder="e.g. KI1024"
                 value={codename}
                 onChange={(e) => setCodename(e.target.value.toUpperCase())}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
+                disabled={!isAdmin}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50 disabled:opacity-50"
               />
             </div>
           )}
