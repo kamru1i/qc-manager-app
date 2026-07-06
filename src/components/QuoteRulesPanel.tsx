@@ -24,8 +24,7 @@ import {
   Sparkles,
   Loader2,
   Check,
-  Key,
-  Globe
+  Key
 } from 'lucide-react';
 
 interface QuoteRulesPanelProps {
@@ -829,14 +828,6 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
             Login Code
           </button>
 
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('quotes-tab-change', { detail: 'ip_checker' }))}
-            className="flex items-center gap-1.5 py-2 px-3.5 bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200"
-            title="Scan IP Safety & Geolocation"
-          >
-            <Globe className="h-3.5 w-3.5 text-blue-500" />
-            IP Checker
-          </button>
 
           {canEdit && (
             <button
