@@ -595,6 +595,7 @@ export default function Dashboard({
           activeChutiTab === 'govt_responses' ? 'responses-table' : 
           activeChutiTab === 'settlement' ? 'settlements-table' : 
           activeChutiTab === 'leave_settings' ? 'leave-settings' : 
+          activeChutiTab === 'team_leaves' ? 'team-leaves-report' :
           'leaves-table'
         } />
       </div>
@@ -616,12 +617,13 @@ export default function Dashboard({
   }
 
   if (loading && !initialFetchDone) {
-    let loaderVariant: 'chuti-form' | 'leaves-table' | 'responses-table' | 'settlements-table' | 'leave-history' | 'leave-settings' = 'leaves-table';
+    let loaderVariant: 'chuti-form' | 'leaves-table' | 'responses-table' | 'settlements-table' | 'leave-history' | 'leave-settings' | 'team-leaves-report' = 'leaves-table';
     if (activeChutiTab === 'add_leave') loaderVariant = 'chuti-form';
     else if (activeChutiTab === 'leave_history') loaderVariant = 'leave-history';
     else if (activeChutiTab === 'govt_responses') loaderVariant = 'responses-table';
     else if (activeChutiTab === 'settlement') loaderVariant = 'settlements-table';
     else if (activeChutiTab === 'leave_settings') loaderVariant = 'leave-settings';
+    else if (activeChutiTab === 'team_leaves') loaderVariant = 'team-leaves-report';
 
     return (
       <div className="w-full">

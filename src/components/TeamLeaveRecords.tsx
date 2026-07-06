@@ -5,6 +5,7 @@ import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { exportHelper } from '@/utils/exportHelper';
 import { LeavesRecordsTable } from './LeavesRecordsTable';
+import { TeamLeaveRecordsSkeleton } from './skeleton/TeamLeaveRecordsSkeleton';
 import { Calendar, RefreshCw, ArrowLeft } from 'lucide-react';
 import { formatDate, formatTimeToAMPM, getCleanComment } from '@/utils/dashboardHelpers';
 
@@ -23,6 +24,10 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   initialFetchDone,
   onBack,
 }) => {
+  if (!initialFetchDone) {
+    return <TeamLeaveRecordsSkeleton />;
+  }
+
   // Initialize to local today's date in 'YYYY-MM-DD' Swedish format
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date();

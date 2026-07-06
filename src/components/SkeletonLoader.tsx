@@ -13,9 +13,10 @@ import { LeaveSettingsSkeleton } from './skeleton/LeaveSettingsSkeleton';
 import { TodoSkeleton } from './skeleton/TodoSkeleton';
 import { AnalyticsSkeleton } from './skeleton/AnalyticsSkeleton';
 import { AuditLogsSkeleton } from './skeleton/AuditLogsSkeleton';
+import { TeamLeaveRecordsSkeleton } from './skeleton/TeamLeaveRecordsSkeleton';
 
 interface SkeletonLoaderProps {
-  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'analytics' | 'audit-logs';
+  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'analytics' | 'audit-logs' | 'team-leaves-report';
   rows?: number;
   cards?: number;
   className?: string;
@@ -56,6 +57,8 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
       return <AnalyticsSkeleton className={className} />;
     case 'audit-logs':
       return <AuditLogsSkeleton className={className} />;
+    case 'team-leaves-report':
+      return <TeamLeaveRecordsSkeleton />;
     case 'table':
     default:
       return <TableSkeleton rows={rows} className={className} />;
