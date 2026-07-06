@@ -111,12 +111,12 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.8** completely eliminates double reloads and UI flickering when adding or managing leave entries in User Management.
+            **v3.0.9** rebuilds the cross-platform Auto Updater from scratch for macOS and Windows.
 
-            #### 🛠 What's Fixed in v3.0.8:
+            #### 🛠 What's Fixed in v3.0.9:
 
-            - **Zero Double-Reload & Smooth State Updates** — Added optimistic local state updates when adding, deleting, or adjusting leave records in User Management > Leave History.
-            - **Silent Background Refetching** — Prevented full-page loading spinners during background data re-fetches, preserving smooth table UI rendering.
+            - **Rebuilt Auto Updater** — Uses Tauri v2 `downloadAndInstall()` flow for atomic package downloads and extractions on macOS and Windows.
+            - **Seamless App Relaunch** — Integrated `@tauri-apps/plugin-process` relaunch to restart the app after update installation cleanly.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.
