@@ -53,6 +53,20 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     return null;
   });
 
+  const [permissionModal, setPermissionModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    confirmText: "",
+    onConfirm: () => {},
+  });
+
   // ── Helpers ────────────────────────────────────────────────────────
   const wrapHtmlForDocx = (contentHtml: string) => {
     return `<!DOCTYPE html>
@@ -369,6 +383,65 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     showToast("success", "Document removed from tracker list.");
   };
 
+  const triggerChooseDirectoryWithPermission = () => {
+    setPermissionModal({
+      isOpen: true,
+      title: "Folder Access Permission Required",
+      message: "This application needs folder access permission to save generated Word documents directly to your local computer. Would you like to select a directory now?",
+      confirmText: "Yes, Choose Folder",
+      onConfirm: async () => {
+        setPermissionModal(prev => ({ ...prev, isOpen: false }));
+        await handleChooseDirectory();
+      }
+    });
+  };
+
+  const triggerSaveWithPermission = async (todayUserRecords: RecordItem[]) => {
+    if (!selectedRecordIdForSave) {
+      showToast("error", "Please select a record (circle checkbox) to generate the file name.");
+      return;
+    }
+    const record = todayUserRecords.find(r => r.id === selectedRecordIdForSave);
+    if (!record) {
+      showToast("error", "Selected record not found.");
+      return;
+    }
+
+    const editorHtml = editorRef.current?.innerHTML || "";
+    if (!editorHtml || editorHtml.trim() === "" || editorHtml === "<br>") {
+      showToast("error", "Please paste some content into the input field first.");
+      return;
+    }
+
+    const isTauri = typeof window !== "undefined" && (window as any).__TAURI__ !== undefined;
+    
+    // Check if we need to select folder first
+    const needsFolderSelection = isTauri 
+      ? !baseDirectory 
+      : (typeof window !== "undefined" && "showDirectoryPicker" in window && !baseDirectoryHandleRef.current);
+
+    if (needsFolderSelection) {
+      setPermissionModal({
+        isOpen: true,
+        title: "Folder Access Required",
+        message: `Please authorize a save directory on your computer to save "${record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "")}". Would you like to choose a folder now?`,
+        confirmText: "Select Folder",
+        onConfirm: async () => {
+          setPermissionModal(prev => ({ ...prev, isOpen: false }));
+          const chosenDir = await handleChooseDirectory();
+          if (chosenDir) {
+            // Add slight timeout to let modal close smoothly before execution
+            setTimeout(() => {
+              handleSaveAsWord(todayUserRecords);
+            }, 250);
+          }
+        }
+      });
+    } else {
+      await handleSaveAsWord(todayUserRecords);
+    }
+  };
+
   return {
     // State
     savedRecordIds,
@@ -378,6 +451,8 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     setSelectedRecordIdForSave,
     editorRef,
     baseDirectory,
+    permissionModal,
+    setPermissionModal,
     // Handlers
     handleChooseDirectory,
     handleSaveAsWord,
@@ -385,5 +460,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     handleEditDocument,
     handleCancelEdit,
     handleDeleteDocument,
+    triggerChooseDirectoryWithPermission,
+    triggerSaveWithPermission,
   };
 };

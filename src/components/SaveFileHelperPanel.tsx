@@ -3,11 +3,12 @@
 import React from "react";
 import { Save, ArrowLeft, Check, X, Edit3, Trash2 } from "lucide-react";
 import { RecordItem, SavedDocument } from "@/types";
+import { ConfirmModal } from "./modals/ConfirmModal";
 
 interface SaveFileHelperPanelProps {
   editorRef: React.RefObject<HTMLDivElement | null>;
   baseDirectory: string | null;
-  handleChooseDirectory: () => Promise<string | null>;
+  handleChooseDirectory: () => void;
   todayUserRecords: RecordItem[];
   savedRecordIds: string[];
   selectedRecordIdForSave: string | null;
@@ -20,6 +21,20 @@ interface SaveFileHelperPanelProps {
   handleEditDocument: (doc: SavedDocument) => void;
   handleDeleteDocument: (docId: string, recordId: string) => void;
   setShowSaveFileHelper: (val: boolean) => void;
+  permissionModal: {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    onConfirm: () => void;
+  };
+  setPermissionModal: React.Dispatch<React.SetStateAction<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    onConfirm: () => void;
+  }>>;
 }
 
 export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
@@ -38,6 +53,8 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
   handleEditDocument,
   handleDeleteDocument,
   setShowSaveFileHelper,
+  permissionModal,
+  setPermissionModal,
 }) => {
   const [isEditorEmpty, setIsEditorEmpty] = React.useState(true);
 
@@ -285,6 +302,17 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={permissionModal.isOpen}
+        onClose={() => setPermissionModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={permissionModal.onConfirm}
+        title={permissionModal.title}
+        message={permissionModal.message}
+        confirmText={permissionModal.confirmText}
+        cancelText="No"
+        isDanger={false}
+      />
     </div>
   );
 };

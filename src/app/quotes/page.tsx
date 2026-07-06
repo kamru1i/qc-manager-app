@@ -318,8 +318,10 @@ export default function Dashboard({
     setSelectedRecordIdForSave,
     editorRef,
     baseDirectory,
-    handleChooseDirectory,
-    handleSaveAsWord: handleSaveAsWordRaw,
+    permissionModal,
+    setPermissionModal,
+    triggerChooseDirectoryWithPermission: handleChooseDirectory,
+    triggerSaveWithPermission: handleSaveAsWordRaw,
     handleUpdateWord,
     handleEditDocument,
     handleCancelEdit,
@@ -1291,6 +1293,8 @@ export default function Dashboard({
                       handleEditDocument={handleEditDocument}
                       handleDeleteDocument={handleDeleteDocument}
                       setShowSaveFileHelper={setShowSaveFileHelper}
+                      permissionModal={permissionModal}
+                      setPermissionModal={setPermissionModal}
                     />
                   </Suspense>
                 ) : (
