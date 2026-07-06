@@ -771,7 +771,7 @@ export default function Dashboard({
             profilesList={profilesList}
             adminRecords={adminRecords}
             initialFetchDone={initialFetchDone}
-            onBack={() => onChutiTabChange('leave_history')}
+            onBack={() => onChutiTabChange('add_leave')}
           />
         )}
 
