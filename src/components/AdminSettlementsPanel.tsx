@@ -235,6 +235,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
       const isProcessed = settlement?.status === 'processed';
       return Math.abs(remaining) > 0.01 && !isProcessed;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staffProfiles, selectedPeriod, selectedCategory, selectedYear, leaveSettlements, records, globalSettings, holidayResponses]);
 
   const filteredStaff = React.useMemo(() => {
@@ -255,6 +256,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
       const showEvenIfZero = searchQuery.trim() !== '';
       return (Math.abs(remaining) > 0 || !!settlement || showEvenIfZero) && matchesSearch;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staffProfiles, selectedPeriod, selectedCategory, selectedYear, leaveSettlements, searchQuery, records, globalSettings, holidayResponses]);
 
   const getSettlementsExportData = () => {

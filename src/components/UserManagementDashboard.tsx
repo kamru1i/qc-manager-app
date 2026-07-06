@@ -114,9 +114,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   // Clear name tooltip timeout on unmount
   useEffect(() => {
+    const timeout = detailNameHoverTimeoutRef.current;
     return () => {
-      if (detailNameHoverTimeoutRef.current) {
-        clearTimeout(detailNameHoverTimeoutRef.current);
+      if (timeout) {
+        clearTimeout(timeout);
       }
     };
   }, []);

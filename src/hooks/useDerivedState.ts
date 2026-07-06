@@ -357,15 +357,10 @@ export function useDerivedState({
       holidayResponses,
       globalSettings.govt_holidays,
       initialFetchDone,
-      adminActiveTab,
       profilesList,
       dismissedNotificationIds,
       leaveSettlements,
-      groupedSupervisorRequests,
-      groupedChutiRequests,
-      pendingReserveRequests,
-      pendingProfileRequests,
-      pendingPasswordResetRequests
+      groupedSupervisorRequests
   ]);
 
   // --- Admin/Supervisor Holiday Notifications ---
@@ -401,7 +396,7 @@ export function useDerivedState({
 
     const filtered = list.filter(n => !dismissedNotificationIds?.has(n.id));
     return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [initialFetchDone, sessionUser, profile, holidayResponses, profilesList, dismissedNotificationIds]);
+  }, [initialFetchDone, sessionUser, profile, holidayResponses, profilesList, dismissedNotificationIds, currentSessionTime]);
 
   const unreadUserNotificationsCount = useMemo(() => 
     userNotificationsList.filter(

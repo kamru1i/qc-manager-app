@@ -492,7 +492,7 @@ export const useDashboardData = () => {
     }
 
     return true;
-  }, [profile, globalSettings.govt_holidays, profilesList, fetchRecords]);
+  }, [profile, globalSettings.govt_holidays, profilesList, fetchRecords, setMessage]);
 
   const handleSaveHolidayResponse = useCallback(async (holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
     if (!sessionUser) return false;
@@ -535,7 +535,7 @@ export const useDashboardData = () => {
     setLoading(false);
     fetchRecords();
     return true;
-  }, [sessionUser, profile, fetchRecords]);
+  }, [sessionUser, profile, fetchRecords, setMessage]);
 
   const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
     if (!profile || profile.role !== 'admin') return false;
@@ -644,7 +644,7 @@ export const useDashboardData = () => {
     setLoading(false);
     fetchRecords();
     return true;
-  }, [profile, fetchRecords]);
+  }, [profile, fetchRecords, setMessage]);
 
   const handleSaveLeaveSettlementsBulk = useCallback(async (
     settlementsList: Array<{
@@ -942,7 +942,7 @@ export const useDashboardData = () => {
         toast.error(c.reason, { duration: 8000, id: `conflict-${c.recordId}` });
       });
     }
-  }, [checkOfflineQueue, fetchRecords]);
+  }, [checkOfflineQueue, fetchRecords, setMessage]);
 
   // Auto Sync on Mount / Login
   useEffect(() => {
@@ -973,7 +973,7 @@ export const useDashboardData = () => {
         window.removeEventListener('offline', handleOffline);
       };
     }
-  }, [triggerAutoSync]);
+  }, [triggerAutoSync, setMessage]);
 
   // Listen for real-time updates from Supabase
   useEffect(() => {
@@ -1039,7 +1039,7 @@ export const useDashboardData = () => {
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(settlementsChannel);
     };
-  }, [sessionUser, fetchRecords]);
+  }, [sessionUser, fetchRecords, setMessage]);
 
   // Check Authentication and Fetch Profile on Mount and Auth Changes
   useEffect(() => {

@@ -177,7 +177,7 @@ export function AdminSettleUserModal({
       { value: 'Eid-ul-Fitr', label: `Eid-ul-Fitr (${eidFitrRemaining} days available)`, balance: eidFitrRemaining },
       { value: 'Eid-ul-Adha', label: `Eid-ul-Adha (${eidAdhaRemaining} days available)`, balance: eidAdhaRemaining },
     ].filter(opt => opt.balance >= Math.abs(total));
-  }, [staff, settlement, records, leaveSettlements, holidayResponses, globalSettings, total]);
+  }, [staff, settlement, records, leaveSettlements, holidayResponses, globalSettings, total, workingHours]);
 
   const allocated = carryForwardDays + paymentDays + adjustLeaveDays;
   const isAllocatedCorrectly = isNegative
