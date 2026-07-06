@@ -337,7 +337,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
         <div className="overflow-x-auto">
           {!initialFetchDone ? (
             <div className="p-6">
-              <SkeletonLoader variant="leaves-table" rows={5} allowOvertime={allowOvertime} />
+              <SkeletonLoader variant="leaves-table" rows={5} allowOvertime={allowOvertime} showNameColumn={showNameColumn} />
             </div>
           ) : filteredRecords.length === 0 ? (
             <div className="py-12 text-center text-slate-500 text-sm">

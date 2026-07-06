@@ -89,7 +89,7 @@ export const TeamLeaveRecordsSkeleton: React.FC = () => {
                   <td className="px-6 py-4"><div className="h-4 w-36 bg-slate-800 rounded mx-auto"></div></td>
                   <td className="px-6 py-4"><div className="h-4 w-12 bg-slate-800 rounded mx-auto"></div></td>
                   <td className="px-6 py-4"><div className="h-4 w-48 bg-slate-800 rounded"></div></td>
-                  <td className="px-6 py-4 text-right"><div className="h-4 w-4 bg-slate-800 rounded ml-auto"></div></td>
+                  <td className="px-6 py-4 text-right"><div className="h-4 w-4 bg-slate-800 rounded-full ml-auto"></div></td>
                 </tr>
               ))}
             </tbody>

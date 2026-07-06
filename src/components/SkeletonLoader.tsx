@@ -21,6 +21,7 @@ interface SkeletonLoaderProps {
   cards?: number;
   className?: string;
   allowOvertime?: boolean;
+  showNameColumn?: boolean;
 }
 
 export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
@@ -29,6 +30,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   cards = 4,
   className = '',
   allowOvertime = false,
+  showNameColumn = false,
 }) => {
   switch (variant) {
     case 'stats':
@@ -38,7 +40,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
     case 'profile-header':
       return <ProfileHeaderSkeleton className={className} />;
     case 'leaves-table':
-      return <LeavesTableSkeleton rows={rows} allowOvertime={allowOvertime} className={className} />;
+      return <LeavesTableSkeleton rows={rows} allowOvertime={allowOvertime} showNameColumn={showNameColumn} className={className} />;
     case 'staff-table':
       return <UserManagementSkeleton rows={rows} className={className} />;
     case 'responses-table':
