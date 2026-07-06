@@ -339,6 +339,7 @@ export default function Dashboard({
     setSoldDate,
     pcUsed,
     reportNotes,
+    copiedStates,
     totalAttempt,
     soldCount,
     unsoldCount,
@@ -1272,6 +1273,7 @@ export default function Dashboard({
                       copyText1={copyText1}
                       copyText2={copyText2}
                       copyNotes={copyNotes}
+                      copiedStates={copiedStates}
                       setShowReportHelper={setShowReportHelper}
                     />
                   </Suspense>

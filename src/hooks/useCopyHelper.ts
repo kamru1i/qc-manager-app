@@ -12,6 +12,15 @@ interface UseCopyHelperOptions {
 
 export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameInput }: UseCopyHelperOptions) => {
   // ── State ──────────────────────────────────────────────────────────
+  const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+  
+  const setCopied = useCallback((key: string) => {
+    setCopiedStates(prev => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setCopiedStates(prev => ({ ...prev, [key]: false }));
+    }, 1500);
+  }, []);
+
   const [spokeTo, setSpokeTo] = useState("Online");
   const [soldDate, setSoldDate] = useState(() => {
     const d = new Date();
@@ -81,31 +90,31 @@ export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameIn
             "text/plain": blobText,
           })
         ]);
-        showToast("success", "Box 1 details copied!");
+        setCopied("box1");
       } else {
         await navigator.clipboard.writeText(plainText);
-        showToast("success", "Box 1 details copied (Plain text)!");
+        setCopied("box1");
       }
     } catch (err) {
       console.error("Failed to copy rich text:", err);
       try {
         await navigator.clipboard.writeText(plainText);
-        showToast("success", "Box 1 details copied (Plain text)!");
+        setCopied("box1");
       } catch {
         showToast("error", "Failed to copy details.");
       }
     }
-  }, [codenameInput, profile?.username, spokeTo, soldDate, pcUsed, showToast]);
+  }, [codenameInput, profile?.username, spokeTo, soldDate, pcUsed, setCopied, showToast]);
 
   const copyBox2 = useCallback(async () => {
     const text = `*Sales Report | Date: ${soldDate}*\n*Total Attempt:* ${totalAttempt} Sale\n*Sold:* ${soldCount} Sale\n*Unsold:* ${unsoldCount} Sale`;
     try {
       await navigator.clipboard.writeText(text);
-      showToast("success", "Box 2 Sales Summary copied!");
+      setCopied("box2");
     } catch {
       showToast("error", "Failed to copy.");
     }
-  }, [soldDate, totalAttempt, soldCount, unsoldCount, showToast]);
+  }, [soldDate, totalAttempt, soldCount, unsoldCount, setCopied, showToast]);
 
   const copyBox4 = useCallback(async () => {
     const title = allSales && hasSubmissions
@@ -126,38 +135,38 @@ export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameIn
     const text = `${title}\n${subtitle}\n${separator}\n${lines.join('\n')}`;
     try {
       await navigator.clipboard.writeText(text);
-      showToast("success", "Box 4 Detailed Report copied!");
+      setCopied("box4");
     } catch {
       showToast("error", "Failed to copy.");
     }
-  }, [allSales, hasSubmissions, soldDate, todayUserRecords, showToast]);
+  }, [allSales, hasSubmissions, soldDate, todayUserRecords, setCopied, showToast]);
 
   const copyText1 = useCallback(async () => {
     try {
       await navigator.clipboard.writeText("Online selling process done & updated.");
-      showToast("success", 'Copied: "Online selling process done & updated."');
+      setCopied("text1");
     } catch {
       showToast("error", "Failed to copy.");
     }
-  }, [showToast]);
+  }, [setCopied, showToast]);
 
   const copyText2 = useCallback(async () => {
     try {
       await navigator.clipboard.writeText("Saved & Updated.");
-      showToast("success", 'Copied: "Saved & Updated."');
+      setCopied("text2");
     } catch {
       showToast("error", "Failed to copy.");
     }
-  }, [showToast]);
+  }, [setCopied, showToast]);
 
   const copyNotes = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(reportNotes);
-      showToast("success", "Notes copied!");
+      setCopied("notes");
     } catch {
       showToast("error", "Failed to copy.");
     }
-  }, [reportNotes, showToast]);
+  }, [reportNotes, setCopied, showToast]);
 
   return {
     // State
@@ -167,6 +176,7 @@ export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameIn
     setSoldDate,
     pcUsed,
     reportNotes,
+    copiedStates,
     // Computed
     totalAttempt,
     soldCount,
