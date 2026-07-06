@@ -14,7 +14,6 @@ import {
   Users,
   ScrollText,
   ListTodo,
-  User,
   RotateCcw,
   Plus,
   Settings,
@@ -124,9 +123,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'audit_logs' }));
     router.push('/');
   };
-
-  // Quotes admin role helper (supervisors and admins both access Quotes admin panel)
-  const isQuotesAdmin = profile.role === 'admin' || profile.role === 'supervisor';
 
   return (
     <aside
