@@ -1,5 +1,5 @@
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { Profile } from '../types';
+import { Profile, GovtHolidayResponse } from '../types';
 import { ChutiRecord } from './offlineSync';
 import { calculateStats } from './dashboardHelpers';
 import { isTauriApp } from './apiUrlHelper';
@@ -36,9 +36,10 @@ const saveTauriFile = async (
 
     await writeFile(filePath, data);
     onSuccess();
-  } catch (err: any) {
+  } catch (err) {
     console.error('Tauri file save error:', err);
-    onError(err.message || 'Failed to save file in desktop app.');
+    const msg = err instanceof Error ? err.message : 'Failed to save file in desktop app.';
+    onError(msg);
   }
 };
 
@@ -636,7 +637,7 @@ export const exportHelper = {
 
   // Export Govt Holiday Responses as Excel
   exportHolidayResponsesExcel: (
-    responses: any[],
+    responses: GovtHolidayResponse[],
     onSuccess: () => void,
     onError: (msg: string) => void
   ) => {
@@ -703,7 +704,7 @@ export const exportHelper = {
 
   // Export Govt Holiday Responses as PDF
   exportHolidayResponsesPDF: (
-    responses: any[],
+    responses: GovtHolidayResponse[],
     onSuccess: () => void,
     onError: (msg: string) => void
   ) => {
