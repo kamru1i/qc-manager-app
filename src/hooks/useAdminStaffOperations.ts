@@ -748,20 +748,34 @@ export const useAdminStaffOperations = ({
         if (rpcError) throw rpcError;
 
         // Reset fields in profiles
+        const targetProfile = profilesList.find(p => p.id === profileId);
+        const currentSettings = targetProfile?.global_settings || {};
+        const updatedSettings = {
+          ...currentSettings,
+          password_reset_status: 'none'
+        };
+
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
             has_changed_password: false,
-            password_reset_status: 'none'
+            global_settings: updatedSettings
           })
           .eq('id', profileId);
         if (profileError) throw profileError;
       } else {
         // Just reject
+        const targetProfile = profilesList.find(p => p.id === profileId);
+        const currentSettings = targetProfile?.global_settings || {};
+        const updatedSettings = {
+          ...currentSettings,
+          password_reset_status: 'none'
+        };
+
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
-            password_reset_status: 'none'
+            global_settings: updatedSettings
           })
           .eq('id', profileId);
         if (profileError) throw profileError;

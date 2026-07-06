@@ -8,13 +8,14 @@ import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/UnifiedSidebar";
 import { Navbar } from "@/components/Navbar";
 import { calculateTopPerformerBadges } from "@/utils/leaderboardHelper";
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { useGlobalNotifications } from "@/hooks/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/modals/UserNotificationsModal";
 import { SkeletonLoader } from "@/components/SkeletonLoader";
 import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/QuotesSkeletonLoader";
 import { subscribeUserToPush } from "@/utils/webPushHelper";
 import { useDesktopNotifications } from "@/hooks/useDesktopNotifications";
+import { checkInactivity, registerAndCheckSession, updateSessionLastActiveInDb } from "@/utils/sessionHelper";
 
 
 const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
@@ -205,7 +206,11 @@ export default function AppPortal() {
     const fetchProfiles = async () => {
       const { data, error } = await supabase.from("profiles").select("*");
       if (data && !error) {
-        setProfilesList(data);
+        const mappedData = data.map((p: any) => ({
+          ...p,
+          password_reset_status: p.password_reset_status || p.global_settings?.password_reset_status || 'none'
+        }));
+        setProfilesList(mappedData);
       }
     };
 
@@ -608,7 +613,17 @@ export default function AppPortal() {
         return;
       }
 
-      const userProfile = profileData as Profile;
+      const userProfile = {
+        ...profileData,
+        password_reset_status: profileData.password_reset_status || profileData.global_settings?.password_reset_status || 'none'
+      } as Profile;
+
+      // Perform inactivity and concurrent session checks
+      const isLoggedOut = await checkInactivity(userId);
+      if (isLoggedOut) return;
+
+      const isValidSession = await registerAndCheckSession(userId, userProfile, setProfile);
+      if (!isValidSession) return;
 
       // Update cache
       localStorage.setItem(cacheKey, JSON.stringify(userProfile));
@@ -705,6 +720,63 @@ export default function AppPortal() {
       subscription.unsubscribe();
     };
   }, [loadUserProfile]);
+
+  // Listen for user activity to update last active timestamp, and periodically check session validity
+  useEffect(() => {
+    if (!sessionUser) return;
+    const userId = sessionUser.id;
+
+    const updateActivity = () => {
+      const now = Date.now();
+      const lastUpdate = localStorage.getItem(`last_active_time_${userId}`);
+      if (!lastUpdate || now - parseInt(lastUpdate, 10) > 15000) {
+        localStorage.setItem(`last_active_time_${userId}`, now.toString());
+        updateSessionLastActiveInDb(userId).catch(err => console.error("Error updating active session in DB:", err));
+      }
+    };
+
+    window.addEventListener('mousemove', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('scroll', updateActivity);
+
+    // Periodically verify session validity in the background (every 15 seconds)
+    const interval = setInterval(async () => {
+      const { data: latestProfile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!error && latestProfile) {
+        const mappedProfile = {
+          ...latestProfile,
+          password_reset_status: latestProfile.password_reset_status || latestProfile.global_settings?.password_reset_status || 'none'
+        } as Profile;
+
+        const currentSessionId = localStorage.getItem('qc_session_id');
+        const activeSessions = Array.isArray(mappedProfile.global_settings?.active_sessions) 
+          ? mappedProfile.global_settings.active_sessions 
+          : [];
+        
+        const isStillValid = activeSessions.some((s: any) => s.sessionId === currentSessionId);
+        if (!isStillValid) {
+          localStorage.removeItem('qc_session_id');
+          localStorage.removeItem(`last_active_time_${userId}`);
+          await supabase.auth.signOut();
+          toast.error("Logged out: You are logged in on 3 other devices/locations.");
+        }
+      }
+    }, 15000);
+
+    return () => {
+      window.removeEventListener('mousemove', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('scroll', updateActivity);
+      clearInterval(interval);
+    };
+  }, [sessionUser]);
 
   // Listen for custom workspace-change event dispatched by sidebar
   useEffect(() => {

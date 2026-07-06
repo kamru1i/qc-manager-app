@@ -489,7 +489,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         .select('*')
         .order('username', { ascending: true });
       if (error) throw error;
-      if (data) setProfiles(data);
+      if (data) {
+        const mapped = data.map((p: any) => ({
+          ...p,
+          password_reset_status: p.password_reset_status || p.global_settings?.password_reset_status || 'none'
+        }));
+        setProfiles(mapped);
+      }
     } catch (e: unknown) {
       console.error('Failed to load profiles:', e);
       toast.error('Failed to load user accounts.');
@@ -561,8 +567,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         .select('*')
         .order('username', { ascending: true });
       if (data) {
-        setProfiles(data);
-        const updated = data.find(p => p.id === viewingStaff.id);
+        const mapped = data.map((p: any) => ({
+          ...p,
+          password_reset_status: p.password_reset_status || p.global_settings?.password_reset_status || 'none'
+        }));
+        setProfiles(mapped);
+        const updated = mapped.find(p => p.id === viewingStaff.id);
         if (updated) {
           setViewingStaff(updated);
         }

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     // 1. Resolve username to profile
     const { data: profile, error: profileError } = await supabaseServer
       .from('profiles')
-      .select('id, username, full_name')
+      .select('id, username, full_name, global_settings')
       .eq('username', cleanUsername)
       .maybeSingle();
 
@@ -85,10 +85,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Update profile password_reset_status to 'pending'
+    const currentSettings = (profile as any).global_settings || {};
+    const updatedSettings = {
+      ...currentSettings,
+      password_reset_status: 'pending'
+    };
+
+    // 2. Update profile password_reset_status to 'pending' inside global_settings
     const { error: updateError } = await supabaseServer
       .from('profiles')
-      .update({ password_reset_status: 'pending' })
+      .update({ global_settings: updatedSettings })
       .eq('id', profile.id);
 
     if (updateError) {

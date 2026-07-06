@@ -167,8 +167,12 @@ export const useDashboardData = () => {
           .order('username', { ascending: true });
 
         if (!profilesErr && profiles) {
-          profilesData = profiles;
-          setProfilesList(profiles);
+          const mapped = profiles.map((p: any) => ({
+            ...p,
+            password_reset_status: p.password_reset_status || p.global_settings?.password_reset_status || 'none'
+          }));
+          profilesData = mapped;
+          setProfilesList(mapped);
         }
 
         const lastChutiSync = await getSyncTimestamp('chuti');
@@ -1153,6 +1157,10 @@ export const useDashboardData = () => {
             profileError = error;
 
             if (!profileError && userProfile) {
+              userProfile = {
+                ...userProfile,
+                password_reset_status: userProfile.password_reset_status || userProfile.global_settings?.password_reset_status || 'none'
+              };
               // Asynchronously update profile cache
               try {
                 await upsertCacheItem('profiles_cache', userProfile);
