@@ -111,12 +111,14 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.4** introduces startup auto-update installation and cleanups.
+            **v3.0.5** introduces auth robustness, custom delete confirmation modals, and right-click protection.
 
-            #### 🛠 What's Fixed in v3.0.4:
+            #### 🛠 What's Fixed in v3.0.5:
 
-            - **Startup Auto-Update Installation** — When the app is opened, it automatically checks, downloads, installs updates, and relaunches without requiring the user to click the "Restart to Update" toast button.
-            - **Warning Resolution** — Resolved final explicit `any` linter warning inside the updater lifecycle checks.
+            - **Auth Robustness** — Implemented token refresh checks prior to leave submission and route handler fallback validation to solve stale session JWT issues.
+            - **Custom Delete warning modal** — Replaced ugly browser confirm boxes with custom premium confirmation modals.
+            - **Right-Click Protection** — Blocked browser default context menus globally while preserving custom in-app right click features. Disabled right-clicks for supervisors on non-deletable leave records.
+            - **Linter and Code Warnings** — Resolved all remaining TypeScript compiler and styling linter warnings.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

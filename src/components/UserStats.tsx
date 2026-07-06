@@ -108,7 +108,6 @@ export const UserStats: React.FC<UserStatsProps> = ({
   govtHolidayStats,
   allowOvertime,
   respondedHolidays = [],
-  eligibleOfficeLeave = true,
   eligibleGovtHoliday = true,
   halfYearlyStats,
   convertedDays = 0,

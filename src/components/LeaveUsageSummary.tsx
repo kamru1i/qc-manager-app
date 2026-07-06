@@ -72,7 +72,6 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
   }
 
   const finalOfficeRemaining = officeRemainingVal - officeDeduction;
-  const isOfficeChanged = officeDeduction > 0;
 
   const finalGovtRemaining = govtHolidayRemaining - govtDeduction;
   const isGovtChanged = govtDeduction > 0;

@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.0.4** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.0.5** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.0.4 — Patch Release (Current)
+### 🚀 v3.0.5 — Patch Release (Current)
+*   **Session Lifetime & Auth Robustness**: Implemented auto-refresh token checks prior to submission and fallback logic in supervisor and push route handlers to avoid stale JWT errors.
+*   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
+*   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
+*   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v3.0.4 — Patch Release
 *   **Startup Auto-Update Installation**: Implemented automatic update downloading, installation, and relaunch on application startup, bypassing the manual restart button prompt.
 *   **Warning Resolution**: Cleaned up the final explicit `any` linter warning inside the updater checker.
 
