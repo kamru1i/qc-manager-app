@@ -190,7 +190,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
           {isNegative ? '-' : ''}{dayStr}
         </span>
         {timeParts && (
-          <span className="text-sm font-semibold font-mono text-slate-300 mt-0.5 block">
+          <span className="text-[10px] font-medium text-slate-400 mt-0.5 block tracking-wide">
             {timeParts}
           </span>
         )}

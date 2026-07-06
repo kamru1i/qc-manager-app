@@ -83,6 +83,57 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
   const finalEidAdhaRemaining = eidAdhaRemaining - eidAdhaDeduction;
   const isEidAdhaChanged = eidAdhaDeduction > 0;
 
+  const renderRemainingNode = (remaining: number, deduction: number = 0) => {
+    const formatParts = (val: number) => {
+      const totalMins = Math.round(val * workingHours * 60);
+      const isNegative = totalMins < 0;
+      const absMins = Math.abs(totalMins);
+      const minutesPerDay = Math.round(workingHours * 60);
+      const wholeDays = Math.floor(absMins / minutesPerDay);
+      const remainingMins = absMins % minutesPerDay;
+      const hours = Math.floor(remainingMins / 60);
+      const mins = remainingMins % 60;
+
+      const dayStr = `${wholeDays} day${wholeDays !== 1 ? 's' : ''}`;
+      const hrPart = hours > 0 ? `${String(hours).padStart(2, '0')} hr${hours > 1 ? 's' : ''}` : '';
+      const minPart = mins > 0 ? `${String(mins).padStart(2, '0')} min${mins > 1 ? 's' : ''}` : '';
+      const timeParts = [hrPart, minPart].filter(Boolean).join(' ');
+
+      return { isNegative, dayStr, timeParts };
+    };
+
+    const rem = formatParts(remaining);
+
+    if (deduction > 0) {
+      const ded = formatParts(deduction);
+      return (
+        <div className="flex flex-col select-none animate-pulse">
+          <span className="text-blue-400 text-xs font-bold font-mono">
+            Remaining: {rem.isNegative ? '-' : ''}{rem.dayStr} (-{ded.isNegative ? '-' : ''}{ded.dayStr})
+          </span>
+          {(rem.timeParts || ded.timeParts) && (
+            <span className="text-[10px] font-medium text-slate-400 mt-0.5 block tracking-wide font-sans">
+              {rem.timeParts || '00 hrs'} (-{ded.timeParts || '00 hrs'})
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col select-none">
+        <span className="text-white text-xs font-bold font-mono">
+          Remaining: {rem.isNegative ? '-' : ''}{rem.dayStr}
+        </span>
+        {rem.timeParts && (
+          <span className="text-[10px] font-medium text-slate-400 mt-0.5 block tracking-wide font-sans">
+            {rem.timeParts}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-slate-955/40 border border-slate-800/80 rounded-xl p-4 flex flex-col gap-4 font-sans text-xs shrink-0 self-start md:mt-0 mt-4 w-full">
       <h4 className="font-bold text-white border-b border-slate-850 pb-2 mb-1 text-[11px] uppercase tracking-wider">
@@ -93,17 +144,9 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
         {/* Office Leave Balance */}
         <div className="bg-slate-900/30 p-2.5 rounded-lg border border-slate-850">
           <span className="text-blue-400 block text-[9px] uppercase font-semibold">Allocated Office Leave</span>
-          <div className="flex justify-between items-center mt-1">
-            {isOfficeChanged ? (
-              <span className="text-blue-400 text-xs font-bold font-mono animate-pulse">
-                Remaining: {formatDaysAndHours(finalOfficeRemaining, workingHours)} (-{formatDaysAndHours(officeDeduction, workingHours)})
-              </span>
-            ) : (
-              <span className="text-white text-xs font-bold font-mono">
-                Remaining: {formatDaysAndHours(officeRemainingVal, workingHours)}
-              </span>
-            )}
-            <span className="text-slate-500 text-[10px] font-mono">Total: {officeTotalDisplay}</span>
+          <div className="flex justify-between items-start mt-1">
+            {renderRemainingNode(finalOfficeRemaining, officeDeduction)}
+            <span className="text-slate-500 text-[10px] font-mono whitespace-nowrap mt-0.5">Total: {officeTotalDisplay}</span>
           </div>
           {officeSubtext && <span className="text-[9px] text-slate-500 block mt-1">{officeSubtext}</span>}
           {finalOfficeRemaining < 0 && (
