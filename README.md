@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.0.6** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.0.7** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,10 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.0.6 — Patch Release (Current)
+### 🚀 v3.0.7 — Patch Release (Current)
+*   **User Profile Settings Visibility & Admin Approval Workflow**: Enabled direct editing of profile details (Full Name, Job Role, Working Hours, Break Minutes, Default Sign-In/Out) for regular employees and supervisors. Submitting changes creates a pending profile update request for Admin approval, while keeping fields editable before submission.
+
+### 🚀 v3.0.6 — Patch Release
 *   **Direct Supabase Leave Insertion**: Resolved desktop app (Tauri) `Failed to fetch` error by inserting leave entries directly through Supabase JavaScript SDK, bypassing external serverless API dependency.
 *   **Double Reload Prevention**: Added debounced fetch execution wrapper in User Management Dashboard to prevent duplicate data refetching and UI reloading when performing leave additions or deletions.
 *   **Official Base URL Configuration**: Updated `apiUrlHelper.ts` and `.env.local` to use the official Vercel base domain `https://qc-manager-y4bzh900h-kamrul-projects.vercel.app`.

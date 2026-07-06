@@ -111,14 +111,12 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.6** introduces direct Supabase leave insertion, double reload prevention, and official domain fallback.
+            **v3.0.7** introduces profile fields visibility for regular users and seamless admin approval change submission.
 
-            #### 🛠 What's Fixed in v3.0.6:
+            #### 🛠 What's Fixed in v3.0.7:
 
-            - **Direct Supabase Leave Insertion** — Resolved desktop app (Tauri) `Failed to fetch` error by inserting leave entries directly through Supabase JavaScript SDK, bypassing external serverless API dependency.
-            - **Double Reload Prevention** — Added debounced fetch execution wrapper in User Management Dashboard to prevent duplicate data refetching and UI reloading when performing leave additions or deletions.
-            - **Official Base URL Configuration** — Updated `apiUrlHelper.ts` and `.env.local` to use the official Vercel base domain `https://qc-manager-y4bzh900h-kamrul-projects.vercel.app`.
-            - **Leave Usage & Stat Card Styling** — Enhanced font sizes for remaining hours and minutes display under Allocated Office Leave in user stats and leave summary cards.
+            - **User Profile Fields Visibility** — Enabled direct viewing and editing of profile fields (Full Name, Job Role, Working Hours, Break, Sign-In/Out) for regular users and supervisors.
+            - **Admin Approval Change Submission** — Submitting profile edits as a regular user now automatically submits a change request to Admin for approval while preserving field accessibility.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

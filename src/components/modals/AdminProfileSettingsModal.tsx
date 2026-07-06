@@ -358,7 +358,7 @@ export function AdminProfileSettingsModal({
             setSignInTime={setProfileSignInTime}
             signOutTime={profileSignOutTime}
             setSignOutTime={setProfileSignOutTime}
-            disabled={(profile?.role !== 'admin' || adminActiveTab === 'user') && profile?.has_edited_profile && (!isEditRequestMode || profile?.profile_change_status === 'pending')}
+            disabled={profile?.profile_change_status === 'pending'}
           />
 
           {/* Settings Toggles (Admin only) */}
@@ -489,40 +489,19 @@ export function AdminProfileSettingsModal({
             </div>
           )}
 
-          {(profile?.role !== 'admin' || adminActiveTab === 'user') && profile?.has_edited_profile && !isEditRequestMode && profile?.profile_change_status !== 'pending' && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsEditRequestMode(true);
-                setEditFullName(profile?.full_name || '');
-                setEditWorkingHours(Number(profile?.working_hours || 9.5).toFixed(1));
-                setEditBreakTime(String(profile?.break_time || 0));
-                setEditJobRole(profile?.job_role || '');
-              }}
-              className="w-full flex justify-center py-2 px-4 border border-blue-500/30 rounded-lg shadow-sm text-xs font-semibold text-blue-400 hover:text-blue-300 bg-blue-955/20 hover:bg-blue-955/40 cursor-pointer transition-all mt-4"
-            >
-              Send Profile Change Request
-            </button>
-          )}
-
-          {((profile?.role === 'admin' && adminActiveTab === 'admin') || !profile?.has_edited_profile || (isEditRequestMode && profile?.profile_change_status !== 'pending')) && (
+          {profile?.profile_change_status !== 'pending' && (
             <div className="flex gap-3 mt-6 pb-2">
-              {((profile?.role !== 'admin' || adminActiveTab === 'user') && profile?.has_edited_profile) && (
-                <button
-                  type="button"
-                  onClick={() => setIsEditRequestMode(false)}
-                  className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
-                >
-                  Cancel
-                </button>
-              )}
               <button
                 type="submit"
                 disabled={setupSubmitting}
                 className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 transition-all items-center gap-1.5"
               >
                 {setupSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                {setupSubmitting ? 'Saving...' : (((profile?.role === 'admin' && adminActiveTab === 'admin') || !profile?.has_edited_profile) ? 'Save Settings' : 'Submit Request')}
+                {setupSubmitting
+                  ? 'Saving...'
+                  : ((profile?.role === 'admin' && adminActiveTab === 'admin') || !profile?.has_edited_profile
+                      ? 'Save Settings'
+                      : 'Submit Request for Approval')}
               </button>
             </div>
           )}
