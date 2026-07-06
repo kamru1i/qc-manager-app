@@ -111,14 +111,14 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.5** introduces auth robustness, custom delete confirmation modals, and right-click protection.
+            **v3.0.6** introduces direct Supabase leave insertion, double reload prevention, and official domain fallback.
 
-            #### 🛠 What's Fixed in v3.0.5:
+            #### 🛠 What's Fixed in v3.0.6:
 
-            - **Auth Robustness** — Implemented token refresh checks prior to leave submission and route handler fallback validation to solve stale session JWT issues.
-            - **Custom Delete warning modal** — Replaced ugly browser confirm boxes with custom premium confirmation modals.
-            - **Right-Click Protection** — Blocked browser default context menus globally while preserving custom in-app right click features. Disabled right-clicks for supervisors on non-deletable leave records.
-            - **Linter and Code Warnings** — Resolved all remaining TypeScript compiler and styling linter warnings.
+            - **Direct Supabase Leave Insertion** — Resolved desktop app (Tauri) `Failed to fetch` error by inserting leave entries directly through Supabase JavaScript SDK, bypassing external serverless API dependency.
+            - **Double Reload Prevention** — Added debounced fetch execution wrapper in User Management Dashboard to prevent duplicate data refetching and UI reloading when performing leave additions or deletions.
+            - **Official Base URL Configuration** — Updated `apiUrlHelper.ts` and `.env.local` to use the official Vercel base domain `https://qc-manager-y4bzh900h-kamrul-projects.vercel.app`.
+            - **Leave Usage & Stat Card Styling** — Enhanced font sizes for remaining hours and minutes display under Allocated Office Leave in user stats and leave summary cards.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

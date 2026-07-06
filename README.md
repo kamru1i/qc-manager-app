@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.0.5** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.0.6** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.0.5 — Patch Release (Current)
+### 🚀 v3.0.6 — Patch Release (Current)
+*   **Direct Supabase Leave Insertion**: Resolved desktop app (Tauri) `Failed to fetch` error by inserting leave entries directly through Supabase JavaScript SDK, bypassing external serverless API dependency.
+*   **Double Reload Prevention**: Added debounced fetch execution wrapper in User Management Dashboard to prevent duplicate data refetching and UI reloading when performing leave additions or deletions.
+*   **Official Base URL Configuration**: Updated `apiUrlHelper.ts` and `.env.local` to use the official Vercel base domain `https://qc-manager-y4bzh900h-kamrul-projects.vercel.app`.
+*   **Leave Usage & Stat Card Styling**: Enhanced font sizes for remaining hours and minutes display under Allocated Office Leave in user stats and leave summary cards.
+
+### 🚀 v3.0.5 — Patch Release
 *   **Session Lifetime & Auth Robustness**: Implemented auto-refresh token checks prior to submission and fallback logic in supervisor and push route handlers to avoid stale JWT errors.
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
