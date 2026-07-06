@@ -18,8 +18,8 @@ import { useDesktopNotifications } from "@/hooks/useDesktopNotifications";
 import { checkInactivity, registerAndCheckSession, updateSessionLastActiveInDb } from "@/utils/sessionHelper";
 
 import { UserKpiPerformancePanel } from "@/components/user-management/UserKpiPerformancePanel";
+import ChutiDashboard from "@/app/chuti/page";
 
-const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
 const QuotesDashboard = lazy(() => import("@/app/quotes/page"));
 const UserManagementDashboard = lazy(() =>
   import("@/components/UserManagementDashboard").then((m) => ({
@@ -1106,12 +1106,10 @@ export default function AppPortal() {
             {/* ChutiDashboard: always mounted to keep global event listeners (like open-profile-settings) and approval modals active on all tabs */}
             {profile && (
               <div className={activeTab !== 'chuti' ? 'hidden' : undefined}>
-                <Suspense fallback={<SkeletonLoader variant="leaves-table" />}>
-                  <ChutiDashboard
-                    activeChutiTab={activeChutiTab}
-                    onChutiTabChange={handleChutiTabChange}
-                  />
-                </Suspense>
+                <ChutiDashboard
+                  activeChutiTab={activeChutiTab}
+                  onChutiTabChange={handleChutiTabChange}
+                />
               </div>
             )}
             {activeTab === "user_management" && (
