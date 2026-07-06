@@ -111,13 +111,13 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.1** fixes user management loading failure in the desktop app and improves the auto-updater with real download progress tracking.
+            **v3.0.2** provides a major codebase review, resolving compiler/lint warnings, unused variables, and improving type-safety.
 
-            #### 🛠 What's Fixed in v3.0.1:
+            #### 🛠 What's Fixed in v3.0.2:
 
-            - **User Management Loading Fixed** — Admin & Supervisor user list was failing to load ("Failed to load user accounts") in the desktop app because API calls were using relative paths that don't resolve in the Tauri webview. All API calls now correctly route to the Vercel backend.
-            - **Real Download Progress** — The app updater now shows the actual download percentage (e.g. "Downloading v3.0.1… (45%)") instead of a fake pulsing bar.
-            - **macOS Auto-Update Fixed** — Added `process:allow-restart` capability so the updater can successfully relaunch the app after installing an update on macOS.
+            - **TypeScript Warning Resolution** — Cleaned up over 260 compiler and linting warnings across `chuti/page.tsx`, `quotes/page.tsx`, and `DashboardModals.tsx` by removing unused states, imports, and hooks.
+            - **Strict API Types in IP Checker** — Strongly typed all 6 third-party geolocation databases (IPLocation, IPWhoIs, IP-API, IP2Location, CriminalIP, IPInfo) in `IPCheckerModal.tsx`, completely removing unsafe `any` types.
+            - **Clean Build Compilation** — Run typechecks and production builds successfully with 0 warnings or errors.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

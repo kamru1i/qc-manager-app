@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.0.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.0.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -114,11 +114,19 @@ npm run build
 npm run tauri build
 ```
 
----
-
 ## 📜 Version History / Changelog
 
-### 🚀 v3.0.0 — Major Release (Current)
+### 🚀 v3.0.2 — Patch Release (Current)
+*   **Project-wide Codebase Review & Cleanup**: Cleaned up over 260 compiler and linting warnings. Removed unused states, imports, and variables across `chuti/page.tsx`, `quotes/page.tsx`, and `DashboardModals.tsx`.
+*   **Strongly Typed IP Checker**: Defined safe, typed interfaces for 6 external geolocation databases in `IPCheckerModal.tsx`, eliminating all explicit `any` types and improving code robustness.
+*   **Production Build Optimization**: Confirmed TypeScript compilation matches 0 error status and compiles without warnings.
+
+### 🚀 v3.0.1 — Patch Release
+*   **User Management Loading Fixed** — Admin & Supervisor user list was failing to load in the desktop app because API calls were using relative paths that don't resolve in the Tauri webview. All API calls now correctly route to the Vercel backend.
+*   **Real Download Progress** — The app updater now shows the actual download percentage (e.g. "Downloading v3.0.1… (45%)") instead of a fake pulsing bar.
+*   **macOS Auto-Update Fixed** — Added `process:allow-restart` capability so the updater can successfully relaunch the app after installing an update on macOS.
+
+### 🚀 v3.0.0 — Major Release
 *   **Server-Persisted Verified Badges**: Shipped a robust backend synchronization system for verified performer badges. This resolves the RLS security restriction conflict where normal staff computed incorrect leaderboard ranks and faked badges locally. Badges are now calculated by the Admin at runtime and saved securely in each user's `global_settings.top_performer_badge` profile record.
 *   **Top 5 Leaderboard Priority & Badges**: Leaderboard ranks are locked to the Top 5. The Top 1–3 performers receive a blue verified performer badge, and the Top 4–5 performers receive a grey verified performer badge.
 *   **Leaderboard Filtering Updates**: Removed the dynamic team average filter and the tie-breaker rank filter. The leaderboard list now displays the complete Top 5 performance records without rank suppression.
