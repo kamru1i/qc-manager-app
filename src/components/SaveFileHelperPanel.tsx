@@ -4,6 +4,7 @@ import React from "react";
 import { Save, ArrowLeft, Check, X, Edit3, Trash2 } from "lucide-react";
 import { RecordItem, SavedDocument } from "@/types";
 import { ConfirmModal } from "./modals/ConfirmModal";
+import { isTauriApp } from "@/utils/apiUrlHelper";
 
 interface SaveFileHelperPanelProps {
   editorRef: React.RefObject<HTMLDivElement | null>;
@@ -141,23 +142,30 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
           </div>
 
           {/* Directory Selection Display */}
-          <div className="bg-slate-900/40 border border-slate-850 rounded-xl p-3 flex items-center justify-between text-xs gap-3">
-            <div className="space-y-0.5 truncate">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Today's Save Directory:</span>
-              {baseDirectory ? (
-                <span className="font-mono text-blue-400 break-all select-all font-semibold" title={baseDirectory}>{baseDirectory}</span>
-              ) : (
-                <span className="text-purple-400 italic">No save directory chosen for today yet. (Will prompt on Save)</span>
-              )}
+          {isTauriApp() ? (
+            <div className="bg-slate-900/40 border border-slate-850 rounded-xl p-3 flex items-center justify-between text-xs gap-3">
+              <div className="space-y-0.5 truncate">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Today's Save Directory:</span>
+                {baseDirectory ? (
+                  <span className="font-mono text-blue-400 break-all select-all font-semibold" title={baseDirectory}>{baseDirectory}</span>
+                ) : (
+                  <span className="text-purple-400 italic">No save directory chosen for today yet. (Will prompt on Save)</span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleChooseDirectory}
+                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 rounded-lg font-semibold text-[10px] cursor-pointer transition-all border border-slate-750 hover:border-slate-700 shrink-0"
+              >
+                {baseDirectory ? "Change Folder" : "Choose Folder"}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleChooseDirectory}
-              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 rounded-lg font-semibold text-[10px] cursor-pointer transition-all border border-slate-750 hover:border-slate-700 shrink-0"
-            >
-              {baseDirectory ? "Change Folder" : "Choose Folder"}
-            </button>
-          </div>
+          ) : (
+            <div className="bg-slate-900/20 border border-slate-850/40 rounded-xl p-3 text-xs text-slate-400 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 animate-pulse"></span>
+              <span>Web Browser Mode: Files will save directly via the browser's native Save dialog (zero folder permission warnings).</span>
+            </div>
+          )}
 
           {/* Filename Records Checklist */}
           <div className="space-y-2.5">

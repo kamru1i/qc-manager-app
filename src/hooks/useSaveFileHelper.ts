@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { RecordItem, SavedDocument } from '@/types';
+import { isTauriApp } from '@/utils/apiUrlHelper';
 
 interface UseSaveFileHelperOptions {
   showToast: (type: 'success' | 'error', text: string) => void;
@@ -112,7 +113,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
   // ── Handlers ───────────────────────────────────────────────────────
   const handleChooseDirectory = async () => {
     try {
-      const isTauri = typeof window !== "undefined" && (window as any).__TAURI__ !== undefined;
+      const isTauri = isTauriApp();
       const todayDate = new Date().toDateString();
 
       if (isTauri) {
@@ -167,7 +168,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
 
     // 1. Get or choose base directory
     let currentBaseDir = baseDirectory;
-    const isTauri = typeof window !== "undefined" && (window as any).__TAURI__ !== undefined;
+    const isTauri = isTauriApp();
     
     if (isTauri) {
       if (!currentBaseDir) {
@@ -214,22 +215,29 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
           content: Array.from(bytes),
         }) as string;
       } else {
-        // Web Fallback: Use directory handle to write file
-        if (baseDirectoryHandleRef.current) {
+        // Web Fallback: Use showSaveFilePicker directly for clean file saving without folder permission warnings
+        if (typeof window !== "undefined" && "showSaveFilePicker" in window) {
           try {
-            let targetDirHandle = baseDirectoryHandleRef.current;
-            if (subFolder) {
-              targetDirHandle = await baseDirectoryHandleRef.current.getDirectoryHandle(subFolder, { create: true });
-            }
-            const fileHandle = await targetDirHandle.getFileHandle(generatedFileName, { create: true });
-            const writable = await fileHandle.createWritable();
+            const handle = await (window as any).showSaveFilePicker({
+              suggestedName: generatedFileName,
+              types: [{
+                description: 'Word Document (.docx)',
+                accept: {
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+                }
+              }]
+            });
+            const writable = await handle.createWritable();
             await writable.write(wrappedHtml);
             await writable.close();
             
-            savedPath = `Local_File/${baseDirectoryHandleRef.current.name}/${subFolder ? subFolder + "/" : ""}${generatedFileName}`;
-            fileHandlesRef.current[savedPath] = fileHandle;
-          } catch (writeErr) {
-            console.error("Failed to write to file handle:", writeErr);
+            savedPath = `Local_File/${handle.name}`;
+            fileHandlesRef.current[savedPath] = handle;
+          } catch (writeErr: any) {
+            if (writeErr.name === "AbortError") {
+              throw new Error("Save cancelled");
+            }
+            console.error("Failed to save via save file picker:", writeErr);
             fallbackDownload(wrappedHtml, generatedFileName);
             savedPath = `Web_Downloads/${generatedFileName}`;
           }
@@ -281,7 +289,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     }
 
     try {
-      const isTauri = typeof window !== "undefined" && (window as any).__TAURI__ !== undefined;
+      const isTauri = isTauriApp();
       const wrappedHtml = wrapHtmlForDocx(editorHtml);
 
       if (isTauri) {
@@ -413,12 +421,10 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       return;
     }
 
-    const isTauri = typeof window !== "undefined" && (window as any).__TAURI__ !== undefined;
+    const isTauri = isTauriApp();
     
-    // Check if we need to select folder first
-    const needsFolderSelection = isTauri 
-      ? !baseDirectory 
-      : (typeof window !== "undefined" && "showDirectoryPicker" in window && !baseDirectoryHandleRef.current);
+    // Check if we need to select folder first (only required for Tauri native saving)
+    const needsFolderSelection = isTauri ? !baseDirectory : false;
 
     if (needsFolderSelection) {
       setPermissionModal({
