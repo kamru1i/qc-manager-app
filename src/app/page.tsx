@@ -17,6 +17,7 @@ import { subscribeUserToPush } from "@/utils/webPushHelper";
 import { useDesktopNotifications } from "@/hooks/useDesktopNotifications";
 import { checkInactivity, registerAndCheckSession, updateSessionLastActiveInDb } from "@/utils/sessionHelper";
 
+import { UserKpiPerformancePanel } from "@/components/user-management/UserKpiPerformancePanel";
 
 const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
 const QuotesDashboard = lazy(() => import("@/app/quotes/page"));
@@ -29,11 +30,6 @@ const TodoPanel = lazy(() =>
   import("@/components/TodoPanel").then((m) => ({ default: m.TodoPanel })),
 );
 
-const UserKpiPerformancePanel = lazy(() =>
-  import("@/components/user-management/UserKpiPerformancePanel").then((m) => ({
-    default: m.UserKpiPerformancePanel,
-  })),
-);
 
 function getInitialState() {
   if (typeof window === "undefined") {
@@ -1107,8 +1103,8 @@ export default function AppPortal() {
                 onTabChange={handleQuotesTabChange}
               />
             )}
-            {/* ChutiDashboard: always mounted for admin (needed for admin approval modal from any tab), else conditionally mounted */}
-            {(activeTab === "chuti" || profile?.role === 'admin') && (
+            {/* ChutiDashboard: always mounted to keep global event listeners (like open-profile-settings) and approval modals active on all tabs */}
+            {profile && (
               <div className={activeTab !== 'chuti' ? 'hidden' : undefined}>
                 <ChutiDashboard
                   activeChutiTab={activeChutiTab}
