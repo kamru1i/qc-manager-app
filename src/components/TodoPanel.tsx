@@ -53,6 +53,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   const [newTask, setNewTask] = useState('');
   const [isAllTime, setIsAllTime] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
   
   // Inline edit, bulk select and custom context menu state
@@ -515,7 +516,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       .join('\n');
 
     navigator.clipboard.writeText(header + body);
-    toast.success('Todo list copied to clipboard!');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Group historical todos by Date
@@ -670,10 +672,14 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 type="button"
                 onClick={handleCopyTodos}
                 disabled={loading || todos.length === 0}
-                className="px-4 py-2.5 bg-slate-900 border border-slate-800 hover:border-slate-750 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-md"
+                className="p-2.5 bg-slate-900 border border-slate-800 hover:border-slate-750 text-slate-400 hover:text-white rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 title="Copy formatted checklist to clipboard"
               >
-                <Copy className="w-3.5 h-3.5" /> Copy Checklist
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-slate-450" />
+                )}
               </button>
 
               <button
