@@ -577,21 +577,23 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                       >
                         <Trash2 className="h-4 w-4 text-red-500 stroke-[2.5] shrink-0" />
                       </button>
-                      <input
-                        type="checkbox"
-                        checked={
-                          deletableDisplayedRecords.length > 0 &&
-                          deletableDisplayedRecords.every((r) =>
-                            selectedIds.includes(r.id),
-                          )
-                        }
-                        onChange={handleSelectAllToggle}
-                        className={`rounded-full border border-slate-700 bg-slate-955 text-blue-500 focus:ring-blue-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-blue-500 checked:border-blue-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 transform shrink-0 ${
+                      <button
+                        type="button"
+                        onClick={handleSelectAllToggle}
+                        className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                          deletableDisplayedRecords.length > 0 && deletableDisplayedRecords.every((r) => selectedIds.includes(r.id))
+                            ? 'bg-blue-500 border-blue-500'
+                            : ''
+                        } ${
                           isSelectionMode
                             ? "scale-100 opacity-100"
                             : "scale-0 opacity-0"
                         }`}
-                      />
+                      >
+                        {deletableDisplayedRecords.length > 0 && deletableDisplayedRecords.every((r) => selectedIds.includes(r.id)) && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                        )}
+                      </button>
                     </>
                   )}
                 </div>
@@ -965,17 +967,22 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           </button>
                         )
                       ) : (
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(r.id)}
+                        <button
+                          type="button"
                           disabled={!isAdmin && r.user_id !== currentUserId}
-                          onChange={() => handleSelectRow(r.id)}
-                          className={`rounded-full border border-slate-700 bg-slate-955 text-blue-500 focus:ring-blue-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-blue-500 checked:border-blue-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 transform shrink-0 disabled:opacity-20 disabled:cursor-not-allowed ${
+                          onClick={() => handleSelectRow(r.id)}
+                          className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 disabled:opacity-20 disabled:cursor-not-allowed ${
+                            selectedIds.includes(r.id) ? 'bg-blue-500 border-blue-500' : ''
+                          } ${
                             isSelectionMode
                               ? "scale-100 opacity-100"
                               : "scale-0 opacity-0"
                           }`}
-                        />
+                        >
+                          {selectedIds.includes(r.id) && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                          )}
+                        </button>
                       )}
                     </div>
                   </td>

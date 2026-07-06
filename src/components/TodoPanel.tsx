@@ -643,19 +643,26 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 >
                   <Trash2 className="h-4 w-4 text-rose-500 stroke-[2.5]" />
                 </button>
-                <input
-                  type="checkbox"
-                  checked={sortedTodos.length > 0 && sortedTodos.every((t) => selectedTodoIds.includes(t.id))}
-                  onChange={() => {
+                <button
+                  type="button"
+                  onClick={() => {
                     if (sortedTodos.every((t) => selectedTodoIds.includes(t.id))) {
                       setSelectedTodoIds([]);
                     } else {
                       setSelectedTodoIds(sortedTodos.map((t) => t.id));
                     }
                   }}
-                  className="rounded-full border border-slate-700 bg-slate-955 text-indigo-500 focus:ring-indigo-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-indigo-500 checked:border-indigo-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 shrink-0"
+                  className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 shrink-0 ${
+                    sortedTodos.length > 0 && sortedTodos.every((t) => selectedTodoIds.includes(t.id))
+                      ? 'bg-indigo-500 border-indigo-500'
+                      : ''
+                  }`}
                   title="Select/Deselect All Tasks"
-                />
+                >
+                  {sortedTodos.length > 0 && sortedTodos.every((t) => selectedTodoIds.includes(t.id)) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  )}
+                </button>
                 <div className="h-5 w-[1px] bg-slate-800 mx-1" />
               </div>
 
@@ -805,16 +812,19 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                         </button>
 
                         {/* Checkbox for bulk selection - on the RIGHT with smooth transition animation */}
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelect(todo.id)}
-                          className={`rounded-full border border-slate-700 bg-slate-955 text-indigo-500 focus:ring-indigo-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-indigo-500 checked:border-indigo-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 transform shrink-0 ${
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSelect(todo.id)}
+                          className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                            isSelected ? 'bg-indigo-500 border-indigo-500' : ''
+                          } ${
                             selectedTodoIds.length > 0
                               ? 'scale-100 opacity-100 w-4 ml-1'
                               : 'scale-0 opacity-0 w-0 pointer-events-none ml-0'
                           }`}
-                        />
+                        >
+                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />}
+                        </button>
                       </div>
                     </div>
                   </div>

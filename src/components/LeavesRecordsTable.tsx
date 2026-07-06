@@ -350,21 +350,23 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           <Trash2 className="h-4 w-4 text-red-500 stroke-[2.5] shrink-0" />
                         </button>
                       )}
-                      <input
-                        type="checkbox"
-                        checked={
-                          filteredRecords.length > 0 &&
-                          filteredRecords.every((r) =>
-                            selectedIds.includes(r.id || '')
-                          )
-                        }
-                        onChange={handleSelectAllToggle}
-                        className={`rounded-full border border-slate-700 bg-slate-955 text-blue-500 focus:ring-blue-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-blue-500 checked:border-blue-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 transform shrink-0 ${
+                      <button
+                        type="button"
+                        onClick={handleSelectAllToggle}
+                        className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                          filteredRecords.length > 0 && filteredRecords.every((r) => selectedIds.includes(r.id || ''))
+                            ? 'bg-blue-500 border-blue-500'
+                            : ''
+                        } ${
                           isSelectionMode
                             ? "scale-100 opacity-100"
                             : "scale-0 opacity-0"
                         }`}
-                      />
+                      >
+                        {filteredRecords.length > 0 && filteredRecords.every((r) => selectedIds.includes(r.id || '')) && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                        )}
+                      </button>
                     </div>
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
@@ -459,22 +461,27 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           className="flex justify-center items-center overflow-hidden mx-auto"
                           style={getInnerStyle("12px", "12px")}
                         >
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(r.id || '')}
-                            onChange={() => {
+                          <button
+                            type="button"
+                            onClick={() => {
                               if (!r.id) return;
                               const rid = r.id;
                               setSelectedIds((prev) =>
                                 prev.includes(rid) ? prev.filter((x) => x !== rid) : [...prev, rid]
                               );
                             }}
-                            className={`rounded-full border border-slate-700 bg-slate-955 text-blue-500 focus:ring-blue-500/30 cursor-pointer h-4 w-4 appearance-none checked:bg-blue-500 checked:border-blue-500 flex items-center justify-center checked:after:content-[''] checked:after:w-1.5 checked:after:h-1.5 checked:after:rounded-full checked:after:bg-white transition-all duration-300 transform shrink-0 ${
+                            className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                              selectedIds.includes(r.id || '') ? 'bg-blue-500 border-blue-500' : ''
+                            } ${
                               isSelectionMode
                                 ? "scale-100 opacity-100"
                                 : "scale-0 opacity-0"
                             }`}
-                          />
+                          >
+                            {selectedIds.includes(r.id || '') && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                            )}
+                          </button>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
