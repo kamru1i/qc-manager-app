@@ -1106,10 +1106,12 @@ export default function AppPortal() {
             {/* ChutiDashboard: always mounted to keep global event listeners (like open-profile-settings) and approval modals active on all tabs */}
             {profile && (
               <div className={activeTab !== 'chuti' ? 'hidden' : undefined}>
-                <ChutiDashboard
-                  activeChutiTab={activeChutiTab}
-                  onChutiTabChange={handleChutiTabChange}
-                />
+                <Suspense fallback={<SkeletonLoader variant="leaves-table" />}>
+                  <ChutiDashboard
+                    activeChutiTab={activeChutiTab}
+                    onChutiTabChange={handleChutiTabChange}
+                  />
+                </Suspense>
               </div>
             )}
             {activeTab === "user_management" && (
