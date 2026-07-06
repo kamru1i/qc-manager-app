@@ -77,10 +77,33 @@ export async function POST(request: NextRequest) {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
 
-    const { data: { user }, error: authError } = await supabaseWithAuth.auth.getUser(token);
+    let user = null;
+    let authError = null;
+
+    try {
+      const { data: { user: u }, error: err } = await supabaseWithAuth.auth.getUser();
+      user = u;
+      authError = err;
+    } catch (e) {
+      console.error('[SendPush] auth.getUser() error:', e);
+    }
 
     if (authError || !user) {
-      console.error('[SendPush] Auth verification failed:', authError?.message || 'No user session');
+      try {
+        const { data: { user: u }, error: err } = await supabaseWithAuth.auth.getUser(token);
+        if (u && !err) {
+          user = u;
+          authError = null;
+        } else {
+          authError = err || authError;
+        }
+      } catch (e) {
+        console.error('[SendPush] auth.getUser(token) error:', e);
+      }
+    }
+
+    if (authError || !user) {
+      console.error('[SendPush] Auth verification failed:', authError?.message || 'No user session', 'Token parts count:', token ? token.split('.').length : 0);
       return NextResponse.json(
         { error: 'Unauthorized: Invalid token' },
         { status: 401, headers: getCorsHeaders(request) }

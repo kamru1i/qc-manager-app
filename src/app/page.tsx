@@ -581,6 +581,13 @@ export default function AppPortal() {
 
       if (profileError) {
         addLog(`Query error: ${profileError.message}`);
+        const errMsg = profileError.message || '';
+        if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('jwt') || profileError.status === 401) {
+          addLog("Auth token invalid or expired. Performing force logout...");
+          localStorage.removeItem(cacheKey);
+          await supabase.auth.signOut();
+          return;
+        }
         if (!cachedProfile) {
           setErrorMsg(
             "Profile settings not found. Please contact administrator.",

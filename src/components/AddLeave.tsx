@@ -460,12 +460,19 @@ export function AddLeave({
       const isPrivilegedRole = profile?.role === 'supervisor' || profile?.role === 'admin';
 
       if (isAddingOnBehalf && isPrivilegedRole) {
+        // Ensure session is fresh by triggering getUser which auto-refreshes JWT if expired
+        await supabase.auth.getUser();
         const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session || !session.access_token) {
+          throw new Error('Your session has expired or is invalid. Please sign out and sign back in.');
+        }
+
         const response = await fetch(getApiUrl('/api/supervisor/add-leave'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || ''}`,
+            'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ insertData }),
         });

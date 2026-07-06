@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Profile, RecordItem } from '@/types';
+import { Profile, RecordItem, FileType } from '@/types';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 import { StatsGrid } from '@/components/StatsGrid';
 import { RecordsTable } from '@/components/RecordsTable';
 import { calculateSummaryStats } from '@/utils/quotesDashboardHelpers';
+import { EditRecordModal } from '@/components/modals/EditRecordModal';
 
 interface UserQuotesHistoryPanelProps {
   viewingStaff: Profile;
@@ -21,6 +22,16 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [submitting, setSubmitting] = useState(false);
+ 
+  const [editingRecord, setEditingRecord] = useState<RecordItem | null>(null);
+  const [editFileName, setEditFileName] = useState('');
+  const [editBranchName, setEditBranchName] = useState('');
+  const [editCodename, setEditCodename] = useState('');
+  const [editFileType, setEditFileType] = useState<FileType>('Quote');
+  const [editCanChangeSubmittedAt, setEditCanChangeSubmittedAt] = useState(false);
+  const [editSubmittedDate, setEditSubmittedDate] = useState('');
+  const [editSubmittedTime, setEditSubmittedTime] = useState('');
+  const [editSaleStatus, setEditSaleStatus] = useState<'SOLD' | 'UNSOLD'>('SOLD');
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -133,7 +144,7 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
     }
   };
 
-  const handleSaveInline = async (id: string, updates: Partial<RecordItem>) => {
+  const handleSaveInline = async (id: string, updates: Partial<RecordItem>): Promise<boolean> => {
     try {
       const { error } = await supabase.from('records').update(updates).eq('id', id);
       if (error) throw error;
@@ -144,6 +155,169 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
       console.error(e);
       toast.error('Failed to update record.');
       return false;
+    }
+  };
+
+  const handleOpenEditRecord = (record: RecordItem, canChangeSubmittedAt = true) => {
+    const submittedAt = new Date(record.submitted_at);
+
+    setEditingRecord(record);
+    const cleanName = record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, '');
+    setEditFileName(cleanName);
+    setEditBranchName(record.branch_name);
+    setEditCodename(record.codename);
+    setEditFileType(record.file_type);
+    setEditCanChangeSubmittedAt(canChangeSubmittedAt);
+
+    if (record.file_name.endsWith(" [UNSOLD]")) {
+      setEditSaleStatus("UNSOLD");
+    } else {
+      setEditSaleStatus("SOLD");
+    }
+
+    if (!isNaN(submittedAt.getTime())) {
+      setEditSubmittedDate(
+        `${String(submittedAt.getDate()).padStart(2, "0")}-${String(
+          submittedAt.getMonth() + 1,
+        ).padStart(2, "0")}-${submittedAt.getFullYear()}`,
+      );
+      const hour24 = submittedAt.getHours();
+      const hour12 = hour24 % 12 || 12;
+      const meridiem = hour24 >= 12 ? "PM" : "AM";
+      setEditSubmittedTime(
+        `${String(hour12).padStart(2, "0")}:${String(
+          submittedAt.getMinutes(),
+        ).padStart(2, "0")} ${meridiem}`,
+      );
+    } else {
+      setEditSubmittedDate("");
+      setEditSubmittedTime("");
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRecord) return;
+
+    if (!editFileName.trim()) {
+      toast.error("File name cannot be empty.");
+      return;
+    }
+    if (!editBranchName.trim()) {
+      toast.error("Branch name cannot be empty.");
+      return;
+    }
+    if (!editCodename.trim()) {
+      toast.error("Codename cannot be empty.");
+      return;
+    }
+
+    let editedSubmittedAt: string | undefined;
+
+    if (editCanChangeSubmittedAt) {
+      const [dayText, monthText, yearText] = editSubmittedDate.split("-");
+      const day = Number(dayText);
+      const month = Number(monthText);
+      const year = Number(yearText);
+      const parsedDate = new Date(year, month - 1, day);
+
+      if (
+        !dayText ||
+        !monthText ||
+        !yearText ||
+        dayText.length !== 2 ||
+        monthText.length !== 2 ||
+        yearText.length !== 4 ||
+        isNaN(parsedDate.getTime()) ||
+        parsedDate.getFullYear() !== year ||
+        parsedDate.getMonth() !== month - 1 ||
+        parsedDate.getDate() !== day
+      ) {
+        toast.error("Please enter the date as DD-MM-YYYY.");
+        return;
+      }
+
+      const timeMatch = editSubmittedTime
+        .trim()
+        .match(/^(0[1-9]|1[0-2]):([0-5]\d)\s?(AM|PM)$/i);
+
+      if (!timeMatch) {
+        toast.error("Please enter the time as 09:21 PM/AM.");
+        return;
+      }
+
+      let hours = Number(timeMatch[1]);
+      const minutes = Number(timeMatch[2]);
+      const meridiem = timeMatch[3].toUpperCase();
+
+      if (meridiem === "PM" && hours !== 12) hours += 12;
+      if (meridiem === "AM" && hours === 12) hours = 0;
+
+      parsedDate.setHours(hours, minutes, 0, 0);
+      editedSubmittedAt = parsedDate.toISOString();
+    }
+
+    const finalFileName = editFileType === "Sale" ? `${editFileName} [${editSaleStatus}]` : editFileName;
+
+    setSubmitting(true);
+    try {
+      const updates: Partial<RecordItem> = {
+        file_name: finalFileName,
+        branch_name: editBranchName,
+        codename: editCodename,
+        file_type: editFileType,
+      };
+      if (editedSubmittedAt) {
+        updates.submitted_at = editedSubmittedAt;
+      }
+      
+      const { error } = await supabase.from('records').update(updates).eq('id', editingRecord.id);
+      if (error) throw error;
+
+      toast.success('Record updated successfully.');
+      setEditingRecord(null);
+      fetchRecords();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update record.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    if (!confirm(`Are you sure you want to permanently delete these ${ids.length} selected file records?`)) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('records').delete().in('id', ids);
+      if (error) throw error;
+      toast.success('Records deleted successfully.');
+      fetchRecords();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to delete records.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkSaveInline = async (updatesMap: Record<string, Partial<RecordItem>>): Promise<boolean> => {
+    setSubmitting(true);
+    try {
+      const promises = Object.entries(updatesMap).map(async ([id, updates]) => {
+        const { error } = await supabase.from('records').update(updates).eq('id', id);
+        if (error) throw error;
+      });
+
+      await Promise.all(promises);
+      toast.success('Records updated successfully.');
+      fetchRecords();
+      return true;
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to save bulk updates.');
+      return false;
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -217,16 +391,42 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
           records={monthlyFilteredRecords}
           emptyMessage="No file records found matching the filters."
           showDate={true}
-          onEdit={() => {}}
+          onEdit={handleOpenEditRecord}
           onDelete={handleToggleDelete}
           isLoading={loading}
           currentUserId={viewingStaff.id}
           isAdmin={true}
+          onBulkDelete={handleBulkDelete}
           onSaveInline={handleSaveInline}
+          onBulkSaveInline={handleBulkSaveInline}
           allowedCategories={viewingStaff.allowed_types || []}
           submitting={submitting}
         />
       </div>
+
+      {editingRecord && (
+        <EditRecordModal
+          editFileName={editFileName}
+          setEditFileName={setEditFileName}
+          editBranchName={editBranchName}
+          setEditBranchName={setEditBranchName}
+          editCodename={editCodename}
+          setEditCodename={setEditCodename}
+          editFileType={editFileType}
+          setEditFileType={setEditFileType}
+          canEditSubmittedAt={editCanChangeSubmittedAt}
+          editSubmittedDate={editSubmittedDate}
+          setEditSubmittedDate={setEditSubmittedDate}
+          editSubmittedTime={editSubmittedTime}
+          setEditSubmittedTime={setEditSubmittedTime}
+          allowedCategories={viewingStaff.allowed_types || []}
+          onClose={() => setEditingRecord(null)}
+          onSave={handleSaveEdit}
+          editSaleStatus={editSaleStatus}
+          setEditSaleStatus={setEditSaleStatus}
+          submitting={submitting}
+        />
+      )}
     </div>
   );
 };

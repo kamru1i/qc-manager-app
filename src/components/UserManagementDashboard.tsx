@@ -262,7 +262,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       }
     } catch (e: unknown) {
       console.error('Failed to load staff leave data:', e);
-      toast.error((e as Error).message || 'Failed to load leave history.');
+      const errMsg = (e as any).message || '';
+      if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('jwt') || (e as any).status === 401) {
+        toast.error('Session expired. Logging out...');
+        supabase.auth.signOut();
+      } else {
+        toast.error(errMsg || 'Failed to load leave history.');
+      }
     } finally {
       setLoadingLeaveData(false);
     }
