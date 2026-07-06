@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Profile } from '@/types';
 import {
@@ -47,6 +47,19 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 }) => {
   const router = useRouter();
 
+  // Subtabs expanded/collapsed state
+  const [isChutiExpanded, setIsChutiExpanded] = useState(true);
+  const [isQuotesExpanded, setIsQuotesExpanded] = useState(true);
+
+  // Auto-expand active workspace tabs
+  useEffect(() => {
+    if (activeSection === 'chuti') {
+      setIsChutiExpanded(true);
+    } else if (activeSection === 'quotes') {
+      setIsQuotesExpanded(true);
+    }
+  }, [activeSection]);
+
   if (!profile) return null;
 
   const hasChutiAccess = !!profile.has_chuti_access;
@@ -60,10 +73,26 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     router.push('/');
   };
 
+  const handleChutiClick = () => {
+    if (activeSection === 'chuti') {
+      setIsChutiExpanded(prev => !prev);
+    } else {
+      handleChutiNav();
+    }
+  };
+
   const handleQuotesNav = () => {
     localStorage.setItem('last_active_dashboard', 'quotes');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'quotes' }));
     router.push('/');
+  };
+
+  const handleQuotesClick = () => {
+    if (activeSection === 'quotes') {
+      setIsQuotesExpanded(prev => !prev);
+    } else {
+      handleQuotesNav();
+    }
   };
 
   const handleKpiNav = () => {
@@ -128,7 +157,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         {hasChutiAccess && (
           <div className="space-y-1">
             <button
-              onClick={handleChutiNav}
+              onClick={handleChutiClick}
               title={isSidebarCollapsed ? 'Leave Tracker' : undefined}
               className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
@@ -143,7 +172,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             </button>
 
             {/* Embedded Chuti sub-tabs when chuti section is active */}
-            {activeSection === 'chuti' && onChutiTabChange && activeChutiTab && (
+            {activeSection === 'chuti' && isChutiExpanded && onChutiTabChange && activeChutiTab && (
               <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-slate-800/80 ml-6'}`}>
                 {/* 1. Add Leave */}
                 <button
@@ -240,7 +269,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         {hasQuotesAccess && (
           <div className="space-y-1">
             <button
-              onClick={handleQuotesNav}
+              onClick={handleQuotesClick}
               title={isSidebarCollapsed ? 'Quotes Tracker' : undefined}
               className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
@@ -255,7 +284,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             </button>
 
             {/* Embedded Quotes sub-tabs when quotes section is active */}
-            {activeSection === 'quotes' && onQuotesTabChange && activeQuotesTab && (
+            {activeSection === 'quotes' && isQuotesExpanded && onQuotesTabChange && activeQuotesTab && (
               <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-slate-800/80 ml-6'}`}>
                 {/* 1. Daily Entry */}
                 <button
