@@ -276,7 +276,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   }, [profile]);
 
   // Debounced wrapper to prevent duplicate fetch calls when realtime events and user actions fire together
-  const fetchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const fetchTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const debouncedFetchStaffLeaveData = useCallback((staffId: string) => {
     if (fetchTimerRef.current) {
       clearTimeout(fetchTimerRef.current);
