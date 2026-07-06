@@ -419,7 +419,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         isSelectionMode && !showNameColumn ? "cursor-pointer select-none" : ""
                       }`}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center justify-center gap-2">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center gap-2 ${showNameColumn ? 'justify-start' : 'justify-center'}`}>
                         {showNameColumn ? (
                           (() => {
                             const rp = r as any;
