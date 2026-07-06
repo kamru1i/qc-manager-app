@@ -5,13 +5,13 @@ import { toast } from 'react-hot-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
-import { Profile, ChutiRecordWithProfile, LeaveSettlement } from '@/types';
+import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 import { checkSubscriptionStatus, sendPushNotification } from '@/utils/webPushHelper';
 import { getGlobalSettingsFromProfile, defaultGlobalSettings, GlobalSettings, formatDate, parseHolidayItem } from '@/utils/dashboardHelpers';
 
 export const useDashboardData = () => {
-  const router = useRouter();
+
   const fetchingRef = useRef<boolean>(false);
   const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -39,7 +39,7 @@ export const useDashboardData = () => {
   const [userRecords, setUserRecords] = useState<ChutiRecord[]>([]);
   const [adminRecords, setAdminRecords] = useState<ChutiRecordWithProfile[]>([]);
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
-  const [holidayResponses, setHolidayResponses] = useState<any[]>([]);
+  const [holidayResponses, setHolidayResponses] = useState<GovtHolidayResponse[]>([]);
   const [leaveSettlements, setLeaveSettlements] = useState<LeaveSettlement[]>([]);
 
   // Navigation / Tab states
@@ -157,7 +157,7 @@ export const useDashboardData = () => {
       let profilesData: Profile[] = [];
       let adminRecordsData: ChutiRecordWithProfile[] = [];
       let userRecordsData: ChutiRecord[] = [];
-      let responsesData: any[] = [];
+      let responsesData: GovtHolidayResponse[] = [];
       let settlementsData: LeaveSettlement[] = [];
 
       // 1. Fetch profiles and admin chuti list if admin/supervisor
@@ -235,8 +235,8 @@ export const useDashboardData = () => {
           .order('username', { ascending: true });
 
         if (!profilesErr && supervisors) {
-          profilesData = supervisors as any[];
-          setProfilesList(supervisors as any[]);
+          profilesData = supervisors as Profile[];
+          setProfilesList(supervisors as Profile[]);
         }
       }
 
@@ -410,7 +410,7 @@ export const useDashboardData = () => {
   const handleSaveGlobalSettings = useCallback(async (newSettings: GlobalSettings, options?: { silent?: boolean }) => {
     if (!profile) return false;
     const hasGlobalSettingsColumn = 'global_settings' in profile;
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     if (hasGlobalSettingsColumn) {
       updates.global_settings = newSettings;
     } else {
@@ -418,8 +418,8 @@ export const useDashboardData = () => {
     }
 
     // Compare old and new government holidays to detect newly added ones
-    const oldHolidays = (globalSettings.govt_holidays || []).map((h: any) => parseHolidayItem(h));
-    const newHolidays = (newSettings.govt_holidays || []).map((h: any) => parseHolidayItem(h));
+    const oldHolidays = (globalSettings.govt_holidays || []).map((h: string) => parseHolidayItem(h));
+    const newHolidays = (newSettings.govt_holidays || []).map((h: string) => parseHolidayItem(h));
     const oldDates = new Set(oldHolidays.map(h => h.date));
     const addedHolidays = newHolidays.filter(h => h.date && !oldDates.has(h.date));
 
@@ -1043,7 +1043,7 @@ export const useDashboardData = () => {
 
   // Check Authentication and Fetch Profile on Mount and Auth Changes
   useEffect(() => {
-    const fetchSession = async (sessionParam?: any) => {
+    const fetchSession = async (sessionParam?: unknown) => {
       try {
         setLoading(true);
         let session = sessionParam;
@@ -1060,7 +1060,7 @@ export const useDashboardData = () => {
                 // Find any cached profile to use as the session user
                 if (cachedProfiles.length > 0) {
                   const cachedProfile = cachedProfiles[0];
-                  setSessionUser({ id: cachedProfile.id } as any);
+                  setSessionUser({ id: cachedProfile.id } as unknown as SupabaseUser);
                   setProfile(cachedProfile);
                   setLoading(false);
                   return;
@@ -1085,7 +1085,7 @@ export const useDashboardData = () => {
               const cachedProfiles = await getCacheData('profiles_cache');
               if (cachedProfiles.length > 0) {
                 const cachedProfile = cachedProfiles[0];
-                setSessionUser({ id: cachedProfile.id } as any);
+                setSessionUser({ id: cachedProfile.id } as unknown as SupabaseUser);
                 setProfile(cachedProfile);
                 setLoading(false);
                 return;
@@ -1221,7 +1221,7 @@ export const useDashboardData = () => {
             if (cachedProfiles.length > 0) {
               const cachedProfile = cachedProfiles[0];
               console.log('Recovered from cache after session timeout (offline):', cachedProfile.username);
-              setSessionUser({ id: cachedProfile.id } as any);
+              setSessionUser({ id: cachedProfile.id } as unknown as SupabaseUser);
               setProfile(cachedProfile);
               setLoading(false);
               return;

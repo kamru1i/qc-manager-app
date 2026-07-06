@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { RotateCcw, CheckCircle2, AlertCircle, Send, BellOff, Edit3, HelpCircle, DollarSign, FolderPlus, ArrowRightLeft, Trash2, Download, X, RefreshCw } from 'lucide-react';
+import { RotateCcw, CheckCircle2, AlertCircle, Send, BellOff, Edit3, HelpCircle, DollarSign, FolderPlus, ArrowRightLeft, Trash2, Download, X } from 'lucide-react';
 import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { sendPushNotification } from '@/utils/webPushHelper';
 import { ChutiRecord } from '@/utils/offlineSync';
-import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getSettlementLabel, formatDaysAndHours } from '@/utils/dashboardHelpers';
+import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getSettlementLabel } from '@/utils/dashboardHelpers';
 import { AdminSettleUserModal } from './modals/AdminSettleUserModal';
 import { toast } from 'react-hot-toast';
 import { Modal } from './Modal';
@@ -21,7 +21,7 @@ interface AdminSettlementsPanelProps {
   onSaveGlobalSettings: (settings: GlobalSettings, options?: { silent?: boolean }) => Promise<boolean>;
   leaveSettlements: LeaveSettlement[];
   holidayResponses: GovtHolidayResponse[];
-  onSaveSettlementsBulk: (settlementsList: any[]) => Promise<boolean>;
+  onSaveSettlementsBulk: (settlementsList: unknown[]) => Promise<boolean>;
   onDeleteSettlement: (id: string) => Promise<boolean>;
   currentUserProfile: Profile | null;
   initialFetchDone?: boolean;
@@ -126,7 +126,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('settlementSelectedCategory');
       if (saved === 'Office Leave' || saved === 'Govt Holiday' || saved === 'Eid-ul-Fitr' || saved === 'Eid-ul-Adha') {
-        return saved as any;
+        return saved as 'Office Leave' | 'Govt Holiday' | 'Eid-ul-Fitr' | 'Eid-ul-Adha';
       }
     }
     return 'Office Leave';
@@ -414,7 +414,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Leave Category</span>
             <CustomSelect
               value={selectedCategory}
-              onChange={(val) => setSelectedCategory(val as any)}
+              onChange={(val) => setSelectedCategory(val as 'Office Leave' | 'Govt Holiday' | 'Eid-ul-Fitr' | 'Eid-ul-Adha')}
               options={categoryOptions}
               className="w-full"
             />
@@ -686,7 +686,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                               disabled={initiatingId === staff.id}
                               onClick={() => {
                                 const mockSettlement: LeaveSettlement = {
-                                  id: undefined as any,
+                                  id: undefined as unknown as string,
                                   user_id: staff.id,
                                   year: selectedYear,
                                   period: selectedPeriod,

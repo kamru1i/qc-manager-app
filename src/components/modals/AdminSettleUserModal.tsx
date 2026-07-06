@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, RotateCcw, ShieldAlert, DollarSign, FolderPlus, ArrowRightLeft, Check } from 'lucide-react';
 import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { Modal } from '../Modal';
-import { sendPushNotification } from '@/utils/webPushHelper';
+
 import { GlobalSettings, getOutstandingOfficeLeave, calculateStats, formatDaysAndHours } from '@/utils/dashboardHelpers';
 import { ChutiRecord } from '@/utils/offlineSync';
 
@@ -13,7 +13,7 @@ interface AdminSettleUserModalProps {
   setShowModal: (val: boolean) => void;
   staff: Profile | null;
   settlement: LeaveSettlement | null;
-  onSaveSettlementsBulk: (settlementsList: any[]) => Promise<boolean>;
+  onSaveSettlementsBulk: (settlementsList: unknown[]) => Promise<boolean>;
   currentUserProfile: Profile | null;
   globalSettings: GlobalSettings;
   records: ChutiRecord[];
@@ -208,7 +208,7 @@ export function AdminSettleUserModal({
     if (!isNegative && !isAllocatedCorrectly) return;
     setSubmitting(true);
 
-    const updateRecords: any[] = [];
+    const updateRecords: Partial<ChutiRecord>[] = [];
 
     if (isNegative) {
       let cfDays = 0;
@@ -612,7 +612,7 @@ export function AdminSettleUserModal({
                           className="w-12 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
                         />
                         <span className="text-[10px] text-slate-500 font-bold">d</span>
-                        <div className="w-[1px] h-3 bg-slate-800 mx-1" />
+                        <div className="w-px h-3 bg-slate-800 mx-1" />
                         <input
                           type="number"
                           min={0}
@@ -627,7 +627,7 @@ export function AdminSettleUserModal({
                           className="w-10 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
                         />
                         <span className="text-[10px] text-slate-500 font-bold">h</span>
-                        <div className="w-[1px] h-3 bg-slate-800 mx-1" />
+                        <div className="w-px h-3 bg-slate-800 mx-1" />
                         <input
                           type="number"
                           min={0}
@@ -691,7 +691,7 @@ export function AdminSettleUserModal({
                               placeholder="0"
                             />
                             <span className="text-[9px] text-slate-500 font-bold">d</span>
-                            <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -706,7 +706,7 @@ export function AdminSettleUserModal({
                               placeholder="0"
                             />
                             <span className="text-[9px] text-slate-500 font-bold">h</span>
-                            <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -764,7 +764,7 @@ export function AdminSettleUserModal({
                               placeholder="0"
                             />
                             <span className="text-[9px] text-slate-500 font-bold">d</span>
-                            <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -779,7 +779,7 @@ export function AdminSettleUserModal({
                               placeholder="0"
                             />
                             <span className="text-[9px] text-slate-500 font-bold">h</span>
-                            <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -838,7 +838,7 @@ export function AdminSettleUserModal({
                                 placeholder="0"
                               />
                               <span className="text-[9px] text-slate-500 font-bold">d</span>
-                              <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                              <div className="w-px h-3 bg-slate-800 mx-0.5" />
                               <input
                                 type="number"
                                 min={0}
@@ -853,7 +853,7 @@ export function AdminSettleUserModal({
                                 placeholder="0"
                               />
                               <span className="text-[9px] text-slate-500 font-bold">h</span>
-                              <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                              <div className="w-px h-3 bg-slate-800 mx-0.5" />
                               <input
                                 type="number"
                                 min={0}
@@ -932,7 +932,7 @@ export function AdminSettleUserModal({
             type="button"
             onClick={handleConfirm}
             disabled={submitting || !isAllocatedCorrectly}
-            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
           >
             {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {submitting ? 'Processing...' : 'Finalize & Process'}

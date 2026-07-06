@@ -1073,7 +1073,7 @@ export default function Dashboard({
 
         <div className="max-w-md w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 p-8 shadow-2xl rounded-2xl z-10 space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">
+            <h2 className="text-2xl font-bold text-white bg-clip-text bg-linear-to-r from-blue-400 to-violet-400">
               Profile Settings & Password Change
             </h2>
             <p className="text-xs text-slate-450 mt-1">
@@ -1199,7 +1199,7 @@ export default function Dashboard({
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
               >
                 {submitting ? (
                   <>

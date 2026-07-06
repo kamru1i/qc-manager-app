@@ -5,9 +5,6 @@ import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { useAdminActions } from '@/hooks/useAdminActions';
-import { Navbar } from '@/components/Navbar';
-import { UnifiedSidebar } from '@/components/UnifiedSidebar';
-import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { Modal } from '@/components/Modal';
 import { UserManagementSkeleton } from '@/components/skeleton/UserManagementSkeleton';
@@ -16,28 +13,19 @@ import {
   Search,
   UserPlus,
   Shield,
-  Edit,
-  Trash2,
-  CheckCircle2,
   XCircle,
   Loader2,
+  CheckCircle2,
   X,
   ArrowLeft,
-  AlertTriangle,
   KeyRound,
-  Check,
-  RefreshCw,
   Settings,
   Calendar,
   BarChart2,
   FileText
 } from 'lucide-react';
-import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { UserDisplayName } from '@/components/UserDisplayName';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
-import { CategoryCheckboxList } from '@/components/CategoryCheckboxList';
-import { Toggle } from '@/components/Toggle';
-import { StaffSettingsForm } from '@/components/StaffSettingsForm';
 
 // Extracted Subtabs Panels
 import { CreateUserPanel } from '@/components/user-management/CreateUserPanel';
@@ -48,7 +36,8 @@ import { UserKpiPerformancePanel } from '@/components/user-management/UserKpiPer
 import { AddLeave } from '@/components/AddLeave';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
-import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
+import { GlobalSettings, getGlobalSettingsFromProfile } from '@/utils/dashboardHelpers';
+
 
 
 interface UserManagementDashboardProps {
@@ -70,11 +59,8 @@ const ALL_FILE_TYPES = [
 export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = ({
   sessionUser,
   profile,
-  onLogout,
-  theme,
-  onThemeToggle,
-  isSidebarCollapsed,
-  onSidebarToggle,
+  topPerformerBadges = {},
+  onViewStateChange,
   topPerformerBadges = {},
   onViewStateChange,
 }) => {
@@ -92,7 +78,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [isCreatingNewUser, setIsCreatingNewUser] = useState(false);
 
   // Edit User State
-  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [editUserFullName, setEditUserFullName] = useState('');
   const [editUserRole, setEditUserRole] = useState<'admin' | 'supervisor' | 'user'>('user');
   const [editHasChutiAccess, setEditHasChutiAccess] = useState(false);
@@ -109,18 +94,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
 
-  const [showDetailNameTooltip, setShowDetailNameTooltip] = useState(false);
-  const detailNameHoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  // Clear name tooltip timeout on unmount
-  useEffect(() => {
-    const timeout = detailNameHoverTimeoutRef.current;
-    return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-    };
-  }, []);
 
   // Double-click viewing state (Employee 360 Hub)
   const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
@@ -289,7 +262,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       } else {
         setGlobalSettings(getGlobalSettingsFromProfile(profile));
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Failed to load staff leave data:', e);
       toast.error(e.message || 'Failed to load leave history.');
     } finally {
@@ -373,7 +346,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (viewingStaff) {
         fetchStaffLeaveData(viewingStaff.id);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error('Failed to update adjustment: ' + (err.message || 'unknown error'));
     }
@@ -394,7 +367,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (viewingStaff) {
         fetchStaffLeaveData(viewingStaff.id);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error('Failed to delete entry: ' + (err.message || 'unknown error'));
     }
@@ -489,7 +462,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         .order('username', { ascending: true });
       if (error) throw error;
       if (data) setProfiles(data);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Failed to load profiles:', e);
       toast.error('Failed to load user accounts.');
     } finally {
@@ -501,7 +474,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     fetchProfiles();
   }, [fetchProfiles]);
 
-  const handleCreateUserWrapper = async (params: any) => {
+  const handleCreateUserWrapper = async (params: { codename: string; role: 'admin' | 'supervisor' | 'user'; fullName: string; initialChutiCount: number; initialPassword?: string; quoteTypes: string[]; canManageRules: boolean; needsApproval: boolean; supervisorIds: string[]; eligibleGovtHoliday: boolean; eligibleOfficeLeave: boolean; allowOvertime: boolean; allowReserve: boolean }) => {
     const pw = await createUser(
       params.codename,
       params.role,
@@ -874,7 +847,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   onClick={() => {
                     setIsCreatingNewUser(true);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer"
                 >
                   <UserPlus className="h-4 w-4" />
                   Add New Staff
@@ -1078,7 +1051,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       type="button"
                       onClick={handleUpdatePassword}
                       disabled={updatingCredentials || !credNewPassword || credNewPassword !== credConfirmPassword || credNewPassword.length < 4}
-                      className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
                       {updatingCredentials && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                       {updatingCredentials ? 'Saving...' : 'Update Password'}

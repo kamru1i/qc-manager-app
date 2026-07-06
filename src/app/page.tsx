@@ -210,7 +210,7 @@ export default function AppPortal() {
     };
 
     const fetchRecords = async () => {
-      let allRecords: any[] = [];
+      const allRecords: any[] = [];
       let page = 0;
       const pageSize = 1000;
       const maxPages = 5; // Safety limit: max 5000 records for badge calculation
@@ -769,7 +769,7 @@ export default function AppPortal() {
             <div className="h-20 w-20 border-2 border-purple-500/20 rounded-full absolute" />
             <Loader2 className="h-12 w-12 text-purple-400 animate-spin" />
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-linear-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
             QC Manager
           </h1>
           <p className="text-sm text-slate-400 tracking-wide animate-pulse">
@@ -829,7 +829,7 @@ export default function AppPortal() {
             <div className="h-20 w-20 border-2 border-purple-500/20 rounded-full absolute" />
             <Loader2 className="h-12 w-12 text-purple-400 animate-spin" />
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-linear-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
             QC Manager
           </h1>
           <p className="text-sm text-slate-400 tracking-wide animate-pulse">

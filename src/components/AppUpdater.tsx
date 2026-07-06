@@ -104,7 +104,7 @@ export default function AppUpdater() {
   if (dismissed || (!updateAvailable && !error)) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] max-w-sm w-full bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-slate-100">
+    <div className="fixed bottom-5 right-5 z-9999 max-w-sm w-full bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-slate-100">
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
