@@ -49,7 +49,7 @@ import { AddLeave } from '@/components/AddLeave';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
-import { getApiUrl } from '@/utils/apiUrlHelper';
+
 
 interface UserManagementDashboardProps {
   sessionUser: { id: string } | null;
@@ -250,25 +250,30 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const fetchStaffLeaveData = useCallback(async (staffId: string) => {
     setLoadingLeaveData(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(getApiUrl('/api/supervisor/staff-leave-data'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}`,
-        },
-        body: JSON.stringify({ staffId }),
-      });
+      const [chutiRes, sRes, hrRes] = await Promise.all([
+        supabase
+          .from('chuti')
+          .select('*')
+          .eq('user_id', staffId)
+          .is('deleted_at', null)
+          .order('date', { ascending: false }),
+        supabase
+          .from('leave_settlements')
+          .select('*')
+          .eq('user_id', staffId),
+        supabase
+          .from('govt_holiday_responses')
+          .select('*')
+          .eq('user_id', staffId),
+      ]);
 
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.error || 'Server API request failed');
-      }
+      if (chutiRes.error) throw chutiRes.error;
+      if (sRes.error) throw sRes.error;
+      if (hrRes.error) throw hrRes.error;
 
-      const resData = await response.json();
-      setViewingStaffRecords(resData.chutiData || []);
-      setViewingStaffSettlements(resData.settlementsData || []);
-      setViewingStaffHolidayResponses(resData.holidayResponsesData || []);
+      setViewingStaffRecords(chutiRes.data || []);
+      setViewingStaffSettlements(sRes.data || []);
+      setViewingStaffHolidayResponses(hrRes.data || []);
 
       // Fetch global settings from admin profile
       const { data: adminProfile, error: apError } = await supabase
@@ -477,24 +482,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const fetchProfiles = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(getApiUrl('/api/supervisor/profiles'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.error || 'Server profiles request failed');
-      }
-
-      const resData = await response.json();
-      if (resData.profiles) {
-        setProfiles(resData.profiles);
-      }
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('username', { ascending: true });
+      if (error) throw error;
+      if (data) setProfiles(data);
     } catch (e: any) {
       console.error('Failed to load profiles:', e);
       toast.error('Failed to load user accounts.');
