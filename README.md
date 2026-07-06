@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.0.9** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.1.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,12 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.0.9 — Patch Release (Current)
+### 🚀 v3.1.0 — Minor Release (Current)
+*   **Team Daily Leave Records Report**: Implemented a comprehensive daily leave records dashboard allowing supervisors to filter and view their team members' active daily leaves (full & short leaves), and administrators to view all organization daily leaves. Supported custom Excel and PDF exports with dynamic filename formatting.
+*   **Custom Skeleton Loaders & UX Improvements**: Designed new tailor-made skeleton loaders (`team-leaves-report` and `leaves-table` variants) to seamlessly match loading columns and eliminate action button grids. Fixed Back button routing navigation to exit directly to the leave application landing tab.
+*   **Code Quality & Linting Compliance**: Resolved React conditional hook violations and cleaned up unused lucide imports, unused variables, and type safety constraints (such as `any[]` array responses in Excel helpers and Postgrest catch block type bindings) to ensure clean next build compilation.
+
+### 🚀 v3.0.9 — Patch Release
 *   **Rebuilt Cross-Platform Auto Updater**: Re-architected `AppUpdater` from scratch for Tauri v2 using `downloadAndInstall()` and `@tauri-apps/plugin-process` relaunch, ensuring seamless, robust auto-update installations on macOS and Windows.
 
 ### 🚀 v3.0.8 — Patch Release

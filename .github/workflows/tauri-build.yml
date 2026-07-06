@@ -111,12 +111,15 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.9** rebuilds the cross-platform Auto Updater from scratch for macOS and Windows.
+            **v3.1.0** introduces a comprehensive Team Daily Leave Records report, customized Excel/PDF exports with date/supervisor filenames, custom loading skeletons, back button fixes, and codebase optimizations.
 
-            #### 🛠 What's Fixed in v3.0.9:
+            #### 🛠 What's New in v3.1.0:
 
-            - **Rebuilt Auto Updater** — Uses Tauri v2 `downloadAndInstall()` flow for atomic package downloads and extractions on macOS and Windows.
-            - **Seamless App Relaunch** — Integrated `@tauri-apps/plugin-process` relaunch to restart the app after update installation cleanly.
+            - **Team Daily Leave Records Dashboard** — Supervisors can view/filter daily records of their team members (admins see all records) with customized Name & Codename column grids.
+            - **Excel & PDF Exports** — Added spreadsheet and report exports with automated filename convention: `[Date]-[Supervisor Name]'s Team Leave record`.
+            - **Custom Skeleton loaders** — Tailored skeleton structures that prevent layout shifts and match exact daily table headers.
+            - **Direct Back Navigation** — Clicking back exits directly to the main leave tracker form.
+            - **Codebase optimizations** — Resolved conditional hook rules of hooks issues and ESLint prefer-const violations.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.
