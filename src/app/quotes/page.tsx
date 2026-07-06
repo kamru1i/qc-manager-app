@@ -6,8 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useQuotesDashboardData } from "@/hooks/useQuotesDashboardData";
 import { useSaveFileHelper } from "@/hooks/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/useCopyHelper";
-import { getCacheData } from "@/utils/quotesOfflineSync";
-import { calculateTopPerformerBadges } from "@/utils/leaderboardHelper";
+
 const StatsGrid = lazy(() => import("@/components/StatsGrid").then(m => ({ default: m.StatsGrid })));
 const RecordsTable = lazy(() => import("@/components/RecordsTable").then(m => ({ default: m.RecordsTable })));
 const DailyEntryForm = lazy(() => import("@/components/DailyEntryForm").then(m => ({ default: m.DailyEntryForm })));
@@ -28,7 +27,7 @@ import {
   formatDate,
   exportToCSV,
 } from "@/utils/quotesDashboardHelpers";
-import { FileType, RecordItem, Profile } from "@/types";
+import { FileType, RecordItem } from "@/types";
 import {
   Loader2,
   Calendar,
@@ -42,11 +41,8 @@ import {
   RefreshCw,
   Search,
   FileSpreadsheet,
-  TrendingUp,
   ScrollText,
-  BookOpen,
   Save,
-  ListTodo,
 } from "lucide-react";
 
 const ALL_10_FILE_TYPES = [
@@ -69,7 +65,6 @@ interface DashboardProps {
 
 export default function Dashboard({
   activeTab,
-  onTabChange,
 }: DashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -91,14 +86,11 @@ export default function Dashboard({
     profile,
     loading,
     recordsLoading,
-    initialFetchDone,
     submitting,
     isOnline,
     showToast,
     records,
     profilesList,
-    theme,
-    toggleTheme,
     selectedYear,
     setSelectedYear,
     selectedMonth,
@@ -109,10 +101,6 @@ export default function Dashboard({
     deleteRecords,
     updateRecord,
     bulkUpdateRecords,
-    createUser,
-    resetUserPassword,
-    deleteUser,
-    adminUpdateUserProfile,
     completeFirstTimeSetup,
     handleLogout,
     auditLogs,
@@ -121,26 +109,7 @@ export default function Dashboard({
     logActivity,
   } = dashboardData;
 
-  const [isMd, setIsMd] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
-    setIsMd(media.matches);
-    const listener = (e: MediaQueryListEvent) => setIsMd(e.matches);
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
-  }, []);
 
-  const handleTabChange = (
-    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules",
-  ) => {
-    if (
-      (tab === "analytics" || tab === "audit_logs") &&
-      (profile?.role !== "admin" && profile?.role !== "supervisor")
-    ) {
-      return;
-    }
-    onTabChange(tab);
-  };
 
   // Fetch audit logs when activeTab becomes 'audit_logs'
   useEffect(() => {
@@ -173,36 +142,9 @@ export default function Dashboard({
     localStorage.setItem("quotes_sales_admin_view_mode", mode);
   };
 
-  // Load all system records asynchronously for calculating top performer badges
-  const [allRecords, setAllRecords] = useState<RecordItem[]>([]);
-  useEffect(() => {
-    const loadAllCachedRecords = async () => {
-      try {
-        const cached = await getCacheData<RecordItem>("records_cache");
-        setAllRecords(cached);
-      } catch (err) {
-        console.error("Failed to load cached records for badges:", err);
-      }
-    };
-    loadAllCachedRecords();
-  }, [records]);
 
-  // Compute top performer badges from records cache or load from profiles List
-  const topPerformerBadges = useMemo(() => {
-    if (!profile) return {};
 
-    if (profile.role !== "admin") {
-      const loadedBadges: Record<string, any> = {};
-      (profilesList || []).forEach((p) => {
-        if (p.global_settings?.top_performer_badge) {
-          loadedBadges[p.id] = p.global_settings.top_performer_badge;
-        }
-      });
-      return loadedBadges;
-    }
 
-    return calculateTopPerformerBadges(allRecords, profilesList || []);
-  }, [allRecords, profilesList, profile]);
 
   // Monthly Table Search Query
   const [searchQuery, setSearchQuery] = useState("");
@@ -214,8 +156,7 @@ export default function Dashboard({
   const [selectedBranch, setSelectedBranch] = useState("");
   const [todaySelectedBranch, setTodaySelectedBranch] = useState("");
 
-  // User Management Search Query
-  const [userSearchQuery, setUserSearchQuery] = useState("");
+
 
   // Monthly Table Date filter state
   const [selectedDate, setSelectedDate] = useState("");
@@ -287,17 +228,7 @@ export default function Dashboard({
   // Admin Backdated Entry Modal State
   const [isCustomEntryModalOpen, setIsCustomEntryModalOpen] = useState(false);
 
-  // Create User Form State
-  const [newCodename, setNewCodename] = useState("");
-  const [newFullName, setNewFullName] = useState("");
-  const [newRole, setNewRole] = useState<"user" | "admin">("user");
-  const [newPassword, setNewPassword] = useState("1234");
-  const [allowedTypesSelect, setAllowedTypesSelect] =
-    useState<string[]>(ALL_10_FILE_TYPES);
-  const [newCanManageRules, setNewCanManageRules] = useState(false);
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(
-    null,
-  );
+
 
   // Edit Record Modal State
   const [editingRecord, setEditingRecord] = useState<RecordItem | null>(null);
@@ -400,23 +331,7 @@ export default function Dashboard({
     copyNotes,
   } = useCopyHelper({ showToast, todayUserRecords, profile, codenameInput });
 
-  // State for resetting user password is now handled inside EditProfileModal
-  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
-  // Admin Editing User Profile State
-  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
-  const [editUserFullName, setEditUserFullName] = useState("");
-  const [editUserRole, setEditUserRole] = useState<"user" | "admin" | "supervisor">("user");
-  const [editUserAllowedTypes, setEditUserAllowedTypes] = useState<string[]>(
-    [],
-  );
-  const [editUserCanManageRules, setEditUserCanManageRules] = useState(false);
-
-  // User deletion state for confirmation modal
-  const [deletingUserAccount, setDeletingUserAccount] = useState<{
-    id: string;
-    username: string;
-  } | null>(null);
 
   // Record deletion state for confirmation modal
   const [deletingRecordId, setDeletingRecordId] = useState<string | null>(null);
@@ -639,17 +554,7 @@ export default function Dashboard({
     });
   }, [todayRecords, todaySearchQuery, todaySelectedBranch]);
 
-  // Filtered users for User Management Tab
-  const filteredProfiles = useMemo(() => {
-    return profilesList.filter((u) => {
-      if (!userSearchQuery) return true;
-      const q = userSearchQuery.toLowerCase().trim();
-      const nameMatch = (u.full_name || "").toLowerCase().includes(q);
-      const codenameMatch = u.username.toLowerCase().includes(q);
-      const roleMatch = u.role.toLowerCase().includes(q);
-      return nameMatch || codenameMatch || roleMatch;
-    });
-  }, [profilesList, userSearchQuery]);
+
 
   // Statistics calculation for today's entries (filtered by search terms)
   const todayStats = useMemo(() => {

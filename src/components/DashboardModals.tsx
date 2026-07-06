@@ -1,6 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useDashboardContext } from '@/contexts/DashboardContext';
+import { ChutiRecordWithProfile, GovtHolidayResponse } from '@/types';
+import { ChutiRecord } from '@/utils/offlineSync';
 
 import { WelcomeModals } from '@/components/modals/WelcomeModals';
 import { AdminAddLeaveModal } from '@/components/modals/AdminAddLeaveModal';
@@ -27,7 +29,6 @@ export const DashboardModals = () => {
   const {
     sessionUser,
     profile,
-    setProfile,
     isPushSubscribed,
     setIsPushSubscribed,
     isPushLoading,
@@ -51,7 +52,6 @@ export const DashboardModals = () => {
     fetchRecords,
     globalSettings,
     holidayResponses,
-    handleSaveHolidayResponse,
     handleDismissNotifications,
   } = dashboardData;
 
@@ -61,43 +61,11 @@ export const DashboardModals = () => {
     pendingReserveRequests,
     groupedSupervisorRequests,
     groupedChutiRequests,
-    userNotificationsList,
     adminHolidayNotifications,
     staffProfile,
   } = derivedState;
 
   const {
-    // Add Leave
-    showAddLeaveModal,
-    setShowAddLeaveModal,
-    date,
-    setDate,
-    leaveType,
-    setLeaveType,
-    adjustment,
-    setAdjustment,
-    adjustmentCategory,
-    setAdjustmentCategory,
-    adjustShortLeave,
-    setAdjustShortLeave,
-    signInTime,
-    setSignInTime,
-    signOutTime,
-    setSignOutTime,
-    leaveHour,
-    setLeaveHour,
-    comment,
-    setComment,
-    selectedSupervisors,
-    setSelectedSupervisors,
-    bulkDates,
-    bulkAdjustments,
-    handleAddBulkDate,
-    handleUpdateBulkDate,
-    handleUpdateBulkAdjustment,
-    handleRemoveBulkDate,
-    handleSubmit,
-
     // Delete
     showDeleteModal,
     setShowDeleteModal,
@@ -347,7 +315,7 @@ export const DashboardModals = () => {
         setShowModal={setShowAdminAddLeaveModal}
         staffProfile={staffProfile}
         onSuccess={fetchRecords}
-        records={viewingStaffId ? adminRecords.filter((r: any) => r.user_id === viewingStaffId) : []}
+        records={viewingStaffId ? adminRecords.filter((r: ChutiRecordWithProfile) => r.user_id === viewingStaffId) : []}
         globalSettings={globalSettings}
         leaveSettlements={leaveSettlements}
       />
@@ -400,8 +368,8 @@ export const DashboardModals = () => {
         setPartialAdjustmentTime={setPartialAdjustmentTime}
         setAdjustShortLeaveOption={setAdjustShortLeaveOption}
         handleSaveAdjustment={handleSaveAdjustment}
-        records={adjustmentRecord ? (adminActiveTab === 'admin' ? adminRecords : userRecords).filter((r: any) => r.user_id === adjustmentRecord.user_id) : []}
-        holidayResponses={adjustmentRecord ? holidayResponses.filter((r: any) => r.user_id === adjustmentRecord.user_id) : []}
+        records={adjustmentRecord ? (adminActiveTab === 'admin' ? adminRecords : userRecords).filter((r: ChutiRecord | ChutiRecordWithProfile) => r.user_id === adjustmentRecord.user_id) : []}
+        holidayResponses={adjustmentRecord ? holidayResponses.filter((r: GovtHolidayResponse) => r.user_id === adjustmentRecord.user_id) : []}
         globalSettings={globalSettings}
         submitting={submitting}
       />

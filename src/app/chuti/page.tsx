@@ -39,23 +39,13 @@ export default function Dashboard({
     }
   }, [pathname, router]);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Core Dashboard State & Real-time monitors
   const dashboardData = useDashboardData();
   const {
     sessionUser,
     profile,
     setProfile,
-    isPushSubscribed,
-    setIsPushSubscribed,
-    isPushLoading,
-    setIsPushLoading,
     loading,
-
     submitting,
     setSubmitting,
     isOnline,
@@ -73,13 +63,8 @@ export default function Dashboard({
     setViewingStaffId,
     lastViewedTime,
     setLastViewedTime,
-    theme,
-    toggleTheme,
-    showLeaveApprovalModal,
     setShowLeaveApprovalModal,
-    showSupervisorApprovalModal,
     setShowSupervisorApprovalModal,
-    showUserNotificationsModal,
     setShowUserNotificationsModal,
     approvingIds,
     setApprovingIds,
@@ -90,7 +75,6 @@ export default function Dashboard({
     fetchRecords,
     checkOfflineQueue,
     handleManualSync,
-    handleLogout,
     globalSettings,
     handleSaveGlobalSettings,
     holidayResponses,
@@ -217,7 +201,7 @@ export default function Dashboard({
       const now = Date.now();
       
       const newIds = new Set(dismissedNotificationIds);
-      listToDismiss.forEach((n: any) => {
+      listToDismiss.forEach((n: { id: string }) => {
         current[n.id] = now;
         newIds.add(n.id);
       });
@@ -253,103 +237,33 @@ export default function Dashboard({
   });
 
   const {
-    // Add Leave
-    showAddLeaveModal,
-    setShowAddLeaveModal,
-    date,
-    setDate,
-    leaveType,
-    setLeaveType,
-    adjustment,
-    setAdjustment,
-    adjustmentCategory,
-    setAdjustmentCategory,
-    adjustShortLeave,
-    setAdjustShortLeave,
-    signInTime,
-    setSignInTime,
-    signOutTime,
-    setSignOutTime,
-    leaveHour,
-    setLeaveHour,
-    comment,
-    setComment,
-    selectedSupervisors,
-    setSelectedSupervisors,
-    bulkDates,
-    bulkAdjustments,
-    handleAddBulkDate,
-    handleUpdateBulkDate,
-    handleUpdateBulkAdjustment,
-    handleRemoveBulkDate,
-    handleSubmit,
-
-    // Delete
-    showDeleteModal,
-    setShowDeleteModal,
-    recordToDelete,
-    setRecordToDelete,
-    deletingRecord,
-    triggerDeleteRecord,
-    handleConfirmDelete,
-
-    // User Revision
-    showUserRevisionModal,
     setShowUserRevisionModal,
-    revisionRecord,
     setRevisionRecord,
-    revisionDate,
     setRevisionDate,
-    revisionLeaveType,
     setRevisionLeaveType,
-    revisionAdjustment,
     setRevisionAdjustment,
-    revisionAdjustShortLeave,
     setRevisionAdjustShortLeave,
-    revisionSignInTime,
     setRevisionSignInTime,
-    revisionSignOutTime,
     setRevisionSignOutTime,
-    revisionLeaveHour,
     setRevisionLeaveHour,
-    revisionComment,
     setRevisionComment,
-    handleUserSubmitRevision,
-
-    // Admin Edit
-    showAdminEditModal,
-    setShowAdminEditModal,
-    adminEditRecord,
-    adminEditDate,
     setAdminEditDate,
-    adminEditLeaveType,
     setAdminEditLeaveType,
-    adminEditSignInTime,
-    setAdminEditSignInTime,
-    adminEditSignOutTime,
-    setAdminEditSignOutTime,
-    adminEditLeaveHour,
-    setAdminEditLeaveHour,
-    adminEditAdjustment,
     setAdminEditAdjustment,
-    adminEditAdjustShortLeave,
     setAdminEditAdjustShortLeave,
-    adminEditComment,
+    setAdminEditSignInTime,
+    setAdminEditSignOutTime,
+    setAdminEditLeaveHour,
     setAdminEditComment,
-    handleAdminSaveEdit,
-
-    // Approvals
+    setShowAdminEditModal,
+    setComment,
+    setAdjustShortLeave,
+    setDate,
+    setShowAddLeaveModal,
+    setSelectedSupervisors,
     handleSupervisorApproveChuti,
     handleApproveChutiRequest,
-
-    // Revision prompt
-    showRevisionPromptModal,
-    setShowRevisionPromptModal,
-    submittingRevision,
-    setRevisionPromptChutiId,
-    revisionPromptText,
-    setRevisionPromptText,
-    submitRevisionWithReason,
+    triggerDeleteRecord,
   } = chutiOps;
 
   // Adjustment operations controller
@@ -368,22 +282,7 @@ export default function Dashboard({
   });
 
   const {
-    showAdjustmentModal,
-    setShowAdjustmentModal,
-    adjustmentRecord,
-    setAdjustmentRecord,
-    adjustmentType,
-    setAdjustmentType,
-    partialAdjustmentTime,
-    setPartialAdjustmentTime,
-    setAdjustShortLeaveOption,
-    showCancelAdjustmentModal,
-    setShowCancelAdjustmentModal,
-    cancelAdjustmentRecord,
-    setCancelAdjustmentRecord,
     handleToggleAdjustmentClick,
-    handleConfirmCancelAdjustment,
-    handleSaveAdjustment,
     handleApproveReserveAdjustment,
   } = adjustmentOps;
 
@@ -403,119 +302,34 @@ export default function Dashboard({
   });
 
   const {
-    showWelcomePopup,
-    setShowWelcomePopup,
-    showFirstTimePasswordModal,
-    showOnboardingModal,
-    firstTimePassword,
-    setFirstTimePassword,
-    firstTimeConfirmPassword,
-    setFirstTimeConfirmPassword,
-    firstTimePasswordSubmitting,
-    firstTimePasswordError,
-
-    handleFirstTimeSetupSubmit,
-
-    setupFullName,
-    setSetupFullName,
-    setupUsername,
-    setupWorkingHours,
-    setSetupWorkingHours,
-    setupBreakTime,
-    setSetupBreakTime,
-    setupJobRole,
-    setSetupJobRole,
-    setupSignInTime,
-    setSetupSignInTime,
-    setupSignOutTime,
-    setSetupSignOutTime,
-    setupSubmitting,
-    setupError,
-    handleSetupSubmit,
-
-    showCreateUserModal,
-    setShowCreateUserModal,
-    setNewStaffPassword,
-    setNewStaffConfirmPassword,
-    newStaffUsername,
-    setNewStaffUsername,
-    newStaffRole,
-    setNewStaffRole,
-    newStaffNeedsApproval,
-    setNewStaffNeedsApproval,
-    newStaffAllowReserve,
-    setNewStaffAllowReserve,
-    newStaffAllowOvertime,
-    setNewStaffAllowOvertime,
-    creatingUser,
-    handleCreateNewUser,
-
-    showCredentialsModal,
-    setShowCredentialsModal,
-    credTargetUserId,
-    setCredTargetUserId,
-    credNewUsername,
-    setCredNewUsername,
-    credNewPassword,
-    setCredNewPassword,
-    credConfirmPassword,
-    setCredConfirmPassword,
-    updatingCredentials,
-    handleUpdateCredentials,
-
-    showDeleteUserModal,
-    setShowDeleteUserModal,
-    deleteTargetUser,
-    setDeleteTargetUser,
-    deletingUser,
-    handleDeleteUser,
-
-    showProfileSettingsModal,
-    setShowProfileSettingsModal,
-    editingStaffProfileId,
     setEditingStaffProfileId,
-    isCodenameEditable,
-    setIsCodenameEditable,
-    editUsername,
     setEditUsername,
-    editFullName,
-    setEditFullName,
-    editJobRole,
-    setEditJobRole,
-    editWorkingHours,
-    setEditWorkingHours,
-    editBreakTime,
-    setEditBreakTime,
-    profileSignInTime,
-    setProfileSignInTime,
-    profileSignOutTime,
-    setProfileSignOutTime,
-    editNeedsApproval,
-    setEditNeedsApproval,
-    editAllowReserve,
-    setEditAllowReserve,
-    editAllowOvertime,
-    setEditAllowOvertime,
-    editEligibleOfficeLeave,
-    setEditEligibleOfficeLeave,
-    editEligibleGovtHoliday,
-    setEditEligibleGovtHoliday,
-    isEditRequestMode,
+    setIsCodenameEditable,
+    setShowProfileSettingsModal,
     setIsEditRequestMode,
+    setEditFullName,
+    setEditWorkingHours,
+    setProfileSignInTime,
+    setProfileSignOutTime,
+    setEditBreakTime,
+    setEditJobRole,
+    setEditNeedsApproval,
+    setEditAllowReserve,
+    setEditAllowOvertime,
+    setEditEligibleOfficeLeave,
+    setEditEligibleGovtHoliday,
     setEditMaxFullLeaves,
-    newStaffEligibleOfficeLeave,
-    setNewStaffEligibleOfficeLeave,
-    newStaffEligibleGovtHoliday,
-    setNewStaffEligibleGovtHoliday,
-
-    handleUpdateSettings,
+    setEditSupervisorIds,
+    setCredTargetUserId,
+    setCredNewUsername,
+    setCredNewPassword,
+    setShowCredentialsModal,
+    setDeleteTargetUser,
+    setShowDeleteUserModal,
     handleApproveProfileChangeRequest,
     handleApprovePasswordResetRequest,
     handleConvertShortLeaveToFullLeave,
-    newStaffSupervisorIds,
-    setNewStaffSupervisorIds,
-    editSupervisorIds,
-    setEditSupervisorIds,
+    setShowCreateUserModal,
   } = adminStaffOps;
 
   // Export operations
@@ -603,19 +417,20 @@ export default function Dashboard({
   });
 
   const {
-    handleOpenAddLeaveModal,
     handleOpenRevisionModal,
     handleOpenAdminEditModal,
     handleOpenProfileSettingsForSelf,
     handleOpenProfileSettingsForStaff,
     handleOpenCredentialsModal,
     handleOpenDeleteUserModal,
-    handleNotificationClick,
     handleResetFilters,
   } = modalHandlers;
 
   const contextValue = {
-    dashboardData,
+    dashboardData: {
+      ...dashboardData,
+      handleDismissNotifications
+    },
     derivedState,
     chutiOps: {
       ...chutiOps,

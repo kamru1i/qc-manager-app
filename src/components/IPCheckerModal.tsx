@@ -2,8 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, Globe, Shield, AlertTriangle, CheckCircle, RefreshCw, Loader2, Info } from 'lucide-react';
+import { X, Search, Globe, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { IPCheckerSkeleton } from './skeleton/IPCheckerSkeleton';
+
+interface WindowWithTauri extends Window {
+  __TAURI__?: {
+    core: {
+      invoke: (cmd: string, args?: Record<string, unknown>) => Promise<string>;
+    };
+  };
+}
 
 interface IPCheckerModalProps {
   isOpen: boolean;
@@ -19,7 +27,71 @@ interface SourceResult {
   isProxyOrVpn?: boolean;
   riskDetails?: string[];
   error?: string;
-  rawData?: any;
+  rawData?: unknown;
+}
+
+interface IPNetResponse {
+  error?: string;
+  response_code?: string;
+  response_message?: string;
+  country_code2?: string;
+  country_name?: string;
+  isp?: string;
+}
+
+interface IPWhoIsResponse {
+  success?: boolean;
+  message?: string;
+  country_code?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  connection?: { isp?: string };
+  security?: { vpn?: boolean; proxy?: boolean; tor?: boolean };
+}
+
+interface IPApiResponse {
+  status?: string;
+  message?: string;
+  country?: string;
+  countryCode?: string;
+  region?: string;
+  regionName?: string;
+  city?: string;
+  isp?: string;
+  org?: string;
+  proxy?: boolean;
+  hosting?: boolean;
+}
+
+interface IP2LocationResponse {
+  error?: { error_message?: string };
+  country_code?: string;
+  country_name?: string;
+  city_name?: string;
+  region_name?: string;
+  as?: string;
+  is_proxy?: boolean;
+}
+
+interface CriminalIPResponse {
+  error?: string;
+  country_code?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  isp?: string;
+  org_name?: string;
+  score?: { inbound?: number; outbound?: number };
+}
+
+interface IPInfoResponse {
+  error?: { message?: string };
+  country?: string;
+  city?: string;
+  region?: string;
+  org?: string;
+  privacy?: { vpn?: boolean; proxy?: boolean; tor?: boolean; hosting?: boolean };
 }
 
 export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose, showToast }) => {
@@ -33,12 +105,12 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
     setDetectingIP(true);
     const delayPromise = new Promise((resolve) => setTimeout(resolve, 450));
     try {
-      const isTauri = typeof window !== 'undefined' && (window as any).__TAURI__ !== undefined;
+      const isTauri = typeof window !== 'undefined' && (window as unknown as WindowWithTauri).__TAURI__ !== undefined;
       let ipDetected = '';
       
       if (isTauri) {
         try {
-          const { invoke } = (window as any).__TAURI__.core;
+          const { invoke } = (window as unknown as WindowWithTauri).__TAURI__!.core;
           const resJsonStr = await invoke('detect_my_ip');
           const data = JSON.parse(resJsonStr);
           if (data && data.ip) {
@@ -75,15 +147,15 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
     }
   }, [isOpen]);
 
-  const secureFetch = async (url: string, headers?: Record<string, string>): Promise<any> => {
-    const isTauri = typeof window !== 'undefined' && (window as any).__TAURI__ !== undefined;
+  const secureFetch = async (url: string, headers?: Record<string, string>): Promise<Record<string, unknown>> => {
+    const isTauri = typeof window !== 'undefined' && (window as unknown as WindowWithTauri).__TAURI__ !== undefined;
     
     if (isTauri) {
       try {
-        const { invoke } = (window as any).__TAURI__.core;
+        const { invoke } = (window as unknown as WindowWithTauri).__TAURI__!.core;
         const resJsonStr = await invoke('fetch_ip_data', { url, headers });
-        return JSON.parse(resJsonStr);
-      } catch (err: any) {
+        return JSON.parse(resJsonStr) as Record<string, unknown>;
+      } catch (err: unknown) {
         console.warn('Tauri native fetch failed, falling back to browser proxy:', err);
       }
     }
@@ -173,7 +245,7 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
     // ─── QUERY SOURCE 1: IPLOCATION.NET ───
     const fetchIPLocationNet = async (): Promise<SourceResult> => {
       try {
-        const data = await secureFetch(`https://api.iplocation.net/?ip=${ip}`);
+        const data = (await secureFetch(`https://api.iplocation.net/?ip=${ip}`)) as unknown as IPNetResponse;
         if (data.response_code !== '200') throw new Error(data.response_message || 'Fetch failed');
         
         return {
@@ -184,15 +256,15 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
           isProxyOrVpn: false,
           rawData: data
         };
-      } catch (err: any) {
-        return { success: false, error: err?.message || 'Request failed' };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message || 'Request failed' };
       }
     };
 
     // ─── QUERY SOURCE 2: IPWHO.IS ───
     const fetchIPWhoIs = async (): Promise<SourceResult> => {
       try {
-        const data = await secureFetch(`https://ipwho.is/${ip}`);
+        const data = (await secureFetch(`https://ipwho.is/${ip}`)) as unknown as IPWhoIsResponse;
         if (!data.success) throw new Error(data.message || 'Lookup failed');
 
         const risks: string[] = [];
@@ -212,15 +284,15 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
           riskDetails: risks,
           rawData: data
         };
-      } catch (err: any) {
-        return { success: false, error: err?.message || 'Request failed' };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message || 'Request failed' };
       }
     };
 
     // ─── QUERY SOURCE 3: IP-API.COM ───
     const fetchIPApi = async (): Promise<SourceResult> => {
       try {
-        const data = await secureFetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,isp,org,as,proxy,hosting,query`);
+        const data = (await secureFetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,isp,org,as,proxy,hosting,query`)) as unknown as IPApiResponse;
         if (data.status !== 'success') throw new Error(data.message || 'Lookup failed');
 
         const risks: string[] = [];
@@ -236,15 +308,15 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
           riskDetails: risks,
           rawData: data
         };
-      } catch (err: any) {
-        return { success: false, error: err?.message || 'Request failed' };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message || 'Request failed' };
       }
     };
 
     // ─── QUERY SOURCE 4: IP2LOCATION.IO ───
     const fetchIP2LocationIo = async (): Promise<SourceResult> => {
       try {
-        const data = await secureFetch(`https://api.ip2location.io/?key=${keys.ip2location}&ip=${ip}`);
+        const data = (await secureFetch(`https://api.ip2location.io/?key=${keys.ip2location}&ip=${ip}`)) as unknown as IP2LocationResponse;
         if (data.error) throw new Error(data.error.error_message || 'Lookup failed');
 
         const risks: string[] = [];
@@ -260,42 +332,41 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
           riskDetails: risks,
           rawData: data
         };
-      } catch (err: any) {
-        return { success: false, error: err?.message || 'Request failed' };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message || 'Request failed' };
       }
     };
 
     // ─── QUERY SOURCE 5: CRIMINALIP.IO ───
     const fetchCriminalIP = async (): Promise<SourceResult> => {
       try {
-        const data = await secureFetch(`https://api.criminalip.io/v1/ip/summary?ip=${ip}`, {
+        const data = (await secureFetch(`https://api.criminalip.io/v1/ip/summary?ip=${ip}`, {
           'x-api-key': keys.criminalip
-        });
+        })) as unknown as CriminalIPResponse;
         
         const risks: string[] = [];
         const scoreIn = data.score?.inbound || 1;
-        const scoreOut = data.score?.outbound || 1;
 
-        if (scoreIn > 3 || scoreOut > 3) risks.push("High Risk Level");
+        if (scoreIn > 3) risks.push("High Risk Level");
 
         return {
           success: true,
           countryCode: data.country_code,
           countryName: `${data.city ? data.city + ', ' : ''}${data.region ? data.region + ', ' : ''}${data.country || ''}`,
-          isp: data.isp || data.org_name,
+          isp: data.isp,
           isProxyOrVpn: scoreIn > 3,
           riskDetails: risks,
           rawData: data
         };
-      } catch (err: any) {
-        return { success: false, error: err?.message || 'Request failed' };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message || 'Request failed' };
       }
     };
 
     // ─── QUERY SOURCE 6: IPINFO.IO ───
     const fetchIPInfoIo = async (): Promise<SourceResult> => {
       try {
-        const data = await secureFetch(`https://ipinfo.io/${ip}/json?token=${keys.ipinfo}`);
+        const data = (await secureFetch(`https://ipinfo.io/${ip}/json?token=${keys.ipinfo}`)) as unknown as IPInfoResponse;
         
         const risks: string[] = [];
         const isVpn = data.privacy?.vpn === true;
@@ -317,17 +388,17 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
           riskDetails: risks,
           rawData: data
         };
-      } catch (err: any) {
-        return { success: false, error: err?.message || 'Request failed' };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message || 'Request failed' };
       }
     };
 
     // ─── TAURI DESKTOP: TRUE PARALLEL NATIVE BATCH FETCH ───
-    const isTauri = typeof window !== 'undefined' && (window as any).__TAURI__ !== undefined;
+    const isTauri = typeof window !== 'undefined' && (window as unknown as WindowWithTauri).__TAURI__ !== undefined;
 
     if (isTauri) {
       try {
-        const { invoke } = (window as any).__TAURI__.core;
+        const { invoke } = (window as unknown as WindowWithTauri).__TAURI__!.core;
         
         const batchRequests = [
           { url: `https://api.iplocation.net/?ip=${ip}`, headers: null },
@@ -340,90 +411,96 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
 
         const delayPromise = new Promise((resolve) => setTimeout(resolve, 550));
         const [rawResults] = await Promise.all([
-          invoke('fetch_ip_batch', { requests: batchRequests }) as Promise<string[]>,
+          invoke('fetch_ip_batch', { requests: batchRequests }) as unknown as Promise<string[]>,
           delayPromise,
         ]);
 
         // Parse each result using inline parsers
-        const parsers: Array<{ name: string; parse: (data: any) => SourceResult }> = [
+        const parsers: Array<{ name: string; parse: (data: Record<string, unknown>) => SourceResult }> = [
           {
             name: 'IPLocation.net',
             parse: (data) => {
-              if (data.error || data.response_code !== '200') return { success: false, error: data.error || data.response_message || 'Fetch failed' };
-              return { success: true, countryCode: data.country_code2, countryName: data.country_name, isp: data.isp, isProxyOrVpn: false, rawData: data };
+              const d = data as unknown as IPNetResponse;
+              if (d.error || d.response_code !== '200') return { success: false, error: d.error || d.response_message || 'Fetch failed' };
+              return { success: true, countryCode: d.country_code2, countryName: d.country_name, isp: d.isp, isProxyOrVpn: false, rawData: d };
             }
           },
           {
             name: 'IPWho.is',
             parse: (data) => {
-              if (data.error || !data.success) return { success: false, error: data.error || data.message || 'Lookup failed' };
+              const d = data as unknown as IPWhoIsResponse;
+              if (d.message || !d.success) return { success: false, error: d.message || 'Lookup failed' };
               const risks: string[] = [];
-              if (data.security?.vpn) risks.push('VPN');
-              if (data.security?.proxy) risks.push('Proxy');
-              if (data.security?.tor) risks.push('Tor exit node');
+              if (d.security?.vpn) risks.push('VPN');
+              if (d.security?.proxy) risks.push('Proxy');
+              if (d.security?.tor) risks.push('Tor exit node');
               return {
-                success: true, countryCode: data.country_code,
-                countryName: `${data.city ? data.city + ', ' : ''}${data.region ? data.region + ', ' : ''}${data.country || ''}`,
-                isp: data.connection?.isp, isProxyOrVpn: risks.length > 0, riskDetails: risks, rawData: data
+                success: true, countryCode: d.country_code,
+                countryName: `${d.city ? d.city + ', ' : ''}${d.region ? d.region + ', ' : ''}${d.country || ''}`,
+                isp: d.connection?.isp, isProxyOrVpn: risks.length > 0, riskDetails: risks, rawData: d
               };
             }
           },
           {
             name: 'IP-API.com',
             parse: (data) => {
-              if (data.error || data.status !== 'success') return { success: false, error: data.error || data.message || 'Lookup failed' };
+              const d = data as unknown as IPApiResponse;
+              if (d.status !== 'success') return { success: false, error: d.message || 'Lookup failed' };
               const risks: string[] = [];
-              if (data.proxy) risks.push('Proxy/VPN');
-              if (data.hosting) risks.push('Hosting/Data Center');
+              if (d.proxy) risks.push('Proxy/VPN');
+              if (d.hosting) risks.push('Hosting/Data Center');
               return {
-                success: true, countryCode: data.countryCode,
-                countryName: `${data.city ? data.city + ', ' : ''}${data.regionName ? data.regionName + ', ' : ''}${data.country || ''}`,
-                isp: data.isp || data.org, isProxyOrVpn: data.proxy === true || data.hosting === true, riskDetails: risks, rawData: data
+                success: true, countryCode: d.countryCode,
+                countryName: `${d.city ? d.city + ', ' : ''}${d.regionName ? d.regionName + ', ' : ''}${d.country || ''}`,
+                isp: d.isp || d.org, isProxyOrVpn: d.proxy === true || d.hosting === true, riskDetails: risks, rawData: d
               };
             }
           },
           {
             name: 'IP2Location.io',
             parse: (data) => {
-              if (data.error) return { success: false, error: typeof data.error === 'object' ? data.error.error_message : data.error };
+              const d = data as unknown as IP2LocationResponse;
+              if (d.error) return { success: false, error: d.error.error_message };
               const risks: string[] = [];
-              if (data.is_proxy) risks.push('Proxy/VPN/Tor');
+              if (d.is_proxy) risks.push('Proxy/VPN/Tor');
               return {
-                success: true, countryCode: data.country_code,
-                countryName: `${data.city_name ? data.city_name + ', ' : ''}${data.region_name ? data.region_name + ', ' : ''}${data.country_name || ''}`,
-                isp: data.as, isProxyOrVpn: data.is_proxy === true, riskDetails: risks, rawData: data
+                success: true, countryCode: d.country_code,
+                countryName: `${d.city_name ? d.city_name + ', ' : ''}${d.region_name ? d.region_name + ', ' : ''}${d.country_name || ''}`,
+                isp: d.as, isProxyOrVpn: d.is_proxy === true, riskDetails: risks, rawData: d
               };
             }
           },
           {
             name: 'CriminalIP.io',
             parse: (data) => {
-              if (data.error) return { success: false, error: data.error };
+              const d = data as unknown as CriminalIPResponse;
+              if (d.error) return { success: false, error: d.error };
               const risks: string[] = [];
-              const scoreIn = data.score?.inbound || 1;
-              const scoreOut = data.score?.outbound || 1;
+              const scoreIn = d.score?.inbound || 1;
+              const scoreOut = d.score?.outbound || 1;
               if (scoreIn > 3 || scoreOut > 3) risks.push("High Risk Level");
               return {
-                success: true, countryCode: data.country_code,
-                countryName: `${data.city ? data.city + ', ' : ''}${data.region ? data.region + ', ' : ''}${data.country || ''}`,
-                isp: data.isp || data.org_name, isProxyOrVpn: scoreIn > 3, riskDetails: risks, rawData: data
+                success: true, countryCode: d.country_code,
+                countryName: `${d.city ? d.city + ', ' : ''}${d.region ? d.region + ', ' : ''}${d.country || ''}`,
+                isp: d.isp || d.org_name, isProxyOrVpn: scoreIn > 3, riskDetails: risks, rawData: d
               };
             }
           },
           {
             name: 'IPInfo.io',
             parse: (data) => {
-              if (data.error) return { success: false, error: typeof data.error === 'object' ? data.error.title : data.error };
+              const d = data as unknown as IPInfoResponse & { error?: { title?: string } };
+              if (d.error) return { success: false, error: typeof d.error === 'object' ? d.error.title : d.error };
               const risks: string[] = [];
-              if (data.privacy?.vpn) risks.push('VPN');
-              if (data.privacy?.proxy) risks.push('Proxy');
-              if (data.privacy?.tor) risks.push('Tor Exit');
-              if (data.privacy?.hosting) risks.push('Hosting/Data Center');
+              if (d.privacy?.vpn) risks.push('VPN');
+              if (d.privacy?.proxy) risks.push('Proxy');
+              if (d.privacy?.tor) risks.push('Tor Exit');
+              if (d.privacy?.hosting) risks.push('Hosting/Data Center');
               return {
-                success: true, countryCode: data.country,
-                countryName: `${data.city ? data.city + ', ' : ''}${data.region ? data.region + ', ' : ''}${data.country || ''}`,
-                isp: data.org, isProxyOrVpn: !!(data.privacy?.vpn || data.privacy?.proxy || data.privacy?.tor || data.privacy?.hosting),
-                riskDetails: risks, rawData: data
+                success: true, countryCode: d.country,
+                countryName: `${d.city ? d.city + ', ' : ''}${d.region ? d.region + ', ' : ''}${d.country || ''}`,
+                isp: d.org, isProxyOrVpn: !!(d.privacy?.vpn || d.privacy?.proxy || d.privacy?.tor || d.privacy?.hosting),
+                riskDetails: risks, rawData: d
               };
             }
           }
@@ -441,9 +518,9 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
 
         setResults(parsed);
         setLoading(false);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.warn('Tauri batch fetch failed:', err);
-        const errorMsg = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+        const errorMsg = (err as Error).message || (typeof err === 'object' && err !== null ? JSON.stringify(err) : String(err));
         const parsed: Record<string, SourceResult> = {};
         const sourceNames = ['IPLocation.net', 'IPWho.is', 'IP-API.com', 'IP2Location.io', 'CriminalIP.io', 'IPInfo.io'];
         sourceNames.forEach(name => {
@@ -719,11 +796,11 @@ export const IPCheckerModal: React.FC<IPCheckerModalProps> = ({ isOpen, onClose,
                           )}
                           
                           {/* Criminal IP risk percentage */}
-                          {sourceName === 'CriminalIP.io' && result.rawData?.score && (
+                          {sourceName === 'CriminalIP.io' && (result.rawData as CriminalIPResponse)?.score && (
                             <p className="flex justify-between border-t border-slate-900/50 pt-1.5 mt-1.5">
                               <span>API Risk Rating:</span>
-                              <strong className={result.rawData.score.inbound > 2 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-semibold'}>
-                                {result.rawData.score.inbound * 20}% Risk ({result.rawData.score.inbound}/5)
+                              <strong className={((result.rawData as CriminalIPResponse).score?.inbound ?? 0) > 2 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-semibold'}>
+                                {((result.rawData as CriminalIPResponse).score?.inbound ?? 0) * 20}% Risk ({((result.rawData as CriminalIPResponse).score?.inbound ?? 0)}/5)
                               </strong>
                             </p>
                           )}
