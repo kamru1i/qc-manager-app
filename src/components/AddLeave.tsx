@@ -45,7 +45,6 @@ export function AddLeave({
   globalSettings,
   leaveSettlements = [],
   onSuccess,
-  onConvertShortLeaveToFullLeave,
   holidayResponses = [],
   initialFetchDone = true,
   targetUser = null,
@@ -177,7 +176,6 @@ export function AddLeave({
     : (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
 
   const convertedDays = targetProfile?.converted_short_leaves_days ?? 0;
-  const convertedHours = targetProfile?.converted_short_leaves_hours ?? 0;
 
   const officeLeaveTaken = (stats.officeLeavesTaken ?? 0)
     + (stats.fullLeaves ?? 0)
