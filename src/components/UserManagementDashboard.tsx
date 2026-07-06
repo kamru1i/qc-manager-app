@@ -262,8 +262,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       }
     } catch (e: unknown) {
       console.error('Failed to load staff leave data:', e);
-      const errMsg = (e as any).message || '';
-      if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('jwt') || (e as any).status === 401) {
+      const err = e as Error & { status?: number };
+      const errMsg = err.message || '';
+      if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('jwt') || err.status === 401) {
         toast.error('Session expired. Logging out...');
         supabase.auth.signOut();
       } else {

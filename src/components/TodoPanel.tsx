@@ -230,8 +230,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       }
 
       setTodos(currentTodayTodos);
-    } catch (err: any) {
-      console.error('Failed to fetch daily todos:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to fetch daily todos:', (err as Error)?.message || err);
       toast.error('Failed to load today\'s Todo list.');
     } finally {
       setLoading(false);
@@ -262,8 +262,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
       if (error) throw error;
       setArchiveTodos(data || []);
-    } catch (err: any) {
-      console.error('Failed to fetch archive todos:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to fetch archive todos:', (err as Error)?.message || err);
       toast.error('Failed to load historical Todo list.');
     } finally {
       setArchiveLoading(false);
@@ -318,8 +318,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setIsAllTime(false);
         toast.success('Task added successfully!');
       }
-    } catch (err: any) {
-      console.error('Failed to add todo:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to add todo:', (err as Error)?.message || err);
       toast.error('Failed to add task.');
     }
   };
@@ -346,8 +346,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         prev.map((t) => (t.id === todo.id ? { ...t, status: nextStatus } : t))
       );
       toast.success(`Task marked as ${nextStatus}!`);
-    } catch (err: any) {
-      console.error('Failed to toggle status:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to toggle status:', (err as Error)?.message || err);
       toast.error('Failed to update status.');
     }
   };
@@ -366,8 +366,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         prev.map((t) => (t.id === todo.id ? { ...t, is_all_time: nextAllTime } : t))
       );
       toast.success(nextAllTime ? 'Task marked as Permanent!' : 'Removed from Permanent routine.');
-    } catch (err: any) {
-      console.error('Failed to toggle all-time status:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to toggle all-time status:', (err as Error)?.message || err);
       toast.error('Failed to update task type.');
     }
   };
@@ -384,8 +384,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       setTodos((prev) =>
         prev.map((t) => (t.id === id ? { ...t, comment: commentVal } : t))
       );
-    } catch (err: any) {
-      console.error('Failed to update comment:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to update comment:', (err as Error)?.message || err);
     }
   };
 
@@ -435,8 +435,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         prev.map((t) => (t.id === todoId ? { ...t, task: editingTaskText.trim() } : t))
       );
       toast.success('Task name updated!');
-    } catch (err: any) {
-      console.error('Failed to update task name:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to update task name:', (err as Error)?.message || err);
       toast.error('Failed to update task name.');
     } finally {
       setEditingTodoId(null);
@@ -463,8 +463,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       setTodos((prev) => prev.filter((t) => !selectedTodoIds.includes(t.id)));
       setSelectedTodoIds([]);
       toast.success('Selected tasks deleted successfully.');
-    } catch (err: any) {
-      console.error('Failed to bulk delete todos:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to bulk delete todos:', (err as Error)?.message || err);
       toast.error('Failed to delete selected tasks.');
     }
   };
@@ -480,8 +480,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       if (error) throw error;
       setTodos((prev) => prev.filter((t) => t.id !== id));
       toast.success('Task deleted successfully.');
-    } catch (err: any) {
-      console.error('Failed to delete todo:', err?.message || err);
+    } catch (err: unknown) {
+      console.error('Failed to delete todo:', (err as Error)?.message || err);
       toast.error('Failed to delete task.');
     }
   };
@@ -613,7 +613,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                       : 'border-slate-700 hover:border-slate-500 bg-slate-950/40'
                   }`}
                 >
-                  {isAllTime && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                  {isAllTime && <Check className="w-2.5 h-2.5 stroke-3" />}
                 </div>
                 <span className="text-[11px] text-slate-350 hover:text-white font-bold tracking-wide transition-colors">Permanent</span>
               </label>
@@ -663,7 +663,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
                   )}
                 </button>
-                <div className="h-5 w-[1px] bg-slate-800 mx-1" />
+                <div className="h-5 w-px bg-slate-800 mx-1" />
               </div>
 
               <button
@@ -798,16 +798,16 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                               ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
                               : todo.status === 'Working'
                               ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
-                              : 'border-slate-700 text-transparent hover:border-slate-500 hover:bg-slate-800/40 text-slate-500'
+                              : 'border-slate-700 text-transparent hover:border-slate-500 hover:bg-slate-800/40'
                           }`}
                           title={`Status: ${todo.status}. Click to cycle status.`}
                         >
                           {todo.status === 'Completed' ? (
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            <Check className="w-3.5 h-3.5 stroke-3" />
                           ) : todo.status === 'Working' ? (
                             <Clock className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
                           ) : (
-                            <Check className="w-3.5 h-3.5 opacity-0 hover:opacity-40 transition-opacity stroke-[3]" />
+                            <Check className="w-3.5 h-3.5 opacity-0 hover:opacity-40 transition-opacity stroke-3" />
                           )}
                         </button>
 
@@ -1057,7 +1057,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
               }}
               className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
-              <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-[2]" />
+              <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2" />
               Delete
             </button>
           </div>,

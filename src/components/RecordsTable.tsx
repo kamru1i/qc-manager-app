@@ -127,7 +127,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
   const handleCommitEdit = (
     id: string,
     field: "file_name" | "branch_name" | "codename" | "file_type",
-    value: any,
+    value: string,
   ) => {
     let finalValue = value;
     if (field === "codename" || field === "branch_name") {
@@ -477,7 +477,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
           onClick={() => setCurrentPage(i)}
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
             currentPage === i
-              ? "bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500 text-white shadow-md shadow-purple-900/30"
+              ? "bg-linear-to-r from-purple-600 to-indigo-600 border-purple-500 text-white shadow-md shadow-purple-900/30"
               : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
         >
@@ -532,7 +532,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
           <thead className="bg-slate-900/50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             <tr>
               <th
-                className={`px-4 py-2 ${showDate ? "w-[7.5rem] min-w-[7.5rem]" : "w-28 min-w-28"}`}
+                className={`px-4 py-2 ${showDate ? "w-30 min-w-30" : "w-28 min-w-28"}`}
               >
                 {showDate ? "Date/Time" : "Submitted Time"}
               </th>
@@ -662,7 +662,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                   }`}
                 >
                   <td
-                    className={`px-4 py-1.5 ${showDate ? "w-[7.5rem] min-w-[7.5rem]" : "w-28 min-w-28"}`}
+                    className={`px-4 py-1.5 ${showDate ? "w-30 min-w-30" : "w-28 min-w-28"}`}
                   >
                     {showDate ? (
                       <div className="flex flex-col">
@@ -1029,7 +1029,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
               onClick={() => handleContextDelete(contextMenu.record)}
               className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
-              <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-[2]" />
+              <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2" />
               Delete
             </button>
           </div>,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, Trash2, Search, Plus, Loader2 } from 'lucide-react';
+import { Edit, Trash2, Search, Plus } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { FilterPanel } from './FilterPanel';
 import { StatusBadge } from './StatusBadge';
@@ -57,7 +57,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   onToggleAdjustment,
   onDeleteClick,
   onEditClick,
-  onRevisionClick,
   formatDate,
   formatTimeToAMPM,
   getCleanComment,
@@ -561,7 +560,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 onClick={() => handleContextDelete(contextMenu.record)}
                 className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
               >
-                <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-[2]" />
+                <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2" />
                 Delete
               </button>
             )}

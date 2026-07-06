@@ -48,6 +48,10 @@ export default function RootLayout({
                       }, 100);
                     });
                   }
+                  // Disable default browser context menu globally
+                  document.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                  });
                 } catch (e) {}
               })();
             `,

@@ -1,20 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, AlertTriangle, Plus, Loader, User, Calendar } from 'lucide-react';
-import { Profile, ChutiRecordWithProfile, GovtHolidayResponse, LeaveSettlement } from '@/types';
-import { ChutiRecord, generateUUID } from '@/utils/offlineSync';
+import { RefreshCw, AlertTriangle, User, Calendar } from 'lucide-react';
+import { Profile, GovtHolidayResponse, LeaveSettlement } from '@/types';
+import { ChutiRecord, generateUUID, AdminEditRequest } from '@/utils/offlineSync';
 import { supabase } from '@/utils/supabase';
 import {
   calculateStats,
   GlobalSettings,
-  calculateHalfYearlyOfficeLeave,
   checkIfHolidayOrWeekend,
   getLeaveValidationError,
   calculateLeaveOrOvertime,
   formatDate,
-  getSettlementSplits,
-  formatDuration
+  getSettlementSplits
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/useLeaveQuotaStats';
 import { sendPushNotification } from '@/utils/webPushHelper';
@@ -22,7 +20,6 @@ import { getApiUrl } from '@/utils/apiUrlHelper';
 import { toast } from 'react-hot-toast';
 import { AddLeaveFormFields } from './AddLeaveFormFields';
 import { LeaveUsageSummary } from './LeaveUsageSummary';
-import { UserStats } from './UserStats';
 import { SkeletonLoader } from './SkeletonLoader';
 
 interface AddLeaveProps {
@@ -145,7 +142,7 @@ export function AddLeave({
     .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
 
   // Government Holiday calculations using shared hook
-  const { respondedHolidays, govtHolidayStats } = useGovtHolidayStats(
+  const { govtHolidayStats } = useGovtHolidayStats(
     targetProfile?.id,
     holidayResponses,
     globalSettings,
@@ -187,12 +184,6 @@ export function AddLeave({
     + convertedDays;
 
   const officeLeaveRemaining = officeLeaveTotal - officeLeaveTaken;
-
-  const officeLeaveStatsObj = {
-    total: officeLeaveTotal,
-    taken: officeLeaveTaken,
-    remaining: officeLeaveRemaining
-  };
 
   const eidFitrTotal = (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr;
   const eidFitrRemaining = Math.max(0, eidFitrTotal - (stats.eidFitrTaken ?? 0) - activeEidFitrSettled);
@@ -262,22 +253,7 @@ export function AddLeave({
     targetProfile?.working_hours || 9.5
   ).halfYearlyStats;
 
-  const totalShortMins = parseHHMMToMinutes(stats.shortHours);
-  const netShortMins = Math.max(0, totalShortMins - convertedHours * 60);
-  const displayShortHours = formatDuration(netShortMins);
-  const displayFullLeaves = stats.fullLeaves + convertedDays;
-  const workingHours = targetProfile?.working_hours ?? 9.5;
-  const hasConvertibleHours = netShortMins >= workingHours * 60;
 
-  const handleConvertToFullLeave = () => {
-    if (!targetProfile) return;
-    const maxDays = Math.floor(netShortMins / (workingHours * 60));
-    const hoursText = (maxDays * workingHours).toFixed(1);
-
-    if (confirm(`Do you want to convert ${hoursText} hours of short leave to ${maxDays} days of full leave?\n(This will deduct from your short leave balance and add to your full leave)`)) {
-      onConvertShortLeaveToFullLeave(targetProfile.id, workingHours, netShortMins);
-    }
-  };
 
   const isFullLeave = leaveType === 'Full Leave';
 
@@ -350,7 +326,7 @@ export function AddLeave({
     }
 
     // Prepare records list to insert
-    const insertData: any[] = [];
+    const insertData: Partial<ChutiRecord>[] = [];
     const bypassSupervisor = addedBySupervisor || profile?.role === 'admin' || targetProfile.needs_supervisor_approval === false;
     let finalStatus = 'pending_supervisor';
     if (profile?.role === 'admin') {
@@ -363,7 +339,6 @@ export function AddLeave({
     let finalAdjustedHour: string | null = null;
     let finalAdjustShortLeave = false;
 
-    const availableOvertimeMins = parseHHMMToMinutes(stats.overtimeHours);
     const availableShortLeaveMins = parseHHMMToMinutes(stats.shortHours);
     const leaveMins = parseHHMMToMinutes(`${leaveHour}:00`);
 
@@ -418,7 +393,7 @@ export function AddLeave({
         commentWithCategory = `Partially Adjusted with Short Leave (${finalAdjustedHour.substring(0, 5)}) | ${comment.trim()}`;
       }
 
-      let adminEditRequest: any = null;
+      let adminEditRequest: AdminEditRequest | null = null;
       if (profile?.role === 'admin') {
         adminEditRequest = {
           notifications: [
@@ -455,7 +430,7 @@ export function AddLeave({
     });
 
     try {
-      let data: any = null;
+      let data: ChutiRecord[] | null = null;
       const isAddingOnBehalf = profile && targetProfile && targetProfile.id !== profile.id;
       const isPrivilegedRole = profile?.role === 'supervisor' || profile?.role === 'admin';
 
@@ -549,9 +524,9 @@ export function AddLeave({
       setBulkDates([]);
       setBulkAdjustments([]);
       setSelectedSupervisors([]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err.message || 'Failed to add leave');
+      toast.error((err as Error).message || 'Failed to add leave');
     } finally {
       setSubmitting(false);
     }
@@ -677,7 +652,7 @@ export function AddLeave({
                 <button
                   type="submit"
                   disabled={submitting || !!validationError || isDuplicateDate || (!addedBySupervisor && profile?.role !== 'admin' && targetProfile?.needs_supervisor_approval !== false && selectedSupervisors.length === 0)}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+                  className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {submitting ? 'Submitting Leave...' : 'Submit Leave Entry'}

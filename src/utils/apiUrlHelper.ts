@@ -6,7 +6,7 @@ export function isTauriApp(): boolean {
   return (
     window.location.protocol === 'tauri:' || 
     window.location.hostname === 'tauri.localhost' || 
-    (window as any).__TAURI_INTERNALS__ !== undefined
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ !== undefined
   );
 }
 
