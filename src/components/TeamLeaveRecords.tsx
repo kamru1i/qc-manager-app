@@ -5,6 +5,7 @@ import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { exportHelper } from '@/utils/exportHelper';
 import { LeavesRecordsTable } from './LeavesRecordsTable';
+import { DateInput } from './DateInput';
 import { TeamLeaveRecordsSkeleton } from './skeleton/TeamLeaveRecordsSkeleton';
 import { Calendar, RefreshCw, ArrowLeft } from 'lucide-react';
 import { formatDate, formatTimeToAMPM, getCleanComment } from '@/utils/dashboardHelpers';
@@ -257,13 +258,12 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
 
         {/* Date Selector Control Group */}
         <div className="flex items-center gap-3 w-full md:w-auto self-stretch md:self-auto border-t border-slate-850/80 md:border-t-0 pt-3 md:pt-0">
-          <div className="flex-1 md:flex-none flex flex-col">
+          <div className="flex-1 md:flex-none flex flex-col min-w-[170px]">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Select Date</label>
-            <input
-              type="date"
+            <DateInput
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={setSelectedDate}
+              className="!rounded-xl"
             />
           </div>
           <div className="flex flex-col justify-end self-end">
