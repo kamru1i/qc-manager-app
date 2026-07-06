@@ -220,11 +220,27 @@ export const useAdminActions = ({
       const cleanUsername = newUsername?.trim().toUpperCase();
 
       if (editorRole === 'admin' && cleanUsername && targetProfile && cleanUsername !== oldUsername) {
-        const { error: usernameError } = await supabase.rpc('admin_update_user_credentials', {
-          p_user_id: userId,
-          p_new_username: cleanUsername
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+
+        const res = await fetch('/api/admin/update-user-codename', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            userId,
+            newUsername: cleanUsername,
+            role: role
+          })
         });
-        if (usernameError) throw usernameError;
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to update user codename');
+        }
+
         targetProfile.username = cleanUsername;
       }
 
