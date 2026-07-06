@@ -211,6 +211,57 @@ export const useAdminStaffOperations = ({
   const handleUpdateSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sessionUser || !profile) return;
+
+    const targetProfile = editingStaffProfileId
+      ? profilesList.find(p => p.id === editingStaffProfileId)
+      : profile;
+
+    if (!targetProfile) return;
+
+    // Check if any field changed
+    const isUsernameChanged = editUsername.toUpperCase().trim() !== (targetProfile.username || '').toUpperCase().trim();
+    const isFullNameChanged = editFullName.trim() !== (targetProfile.full_name || '').trim();
+    const isWorkingHoursChanged = (parseFloat(editWorkingHours) || 9.5) !== (targetProfile.working_hours ?? 9.5);
+    const isBreakTimeChanged = (parseInt(editBreakTime) || 0) !== (targetProfile.break_time ?? 0);
+    const isJobRoleChanged = editJobRole.trim() !== (targetProfile.job_role || '').trim();
+    const isSignInChanged = (profileSignInTime || '') !== (targetProfile.default_sign_in || '');
+    const isSignOutChanged = (profileSignOutTime || '') !== (targetProfile.default_sign_out || '');
+    
+    const isNeedsApprovalChanged = editNeedsApproval !== !!targetProfile.needs_supervisor_approval;
+    const isAllowReserveChanged = editAllowReserve !== !!targetProfile.allow_reserve;
+    const isAllowOvertimeChanged = editAllowOvertime !== !!targetProfile.allow_overtime;
+    const isMaxLeavesChanged = (parseInt(editMaxFullLeaves) || 15) !== (targetProfile.max_full_leaves ?? 15);
+    const isEligibleOfficeChanged = editEligibleOfficeLeave !== !!targetProfile.eligible_office_leave;
+    const isEligibleGovtChanged = editEligibleGovtHoliday !== !!targetProfile.eligible_govt_holiday;
+    
+    let isSupervisorsChanged = false;
+    if (editingStaffProfileId) {
+      const oldSups = [...(targetProfile.supervisor_ids || [])].sort();
+      const newSups = [...editSupervisorIds].sort();
+      isSupervisorsChanged = oldSups.join(',') !== newSups.join(',');
+    }
+
+    let hasChanges = false;
+    if (editingStaffProfileId) {
+      hasChanges = isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+                   isJobRoleChanged || isSignInChanged || isSignOutChanged || isNeedsApprovalChanged || 
+                   isAllowReserveChanged || isAllowOvertimeChanged || isMaxLeavesChanged || 
+                   isEligibleOfficeChanged || isEligibleGovtChanged || (editNeedsApproval && isSupervisorsChanged);
+    } else if (profile.role === 'admin') {
+      hasChanges = isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+                   isJobRoleChanged || isSignInChanged || isSignOutChanged || isNeedsApprovalChanged || 
+                   isAllowReserveChanged || isAllowOvertimeChanged || isMaxLeavesChanged || 
+                   isEligibleOfficeChanged || isEligibleGovtChanged;
+    } else {
+      hasChanges = isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+                   isJobRoleChanged || isSignInChanged || isSignOutChanged;
+    }
+
+    if (!hasChanges) {
+      setMessage({ type: 'error', text: 'No changes detected. Profile was not updated.' });
+      return;
+    }
+
     setProfileSubmitting(true);
     setMessage(null);
 
@@ -276,20 +327,6 @@ export const useAdminStaffOperations = ({
         setMessage({ type: 'success', text: 'Your profile successfully updated!' });
         setShowProfileSettingsModal(false);
       } else {
-        const isFullNameChanged = editFullName.trim() !== (profile.full_name || '').trim();
-        const isWorkingHoursChanged = (parseFloat(editWorkingHours) || 9.5) !== (profile.working_hours ?? 9.5);
-        const isBreakTimeChanged = (parseInt(editBreakTime) || 0) !== (profile.break_time ?? 0);
-        const isJobRoleChanged = editJobRole.trim() !== (profile.job_role || '').trim();
-        const isSignInChanged = (profileSignInTime || '') !== (profile.default_sign_in || '');
-        const isSignOutChanged = (profileSignOutTime || '') !== (profile.default_sign_out || '');
-
-        const hasChanges = isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || isJobRoleChanged || isSignInChanged || isSignOutChanged;
-
-        if (!hasChanges) {
-          setMessage({ type: 'error', text: 'No changes detected. Profile was not submitted.' });
-          setProfileSubmitting(false);
-          return;
-        }
 
         if (!profile?.has_edited_profile) {
           const updates = {

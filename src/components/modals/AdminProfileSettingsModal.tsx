@@ -108,6 +108,49 @@ export function AdminProfileSettingsModal({
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [testingPush, setTestingPush] = useState(false);
 
+  const targetProfile = editingStaffProfileId
+    ? profilesList.find(p => p.id === editingStaffProfileId)
+    : profile;
+
+  let hasChanges = false;
+  if (targetProfile) {
+    const isUsernameChanged = editUsername.toUpperCase().trim() !== (targetProfile.username || '').toUpperCase().trim();
+    const isFullNameChanged = editFullName.trim() !== (targetProfile.full_name || '').trim();
+    const isWorkingHoursChanged = (parseFloat(editWorkingHours) || 9.5) !== (targetProfile.working_hours ?? 9.5);
+    const isBreakTimeChanged = (parseInt(editBreakTime) || 0) !== (targetProfile.break_time ?? 0);
+    const isJobRoleChanged = editJobRole.trim() !== (targetProfile.job_role || '').trim();
+    const isSignInChanged = (profileSignInTime || '') !== (targetProfile.default_sign_in || '');
+    const isSignOutChanged = (profileSignOutTime || '') !== (targetProfile.default_sign_out || '');
+    
+    const isNeedsApprovalChanged = editNeedsApproval !== !!targetProfile.needs_supervisor_approval;
+    const isAllowReserveChanged = editAllowReserve !== !!targetProfile.allow_reserve;
+    const isAllowOvertimeChanged = editAllowOvertime !== !!targetProfile.allow_overtime;
+    const isEligibleOfficeChanged = editEligibleOfficeLeave !== !!targetProfile.eligible_office_leave;
+    const isEligibleGovtChanged = editEligibleGovtHoliday !== !!targetProfile.eligible_govt_holiday;
+    
+    let isSupervisorsChanged = false;
+    if (editingStaffProfileId) {
+      const oldSups = [...(targetProfile.supervisor_ids || [])].sort();
+      const newSups = [...editSupervisorIds].sort();
+      isSupervisorsChanged = oldSups.join(',') !== newSups.join(',');
+    }
+
+    if (editingStaffProfileId) {
+      hasChanges = isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+                   isJobRoleChanged || isSignInChanged || isSignOutChanged || isNeedsApprovalChanged || 
+                   isAllowReserveChanged || isAllowOvertimeChanged || 
+                   isEligibleOfficeChanged || isEligibleGovtChanged || (editNeedsApproval && isSupervisorsChanged);
+    } else if (profile?.role === 'admin') {
+      hasChanges = isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+                   isJobRoleChanged || isSignInChanged || isSignOutChanged || isNeedsApprovalChanged || 
+                   isAllowReserveChanged || isAllowOvertimeChanged || 
+                   isEligibleOfficeChanged || isEligibleGovtChanged;
+    } else {
+      hasChanges = isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+                   isJobRoleChanged || isSignInChanged || isSignOutChanged;
+    }
+  }
+
   const handleTestPushNotification = async () => {
     if (!sessionUser) return;
     setTestingPush(true);
@@ -493,8 +536,12 @@ export function AdminProfileSettingsModal({
             <div className="flex gap-3 mt-6 pb-2">
               <button
                 type="submit"
-                disabled={setupSubmitting}
-                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 transition-all items-center gap-1.5"
+                disabled={setupSubmitting || !hasChanges}
+                className={`flex-1 flex justify-center py-2 px-4 border rounded-lg shadow-sm text-xs font-semibold transition-all items-center gap-1.5 ${
+                  setupSubmitting || !hasChanges
+                    ? 'border-slate-800/80 bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-50'
+                    : 'border-transparent text-white bg-blue-600 hover:bg-blue-500 cursor-pointer active:scale-95'
+                }`}
               >
                 {setupSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                 {setupSubmitting
