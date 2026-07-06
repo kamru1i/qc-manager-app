@@ -85,7 +85,7 @@ export async function subscribeUserToPush(userId: string): Promise<boolean> {
     });
 
     if (error) {
-      console.error('Error saving push subscription to database via RPC:', error);
+      console.error('Error saving push subscription to database via RPC:', error.message, error.details, error.hint, error.code);
       return false;
     }
 
@@ -199,7 +199,7 @@ export async function checkSubscriptionStatus(userId: string): Promise<{
         });
         
         if (rpcError) {
-          console.error('Error syncing push subscription via RPC:', rpcError);
+          console.error('Error syncing push subscription via RPC:', rpcError.message, rpcError.details, rpcError.hint, rpcError.code);
           return { permission, isSubscribed: false };
         }
         return { permission, isSubscribed: true };
