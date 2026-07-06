@@ -219,8 +219,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   }, [viewingStaff, isCreatingNewUser, onViewStateChange]);
 
   // Fetch all leave records, settlements, and holiday responses for the selected staff member
-  const fetchStaffLeaveData = useCallback(async (staffId: string) => {
-    setLoadingLeaveData(true);
+  const fetchStaffLeaveData = useCallback(async (staffId: string, isSilent = false) => {
+    if (!isSilent) {
+      setLoadingLeaveData(true);
+    }
     try {
       const [chutiRes, sRes, hrRes] = await Promise.all([
         supabase
@@ -277,13 +279,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   // Debounced wrapper to prevent duplicate fetch calls when realtime events and user actions fire together
   const fetchTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const debouncedFetchStaffLeaveData = useCallback((staffId: string) => {
+  const debouncedFetchStaffLeaveData = useCallback((staffId: string, isSilent = true) => {
     if (fetchTimerRef.current) {
       clearTimeout(fetchTimerRef.current);
     }
     fetchTimerRef.current = setTimeout(() => {
-      fetchStaffLeaveData(staffId);
-    }, 200);
+      fetchStaffLeaveData(staffId, isSilent);
+    }, 150);
   }, [fetchStaffLeaveData]);
 
   // Fetch leave data on mount/change of selected staff member
@@ -352,6 +354,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Toggle adjustment handler for leaves in details view
   const handleToggleAdjustment = async (record: ChutiRecord) => {
     try {
+      // Optimistically update UI state immediately
+      setViewingStaffRecords(prev => prev.map(r => r.id === record.id ? { ...r, adjustment: !r.adjustment } : r));
+
       const { error } = await supabase
         .from('chuti')
         .update({ adjustment: !record.adjustment })
@@ -360,17 +365,23 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (error) throw error;
       toast.success('Adjustment status updated.');
       if (viewingStaff) {
-        debouncedFetchStaffLeaveData(viewingStaff.id);
+        debouncedFetchStaffLeaveData(viewingStaff.id, true);
       }
     } catch (err: unknown) {
       console.error(err);
       toast.error('Failed to update adjustment: ' + ((err as Error).message || 'unknown error'));
+      if (viewingStaff) {
+        fetchStaffLeaveData(viewingStaff.id, true);
+      }
     }
   };
 
   // Delete handler for leaves in details view
   const handleDeleteRecord = async (record: ChutiRecord) => {
     try {
+      // Optimistically remove record from local state immediately
+      setViewingStaffRecords(prev => prev.filter(r => r.id !== record.id));
+
       const { error } = await supabase
         .from('chuti')
         .update({ deleted_at: new Date().toISOString() })
@@ -379,11 +390,14 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (error) throw error;
       toast.success('Leave entry deleted successfully.');
       if (viewingStaff) {
-        debouncedFetchStaffLeaveData(viewingStaff.id);
+        debouncedFetchStaffLeaveData(viewingStaff.id, true);
       }
     } catch (err: unknown) {
       console.error(err);
       toast.error('Failed to delete entry: ' + ((err as Error).message || 'unknown error'));
+      if (viewingStaff) {
+        fetchStaffLeaveData(viewingStaff.id, true);
+      }
     }
   };
 
@@ -791,11 +805,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       records={viewingStaffRecords}
                       globalSettings={globalSettings}
                       leaveSettlements={viewingStaffSettlements}
-                      onSuccess={() => {
+                      onSuccess={(newRecords) => {
+                        if (newRecords && Array.isArray(newRecords) && newRecords.length > 0) {
+                          setViewingStaffRecords(prev => [...newRecords, ...prev]);
+                        }
                         setShowAddLeaveForStaff(false);
                         setActiveSubTab('leave');
-                        // Refresh leave data without triggering double reload
-                        debouncedFetchStaffLeaveData(viewingStaff.id);
+                        debouncedFetchStaffLeaveData(viewingStaff.id, true);
                       }}
                       onConvertShortLeaveToFullLeave={() => {}}
                       holidayResponses={viewingStaffHolidayResponses}

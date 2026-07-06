@@ -111,12 +111,12 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.7** introduces profile fields visibility for regular users and seamless admin approval change submission.
+            **v3.0.8** completely eliminates double reloads and UI flickering when adding or managing leave entries in User Management.
 
-            #### 🛠 What's Fixed in v3.0.7:
+            #### 🛠 What's Fixed in v3.0.8:
 
-            - **User Profile Fields Visibility** — Enabled direct viewing and editing of profile fields (Full Name, Job Role, Working Hours, Break, Sign-In/Out) for regular users and supervisors.
-            - **Admin Approval Change Submission** — Submitting profile edits as a regular user now automatically submits a change request to Admin for approval while preserving field accessibility.
+            - **Zero Double-Reload & Smooth State Updates** — Added optimistic local state updates when adding, deleting, or adjusting leave records in User Management > Leave History.
+            - **Silent Background Refetching** — Prevented full-page loading spinners during background data re-fetches, preserving smooth table UI rendering.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

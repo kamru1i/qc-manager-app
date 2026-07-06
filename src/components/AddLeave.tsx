@@ -28,7 +28,7 @@ interface AddLeaveProps {
   records: ChutiRecord[];
   globalSettings: GlobalSettings;
   leaveSettlements?: LeaveSettlement[];
-  onSuccess: () => void;
+  onSuccess: (newRecords?: ChutiRecord[]) => void;
   onConvertShortLeaveToFullLeave: (userId: string, workingHours: number, shortMins: number) => void;
   holidayResponses: GovtHolidayResponse[];
   initialFetchDone: boolean;
@@ -528,7 +528,7 @@ export function AddLeave({
         }).catch(err => console.error('Error sending push:', err));
       }
 
-      onSuccess();
+      onSuccess(data || undefined);
 
       // Reset form
       setDate('');

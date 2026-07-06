@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.0.7** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.0.8** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,10 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.0.7 — Patch Release (Current)
+### 🚀 v3.0.8 — Patch Release (Current)
+*   **Eliminated Double Reload & UI Flickering**: Implemented optimistic state updates for adding, deleting, and adjusting leave entries in User Management > Leave History view, along with silent background data refetching.
+
+### 🚀 v3.0.7 — Patch Release
 *   **User Profile Settings Visibility & Admin Approval Workflow**: Enabled direct editing of profile details (Full Name, Job Role, Working Hours, Break Minutes, Default Sign-In/Out) for regular employees and supervisors. Submitting changes creates a pending profile update request for Admin approval, while keeping fields editable before submission.
 
 ### 🚀 v3.0.6 — Patch Release
