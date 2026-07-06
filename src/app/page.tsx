@@ -115,7 +115,7 @@ export default function AppPortal() {
   }, []);
 
   const [activeQuotesTab, setActiveQuotesTab] = useState<
-    "entry" | "monthly" | "analytics" | "audit_logs" | "rules"
+    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker"
   >(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("quotes_sales_active_tab");
@@ -124,14 +124,16 @@ export default function AppPortal() {
         saved === "monthly" ||
         saved === "analytics" ||
         saved === "audit_logs" ||
-        saved === "rules"
+        saved === "rules" ||
+        saved === "ip_checker"
       ) {
         return saved as
           | "entry"
           | "monthly"
           | "analytics"
           | "audit_logs"
-          | "rules";
+          | "rules"
+          | "ip_checker";
       }
     }
     return "entry";
@@ -156,7 +158,7 @@ export default function AppPortal() {
   });
 
   const handleQuotesTabChange = (
-    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules",
+    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker",
   ) => {
     if (tab === "analytics" || tab === "audit_logs") {
       setActiveTab(tab);

@@ -21,6 +21,7 @@ const AuditLogsPanel = lazy(() => import("@/components/AuditLogsPanel").then(m =
 const QuoteRulesPanel = lazy(() => import("@/components/QuoteRulesPanel").then(m => ({ default: m.QuoteRulesPanel })));
 const CopyHelperPanel = lazy(() => import("@/components/CopyHelperPanel").then(m => ({ default: m.CopyHelperPanel })));
 const SaveFileHelperPanel = lazy(() => import("@/components/SaveFileHelperPanel").then(m => ({ default: m.SaveFileHelperPanel })));
+import { IPChecker } from "@/components/IPChecker";
 import { validator } from "@/utils/quotesValidator";
 import {
   calculateSummaryStats,
@@ -59,12 +60,13 @@ const ALL_10_FILE_TYPES = [
 ];
 
 interface DashboardProps {
-  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules";
-  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules") => void;
+  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker";
+  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker") => void;
 }
 
 export default function Dashboard({
   activeTab,
+  onTabChange,
 }: DashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -78,6 +80,25 @@ export default function Dashboard({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Listen for custom quotes-tab-change event to update subtab navigation dynamically
+  useEffect(() => {
+    const handleTabChange = (e: Event) => {
+      const targetTab = (e as CustomEvent).detail;
+      if (
+        targetTab === "entry" ||
+        targetTab === "monthly" ||
+        targetTab === "analytics" ||
+        targetTab === "audit_logs" ||
+        targetTab === "rules" ||
+        targetTab === "ip_checker"
+      ) {
+        onTabChange(targetTab);
+      }
+    };
+    window.addEventListener("quotes-tab-change", handleTabChange);
+    return () => window.removeEventListener("quotes-tab-change", handleTabChange);
+  }, [onTabChange]);
 
   const specificDateRef = useRef<HTMLInputElement>(null);
   const dashboardData = useQuotesDashboardData();
@@ -1591,6 +1612,11 @@ export default function Dashboard({
                 showToast={showToast}
               />
             </Suspense>
+          )}
+
+          {/* TAB 7: IP CHECKER */}
+          {activeTab === "ip_checker" && (
+            <IPChecker showToast={showToast} />
           )}
 
 
