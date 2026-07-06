@@ -45,6 +45,7 @@ interface LeavesRecordsTableProps {
   hideAdjustmentAndOvertime?: boolean;
   hideYearSelect?: boolean;
   profilesList?: Profile[];
+  hideFilterPanel?: boolean;
 }
 
 export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
@@ -79,6 +80,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   hideAdjustmentAndOvertime = false,
   hideYearSelect = false,
   profilesList = [],
+  hideFilterPanel = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isMounted, setIsMounted] = useState(false);
@@ -268,19 +270,21 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* Filtering Panel */}
-      <FilterPanel
-        filterType={filterType}
-        setFilterType={setFilterType}
-        filterStartDate={filterStartDate}
-        setFilterStartDate={setFilterStartDate}
-        filterEndDate={filterEndDate}
-        setFilterEndDate={setFilterEndDate}
-        selectedYear={selectedYear}
-        allowOvertime={allowOvertime}
-        onExportExcel={() => onExportExcel(filteredRecords, searchTerm)}
-        onExportPDF={() => onExportPDF(filteredRecords, searchTerm)}
-        onResetFilters={handleReset}
-      />
+      {!hideFilterPanel && (
+        <FilterPanel
+          filterType={filterType}
+          setFilterType={setFilterType}
+          filterStartDate={filterStartDate}
+          setFilterStartDate={setFilterStartDate}
+          filterEndDate={filterEndDate}
+          setFilterEndDate={setFilterEndDate}
+          selectedYear={selectedYear}
+          allowOvertime={allowOvertime}
+          onExportExcel={() => onExportExcel(filteredRecords, searchTerm)}
+          onExportPDF={() => onExportPDF(filteredRecords, searchTerm)}
+          onResetFilters={handleReset}
+        />
+      )}
 
       {/* Records Table */}
       <div className="bg-slate-900/40 border border-slate-900 shadow-2xl rounded-2xl overflow-hidden flex flex-col">

@@ -65,6 +65,84 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     });
   }, [adminRecords, selectedDate, teamUserIds]);
 
+  // Group the dailyRecords by supervisor (only for admins)
+  const groupedDailyRecords = useMemo(() => {
+    // If the user is a supervisor (or not an admin), we just show a single group with their records
+    if (profile.role !== 'admin') {
+      const supervisorName = profile.username || 'Supervisor';
+      const cleanName = supervisorName.toUpperCase();
+      return [{
+        title: `${cleanName} Team Leave Records`,
+        records: dailyRecords,
+        hideFilterPanel: false,
+      }];
+    }
+
+    // Admin logic: group by supervisor, and gather unassigned records
+    // Get all supervisors: users with role 'supervisor' or 'admin'
+    const supervisors = profilesList.filter(
+      (p) => p.role === 'supervisor' || p.role === 'admin'
+    );
+
+    const groups: { title: string; records: ChutiRecord[]; hideFilterPanel: boolean }[] = [];
+
+    // Track which records are assigned to any supervisor's team
+    const assignedRecordIds = new Set<string>();
+
+    // Sort supervisors by username/codename to keep consistent ordering
+    const sortedSupervisors = [...supervisors].sort((a, b) => 
+      (a.username || '').localeCompare(b.username || '')
+    );
+
+    // Populate groups for each supervisor who has leaves in their team on this day
+    sortedSupervisors.forEach((sup) => {
+      const teamRecords = dailyRecords.filter((r) => {
+        const staff = profilesList.find((p) => p.id === r.user_id);
+        return staff?.supervisor_ids?.includes(sup.id);
+      });
+
+      if (teamRecords.length > 0) {
+        teamRecords.forEach(r => assignedRecordIds.add(r.id));
+        const supName = (sup.username || 'Supervisor').toUpperCase();
+        groups.push({
+          title: `${supName} Team Leave Records`,
+          records: teamRecords,
+          hideFilterPanel: false, // Will adjust below
+        });
+      }
+    });
+
+    // Gather records that don't belong to any active supervisor
+    const unassignedRecords = dailyRecords.filter((r) => !assignedRecordIds.has(r.id));
+    if (unassignedRecords.length > 0) {
+      groups.push({
+        title: `Direct Staff Leave Records`,
+        records: unassignedRecords,
+        hideFilterPanel: false,
+      });
+    }
+
+    // Set hideFilterPanel = true for all tables except the first one
+    groups.forEach((g, index) => {
+      g.hideFilterPanel = index > 0;
+    });
+
+    return groups;
+  }, [profile, dailyRecords, profilesList]);
+
+  const displayGroups = useMemo(() => {
+    if (groupedDailyRecords.length > 0) {
+      return groupedDailyRecords;
+    }
+    const supervisorName = profile.username || 'Supervisor';
+    const cleanName = supervisorName.toUpperCase();
+    return [{
+      title: profile.role === 'admin' ? 'Team daily leave records' : `${cleanName} Team Leave Records`,
+      records: [],
+      hideFilterPanel: false,
+    }];
+  }, [groupedDailyRecords, profile]);
+
   if (!initialFetchDone) {
     return <TeamLeaveRecordsSkeleton />;
   }
@@ -75,19 +153,37 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     setSelectedDate(`${year}-${month}-${day}`);
+    handleResetFilters();
+  };
+
+  const handleResetFilters = () => {
+    setFilterType('All');
+    setFilterStartDate('');
+    setFilterEndDate('');
   };
 
   const handleExportExcel = (filtered: ChutiRecord[], searchTerm: string) => {
-    const targetRecords = searchTerm.trim() 
-      ? filtered.filter(r => {
-          const staffProfile = profilesList.find(p => p.id === r.user_id);
-          const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
-          const codename = staffProfile?.username || r.username || '';
-          return fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                 codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                 getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
-        })
-      : filtered;
+    let targetRecords = filtered;
+    if (profile.role === 'admin') {
+      // Export all daily records matching categories and date filters
+      targetRecords = dailyRecords.filter(r => {
+        if (filterType !== 'All' && r.leave_type !== filterType) return false;
+        if (filterStartDate && new Date(r.date) < new Date(filterStartDate)) return false;
+        if (filterEndDate && new Date(r.date) > new Date(filterEndDate)) return false;
+        return true;
+      });
+    } else {
+      targetRecords = searchTerm.trim() 
+        ? filtered.filter(r => {
+            const staffProfile = profilesList.find(p => p.id === r.user_id);
+            const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
+            const codename = staffProfile?.username || r.username || '';
+            return fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                   codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                   getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
+          })
+        : filtered;
+    }
 
     exportHelper.exportDailyLeavesExcel(
       targetRecords,
@@ -100,16 +196,27 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   };
 
   const handleExportPDF = (filtered: ChutiRecord[], searchTerm: string) => {
-    const targetRecords = searchTerm.trim() 
-      ? filtered.filter(r => {
-          const staffProfile = profilesList.find(p => p.id === r.user_id);
-          const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
-          const codename = staffProfile?.username || r.username || '';
-          return fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                 codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                 getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
-        })
-      : filtered;
+    let targetRecords = filtered;
+    if (profile.role === 'admin') {
+      // Export all daily records matching categories and date filters
+      targetRecords = dailyRecords.filter(r => {
+        if (filterType !== 'All' && r.leave_type !== filterType) return false;
+        if (filterStartDate && new Date(r.date) < new Date(filterStartDate)) return false;
+        if (filterEndDate && new Date(r.date) > new Date(filterEndDate)) return false;
+        return true;
+      });
+    } else {
+      targetRecords = searchTerm.trim() 
+        ? filtered.filter(r => {
+            const staffProfile = profilesList.find(p => p.id === r.user_id);
+            const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
+            const codename = staffProfile?.username || r.username || '';
+            return fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                   codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                   getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
+          })
+        : filtered;
+    }
 
     exportHelper.exportDailyLeavesPDF(
       targetRecords,
@@ -171,39 +278,43 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         </div>
       </div>
 
-      {/* Daily Leaves Table */}
-      <LeavesRecordsTable
-        records={dailyRecords}
-        allowOvertime={false}
-        filterType={filterType}
-        setFilterType={setFilterType}
-        filterStartDate={filterStartDate}
-        setFilterStartDate={setFilterStartDate}
-        filterEndDate={filterEndDate}
-        setFilterEndDate={setFilterEndDate}
-        onResetFilters={() => {}}
-        onExportExcel={handleExportExcel}
-        onExportPDF={handleExportPDF}
-        onToggleAdjustment={() => {}}
-        onDeleteClick={() => {}}
-        formatDate={formatDate}
-        formatTimeToAMPM={formatTimeToAMPM}
-        getCleanComment={getCleanComment}
-        selectedYear={selectedYear}
-        setSelectedYear={setSelectedYear}
-        availableYears={[selectedYear]}
-        onAddLeaveClick={() => {}}
-        title="Team daily leave records"
-        emptyMessage="No leave records found for the selected date."
-        showPendingBadge={true}
-        initialFetchDone={initialFetchDone}
-        hideDelete={true}
-        showAddLeave={false}
-        showNameColumn={true}
-        hideAdjustmentAndOvertime={true}
-        hideYearSelect={true}
-        profilesList={profilesList}
-      />
+      {/* Daily Leaves Tables Grouped by Supervisor */}
+      {displayGroups.map((group) => (
+        <LeavesRecordsTable
+          key={group.title}
+          records={group.records}
+          allowOvertime={false}
+          filterType={filterType}
+          setFilterType={setFilterType}
+          filterStartDate={filterStartDate}
+          setFilterStartDate={setFilterStartDate}
+          filterEndDate={filterEndDate}
+          setFilterEndDate={setFilterEndDate}
+          onResetFilters={handleResetFilters}
+          onExportExcel={handleExportExcel}
+          onExportPDF={handleExportPDF}
+          onToggleAdjustment={() => {}}
+          onDeleteClick={() => {}}
+          formatDate={formatDate}
+          formatTimeToAMPM={formatTimeToAMPM}
+          getCleanComment={getCleanComment}
+          selectedYear={selectedYear}
+          setSelectedYear={setSelectedYear}
+          availableYears={[selectedYear]}
+          onAddLeaveClick={() => {}}
+          title={group.title}
+          emptyMessage="No leave records found for the selected date."
+          showPendingBadge={true}
+          initialFetchDone={initialFetchDone}
+          hideDelete={true}
+          showAddLeave={false}
+          showNameColumn={true}
+          hideAdjustmentAndOvertime={true}
+          hideYearSelect={true}
+          profilesList={profilesList}
+          hideFilterPanel={group.hideFilterPanel}
+        />
+      ))}
     </div>
   );
 };
