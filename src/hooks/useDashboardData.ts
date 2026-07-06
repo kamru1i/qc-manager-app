@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
-import { User as SupabaseUser } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
@@ -1043,7 +1042,7 @@ export const useDashboardData = () => {
 
   // Check Authentication and Fetch Profile on Mount and Auth Changes
   useEffect(() => {
-    const fetchSession = async (sessionParam?: unknown) => {
+    const fetchSession = async (sessionParam?: Session | null) => {
       try {
         setLoading(true);
         let session = sessionParam;

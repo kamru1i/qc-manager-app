@@ -61,8 +61,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   profile,
   topPerformerBadges = {},
   onViewStateChange,
-  topPerformerBadges = {},
-  onViewStateChange,
 }) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -264,7 +262,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       }
     } catch (e: unknown) {
       console.error('Failed to load staff leave data:', e);
-      toast.error(e.message || 'Failed to load leave history.');
+      toast.error((e as Error).message || 'Failed to load leave history.');
     } finally {
       setLoadingLeaveData(false);
     }
@@ -348,7 +346,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       }
     } catch (err: unknown) {
       console.error(err);
-      toast.error('Failed to update adjustment: ' + (err.message || 'unknown error'));
+      toast.error('Failed to update adjustment: ' + ((err as Error).message || 'unknown error'));
     }
   };
 
@@ -369,7 +367,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       }
     } catch (err: unknown) {
       console.error(err);
-      toast.error('Failed to delete entry: ' + (err.message || 'unknown error'));
+      toast.error('Failed to delete entry: ' + ((err as Error).message || 'unknown error'));
     }
   };
 
@@ -474,7 +472,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     fetchProfiles();
   }, [fetchProfiles]);
 
-  const handleCreateUserWrapper = async (params: { codename: string; role: 'admin' | 'supervisor' | 'user'; fullName: string; initialChutiCount: number; initialPassword?: string; quoteTypes: string[]; canManageRules: boolean; needsApproval: boolean; supervisorIds: string[]; eligibleGovtHoliday: boolean; eligibleOfficeLeave: boolean; allowOvertime: boolean; allowReserve: boolean }) => {
+  const handleCreateUserWrapper = async (params: { codename: string; role: 'admin' | 'supervisor' | 'user'; fullName: string; initialChutiCount: number; initialPassword?: string; quoteTypes: string[]; canManageRules: boolean; needsApproval: boolean; supervisorIds: string[]; eligibleGovtHoliday: boolean; eligibleOfficeLeave: boolean; allowOvertime: boolean; allowReserve: boolean; allowedTypes: string[]; hasChutiAccess: boolean; hasQuotesAccess: boolean; password?: string }) => {
     const pw = await createUser(
       params.codename,
       params.role,
