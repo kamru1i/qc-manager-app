@@ -111,12 +111,12 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.0.3** completes Vercel Analytics integration and resolves spelling warnings.
+            **v3.0.4** introduces startup auto-update installation and cleanups.
 
-            #### 🛠 What's Fixed in v3.0.3:
+            #### 🛠 What's Fixed in v3.0.4:
 
-            - **Vercel Analytics Next.js Update** — Configured Vercel Analytics to use the official Next.js-specific entry point (`@vercel/analytics/next`) in the root layout.
-            - **Disabled Spellcheck Warnings** — Added custom configuration to `.vscode/settings.json` to disable Code Spell Checker warnings for the workspace.
+            - **Startup Auto-Update Installation** — When the app is opened, it automatically checks, downloads, installs updates, and relaunches without requiring the user to click the "Restart to Update" toast button.
+            - **Warning Resolution** — Resolved final explicit `any` linter warning inside the updater lifecycle checks.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

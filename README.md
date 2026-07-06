@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.0.3** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.0.4** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,11 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.0.3 — Patch Release (Current)
+### 🚀 v3.0.4 — Patch Release (Current)
+*   **Startup Auto-Update Installation**: Implemented automatic update downloading, installation, and relaunch on application startup, bypassing the manual restart button prompt.
+*   **Warning Resolution**: Cleaned up the final explicit `any` linter warning inside the updater checker.
+
+### 🚀 v3.0.3 — Patch Release
 *   **Vercel Analytics Integration**: Switched `@vercel/analytics/react` to `@vercel/analytics/next` in the App Router root layout to utilize Next.js-specific optimizations.
 *   **Permanent Spellcheck Fix**: Configured workspace settings to disable VS Code CSpell alerts, resolving formatting underline warnings globally.
 

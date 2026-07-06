@@ -24,36 +24,40 @@ export default function AppUpdater() {
   const [error, setError]                       = useState<string | null>(null);
   const [dismissed, setDismissed]               = useState(false);
   const [updateRef, setUpdateRef]               = useState<Update | null>(null);
-
+  const [isAutoUpdating, setIsAutoUpdating]     = useState(false);
+ 
   useEffect(() => {
     const isTauri =
       typeof window !== 'undefined' &&
-      ((window as any).__TAURI_INTERNALS__ !== undefined ||
+      ((window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ !== undefined ||
         window.location.protocol === 'tauri:');
-
+ 
     if (!isTauri || process.env.NODE_ENV === 'development') return;
-
+ 
     let running = false;
-
-    const checkUpdates = async () => {
+ 
+    const checkUpdates = async (isStartup = false) => {
       if (running) return;
       running = true;
-
+ 
       try {
         const { check } = await import('@tauri-apps/plugin-updater');
         const update = await check();
-
+ 
         if (update) {
           setUpdateRef(update);
           setNewVersion(update.version);
           setUpdateAvailable(true);
           setDownloading(true);
           setDownloadProgress(0);
-
+          if (isStartup) {
+            setIsAutoUpdating(true);
+          }
+ 
           // Track download progress via the DownloadEvent callback
           let downloaded = 0;
           let total = 0;
-
+ 
           await update.download((event) => {
             if (event.event === 'Started') {
               total = event.data.contentLength ?? 0;
@@ -67,9 +71,20 @@ export default function AppUpdater() {
               setDownloadProgress(100);
             }
           });
-
+ 
           setDownloading(false);
           setReadyToRestart(true);
+ 
+          if (isStartup) {
+            try {
+              await update.install();
+              const { relaunch } = await import('@tauri-apps/plugin-process');
+              await relaunch();
+            } catch (installErr) {
+              console.error('[AppUpdater] Auto install on startup failed:', installErr);
+              setIsAutoUpdating(false); // Fall back to showing manual restart button
+            }
+          }
         }
       } catch (err) {
         console.warn('[AppUpdater] Update check failed:', err);
@@ -78,16 +93,16 @@ export default function AppUpdater() {
         running = false;
       }
     };
-
-    const startupTimer = setTimeout(checkUpdates, 5000);
-    const interval = setInterval(checkUpdates, 30 * 60 * 1000);
-
+ 
+    const startupTimer = setTimeout(() => checkUpdates(true), 5000);
+    const interval = setInterval(() => checkUpdates(false), 30 * 60 * 1000);
+ 
     return () => {
       clearTimeout(startupTimer);
       clearInterval(interval);
     };
   }, []);
-
+ 
   const handleRestart = async () => {
     try {
       if (updateRef) {
@@ -100,7 +115,7 @@ export default function AppUpdater() {
       setError('Relaunch failed. Please close and reopen the app manually.');
     }
   };
-
+ 
   if (dismissed || (!updateAvailable && !error)) return null;
 
   return (
@@ -116,8 +131,8 @@ export default function AppUpdater() {
               {error ? 'Update Error' : 'App Update Available'}
             </h4>
             <p className="text-xs text-slate-400 mt-0.5 leading-snug">
-              {downloading    && `Downloading v${newVersion}… ${downloadProgress > 0 ? `(${downloadProgress}%)` : ''}`}
-              {readyToRestart && `v${newVersion} is ready — restart to apply.`}
+              {downloading    && (isAutoUpdating ? `Installing critical update v${newVersion}… ${downloadProgress > 0 ? `(${downloadProgress}%)` : ''}` : `Downloading v${newVersion}… ${downloadProgress > 0 ? `(${downloadProgress}%)` : ''}`)}
+              {readyToRestart && (isAutoUpdating ? `Restarting app to apply update…` : `v${newVersion} is ready — restart to apply.`)}
               {error          && error}
             </p>
           </div>
