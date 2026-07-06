@@ -974,5 +974,176 @@ export const exportHelper = {
       </html>
     `;
     printHtml(htmlContent, onSuccess, onError);
+  },
+
+  exportDailyLeavesExcel: (
+    recordsToExport: ChutiRecord[],
+    selectedDate: string,
+    profilesList: Profile[],
+    profile: Profile | null,
+    onSuccess: () => void,
+    onError: (msg: string) => void
+  ) => {
+    if (recordsToExport.length === 0) {
+      onError('No data found to export!');
+      return;
+    }
+
+    let headersHtml = `
+      <th>Name</th>
+      <th>Codename</th>
+      <th>Leave Type</th>
+      <th>Sign In/Out</th>
+      <th>Leave Hour</th>
+      <th>Comment</th>
+      <th>Status</th>
+    `;
+
+    let rowsHtml = '';
+    recordsToExport.forEach(r => {
+      const staffProfile = profilesList.find(p => p.id === r.user_id);
+      const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
+      const codename = staffProfile?.username || r.username || '';
+      const signInStr = r.leave_type === 'Full Leave' ? '-' : formatTimeToAMPM(r.sign_in_time);
+      const signOutStr = r.leave_type === 'Full Leave' ? '-' : formatTimeToAMPM(r.sign_out_time);
+      const leaveHourStr = r.leave_type === 'Full Leave' || r.leave_type === 'Overtime' ? '-' : (r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '-');
+
+      rowsHtml += `
+        <tr>
+          <td>${escapeHtml(fullName)}</td>
+          <td>${escapeHtml(codename)}</td>
+          <td>${escapeHtml(r.leave_type)}</td>
+          <td>${r.leave_type === 'Full Leave' ? '-' : escapeHtml(`${signInStr} / ${signOutStr}`)}</td>
+          <td>${escapeHtml(leaveHourStr)}</td>
+          <td>${escapeHtml(getCleanComment(r.comment))}</td>
+          <td>${escapeHtml(r.status || 'pending')}</td>
+        </tr>
+      `;
+    });
+
+    let html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="utf-8"/><style>td { border: 0.5pt solid #ccc; }</style></head>
+      <body>
+        <h2>Team Daily Leave Records - ${formatDate(selectedDate)}</h2>
+        <table>
+          <thead>
+            <tr>${headersHtml}</tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const supervisorName = profile?.full_name || profile?.username || 'Supervisor';
+    const filename = `${selectedDate}-${supervisorName}'s Team Leave record.xls`;
+
+    if (isTauriApp()) {
+      saveTauriFile(html, filename, 'Excel Files', 'xls', onSuccess, onError);
+    } else {
+      const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      onSuccess();
+    }
+  },
+
+  exportDailyLeavesPDF: (
+    recordsToExport: ChutiRecord[],
+    selectedDate: string,
+    profilesList: Profile[],
+    profile: Profile | null,
+    onSuccess: () => void,
+    onError: (msg: string) => void
+  ) => {
+    if (recordsToExport.length === 0) {
+      onError('No data found to export!');
+      return;
+    }
+
+    let rowsHtml = '';
+    recordsToExport.forEach(r => {
+      const staffProfile = profilesList.find(p => p.id === r.user_id);
+      const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
+      const codename = staffProfile?.username || r.username || '';
+      const signInStr = r.leave_type === 'Full Leave' ? '-' : formatTimeToAMPM(r.sign_in_time);
+      const signOutStr = r.leave_type === 'Full Leave' ? '-' : formatTimeToAMPM(r.sign_out_time);
+      const leaveHourStr = r.leave_type === 'Full Leave' || r.leave_type === 'Overtime' ? '-' : (r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '-');
+
+      rowsHtml += `
+        <tr>
+          <td>${escapeHtml(fullName)}</td>
+          <td>${escapeHtml(codename)}</td>
+          <td>${escapeHtml(r.leave_type)}</td>
+          <td>${r.leave_type === 'Full Leave' ? '-' : escapeHtml(`${signInStr} / ${signOutStr}`)}</td>
+          <td>${escapeHtml(leaveHourStr)}</td>
+          <td>${escapeHtml(getCleanComment(r.comment))}</td>
+          <td>${escapeHtml(r.status || 'pending')}</td>
+        </tr>
+      `;
+    });
+
+    const supervisorName = profile?.full_name || profile?.username || 'Supervisor';
+    const documentTitle = `${selectedDate}-${supervisorName}'s Team Leave record`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${escapeHtml(documentTitle)}</title>
+        <style>
+          body { font-family: sans-serif; color: #333; margin: 20px; }
+          .header { text-align: center; margin-bottom: 25px; }
+          .header h1 { margin: 0; font-size: 22px; color: #1e293b; }
+          .header p { margin: 5px 0 0 0; font-size: 14px; color: #64748b; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+          th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+          th { background-color: #f1f5f9; font-weight: bold; color: #334155; }
+          tr:nth-child(even) { background-color: #f8fafc; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Team Daily Leave Records</h1>
+          <p>Date: ${escapeHtml(formatDate(selectedDate))}</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Codename</th>
+              <th>Leave Type</th>
+              <th>Sign In/Out</th>
+              <th>Leave Hour</th>
+              <th>Comment</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 500);
+          }
+        </script>
+      </body>
+      </html>
+    `;
+    printHtml(htmlContent, onSuccess, onError);
   }
 };

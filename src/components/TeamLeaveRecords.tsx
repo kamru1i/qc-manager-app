@@ -2,8 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { Profile, ChutiRecordWithProfile } from '@/types';
+import { ChutiRecord } from '@/utils/offlineSync';
+import { exportHelper } from '@/utils/exportHelper';
 import { LeavesRecordsTable } from './LeavesRecordsTable';
-import { Calendar, RefreshCw } from 'lucide-react';
+import { Calendar, RefreshCw, ArrowLeft } from 'lucide-react';
 import { formatDate, formatTimeToAMPM, getCleanComment } from '@/utils/dashboardHelpers';
 
 interface TeamLeaveRecordsProps {
@@ -11,6 +13,7 @@ interface TeamLeaveRecordsProps {
   profilesList: Profile[];
   adminRecords: ChutiRecordWithProfile[];
   initialFetchDone: boolean;
+  onBack?: () => void;
 }
 
 export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
@@ -18,6 +21,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   profilesList,
   adminRecords,
   initialFetchDone,
+  onBack,
 }) => {
   // Initialize to local today's date in 'YYYY-MM-DD' Swedish format
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -68,19 +72,74 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     setSelectedDate(`${year}-${month}-${day}`);
   };
 
+  const handleExportExcel = (filtered: ChutiRecord[], searchTerm: string) => {
+    const targetRecords = searchTerm.trim() 
+      ? filtered.filter(r => {
+          const staffProfile = profilesList.find(p => p.id === r.user_id);
+          const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
+          const codename = staffProfile?.username || r.username || '';
+          return fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                 codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
+        })
+      : filtered;
+
+    exportHelper.exportDailyLeavesExcel(
+      targetRecords,
+      selectedDate,
+      profilesList,
+      profile,
+      () => {},
+      (msg) => alert(msg)
+    );
+  };
+
+  const handleExportPDF = (filtered: ChutiRecord[], searchTerm: string) => {
+    const targetRecords = searchTerm.trim() 
+      ? filtered.filter(r => {
+          const staffProfile = profilesList.find(p => p.id === r.user_id);
+          const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
+          const codename = staffProfile?.username || r.username || '';
+          return fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                 codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
+        })
+      : filtered;
+
+    exportHelper.exportDailyLeavesPDF(
+      targetRecords,
+      selectedDate,
+      profilesList,
+      profile,
+      () => {},
+      (msg) => alert(msg)
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Premium Header */}
       <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/80 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl shrink-0 mt-0.5">
-            <Calendar className="h-5 w-5 text-blue-500" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-white">Daily Leave Records Report 📅</h4>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              View full leaves and short leaves scheduled for today or any other day.
-            </p>
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2.5 bg-slate-850 hover:bg-slate-800 border border-slate-800/80 text-slate-300 rounded-xl hover:text-white transition-all cursor-pointer shrink-0"
+              title="Go Back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl shrink-0 mt-0.5">
+              <Calendar className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-white">Daily Leave Records Report 📅</h4>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                View full leaves and short leaves scheduled for today or any other day.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -118,8 +177,8 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         filterEndDate={filterEndDate}
         setFilterEndDate={setFilterEndDate}
         onResetFilters={() => {}}
-        onExportExcel={() => {}}
-        onExportPDF={() => {}}
+        onExportExcel={handleExportExcel}
+        onExportPDF={handleExportPDF}
         onToggleAdjustment={() => {}}
         onDeleteClick={() => {}}
         formatDate={formatDate}
@@ -138,6 +197,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         showNameColumn={true}
         hideAdjustmentAndOvertime={true}
         hideYearSelect={true}
+        profilesList={profilesList}
       />
     </div>
   );

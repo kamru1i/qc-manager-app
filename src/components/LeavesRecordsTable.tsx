@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit, Trash2, Search, Plus } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
+import { Profile } from '@/types';
 import { FilterPanel } from './FilterPanel';
 import { StatusBadge } from './StatusBadge';
 import { CustomSelect } from './CustomSelect';
@@ -43,6 +44,7 @@ interface LeavesRecordsTableProps {
   showNameColumn?: boolean;
   hideAdjustmentAndOvertime?: boolean;
   hideYearSelect?: boolean;
+  profilesList?: Profile[];
 }
 
 export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
@@ -76,6 +78,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   showNameColumn = false,
   hideAdjustmentAndOvertime = false,
   hideYearSelect = false,
+  profilesList = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isMounted, setIsMounted] = useState(false);
@@ -344,9 +347,20 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
             <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
               <thead className="bg-slate-955/60">
                 <tr>
-                  <th className={`px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider ${showNameColumn ? 'text-left' : 'text-center'}`}>
-                    {showNameColumn ? "Name" : "Date"}
-                  </th>
+                  {showNameColumn ? (
+                    <>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        Codename
+                      </th>
+                    </>
+                  ) : (
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Date
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
                   {!hideAdjustmentAndOvertime && (
                     <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Adjustment</th>
@@ -419,25 +433,36 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         isSelectionMode && !showNameColumn ? "cursor-pointer select-none" : ""
                       }`}
                     >
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center gap-2 ${showNameColumn ? 'justify-start' : 'justify-center'}`}>
-                        {showNameColumn ? (
-                          (() => {
-                            const rp = r as any;
-                            if (rp.profiles) {
-                              const namePart = rp.profiles.full_name || rp.profiles.username;
-                              return `${namePart} (${rp.profiles.username})`;
-                            }
-                            return r.username || r.user_id;
-                          })()
-                        ) : (
-                          formatDate(r.date)
-                        )}
-                        {showPendingBadge && isTemp && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
-                            Pending
-                          </span>
-                        )}
-                      </td>
+                      {showNameColumn ? (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center justify-start gap-2">
+                            {(() => {
+                              const staffProfile = profilesList?.find(p => p.id === r.user_id);
+                              return staffProfile?.full_name || staffProfile?.username || r.username || r.user_id;
+                            })()}
+                            {showPendingBadge && isTemp && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
+                                Pending
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 text-center font-mono">
+                            {(() => {
+                              const staffProfile = profilesList?.find(p => p.id === r.user_id);
+                              return staffProfile?.username || r.username || '-';
+                            })()}
+                          </td>
+                        </>
+                      ) : (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center justify-center gap-2">
+                          {formatDate(r.date)}
+                          {showPendingBadge && isTemp && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 text-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${
                           r.leave_type === 'Full Leave' 
