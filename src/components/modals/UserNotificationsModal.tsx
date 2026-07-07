@@ -95,7 +95,31 @@ export function UserNotificationsModal({
         ) : undefined
       }
     >
-      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .notification-scrollbar::-webkit-scrollbar {
+              width: 4px;
+              height: 4px;
+            }
+            .notification-scrollbar::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            .notification-scrollbar::-webkit-scrollbar-thumb {
+              background: rgba(148, 163, 184, 0.08);
+              border-radius: 9999px;
+              transition: background 0.15s ease;
+            }
+            .notification-scrollbar:hover::-webkit-scrollbar-thumb {
+              background: rgba(148, 163, 184, 0.2);
+            }
+            .notification-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: rgba(148, 163, 184, 0.3);
+            }
+          `,
+        }}
+      />
+      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1 notification-scrollbar">
         {userNotificationsList.length === 0 ? (
           <div className="py-8 text-center text-slate-500 text-sm">
             No notifications.
