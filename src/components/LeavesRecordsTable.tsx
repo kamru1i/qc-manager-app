@@ -579,24 +579,26 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
             className="fixed z-50 backdrop-blur-lg bg-slate-900/95 border border-slate-800 rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
           >
-            {selectedIds.includes(contextMenu.record.id || '') ? (
-              <button
-                type="button"
-                onClick={() => handleContextDeselect(contextMenu.record)}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
-              >
-                <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
-                Deselect
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleContextSelect(contextMenu.record)}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
-              >
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
-                Select
-              </button>
+            {!hideDelete && (
+              selectedIds.includes(contextMenu.record.id || '') ? (
+                <button
+                  type="button"
+                  onClick={() => handleContextDeselect(contextMenu.record)}
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
+                  Deselect
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleContextSelect(contextMenu.record)}
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  Select
+                </button>
+              )
             )}
             {onEditClick && (
               <button
