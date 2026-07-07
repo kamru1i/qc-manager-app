@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Loader2, Check, X } from 'lucide-react';
-import { StaffSettingsForm } from '@/components/StaffSettingsForm';
-import { Profile } from '@/types';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Loader2, Check, X } from "lucide-react";
+import { StaffSettingsForm } from "@/components/StaffSettingsForm";
+import { Profile } from "@/types";
+import toast from "react-hot-toast";
 
 interface CreateUserPanelProps {
   isAdmin: boolean;
@@ -19,11 +19,13 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
   submitting,
   onCancel,
   onCreateUser,
-  onSuccess
+  onSuccess,
 }) => {
-  const [newCodename, setNewCodename] = useState('');
-  const [newFullName, setNewFullName] = useState('');
-  const [newRole, setNewRole] = useState<'admin' | 'supervisor' | 'user'>('user');
+  const [newCodename, setNewCodename] = useState("");
+  const [newFullName, setNewFullName] = useState("");
+  const [newRole, setNewRole] = useState<"admin" | "supervisor" | "user">(
+    "user",
+  );
   const [hasChutiAccess, setHasChutiAccess] = useState(true);
   const [hasQuotesAccess, setHasQuotesAccess] = useState(false);
   const [allowedTypes, setAllowedTypes] = useState<string[]>([]);
@@ -34,28 +36,30 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
   const [newEligibleOfficeLeave, setNewEligibleOfficeLeave] = useState(false);
   const [newAllowOvertime, setNewAllowOvertime] = useState(false);
   const [newAllowReserve, setNewAllowReserve] = useState(false);
-  const [newJobRole, setNewJobRole] = useState('');
-  const [newWorkingHours, setNewWorkingHours] = useState('9.5');
-  const [newBreakTime, setNewBreakTime] = useState('0');
-  const [newSignInTime, setNewSignInTime] = useState('');
-  const [newSignOutTime, setNewSignOutTime] = useState('');
+  const [newJobRole, setNewJobRole] = useState("");
+  const [newWorkingHours, setNewWorkingHours] = useState("9.5");
+  const [newBreakTime, setNewBreakTime] = useState("0");
+  const [newSignInTime, setNewSignInTime] = useState("");
+  const [newSignOutTime, setNewSignOutTime] = useState("");
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCodename.trim() || newCodename.trim().length < 3) {
-      toast.error('Codename must be at least 3 characters long.');
+      toast.error("Codename must be at least 3 characters long.");
       return;
     }
     if (!/^[a-zA-Z0-9_-]+$/.test(newCodename.trim())) {
-      toast.error('Codename can only contain letters, numbers, - and _.');
+      toast.error("Codename can only contain letters, numbers, - and _.");
       return;
     }
     if (hasQuotesAccess && allowedTypes.length === 0) {
-      toast.error('Please select at least one permitted file type for Quotes.');
+      toast.error("Please select at least one permitted file type for Quotes.");
       return;
     }
     if (!hasChutiAccess && !hasQuotesAccess) {
-      toast.error('Please select at least one workspace access (Leave or Quotes Tracker).');
+      toast.error(
+        "Please select at least one workspace access (Leave or Quotes Tracker).",
+      );
       return;
     }
 
@@ -67,7 +71,7 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
       canManageRules,
       hasChutiAccess,
       hasQuotesAccess,
-      password: '1234',
+      password: "1234",
       needsApproval: newNeedsApproval,
       supervisorIds: newNeedsApproval ? newSupervisorIds : [],
       eligibleGovtHoliday: newEligibleGovtHoliday,
@@ -78,7 +82,7 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
       workingHours: parseFloat(newWorkingHours) || 9.5,
       breakTime: parseInt(newBreakTime) || 0,
       signInTime: newSignInTime,
-      signOutTime: newSignOutTime
+      signOutTime: newSignOutTime,
     });
 
     if (success) {
@@ -100,7 +104,7 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
         setHasChutiAccess={setHasChutiAccess}
         needsApproval={newNeedsApproval}
         setNeedsApproval={setNewNeedsApproval}
-        supervisors={profiles.filter(p => p.role === 'supervisor')}
+        supervisors={profiles.filter((p) => p.role === "supervisor")}
         supervisorIds={newSupervisorIds}
         setSupervisorIds={setNewSupervisorIds}
         eligibleOfficeLeave={newEligibleOfficeLeave}
@@ -144,10 +148,14 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
             type="button"
             disabled={submitting}
             onClick={handleCreateUser}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+            className="px-6 py-2.5 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
           >
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            {submitting ? 'Creating...' : 'Create User'}
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
+            {submitting ? "Creating..." : "Create User"}
           </button>
         </div>
       </div>

@@ -144,24 +144,6 @@ export interface ComplianceRule {
   } | null;
 }
 
-export interface RuleHistory {
-  id: string;
-  rule_id: string;
-  category: string;
-  sub_category: string;
-  company_name: string | null;
-  company_tags: string[] | null;
-  title: string | null;
-  content: string;
-  extra_info: string | null;
-  action_type: 'INSERT' | 'UPDATE' | 'DELETE';
-  archived_at: string;
-  archived_by: string | null;
-  profiles?: {
-    username: string;
-    full_name: string | null;
-  } | null;
-}
 
 export interface SavedDocument {
   id: string;

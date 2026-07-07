@@ -1,5 +1,5 @@
-import React, { useEffect, useCallback } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useCallback } from "react";
+import { X, AlertTriangle } from "lucide-react";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -18,19 +18,22 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  isDanger = false
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  isDanger = false,
 }) => {
   // Close on Escape key press
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
 
   useEffect(() => {
     if (!isOpen) return;
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, handleEscape]);
 
   if (!isOpen) return null;
@@ -54,7 +57,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           )}
           <div>
             <h3 className="text-sm font-bold text-white leading-6">{title}</h3>
-            <div className="text-xs text-slate-400 mt-1.5 leading-relaxed">{message}</div>
+            <div className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              {message}
+            </div>
           </div>
         </div>
 
@@ -71,8 +76,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             }}
             className={`flex-1 py-2 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
               isDanger
-                ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-md shadow-red-950/20'
-                : 'bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 shadow-md shadow-blue-950/20'
+                ? "bg-linear-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-md shadow-red-950/20"
+                : "bg-linear-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 shadow-md shadow-blue-950/20"
             }`}
           >
             {confirmText}

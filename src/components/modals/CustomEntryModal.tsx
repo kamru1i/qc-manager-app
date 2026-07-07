@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import {
   X,
   Calendar,
@@ -200,14 +206,17 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
   };
 
   // Close on Escape key press
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
 
   useEffect(() => {
     if (!isOpen) return;
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, handleEscape]);
 
   if (!isOpen) return null;
@@ -355,7 +364,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 flex items-center justify-center gap-1.5 py-3 px-4 border border-transparent rounded-xl shadow-lg text-xs font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+                className="flex-1 flex items-center justify-center gap-1.5 py-3 px-4 border border-transparent rounded-xl shadow-lg text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
               >
                 {submitting ? (
                   <>

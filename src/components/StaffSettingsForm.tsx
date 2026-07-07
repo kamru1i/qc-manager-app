@@ -1,9 +1,9 @@
-import React from 'react';
-import { Check } from 'lucide-react';
-import { Toggle } from './Toggle';
-import { CategoryCheckboxList } from './CategoryCheckboxList';
-import { Profile } from '@/types';
-import { formatTimeToAMPM } from '@/utils/dashboardHelpers';
+import React from "react";
+import { Check } from "lucide-react";
+import { Toggle } from "./Toggle";
+import { CategoryCheckboxList } from "./CategoryCheckboxList";
+import { Profile } from "@/types";
+import { formatTimeToAMPM } from "@/utils/dashboardHelpers";
 
 interface StaffSettingsFormProps {
   isNewUser: boolean;
@@ -13,8 +13,8 @@ interface StaffSettingsFormProps {
   fullName: string;
   setFullName: (val: string) => void;
 
-  role: 'admin' | 'supervisor' | 'user';
-  setRole: (val: 'admin' | 'supervisor' | 'user') => void;
+  role: "admin" | "supervisor" | "user";
+  setRole: (val: "admin" | "supervisor" | "user") => void;
 
   hasChutiAccess: boolean;
   setHasChutiAccess: (val: boolean) => void;
@@ -42,7 +42,9 @@ interface StaffSettingsFormProps {
   setHasQuotesAccess: (val: boolean) => void;
 
   allowedTypes: string[];
-  setAllowedTypes: React.Dispatch<React.SetStateAction<string[]>> | ((val: string[]) => void);
+  setAllowedTypes:
+    | React.Dispatch<React.SetStateAction<string[]>>
+    | ((val: string[]) => void);
 
   canManageRules: boolean;
   setCanManageRules: (val: boolean) => void;
@@ -64,7 +66,7 @@ interface StaffSettingsFormProps {
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   isNewUser,
-  codename = '',
+  codename = "",
   setCodename,
   fullName,
   setFullName,
@@ -93,15 +95,15 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setCanManageRules,
   isAdmin,
   isSupervisor = false,
-  jobRole = '',
+  jobRole = "",
   setJobRole,
-  workingHours = '9.5',
+  workingHours = "9.5",
   setWorkingHours,
-  breakTime = '0',
+  breakTime = "0",
   setBreakTime,
-  signInTime = '',
+  signInTime = "",
   setSignInTime,
-  signOutTime = '',
+  signOutTime = "",
   setSignOutTime,
 }) => {
   return (
@@ -111,7 +113,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {setCodename && (
             <div>
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Codename</label>
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                Codename
+              </label>
               <input
                 type="text"
                 required
@@ -125,7 +129,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
           )}
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Full Name
+            </label>
             {isAdmin ? (
               <input
                 type="text"
@@ -136,20 +142,22 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {fullName || '—'}
+                {fullName || "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Account Role</label>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Account Role
+            </label>
             {isAdmin ? (
               <select
                 value={role}
                 onChange={(e) => {
-                  const val = e.target.value as 'admin' | 'user' | 'supervisor';
+                  const val = e.target.value as "admin" | "user" | "supervisor";
                   setRole(val);
-                  if (val === 'admin') {
+                  if (val === "admin") {
                     setCanManageRules(true);
                   }
                 }}
@@ -161,13 +169,15 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               </select>
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold capitalize">
-                {role || '—'}
+                {role || "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Job Role</label>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Job Role
+            </label>
             {isAdmin ? (
               <input
                 type="text"
@@ -178,13 +188,15 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {jobRole || '—'}
+                {jobRole || "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Working Hours</label>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Working Hours
+            </label>
             {isAdmin ? (
               <select
                 value={workingHours}
@@ -200,14 +212,16 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               </select>
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {workingHours ? `${workingHours} hrs` : '—'}
+                {workingHours ? `${workingHours} hrs` : "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Break (Minutes)</label>
-            {(isAdmin || isSupervisor) ? (
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Break (Minutes)
+            </label>
+            {isAdmin || isSupervisor ? (
               <input
                 type="number"
                 min="0"
@@ -217,21 +231,23 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {breakTime !== undefined ? `${breakTime} mins` : '—'}
+                {breakTime !== undefined ? `${breakTime} mins` : "—"}
               </div>
             )}
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Sign-In Time</label>
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Sign-In Time
+              </label>
               {signInTime && (
                 <span className="text-[10px] font-bold text-blue-450 tracking-wider">
                   {formatTimeToAMPM(signInTime)}
                 </span>
               )}
             </div>
-            {(isAdmin || isSupervisor) ? (
+            {isAdmin || isSupervisor ? (
               <input
                 type="time"
                 value={signInTime}
@@ -240,21 +256,23 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {signInTime ? formatTimeToAMPM(signInTime) : '—'}
+                {signInTime ? formatTimeToAMPM(signInTime) : "—"}
               </div>
             )}
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Sign-Out Time</label>
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Sign-Out Time
+              </label>
               {signOutTime && (
                 <span className="text-[10px] font-bold text-blue-450 tracking-wider">
                   {formatTimeToAMPM(signOutTime)}
                 </span>
               )}
             </div>
-            {(isAdmin || isSupervisor) ? (
+            {isAdmin || isSupervisor ? (
               <input
                 type="time"
                 value={signOutTime}
@@ -263,7 +281,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {signOutTime ? formatTimeToAMPM(signOutTime) : '—'}
+                {signOutTime ? formatTimeToAMPM(signOutTime) : "—"}
               </div>
             )}
           </div>
@@ -274,24 +292,30 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Leave Tracker Access Card */}
         <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
-              <div className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-full ${hasChutiAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
-                <h3 className="text-sm font-bold text-white">Leave Tracker Workspace</h3>
-              </div>
-              {isAdmin && (
-                <Toggle
-                  checked={hasChutiAccess}
-                  onChange={setHasChutiAccess}
-                  label="Access"
-                />
-              )}
+          <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+            <div className="flex items-center gap-2">
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${hasChutiAccess ? "bg-emerald-500 shadow-lg shadow-emerald-500/50" : "bg-slate-600"}`}
+              />
+              <h3 className="text-sm font-bold text-white">
+                Leave Tracker Workspace
+              </h3>
             </div>
+            {isAdmin && (
+              <Toggle
+                checked={hasChutiAccess}
+                onChange={setHasChutiAccess}
+                label="Access"
+              />
+            )}
+          </div>
 
           {hasChutiAccess && (
             <div className="space-y-4 text-xs text-slate-350 animate-fade-in">
               {/* Supervisor Approval Required */}
-              <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+              <label
+                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+              >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
@@ -300,12 +324,16 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     onChange={(e) => setNeedsApproval(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                    needsApproval
-                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                      : 'border-slate-700 bg-slate-955 text-transparent'
-                  }`}>
-                    {needsApproval && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  <div
+                    className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                      needsApproval
+                        ? "bg-blue-600 border-blue-500 text-white font-bold"
+                        : "border-slate-700 bg-slate-955 text-transparent"
+                    }`}
+                  >
+                    {needsApproval && (
+                      <Check className="h-2.5 w-2.5 stroke-3" />
+                    )}
                   </div>
                 </div>
                 <div>
@@ -313,7 +341,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     Supervisor Approval Required?
                   </span>
                   <span className="text-[10px] text-slate-500 block leading-tight">
-                    Requires approval from a supervisor for any leave submissions.
+                    Requires approval from a supervisor for any leave
+                    submissions.
                   </span>
                 </div>
               </label>
@@ -322,42 +351,56 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               {needsApproval && (
                 <div className="pl-6.5 space-y-1.5 animate-fade-in">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-semibold text-slate-450">Select Supervisors</label>
+                    <label className="block text-[10px] font-semibold text-slate-450">
+                      Select Supervisors
+                    </label>
                     <span className="text-[9px] font-semibold text-slate-500 bg-slate-950/60 border border-slate-850 px-2 py-0.5 rounded-full">
                       {supervisorIds.length} Selected
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2 p-3 bg-slate-950/60 border border-slate-850 rounded-xl max-h-40 overflow-y-auto">
                     {supervisors.length === 0 ? (
-                      <span className="text-[10px] text-slate-500 italic">No supervisor accounts found.</span>
+                      <span className="text-[10px] text-slate-500 italic">
+                        No supervisor accounts found.
+                      </span>
                     ) : (
                       <>
-                        <label className={`flex items-center px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all select-none ${
-                          isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
-                        } ${
-                          supervisorIds.length === supervisors.length
-                            ? 'bg-blue-950/40 border-blue-700/60 text-blue-400'
-                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                        }`}>
+                        <label
+                          className={`flex items-center px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all select-none ${
+                            isAdmin
+                              ? "cursor-pointer"
+                              : "opacity-85 pointer-events-none"
+                          } ${
+                            supervisorIds.length === supervisors.length
+                              ? "bg-blue-950/40 border-blue-700/60 text-blue-400"
+                              : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                          }`}
+                        >
                           <input
                             type="checkbox"
                             disabled={!isAdmin}
-                            checked={supervisorIds.length === supervisors.length}
+                            checked={
+                              supervisorIds.length === supervisors.length
+                            }
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSupervisorIds(supervisors.map(s => s.id));
+                                setSupervisorIds(supervisors.map((s) => s.id));
                               } else {
                                 setSupervisorIds([]);
                               }
                             }}
                             className="hidden"
                           />
-                          <div className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                            supervisorIds.length === supervisors.length
-                              ? 'bg-blue-600 border-blue-500 text-white'
-                              : 'border-slate-700 bg-transparent text-transparent'
-                          }`}>
-                            {supervisorIds.length === supervisors.length && <Check className="h-2 w-2 stroke-[3]" />}
+                          <div
+                            className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                              supervisorIds.length === supervisors.length
+                                ? "bg-blue-600 border-blue-500 text-white"
+                                : "border-slate-700 bg-transparent text-transparent"
+                            }`}
+                          >
+                            {supervisorIds.length === supervisors.length && (
+                              <Check className="h-2 w-2 stroke-3" />
+                            )}
                           </div>
                           <span className="ml-1.5">All</span>
                         </label>
@@ -368,11 +411,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                             <label
                               key={sup.id}
                               className={`flex items-center px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all select-none ${
-                                isAdmin ? 'cursor-pointer' : 'opacity-85 pointer-events-none'
+                                isAdmin
+                                  ? "cursor-pointer"
+                                  : "opacity-85 pointer-events-none"
                               } ${
                                 isSelected
-                                  ? 'bg-blue-950/40 border-blue-750/70 text-blue-400'
-                                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                                  ? "bg-blue-950/40 border-blue-750/70 text-blue-400"
+                                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
                               }`}
                             >
                               <input
@@ -381,21 +426,34 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                                 checked={isSelected}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setSupervisorIds([...supervisorIds, sup.id]);
+                                    setSupervisorIds([
+                                      ...supervisorIds,
+                                      sup.id,
+                                    ]);
                                   } else {
-                                    setSupervisorIds(supervisorIds.filter(id => id !== sup.id));
+                                    setSupervisorIds(
+                                      supervisorIds.filter(
+                                        (id) => id !== sup.id,
+                                      ),
+                                    );
                                   }
                                 }}
                                 className="hidden"
                               />
-                              <div className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                                isSelected
-                                  ? 'bg-blue-600 border-blue-500 text-white'
-                                  : 'border-slate-700 bg-transparent text-transparent'
-                              }`}>
-                                {isSelected && <Check className="h-2 w-2 stroke-[3]" />}
+                              <div
+                                className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                                  isSelected
+                                    ? "bg-blue-600 border-blue-500 text-white"
+                                    : "border-slate-700 bg-transparent text-transparent"
+                                }`}
+                              >
+                                {isSelected && (
+                                  <Check className="h-2 w-2 stroke-3" />
+                                )}
                               </div>
-                              <span className="ml-1.5">{sup.username.trim().toUpperCase()}</span>
+                              <span className="ml-1.5">
+                                {sup.username.trim().toUpperCase()}
+                              </span>
                             </label>
                           );
                         })}
@@ -406,7 +464,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               )}
 
               {/* Office Leave Eligible */}
-              <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+              <label
+                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+              >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
@@ -415,12 +475,16 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     onChange={(e) => setEligibleOfficeLeave(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                    eligibleOfficeLeave
-                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                      : 'border-slate-700 bg-slate-955 text-transparent'
-                  }`}>
-                    {eligibleOfficeLeave && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  <div
+                    className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                      eligibleOfficeLeave
+                        ? "bg-blue-600 border-blue-500 text-white font-bold"
+                        : "border-slate-700 bg-slate-955 text-transparent"
+                    }`}
+                  >
+                    {eligibleOfficeLeave && (
+                      <Check className="h-2.5 w-2.5 stroke-3" />
+                    )}
                   </div>
                 </div>
                 <div>
@@ -434,7 +498,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               </label>
 
               {/* Govt Holiday Eligible */}
-              <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+              <label
+                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+              >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
@@ -443,12 +509,16 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     onChange={(e) => setEligibleGovtHoliday(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                    eligibleGovtHoliday
-                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                      : 'border-slate-700 bg-slate-955 text-transparent'
-                  }`}>
-                    {eligibleGovtHoliday && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  <div
+                    className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                      eligibleGovtHoliday
+                        ? "bg-blue-600 border-blue-500 text-white font-bold"
+                        : "border-slate-700 bg-slate-955 text-transparent"
+                    }`}
+                  >
+                    {eligibleGovtHoliday && (
+                      <Check className="h-2.5 w-2.5 stroke-3" />
+                    )}
                   </div>
                 </div>
                 <div>
@@ -462,7 +532,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               </label>
 
               {/* Overtime Category */}
-              <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+              <label
+                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+              >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
@@ -471,12 +543,16 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     onChange={(e) => setAllowOvertime(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                    allowOvertime
-                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                      : 'border-slate-700 bg-slate-955 text-transparent'
-                  }`}>
-                    {allowOvertime && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  <div
+                    className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                      allowOvertime
+                        ? "bg-blue-600 border-blue-500 text-white font-bold"
+                        : "border-slate-700 bg-slate-955 text-transparent"
+                    }`}
+                  >
+                    {allowOvertime && (
+                      <Check className="h-2.5 w-2.5 stroke-3" />
+                    )}
                   </div>
                 </div>
                 <div>
@@ -490,7 +566,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               </label>
 
               {/* Reserve Govt Holiday */}
-              <label className={`flex items-start gap-2.5 select-none ${isAdmin ? 'cursor-pointer group' : 'opacity-80 pointer-events-none'}`}>
+              <label
+                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+              >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
@@ -499,12 +577,14 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     onChange={(e) => setAllowReserve(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                    allowReserve
-                      ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                      : 'border-slate-700 bg-slate-955 text-transparent'
-                  }`}>
-                    {allowReserve && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  <div
+                    className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                      allowReserve
+                        ? "bg-blue-600 border-blue-500 text-white font-bold"
+                        : "border-slate-700 bg-slate-955 text-transparent"
+                    }`}
+                  >
+                    {allowReserve && <Check className="h-2.5 w-2.5 stroke-3" />}
                   </div>
                 </div>
                 <div>
@@ -519,7 +599,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             </div>
           )}
           {!hasChutiAccess && (
-            <p className="text-xs text-slate-500 italic py-4 text-center">This user does not have access to the Leave Tracker workspace.</p>
+            <p className="text-xs text-slate-500 italic py-4 text-center">
+              This user does not have access to the Leave Tracker workspace.
+            </p>
           )}
         </div>
 
@@ -527,8 +609,12 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
         <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
             <div className="flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${hasQuotesAccess ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-600'}`} />
-              <h3 className="text-sm font-bold text-white">Quotes Manager Workspace</h3>
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${hasQuotesAccess ? "bg-emerald-500 shadow-lg shadow-emerald-500/50" : "bg-slate-600"}`}
+              />
+              <h3 className="text-sm font-bold text-white">
+                Quotes Manager Workspace
+              </h3>
             </div>
             {(isAdmin || isSupervisor) && (
               <Toggle
@@ -550,36 +636,52 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
               {/* Can Manage Quote Rules (Only Admin edits) */}
               <div className="border-t border-slate-850/70 pt-3">
-                <label className={`flex items-center gap-2.5 select-none ${
-                  isAdmin && role !== 'admin' ? 'cursor-pointer group' : 'opacity-70 pointer-events-none'
-                }`}>
+                <label
+                  className={`flex items-center gap-2.5 select-none ${
+                    isAdmin && role !== "admin"
+                      ? "cursor-pointer group"
+                      : "opacity-70 pointer-events-none"
+                  }`}
+                >
                   <div className="relative flex items-center">
                     <input
                       type="checkbox"
-                      checked={canManageRules || role === 'admin'}
-                      disabled={!isAdmin || role === 'admin'}
+                      checked={canManageRules || role === "admin"}
+                      disabled={!isAdmin || role === "admin"}
                       onChange={(e) => setCanManageRules(e.target.checked)}
                       className="sr-only"
                     />
-                    <div className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                      (canManageRules || role === 'admin')
-                        ? 'bg-blue-600 border-blue-500 text-white font-bold'
-                        : 'border-slate-700 bg-slate-955 text-transparent'
-                    }`}>
-                      {(canManageRules || role === 'admin') && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                    <div
+                      className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        canManageRules || role === "admin"
+                          ? "bg-blue-600 border-blue-500 text-white font-bold"
+                          : "border-slate-700 bg-slate-955 text-transparent"
+                      }`}
+                    >
+                      {(canManageRules || role === "admin") && (
+                        <Check className="h-2.5 w-2.5 stroke-3" />
+                      )}
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
-                    Can Manage Quote Rules? {role === 'admin' && <span className="text-[10px] text-slate-500 font-normal italic ml-1">(Always Allowed for Admin)</span>}
+                    Can Manage Quote Rules?{" "}
+                    {role === "admin" && (
+                      <span className="text-[10px] text-slate-500 font-normal italic ml-1">
+                        (Always Allowed for Admin)
+                      </span>
+                    )}
                   </span>
                 </label>
                 <p className="text-[10px] text-slate-500 mt-1 ml-6.5">
-                  Allows user to add, edit, or delete compliance rules and view history.
+                  Allows user to add, edit, or delete compliance rules and view
+                  history.
                 </p>
               </div>
             </div>
           ) : (
-            <p className="text-xs text-slate-500 italic py-4 text-center">This user does not have access to the Quotes Manager workspace.</p>
+            <p className="text-xs text-slate-500 italic py-4 text-center">
+              This user does not have access to the Quotes Manager workspace.
+            </p>
           )}
         </div>
       </div>

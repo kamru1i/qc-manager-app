@@ -82,10 +82,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
               </button>
             )}
           </div>
-          <BranchSelector
-            value={branchName}
-            onChange={setBranchName}
-          />
+          <BranchSelector value={branchName} onChange={setBranchName} />
         </div>
 
         <div>
@@ -137,7 +134,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
         <button
           type="submit"
           disabled={submitting}
-          className="w-1/2 self-end mt-4 flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer disabled:opacity-50 shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+          className="w-1/2 self-end mt-4 flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer disabled:opacity-50 shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
           {submitting ? (
             <>

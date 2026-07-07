@@ -1,106 +1,106 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { supabase } from '@/utils/supabase';
-import { LoginCode } from '@/types';
-import { 
-  Search, 
-  X, 
-  Copy, 
-  Check, 
-  Plus, 
-  Trash2, 
-  Edit, 
-  Key, 
-  User, 
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "@/utils/supabase";
+import { LoginCode } from "@/types";
+import {
+  Search,
+  X,
+  Copy,
+  Check,
+  Plus,
+  Trash2,
+  Edit,
+  Key,
+  User,
   AlertCircle,
   Loader2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
-} from 'lucide-react';
+  ChevronsRight,
+} from "lucide-react";
 
 const DEFAULT_LOGIN_CODES: LoginCode[] = [
-  { login_id: 'SR616', code: 'i', name: 'Rifat boss' },
-  { login_id: 'Santu', code: 'd', name: null },
-  { login_id: 'Razib', code: 'h', name: null },
-  { login_id: 'Mithun', code: 't', name: null },
-  { login_id: 'SM1119', code: 'L', name: 'Soikot Mollik' },
-  { login_id: 'MD1019', code: 't', name: null },
-  { login_id: 'Riyad', code: 'y', name: null },
-  { login_id: 'JH', code: 'v', name: null },
-  { login_id: 'Ramin', code: 'b', name: null },
-  { login_id: 'AR619', code: 'v/y', name: null },
-  { login_id: 'SD919', code: 'd', name: null },
-  { login_id: 'SE419', code: 'e', name: 'Sanjid Shanjid' },
-  { login_id: 'FI', code: 'k', name: null },
-  { login_id: 'To720', code: 'o', name: null },
-  { login_id: 'Aziz', code: 'y', name: null },
-  { login_id: 'Juel', code: 'm / w', name: null },
-  { login_id: 'MF720', code: 'f', name: null },
-  { login_id: 'Rifat/Shohan', code: 'i, e, s,', name: null },
-  { login_id: 'MH122', code: 'h', name: null },
-  { login_id: 'MR720', code: 'r', name: null },
-  { login_id: 'NS720', code: 's', name: null },
-  { login_id: 'MK820', code: 'k', name: null },
-  { login_id: 'YK920', code: 'k', name: null },
-  { login_id: 'KB222', code: 'b', name: null },
-  { login_id: 'AH222', code: 'h', name: null },
-  { login_id: 'MN822', code: 'n', name: null },
-  { login_id: 'JC723', code: 'c', name: null },
-  { login_id: 'PD720', code: 'd', name: null },
-  { login_id: 'HD1022', code: 'd', name: null },
-  { login_id: 'SM1022', code: 'm', name: null },
-  { login_id: 'NZ720', code: 'z', name: null },
-  { login_id: 'YZ123', code: 'Z', name: null },
-  { login_id: 'RA123', code: 'A', name: null },
-  { login_id: 'NC723', code: 'c', name: null },
-  { login_id: 'SC723', code: 's', name: null },
-  { login_id: 'MD823', code: 'd', name: null },
-  { login_id: 'PN 1223', code: 'n', name: null },
-  { login_id: 'OD1221', code: 'o', name: null },
-  { login_id: 'SD1221', code: 'U', name: null },
-  { login_id: 'NE1123', code: 'e', name: null },
-  { login_id: 'JT1123', code: 't', name: null },
-  { login_id: 'RC1123', code: 'c', name: null },
-  { login_id: 'IC1123', code: 'i', name: null },
-  { login_id: 'AN1223', code: 'n', name: null },
-  { login_id: 'SI1223', code: 'i', name: null },
-  { login_id: 'BD0124', code: 'd', name: null },
-  { login_id: 'HM0224', code: 'm', name: 'Md Habib Ullah Meheraz' },
-  { login_id: 'RS0224', code: 's', name: 'Rubayet Hossen Sifat' },
-  { login_id: 'AP0124', code: 'p', name: 'A.H provat' },
-  { login_id: 'SU0224', code: 'u', name: 'Md Sharif Uddin' },
-  { login_id: 'TM0224', code: 'm', name: 'Tahsin Habib Mahin' },
-  { login_id: 'RI224', code: 'i', name: 'Rakibul Islam' },
-  { login_id: 'AA1223', code: 'a', name: 'Asraful Arfin' },
-  { login_id: 'RU0224', code: 'r', name: 'Rasel Uddin' },
-  { login_id: 'RAA324', code: 'a', name: 'Ramjan Ali Arif' },
-  { login_id: 'SA424', code: 'a', name: 'Shamim Ahmed Asadulllah' },
-  { login_id: 'SH1024', code: 'h', name: 'Shahed Hossain' },
-  { login_id: 'MI924', code: 'i', name: 'Mominul Islam' },
-  { login_id: 'RT623', code: 'T', name: 'Rehunuma Akhter tanz' },
-  { login_id: 'ST425', code: 't', name: 'Sabbir Alam Tuhin' },
-  { login_id: 'KAMRUL', code: 'k', name: 'Kamrul Islam – IT' },
-  { login_id: 'KK525', code: 'k', name: 'Kapil Karmakar' },
-  { login_id: 'AAN425', code: 'N', name: 'Md Ali Akbor Hossain Newton' },
-  { login_id: 'OS525', code: 'S', name: 'Md Omar Faruque Sunny' }
+  { login_id: "SR616", code: "i", name: "Rifat boss" },
+  { login_id: "Santu", code: "d", name: null },
+  { login_id: "Razib", code: "h", name: null },
+  { login_id: "Mithun", code: "t", name: null },
+  { login_id: "SM1119", code: "L", name: "Soikot Mollik" },
+  { login_id: "MD1019", code: "t", name: null },
+  { login_id: "Riyad", code: "y", name: null },
+  { login_id: "JH", code: "v", name: null },
+  { login_id: "Ramin", code: "b", name: null },
+  { login_id: "AR619", code: "v/y", name: null },
+  { login_id: "SD919", code: "d", name: null },
+  { login_id: "SE419", code: "e", name: "Sanjid Shanjid" },
+  { login_id: "FI", code: "k", name: null },
+  { login_id: "To720", code: "o", name: null },
+  { login_id: "Aziz", code: "y", name: null },
+  { login_id: "Juel", code: "m / w", name: null },
+  { login_id: "MF720", code: "f", name: null },
+  { login_id: "Rifat/Shohan", code: "i, e, s,", name: null },
+  { login_id: "MH122", code: "h", name: null },
+  { login_id: "MR720", code: "r", name: null },
+  { login_id: "NS720", code: "s", name: null },
+  { login_id: "MK820", code: "k", name: null },
+  { login_id: "YK920", code: "k", name: null },
+  { login_id: "KB222", code: "b", name: null },
+  { login_id: "AH222", code: "h", name: null },
+  { login_id: "MN822", code: "n", name: null },
+  { login_id: "JC723", code: "c", name: null },
+  { login_id: "PD720", code: "d", name: null },
+  { login_id: "HD1022", code: "d", name: null },
+  { login_id: "SM1022", code: "m", name: null },
+  { login_id: "NZ720", code: "z", name: null },
+  { login_id: "YZ123", code: "Z", name: null },
+  { login_id: "RA123", code: "A", name: null },
+  { login_id: "NC723", code: "c", name: null },
+  { login_id: "SC723", code: "s", name: null },
+  { login_id: "MD823", code: "d", name: null },
+  { login_id: "PN 1223", code: "n", name: null },
+  { login_id: "OD1221", code: "o", name: null },
+  { login_id: "SD1221", code: "U", name: null },
+  { login_id: "NE1123", code: "e", name: null },
+  { login_id: "JT1123", code: "t", name: null },
+  { login_id: "RC1123", code: "c", name: null },
+  { login_id: "IC1123", code: "i", name: null },
+  { login_id: "AN1223", code: "n", name: null },
+  { login_id: "SI1223", code: "i", name: null },
+  { login_id: "BD0124", code: "d", name: null },
+  { login_id: "HM0224", code: "m", name: "Md Habib Ullah Meheraz" },
+  { login_id: "RS0224", code: "s", name: "Rubayet Hossen Sifat" },
+  { login_id: "AP0124", code: "p", name: "A.H provat" },
+  { login_id: "SU0224", code: "u", name: "Md Sharif Uddin" },
+  { login_id: "TM0224", code: "m", name: "Tahsin Habib Mahin" },
+  { login_id: "RI224", code: "i", name: "Rakibul Islam" },
+  { login_id: "AA1223", code: "a", name: "Asraful Arfin" },
+  { login_id: "RU0224", code: "r", name: "Rasel Uddin" },
+  { login_id: "RAA324", code: "a", name: "Ramjan Ali Arif" },
+  { login_id: "SA424", code: "a", name: "Shamim Ahmed Asadulllah" },
+  { login_id: "SH1024", code: "h", name: "Shahed Hossain" },
+  { login_id: "MI924", code: "i", name: "Mominul Islam" },
+  { login_id: "RT623", code: "T", name: "Rehunuma Akhter tanz" },
+  { login_id: "ST425", code: "t", name: "Sabbir Alam Tuhin" },
+  { login_id: "KAMRUL", code: "k", name: "Kamrul Islam – IT" },
+  { login_id: "KK525", code: "k", name: "Kapil Karmakar" },
+  { login_id: "AAN425", code: "N", name: "Md Ali Akbor Hossain Newton" },
+  { login_id: "OS525", code: "S", name: "Md Omar Faruque Sunny" },
 ];
 
 interface LoginCodesPanelProps {
   canEdit: boolean;
   isOnline: boolean;
-  showToast: (type: 'success' | 'error', text: string) => void;
+  showToast: (type: "success" | "error", text: string) => void;
 }
 
 export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   canEdit,
   isOnline,
-  showToast
+  showToast,
 }) => {
   const [loginCodes, setLoginCodes] = useState<LoginCode[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -111,9 +111,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   // Form Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [formLoginId, setFormLoginId] = useState('');
-  const [formCode, setFormCode] = useState('');
-  const [formName, setFormName] = useState('');
+  const [formLoginId, setFormLoginId] = useState("");
+  const [formCode, setFormCode] = useState("");
+  const [formName, setFormName] = useState("");
   const [itemToDelete, setItemToDelete] = useState<LoginCode | null>(null);
 
   // Context Menu State
@@ -131,9 +131,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
     const delayPromise = new Promise((resolve) => setTimeout(resolve, 450));
     try {
       const dbPromise = supabase
-        .from('login_codes')
-        .select('*')
-        .order('login_id', { ascending: true });
+        .from("login_codes")
+        .select("*")
+        .order("login_id", { ascending: true });
 
       const [dbResult] = await Promise.all([dbPromise, delayPromise]);
       const { data, error } = dbResult;
@@ -145,8 +145,11 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         setLoginCodes(DEFAULT_LOGIN_CODES);
       }
     } catch (err) {
-      console.warn('Could not load login codes from database, falling back to local list:', err);
-      const stored = localStorage.getItem('local_login_codes');
+      console.warn(
+        "Could not load login codes from database, falling back to local list:",
+        err,
+      );
+      const stored = localStorage.getItem("local_login_codes");
       if (stored) {
         setLoginCodes(JSON.parse(stored));
       } else {
@@ -164,18 +167,21 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   // Handle outside click to close context menu
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(e.target as Node)
+      ) {
         setContextMenu(null);
       }
     };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (contextMenu) {
           setContextMenu(null);
         } else if (isFormOpen) {
@@ -185,15 +191,15 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         }
       }
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isFormOpen, itemToDelete, contextMenu]);
 
   // Save / Update Handler
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formLoginId.trim() || !formCode.trim()) {
-      showToast('error', 'Login ID and Code are required.');
+      showToast("error", "Login ID and Code are required.");
       return;
     }
 
@@ -201,14 +207,12 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       login_id: formLoginId.trim(),
       code: formCode.trim(),
       name: formName.trim() || null,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     let savedInDB = false;
     try {
-      const { error } = await supabase
-        .from('login_codes')
-        .upsert(payload);
+      const { error } = await supabase.from("login_codes").upsert(payload);
 
       if (!error) {
         savedInDB = true;
@@ -216,25 +220,33 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         throw error;
       }
     } catch (err) {
-      console.error('Failed to save login code to database, saving locally:', err);
+      console.error(
+        "Failed to save login code to database, saving locally:",
+        err,
+      );
     }
 
-    setLoginCodes(prev => {
+    setLoginCodes((prev) => {
       let next;
       if (isEditing) {
-        next = prev.map(item => item.login_id === payload.login_id ? payload : item);
+        next = prev.map((item) =>
+          item.login_id === payload.login_id ? payload : item,
+        );
       } else {
-        next = [...prev.filter(item => item.login_id !== payload.login_id), payload];
+        next = [
+          ...prev.filter((item) => item.login_id !== payload.login_id),
+          payload,
+        ];
       }
       next.sort((a, b) => a.login_id.localeCompare(b.login_id));
-      localStorage.setItem('local_login_codes', JSON.stringify(next));
+      localStorage.setItem("local_login_codes", JSON.stringify(next));
       return next;
     });
 
     if (savedInDB) {
-      showToast('success', 'Login code saved to database.');
+      showToast("success", "Login code saved to database.");
     } else {
-      showToast('success', 'Saved locally (DB table not configured).');
+      showToast("success", "Saved locally (DB table not configured).");
     }
 
     setIsFormOpen(false);
@@ -248,9 +260,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
     let deletedInDB = false;
     try {
       const { error } = await supabase
-        .from('login_codes')
+        .from("login_codes")
         .delete()
-        .eq('login_id', itemToDelete.login_id);
+        .eq("login_id", itemToDelete.login_id);
 
       if (!error) {
         deletedInDB = true;
@@ -258,19 +270,21 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         throw error;
       }
     } catch (err) {
-      console.error('Failed to delete from database, deleting locally:', err);
+      console.error("Failed to delete from database, deleting locally:", err);
     }
 
-    setLoginCodes(prev => {
-      const next = prev.filter(item => item.login_id !== itemToDelete.login_id);
-      localStorage.setItem('local_login_codes', JSON.stringify(next));
+    setLoginCodes((prev) => {
+      const next = prev.filter(
+        (item) => item.login_id !== itemToDelete.login_id,
+      );
+      localStorage.setItem("local_login_codes", JSON.stringify(next));
       return next;
     });
 
     if (deletedInDB) {
-      showToast('success', 'Login code deleted from database.');
+      showToast("success", "Login code deleted from database.");
     } else {
-      showToast('success', 'Deleted locally (DB table not configured).');
+      showToast("success", "Deleted locally (DB table not configured).");
     }
 
     setItemToDelete(null);
@@ -280,9 +294,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   // Open Form for Adding
   const openAdd = () => {
     setIsEditing(false);
-    setFormLoginId('');
-    setFormCode('');
-    setFormName('');
+    setFormLoginId("");
+    setFormCode("");
+    setFormName("");
     setIsFormOpen(true);
   };
 
@@ -291,7 +305,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
     setIsEditing(true);
     setFormLoginId(item.login_id);
     setFormCode(item.code);
-    setFormName(item.name || '');
+    setFormName(item.name || "");
     setIsFormOpen(true);
     setContextMenu(null);
   };
@@ -320,16 +334,22 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   }, [searchQuery]);
 
   // Filtering
-  const filteredCodes = loginCodes.filter(item => 
-    item.login_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredCodes = loginCodes.filter(
+    (item) =>
+      item.login_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.name &&
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredCodes.length / itemsPerPage);
-  const startIndex = filteredCodes.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const startIndex =
+    filteredCodes.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(currentPage * itemsPerPage, filteredCodes.length);
-  const paginatedCodes = filteredCodes.slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage);
+  const paginatedCodes = filteredCodes.slice(
+    (currentPage - 1) * itemsPerPage,
+    (currentPage - 1) * itemsPerPage + itemsPerPage,
+  );
 
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -369,8 +389,12 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   };
 
   return (
-    <div className="bg-slate-955/20 border border-slate-850 rounded-2xl p-5 space-y-6 relative flex flex-col min-h-[60vh] overflow-hidden" style={{ fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', 'Inter', sans-serif" }}>
-      
+    <div
+      className="bg-slate-955/20 border border-slate-850 rounded-2xl p-5 space-y-6 relative flex flex-col min-h-[60vh] overflow-hidden"
+      style={{
+        fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', 'Inter', sans-serif",
+      }}
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-slate-900 gap-4">
         <div className="flex items-center gap-2.5">
@@ -378,8 +402,12 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
             <Key className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-md font-bold text-white">Login Codes Directory</h3>
-            <p className="text-[11px] text-slate-450 mt-0.5">Copy user codes or manage logins</p>
+            <h3 className="text-md font-bold text-white">
+              Login Codes Directory
+            </h3>
+            <p className="text-[11px] text-slate-450 mt-0.5">
+              Copy user codes or manage logins
+            </p>
           </div>
         </div>
       </div>
@@ -397,7 +425,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
           />
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => setSearchQuery("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
             >
               <X className="h-3.5 w-3.5" />
@@ -407,7 +435,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         {canEdit && (
           <button
             onClick={openAdd}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-955"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-955"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Code
@@ -438,7 +466,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         ) : filteredCodes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-2 text-slate-500">
             <AlertCircle className="h-8 w-8 text-slate-700" />
-            <span className="text-xs font-medium">No login codes match your search.</span>
+            <span className="text-xs font-medium">
+              No login codes match your search.
+            </span>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 animate-fade-in">
@@ -447,7 +477,11 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
                 key={item.login_id}
                 onContextMenu={(e) => handleContextMenuTrigger(e, item)}
                 className="group flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/30 hover:bg-slate-900/60 border border-slate-900/60 hover:border-slate-800/80 transition-all duration-200 select-none relative overflow-hidden"
-                title={canEdit ? "Right-click to Edit or Delete" : "Hover to copy code"}
+                title={
+                  canEdit
+                    ? "Right-click to Edit or Delete"
+                    : "Hover to copy code"
+                }
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-slate-800/40 border border-slate-800/60 text-slate-400 group-hover:text-blue-400 group-hover:bg-blue-500/5 group-hover:border-blue-500/10 transition-all duration-300">
@@ -470,7 +504,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
                 </div>
 
                 {/* Copy code interactive container */}
-                <div 
+                <div
                   onClick={() => handleCopy(item.code, item.login_id)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/60 border border-slate-850 hover:border-blue-500/35 hover:bg-blue-600/5 text-slate-355 hover:text-white transition-all duration-200 cursor-pointer text-xs font-semibold group/btn"
                 >
@@ -495,7 +529,14 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       {filteredCodes.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-3 px-4 bg-slate-900/35 border border-slate-850/60 rounded-2xl text-xs font-semibold select-none">
           <div className="text-slate-400 font-medium">
-            Showing <span className="font-semibold text-slate-200">{startIndex}</span> to <span className="font-semibold text-slate-200">{endIndex}</span> of <span className="font-semibold text-slate-200">{filteredCodes.length}</span> entries
+            Showing{" "}
+            <span className="font-semibold text-slate-200">{startIndex}</span>{" "}
+            to <span className="font-semibold text-slate-200">{endIndex}</span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-200">
+              {filteredCodes.length}
+            </span>{" "}
+            entries
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -572,26 +613,36 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       {/* Footer info/legend */}
       <div className="pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex justify-between items-center z-10 select-none">
         <span>Total logins: {loginCodes.length}</span>
-        {canEdit && <span className="text-blue-500/80">💡 Tip: Right-click on any row to edit or delete it.</span>}
+        {canEdit && (
+          <span className="text-blue-500/80">
+            💡 Tip: Right-click on any row to edit or delete it.
+          </span>
+        )}
       </div>
 
       {/* ─── ADD/EDIT OVERLAY MODAL ─── */}
       {isFormOpen && (
         <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-40 flex items-center justify-center p-6 animate-fade-in">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
-            <button 
-              onClick={() => setIsFormOpen(false)} 
+            <button
+              onClick={() => setIsFormOpen(false)}
               className="absolute right-4 top-4 text-slate-450 hover:text-white transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-1.5">
-              {isEditing ? <Edit className="h-4 w-4 text-blue-500" /> : <Plus className="h-4 w-4 text-blue-500" />}
-              {isEditing ? 'Edit User Code' : 'Add User Code'}
+              {isEditing ? (
+                <Edit className="h-4 w-4 text-blue-500" />
+              ) : (
+                <Plus className="h-4 w-4 text-blue-500" />
+              )}
+              {isEditing ? "Edit User Code" : "Add User Code"}
             </h3>
             <form onSubmit={handleSave} className="space-y-4 text-xs">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">Login ID (Codename)</label>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">
+                  Login ID (Codename)
+                </label>
                 <input
                   type="text"
                   required
@@ -603,7 +654,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">Code</label>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">
+                  Code
+                </label>
                 <input
                   type="text"
                   required
@@ -614,7 +667,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">Full Name (Optional)</label>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">
+                  Full Name (Optional)
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. Rifat boss"
@@ -623,7 +678,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
                   className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
                 />
               </div>
-              
+
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -634,9 +689,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-650 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold cursor-pointer shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-955"
+                  className="px-3.5 py-2 rounded-lg bg-linear-to-r from-purple-600 to-indigo-650 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold cursor-pointer shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-955"
                 >
-                  {isEditing ? 'Save Changes' : 'Add Code'}
+                  {isEditing ? "Save Changes" : "Add Code"}
                 </button>
               </div>
             </form>
@@ -653,7 +708,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
               Delete Login Code?
             </h4>
             <p className="text-xs text-slate-400 mb-4">
-              Are you sure you want to delete the login code for <strong className="text-white">{itemToDelete.login_id}</strong>? This action cannot be undone.
+              Are you sure you want to delete the login code for{" "}
+              <strong className="text-white">{itemToDelete.login_id}</strong>?
+              This action cannot be undone.
             </p>
             <div className="flex items-center justify-end gap-2">
               <button
@@ -700,7 +757,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 5px;
           height: 5px;
@@ -719,7 +778,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(148, 163, 184, 0.35);
         }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 };

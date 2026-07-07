@@ -266,7 +266,7 @@ export default function LoginPage() {
       <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-blue-400 to-purple-450">
+        <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-linear-to-r from-blue-400 to-purple-450">
           QC Manager App
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400 font-medium">
@@ -365,7 +365,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -515,7 +515,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="flex-1 flex justify-center py-2 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all items-center gap-1.5"
+                  className="flex-1 flex justify-center py-2 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all items-center gap-1.5"
                 >
                   {forgotLoading && (
                     <Loader className="animate-spin h-3.5 w-3.5 text-white" />

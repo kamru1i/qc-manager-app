@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { RecordItem, Profile } from '@/types';
-import { VerifiedBadge } from './VerifiedBadge';
-import { AnalyticsSkeleton } from './skeleton/AnalyticsSkeleton';
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { RecordItem, Profile } from "@/types";
+import { VerifiedBadge } from "./VerifiedBadge";
+import { AnalyticsSkeleton } from "./skeleton/AnalyticsSkeleton";
 import {
   FileText,
   TrendingUp,
@@ -11,9 +11,9 @@ import {
   Award,
   MapPin,
   Clock,
-  Eye
-} from 'lucide-react';
-import { getCacheData } from '@/utils/quotesOfflineSync';
+  Eye,
+} from "lucide-react";
+import { getCacheData } from "@/utils/quotesOfflineSync";
 
 interface AnalyticsPanelProps {
   records: RecordItem[];
@@ -22,8 +22,11 @@ interface AnalyticsPanelProps {
   recordsLoading?: boolean;
 }
 
-const GrowthBadge: React.FC<{ trend: 'up' | 'down' | 'neutral'; label: string }> = ({ trend, label }) => {
-  if (trend === 'up') {
+const GrowthBadge: React.FC<{
+  trend: "up" | "down" | "neutral";
+  label: string;
+}> = ({ trend, label }) => {
+  if (trend === "up") {
     return (
       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
         <TrendingUp className="h-3 w-3 shrink-0" />
@@ -31,10 +34,19 @@ const GrowthBadge: React.FC<{ trend: 'up' | 'down' | 'neutral'; label: string }>
       </span>
     );
   }
-  if (trend === 'down') {
+  if (trend === "down") {
     return (
       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/10 border border-rose-500/20 text-rose-450 dark:text-rose-400">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 shrink-0">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-3 w-3 shrink-0"
+        >
           <line x1="7" y1="7" x2="17" y2="17"></line>
           <polyline points="17 7 17 17 7 17"></polyline>
         </svg>
@@ -51,18 +63,18 @@ const GrowthBadge: React.FC<{ trend: 'up' | 'down' | 'neutral'; label: string }>
 };
 
 const monthsList = [
-  { value: '01', name: 'January' },
-  { value: '02', name: 'February' },
-  { value: '03', name: 'March' },
-  { value: '04', name: 'April' },
-  { value: '05', name: 'May' },
-  { value: '06', name: 'June' },
-  { value: '07', name: 'July' },
-  { value: '08', name: 'August' },
-  { value: '09', name: 'September' },
-  { value: '10', name: 'October' },
-  { value: '11', name: 'November' },
-  { value: '12', name: 'December' },
+  { value: "01", name: "January" },
+  { value: "02", name: "February" },
+  { value: "03", name: "March" },
+  { value: "04", name: "April" },
+  { value: "05", name: "May" },
+  { value: "06", name: "June" },
+  { value: "07", name: "July" },
+  { value: "08", name: "August" },
+  { value: "09", name: "September" },
+  { value: "10", name: "October" },
+  { value: "11", name: "November" },
+  { value: "12", name: "December" },
 ];
 
 export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
@@ -81,10 +93,10 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         setIsLoading(true);
       }
       try {
-        const cached = await getCacheData<RecordItem>('records_cache');
+        const cached = await getCacheData<RecordItem>("records_cache");
         setAllRecords(cached);
       } catch (err) {
-        console.error('Failed to load cached records for analytics:', err);
+        console.error("Failed to load cached records for analytics:", err);
       } finally {
         setIsLoading(false);
         isFirstLoad.current = false;
@@ -96,7 +108,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   // Get available years dynamically from all cached records
   const availableYears = useMemo(() => {
     const yearsSet = new Set<string>();
-    allRecords.forEach(r => {
+    allRecords.forEach((r) => {
       if (r.submitted_at) {
         const year = new Date(r.submitted_at).getFullYear().toString();
         if (year && !isNaN(parseInt(year, 10))) {
@@ -124,7 +136,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   }, [availableYears, selectedYear]);
 
   // Selected Month for staff line chart and monthly filters
-  const currentMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+  const currentMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
 
   // Tooltip state for monthly bar chart
@@ -138,11 +150,13 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   } | null>(null);
 
   // Toggle States for Filters
-  const [metricsTimeScope, setMetricsTimeScope] = useState<'yearly' | 'monthly'>('monthly');
+  const [metricsTimeScope, setMetricsTimeScope] = useState<
+    "yearly" | "monthly"
+  >("monthly");
 
   // Filter all system records by selected year
   const systemYearRecords = useMemo(() => {
-    return allRecords.filter(r => {
+    return allRecords.filter((r) => {
       if (!r.submitted_at) return false;
       const date = new Date(r.submitted_at);
       return date.getFullYear().toString() === selectedYear;
@@ -151,13 +165,13 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
   // Filter system records for current selected month/year scope
   const systemMetricsFilteredRecords = useMemo(() => {
-    if (metricsTimeScope === 'yearly') {
+    if (metricsTimeScope === "yearly") {
       return systemYearRecords;
     } else {
-      return systemYearRecords.filter(r => {
+      return systemYearRecords.filter((r) => {
         if (!r.submitted_at) return false;
         const date = new Date(r.submitted_at);
-        const mStr = String(date.getMonth() + 1).padStart(2, '0');
+        const mStr = String(date.getMonth() + 1).padStart(2, "0");
         return mStr === selectedMonth;
       });
     }
@@ -170,28 +184,29 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
     let reviews = 0;
     let sales = 0;
 
-    systemMetricsFilteredRecords.forEach(r => {
-      const type = r.file_type || '';
-      if (type === 'Quote') {
+    systemMetricsFilteredRecords.forEach((r) => {
+      const type = r.file_type || "";
+      if (type === "Quote") {
         quotes++;
-      } else if (type === 'Requote') {
+      } else if (type === "Requote") {
         requotes++;
-      } else if (type.toLowerCase().includes('review')) {
+      } else if (type.toLowerCase().includes("review")) {
         reviews++;
-      } else if (type === 'Sale') {
+      } else if (type === "Sale") {
         sales++;
       }
     });
 
     const totalFiles = systemMetricsFilteredRecords.length;
-    const conversionRate = totalFiles > 0 ? ((sales / totalFiles) * 100).toFixed(2) : '0.00';
+    const conversionRate =
+      totalFiles > 0 ? ((sales / totalFiles) * 100).toFixed(2) : "0.00";
 
     return {
       quotes,
       requotes,
       reviews,
       sales,
-      conversionRate: parseFloat(conversionRate)
+      conversionRate: parseFloat(conversionRate),
     };
   }, [systemMetricsFilteredRecords]);
 
@@ -199,9 +214,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   const previousSystemPeriodFilteredRecords = useMemo(() => {
     const currentYearNum = parseInt(selectedYear, 10);
 
-    if (metricsTimeScope === 'yearly') {
+    if (metricsTimeScope === "yearly") {
       const prevYear = (currentYearNum - 1).toString();
-      return allRecords.filter(r => {
+      return allRecords.filter((r) => {
         if (!r.submitted_at) return false;
         const date = new Date(r.submitted_at);
         return date.getFullYear().toString() === prevYear;
@@ -217,13 +232,15 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       }
 
       const prevYearStr = prevYear.toString();
-      const prevMonthStr = String(prevMonthNum).padStart(2, '0');
+      const prevMonthStr = String(prevMonthNum).padStart(2, "0");
 
-      return allRecords.filter(r => {
+      return allRecords.filter((r) => {
         if (!r.submitted_at) return false;
         const date = new Date(r.submitted_at);
-        const mStr = String(date.getMonth() + 1).padStart(2, '0');
-        return date.getFullYear().toString() === prevYearStr && mStr === prevMonthStr;
+        const mStr = String(date.getMonth() + 1).padStart(2, "0");
+        return (
+          date.getFullYear().toString() === prevYearStr && mStr === prevMonthStr
+        );
       });
     }
   }, [allRecords, selectedYear, selectedMonth, metricsTimeScope]);
@@ -234,28 +251,29 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
     let reviews = 0;
     let sales = 0;
 
-    previousSystemPeriodFilteredRecords.forEach(r => {
-      const type = r.file_type || '';
-      if (type === 'Quote') {
+    previousSystemPeriodFilteredRecords.forEach((r) => {
+      const type = r.file_type || "";
+      if (type === "Quote") {
         quotes++;
-      } else if (type === 'Requote') {
+      } else if (type === "Requote") {
         requotes++;
-      } else if (type.toLowerCase().includes('review')) {
+      } else if (type.toLowerCase().includes("review")) {
         reviews++;
-      } else if (type === 'Sale') {
+      } else if (type === "Sale") {
         sales++;
       }
     });
 
     const prevTotalFiles = previousSystemPeriodFilteredRecords.length;
-    const conversionRate = prevTotalFiles > 0 ? ((sales / prevTotalFiles) * 100).toFixed(2) : '0.00';
+    const conversionRate =
+      prevTotalFiles > 0 ? ((sales / prevTotalFiles) * 100).toFixed(2) : "0.00";
 
     return {
       quotes,
       requotes,
       reviews,
       sales,
-      conversionRate: parseFloat(conversionRate)
+      conversionRate: parseFloat(conversionRate),
     };
   }, [previousSystemPeriodFilteredRecords]);
 
@@ -263,37 +281,66 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   const getGrowthStats = (current: number, previous: number) => {
     if (previous === 0) {
       if (current === 0) {
-        return { trend: 'neutral' as const, label: '0.00%' };
+        return { trend: "neutral" as const, label: "0.00%" };
       }
-      return { trend: 'up' as const, label: '+100.00%' };
+      return { trend: "up" as const, label: "+100.00%" };
     }
     const finalChange = ((current - previous) / Math.abs(previous)) * 100;
-    const trend = finalChange > 0 ? ('up' as const) : finalChange < 0 ? ('down' as const) : ('neutral' as const);
-    const label = finalChange > 0 ? `+${finalChange.toFixed(2)}%` : finalChange < 0 ? `${finalChange.toFixed(2)}%` : '0.00%';
+    const trend =
+      finalChange > 0
+        ? ("up" as const)
+        : finalChange < 0
+          ? ("down" as const)
+          : ("neutral" as const);
+    const label =
+      finalChange > 0
+        ? `+${finalChange.toFixed(2)}%`
+        : finalChange < 0
+          ? `${finalChange.toFixed(2)}%`
+          : "0.00%";
     return { trend, label };
   };
 
   const getRateGrowthStats = (current: number, previous: number) => {
     const diff = current - previous;
-    const trend = diff > 0 ? ('up' as const) : diff < 0 ? ('down' as const) : ('neutral' as const);
-    const label = diff > 0 ? `+${diff.toFixed(2)}%` : diff < 0 ? `${diff.toFixed(2)}%` : '0.00%';
+    const trend =
+      diff > 0
+        ? ("up" as const)
+        : diff < 0
+          ? ("down" as const)
+          : ("neutral" as const);
+    const label =
+      diff > 0
+        ? `+${diff.toFixed(2)}%`
+        : diff < 0
+          ? `${diff.toFixed(2)}%`
+          : "0.00%";
     return { trend, label };
   };
 
   // Category Breakdown logic for all 12 categories
   const categoryBreakdown = useMemo(() => {
     const all12Categories = [
-      'Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review',
-      'Review Van', 'Review Bike', 'Individual Review', 'Other Site',
-      'Van', 'Bike', 'Sale'
+      "Quote",
+      "Requote",
+      "Requote Van",
+      "Requote Bike",
+      "Review",
+      "Review Van",
+      "Review Bike",
+      "Individual Review",
+      "Other Site",
+      "Van",
+      "Bike",
+      "Sale",
     ];
 
     const counts: Record<string, number> = {};
-    all12Categories.forEach(cat => {
+    all12Categories.forEach((cat) => {
       counts[cat] = 0;
     });
 
-    systemMetricsFilteredRecords.forEach(r => {
+    systemMetricsFilteredRecords.forEach((r) => {
       if (r.file_type && counts[r.file_type] !== undefined) {
         counts[r.file_type]++;
       }
@@ -304,54 +351,61 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
     const formatted = Object.entries(counts).map(([name, count]) => ({
       name,
       count,
-      percentage: total > 0 ? parseFloat(((count / total) * 100).toFixed(2)) : 0
+      percentage:
+        total > 0 ? parseFloat(((count / total) * 100).toFixed(2)) : 0,
     }));
 
     // Sort descending by count, then by name
-    return formatted.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    return formatted.sort(
+      (a, b) => b.count - a.count || a.name.localeCompare(b.name),
+    );
   }, [systemMetricsFilteredRecords]);
 
   const dominantActivity = useMemo(() => {
-    if (categoryBreakdown.length === 0 || categoryBreakdown.every(c => c.count === 0)) {
-      return { name: 'None', count: 0, percentage: 0 };
+    if (
+      categoryBreakdown.length === 0 ||
+      categoryBreakdown.every((c) => c.count === 0)
+    ) {
+      return { name: "None", count: 0, percentage: 0 };
     }
     return categoryBreakdown[0];
   }, [categoryBreakdown]);
 
   const getCategoryColor = (name: string) => {
     switch (name) {
-      case 'Quote':
-        return 'from-blue-600 to-blue-400 border-blue-500/25 bg-blue-500';
-      case 'Requote':
-        return 'from-purple-600 to-purple-400 border-purple-500/25 bg-purple-500';
-      case 'Requote Van':
-        return 'from-indigo-600 to-indigo-400 border-indigo-500/25 bg-indigo-500';
-      case 'Requote Bike':
-        return 'from-violet-600 to-violet-400 border-violet-500/25 bg-violet-500';
-      case 'Review':
-        return 'from-pink-600 to-pink-400 border-pink-500/25 bg-pink-500';
-      case 'Review Van':
-        return 'from-rose-600 to-rose-450 border-rose-500/25 bg-rose-500';
-      case 'Review Bike':
-        return 'from-fuchsia-600 to-fuchsia-400 border-fuchsia-500/25 bg-fuchsia-500';
-      case 'Individual Review':
-        return 'from-purple-600 to-purple-400 border-purple-500/25 bg-purple-500';
-      case 'Other Site':
-        return 'from-blue-600 to-blue-400 border-blue-500/25 bg-blue-500';
-      case 'Van':
-        return 'from-teal-600 to-teal-400 border-teal-500/25 bg-teal-500';
-      case 'Bike':
-        return 'from-cyan-600 to-cyan-400 border-cyan-500/25 bg-cyan-500';
-      case 'Sale':
-        return 'from-emerald-600 to-emerald-400 border-emerald-500/25 bg-emerald-500';
+      case "Quote":
+        return "from-blue-600 to-blue-400 border-blue-500/25 bg-blue-500";
+      case "Requote":
+        return "from-purple-600 to-purple-400 border-purple-500/25 bg-purple-500";
+      case "Requote Van":
+        return "from-indigo-600 to-indigo-400 border-indigo-500/25 bg-indigo-500";
+      case "Requote Bike":
+        return "from-violet-600 to-violet-400 border-violet-500/25 bg-violet-500";
+      case "Review":
+        return "from-pink-600 to-pink-400 border-pink-500/25 bg-pink-500";
+      case "Review Van":
+        return "from-rose-600 to-rose-450 border-rose-500/25 bg-rose-500";
+      case "Review Bike":
+        return "from-fuchsia-600 to-fuchsia-400 border-fuchsia-500/25 bg-fuchsia-500";
+      case "Individual Review":
+        return "from-purple-600 to-purple-400 border-purple-500/25 bg-purple-500";
+      case "Other Site":
+        return "from-blue-600 to-blue-400 border-blue-500/25 bg-blue-500";
+      case "Van":
+        return "from-teal-600 to-teal-400 border-teal-500/25 bg-teal-500";
+      case "Bike":
+        return "from-cyan-600 to-cyan-400 border-cyan-500/25 bg-cyan-500";
+      case "Sale":
+        return "from-emerald-600 to-emerald-400 border-emerald-500/25 bg-emerald-500";
       default:
-        return 'from-slate-650 to-slate-450 border-slate-500/25 bg-slate-500';
+        return "from-slate-650 to-slate-450 border-slate-500/25 bg-slate-500";
     }
   };
 
   const scopedDaysCount = useMemo(() => {
-    if (metricsTimeScope === 'yearly') {
-      const isLeap = (year: number) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    if (metricsTimeScope === "yearly") {
+      const isLeap = (year: number) =>
+        (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
       return isLeap(parseInt(selectedYear, 10)) ? 366 : 365;
     } else {
       const yearNum = parseInt(selectedYear, 10);
@@ -369,23 +423,23 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       requotes: 0,
       reviews: 0,
       sales: 0,
-      total: 0
+      total: 0,
     }));
 
-    systemYearRecords.forEach(r => {
+    systemYearRecords.forEach((r) => {
       if (!r.submitted_at) return;
       const date = new Date(r.submitted_at);
       const monthIdx = date.getMonth();
       if (monthIdx >= 0 && monthIdx < 12) {
         months[monthIdx].total++;
-        const type = r.file_type || '';
-        if (type === 'Quote') {
+        const type = r.file_type || "";
+        if (type === "Quote") {
           months[monthIdx].quotes++;
-        } else if (type === 'Requote') {
+        } else if (type === "Requote") {
           months[monthIdx].requotes++;
-        } else if (type.toLowerCase().includes('review')) {
+        } else if (type.toLowerCase().includes("review")) {
           months[monthIdx].reviews++;
-        } else if (type === 'Sale') {
+        } else if (type === "Sale") {
           months[monthIdx].sales++;
         }
       }
@@ -397,7 +451,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   // Calculate highest monthly value to scale the Y axis on bar chart
   const maxMonthlyVal = useMemo(() => {
     let max = 10; // minimum scale limit
-    monthlyData.forEach(m => {
+    monthlyData.forEach((m) => {
       const val = Math.max(m.quotes, m.requotes, m.reviews, m.sales);
       if (val > max) max = val;
     });
@@ -409,7 +463,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   const branchData = useMemo(() => {
     const branches: Record<string, number> = {};
 
-    systemMetricsFilteredRecords.forEach(r => {
+    systemMetricsFilteredRecords.forEach((r) => {
       if (r.branch_name) {
         const bName = r.branch_name.toUpperCase().trim();
         branches[bName] = (branches[bName] || 0) + 1;
@@ -422,9 +476,12 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
     const totalInScope = systemMetricsFilteredRecords.length;
 
-    const formatted = sortedBranches.map(b => ({
+    const formatted = sortedBranches.map((b) => ({
       ...b,
-      percentage: totalInScope > 0 ? parseFloat(((b.count / totalInScope) * 100).toFixed(2)) : 0
+      percentage:
+        totalInScope > 0
+          ? parseFloat(((b.count / totalInScope) * 100).toFixed(2))
+          : 0,
     }));
 
     return formatted.slice(0, 5);
@@ -432,29 +489,34 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
   // Leaderboard data (Show top 5 only)
   const leaderboardData = useMemo(() => {
-    const usersCount: Record<string, { userId: string; name: string; codename: string; count: number }> = {};
+    const usersCount: Record<
+      string,
+      { userId: string; name: string; codename: string; count: number }
+    > = {};
 
     // Initialize profiles list
-    profilesList.forEach(p => {
+    profilesList.forEach((p) => {
       usersCount[p.id] = {
         userId: p.id,
         name: p.full_name || p.username,
         codename: p.username.toUpperCase(),
-        count: 0
+        count: 0,
       };
     });
 
     // Count records
-    systemMetricsFilteredRecords.forEach(r => {
+    systemMetricsFilteredRecords.forEach((r) => {
       if (r.user_id && usersCount[r.user_id]) {
         usersCount[r.user_id].count++;
       }
     });
 
-    const activeUsers = Object.values(usersCount).filter(u => u.count > 0);
-    
+    const activeUsers = Object.values(usersCount).filter((u) => u.count > 0);
+
     // Sort descending by count, then alphabetically by codename
-    const sortedLeaderboard = activeUsers.sort((a, b) => b.count - a.count || a.codename.localeCompare(b.codename));
+    const sortedLeaderboard = activeUsers.sort(
+      (a, b) => b.count - a.count || a.codename.localeCompare(b.codename),
+    );
 
     return sortedLeaderboard.slice(0, 5);
   }, [systemMetricsFilteredRecords, profilesList]);
@@ -470,8 +532,6 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
     return loadedBadges;
   }, [profilesList]);
 
-
-
   if (recordsLoading || isLoading) {
     return <AnalyticsSkeleton />;
   }
@@ -485,27 +545,32 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             <TrendingUp className="h-5 w-5 text-blue-500" />
             Performance Analytics Panel
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5 font-medium">Visualize your quotes, requotes, sales records, and leaderboard trends.</p>
+          <p className="text-xs text-slate-400 mt-0.5 font-medium">
+            Visualize your quotes, requotes, sales records, and leaderboard
+            trends.
+          </p>
         </div>
 
         <div className="flex flex-row flex-nowrap items-center gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 w-full lg:w-auto custom-scrollbar">
           {/* Time Scope Toggle: Yearly vs Monthly */}
           <div className="flex items-center bg-slate-950/40 border border-slate-850 p-1 rounded-xl">
             <button
-              onClick={() => setMetricsTimeScope('yearly')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${metricsTimeScope === 'yearly'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white font-medium'
-                }`}
+              onClick={() => setMetricsTimeScope("yearly")}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                metricsTimeScope === "yearly"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white font-medium"
+              }`}
             >
               Yearly
             </button>
             <button
-              onClick={() => setMetricsTimeScope('monthly')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${metricsTimeScope === 'monthly'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white font-medium'
-                }`}
+              onClick={() => setMetricsTimeScope("monthly")}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                metricsTimeScope === "monthly"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white font-medium"
+              }`}
             >
               Monthly
             </button>
@@ -519,8 +584,14 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="bg-transparent text-xs text-slate-350 outline-none border-none cursor-pointer focus:text-white font-semibold"
             >
-              {monthsList.map(m => (
-                <option key={m.value} value={m.value} className="bg-slate-950 text-slate-350">{m.name}</option>
+              {monthsList.map((m) => (
+                <option
+                  key={m.value}
+                  value={m.value}
+                  className="bg-slate-950 text-slate-350"
+                >
+                  {m.name}
+                </option>
               ))}
             </select>
           </div>
@@ -533,8 +604,14 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               onChange={(e) => setSelectedYear(e.target.value)}
               className="bg-transparent text-xs text-slate-350 outline-none border-none cursor-pointer focus:text-white font-semibold"
             >
-              {availableYears.map(year => (
-                <option key={year} value={year} className="bg-slate-950 text-slate-350">Year {year}</option>
+              {availableYears.map((year) => (
+                <option
+                  key={year}
+                  value={year}
+                  className="bg-slate-950 text-slate-350"
+                >
+                  Year {year}
+                </option>
               ))}
             </select>
           </div>
@@ -548,11 +625,17 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#3b82f6]/5 rounded-full blur-2xl group-hover:bg-[#3b82f6]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">Total Quotes</p>
+              <p className="text-xs font-semibold text-slate-400">
+                Total Quotes
+              </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">{stats.quotes}</h3>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                  {stats.quotes}
+                </h3>
                 <div>
-                  <GrowthBadge {...getGrowthStats(stats.quotes, previousStats.quotes)} />
+                  <GrowthBadge
+                    {...getGrowthStats(stats.quotes, previousStats.quotes)}
+                  />
                 </div>
               </div>
             </div>
@@ -561,8 +644,15 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </div>
           </div>
           <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
-            <span>Quotes in {metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name} ${selectedYear}`}</span>
-            <span className="text-[9px] text-slate-450 opacity-80">vs. prev {metricsTimeScope === 'yearly' ? 'year' : 'month'}</span>
+            <span>
+              Quotes in{" "}
+              {metricsTimeScope === "yearly"
+                ? selectedYear
+                : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
+            </span>
+            <span className="text-[9px] text-slate-450 opacity-80">
+              vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
+            </span>
           </p>
         </div>
 
@@ -571,11 +661,17 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#a855f7]/5 rounded-full blur-2xl group-hover:bg-[#a855f7]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">Total Requotes</p>
+              <p className="text-xs font-semibold text-slate-400">
+                Total Requotes
+              </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">{stats.requotes}</h3>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                  {stats.requotes}
+                </h3>
                 <div>
-                  <GrowthBadge {...getGrowthStats(stats.requotes, previousStats.requotes)} />
+                  <GrowthBadge
+                    {...getGrowthStats(stats.requotes, previousStats.requotes)}
+                  />
                 </div>
               </div>
             </div>
@@ -584,8 +680,15 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </div>
           </div>
           <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
-            <span>Requotes in {metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name} ${selectedYear}`}</span>
-            <span className="text-[9px] text-slate-450 opacity-80">vs. prev {metricsTimeScope === 'yearly' ? 'year' : 'month'}</span>
+            <span>
+              Requotes in{" "}
+              {metricsTimeScope === "yearly"
+                ? selectedYear
+                : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
+            </span>
+            <span className="text-[9px] text-slate-450 opacity-80">
+              vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
+            </span>
           </p>
         </div>
 
@@ -594,11 +697,17 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#ec4899]/5 rounded-full blur-2xl group-hover:bg-[#ec4899]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">Total Reviews</p>
+              <p className="text-xs font-semibold text-slate-400">
+                Total Reviews
+              </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">{stats.reviews}</h3>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                  {stats.reviews}
+                </h3>
                 <div>
-                  <GrowthBadge {...getGrowthStats(stats.reviews, previousStats.reviews)} />
+                  <GrowthBadge
+                    {...getGrowthStats(stats.reviews, previousStats.reviews)}
+                  />
                 </div>
               </div>
             </div>
@@ -607,8 +716,15 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </div>
           </div>
           <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
-            <span>Reviews in {metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name} ${selectedYear}`}</span>
-            <span className="text-[9px] text-slate-450 opacity-80">vs. prev {metricsTimeScope === 'yearly' ? 'year' : 'month'}</span>
+            <span>
+              Reviews in{" "}
+              {metricsTimeScope === "yearly"
+                ? selectedYear
+                : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
+            </span>
+            <span className="text-[9px] text-slate-450 opacity-80">
+              vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
+            </span>
           </p>
         </div>
 
@@ -617,11 +733,17 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#10b981]/5 rounded-full blur-2xl group-hover:bg-[#10b981]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">Total Sales</p>
+              <p className="text-xs font-semibold text-slate-400">
+                Total Sales
+              </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">{stats.sales}</h3>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                  {stats.sales}
+                </h3>
                 <div>
-                  <GrowthBadge {...getGrowthStats(stats.sales, previousStats.sales)} />
+                  <GrowthBadge
+                    {...getGrowthStats(stats.sales, previousStats.sales)}
+                  />
                 </div>
               </div>
             </div>
@@ -630,8 +752,15 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </div>
           </div>
           <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
-            <span>Sales in {metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name} ${selectedYear}`}</span>
-            <span className="text-[9px] text-slate-450 opacity-80">vs. prev {metricsTimeScope === 'yearly' ? 'year' : 'month'}</span>
+            <span>
+              Sales in{" "}
+              {metricsTimeScope === "yearly"
+                ? selectedYear
+                : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
+            </span>
+            <span className="text-[9px] text-slate-450 opacity-80">
+              vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
+            </span>
           </p>
         </div>
 
@@ -700,7 +829,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               {/* Horizontal Grid lines */}
               {Array.from({ length: 5 }).map((_, idx) => {
                 const y = 30 + idx * 50;
-                const gridVal = Math.round(maxMonthlyVal - (idx * maxMonthlyVal) / 4);
+                const gridVal = Math.round(
+                  maxMonthlyVal - (idx * maxMonthlyVal) / 4,
+                );
                 return (
                   <g key={idx}>
                     <line
@@ -734,10 +865,22 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
                 // Bar height scales
                 const chartHeight = 200; // 230 - 30
-                const qHeight = maxMonthlyVal > 0 ? (data.quotes / maxMonthlyVal) * chartHeight : 0;
-                const rHeight = maxMonthlyVal > 0 ? (data.requotes / maxMonthlyVal) * chartHeight : 0;
-                const revHeight = maxMonthlyVal > 0 ? (data.reviews / maxMonthlyVal) * chartHeight : 0;
-                const sHeight = maxMonthlyVal > 0 ? (data.sales / maxMonthlyVal) * chartHeight : 0;
+                const qHeight =
+                  maxMonthlyVal > 0
+                    ? (data.quotes / maxMonthlyVal) * chartHeight
+                    : 0;
+                const rHeight =
+                  maxMonthlyVal > 0
+                    ? (data.requotes / maxMonthlyVal) * chartHeight
+                    : 0;
+                const revHeight =
+                  maxMonthlyVal > 0
+                    ? (data.reviews / maxMonthlyVal) * chartHeight
+                    : 0;
+                const sHeight =
+                  maxMonthlyVal > 0
+                    ? (data.sales / maxMonthlyVal) * chartHeight
+                    : 0;
 
                 const barWidth = 8;
                 const gap = 2;
@@ -778,16 +921,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                           ry="2"
                           className="cursor-pointer transition-all duration-250 hover:brightness-125"
                           onMouseEnter={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const container = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            const container =
+                              e.currentTarget.ownerSVGElement?.getBoundingClientRect();
                             if (rect && container) {
                               setHoveredBar({
                                 x: rect.left - container.left + barWidth / 2,
                                 y: rect.top - container.top - 40,
                                 month: data.fullName,
-                                label: 'Quotes',
+                                label: "Quotes",
                                 value: data.quotes,
-                                color: '#3b82f6'
+                                color: "#3b82f6",
                               });
                             }
                           }}
@@ -806,16 +951,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                           ry="2"
                           className="cursor-pointer transition-all duration-250 hover:brightness-125"
                           onMouseEnter={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const container = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            const container =
+                              e.currentTarget.ownerSVGElement?.getBoundingClientRect();
                             if (rect && container) {
                               setHoveredBar({
                                 x: rect.left - container.left + barWidth / 2,
                                 y: rect.top - container.top - 40,
                                 month: data.fullName,
-                                label: 'Requotes',
+                                label: "Requotes",
                                 value: data.requotes,
-                                color: '#a855f7'
+                                color: "#a855f7",
                               });
                             }
                           }}
@@ -834,16 +981,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                           ry="2"
                           className="cursor-pointer transition-all duration-250 hover:brightness-125"
                           onMouseEnter={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const container = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            const container =
+                              e.currentTarget.ownerSVGElement?.getBoundingClientRect();
                             if (rect && container) {
                               setHoveredBar({
                                 x: rect.left - container.left + barWidth / 2,
                                 y: rect.top - container.top - 40,
                                 month: data.fullName,
-                                label: 'Reviews',
+                                label: "Reviews",
                                 value: data.reviews,
-                                color: '#ec4899'
+                                color: "#ec4899",
                               });
                             }
                           }}
@@ -862,16 +1011,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                           ry="2"
                           className="cursor-pointer transition-all duration-250 hover:brightness-125"
                           onMouseEnter={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const container = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            const container =
+                              e.currentTarget.ownerSVGElement?.getBoundingClientRect();
                             if (rect && container) {
                               setHoveredBar({
                                 x: rect.left - container.left + barWidth / 2,
                                 y: rect.top - container.top - 40,
                                 month: data.fullName,
-                                label: 'Sales',
+                                label: "Sales",
                                 value: data.sales,
-                                color: '#10b981'
+                                color: "#10b981",
                               });
                             }
                           }}
@@ -901,14 +1052,24 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 style={{
                   left: `${hoveredBar.x}px`,
                   top: `${hoveredBar.y}px`,
-                  transform: 'translateX(-50%)'
+                  transform: "translateX(-50%)",
                 }}
               >
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{hoveredBar.month}</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  {hoveredBar.month}
+                </span>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: hoveredBar.color }}></span>
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: hoveredBar.color }}
+                  ></span>
                   <span className="font-semibold">{hoveredBar.label}:</span>
-                  <span className="font-extrabold" style={{ color: hoveredBar.color }}>{hoveredBar.value} files</span>
+                  <span
+                    className="font-extrabold"
+                    style={{ color: hoveredBar.color }}
+                  >
+                    {hoveredBar.value} files
+                  </span>
                 </div>
               </div>
             )}
@@ -940,7 +1101,11 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
             <h4 className="text-sm font-bold text-white flex items-center gap-2">
               <MapPin className="h-4.5 w-4.5 text-emerald-400" />
-              Branches Contribution ({metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name.substring(0, 3)} ${selectedYear}`})
+              Branches Contribution (
+              {metricsTimeScope === "yearly"
+                ? selectedYear
+                : `${monthsList.find((m) => m.value === selectedMonth)?.name.substring(0, 3)} ${selectedYear}`}
+              )
             </h4>
           </div>
 
@@ -953,11 +1118,11 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             <div className="flex-1 space-y-5 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
               {branchData.map((branch, idx) => {
                 const colors = [
-                  'bg-blue-500 from-blue-600 to-blue-400',
-                  'bg-emerald-500 from-emerald-600 to-emerald-400',
-                  'bg-purple-500 from-purple-600 to-purple-400',
-                  'bg-purple-500 from-purple-600 to-purple-400',
-                  'bg-rose-500 from-rose-600 to-rose-400',
+                  "bg-blue-500 from-blue-600 to-blue-400",
+                  "bg-emerald-500 from-emerald-600 to-emerald-400",
+                  "bg-purple-500 from-purple-600 to-purple-400",
+                  "bg-purple-500 from-purple-600 to-purple-400",
+                  "bg-rose-500 from-rose-600 to-rose-400",
                 ];
 
                 const colorClass = colors[idx % colors.length];
@@ -965,14 +1130,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 return (
                   <div key={branch.name} className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-slate-350">{branch.name}</span>
-                      <span className="font-extrabold text-white">{branch.count} entries ({branch.percentage}%)</span>
+                      <span className="font-bold text-slate-350">
+                        {branch.name}
+                      </span>
+                      <span className="font-extrabold text-white">
+                        {branch.count} entries ({branch.percentage}%)
+                      </span>
                     </div>
 
                     {/* Progress Bar */}
                     <div className="w-full h-2.5 bg-slate-900 border border-slate-850 rounded-full overflow-hidden">
                       <div
-                        className={`h-full bg-gradient-to-r ${colorClass} rounded-full transition-all duration-1000 ease-out`}
+                        className={`h-full bg-linear-to-r ${colorClass} rounded-full transition-all duration-1000 ease-out`}
                         style={{ width: `${branch.percentage}%` }}
                       ></div>
                     </div>
@@ -990,7 +1159,11 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
             <h4 className="text-sm font-bold text-white flex items-center gap-2">
               <Award className="h-4.5 w-4.5 text-purple-400" />
-              Staff Performance Leaderboard ({metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name.substring(0, 3)} ${selectedYear}`})
+              Staff Performance Leaderboard (
+              {metricsTimeScope === "yearly"
+                ? selectedYear
+                : `${monthsList.find((m) => m.value === selectedMonth)?.name.substring(0, 3)} ${selectedYear}`}
+              )
             </h4>
           </div>
 
@@ -1004,11 +1177,11 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                 {leaderboardData.map((user, idx) => {
                   const medalColors = [
-                    'bg-purple-500/10 border-purple-500/30 text-purple-500 shadow-purple-900/5',
-                    'bg-slate-400/10 border-slate-400/30 text-slate-350 shadow-slate-900/5',
-                    'bg-purple-700/10 border-purple-700/30 text-purple-700 shadow-purple-900/5',
-                    'bg-slate-900 border-slate-800 text-slate-400',
-                    'bg-slate-900 border-slate-800 text-slate-400',
+                    "bg-purple-500/10 border-purple-500/30 text-purple-500 shadow-purple-900/5",
+                    "bg-slate-400/10 border-slate-400/30 text-slate-350 shadow-slate-900/5",
+                    "bg-purple-700/10 border-purple-700/30 text-purple-700 shadow-purple-900/5",
+                    "bg-slate-900 border-slate-800 text-slate-400",
+                    "bg-slate-900 border-slate-800 text-slate-400",
                   ];
 
                   return (
@@ -1017,7 +1190,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                       className="relative overflow-hidden bg-slate-950/50 border border-slate-850 hover:border-slate-800 p-4 rounded-xl flex flex-col justify-between items-center text-center shadow-lg transition-all duration-300 hover:scale-[1.02] group"
                     >
                       {/* Rank Medal */}
-                      <span className={`w-8 h-8 rounded-full border text-xs font-extrabold flex items-center justify-center shadow-md ${idx < 5 ? medalColors[idx] : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
+                      <span
+                        className={`w-8 h-8 rounded-full border text-xs font-extrabold flex items-center justify-center shadow-md ${idx < 5 ? medalColors[idx] : "bg-slate-900 border-slate-800 text-slate-400"}`}
+                      >
                         {idx + 1}
                       </span>
 
@@ -1025,15 +1200,23 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                         <h5 className="text-xs font-extrabold text-white truncate max-w-full group-hover:text-blue-400 transition-colors flex items-center justify-center">
                           <span>{user.name}</span>
                           {topPerformerBadges[user.userId] && (
-                            <VerifiedBadge badge={topPerformerBadges[user.userId]} />
+                            <VerifiedBadge
+                              badge={topPerformerBadges[user.userId]}
+                            />
                           )}
                         </h5>
-                        <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">{user.codename}</p>
+                        <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">
+                          {user.codename}
+                        </p>
                       </div>
 
                       <div className="mt-4 pt-3.5 border-t border-slate-900/30 w-full">
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Submissions</span>
-                        <span className="text-lg font-extrabold text-blue-400 mt-1 block">{user.count}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
+                          Submissions
+                        </span>
+                        <span className="text-lg font-extrabold text-blue-400 mt-1 block">
+                          {user.count}
+                        </span>
                       </div>
                     </div>
                   );
@@ -1041,29 +1224,40 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               </div>
 
               {/* Streak & Wins Highlights Box */}
-              {leaderboardData.some(u => topPerformerBadges[u.userId]) && (
+              {leaderboardData.some((u) => topPerformerBadges[u.userId]) && (
                 <div className="mt-6 bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl">
                   <h5 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     🏆 Streak & Performance Highlights
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {leaderboardData
-                      .filter(u => topPerformerBadges[u.userId])
-                      .map(user => {
+                      .filter((u) => topPerformerBadges[u.userId])
+                      .map((user) => {
                         const badge = topPerformerBadges[user.userId];
                         return (
-                          <div key={user.userId} className="bg-slate-950/45 border border-slate-850/50 p-3 rounded-lg flex flex-col justify-center space-y-1">
+                          <div
+                            key={user.userId}
+                            className="bg-slate-950/45 border border-slate-850/50 p-3 rounded-lg flex flex-col justify-center space-y-1"
+                          >
                             <div className="flex items-center justify-between text-xs border-b border-slate-900 pb-1.5 mb-1.5">
-                              <span className="font-bold text-white truncate">{user.name}</span>
-                              <span className="text-[9px] font-mono text-slate-500 uppercase">{user.codename}</span>
+                              <span className="font-bold text-white truncate">
+                                {user.name}
+                              </span>
+                              <span className="text-[9px] font-mono text-slate-500 uppercase">
+                                {user.codename}
+                              </span>
                             </div>
                             <div className="flex justify-between text-[11px] text-slate-400">
                               <span>Consecutive:</span>
-                              <span className="text-blue-400 font-bold">{badge.consecutiveMonths} mo</span>
+                              <span className="text-blue-400 font-bold">
+                                {badge.consecutiveMonths} mo
+                              </span>
                             </div>
                             <div className="flex justify-between text-[11px] text-slate-400">
                               <span>Yearly Wins:</span>
-                              <span className="text-purple-400 font-bold">{badge.yearlyTopPerformances}x</span>
+                              <span className="text-purple-400 font-bold">
+                                {badge.yearlyTopPerformances}x
+                              </span>
                             </div>
                           </div>
                         );
@@ -1082,27 +1276,40 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         <div className="lg:col-span-2 bg-slate-955/30 border border-slate-800/40 p-5 rounded-2xl shadow-xl flex flex-col min-h-96">
           <h4 className="text-sm font-bold text-white mb-5 flex items-center gap-2">
             <FileText className="h-4.5 w-4.5 text-blue-400 animate-pulse" />
-            File Category Distribution Breakdown ({metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name} ${selectedYear}`})
+            File Category Distribution Breakdown (
+            {metricsTimeScope === "yearly"
+              ? selectedYear
+              : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
+            )
           </h4>
 
           <p className="text-xs text-slate-400 mb-4 font-medium">
-            Detailed breakdown of all 12 custom file types submitted during the selected period.
+            Detailed breakdown of all 12 custom file types submitted during the
+            selected period.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
             {categoryBreakdown.map((cat) => {
               const bgGradientClass = getCategoryColor(cat.name);
               return (
-                <div key={cat.name} className="space-y-1.5 p-2 bg-slate-900/10 border border-slate-850/30 rounded-xl hover:bg-slate-900/20 hover:border-slate-850 transition-all duration-200">
+                <div
+                  key={cat.name}
+                  className="space-y-1.5 p-2 bg-slate-900/10 border border-slate-850/30 rounded-xl hover:bg-slate-900/20 hover:border-slate-850 transition-all duration-200"
+                >
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-bold text-slate-350">{cat.name}</span>
-                    <span className="font-extrabold text-white">{cat.count} <span className="text-[10px] text-slate-500 font-bold">({cat.percentage}%)</span></span>
+                    <span className="font-extrabold text-white">
+                      {cat.count}{" "}
+                      <span className="text-[10px] text-slate-500 font-bold">
+                        ({cat.percentage}%)
+                      </span>
+                    </span>
                   </div>
 
                   {/* Progress Bar */}
                   <div className="w-full h-2 bg-slate-955 rounded-full overflow-hidden border border-slate-850">
                     <div
-                      className={`h-full bg-gradient-to-r ${bgGradientClass} rounded-full transition-all duration-1000 ease-out`}
+                      className={`h-full bg-linear-to-r ${bgGradientClass} rounded-full transition-all duration-1000 ease-out`}
                       style={{ width: `${cat.percentage}%` }}
                     ></div>
                   </div>
@@ -1123,18 +1330,30 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             <div className="space-y-4">
               {/* Stat item 1 */}
               <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl space-y-1.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Average Submissions / Day</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                  Average Submissions / Day
+                </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-extrabold text-white">{(systemMetricsFilteredRecords.length / scopedDaysCount).toFixed(1)}</span>
-                  <span className="text-xs text-slate-400 font-semibold">entries / day</span>
+                  <span className="text-2xl font-extrabold text-white">
+                    {(
+                      systemMetricsFilteredRecords.length / scopedDaysCount
+                    ).toFixed(1)}
+                  </span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    entries / day
+                  </span>
                 </div>
               </div>
 
               {/* Stat item 2 */}
               <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl space-y-1.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Dominant Submission Type</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                  Dominant Submission Type
+                </span>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-extrabold text-white truncate max-w-[65%]">{dominantActivity.name}</span>
+                  <span className="text-xs font-extrabold text-white truncate max-w-[65%]">
+                    {dominantActivity.name}
+                  </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 shrink-0">
                     {dominantActivity.count} files
                   </span>
@@ -1144,16 +1363,17 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-800/50">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Automated Executive Summary</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">
+              Automated Executive Summary
+            </span>
             <p className="text-xs text-slate-350 leading-relaxed font-medium">
-              {systemMetricsFilteredRecords.length === 0 ? (
-                "No submission activities recorded for this period. Start logging entries to view insights."
-              ) : (
-                `During this period, a total of ${systemMetricsFilteredRecords.length} records were processed. The system achieved a sales conversion rate of ${stats.conversionRate.toFixed(2)}% (${stats.sales} sales out of ${stats.quotes} quotes). ${dominantActivity.count > 0
-                  ? `The primary driver of activity was ${dominantActivity.name}, contributing to ${dominantActivity.percentage.toFixed(2)}% of all operations.`
-                  : ''
-                }`
-              )}
+              {systemMetricsFilteredRecords.length === 0
+                ? "No submission activities recorded for this period. Start logging entries to view insights."
+                : `During this period, a total of ${systemMetricsFilteredRecords.length} records were processed. The system achieved a sales conversion rate of ${stats.conversionRate.toFixed(2)}% (${stats.sales} sales out of ${stats.quotes} quotes). ${
+                    dominantActivity.count > 0
+                      ? `The primary driver of activity was ${dominantActivity.name}, contributing to ${dominantActivity.percentage.toFixed(2)}% of all operations.`
+                      : ""
+                  }`}
             </p>
           </div>
         </div>

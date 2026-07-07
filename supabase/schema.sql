@@ -920,45 +920,10 @@ CREATE TABLE public.compliance_rules (
 -- Enable RLS on compliance_rules
 ALTER TABLE public.compliance_rules ENABLE ROW LEVEL SECURITY;
 
-CREATE TABLE public.rules_history (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  rule_id UUID NOT NULL,
-  category TEXT NOT NULL,
-  sub_category TEXT NOT NULL,
-  company_name TEXT,
-  company_tags TEXT[],
-  title TEXT,
-  content TEXT NOT NULL,
-  extra_info TEXT,
-  action_type TEXT NOT NULL CHECK (action_type IN ('INSERT', 'UPDATE', 'DELETE')),
-  archived_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  archived_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL
-);
-
--- Enable RLS on rules_history
-ALTER TABLE public.rules_history ENABLE ROW LEVEL SECURITY;
-
--- Archive Rules Changes Trigger Function
-CREATE OR REPLACE FUNCTION public.archive_rule_changes()
+-- Trigger to update updated_at and updated_by on compliance_rules modifications
+CREATE OR REPLACE FUNCTION public.update_compliance_rules_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Archive if it's a soft delete
-  IF (OLD.is_deleted = false AND NEW.is_deleted = true) THEN
-    INSERT INTO public.rules_history (
-      rule_id, category, sub_category, company_name, company_tags, title, content, extra_info, action_type, archived_by
-    )
-    VALUES (
-      OLD.id, OLD.category, OLD.sub_category, OLD.company_name, OLD.company_tags, OLD.title, OLD.content, OLD.extra_info, 'DELETE', auth.uid()
-    );
-  -- Only archive if the content actually changed
-  ELSIF (OLD.content <> NEW.content OR OLD.title IS DISTINCT FROM NEW.title OR OLD.extra_info IS DISTINCT FROM NEW.extra_info OR OLD.company_name IS DISTINCT FROM NEW.company_name) THEN
-    INSERT INTO public.rules_history (
-      rule_id, category, sub_category, company_name, company_tags, title, content, extra_info, action_type, archived_by
-    )
-    VALUES (
-      OLD.id, OLD.category, OLD.sub_category, OLD.company_name, OLD.company_tags, OLD.title, OLD.content, OLD.extra_info, 'UPDATE', auth.uid()
-    );
-  END IF;
   NEW.updated_at := now();
   NEW.updated_by := auth.uid();
   RETURN NEW;
@@ -967,9 +932,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Bind trigger to compliance_rules
 DROP TRIGGER IF EXISTS trg_archive_rule_changes ON public.compliance_rules;
-CREATE TRIGGER trg_archive_rule_changes
+DROP TRIGGER IF EXISTS trg_update_compliance_rules_updated_at ON public.compliance_rules;
+CREATE TRIGGER trg_update_compliance_rules_updated_at
   BEFORE UPDATE ON public.compliance_rules
-  FOR EACH ROW EXECUTE FUNCTION public.archive_rule_changes();
+  FOR EACH ROW EXECUTE FUNCTION public.update_compliance_rules_updated_at();
 
 -- Policies for compliance_rules
 CREATE POLICY "Allow authenticated to read compliance rules" ON public.compliance_rules
@@ -1010,14 +976,7 @@ CREATE POLICY "Allow admins, supervisors or authorized editors to delete rules" 
     )
   );
 
--- Policies for rules_history
-CREATE POLICY "Allow admins & supervisors to read rules history" ON public.rules_history
-  FOR SELECT TO authenticated USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND (role = 'admin' OR role = 'supervisor' OR can_manage_rules = TRUE)
-    )
-  );
+
 
 -- ==========================================
 -- 12. Quotes App: todos Table
@@ -1058,7 +1017,7 @@ CREATE INDEX IF NOT EXISTS idx_todos_todo_date ON public.todos(todo_date);
 ALTER PUBLICATION supabase_realtime ADD TABLE public.records;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.todos;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.compliance_rules;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.rules_history;
+
 
 -- ==========================================
 -- 11. Audit Logs Table

@@ -1,7 +1,7 @@
-import React, { useEffect, useCallback } from 'react';
-import { X, Loader2 } from 'lucide-react';
-import { FileType } from '@/types';
-import { BranchSelector } from '../BranchSelector';
+import React, { useEffect, useCallback } from "react";
+import { X, Loader2 } from "lucide-react";
+import { FileType } from "@/types";
+import { BranchSelector } from "../BranchSelector";
 
 interface EditRecordModalProps {
   editFileName: string;
@@ -20,8 +20,8 @@ interface EditRecordModalProps {
   allowedCategories: string[];
   onClose: () => void;
   onSave: () => void;
-  editSaleStatus?: 'SOLD' | 'UNSOLD';
-  setEditSaleStatus?: (val: 'SOLD' | 'UNSOLD') => void;
+  editSaleStatus?: "SOLD" | "UNSOLD";
+  setEditSaleStatus?: (val: "SOLD" | "UNSOLD") => void;
   submitting?: boolean;
 }
 
@@ -44,16 +44,19 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
   onSave,
   editSaleStatus,
   setEditSaleStatus,
-  submitting = false
+  submitting = false,
 }) => {
   // Close on Escape key press
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && !submitting) onClose();
-  }, [onClose, submitting]);
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !submitting) onClose();
+    },
+    [onClose, submitting],
+  );
 
   useEffect(() => {
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [handleEscape]);
 
   const handleDateChange = (value: string) => {
@@ -83,11 +86,15 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
         </button>
 
         <h3 className="text-lg font-bold text-white mb-1">Edit Entry</h3>
-        <p className="text-xs text-slate-450 mb-5">Modify the details of the selected file below.</p>
+        <p className="text-xs text-slate-450 mb-5">
+          Modify the details of the selected file below.
+        </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-350 mb-1">File Name</label>
+            <label className="block text-xs font-semibold text-slate-350 mb-1">
+              File Name
+            </label>
             <input
               type="text"
               disabled={submitting}
@@ -98,7 +105,9 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-355 mb-1">Branch Name</label>
+            <label className="block text-xs font-semibold text-slate-355 mb-1">
+              Branch Name
+            </label>
             <BranchSelector
               value={editBranchName}
               onChange={setEditBranchName}
@@ -108,7 +117,9 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-355 mb-1">Codename</label>
+            <label className="block text-xs font-semibold text-slate-355 mb-1">
+              Codename
+            </label>
             <input
               type="text"
               disabled={submitting}
@@ -119,7 +130,9 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-355 mb-1.5">File Category</label>
+            <label className="block text-xs font-semibold text-slate-355 mb-1.5">
+              File Category
+            </label>
             <select
               value={editFileType}
               disabled={submitting}
@@ -134,13 +147,17 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
             </select>
           </div>
 
-          {editFileType === 'Sale' && editSaleStatus && setEditSaleStatus && (
+          {editFileType === "Sale" && editSaleStatus && setEditSaleStatus && (
             <div>
-              <label className="block text-xs font-semibold text-slate-355 mb-1.5">Sale Status</label>
+              <label className="block text-xs font-semibold text-slate-355 mb-1.5">
+                Sale Status
+              </label>
               <select
                 value={editSaleStatus}
                 disabled={submitting}
-                onChange={(e) => setEditSaleStatus(e.target.value as 'SOLD' | 'UNSOLD')}
+                onChange={(e) =>
+                  setEditSaleStatus(e.target.value as "SOLD" | "UNSOLD")
+                }
                 className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
               >
                 <option value="SOLD">Sold</option>
@@ -152,7 +169,9 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           {canEditSubmittedAt && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-355 mb-1">Submitted Date</label>
+                <label className="block text-xs font-semibold text-slate-355 mb-1">
+                  Submitted Date
+                </label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -166,14 +185,18 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-355 mb-1">Submitted Time</label>
+                <label className="block text-xs font-semibold text-slate-355 mb-1">
+                  Submitted Time
+                </label>
                 <input
                   type="text"
                   disabled={submitting}
                   maxLength={8}
                   placeholder="09:21 PM"
                   value={editSubmittedTime}
-                  onChange={(e) => setEditSubmittedTime(e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    setEditSubmittedTime(e.target.value.toUpperCase())
+                  }
                   className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                 />
               </div>
@@ -191,7 +214,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
             <button
               onClick={onSave}
               disabled={submitting}
-              className="flex-1 py-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-blue-950/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              className="flex-1 py-2 bg-linear-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-blue-950/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             >
               {submitting ? (
                 <>
@@ -199,7 +222,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                "Save Changes"
               )}
             </button>
           </div>

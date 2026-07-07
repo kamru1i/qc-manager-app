@@ -1,36 +1,41 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { supabase } from '@/utils/supabase';
-import { Profile, ComplianceRule, RuleHistory } from '@/types';
-import { sendPushNotification } from '@/utils/webPushHelper';
-import { INSURANCE_DATABASE } from '@/utils/initialRulesData';
-import { 
-  Search, 
-  X, 
-  ChevronDown, 
-  Copy, 
-  PlusCircle, 
-  Trash2, 
-  Edit, 
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
+import { createPortal } from "react-dom";
+import { supabase } from "@/utils/supabase";
+import { Profile, ComplianceRule } from "@/types";
+import { sendPushNotification } from "@/utils/webPushHelper";
+import { INSURANCE_DATABASE } from "@/utils/initialRulesData";
+import {
+  Search,
+  X,
+  ChevronDown,
+  Copy,
+  PlusCircle,
+  Trash2,
+  Edit,
   ShieldAlert,
-  AlertTriangle, 
-  BookOpen, 
-  AlertCircle, 
-  ArrowLeft, 
-  History, 
+  AlertTriangle,
+  BookOpen,
+  AlertCircle,
+  ArrowLeft,
   Sparkles,
   Loader2,
   Check,
-  Key
-} from 'lucide-react';
+  Key,
+} from "lucide-react";
 
 interface QuoteRulesPanelProps {
   profile: Profile | null;
   sessionUser: any;
   isOnline: boolean;
-  showToast: (type: 'success' | 'error', text: string) => void;
+  showToast: (type: "success" | "error", text: string) => void;
 }
 
 // ─── ACCORDION SECTION COMPONENT ───────────────────────────────────
@@ -43,13 +48,13 @@ interface AccordionSectionProps {
   children: React.ReactNode;
 }
 
-const AccordionSection: React.FC<AccordionSectionProps> = ({ 
-  title, 
-  icon, 
-  accent, 
-  count, 
-  defaultOpen = false, 
-  children 
+const AccordionSection: React.FC<AccordionSectionProps> = ({
+  title,
+  icon,
+  accent,
+  count,
+  defaultOpen = false,
+  children,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
@@ -59,20 +64,22 @@ const AccordionSection: React.FC<AccordionSectionProps> = ({
         className="w-full flex items-center gap-3 px-5 py-4 hover:bg-slate-850/20 transition-colors duration-200"
       >
         <span className={`shrink-0 ${accent}`}>{icon}</span>
-        <h3 className="text-sm font-semibold tracking-wide text-slate-200 flex-1 text-left">{title}</h3>
+        <h3 className="text-sm font-semibold tracking-wide text-slate-200 flex-1 text-left">
+          {title}
+        </h3>
         {count !== undefined && (
           <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-750">
             {count}
           </span>
         )}
         <ChevronDown
-          className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
-      <div className={`transition-all duration-300 ease-out ${isOpen ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
-        <div className="px-4 pb-4">
-          {children}
-        </div>
+      <div
+        className={`transition-all duration-300 ease-out ${isOpen ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"} overflow-hidden`}
+      >
+        <div className="px-4 pb-4">{children}</div>
       </div>
     </div>
   );
@@ -81,25 +88,32 @@ const AccordionSection: React.FC<AccordionSectionProps> = ({
 let seedingInProgress = false;
 
 const COMPANY_KEYWORDS_MAP: Record<string, string[]> = {
-  'acorn': ['acorn', 'motorcade', 'protect', 'iresure', 'middlesure'],
-  'marshmallow': ['marshmallow', 'move', 'go box'],
-  'esure': ['esure', 'flex', 'sheilas', 'wheels'],
-  'eui': ['eui', 'admiral', 'elephant', 'diamond', 'ford', 'bellbox'],
-  'tesco': ['tesco'],
-  'hastings': ['hastings', 'youdrive'],
-  '1st central': ['1st central', 'first central'],
-  'go girl': ['go girl', 'insure2drive', 'gogirl'],
-  'quote me happy': ['quote me happy', 'quotemehappy', 'aviva', 'general accident'],
-  'axa': ['axa', 'swiftcover', 'moja'],
-  'sainsbury': ['sainsbury', 'sainsburys'],
-  'sheffield': ['sheffield', 'swan drive', 'swandrive']
+  acorn: ["acorn", "motorcade", "protect", "iresure", "middlesure"],
+  marshmallow: ["marshmallow", "move", "go box"],
+  esure: ["esure", "flex", "sheilas", "wheels"],
+  eui: ["eui", "admiral", "elephant", "diamond", "ford", "bellbox"],
+  tesco: ["tesco"],
+  hastings: ["hastings", "youdrive"],
+  "1st central": ["1st central", "first central"],
+  "go girl": ["go girl", "insure2drive", "gogirl"],
+  "quote me happy": [
+    "quote me happy",
+    "quotemehappy",
+    "aviva",
+    "general accident",
+  ],
+  axa: ["axa", "swiftcover", "moja"],
+  sainsbury: ["sainsbury", "sainsburys"],
+  sheffield: ["sheffield", "swan drive", "swandrive"],
 };
 
 const getMentionedCompanies = (text: string): string[] => {
   const lowercaseText = text.toLowerCase();
   const mentioned: string[] = [];
   Object.entries(COMPANY_KEYWORDS_MAP).forEach(([companyKey, keywords]) => {
-    const hasKeyword = keywords.some(keyword => lowercaseText.includes(keyword));
+    const hasKeyword = keywords.some((keyword) =>
+      lowercaseText.includes(keyword),
+    );
     if (hasKeyword) {
       mentioned.push(companyKey);
     }
@@ -110,22 +124,25 @@ const getMentionedCompanies = (text: string): string[] => {
 const getCompanyKey = (name: string): string | null => {
   const lowercaseName = name.toLowerCase();
   for (const [companyKey, keywords] of Object.entries(COMPANY_KEYWORDS_MAP)) {
-    if (keywords.some(keyword => lowercaseName.includes(keyword))) {
+    if (keywords.some((keyword) => lowercaseName.includes(keyword))) {
       return companyKey;
     }
   }
   return null;
 };
 
-const isRuleRelevant = (ruleContent: string, selectedName: string | null): boolean => {
+const isRuleRelevant = (
+  ruleContent: string,
+  selectedName: string | null,
+): boolean => {
   if (!selectedName) return true; // Show all if no company selected
-  
+
   const mentioned = getMentionedCompanies(ruleContent);
   if (mentioned.length === 0) return true; // General rule
-  
+
   const selectedKey = getCompanyKey(selectedName);
   if (!selectedKey) return true; // Fallback if selected company not mapped
-  
+
   return mentioned.includes(selectedKey);
 };
 
@@ -133,18 +150,20 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   profile,
   sessionUser,
   isOnline,
-  showToast
+  showToast,
 }) => {
   const [rules, setRules] = useState<ComplianceRule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
-  const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(null);
+  const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(
+    null,
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
+
   // Authorization check
   const canEdit = useMemo(() => {
-    return profile?.role === 'admin' || !!profile?.can_manage_rules;
+    return profile?.role === "admin" || !!profile?.can_manage_rules;
   }, [profile]);
 
   // Context Menu State
@@ -157,91 +176,98 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [ruleToEdit, setRuleToEdit] = useState<ComplianceRule | null>(null);
   const [ruleToDelete, setRuleToDelete] = useState<ComplianceRule | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Close all open modals on Escape key press
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (isAddModalOpen) setIsAddModalOpen(false);
         if (isEditModalOpen) setIsEditModalOpen(false);
         if (ruleToDelete) setRuleToDelete(null);
-        if (isHistoryModalOpen) setIsHistoryModalOpen(false);
       }
     };
-    
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isAddModalOpen, isEditModalOpen, ruleToDelete, isHistoryModalOpen]);
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isAddModalOpen, isEditModalOpen, ruleToDelete]);
 
   // Form States for Add/Edit
-  const [formCategory, setFormCategory] = useState<'announcement' | 'fine' | 'universal' | 'company'>('company');
-  const [formSubCategory, setFormSubCategory] = useState<any>('common_rules');
-  const [formCompanyName, setFormCompanyName] = useState('');
-  const [formCompanyTagsInput, setFormCompanyTagsInput] = useState('');
-  const [formTitle, setFormTitle] = useState('');
-  const [formContent, setFormContent] = useState('');
-  const [formExtraInfo, setFormExtraInfo] = useState('');
-
-  // History List State
-  const [historyList, setHistoryList] = useState<RuleHistory[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [formCategory, setFormCategory] = useState<
+    "announcement" | "fine" | "universal" | "company"
+  >("company");
+  const [formSubCategory, setFormSubCategory] = useState<any>("common_rules");
+  const [formCompanyName, setFormCompanyName] = useState("");
+  const [formCompanyTagsInput, setFormCompanyTagsInput] = useState("");
+  const [formTitle, setFormTitle] = useState("");
+  const [formContent, setFormContent] = useState("");
+  const [formExtraInfo, setFormExtraInfo] = useState("");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
   // Fetch rules from Supabase
-  const fetchRules = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('compliance_rules')
-        .select('*')
-        .eq('is_deleted', false)
-        .order('created_at', { ascending: true });
+  const fetchRules = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("compliance_rules")
+          .select("*")
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: true });
 
-      if (error) throw error;
-      
-      const uniqueRulesMap = new Map();
-      const duplicateIdsToDelete: string[] = [];
-      
-      (data || []).forEach((r: any) => {
-        const key = `${r.category}_${r.sub_category}_${r.company_name || ''}_${r.title || ''}_${r.content}`;
-        if (!uniqueRulesMap.has(key)) {
-          uniqueRulesMap.set(key, r);
-        } else {
-          duplicateIdsToDelete.push(r.id);
+        if (error) throw error;
+
+        const uniqueRulesMap = new Map();
+        const duplicateIdsToDelete: string[] = [];
+
+        (data || []).forEach((r: any) => {
+          const key = `${r.category}_${r.sub_category}_${r.company_name || ""}_${r.title || ""}_${r.content}`;
+          if (!uniqueRulesMap.has(key)) {
+            uniqueRulesMap.set(key, r);
+          } else {
+            duplicateIdsToDelete.push(r.id);
+          }
+        });
+
+        setRules(Array.from(uniqueRulesMap.values()));
+
+        // Background cleanup of duplicate rules for admins
+        if (
+          duplicateIdsToDelete.length > 0 &&
+          profile?.role === "admin" &&
+          isOnline
+        ) {
+          supabase
+            .from("compliance_rules")
+            .delete()
+            .in("id", duplicateIdsToDelete)
+            .then(({ error: deleteError }) => {
+              if (!deleteError) {
+                console.log(
+                  `Deduplication: Cleaned up ${duplicateIdsToDelete.length} duplicate rules from database.`,
+                );
+              } else {
+                console.error(
+                  "Deduplication: Failed to delete duplicate database rules:",
+                  deleteError,
+                );
+              }
+            });
         }
-      });
-      
-      setRules(Array.from(uniqueRulesMap.values()));
-
-      // Background cleanup of duplicate rules for admins
-      if (duplicateIdsToDelete.length > 0 && profile?.role === 'admin' && isOnline) {
-        supabase
-          .from('compliance_rules')
-          .delete()
-          .in('id', duplicateIdsToDelete)
-          .then(({ error: deleteError }) => {
-            if (!deleteError) {
-              console.log(`Deduplication: Cleaned up ${duplicateIdsToDelete.length} duplicate rules from database.`);
-            } else {
-              console.error('Deduplication: Failed to delete duplicate database rules:', deleteError);
-            }
-          });
+      } catch (err) {
+        console.error("Error fetching compliance rules:", err);
+        showToast("error", "Failed to load rules.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching compliance rules:', err);
-      showToast('error', 'Failed to load rules.');
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast, profile, isOnline]);
+    },
+    [showToast, profile, isOnline],
+  );
 
   // Trigger rules query on mount
   useEffect(() => {
@@ -252,15 +278,21 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   // Close context menu and dropdown on outside click
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(e.target as Node)
+      ) {
         setContextMenu(null);
       }
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setSearchFocused(false);
       }
     };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const seedRules = async () => {
@@ -270,9 +302,9 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
     try {
       // Double check if rules exist in database before insertion
       const { count } = await supabase
-        .from('compliance_rules')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_deleted', false);
+        .from("compliance_rules")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false);
       if (count && count > 0) {
         seedingInProgress = false;
         return;
@@ -282,105 +314,112 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
 
       // 1. Global Announcements
       rowsToInsert.push({
-        category: 'announcement',
-        sub_category: 'nby_rule',
-        content: INSURANCE_DATABASE.global_announcements.nby_rule
+        category: "announcement",
+        sub_category: "nby_rule",
+        content: INSURANCE_DATABASE.global_announcements.nby_rule,
       });
       rowsToInsert.push({
-        category: 'announcement',
-        sub_category: 'general_pricing',
-        content: INSURANCE_DATABASE.global_announcements.general_pricing
+        category: "announcement",
+        sub_category: "general_pricing",
+        content: INSURANCE_DATABASE.global_announcements.general_pricing,
       });
 
       // 2. Admin Fines
-      INSURANCE_DATABASE.admin_fines.forEach(fine => {
+      INSURANCE_DATABASE.admin_fines.forEach((fine) => {
         rowsToInsert.push({
-          category: 'fine',
-          sub_category: 'common_rules',
+          category: "fine",
+          sub_category: "common_rules",
           title: fine.title,
           content: fine.detail,
-          extra_info: fine.amount
+          extra_info: fine.amount,
         });
       });
 
       // 3. Universal Rules
-      INSURANCE_DATABASE.universal_rules.employment.forEach(rule => {
+      INSURANCE_DATABASE.universal_rules.employment.forEach((rule) => {
         rowsToInsert.push({
-          category: 'universal',
-          sub_category: 'employment',
-          content: rule
+          category: "universal",
+          sub_category: "employment",
+          content: rule,
         });
       });
-      INSURANCE_DATABASE.universal_rules.driver_and_usage.forEach(rule => {
+      INSURANCE_DATABASE.universal_rules.driver_and_usage.forEach((rule) => {
         rowsToInsert.push({
-          category: 'universal',
-          sub_category: 'driver_and_usage',
-          content: rule
+          category: "universal",
+          sub_category: "driver_and_usage",
+          content: rule,
         });
       });
-      INSURANCE_DATABASE.universal_rules.license_and_residency.forEach(rule => {
+      INSURANCE_DATABASE.universal_rules.license_and_residency.forEach(
+        (rule) => {
+          rowsToInsert.push({
+            category: "universal",
+            sub_category: "license_and_residency",
+            content: rule,
+          });
+        },
+      );
+      INSURANCE_DATABASE.universal_rules.file_processing.forEach((rule) => {
         rowsToInsert.push({
-          category: 'universal',
-          sub_category: 'license_and_residency',
-          content: rule
-        });
-      });
-      INSURANCE_DATABASE.universal_rules.file_processing.forEach(rule => {
-        rowsToInsert.push({
-          category: 'universal',
-          sub_category: 'file_processing',
-          content: rule
+          category: "universal",
+          sub_category: "file_processing",
+          content: rule,
         });
       });
 
       // 4. Company Rules
-      INSURANCE_DATABASE.companies.forEach(company => {
-        company.branch_priority.forEach(rule => {
+      INSURANCE_DATABASE.companies.forEach((company) => {
+        company.branch_priority.forEach((rule) => {
           rowsToInsert.push({
-            category: 'company',
-            sub_category: 'branch_priority',
+            category: "company",
+            sub_category: "branch_priority",
             company_name: company.name,
             company_tags: company.tags,
-            content: rule
+            content: rule,
           });
         });
-        company.doc_extensions.forEach(rule => {
+        company.doc_extensions.forEach((rule) => {
           rowsToInsert.push({
-            category: 'company',
-            sub_category: 'doc_extensions',
+            category: "company",
+            sub_category: "doc_extensions",
             company_name: company.name,
             company_tags: company.tags,
-            content: rule
+            content: rule,
           });
         });
-        company.common_rules.forEach(rule => {
+        company.common_rules.forEach((rule) => {
           rowsToInsert.push({
-            category: 'company',
-            sub_category: 'common_rules',
+            category: "company",
+            sub_category: "common_rules",
             company_name: company.name,
             company_tags: company.tags,
-            content: rule
+            content: rule,
           });
         });
       });
 
-      const { error } = await supabase.from('compliance_rules').insert(rowsToInsert);
+      const { error } = await supabase
+        .from("compliance_rules")
+        .insert(rowsToInsert);
       if (error) throw error;
-      
+
       // Log seeding activity
-      await supabase.from('audit_logs').insert({
+      await supabase.from("audit_logs").insert({
         actor_id: sessionUser?.id,
-        actor_codename: profile?.username || 'SYSTEM',
-        action_type: 'SEED_RULES',
+        actor_codename: profile?.username || "SYSTEM",
+        action_type: "SEED_RULES",
         target_id: null,
-        details: 'Initialized compliance rules database with 83 default rules'
+        details: "Initialized compliance rules database with 83 default rules",
       });
 
-      showToast('success', 'Quote rules database initialized successfully!');
+      showToast("success", "Quote rules database initialized successfully!");
       fetchRules();
     } catch (err) {
-      console.error('Failed to seed rules database:', err);
-      showToast('error', 'Seeding failed: ' + (err instanceof Error ? err.message : String(err)));
+      console.error("Failed to seed rules database:", err);
+      showToast(
+        "error",
+        "Seeding failed: " + (err instanceof Error ? err.message : String(err)),
+      );
     } finally {
       seedingInProgress = false;
       setLoading(false);
@@ -393,56 +432,88 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
       // Prompt seeding
       const checkAndSeed = async () => {
         const { count, error } = await supabase
-          .from('compliance_rules')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_deleted', false);
-        
+          .from("compliance_rules")
+          .select("*", { count: "exact", head: true })
+          .eq("is_deleted", false);
+
         if (!error && count === 0) {
           seedRules();
         }
       };
       checkAndSeed();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules.length, loading, canEdit, isOnline]);
 
   // Group rules into structured variables
   const globalAnnouncements = useMemo(() => {
     return {
-      nby_rule: rules.find(r => r.category === 'announcement' && r.sub_category === 'nby_rule'),
-      general_pricing: rules.find(r => r.category === 'announcement' && r.sub_category === 'general_pricing')
+      nby_rule: rules.find(
+        (r) => r.category === "announcement" && r.sub_category === "nby_rule",
+      ),
+      general_pricing: rules.find(
+        (r) =>
+          r.category === "announcement" && r.sub_category === "general_pricing",
+      ),
     };
   }, [rules]);
 
   const adminFines = useMemo(() => {
-    const fines = rules.filter(r => r.category === 'fine');
+    const fines = rules.filter((r) => r.category === "fine");
     if (!selectedCompanyName) return fines;
-    return fines.filter(r => isRuleRelevant(r.content || '', selectedCompanyName) || isRuleRelevant(r.title || '', selectedCompanyName));
+    return fines.filter(
+      (r) =>
+        isRuleRelevant(r.content || "", selectedCompanyName) ||
+        isRuleRelevant(r.title || "", selectedCompanyName),
+    );
   }, [rules, selectedCompanyName]);
 
   const universalRules = useMemo(() => {
     const filterFn = (r: ComplianceRule) => {
       if (!selectedCompanyName) return true;
-      return isRuleRelevant(r.content || '', selectedCompanyName) || isRuleRelevant(r.title || '', selectedCompanyName);
+      return (
+        isRuleRelevant(r.content || "", selectedCompanyName) ||
+        isRuleRelevant(r.title || "", selectedCompanyName)
+      );
     };
 
     return {
-      employment: rules.filter(r => r.category === 'universal' && r.sub_category === 'employment').filter(filterFn),
-      driver_and_usage: rules.filter(r => r.category === 'universal' && r.sub_category === 'driver_and_usage').filter(filterFn),
-      license_and_residency: rules.filter(r => r.category === 'universal' && r.sub_category === 'license_and_residency').filter(filterFn),
-      file_processing: rules.filter(r => r.category === 'universal' && r.sub_category === 'file_processing').filter(filterFn)
+      employment: rules
+        .filter(
+          (r) => r.category === "universal" && r.sub_category === "employment",
+        )
+        .filter(filterFn),
+      driver_and_usage: rules
+        .filter(
+          (r) =>
+            r.category === "universal" && r.sub_category === "driver_and_usage",
+        )
+        .filter(filterFn),
+      license_and_residency: rules
+        .filter(
+          (r) =>
+            r.category === "universal" &&
+            r.sub_category === "license_and_residency",
+        )
+        .filter(filterFn),
+      file_processing: rules
+        .filter(
+          (r) =>
+            r.category === "universal" && r.sub_category === "file_processing",
+        )
+        .filter(filterFn),
     };
   }, [rules, selectedCompanyName]);
 
   // Unique list of companies derived from the database rules
   const uniqueCompanies = useMemo(() => {
     const map = new Map<string, { name: string; tags: string[] }>();
-    rules.forEach(r => {
-      if (r.category === 'company' && r.company_name) {
+    rules.forEach((r) => {
+      if (r.category === "company" && r.company_name) {
         if (!map.has(r.company_name)) {
           map.set(r.company_name, {
             name: r.company_name,
-            tags: r.company_tags || []
+            tags: r.company_tags || [],
           });
         }
       }
@@ -453,13 +524,19 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   // Active Company Filtered details
   const selectedCompanyRules = useMemo(() => {
     if (!selectedCompanyName) return null;
-    const cmpRules = rules.filter(r => r.category === 'company' && r.company_name === selectedCompanyName);
+    const cmpRules = rules.filter(
+      (r) => r.category === "company" && r.company_name === selectedCompanyName,
+    );
     return {
       name: selectedCompanyName,
       tags: cmpRules[0]?.company_tags || [],
-      branch_priority: cmpRules.filter(r => r.sub_category === 'branch_priority'),
-      doc_extensions: cmpRules.filter(r => r.sub_category === 'doc_extensions'),
-      common_rules: cmpRules.filter(r => r.sub_category === 'common_rules')
+      branch_priority: cmpRules.filter(
+        (r) => r.sub_category === "branch_priority",
+      ),
+      doc_extensions: cmpRules.filter(
+        (r) => r.sub_category === "doc_extensions",
+      ),
+      common_rules: cmpRules.filter((r) => r.sub_category === "common_rules"),
     };
   }, [rules, selectedCompanyName]);
 
@@ -467,23 +544,25 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   const suggestions = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return [];
-    return uniqueCompanies.filter(c => 
-      c.name.toLowerCase().includes(q) || 
-      c.tags.some(t => t.toLowerCase().includes(q))
+    return uniqueCompanies.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.tags.some((t) => t.toLowerCase().includes(q)),
     );
   }, [searchQuery, uniqueCompanies]);
 
-  const showDropdown = searchFocused && searchQuery.trim().length > 0 && suggestions.length > 0;
+  const showDropdown =
+    searchFocused && searchQuery.trim().length > 0 && suggestions.length > 0;
 
   // Copy helper
   const handleCopy = async (text: string, id: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(id);
-      showToast('success', 'Copied to clipboard!');
+      showToast("success", "Copied to clipboard!");
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      showToast('error', 'Failed to copy.');
+      showToast("error", "Failed to copy.");
     }
   };
 
@@ -491,11 +570,11 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   const handleAddRuleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isOnline) {
-      showToast('error', 'Requires an active internet connection.');
+      showToast("error", "Requires an active internet connection.");
       return;
     }
     if (!formContent.trim()) {
-      showToast('error', 'Content cannot be empty.');
+      showToast("error", "Content cannot be empty.");
       return;
     }
 
@@ -505,66 +584,78 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         category: formCategory,
         sub_category: formSubCategory,
         content: formContent.trim(),
-        updated_by: sessionUser?.id
+        updated_by: sessionUser?.id,
       };
 
-      if (formCategory === 'company') {
+      if (formCategory === "company") {
         if (!formCompanyName.trim()) {
-          showToast('error', 'Company name is required.');
+          showToast("error", "Company name is required.");
           return;
         }
         payload.company_name = formCompanyName.trim();
-        payload.company_tags = formCompanyTagsInput.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      } else if (formCategory === 'fine') {
+        payload.company_tags = formCompanyTagsInput
+          .split(",")
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean);
+      } else if (formCategory === "fine") {
         if (!formTitle.trim()) {
-          showToast('error', 'Fine title is required.');
+          showToast("error", "Fine title is required.");
           return;
         }
         payload.title = formTitle.trim();
         payload.extra_info = formExtraInfo.trim();
-      } else if (formCategory === 'announcement') {
+      } else if (formCategory === "announcement") {
         // Validation check
-        if (formSubCategory !== 'nby_rule' && formSubCategory !== 'general_pricing') {
-          showToast('error', 'Invalid announcement type.');
+        if (
+          formSubCategory !== "nby_rule" &&
+          formSubCategory !== "general_pricing"
+        ) {
+          showToast("error", "Invalid announcement type.");
           return;
         }
       }
 
-      const { data, error } = await supabase.from('compliance_rules').insert(payload).select().single();
+      const { data, error } = await supabase
+        .from("compliance_rules")
+        .insert(payload)
+        .select()
+        .single();
       if (error) throw error;
 
       // Log activity
-      await supabase.from('audit_logs').insert({
+      await supabase.from("audit_logs").insert({
         actor_id: sessionUser?.id,
-        actor_codename: profile?.username || 'SYSTEM',
-        action_type: 'ADD_RULE',
+        actor_codename: profile?.username || "SYSTEM",
+        action_type: "ADD_RULE",
         target_id: data.id,
-        details: `Added new rule in category '${formCategory}' -> '${formSubCategory}'`
+        details: `Added new rule in category '${formCategory}' -> '${formSubCategory}'`,
       });
 
       // Send push notification to all users
       try {
-        const { data: usersData } = await supabase.from('profiles').select('id');
+        const { data: usersData } = await supabase
+          .from("profiles")
+          .select("id");
         if (usersData) {
-          const userIds = usersData.map(u => u.id);
+          const userIds = usersData.map((u) => u.id);
           await sendPushNotification({
             userIds,
-            title: 'New Compliance Rule Added 🚨',
-            body: `Category: ${formCategory.toUpperCase()} -> ${formSubCategory.toUpperCase()}\n\n${formContent.substring(0, 100)}${formContent.length > 100 ? '...' : ''}`,
-            url: '/quotes'
+            title: "New Compliance Rule Added 🚨",
+            body: `Category: ${formCategory.toUpperCase()} -> ${formSubCategory.toUpperCase()}\n\n${formContent.substring(0, 100)}${formContent.length > 100 ? "..." : ""}`,
+            url: "/quotes",
           });
         }
       } catch (err) {
-        console.error('Failed to send push notifications for new rule:', err);
+        console.error("Failed to send push notifications for new rule:", err);
       }
 
-      showToast('success', 'Rule added successfully!');
+      showToast("success", "Rule added successfully!");
       setIsAddModalOpen(false);
       resetForm();
       await fetchRules(true);
     } catch (err) {
-      console.error('Failed to add rule:', err);
-      showToast('error', 'Error adding rule.');
+      console.error("Failed to add rule:", err);
+      showToast("error", "Error adding rule.");
     } finally {
       setSubmitting(false);
     }
@@ -575,7 +666,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
     e.preventDefault();
     if (!ruleToEdit || !isOnline) return;
     if (!formContent.trim()) {
-      showToast('error', 'Content cannot be empty.');
+      showToast("error", "Content cannot be empty.");
       return;
     }
 
@@ -583,57 +674,86 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
       setSubmitting(true);
       const payload: any = {
         content: formContent.trim(),
-        updated_by: sessionUser?.id
+        updated_by: sessionUser?.id,
       };
 
-      if (ruleToEdit.category === 'company') {
+      if (ruleToEdit.category === "company") {
         payload.company_name = formCompanyName.trim();
-        payload.company_tags = formCompanyTagsInput.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      } else if (ruleToEdit.category === 'fine') {
+        payload.company_tags = formCompanyTagsInput
+          .split(",")
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean);
+      } else if (ruleToEdit.category === "fine") {
         payload.title = formTitle.trim();
         payload.extra_info = formExtraInfo.trim();
       }
 
       const { error } = await supabase
-        .from('compliance_rules')
+        .from("compliance_rules")
         .update(payload)
-        .eq('id', ruleToEdit.id);
+        .eq("id", ruleToEdit.id);
 
       if (error) throw error;
 
       // Log activity
-      await supabase.from('audit_logs').insert({
+      const previousDetails = [
+        `Category: ${ruleToEdit.category}`,
+        `Sub-Category: ${ruleToEdit.sub_category}`,
+        ruleToEdit.title ? `Title: ${ruleToEdit.title}` : "",
+        ruleToEdit.company_name
+          ? `Company Name: ${ruleToEdit.company_name}`
+          : "",
+        ruleToEdit.company_tags && ruleToEdit.company_tags.length > 0
+          ? `Company Tags: ${ruleToEdit.company_tags.join(", ")}`
+          : "",
+        ruleToEdit.content ? `Content: ${ruleToEdit.content}` : "",
+        ruleToEdit.extra_info ? `Extra Info: ${ruleToEdit.extra_info}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n- ");
+
+      await supabase.from("audit_logs").insert({
         actor_id: sessionUser?.id,
-        actor_codename: profile?.username || 'SYSTEM',
-        action_type: 'UPDATE_RULE',
+        actor_codename: profile?.username || "SYSTEM",
+        action_type: "UPDATE_RULE",
         target_id: ruleToEdit.id,
-        details: `Updated compliance rule details for ID '${ruleToEdit.id}'`
+        details: `Updated compliance rule.
+
+Previous Version:
+- ${previousDetails}
+
+Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`,
       });
 
       // Send push notification to all users
       try {
-        const { data: usersData } = await supabase.from('profiles').select('id');
+        const { data: usersData } = await supabase
+          .from("profiles")
+          .select("id");
         if (usersData) {
-          const userIds = usersData.map(u => u.id);
+          const userIds = usersData.map((u) => u.id);
           await sendPushNotification({
             userIds,
-            title: 'Compliance Rule Updated ⚠️',
-            body: `Category: ${ruleToEdit.category.toUpperCase()} -> ${ruleToEdit.sub_category.toUpperCase()}\n\n${formContent.substring(0, 100)}${formContent.length > 100 ? '...' : ''}`,
-            url: '/quotes'
+            title: "Compliance Rule Updated ⚠️",
+            body: `Category: ${ruleToEdit.category.toUpperCase()} -> ${ruleToEdit.sub_category.toUpperCase()}\n\n${formContent.substring(0, 100)}${formContent.length > 100 ? "..." : ""}`,
+            url: "/quotes",
           });
         }
       } catch (err) {
-        console.error('Failed to send push notifications for updated rule:', err);
+        console.error(
+          "Failed to send push notifications for updated rule:",
+          err,
+        );
       }
 
-      showToast('success', 'Rule updated successfully!');
+      showToast("success", "Rule updated successfully!");
       setIsEditModalOpen(false);
       setRuleToEdit(null);
       resetForm();
       await fetchRules(true);
     } catch (err) {
-      console.error('Failed to edit rule:', err);
-      showToast('error', 'Error updating rule.');
+      console.error("Failed to edit rule:", err);
+      showToast("error", "Error updating rule.");
     } finally {
       setSubmitting(false);
     }
@@ -645,109 +765,79 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
     try {
       setSubmitting(true);
       const { error } = await supabase
-        .from('compliance_rules')
+        .from("compliance_rules")
         .update({ is_deleted: true, updated_by: sessionUser?.id })
-        .eq('id', ruleToDelete.id);
+        .eq("id", ruleToDelete.id);
 
       if (error) throw error;
 
       // Log activity
-      await supabase.from('audit_logs').insert({
+      const deletedDetails = [
+        `Category: ${ruleToDelete.category}`,
+        `Sub-Category: ${ruleToDelete.sub_category}`,
+        ruleToDelete.title ? `Title: ${ruleToDelete.title}` : "",
+        ruleToDelete.company_name
+          ? `Company Name: ${ruleToDelete.company_name}`
+          : "",
+        ruleToDelete.company_tags && ruleToDelete.company_tags.length > 0
+          ? `Company Tags: ${ruleToDelete.company_tags.join(", ")}`
+          : "",
+        ruleToDelete.content ? `Content: ${ruleToDelete.content}` : "",
+        ruleToDelete.extra_info ? `Extra Info: ${ruleToDelete.extra_info}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n- ");
+
+      await supabase.from("audit_logs").insert({
         actor_id: sessionUser?.id,
-        actor_codename: profile?.username || 'SYSTEM',
-        action_type: 'DELETE_RULE',
+        actor_codename: profile?.username || "SYSTEM",
+        action_type: "DELETE_RULE",
         target_id: ruleToDelete.id,
-        details: `Soft deleted compliance rule for ID '${ruleToDelete.id}'`
+        details: `Deleted compliance rule.
+
+Rule Details:
+- ${deletedDetails}
+
+Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`,
       });
 
-      showToast('success', 'Rule deleted successfully!');
+      showToast("success", "Rule deleted successfully!");
       setRuleToDelete(null);
       await fetchRules(true);
     } catch (err: any) {
-      console.error('Failed to delete rule:', err?.message || err, err?.details, err?.hint);
-      showToast('error', 'Error deleting rule.');
+      console.error(
+        "Failed to delete rule:",
+        err?.message || err,
+        err?.details,
+        err?.hint,
+      );
+      showToast("error", "Error deleting rule.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Fetch archives from rules_history
-  const viewHistory = async () => {
-    setIsHistoryModalOpen(true);
-    setHistoryLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('rules_history')
-        .select(`
-          *,
-          profiles:archived_by (username, full_name)
-        `)
-        .order('archived_at', { ascending: false });
-
-      if (error) throw error;
-      setHistoryList(data || []);
-    } catch (err) {
-      console.error('Error fetching rules history:', err);
-      showToast('error', 'Failed to load archive history.');
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
-
-  const handleClearHistory = async () => {
-    if (profile?.role !== 'admin') {
-      showToast('error', 'Only administrators can clear rules history.');
-      return;
-    }
-    setShowClearConfirm(true);
-  };
-
-  const executeClearHistory = async () => {
-    setShowClearConfirm(false);
-    setHistoryLoading(true);
-    try {
-      const { error } = await supabase
-        .from('rules_history')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-
-      if (error) throw error;
-
-      await supabase.from('audit_logs').insert({
-        actor_id: sessionUser?.id,
-        actor_codename: profile?.username || 'SYSTEM',
-        action_type: 'CLEAR_RULES_HISTORY',
-        details: 'Admin permanently cleared the rules edit history archive'
-      });
-
-      setHistoryList([]);
-      showToast('success', 'Rules history cleared successfully.');
-    } catch (err: any) {
-      console.error('Error clearing rules history:', err);
-      showToast('error', err?.message || 'Failed to clear history.');
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
-
   const resetForm = () => {
-    setFormCategory('company');
-    setFormSubCategory('common_rules');
-    setFormCompanyName('');
-    setFormCompanyTagsInput('');
-    setFormTitle('');
-    setFormContent('');
-    setFormExtraInfo('');
+    setFormCategory("company");
+    setFormSubCategory("common_rules");
+    setFormCompanyName("");
+    setFormCompanyTagsInput("");
+    setFormTitle("");
+    setFormContent("");
+    setFormExtraInfo("");
   };
 
-  const handleOpenAddModal = (cat: 'announcement' | 'fine' | 'universal' | 'company', sub: string = 'common_rules') => {
+  const handleOpenAddModal = (
+    cat: "announcement" | "fine" | "universal" | "company",
+    sub: string = "common_rules",
+  ) => {
     resetForm();
     setFormCategory(cat);
     setFormSubCategory(sub as any);
-    if (cat === 'company' && selectedCompanyName) {
+    if (cat === "company" && selectedCompanyName) {
       setFormCompanyName(selectedCompanyName);
       const tags = selectedCompanyRules?.tags || [];
-      setFormCompanyTagsInput(tags.join(', '));
+      setFormCompanyTagsInput(tags.join(", "));
     }
     setIsAddModalOpen(true);
   };
@@ -756,11 +846,11 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
     setRuleToEdit(rule);
     setFormCategory(rule.category);
     setFormSubCategory(rule.sub_category);
-    setFormCompanyName(rule.company_name || '');
-    setFormCompanyTagsInput((rule.company_tags || []).join(', '));
-    setFormTitle(rule.title || '');
+    setFormCompanyName(rule.company_name || "");
+    setFormCompanyTagsInput((rule.company_tags || []).join(", "));
+    setFormTitle(rule.title || "");
     setFormContent(rule.content);
-    setFormExtraInfo(rule.extra_info || '');
+    setFormExtraInfo(rule.extra_info || "");
     setIsEditModalOpen(true);
     setContextMenu(null);
   };
@@ -769,26 +859,23 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   const handleContextMenu = (e: React.MouseEvent, rule: ComplianceRule) => {
     if (!canEdit) return; // Only show menu if authorized
     e.preventDefault();
-    
+
     // Clamp position to keep context menu within viewport bounds
     const menuWidth = 144; // w-36 = 9rem = 144px
     const menuHeight = 80; // approximate height of 2 menu items
     const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
     const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
-    
+
     setContextMenu({ x, y, rule });
   };
 
-  // Safe render formatting for timestamp
-  const formatArchiveTime = (isoString: string) => {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleString();
-  };
-
   return (
-    <div className="space-y-6 relative" style={{ fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', 'Inter', sans-serif" }}>
-      
+    <div
+      className="space-y-6 relative"
+      style={{
+        fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', 'Inter', sans-serif",
+      }}
+    >
       {/* ─── HEADER PANEL ─── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -805,21 +892,8 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         <div className="flex items-center gap-3 self-start md:self-auto">
           {canEdit && (
             <button
-              onClick={viewHistory}
-              className="flex items-center gap-1.5 py-2 px-3.5 bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200"
-              title="View Rules Edit Archives"
-            >
-              <History className="h-3.5 w-3.5" />
-              History Archive
-            </button>
-          )}
-
-
-
-          {canEdit && (
-            <button
-              onClick={() => handleOpenAddModal('company')}
-              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+              onClick={() => handleOpenAddModal("company")}
+              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               <PlusCircle className="h-3.5 w-3.5" />
               Add Rule
@@ -844,7 +918,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
           </div>
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => setSearchQuery("")}
               className="absolute right-24 top-1/2 -translate-y-1/2 p-0.5 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white"
             >
               <X className="h-3.5 w-3.5" />
@@ -854,7 +928,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
             onClick={() => {
               if (suggestions.length > 0) {
                 setSelectedCompanyName(suggestions[0].name);
-                setSearchQuery('');
+                setSearchQuery("");
               }
             }}
             className="shrink-0 px-5 py-2.5 bg-blue-600/10 border border-l-0 border-slate-850 hover:bg-blue-600/20 hover:border-blue-500/30 rounded-r-xl text-blue-400 text-sm font-semibold transition-all duration-200"
@@ -875,15 +949,17 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
                   key={company.name}
                   onClick={() => {
                     setSelectedCompanyName(company.name);
-                    setSearchQuery('');
+                    setSearchQuery("");
                     setSearchFocused(false);
                   }}
                   className="w-full text-left px-4 py-2.5 hover:bg-slate-800/60 transition-colors flex items-center justify-between group"
                 >
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">{company.name}</p>
+                    <p className="text-xs font-semibold text-slate-200">
+                      {company.name}
+                    </p>
                     <p className="text-[10px] text-slate-500 mt-0.5">
-                      {company.tags.map(t => `#${t}`).join('  ')}
+                      {company.tags.map((t) => `#${t}`).join("  ")}
                     </p>
                   </div>
                   <Sparkles className="w-3.5 h-3.5 text-slate-700 group-hover:text-blue-400 transition-colors shrink-0" />
@@ -896,9 +972,20 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         {/* Quick search tags */}
         {!selectedCompanyName && !searchQuery && (
           <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider">Quick Select:</span>
-            {['Acorn', 'EUI', 'Marshmallow', 'Tesco', 'Hastings', '1st Central'].map(nameKey => {
-              const matchedCompany = uniqueCompanies.find(c => c.name.toLowerCase().includes(nameKey.toLowerCase()));
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+              Quick Select:
+            </span>
+            {[
+              "Acorn",
+              "EUI",
+              "Marshmallow",
+              "Tesco",
+              "Hastings",
+              "1st Central",
+            ].map((nameKey) => {
+              const matchedCompany = uniqueCompanies.find((c) =>
+                c.name.toLowerCase().includes(nameKey.toLowerCase()),
+              );
               return (
                 <button
                   key={nameKey}
@@ -1000,7 +1087,6 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         </div>
       ) : (
         <div className="space-y-6">
-
           {/* ═══════════════════════════════════════════════════════════ */}
           {/*  COMPANY SPECIFIC RULES DISPLAY                             */}
           {/* ═══════════════════════════════════════════════════════════ */}
@@ -1019,7 +1105,10 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
                     </h3>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {(selectedCompanyRules?.tags || []).map((tag: string) => (
-                        <span key={tag} className="text-[9px] px-2 py-0.5 rounded bg-slate-850 text-blue-400 border border-slate-800">
+                        <span
+                          key={tag}
+                          className="text-[9px] px-2 py-0.5 rounded bg-slate-850 text-blue-400 border border-slate-800"
+                        >
                           #{tag}
                         </span>
                       ))}
@@ -1049,7 +1138,13 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
                   >
                     <div className="space-y-1">
                       {selectedCompanyRules?.branch_priority.map((rule) => (
-                        <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
+                        <RuleItem
+                          key={rule.id}
+                          rule={rule}
+                          onCopy={handleCopy}
+                          copiedId={copiedId}
+                          onContextMenu={handleContextMenu}
+                        />
                       ))}
                     </div>
                   </AccordionSection>
@@ -1066,7 +1161,13 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
                   >
                     <div className="space-y-1">
                       {selectedCompanyRules?.common_rules.map((rule) => (
-                        <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
+                        <RuleItem
+                          key={rule.id}
+                          rule={rule}
+                          onCopy={handleCopy}
+                          copiedId={copiedId}
+                          onContextMenu={handleContextMenu}
+                        />
                       ))}
                     </div>
                   </AccordionSection>
@@ -1074,11 +1175,19 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
 
                 {/* DOC extensions */}
                 {(selectedCompanyRules?.doc_extensions.length || 0) > 0 && (
-                  <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.02] p-4.5 space-y-3">
-                    <h4 className="text-xs font-bold text-purple-400 tracking-wider uppercase">DOC — Driving Other Cars</h4>
+                  <div className="rounded-2xl border border-purple-500/20 bg-purple-500/2 p-4.5 space-y-3">
+                    <h4 className="text-xs font-bold text-purple-400 tracking-wider uppercase">
+                      DOC — Driving Other Cars
+                    </h4>
                     <div className="space-y-1">
                       {selectedCompanyRules?.doc_extensions.map((rule) => (
-                        <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
+                        <RuleItem
+                          key={rule.id}
+                          rule={rule}
+                          onCopy={handleCopy}
+                          copiedId={copiedId}
+                          onContextMenu={handleContextMenu}
+                        />
                       ))}
                     </div>
                   </div>
@@ -1093,71 +1202,121 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
           <div className="space-y-4">
             <div className="flex items-center gap-4 py-4">
               <div className="flex-1 h-px bg-slate-850" />
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest shrink-0">Universal Guidelines</span>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest shrink-0">
+                Universal Guidelines
+              </span>
               <div className="flex-1 h-px bg-slate-850" />
             </div>
 
             {/* NBY Rule */}
             {globalAnnouncements.nby_rule && (
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.02] p-5 space-y-3 animate-fade-in relative group">
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/2 p-5 space-y-3 animate-fade-in relative group">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-base">🚨</span>
-                    <h4 className="text-sm font-bold text-red-300 tracking-wide">CRITICAL — NBY Rule</h4>
+                    <h4 className="text-sm font-bold text-red-300 tracking-wide">
+                      CRITICAL — NBY Rule
+                    </h4>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5 bg-red-500/[0.01] border border-red-500/5 rounded-xl p-3" onContextMenu={(e) => handleContextMenu(e, globalAnnouncements.nby_rule!)}>
-                  <p className="text-xs leading-relaxed text-slate-300/90 flex-1">{globalAnnouncements.nby_rule.content}</p>
-                  <CopyButton text={globalAnnouncements.nby_rule.content} id={globalAnnouncements.nby_rule.id} onCopy={handleCopy} copiedId={copiedId} />
+                <div
+                  className="flex items-start gap-2.5 bg-red-500/1 border border-red-500/5 rounded-xl p-3"
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, globalAnnouncements.nby_rule!)
+                  }
+                >
+                  <p className="text-xs leading-relaxed text-slate-300/90 flex-1">
+                    {globalAnnouncements.nby_rule.content}
+                  </p>
+                  <CopyButton
+                    text={globalAnnouncements.nby_rule.content}
+                    id={globalAnnouncements.nby_rule.id}
+                    onCopy={handleCopy}
+                    copiedId={copiedId}
+                  />
                 </div>
               </div>
             )}
 
             {/* General Pricing */}
             {globalAnnouncements.general_pricing && (
-              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.02] p-5 space-y-3 animate-fade-in relative group">
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/2 p-5 space-y-3 animate-fade-in relative group">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-base">💡</span>
-                    <h4 className="text-sm font-bold text-blue-300 tracking-wide">General Pricing Rule</h4>
+                    <h4 className="text-sm font-bold text-blue-300 tracking-wide">
+                      General Pricing Rule
+                    </h4>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5 bg-blue-500/[0.01] border border-blue-500/5 rounded-xl p-3" onContextMenu={(e) => handleContextMenu(e, globalAnnouncements.general_pricing!)}>
-                  <p className="text-xs leading-relaxed text-slate-300/90 flex-1">{globalAnnouncements.general_pricing.content}</p>
-                  <CopyButton text={globalAnnouncements.general_pricing.content} id={globalAnnouncements.general_pricing.id} onCopy={handleCopy} copiedId={copiedId} />
+                <div
+                  className="flex items-start gap-2.5 bg-blue-500/1 border border-blue-500/5 rounded-xl p-3"
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, globalAnnouncements.general_pricing!)
+                  }
+                >
+                  <p className="text-xs leading-relaxed text-slate-300/90 flex-1">
+                    {globalAnnouncements.general_pricing.content}
+                  </p>
+                  <CopyButton
+                    text={globalAnnouncements.general_pricing.content}
+                    id={globalAnnouncements.general_pricing.id}
+                    onCopy={handleCopy}
+                    copiedId={copiedId}
+                  />
                 </div>
               </div>
             )}
 
             {/* Admin Fines */}
             {adminFines.length > 0 && (
-              <div className="rounded-2xl border border-purple-500/15 bg-purple-500/[0.02] p-5 space-y-4">
+              <div className="rounded-2xl border border-purple-500/15 bg-purple-500/2 p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-purple-300 tracking-wider uppercase flex items-center gap-2">
                     <ShieldAlert className="h-4.5 w-4.5 text-purple-500" />
                     Admin Fines & Penalties
                   </h3>
                   {canEdit && (
-                    <button onClick={() => handleOpenAddModal('fine')} className="p-1 text-slate-400 hover:text-white"><PlusCircle className="h-4 w-4" /></button>
+                    <button
+                      onClick={() => handleOpenAddModal("fine")}
+                      className="p-1 text-slate-400 hover:text-white"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {adminFines.map((fine, idx) => (
-                    <div key={fine.id} className="group relative flex items-start gap-3 p-3.5 bg-slate-900/30 border border-slate-850 rounded-xl hover:bg-slate-850/30 transition-all duration-200" onContextMenu={(e) => handleContextMenu(e, fine)}>
+                    <div
+                      key={fine.id}
+                      className="group relative flex items-start gap-3 p-3.5 bg-slate-900/30 border border-slate-850 rounded-xl hover:bg-slate-850/30 transition-all duration-200"
+                      onContextMenu={(e) => handleContextMenu(e, fine)}
+                    >
                       <span className="shrink-0 mt-0.5 w-5 h-5 rounded-md bg-purple-500/10 flex items-center justify-center text-[10px] font-bold text-purple-400">
                         {idx + 1}
                       </span>
                       <div className="flex-1 min-w-0 pr-6">
                         <div className="flex items-start justify-between gap-3">
-                          <h4 className="text-[12.5px] font-semibold text-purple-300/90 truncate">{fine.title}</h4>
-                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/20 whitespace-nowrap">{fine.extra_info}</span>
+                          <h4 className="text-[12.5px] font-semibold text-purple-300/90 truncate">
+                            {fine.title}
+                          </h4>
+                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/20 whitespace-nowrap">
+                            {fine.extra_info}
+                          </span>
                         </div>
-                        <p className="mt-1 text-[11.5px] text-slate-400 leading-relaxed">{fine.content}</p>
+                        <p className="mt-1 text-[11.5px] text-slate-400 leading-relaxed">
+                          {fine.content}
+                        </p>
                       </div>
 
                       {/* Copy Button */}
                       <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
-                        <CopyButton text={fine.content} id={fine.id} onCopy={handleCopy} copiedId={copiedId} />
+                        <CopyButton
+                          text={fine.content}
+                          id={fine.id}
+                          onCopy={handleCopy}
+                          copiedId={copiedId}
+                        />
                       </div>
                     </div>
                   ))}
@@ -1175,7 +1334,13 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
               >
                 <div className="space-y-1">
                   {universalRules.employment.map((rule) => (
-                    <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
+                    <RuleItem
+                      key={rule.id}
+                      rule={rule}
+                      onCopy={handleCopy}
+                      copiedId={copiedId}
+                      onContextMenu={handleContextMenu}
+                    />
                   ))}
                 </div>
               </AccordionSection>
@@ -1191,7 +1356,13 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
               >
                 <div className="space-y-1">
                   {universalRules.driver_and_usage.map((rule) => (
-                    <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
+                    <RuleItem
+                      key={rule.id}
+                      rule={rule}
+                      onCopy={handleCopy}
+                      copiedId={copiedId}
+                      onContextMenu={handleContextMenu}
+                    />
                   ))}
                 </div>
               </AccordionSection>
@@ -1207,7 +1378,13 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
               >
                 <div className="space-y-1">
                   {universalRules.license_and_residency.map((rule) => (
-                    <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
+                    <RuleItem
+                      key={rule.id}
+                      rule={rule}
+                      onCopy={handleCopy}
+                      copiedId={copiedId}
+                      onContextMenu={handleContextMenu}
+                    />
                   ))}
                 </div>
               </AccordionSection>
@@ -1223,7 +1400,13 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
               >
                 <div className="space-y-1">
                   {universalRules.file_processing.map((rule) => (
-                    <RuleItem key={rule.id} rule={rule} onCopy={handleCopy} copiedId={copiedId} onContextMenu={handleContextMenu} />
+                    <RuleItem
+                      key={rule.id}
+                      rule={rule}
+                      onCopy={handleCopy}
+                      copiedId={copiedId}
+                      onContextMenu={handleContextMenu}
+                    />
                   ))}
                 </div>
               </AccordionSection>
@@ -1233,489 +1416,428 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
       )}
 
       {/* ─── FLOATING CONTEXT MENU ─── */}
-      {mounted && contextMenu && createPortal(
-        <div
-          ref={contextMenuRef}
-          className="fixed bg-slate-900 border border-slate-800 rounded-lg shadow-2xl py-1 w-36 z-50 text-xs animate-fade-in"
-          style={{ top: contextMenu.y, left: contextMenu.x }}
-        >
-          <button
-            onClick={() => handleOpenEditModal(contextMenu.rule)}
-            className="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer"
+      {mounted &&
+        contextMenu &&
+        createPortal(
+          <div
+            ref={contextMenuRef}
+            className="fixed bg-slate-900 border border-slate-800 rounded-lg shadow-2xl py-1 w-36 z-50 text-xs animate-fade-in"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
           >
-            <Edit className="h-3.5 w-3.5 text-blue-500" />
-            Edit Rule
-          </button>
-          <button
-            onClick={() => {
-              setRuleToDelete(contextMenu.rule);
-              setContextMenu(null);
-            }}
-            className="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-red-400 hover:text-red-300 flex items-center gap-2 cursor-pointer border-t border-slate-800"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete Rule
-          </button>
-        </div>,
-        document.body
-      )}
+            <button
+              onClick={() => handleOpenEditModal(contextMenu.rule)}
+              className="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer"
+            >
+              <Edit className="h-3.5 w-3.5 text-blue-500" />
+              Edit Rule
+            </button>
+            <button
+              onClick={() => {
+                setRuleToDelete(contextMenu.rule);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-red-400 hover:text-red-300 flex items-center gap-2 cursor-pointer border-t border-slate-800"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete Rule
+            </button>
+          </div>,
+          document.body,
+        )}
 
       {/* ─── ADD RULE MODAL ─── */}
-      {mounted && isAddModalOpen && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onClick={() => setIsAddModalOpen(false)} className="absolute right-4 top-4 text-slate-450 hover:text-white cursor-pointer"><X className="h-5 w-5" /></button>
-            <h3 className="text-md font-bold text-white mb-4 flex items-center gap-1.5"><PlusCircle className="h-4.5 w-4.5 text-blue-500" /> Add New Rule</h3>
-            <form onSubmit={handleAddRuleSubmit} className="space-y-4 text-xs">
-              
-              <div className="grid grid-cols-2 gap-3">
+      {mounted &&
+        isAddModalOpen &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="absolute right-4 top-4 text-slate-450 hover:text-white cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h3 className="text-md font-bold text-white mb-4 flex items-center gap-1.5">
+                <PlusCircle className="h-4.5 w-4.5 text-blue-500" /> Add New
+                Rule
+              </h3>
+              <form
+                onSubmit={handleAddRuleSubmit}
+                className="space-y-4 text-xs"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formCategory}
+                      onChange={(e: any) => {
+                        setFormCategory(e.target.value);
+                        if (e.target.value === "announcement") {
+                          setFormSubCategory("nby_rule");
+                        } else if (e.target.value === "universal") {
+                          setFormSubCategory("employment");
+                        } else if (e.target.value === "fine") {
+                          setFormSubCategory("common_rules");
+                        } else {
+                          setFormSubCategory("common_rules");
+                        }
+                      }}
+                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                    >
+                      <option value="company">Company Specific</option>
+                      <option value="universal">Universal Rule</option>
+                      <option value="fine">Admin Fine</option>
+                      <option value="announcement">Announcement</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      Sub Category
+                    </label>
+                    {formCategory === "company" ? (
+                      <select
+                        value={formSubCategory}
+                        onChange={(e) =>
+                          setFormSubCategory(e.target.value as any)
+                        }
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                      >
+                        <option value="common_rules">Common Rule</option>
+                        <option value="branch_priority">Branch Priority</option>
+                        <option value="doc_extensions">
+                          DOC Driving Other Cars
+                        </option>
+                      </select>
+                    ) : formCategory === "universal" ? (
+                      <select
+                        value={formSubCategory}
+                        onChange={(e) =>
+                          setFormSubCategory(e.target.value as any)
+                        }
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                      >
+                        <option value="employment">Employment</option>
+                        <option value="driver_and_usage">
+                          Driver & Car Usage
+                        </option>
+                        <option value="license_and_residency">
+                          License & Residency
+                        </option>
+                        <option value="file_processing">
+                          File Processing & Policies
+                        </option>
+                      </select>
+                    ) : formCategory === "announcement" ? (
+                      <select
+                        value={formSubCategory}
+                        onChange={(e) =>
+                          setFormSubCategory(e.target.value as any)
+                        }
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                      >
+                        <option value="nby_rule">NBY Rule</option>
+                        <option value="general_pricing">General Pricing</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        disabled
+                        value="Common Rules"
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500 opacity-60"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {formCategory === "company" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Company Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Marshmallow"
+                        value={formCompanyName}
+                        onChange={(e) => setFormCompanyName(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Tags (Comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. marshmallow, move, go"
+                        value={formCompanyTagsInput}
+                        onChange={(e) =>
+                          setFormCompanyTagsInput(e.target.value)
+                        }
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {formCategory === "fine" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Fine Title
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. ভুল আপডেট"
+                        value={formTitle}
+                        onChange={(e) => setFormTitle(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Penalty Amount
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. ৫০০ টাকা জরিমানা"
+                        value={formExtraInfo}
+                        onChange={(e) => setFormExtraInfo(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-355 mb-1">Category</label>
-                  <select
-                    value={formCategory}
-                    onChange={(e: any) => {
-                      setFormCategory(e.target.value);
-                      if (e.target.value === 'announcement') {
-                        setFormSubCategory('nby_rule');
-                      } else if (e.target.value === 'universal') {
-                        setFormSubCategory('employment');
-                      } else if (e.target.value === 'fine') {
-                        setFormSubCategory('common_rules');
-                      } else {
-                        setFormSubCategory('common_rules');
-                      }
-                    }}
-                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                  <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                    Rule Detail (Bengali or English)
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="Type the rule instruction..."
+                    value={formContent}
+                    onChange={(e) => setFormContent(e.target.value)}
+                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 resize-y"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <option value="company">Company Specific</option>
-                    <option value="universal">Universal Rule</option>
-                    <option value="fine">Admin Fine</option>
-                    <option value="announcement">Announcement</option>
-                  </select>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                  >
+                    Save Rule
+                  </button>
                 </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-355 mb-1">Sub Category</label>
-                  {formCategory === 'company' ? (
-                    <select value={formSubCategory} onChange={(e) => setFormSubCategory(e.target.value as any)} className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer">
-                      <option value="common_rules">Common Rule</option>
-                      <option value="branch_priority">Branch Priority</option>
-                      <option value="doc_extensions">DOC Driving Other Cars</option>
-                    </select>
-                  ) : formCategory === 'universal' ? (
-                    <select value={formSubCategory} onChange={(e) => setFormSubCategory(e.target.value as any)} className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer">
-                      <option value="employment">Employment</option>
-                      <option value="driver_and_usage">Driver & Car Usage</option>
-                      <option value="license_and_residency">License & Residency</option>
-                      <option value="file_processing">File Processing & Policies</option>
-                    </select>
-                  ) : formCategory === 'announcement' ? (
-                    <select value={formSubCategory} onChange={(e) => setFormSubCategory(e.target.value as any)} className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer">
-                      <option value="nby_rule">NBY Rule</option>
-                      <option value="general_pricing">General Pricing</option>
-                    </select>
-                  ) : (
-                    <input type="text" disabled value="Common Rules" className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500 opacity-60" />
-                  )}
-                </div>
-              </div>
-
-              {formCategory === 'company' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Company Name</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Marshmallow"
-                      value={formCompanyName}
-                      onChange={(e) => setFormCompanyName(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Tags (Comma-separated)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. marshmallow, move, go"
-                      value={formCompanyTagsInput}
-                      onChange={(e) => setFormCompanyTagsInput(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {formCategory === 'fine' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Fine Title</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. ভুল আপডেট"
-                      value={formTitle}
-                      onChange={(e) => setFormTitle(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Penalty Amount</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. ৫০০ টাকা জরিমানা"
-                      value={formExtraInfo}
-                      onChange={(e) => setFormExtraInfo(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-355 mb-1">Rule Detail (Bengali or English)</label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Type the rule instruction..."
-                  value={formContent}
-                  onChange={(e) => setFormContent(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 resize-y"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                >
-                  Save Rule
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* ─── EDIT RULE MODAL ─── */}
-      {mounted && isEditModalOpen && ruleToEdit && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onClick={() => setIsEditModalOpen(false)} className="absolute right-4 top-4 text-slate-455 hover:text-white cursor-pointer"><X className="h-5 w-5" /></button>
-            <h3 className="text-md font-bold text-white mb-4 flex items-center gap-1.5"><Edit className="h-4.5 w-4.5 text-blue-500" /> Edit Rule</h3>
-            <form onSubmit={handleEditRuleSubmit} className="space-y-4 text-xs">
-              
-              <div className="grid grid-cols-2 gap-3 opacity-60">
+      {mounted &&
+        isEditModalOpen &&
+        ruleToEdit &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="absolute right-4 top-4 text-slate-455 hover:text-white cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h3 className="text-md font-bold text-white mb-4 flex items-center gap-1.5">
+                <Edit className="h-4.5 w-4.5 text-blue-500" /> Edit Rule
+              </h3>
+              <form
+                onSubmit={handleEditRuleSubmit}
+                className="space-y-4 text-xs"
+              >
+                <div className="grid grid-cols-2 gap-3 opacity-60">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ruleToEdit.category.toUpperCase()}
+                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      Sub Category
+                    </label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ruleToEdit.sub_category.toUpperCase()}
+                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500"
+                    />
+                  </div>
+                </div>
+
+                {ruleToEdit.category === "company" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Company Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Marshmallow"
+                        value={formCompanyName}
+                        onChange={(e) => setFormCompanyName(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Tags (Comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. marshmallow, move, go"
+                        value={formCompanyTagsInput}
+                        onChange={(e) =>
+                          setFormCompanyTagsInput(e.target.value)
+                        }
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {ruleToEdit.category === "fine" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Fine Title
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. ভুল আপডেট"
+                        value={formTitle}
+                        onChange={(e) => setFormTitle(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                        Penalty Amount
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. ৫০০ টাকা জরিমানা"
+                        value={formExtraInfo}
+                        onChange={(e) => setFormExtraInfo(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Category</label>
-                  <input type="text" disabled value={ruleToEdit.category.toUpperCase()} className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500" />
+                  <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                    Rule Detail (Bengali or English)
+                  </label>
+                  <textarea
+                    required
+                    rows={5}
+                    value={formContent}
+                    onChange={(e) => setFormContent(e.target.value)}
+                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white resize-y"
+                  />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Sub Category</label>
-                  <input type="text" disabled value={ruleToEdit.sub_category.toUpperCase()} className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500" />
+
+                <div className="flex gap-3 pt-3">
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 py-2.5 bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-1.5 shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </button>
                 </div>
-              </div>
-
-              {ruleToEdit.category === 'company' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Company Name</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Marshmallow"
-                      value={formCompanyName}
-                      onChange={(e) => setFormCompanyName(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Tags (Comma-separated)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. marshmallow, move, go"
-                      value={formCompanyTagsInput}
-                      onChange={(e) => setFormCompanyTagsInput(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {ruleToEdit.category === 'fine' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Fine Title</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. ভুল আপডেট"
-                      value={formTitle}
-                      onChange={(e) => setFormTitle(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">Penalty Amount</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. ৫০০ টাকা জরিমানা"
-                      value={formExtraInfo}
-                      onChange={(e) => setFormExtraInfo(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-355 mb-1">Rule Detail (Bengali or English)</label>
-                <textarea
-                  required
-                  rows={5}
-                  value={formContent}
-                  onChange={(e) => setFormContent(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white resize-y"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-3">
-                <button
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-1.5 shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* ─── DELETE RULE MODAL ─── */}
-      {mounted && ruleToDelete && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative text-center">
-            <button onClick={() => setRuleToDelete(null)} className="absolute right-4 top-4 text-slate-455 hover:text-white"><X className="h-5 w-5" /></button>
-            <div className="mx-auto w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-4">
-              <Trash2 className="h-5 w-5" />
-            </div>
-            <h3 className="text-sm font-bold text-white mb-2">Delete Rule?</h3>
-            <p className="text-xs text-slate-450 mb-6 leading-relaxed">
-              Are you sure you want to delete this compliance rule? Deleted rules can still be reviewed in the History archives.
-            </p>
-            <div className="flex gap-3">
+      {mounted &&
+        ruleToDelete &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative text-center">
               <button
-                disabled={submitting}
                 onClick={() => setRuleToDelete(null)}
-                className="flex-1 py-2 bg-slate-955 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute right-4 top-4 text-slate-455 hover:text-white"
               >
-                Cancel
+                <X className="h-5 w-5" />
               </button>
-              <button
-                disabled={submitting}
-                onClick={handleDeleteRule}
-                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* ─── HISTORY / ARCHIVE MODAL ─── */}
-      {mounted && isHistoryModalOpen && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-2xl shadow-2xl relative max-h-[85vh] flex flex-col">
-            <button onClick={() => setIsHistoryModalOpen(false)} className="absolute right-4 top-4 text-slate-455 hover:text-white"><X className="h-5 w-5" /></button>
-            
-            <div className="mb-4">
-              <h3 className="text-md font-bold text-white flex items-center gap-1.5">
-                <History className="h-4.5 w-4.5 text-blue-500" />
-                Quote Rules Edit History & Archives
-              </h3>
-              <p className="text-xs text-slate-450 mt-1">
-                Browse audit trails of modifications made to compliance rules.
-              </p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3.5 pr-1 text-xs">
-              {historyLoading ? (
-                <div className="flex justify-center items-center py-12 gap-2 text-slate-450">
-                  <Loader2 className="animate-spin h-5 w-5 text-blue-500" /> Loading archives...
-                </div>
-              ) : historyList.length === 0 ? (
-                <div className="text-center py-12 italic text-slate-550">
-                  No rule edits have been archived yet.
-                </div>
-              ) : (
-                (() => {
-                  const seen = new Set();
-                  const uniqueList = historyList.filter(item => {
-                    const key = `${item.rule_id}_${item.action_type}_${item.title || ''}_${item.content || ''}_${item.extra_info || ''}_${item.archived_by || ''}`;
-                    if (seen.has(key)) return false;
-                    seen.add(key);
-                    return true;
-                  });
-
-                  if (uniqueList.length === 0) {
-                    return (
-                      <div className="text-center py-12 italic text-slate-550">
-                        No unique rule changes archived yet.
-                      </div>
-                    );
-                  }
-
-                  return uniqueList.map((item) => (
-                    <div key={item.id} className="bg-slate-950/40 border border-slate-850 p-3.5 rounded-xl space-y-2">
-                      <div className="flex justify-between items-center flex-wrap gap-2 text-[10px]">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-1.5 py-0.5 rounded font-bold ${
-                            item.action_type === 'UPDATE' 
-                              ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' 
-                              : 'bg-red-600/10 text-red-400 border border-red-500/20'
-                          }`}>
-                            {item.action_type}
-                          </span>
-                          <span className="text-slate-400 font-semibold uppercase tracking-wider">
-                            {item.category} / {item.sub_category}
-                          </span>
-                        </div>
-                        <span className="text-slate-500 font-mono">
-                          {formatArchiveTime(item.archived_at)}
-                        </span>
-                      </div>
-
-                      {item.company_name && (
-                        <p className="font-bold text-slate-200 text-xs">
-                          Company: {item.company_name}
-                        </p>
-                      )}
-                      
-                      {item.title && (
-                        <p className="font-bold text-slate-200 text-xs">
-                          Title: {item.title} {item.extra_info && <span className="text-slate-400">({item.extra_info})</span>}
-                        </p>
-                      )}
-
-                      <div className="bg-slate-955 border border-slate-900 rounded-lg p-2.5 font-mono text-[11px] leading-relaxed text-slate-350 whitespace-pre-wrap">
-                        {item.content}
-                      </div>
-
-                      <div className="text-[10px] text-slate-500 text-right">
-                        Archived by: <strong className="text-slate-300 font-semibold">
-                          {item.profiles 
-                            ? `${item.profiles.full_name || ''} (${item.profiles.username || ''})` 
-                            : 'SYSTEM'}
-                        </strong>
-                      </div>
-                    </div>
-                  ));
-                })()
-              )}
-            </div>
-
-            <div className="pt-4 border-t border-slate-850 flex justify-between items-center">
-              <div>
-                {profile?.role === 'admin' && (
-                  <button
-                    onClick={handleClearHistory}
-                    disabled={historyLoading}
-                    className="py-1.5 px-3 bg-red-955/20 border border-red-900/30 hover:bg-red-900/20 hover:border-red-800 text-red-400 hover:text-red-300 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Clear History
-                  </button>
-                )}
+              <div className="mx-auto w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-4">
+                <Trash2 className="h-5 w-5" />
               </div>
-              <button
-                onClick={() => setIsHistoryModalOpen(false)}
-                className="py-1.5 px-4 bg-slate-955 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-
-
-      {/* ─── CLEAR HISTORY CONFIRM MODAL ─── */}
-      {mounted && showClearConfirm && createPortal(
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center px-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative text-center">
-            <button onClick={() => setShowClearConfirm(false)} className="absolute right-4 top-4 text-slate-455 hover:text-white cursor-pointer">
-              <X className="h-5 w-5" />
-            </button>
-            <div className="mx-auto w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-4 animate-pulse">
-              <AlertTriangle className="h-6 w-6" />
-            </div>
-            <h3 className="text-sm font-bold text-white mb-1.5">Clear All History?</h3>
-            <p className="text-xs text-slate-400 mb-2 leading-relaxed">
-              This will <strong className="text-red-400">permanently delete</strong> all archived rule edit history records.
-            </p>
-            <div className="bg-red-950/20 border border-red-900/30 rounded-lg p-2.5 mb-5">
-              <p className="text-[10px] text-red-400/90 leading-relaxed">
-                ⚠️ <strong>Warning:</strong> This action cannot be undone. Once cleared, all audit trails of past rule modifications will be lost forever.
+              <h3 className="text-sm font-bold text-white mb-2">
+                Delete Rule?
+              </h3>
+              <p className="text-xs text-slate-450 mb-6 leading-relaxed">
+                Are you sure you want to delete this compliance rule? This
+                action will be logged in the system audit logs.
               </p>
+              <div className="flex gap-3">
+                <button
+                  disabled={submitting}
+                  className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete All
+                </button>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="flex-1 py-2 bg-slate-955 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={executeClearHistory}
-                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Delete All
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 5px;
           height: 5px;
@@ -1741,8 +1863,9 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
         }
-      `}} />
-
+      `,
+        }}
+      />
     </div>
   );
 };
@@ -1755,27 +1878,32 @@ interface RuleItemProps {
   onContextMenu: (e: React.MouseEvent, rule: ComplianceRule) => void;
 }
 
-const RuleItem: React.FC<RuleItemProps> = React.memo((
-  { rule, onCopy, copiedId, onContextMenu }
-) => {
-  return (
-    <div 
-      className="group relative flex items-start gap-2.5 py-2.5 px-3 rounded-xl hover:bg-slate-850/20 transition-all duration-200 border border-transparent hover:border-slate-850/50"
-      onContextMenu={(e) => onContextMenu(e, rule)}
-    >
-      <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-blue-500/50" />
-      <p className="text-[12.5px] leading-[1.7] text-slate-300/90 flex-1">
-        {rule.content}
-      </p>
+const RuleItem: React.FC<RuleItemProps> = React.memo(
+  ({ rule, onCopy, copiedId, onContextMenu }) => {
+    return (
+      <div
+        className="group relative flex items-start gap-2.5 py-2.5 px-3 rounded-xl hover:bg-slate-850/20 transition-all duration-200 border border-transparent hover:border-slate-850/50"
+        onContextMenu={(e) => onContextMenu(e, rule)}
+      >
+        <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-blue-500/50" />
+        <p className="text-[12.5px] leading-[1.7] text-slate-300/90 flex-1">
+          {rule.content}
+        </p>
 
-      {/* Copy Button */}
-      <div className="flex items-center gap-1.5 shrink-0 ml-2">
-        <CopyButton text={rule.content} id={rule.id} onCopy={onCopy} copiedId={copiedId} />
+        {/* Copy Button */}
+        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+          <CopyButton
+            text={rule.content}
+            id={rule.id}
+            onCopy={onCopy}
+            copiedId={copiedId}
+          />
+        </div>
       </div>
-    </div>
-  );
-});
-RuleItem.displayName = 'RuleItem';
+    );
+  },
+);
+RuleItem.displayName = "RuleItem";
 
 // ─── HELPER COPY BUTTON COMPONENT ───────────────────────────────────
 interface CopyButtonProps {
@@ -1785,27 +1913,29 @@ interface CopyButtonProps {
   onCopy: (text: string, id: string) => void;
 }
 
-const CopyButton: React.FC<CopyButtonProps> = React.memo(({ text, id, copiedId, onCopy }) => {
-  const isCopied = copiedId === id;
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onCopy(text, id);
-      }}
-      className={`shrink-0 p-1 rounded transition-all duration-300 cursor-pointer ${
-        isCopied
-          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 scale-100'
-          : 'bg-slate-800/40 text-slate-500 hover:text-slate-300 hover:bg-slate-750/50 opacity-0 group-hover:opacity-100 border border-transparent'
-      }`}
-      title={isCopied ? 'Copied!' : 'Copy to Clipboard'}
-    >
-      {isCopied ? (
-        <Check className="w-3 h-3" />
-      ) : (
-        <Copy className="w-3 h-3" />
-      )}
-    </button>
-  );
-});
-CopyButton.displayName = 'CopyButton';
+const CopyButton: React.FC<CopyButtonProps> = React.memo(
+  ({ text, id, copiedId, onCopy }) => {
+    const isCopied = copiedId === id;
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onCopy(text, id);
+        }}
+        className={`shrink-0 p-1 rounded transition-all duration-300 cursor-pointer ${
+          isCopied
+            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 scale-100"
+            : "bg-slate-800/40 text-slate-500 hover:text-slate-300 hover:bg-slate-750/50 opacity-0 group-hover:opacity-100 border border-transparent"
+        }`}
+        title={isCopied ? "Copied!" : "Copy to Clipboard"}
+      >
+        {isCopied ? (
+          <Check className="w-3 h-3" />
+        ) : (
+          <Copy className="w-3 h-3" />
+        )}
+      </button>
+    );
+  },
+);
+CopyButton.displayName = "CopyButton";

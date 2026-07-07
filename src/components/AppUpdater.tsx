@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useRef } from 'react';
-import { ArrowUpCircle, RefreshCw, X } from 'lucide-react';
+import React, { useEffect, useState, useRef } from "react";
+import { ArrowUpCircle, RefreshCw, X } from "lucide-react";
 
 /**
  * Modern, Production-Grade Auto Updater for Tauri v2 (macOS & Windows)
@@ -18,30 +18,30 @@ export default function AppUpdater() {
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [readyToRestart, setReadyToRestart] = useState(false);
-  const [newVersion, setNewVersion] = useState('');
+  const [newVersion, setNewVersion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const isCheckingRef = useRef(false);
 
   useEffect(() => {
     const isTauri =
-      typeof window !== 'undefined' &&
+      typeof window !== "undefined" &&
       ((window as any).__TAURI_INTERNALS__ !== undefined ||
-        window.location.protocol === 'tauri:');
+        window.location.protocol === "tauri:");
 
-    if (!isTauri || process.env.NODE_ENV === 'development') return;
+    if (!isTauri || process.env.NODE_ENV === "development") return;
 
     const checkForUpdates = async () => {
       if (isCheckingRef.current) return;
       isCheckingRef.current = true;
 
       try {
-        const { check } = await import('@tauri-apps/plugin-updater');
+        const { check } = await import("@tauri-apps/plugin-updater");
         const update = await check({
           headers: {
-            'cache-control': 'no-cache',
-            'pragma': 'no-cache',
-            'expires': '0',
+            "cache-control": "no-cache",
+            pragma: "no-cache",
+            expires: "0",
           },
         });
 
@@ -58,21 +58,24 @@ export default function AppUpdater() {
           // downloadAndInstall downloads and extracts update package on macOS & Windows
           await update.downloadAndInstall((event) => {
             switch (event.event) {
-              case 'Started':
+              case "Started":
                 contentLength = event.data.contentLength ?? 0;
                 downloaded = 0;
                 setDownloadProgress(0);
                 break;
-              case 'Progress':
+              case "Progress":
                 downloaded += event.data.chunkLength;
                 if (contentLength > 0) {
-                  const pct = Math.min(99, Math.round((downloaded / contentLength) * 100));
+                  const pct = Math.min(
+                    99,
+                    Math.round((downloaded / contentLength) * 100),
+                  );
                   setDownloadProgress(pct);
                 } else {
                   setDownloadProgress(50);
                 }
                 break;
-              case 'Finished':
+              case "Finished":
                 setDownloadProgress(100);
                 break;
             }
@@ -83,14 +86,14 @@ export default function AppUpdater() {
 
           // Automatically trigger relaunch after installation
           try {
-            const { relaunch } = await import('@tauri-apps/plugin-process');
+            const { relaunch } = await import("@tauri-apps/plugin-process");
             await relaunch();
           } catch (relaunchErr) {
-            console.error('[AppUpdater] Auto relaunch failed:', relaunchErr);
+            console.error("[AppUpdater] Auto relaunch failed:", relaunchErr);
           }
         }
       } catch (err: any) {
-        console.warn('[AppUpdater] Update check failed:', err);
+        console.warn("[AppUpdater] Update check failed:", err);
         setDownloading(false);
       } finally {
         isCheckingRef.current = false;
@@ -108,18 +111,20 @@ export default function AppUpdater() {
 
   const handleRestartNow = async () => {
     try {
-      const { relaunch } = await import('@tauri-apps/plugin-process');
+      const { relaunch } = await import("@tauri-apps/plugin-process");
       await relaunch();
     } catch (err: any) {
-      console.error('[AppUpdater] Relaunch failed:', err);
-      setError('Failed to restart automatically. Please close and reopen the app.');
+      console.error("[AppUpdater] Relaunch failed:", err);
+      setError(
+        "Failed to restart automatically. Please close and reopen the app.",
+      );
     }
   };
 
   if (dismissed || (!updateAvailable && !error)) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] max-w-sm w-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-slate-100 font-sans animate-fade-in">
+    <div className="fixed bottom-5 right-5 z-9999 max-w-sm w-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-slate-100 font-sans animate-fade-in">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl shrink-0 border border-blue-500/20">
@@ -127,11 +132,13 @@ export default function AppUpdater() {
           </div>
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-              {error ? 'Update Failed' : 'App Update Available'}
+              {error ? "Update Failed" : "App Update Available"}
             </h4>
             <p className="text-xs text-slate-400 mt-0.5 leading-snug font-medium">
-              {downloading && `Downloading & installing v${newVersion}... (${downloadProgress}%)`}
-              {readyToRestart && `v${newVersion} installed! Restarting application...`}
+              {downloading &&
+                `Downloading & installing v${newVersion}... (${downloadProgress}%)`}
+              {readyToRestart &&
+                `v${newVersion} installed! Restarting application...`}
               {error && error}
             </p>
           </div>
@@ -151,7 +158,7 @@ export default function AppUpdater() {
       {downloading && (
         <div className="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
           <div
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-300 shadow-sm"
+            className="bg-linear-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-300 shadow-sm"
             style={{ width: `${downloadProgress}%` }}
           />
         </div>

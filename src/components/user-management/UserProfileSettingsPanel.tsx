@@ -1,9 +1,16 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Profile } from '@/types';
-import { StaffSettingsForm } from '@/components/StaffSettingsForm';
-import { RefreshCw, KeyRound, Trash2, Check, Loader2, AlertTriangle } from 'lucide-react';
+import React from "react";
+import { Profile } from "@/types";
+import { StaffSettingsForm } from "@/components/StaffSettingsForm";
+import {
+  RefreshCw,
+  KeyRound,
+  Trash2,
+  Check,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react";
 
 interface UserProfileSettingsPanelProps {
   isAdmin: boolean;
@@ -14,8 +21,8 @@ interface UserProfileSettingsPanelProps {
   setEditUserCodename: (val: string) => void;
   editUserFullName: string;
   setEditUserFullName: (val: string) => void;
-  editUserRole: 'admin' | 'supervisor' | 'user';
-  setEditUserRole: (val: 'admin' | 'supervisor' | 'user') => void;
+  editUserRole: "admin" | "supervisor" | "user";
+  setEditUserRole: (val: "admin" | "supervisor" | "user") => void;
   editHasChutiAccess: boolean;
   setEditHasChutiAccess: (val: boolean) => void;
   editNeedsApproval: boolean;
@@ -54,7 +61,9 @@ interface UserProfileSettingsPanelProps {
   setEditUserSignOutTime: (val: string) => void;
 }
 
-export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> = ({
+export const UserProfileSettingsPanel: React.FC<
+  UserProfileSettingsPanelProps
+> = ({
   isAdmin,
   submitting,
   profiles,
@@ -101,7 +110,7 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
   editUserSignOutTime,
   setEditUserSignOutTime,
 }) => {
-  const isTargetAdmin = viewingStaff.role === 'admin';
+  const isTargetAdmin = viewingStaff.role === "admin";
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
 
   return (
@@ -125,7 +134,7 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
         setHasChutiAccess={setEditHasChutiAccess}
         needsApproval={editNeedsApproval}
         setNeedsApproval={setEditNeedsApproval}
-        supervisors={profiles.filter(p => p.role === 'supervisor')}
+        supervisors={profiles.filter((p) => p.role === "supervisor")}
         supervisorIds={editSupervisorIds}
         setSupervisorIds={setEditSupervisorIds}
         eligibleOfficeLeave={editEligibleOfficeLeave}
@@ -155,7 +164,7 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
         signOutTime={editUserSignOutTime}
         setSignOutTime={setEditUserSignOutTime}
       />
-      
+
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
         <div className="flex flex-wrap gap-2.5">
           {isAdmin && (
@@ -164,10 +173,11 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
               onClick={onResetPasswordClick}
               className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
             >
-              <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset Password?
+              <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset
+              Password?
             </button>
           )}
-          
+
           {!showSupervisorWarning && (
             <button
               type="button"
@@ -178,7 +188,7 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
             </button>
           )}
 
-          {isAdmin && viewingStaff.role !== 'admin' && (
+          {isAdmin && viewingStaff.role !== "admin" && (
             <button
               type="button"
               onClick={onDeleteAccountClick}
@@ -195,10 +205,14 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
               type="button"
               disabled={submitting}
               onClick={onSaveProfileClick}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              className="px-6 py-2.5 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             >
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-              {submitting ? 'Saving...' : 'Save Changes'}
+              {submitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              {submitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         )}
