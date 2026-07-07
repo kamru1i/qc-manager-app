@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { exportHelper } from '@/utils/exportHelper';
 import { LeavesRecordsTable } from './LeavesRecordsTable';
 import { DateInput } from './DateInput';
 import { TeamLeaveRecordsSkeleton } from './skeleton/TeamLeaveRecordsSkeleton';
-import { Calendar, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Calendar, RefreshCw, ArrowLeft, Check, Edit, Trash2 } from 'lucide-react';
 import { formatDate, formatTimeToAMPM, getCleanComment } from '@/utils/dashboardHelpers';
+import { Modal } from './Modal';
+import { supabase } from '@/utils/supabase';
+import toast from 'react-hot-toast';
 
 interface TeamLeaveRecordsProps {
   profile: Profile;
@@ -16,6 +20,8 @@ interface TeamLeaveRecordsProps {
   adminRecords: ChutiRecordWithProfile[];
   initialFetchDone: boolean;
   onBack?: () => void;
+  setProfile?: React.Dispatch<React.SetStateAction<Profile | null>>;
+  setProfilesList?: React.Dispatch<React.SetStateAction<Profile[]>>;
 }
 
 export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
@@ -24,6 +30,8 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   adminRecords,
   initialFetchDone,
   onBack,
+  setProfile,
+  setProfilesList,
 }) => {
   // Initialize to local today's date in 'YYYY-MM-DD' Swedish format
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -40,14 +48,27 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   const [filterEndDate, setFilterEndDate] = useState('');
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear().toString());
 
+  // Delegate / Access control states
+  const [showAccessModal, setShowAccessModal] = useState(false);
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState(profile.delegated_supervisor_id || '');
+  const [submittingAccess, setSubmittingAccess] = useState(false);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+
   // Filter profiles list to identify team member user IDs
   const teamUserIds = useMemo(() => {
     if (profile.role === 'admin') {
       return null; // Admin sees everyone
     }
-    // Supervisor sees members under their team
+    // Supervisor sees members under their team, plus members of teams that delegated to them
+    const delegatedFromSupervisorIds = profilesList
+      .filter(p => p.delegated_supervisor_id === profile.id)
+      .map(p => p.id);
+
     return profilesList
-      .filter((p) => p.supervisor_ids && p.supervisor_ids.includes(profile.id))
+      .filter((p) => 
+        (p.supervisor_ids && p.supervisor_ids.includes(profile.id)) ||
+        (p.supervisor_ids && p.supervisor_ids.some(id => delegatedFromSupervisorIds.includes(id)))
+      )
       .map((p) => p.id);
   }, [profile, profilesList]);
 
@@ -66,17 +87,53 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     });
   }, [adminRecords, selectedDate, teamUserIds]);
 
-  // Group the dailyRecords by supervisor (only for admins)
+  // Group the dailyRecords by supervisor
   const groupedDailyRecords = useMemo(() => {
-    // If the user is a supervisor (or not an admin), we just show a single group with their records
+    // If the user is a supervisor (or not an admin), we group into own team + delegated teams
     if (profile.role !== 'admin') {
+      const groups = [];
+
+      // 1. Supervisor's own team records
+      const ownTeamUserIds = profilesList
+        .filter((p) => p.supervisor_ids && p.supervisor_ids.includes(profile.id))
+        .map((p) => p.id);
+      const ownRecords = dailyRecords.filter(r => ownTeamUserIds.includes(r.user_id));
       const supervisorName = profile.username || 'Supervisor';
-      const cleanName = supervisorName.toUpperCase();
-      return [{
-        title: `${cleanName} Team Leave Records`,
-        records: dailyRecords,
+      groups.push({
+        title: `${supervisorName.toUpperCase()} Team Leave Records`,
+        records: ownRecords,
         hideFilterPanel: false,
-      }];
+      });
+
+      // 2. Delegated teams records
+      const delegatingSups = profilesList.filter(
+        (p) => p.role === 'supervisor' && p.delegated_supervisor_id === profile.id
+      );
+
+      // Sort delegating supervisors to keep consistent ordering
+      const sortedDelegating = [...delegatingSups].sort((a, b) =>
+        (a.username || '').localeCompare(b.username || '')
+      );
+
+      sortedDelegating.forEach((sup) => {
+        const teamUserIds = profilesList
+          .filter((p) => p.supervisor_ids && p.supervisor_ids.includes(sup.id))
+          .map((p) => p.id);
+        const teamRecords = dailyRecords.filter(r => teamUserIds.includes(r.user_id));
+
+        groups.push({
+          title: `${(sup.username || 'Supervisor').toUpperCase()} Team Leave Records`,
+          records: teamRecords,
+          hideFilterPanel: true,
+        });
+      });
+
+      // Adjust filter panel visibility
+      groups.forEach((g, index) => {
+        g.hideFilterPanel = index > 0;
+      });
+
+      return groups;
     }
 
     // Admin logic: group by supervisor, and gather unassigned records
@@ -148,6 +205,74 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     return <TeamLeaveRecordsSkeleton />;
   }
 
+  const handleSaveAccess = async () => {
+    if (!setProfile || !setProfilesList) return;
+    if (!selectedSupervisorId) {
+      toast.error('Please select a supervisor first.');
+      return;
+    }
+    setSubmittingAccess(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ delegated_supervisor_id: selectedSupervisorId })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      // Update local profile state
+      setProfile((prev) => prev ? { ...prev, delegated_supervisor_id: selectedSupervisorId } : null);
+      
+      // Update local profilesList state
+      setProfilesList((prev) =>
+        prev.map((p) => (p.id === profile.id ? { ...p, delegated_supervisor_id: selectedSupervisorId } : p))
+      );
+
+      toast.success('Access delegated successfully!');
+      setShowAccessModal(false);
+    } catch (err) {
+      console.error('Error saving access:', err);
+      toast.error('Failed to delegate access.');
+    } finally {
+      setSubmittingAccess(false);
+    }
+  };
+
+  const handleRemoveAccess = async () => {
+    if (!setProfile || !setProfilesList) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ delegated_supervisor_id: null })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      // Update local profile state
+      setProfile((prev) => prev ? { ...prev, delegated_supervisor_id: null } : null);
+      
+      // Update local profilesList state
+      setProfilesList((prev) =>
+        prev.map((p) => (p.id === profile.id ? { ...p, delegated_supervisor_id: null } : p))
+      );
+
+      toast.success('Access removed successfully!');
+    } catch (err) {
+      console.error('Error removing access:', err);
+      toast.error('Failed to remove access.');
+    }
+  };
+
+  const handleAccessContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleAccessClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
   const handleResetToToday = () => {
     const d = new Date();
     const year = d.getFullYear();
@@ -174,8 +299,9 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         return true;
       });
     } else {
+      // Export all accessible records (own team + delegated teams) matching search
       targetRecords = searchTerm.trim() 
-        ? filtered.filter(r => {
+        ? dailyRecords.filter(r => {
             const staffProfile = profilesList.find(p => p.id === r.user_id);
             const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
             const codename = staffProfile?.username || r.username || '';
@@ -183,7 +309,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                    codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
                    getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
           })
-        : filtered;
+        : dailyRecords;
     }
 
     exportHelper.exportDailyLeavesExcel(
@@ -207,8 +333,9 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         return true;
       });
     } else {
+      // Export all accessible records (own team + delegated teams) matching search
       targetRecords = searchTerm.trim() 
-        ? filtered.filter(r => {
+        ? dailyRecords.filter(r => {
             const staffProfile = profilesList.find(p => p.id === r.user_id);
             const fullName = staffProfile?.full_name || staffProfile?.username || r.username || '';
             const codename = staffProfile?.username || r.username || '';
@@ -216,7 +343,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                    codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
                    getCleanComment(r.comment).toLowerCase().includes(searchTerm.toLowerCase());
           })
-        : filtered;
+        : dailyRecords;
     }
 
     exportHelper.exportDailyLeavesPDF(
@@ -275,6 +402,37 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
               <RefreshCw className="h-3.5 w-3.5" /> Today
             </button>
           </div>
+
+          {profile.role === 'supervisor' && (
+            <div className="flex flex-col justify-end self-end">
+              {profile.delegated_supervisor_id ? (
+                (() => {
+                  const delegatedSup = profilesList.find(p => p.id === profile.delegated_supervisor_id);
+                  const codename = delegatedSup ? delegatedSup.username.toUpperCase() : 'NONE';
+                  return (
+                    <button
+                      onContextMenu={handleAccessContextMenu}
+                      onClick={handleAccessClick}
+                      className="flex items-center gap-1.5 py-2 px-3.5 bg-emerald-950/40 hover:bg-emerald-900/30 border border-emerald-800/80 text-emerald-400 hover:text-emerald-350 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+                      title="Left-click or right-click for options"
+                    >
+                      Access: {codename}
+                    </button>
+                  );
+                })()
+              ) : (
+                <button
+                  onClick={() => {
+                    setSelectedSupervisorId('');
+                    setShowAccessModal(true);
+                  }}
+                  className="flex items-center gap-1.5 py-2 px-3.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm"
+                >
+                  Allow Access
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -315,6 +473,114 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           hideFilterPanel={group.hideFilterPanel}
         />
       ))}
+
+      {/* Delegate Access Modal */}
+      <Modal
+        isOpen={showAccessModal}
+        onClose={() => setShowAccessModal(false)}
+        title="Delegate Team Access"
+        icon={<Calendar className="h-5 w-5 text-blue-500" />}
+        maxWidthClass="max-w-md"
+      >
+        <div className="space-y-4 font-sans text-xs">
+          <p className="text-slate-400 leading-relaxed">
+            If you are going on leave, you can temporarily allow another supervisor to view and approve your team's leave records.
+          </p>
+
+          <div className="border border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-800 bg-slate-950/40 max-h-[220px] overflow-y-auto">
+            {(() => {
+              const otherSupervisors = profilesList.filter(p => p.role === 'supervisor' && p.id !== profile.id);
+              if (otherSupervisors.length === 0) {
+                return (
+                  <div className="p-4 text-center text-slate-500">
+                    No other supervisors found in the system.
+                  </div>
+                );
+              }
+              return otherSupervisors.map((sup) => (
+                <div
+                  key={sup.id}
+                  onClick={() => setSelectedSupervisorId(sup.id)}
+                  className="flex items-center justify-between p-3.5 hover:bg-slate-900/50 cursor-pointer transition-all"
+                >
+                  <span className="text-sm font-semibold text-slate-200 uppercase tracking-wide">
+                    {sup.username} {sup.full_name ? `(${sup.full_name})` : ''}
+                  </span>
+                  
+                  {/* Styled Circle Checkbox */}
+                  <div 
+                    className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedSupervisorId === sup.id
+                        ? 'border-blue-500 bg-blue-600'
+                        : 'border-slate-700 bg-transparent hover:border-slate-500'
+                    }`}
+                  >
+                    {selectedSupervisorId === sup.id && (
+                      <Check className="h-3 w-3 text-white stroke-[3px]" />
+                    )}
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800/80">
+            <button
+              onClick={() => setShowAccessModal(false)}
+              className="py-2 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition-all cursor-pointer font-bold"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveAccess}
+              disabled={submittingAccess || !selectedSupervisorId}
+              className="py-2 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all cursor-pointer font-bold"
+            >
+              {submittingAccess ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Right-click & Left-click Context Menu (Rendered using React Portal for precise mouse positioning) */}
+      {contextMenuPos && typeof document !== 'undefined' && createPortal(
+        <>
+          <div 
+            className="fixed inset-0 z-[110] cursor-default" 
+            onClick={() => setContextMenuPos(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenuPos(null);
+            }}
+          />
+          <div 
+            style={{ top: contextMenuPos.y + 5, left: contextMenuPos.x }}
+            className="fixed z-[120] w-40 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl py-1.5 font-sans text-xs"
+          >
+            <button
+              onClick={() => {
+                setContextMenuPos(null);
+                setShowAccessModal(true);
+              }}
+              className="w-full text-left px-3 py-2 text-slate-350 hover:bg-slate-900 hover:text-white transition-colors cursor-pointer flex items-center gap-2 font-medium"
+            >
+              <Edit className="h-3.5 w-3.5 text-slate-405" />
+              Edit Access
+            </button>
+            <button
+              onClick={() => {
+                setContextMenuPos(null);
+                handleRemoveAccess();
+              }}
+              className="w-full text-left px-3 py-2 text-red-400 hover:bg-slate-900 hover:text-red-350 transition-colors cursor-pointer flex items-center gap-2 font-medium"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-405" />
+              Remove Access
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 };

@@ -365,16 +365,21 @@ export function useGlobalNotifications(
     }
     
     if (profile?.role === 'supervisor') {
+      const delegatedFromSupervisorIds = profilesList.filter(p => p.delegated_supervisor_id === profile.id).map(p => p.id);
+
       const myTeamPendingCount = supervisorPendingRecords.filter(r => {
-        // Only count if this supervisor is assigned to the user
+        // Only count if this supervisor is assigned to the user, or if someone who delegated to them is assigned
         const userSupervisorIds = (r as any).profiles?.supervisor_ids || [];
-        if (!userSupervisorIds.includes(profile.id)) return false;
+        const isSupervised = userSupervisorIds.includes(profile.id) ||
+                             userSupervisorIds.some((id: string) => delegatedFromSupervisorIds.includes(id));
+        if (!isSupervised) return false;
 
         const meta = r.admin_edit_request && typeof r.admin_edit_request === 'object'
           ? (r.admin_edit_request as { supervisor_ids?: string[] })
           : null;
         if (meta && Array.isArray(meta.supervisor_ids) && meta.supervisor_ids.length > 0) {
-          return meta.supervisor_ids.includes(profile.id);
+          return meta.supervisor_ids.includes(profile.id) ||
+                 meta.supervisor_ids.some((id: string) => delegatedFromSupervisorIds.includes(id));
         }
         return true;
       }).length;

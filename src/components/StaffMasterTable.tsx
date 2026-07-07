@@ -28,6 +28,7 @@ export interface Profile {
   allow_overtime?: boolean;
   has_edited_profile?: boolean;
   has_changed_password?: boolean;
+  delegated_supervisor_id?: string | null;
 }
 
 interface StaffMasterTableProps {

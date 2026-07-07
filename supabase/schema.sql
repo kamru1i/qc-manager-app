@@ -79,6 +79,7 @@ CREATE TABLE public.profiles (
   converted_short_leaves_hours NUMERIC DEFAULT 0,
   global_settings JSONB DEFAULT '{"office_leave_default": 14, "eid_fitr_leave": 0, "eid_adha_leave": 0, "govt_holidays": []}'::jsonb,
   supervisor_ids UUID[] DEFAULT NULL,
+  delegated_supervisor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   
   -- Quotes App Integration Columns
   allowed_types TEXT[] DEFAULT ARRAY['Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review', 'Review Van', 'Review Bike', 'Individual Review', 'Other Site', 'Van', 'Bike', 'Sale']::TEXT[] NOT NULL,

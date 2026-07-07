@@ -169,13 +169,17 @@ export function useDerivedState({
   );
 
   const pendingSupervisorRequests = useMemo(() => {
+    const delegatedFromSupervisorIds = profilesList.filter(p => p.delegated_supervisor_id === sessionUser?.id).map(p => p.id);
+
     return adminRecords.filter(r => {
       if (r.status !== 'pending_supervisor') return false;
       if (r.user_id === sessionUser?.id) return false;
 
-      // Restrict to team members supervised by this supervisor
+      // Restrict to team members supervised by this supervisor, or by someone who delegated to this supervisor
       const userSupervisorIds = r.profiles?.supervisor_ids || [];
-      if (!userSupervisorIds.includes(sessionUser?.id || '')) {
+      const isSupervised = userSupervisorIds.includes(sessionUser?.id || '') ||
+                           userSupervisorIds.some((id: string) => delegatedFromSupervisorIds.includes(id));
+      if (!isSupervised) {
         return false;
       }
 
@@ -184,12 +188,13 @@ export function useDerivedState({
         : null;
 
       if (meta && Array.isArray(meta.supervisor_ids) && meta.supervisor_ids.length > 0) {
-        return meta.supervisor_ids.includes(sessionUser?.id || '');
+        return meta.supervisor_ids.includes(sessionUser?.id || '') ||
+               meta.supervisor_ids.some((id: string) => delegatedFromSupervisorIds.includes(id));
       }
 
       return true;
     });
-  }, [adminRecords, sessionUser]);
+  }, [adminRecords, sessionUser, profilesList]);
 
   const groupedSupervisorRequests = useMemo(() => 
     groupPendingRequests(pendingSupervisorRequests as ChutiRecordWithProfile[]), 

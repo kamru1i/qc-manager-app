@@ -840,6 +840,8 @@ export default function Dashboard({
             adminRecords={adminRecords}
             initialFetchDone={initialFetchDone}
             onBack={() => onChutiTabChange('add_leave')}
+            setProfile={setProfile}
+            setProfilesList={setProfilesList}
           />
         )}
 
