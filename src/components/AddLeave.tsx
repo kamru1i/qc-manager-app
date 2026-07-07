@@ -78,6 +78,11 @@ export function AddLeave({
   const isUserRole = profile?.role === 'user';
   const needsReapproval = (isSupervisorRole || isUserRole) && !!editingRecord && (editingRecord.status === 'approved' || editingRecord.status === 'settled');
 
+  const targetProfileId = targetProfile?.id;
+  const defaultSignIn = targetProfile?.default_sign_in;
+  const defaultSignOut = targetProfile?.default_sign_out;
+  const targetWorkingHours = targetProfile?.working_hours;
+
   // Initialize today's date and default times
   useEffect(() => {
     if (targetProfile && !editingRecord) {
@@ -85,8 +90,8 @@ export function AddLeave({
       const localDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
       setDate(localDate);
 
-      setSignInTime(targetProfile.default_sign_in || '13:00');
-      setSignOutTime(targetProfile.default_sign_out || '22:30');
+      setSignInTime(defaultSignIn || '13:00');
+      setSignOutTime(defaultSignOut || '22:30');
       setLeaveType('Short Leave');
       setAdjustment(false);
       setAdjustmentCategory('None');
@@ -95,18 +100,18 @@ export function AddLeave({
       setBulkDates([]);
       setBulkAdjustments([]);
     }
-  }, [targetProfile, editingRecord]);
+  }, [targetProfileId, defaultSignIn, defaultSignOut, editingRecord]);
 
   // Recalculate leave hour when inputs change
   useEffect(() => {
     if (!targetProfile) return;
-    const shiftStart = targetProfile.default_sign_in || '13:00';
-    const shiftEnd = targetProfile.default_sign_out || '22:30';
-    const workingHours = targetProfile.working_hours ?? 9.5;
+    const shiftStart = defaultSignIn || '13:00';
+    const shiftEnd = defaultSignOut || '22:30';
+    const workingHours = targetWorkingHours ?? 9.5;
     const isHoliday = checkIfHolidayOrWeekend(date, globalSettings);
     const calc = calculateLeaveOrOvertime(leaveType, signInTime, signOutTime, shiftStart, shiftEnd, workingHours, isHoliday);
     setLeaveHour(calc);
-  }, [signInTime, signOutTime, leaveType, date, targetProfile, globalSettings]);
+  }, [signInTime, signOutTime, leaveType, date, defaultSignIn, defaultSignOut, targetWorkingHours, globalSettings, targetProfile]);
 
   // Filter records belonging to the target staff member
   const staffRecords = React.useMemo(() => {
