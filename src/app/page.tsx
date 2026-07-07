@@ -626,32 +626,7 @@ export default function AppPortal() {
     };
   }, [loadUserProfile]);
 
-  // Listen for user activity to update last active timestamp, and periodically check session validity
-  useEffect(() => {
-    if (!sessionUser) return;
-    const userId = sessionUser.id;
 
-    const updateActivity = () => {
-      const now = Date.now();
-      const lastUpdate = localStorage.getItem(`last_active_time_${userId}`);
-      if (!lastUpdate || now - parseInt(lastUpdate, 10) > 15000) {
-        localStorage.setItem(`last_active_time_${userId}`, now.toString());
-        updateSessionLastActiveInDb(userId).catch(err => console.error("Error updating active session in DB:", err));
-      }
-    };
-
-    window.addEventListener('mousemove', updateActivity);
-    window.addEventListener('keydown', updateActivity);
-    window.addEventListener('click', updateActivity);
-    window.addEventListener('scroll', updateActivity);
-
-    return () => {
-      window.removeEventListener('mousemove', updateActivity);
-      window.removeEventListener('keydown', updateActivity);
-      window.removeEventListener('click', updateActivity);
-      window.removeEventListener('scroll', updateActivity);
-    };
-  }, [sessionUser]);
 
   // Listen for custom workspace-change event dispatched by sidebar
   useEffect(() => {

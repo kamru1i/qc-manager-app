@@ -41,6 +41,12 @@ export const useDashboardData = () => {
   const [holidayResponses, setHolidayResponses] = useState<GovtHolidayResponse[]>([]);
   const [leaveSettlements, setLeaveSettlements] = useState<LeaveSettlement[]>([]);
 
+  // Keep a ref of profilesList to avoid subscription re-run cycles
+  const profilesListRef = useRef<Profile[]>([]);
+  useEffect(() => {
+    profilesListRef.current = profilesList;
+  }, [profilesList]);
+
   // Navigation / Tab states
   const [adminActiveTab, setAdminActiveTab] = useState<'user' | 'admin'>('admin');
   const [viewingStaffId, setViewingStaffIdState] = useState<string | null>(() => {
@@ -1015,10 +1021,30 @@ export const useDashboardData = () => {
             handleForceLogout();
             return;
           }
-          if (payload.eventType === 'UPDATE' && payload.new && payload.new.id === sessionUser.id) {
-            setProfile(prev => prev ? { ...prev, ...payload.new } : (payload.new as Profile));
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            if (payload.new.id === sessionUser.id) {
+              setProfile(prev => prev ? { ...prev, ...payload.new } : (payload.new as Profile));
+            }
+            
+            // Only refetch if username, role, active status, or codename changed.
+            // Avoid refetching when only session activity (lastActive/global_settings) updates.
+            const oldUser = profilesListRef.current.find(p => p.id === payload.new.id);
+            const hasSubstantialChange = !oldUser ||
+              oldUser.username !== payload.new.username ||
+              oldUser.role !== payload.new.role ||
+              oldUser.full_name !== payload.new.full_name ||
+              oldUser.job_role !== payload.new.job_role ||
+              oldUser.working_hours !== payload.new.working_hours ||
+              oldUser.break_time !== payload.new.break_time ||
+              oldUser.is_setup_completed !== payload.new.is_setup_completed;
+
+            if (hasSubstantialChange) {
+              fetchRecords();
+            }
+          } else {
+            // INSERT or DELETE
+            fetchRecords();
           }
-          fetchRecords();
         }
       )
       .subscribe();

@@ -78,6 +78,12 @@ export const useQuotesDashboardData = () => {
   }, []);
   const [availableDates, setAvailableDates] = useState<{ year: string; month: string }[]>([]);
 
+  // Keep a ref of profilesList to avoid subscription re-run cycles
+  const profilesListRef = useRef<Profile[]>([]);
+  useEffect(() => {
+    profilesListRef.current = profilesList;
+  }, [profilesList]);
+
   // Audit Logs
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [auditLogsLoading, setAuditLogsLoading] = useState(false);
@@ -885,21 +891,47 @@ export const useQuotesDashboardData = () => {
             });
             return;
           }
-          if (payload.eventType === 'UPDATE' && payload.new && payload.new.id === sessionUser.id) {
-            setProfile(payload.new as Profile);
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('quotes_sales_profile', JSON.stringify(payload.new));
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            if (payload.new.id === sessionUser.id) {
+              setProfile(payload.new as Profile);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('quotes_sales_profile', JSON.stringify(payload.new));
+              }
             }
-          }
-          // Refresh profiles list for admin
-          if ((profile?.role === 'admin' || profile?.role === 'supervisor')) {
-            supabase
-              .from('profiles')
-              .select('*')
-              .order('username', { ascending: true })
-              .then(({ data }) => {
-                if (data) setProfilesList(data || []);
-              });
+
+            // Refresh profiles list for admin/supervisor only if substantial change occurred
+            if ((profile?.role === 'admin' || profile?.role === 'supervisor')) {
+              const oldUser = profilesListRef.current.find(p => p.id === payload.new.id);
+              const hasSubstantialChange = !oldUser ||
+                oldUser.username !== payload.new.username ||
+                oldUser.role !== payload.new.role ||
+                oldUser.full_name !== payload.new.full_name ||
+                oldUser.job_role !== payload.new.job_role ||
+                oldUser.working_hours !== payload.new.working_hours ||
+                oldUser.break_time !== payload.new.break_time ||
+                oldUser.is_setup_completed !== payload.new.is_setup_completed;
+
+              if (hasSubstantialChange) {
+                supabase
+                  .from('profiles')
+                  .select('*')
+                  .order('username', { ascending: true })
+                  .then(({ data }) => {
+                    if (data) setProfilesList(data || []);
+                  });
+              }
+            }
+          } else {
+            // INSERT or DELETE
+            if ((profile?.role === 'admin' || profile?.role === 'supervisor')) {
+              supabase
+                .from('profiles')
+                .select('*')
+                .order('username', { ascending: true })
+                .then(({ data }) => {
+                  if (data) setProfilesList(data || []);
+                });
+            }
           }
         }
       )
