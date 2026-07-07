@@ -36,6 +36,7 @@ interface AddLeaveProps {
   targetUser?: Profile | null;
   /** When true, bypasses supervisor approval — leave goes straight to admin queue */
   addedBySupervisor?: boolean;
+  editingRecord?: ChutiRecord | null;
 }
 
 export function AddLeave({
@@ -49,26 +50,36 @@ export function AddLeave({
   initialFetchDone = true,
   targetUser = null,
   addedBySupervisor = false,
+  editingRecord = null,
 }: AddLeaveProps) {
   // If supervisor is adding on behalf of a user, use that user as the target
   const targetProfile = targetUser ?? profile;
 
-  const [date, setDate] = useState('');
-  const [leaveType, setLeaveType] = useState('Short Leave');
-  const [adjustment, setAdjustment] = useState(false);
-  const [adjustmentCategory, setAdjustmentCategory] = useState('None');
-  const [adjustShortLeave, setAdjustShortLeave] = useState(false);
-  const [signInTime, setSignInTime] = useState('13:00');
-  const [signOutTime, setSignOutTime] = useState('22:30');
-  const [leaveHour, setLeaveHour] = useState('00:00');
-  const [comment, setComment] = useState('');
+  const [date, setDate] = useState(() => editingRecord?.date || '');
+  const [leaveType, setLeaveType] = useState(() => editingRecord?.leave_type || 'Short Leave');
+  const [adjustment, setAdjustment] = useState(() => editingRecord ? !!editingRecord.adjustment : false);
+  const [adjustmentCategory, setAdjustmentCategory] = useState(() => {
+    if (editingRecord && editingRecord.reserve_holiday) {
+      return editingRecord.reserve_holiday;
+    }
+    return 'None';
+  });
+  const [adjustShortLeave, setAdjustShortLeave] = useState(() => editingRecord ? !!editingRecord.adjust_short_leave : false);
+  const [signInTime, setSignInTime] = useState(() => editingRecord?.sign_in_time ? editingRecord.sign_in_time.substring(0, 5) : '13:00');
+  const [signOutTime, setSignOutTime] = useState(() => editingRecord?.sign_out_time ? editingRecord.sign_out_time.substring(0, 5) : '22:30');
+  const [leaveHour, setLeaveHour] = useState(() => editingRecord?.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00');
+  const [comment, setComment] = useState(() => editingRecord?.comment || '');
   const [bulkDates, setBulkDates] = useState<string[]>([]);
   const [bulkAdjustments, setBulkAdjustments] = useState<boolean[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [editReason, setEditReason] = useState('');
+
+  const isSupervisorRole = profile?.role === 'supervisor';
+  const needsReapproval = isSupervisorRole && !!editingRecord && (editingRecord.status === 'approved' || editingRecord.status === 'settled');
 
   // Initialize today's date and default times
   useEffect(() => {
-    if (targetProfile) {
+    if (targetProfile && !editingRecord) {
       const today = new Date();
       const localDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
       setDate(localDate);
@@ -83,7 +94,7 @@ export function AddLeave({
       setBulkDates([]);
       setBulkAdjustments([]);
     }
-  }, [targetProfile]);
+  }, [targetProfile, editingRecord]);
 
   // Recalculate leave hour when inputs change
   useEffect(() => {
@@ -168,7 +179,7 @@ export function AddLeave({
   const govtHolidayRemaining = adjustedGovtHolidayStats.remaining;
   const govtHolidayTotal = adjustedGovtHolidayStats.total;
 
-  const officeLeaveTotalBase = isOfficeLeaveEligible ? (globalSettings.office_leave_h1 + globalSettings.office_leave_h2) : 0;
+    const officeLeaveTotalBase = isOfficeLeaveEligible ? (globalSettings.office_leave_h1 + globalSettings.office_leave_h2) : 0;
   const officeLeaveTotal = isOfficeLeaveEligible
     ? officeLeaveTotalBase + carriedOffice + (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha
     : (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
@@ -192,14 +203,17 @@ export function AddLeave({
 
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
-    const hasMainDuplicate = staffRecords.some(r => r.date === date);
+    const recordsToCheck = editingRecord
+      ? staffRecords.filter(r => r.id !== editingRecord.id)
+      : staffRecords;
+    const hasMainDuplicate = recordsToCheck.some(r => r.date === date);
     if (hasMainDuplicate) return true;
-    
+
     if (leaveType === 'Full Leave' && bulkDates.length > 0) {
-      return bulkDates.some(bd => bd && staffRecords.some(r => r.date === bd));
+      return bulkDates.some(bd => bd && recordsToCheck.some(r => r.date === bd));
     }
     return false;
-  }, [date, leaveType, bulkDates, staffRecords]);
+  }, [date, leaveType, bulkDates, staffRecords, editingRecord]);
 
   // Real-time deduction preview logic based on state
   let officeDeduction = 0;
@@ -288,11 +302,148 @@ export function AddLeave({
     if (!targetProfile) return;
     setSubmitting(true);
 
+    if (needsReapproval && !editReason.trim()) {
+      toast.error('Please enter a reason for this edit.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (editingRecord) {
+      // ─── UPDATE EXISTING RECORD ───
+      if (!isFullLeave && leaveHour === '00:00') {
+        toast.error(`${leaveType} requests cannot be submitted with 00:00 hours. Please adjust your Sign-in and Sign-out times.`);
+        setSubmitting(false);
+        return;
+      }
+
+      if (!isFullLeave && validationError) {
+        toast.error(validationError);
+        setSubmitting(false);
+        return;
+      }
+
+      let commentWithCategory = comment.trim();
+      let finalStatus = editingRecord.status;
+
+      if (needsReapproval) {
+        // Construct changes summary
+        let changeDescription = '';
+        if (editingRecord.date !== date) {
+          changeDescription += `Date (${editingRecord.date} -> ${date}), `;
+        }
+        if (editingRecord.leave_type !== leaveType) {
+          changeDescription += `Leave Type (${editingRecord.leave_type} -> ${leaveType}), `;
+        }
+        const formattedLeaveHour = leaveType === 'Full Leave' ? '00:00' : leaveHour;
+        const originalLeaveHourStr = editingRecord.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00';
+        if (originalLeaveHourStr !== formattedLeaveHour) {
+          changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
+        }
+        if (editingRecord.comment !== comment) {
+          changeDescription += `Original Comment (${editingRecord.comment || ''} -> ${comment || ''}), `;
+        }
+
+        changeDescription = changeDescription.replace(/,\s*$/, '');
+        const supervisorName = profile?.username?.toUpperCase() || 'SUPERVISOR';
+        const editLog = `\n[Edited by ${supervisorName}: ${changeDescription}. Reason: ${editReason}]`;
+        commentWithCategory = (editingRecord.comment || '') + editLog;
+
+        // Reset status for admin re-approval
+        finalStatus = 'approved_by_supervisor';
+      } else {
+        // If not approved yet, we keep status or set to approved_by_supervisor if supervisor edits
+        if (isSupervisorRole) {
+          finalStatus = 'approved_by_supervisor';
+        }
+      }
+
+      let finalAdjustment = false;
+      let finalAdjustedHour: string | null = null;
+      let finalAdjustShortLeave = false;
+
+      const availableShortLeaveMins = parseHHMMToMinutes(stats.shortHours);
+      const leaveMins = parseHHMMToMinutes(`${leaveHour}:00`);
+
+      if (leaveType === 'Full Leave') {
+        finalAdjustment = adjustmentCategory !== 'None';
+        finalAdjustedHour = null;
+        finalAdjustShortLeave = false;
+      } else if (leaveType === 'Short Leave') {
+        finalAdjustment = adjustment;
+        finalAdjustedHour = null;
+        finalAdjustShortLeave = false;
+      } else if (leaveType === 'Overtime') {
+        if (adjustShortLeave && availableShortLeaveMins > 0) {
+          finalAdjustShortLeave = true;
+          if (leaveMins <= availableShortLeaveMins) {
+            finalAdjustment = true;
+            finalAdjustedHour = null;
+          } else {
+            finalAdjustment = false;
+            const slHours = Math.floor(availableShortLeaveMins / 60);
+            const slMins = availableShortLeaveMins % 60;
+            finalAdjustedHour = `${String(slHours).padStart(2, '0')}:${String(slMins).padStart(2, '0')}:00`;
+          }
+        } else {
+          finalAdjustment = false;
+          finalAdjustedHour = null;
+          finalAdjustShortLeave = false;
+        }
+      }
+
+      const updateData = {
+        date: date,
+        leave_type: leaveType,
+        sign_in_time: leaveType === 'Full Leave' ? null : `${signInTime}:00`,
+        sign_out_time: leaveType === 'Full Leave' ? null : `${signOutTime}:00`,
+        leave_hour: leaveType === 'Full Leave' ? null : `${leaveHour}:00`,
+        comment: commentWithCategory || null,
+        status: finalStatus,
+        adjustment: leaveType === 'Full Leave' ? (adjustmentCategory !== 'None') : finalAdjustment,
+        adjusted_hour: finalAdjustedHour,
+        adjust_short_leave: finalAdjustShortLeave,
+        reserve_holiday: leaveType === 'Short Leave' && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null),
+      };
+
+      try {
+        const { data: updatedData, error: updateError } = await supabase
+          .from('chuti')
+          .update(updateData)
+          .eq('id', editingRecord.id)
+          .select();
+
+        if (updateError) throw updateError;
+
+        toast.success(needsReapproval ? 'Leave updated. Admin re-approval is required.' : 'Leave updated successfully.');
+
+        // Notify Admin if edit needs re-approval
+        if (needsReapproval && profile?.role === 'supervisor') {
+          const adminIds = profilesList.filter(p => p.role === 'admin').map(p => p.id);
+          if (adminIds.length > 0) {
+            sendPushNotification({
+              userIds: adminIds,
+              title: 'Approved Leave Edited (Requires Re-approval)',
+              body: `Supervisor ${profile.full_name || profile.username} edited an approved leave for ${targetProfile.full_name || targetProfile.username} on ${formatDate(date)}.`
+            }).catch(err => console.error('Error sending push:', err));
+          }
+        }
+
+        onSuccess(updatedData || undefined);
+      } catch (err: unknown) {
+        console.error(err);
+        toast.error((err as Error).message || 'Failed to update leave');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // ─── INSERT NEW RECORD (Original Logic) ───
     const datesWithAdjustment = isFullLeave
       ? [
-        { date, adjustment: adjustmentCategory !== 'None' },
-        ...bulkDates.map((d, idx) => ({ date: d, adjustment: bulkAdjustments[idx] || false }))
-      ].filter(item => item.date)
+          { date, adjustment: adjustmentCategory !== 'None' },
+          ...bulkDates.map((d, idx) => ({ date: d, adjustment: bulkAdjustments[idx] || false }))
+        ].filter(item => item.date)
       : [{ date, adjustment: false }];
 
     const allDates = datesWithAdjustment.map(item => item.date);
@@ -377,8 +528,8 @@ export function AddLeave({
       if (profile?.role === 'admin') {
         const adminUsername = profile?.username || 'Admin';
         const updatedCommentPrefix = `${adminUsername} Approved`;
-        commentWithCategory = commentWithCategory 
-          ? `${updatedCommentPrefix} | ${commentWithCategory}` 
+        commentWithCategory = commentWithCategory
+          ? `${updatedCommentPrefix} | ${commentWithCategory}`
           : updatedCommentPrefix;
       } else if (leaveType === 'Full Leave') {
         commentWithCategory = (item.adjustment && adjustmentCategory !== 'None')
@@ -485,7 +636,7 @@ export function AddLeave({
       }
 
       toast.success(allDates.length > 1 ? `Successfully added ${allDates.length} bulk leaves!` : 'Leave added successfully!');
-      
+
       // Notify Admin(s) if added by Supervisor
       if (profile?.role === 'supervisor') {
         const adminIds = profilesList.filter(p => p.role === 'admin').map(p => p.id);
@@ -554,10 +705,13 @@ export function AddLeave({
         <div>
           <h3 className="text-md font-bold text-white flex items-center gap-2">
             <Calendar className="h-4.5 w-4.5 text-blue-400" />
-            New Leave Entry Form
+            {editingRecord ? 'Edit Leave Entry' : 'New Leave Entry Form'}
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Record a new full day leave, short leave, or overtime entry directly into the system.
+            {editingRecord
+              ? 'Update the details of the selected leave entry.'
+              : 'Record a new full day leave, short leave, or overtime entry directly into the system.'
+            }
           </p>
         </div>
 
@@ -630,6 +784,20 @@ export function AddLeave({
                 globalSettings={globalSettings}
               />
 
+              {needsReapproval && (
+                <div className="space-y-1 pt-2 border-t border-slate-800/50">
+                  <label className="block text-slate-400 font-semibold">Reason for Editing (Required)</label>
+                  <textarea
+                    required
+                    rows={2}
+                    value={editReason}
+                    onChange={(e) => setEditReason(e.target.value)}
+                    placeholder="Enter why this approved leave is being modified..."
+                    className="w-full p-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white text-xs placeholder-slate-655 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                  />
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t border-slate-800">
                 <button
@@ -638,7 +806,9 @@ export function AddLeave({
                   className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                  {submitting ? 'Submitting Leave...' : 'Submit Leave Entry'}
+                  {submitting
+                    ? (editingRecord ? 'Saving Changes...' : 'Submitting Leave...')
+                    : (editingRecord ? 'Save Changes' : 'Submit Leave Entry')}
                 </button>
               </div>
             </form>

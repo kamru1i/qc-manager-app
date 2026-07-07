@@ -39,6 +39,7 @@ interface UserLeaveHistoryPanelProps {
   onDeleteRecord: (r: ChutiRecord) => void;
   /** Called when supervisor clicks Add Leave for this user */
   onAddLeaveClick?: () => void;
+  onEditClick?: (r: ChutiRecord) => void;
   /** Whether the viewer is a supervisor (shows Add Leave button) */
   isSupervisor?: boolean;
   /** When true, hides delete controls */
@@ -68,6 +69,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   onToggleAdjustment,
   onDeleteRecord,
   onAddLeaveClick,
+  onEditClick,
   isSupervisor = false,
   hideDelete = false,
   showAddLeave = true,
@@ -225,6 +227,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         onAddLeaveClick={onAddLeaveClick ?? (() => {})}
         onToggleAdjustment={onToggleAdjustment}
         onDeleteClick={onDeleteRecord}
+        onEditClick={onEditClick}
         onRevisionClick={() => {}}
         onConvertShortLeaveToFullLeave={() => {}}
         holidayResponses={viewingStaffHolidayResponses}

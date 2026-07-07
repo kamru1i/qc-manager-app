@@ -111,6 +111,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings | null>(null);
   const [loadingLeaveData, setLoadingLeaveData] = useState(false);
   const [showAddLeaveForStaff, setShowAddLeaveForStaff] = useState(false);
+  const [editingLeaveRecord, setEditingLeaveRecord] = useState<ChutiRecord | null>(null);
 
   // Leave Records Filter parameters
   const [leaveFilterType, setLeaveFilterType] = useState('all');
@@ -203,6 +204,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     if (!viewingStaff) {
       setActiveSubTab('leave');
       setShowAddLeaveForStaff(false);
+      setEditingLeaveRecord(null);
     }
   }, [viewingStaff]);
 
@@ -210,6 +212,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   useEffect(() => {
     if (activeSubTab !== 'leave') {
       setShowAddLeaveForStaff(false);
+      setEditingLeaveRecord(null);
     }
   }, [activeSubTab]);
 
@@ -803,12 +806,15 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               )}
 
               {activeSubTab === 'leave' && viewingStaff && (
-                showAddLeaveForStaff && (profile?.role === 'supervisor' || profile?.role === 'admin') && globalSettings ? (
-                  // Full-page AddLeave view for supervisor/admin adding on behalf
+                (showAddLeaveForStaff || editingLeaveRecord) && (profile?.role === 'supervisor' || profile?.role === 'admin') && globalSettings ? (
+                  // Full-page AddLeave view for supervisor/admin adding on behalf or editing
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 pb-3 border-b border-slate-800/60">
                       <button
-                        onClick={() => setShowAddLeaveForStaff(false)}
+                        onClick={() => {
+                          setShowAddLeaveForStaff(false);
+                          setEditingLeaveRecord(null);
+                        }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-355 hover:text-white transition-all cursor-pointer"
                       >
                         <ArrowLeft className="h-3.5 w-3.5" />
@@ -816,9 +822,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       </button>
                       <div>
                         <p className="text-xs text-slate-400">
-                          Adding leave on behalf of{' '}
-                          <span className="text-white font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
-                          ({viewingStaff.username?.toUpperCase()})
+                          {editingLeaveRecord ? (
+                            <>
+                              Editing leave for{' '}
+                              <span className="text-white font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
+                              ({viewingStaff.username?.toUpperCase()})
+                            </>
+                          ) : (
+                            <>
+                              Adding leave on behalf of{' '}
+                              <span className="text-white font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
+                              ({viewingStaff.username?.toUpperCase()})
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -828,11 +844,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       records={viewingStaffRecords}
                       globalSettings={globalSettings}
                       leaveSettlements={viewingStaffSettlements}
+                      editingRecord={editingLeaveRecord}
                       onSuccess={(newRecords) => {
                         if (newRecords && Array.isArray(newRecords) && newRecords.length > 0) {
-                          setViewingStaffRecords(prev => [...newRecords, ...prev]);
+                          if (editingLeaveRecord) {
+                            // Update existing record in list
+                            setViewingStaffRecords(prev => prev.map(r => r.id === editingLeaveRecord.id ? { ...r, ...newRecords[0] } : r));
+                          } else {
+                            // Prepend new records
+                            setViewingStaffRecords(prev => [...newRecords, ...prev]);
+                          }
                         }
                         setShowAddLeaveForStaff(false);
+                        setEditingLeaveRecord(null);
                         setActiveSubTab('leave');
                         debouncedFetchStaffLeaveData(viewingStaff.id, true);
                       }}
@@ -864,8 +888,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     setLeaveSearchQuery={setLeaveSearchQuery}
                     onToggleAdjustment={handleToggleAdjustment}
                     onDeleteRecord={handleDeleteRecord}
-                    isSupervisor={profile?.role === 'supervisor'}
+                    isSupervisor={profile?.role === 'supervisor' || profile?.role === 'admin'}
                     onAddLeaveClick={() => setShowAddLeaveForStaff(true)}
+                    onEditClick={(record) => setEditingLeaveRecord(record)}
                     hideDelete={profile?.role === 'supervisor'}
                     showAddLeave={profile?.role === 'admin' || profile?.role === 'supervisor'}
                   />
