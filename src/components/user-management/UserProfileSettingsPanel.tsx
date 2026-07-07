@@ -41,6 +41,17 @@ interface UserProfileSettingsPanelProps {
   onDeleteAccountClick: () => void;
   onSaveProfileClick: () => void;
   isSupervisor?: boolean;
+
+  editUserJobRole: string;
+  setEditUserJobRole: (val: string) => void;
+  editUserWorkingHours: string;
+  setEditUserWorkingHours: (val: string) => void;
+  editUserBreakTime: string;
+  setEditUserBreakTime: (val: string) => void;
+  editUserSignInTime: string;
+  setEditUserSignInTime: (val: string) => void;
+  editUserSignOutTime: string;
+  setEditUserSignOutTime: (val: string) => void;
 }
 
 export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> = ({
@@ -78,7 +89,17 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
   onChangePasswordClick,
   onDeleteAccountClick,
   onSaveProfileClick,
-  isSupervisor = false
+  isSupervisor = false,
+  editUserJobRole,
+  setEditUserJobRole,
+  editUserWorkingHours,
+  setEditUserWorkingHours,
+  editUserBreakTime,
+  setEditUserBreakTime,
+  editUserSignInTime,
+  setEditUserSignInTime,
+  editUserSignOutTime,
+  setEditUserSignOutTime,
 }) => {
   const isTargetAdmin = viewingStaff.role === 'admin';
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
@@ -123,6 +144,16 @@ export const UserProfileSettingsPanel: React.FC<UserProfileSettingsPanelProps> =
         setCanManageRules={setEditUserCanManageRules}
         isAdmin={isAdmin}
         isSupervisor={isSupervisor && !isTargetAdmin}
+        jobRole={editUserJobRole}
+        setJobRole={setEditUserJobRole}
+        workingHours={editUserWorkingHours}
+        setWorkingHours={setEditUserWorkingHours}
+        breakTime={editUserBreakTime}
+        setBreakTime={setEditUserBreakTime}
+        signInTime={editUserSignInTime}
+        setSignInTime={setEditUserSignInTime}
+        signOutTime={editUserSignOutTime}
+        setSignOutTime={setEditUserSignOutTime}
       />
       
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">

@@ -34,6 +34,11 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
   const [newEligibleOfficeLeave, setNewEligibleOfficeLeave] = useState(false);
   const [newAllowOvertime, setNewAllowOvertime] = useState(false);
   const [newAllowReserve, setNewAllowReserve] = useState(false);
+  const [newJobRole, setNewJobRole] = useState('');
+  const [newWorkingHours, setNewWorkingHours] = useState('9.5');
+  const [newBreakTime, setNewBreakTime] = useState('0');
+  const [newSignInTime, setNewSignInTime] = useState('');
+  const [newSignOutTime, setNewSignOutTime] = useState('');
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +73,12 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
       eligibleGovtHoliday: newEligibleGovtHoliday,
       eligibleOfficeLeave: newEligibleOfficeLeave,
       allowOvertime: newAllowOvertime,
-      allowReserve: newAllowReserve
+      allowReserve: newAllowReserve,
+      jobRole: newJobRole,
+      workingHours: parseFloat(newWorkingHours) || 9.5,
+      breakTime: parseInt(newBreakTime) || 0,
+      signInTime: newSignInTime,
+      signOutTime: newSignOutTime
     });
 
     if (success) {
@@ -108,6 +118,16 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
         canManageRules={canManageRules}
         setCanManageRules={setCanManageRules}
         isAdmin={isAdmin}
+        jobRole={newJobRole}
+        setJobRole={setNewJobRole}
+        workingHours={newWorkingHours}
+        setWorkingHours={setNewWorkingHours}
+        breakTime={newBreakTime}
+        setBreakTime={setNewBreakTime}
+        signInTime={newSignInTime}
+        setSignInTime={setNewSignInTime}
+        signOutTime={newSignOutTime}
+        setSignOutTime={setNewSignOutTime}
       />
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
         <div className="flex flex-wrap gap-2.5 font-sans">

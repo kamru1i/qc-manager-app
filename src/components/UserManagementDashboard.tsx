@@ -89,6 +89,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [editEligibleOfficeLeave, setEditEligibleOfficeLeave] = useState(true);
   const [editAllowOvertime, setEditAllowOvertime] = useState(false);
   const [editAllowReserve, setEditAllowReserve] = useState(false);
+  const [editUserJobRole, setEditUserJobRole] = useState('');
+  const [editUserWorkingHours, setEditUserWorkingHours] = useState('9.5');
+  const [editUserBreakTime, setEditUserBreakTime] = useState('0');
+  const [editUserSignInTime, setEditUserSignInTime] = useState('');
+  const [editUserSignOutTime, setEditUserSignOutTime] = useState('');
 
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
@@ -143,6 +148,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditEligibleOfficeLeave(viewingStaff.eligible_office_leave !== false);
       setEditAllowOvertime(!!viewingStaff.allow_overtime);
       setEditAllowReserve(!!viewingStaff.allow_reserve);
+      setEditUserJobRole(viewingStaff.job_role || '');
+      setEditUserWorkingHours((viewingStaff.working_hours ?? 9.5).toString());
+      setEditUserBreakTime((viewingStaff.break_time ?? 0).toString());
+      setEditUserSignInTime(viewingStaff.default_sign_in || '');
+      setEditUserSignOutTime(viewingStaff.default_sign_out || '');
     }
   }, [viewingStaff]);
 
@@ -569,7 +579,12 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       editEligibleOfficeLeave,
       editAllowOvertime,
       editAllowReserve,
-      editUserCodename
+      editUserCodename,
+      editUserJobRole,
+      parseFloat(editUserWorkingHours) || 9.5,
+      parseInt(editUserBreakTime) || 0,
+      editUserSignInTime,
+      editUserSignOutTime
     );
 
     setSubmitting(false);
@@ -802,6 +817,16 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   onDeleteAccountClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
                   onSaveProfileClick={handleUpdateUser}
                   isSupervisor={profile?.role === 'supervisor'}
+                  editUserJobRole={editUserJobRole}
+                  setEditUserJobRole={setEditUserJobRole}
+                  editUserWorkingHours={editUserWorkingHours}
+                  setEditUserWorkingHours={setEditUserWorkingHours}
+                  editUserBreakTime={editUserBreakTime}
+                  setEditUserBreakTime={setEditUserBreakTime}
+                  editUserSignInTime={editUserSignInTime}
+                  setEditUserSignInTime={setEditUserSignInTime}
+                  editUserSignOutTime={editUserSignOutTime}
+                  setEditUserSignOutTime={setEditUserSignOutTime}
                 />
               )}
 

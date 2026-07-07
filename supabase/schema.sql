@@ -450,6 +450,15 @@ CREATE POLICY "Allow admins to update all profiles"
 ON public.profiles FOR UPDATE
 USING (public.is_admin());
 
+CREATE POLICY "Allow supervisors to update supervised profiles"
+ON public.profiles FOR UPDATE
+USING (
+  public.is_supervisor() AND auth.uid() = ANY(supervisor_ids)
+)
+WITH CHECK (
+  public.is_supervisor() AND auth.uid() = ANY(supervisor_ids)
+);
+
 CREATE POLICY "Allow admins to delete profiles"
 ON public.profiles FOR DELETE
 USING (public.is_admin());

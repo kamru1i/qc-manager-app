@@ -48,6 +48,17 @@ interface StaffSettingsFormProps {
 
   isAdmin: boolean; // whether current viewing user has admin access to modify these fields
   isSupervisor?: boolean;
+
+  jobRole?: string;
+  setJobRole?: (val: string) => void;
+  workingHours?: string;
+  setWorkingHours?: (val: string) => void;
+  breakTime?: string;
+  setBreakTime?: (val: string) => void;
+  signInTime?: string;
+  setSignInTime?: (val: string) => void;
+  signOutTime?: string;
+  setSignOutTime?: (val: string) => void;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -80,14 +91,24 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   canManageRules,
   setCanManageRules,
   isAdmin,
-  isSupervisor = false
+  isSupervisor = false,
+  jobRole = '',
+  setJobRole,
+  workingHours = '9.5',
+  setWorkingHours,
+  breakTime = '0',
+  setBreakTime,
+  signInTime = '',
+  setSignInTime,
+  signOutTime = '',
+  setSignOutTime,
 }) => {
   return (
     <div className="space-y-6">
       {/* Profile Details Fields */}
       <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl">
-        <div className={`grid grid-cols-1 gap-4 ${(isNewUser || isAdmin) ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-          {(isNewUser || isAdmin) && setCodename && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {setCodename && (
             <div>
               <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Codename</label>
               <input
@@ -140,6 +161,94 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold capitalize">
                 {role || '—'}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Job Role</label>
+            {isAdmin ? (
+              <input
+                type="text"
+                placeholder="e.g. IT Officer"
+                value={jobRole}
+                onChange={(e) => setJobRole?.(e.target.value)}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
+              />
+            ) : (
+              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+                {jobRole || '—'}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Working Hours</label>
+            {isAdmin ? (
+              <select
+                value={workingHours}
+                onChange={(e) => setWorkingHours?.(e.target.value)}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer"
+              >
+                <option value="7.5">7 Hours 30 Mins</option>
+                <option value="8.0">8 Hours</option>
+                <option value="8.5">8 Hours 30 Mins</option>
+                <option value="9.0">9 Hours</option>
+                <option value="9.5">9 Hours 30 Mins</option>
+                <option value="10.0">10 Hours</option>
+              </select>
+            ) : (
+              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+                {workingHours ? `${workingHours} hrs` : '—'}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Break (Minutes)</label>
+            {(isAdmin || isSupervisor) ? (
+              <input
+                type="number"
+                min="0"
+                value={breakTime}
+                onChange={(e) => setBreakTime?.(e.target.value)}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+              />
+            ) : (
+              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+                {breakTime !== undefined ? `${breakTime} mins` : '—'}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sign-In Time</label>
+            {(isAdmin || isSupervisor) ? (
+              <input
+                type="time"
+                value={signInTime}
+                onChange={(e) => setSignInTime?.(e.target.value)}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+              />
+            ) : (
+              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+                {signInTime || '—'}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sign-Out Time</label>
+            {(isAdmin || isSupervisor) ? (
+              <input
+                type="time"
+                value={signOutTime}
+                onChange={(e) => setSignOutTime?.(e.target.value)}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+              />
+            ) : (
+              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+                {signOutTime || '—'}
               </div>
             )}
           </div>

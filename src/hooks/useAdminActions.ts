@@ -37,7 +37,12 @@ export const useAdminActions = ({
     eligibleGovtHoliday?: boolean,
     eligibleOfficeLeave?: boolean,
     allowOvertime?: boolean,
-    allowReserve?: boolean
+    allowReserve?: boolean,
+    jobRole?: string,
+    workingHours?: number,
+    breakTime?: number,
+    defaultSignIn?: string,
+    defaultSignOut?: string
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -72,19 +77,27 @@ export const useAdminActions = ({
         .single();
       
       if (newProfile) {
+        const updatePayload: any = { 
+          can_manage_rules: canManageRules,
+          has_chuti_access: hasChutiAccess,
+          has_quotes_access: hasQuotesAccess,
+          needs_supervisor_approval: needsSupervisorApproval,
+          supervisor_ids: supervisorIds,
+          eligible_govt_holiday: eligibleGovtHoliday,
+          eligible_office_leave: eligibleOfficeLeave,
+          allow_overtime: allowOvertime,
+          allow_reserve: allowReserve
+        };
+
+        if (jobRole !== undefined) updatePayload.job_role = jobRole;
+        if (workingHours !== undefined) updatePayload.working_hours = workingHours;
+        if (breakTime !== undefined) updatePayload.break_time = breakTime;
+        if (defaultSignIn !== undefined) updatePayload.default_sign_in = defaultSignIn;
+        if (defaultSignOut !== undefined) updatePayload.default_sign_out = defaultSignOut;
+
         await supabase
           .from('profiles')
-          .update({ 
-            can_manage_rules: canManageRules,
-            has_chuti_access: hasChutiAccess,
-            has_quotes_access: hasQuotesAccess,
-            needs_supervisor_approval: needsSupervisorApproval,
-            supervisor_ids: supervisorIds,
-            eligible_govt_holiday: eligibleGovtHoliday,
-            eligible_office_leave: eligibleOfficeLeave,
-            allow_overtime: allowOvertime,
-            allow_reserve: allowReserve
-          })
+          .update(updatePayload)
           .eq('id', newProfile.id);
       }
 
@@ -206,7 +219,12 @@ export const useAdminActions = ({
     eligibleOfficeLeave?: boolean,
     allowOvertime?: boolean,
     allowReserve?: boolean,
-    newUsername?: string
+    newUsername?: string,
+    jobRole?: string,
+    workingHours?: number,
+    breakTime?: number,
+    defaultSignIn?: string,
+    defaultSignOut?: string
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -258,9 +276,18 @@ export const useAdminActions = ({
         updatePayload.eligible_office_leave = eligibleOfficeLeave;
         updatePayload.allow_overtime = allowOvertime;
         updatePayload.allow_reserve = allowReserve;
+        
+        if (jobRole !== undefined) updatePayload.job_role = jobRole;
+        if (workingHours !== undefined) updatePayload.working_hours = workingHours;
+        if (breakTime !== undefined) updatePayload.break_time = breakTime;
+        if (defaultSignIn !== undefined) updatePayload.default_sign_in = defaultSignIn;
+        if (defaultSignOut !== undefined) updatePayload.default_sign_out = defaultSignOut;
       } else {
-        // Supervisor can ONLY update allowed_types (file permissions)
+        // Supervisor can update allowed_types, break_time, default_sign_in, default_sign_out
         updatePayload.allowed_types = allowedTypes;
+        if (breakTime !== undefined) updatePayload.break_time = breakTime;
+        if (defaultSignIn !== undefined) updatePayload.default_sign_in = defaultSignIn;
+        if (defaultSignOut !== undefined) updatePayload.default_sign_out = defaultSignOut;
       }
 
       const { error } = await supabase
@@ -323,6 +350,22 @@ export const useAdminActions = ({
         const newCanManage = canManageRules;
         if (oldCanManage !== newCanManage) {
           changes.push(`Quote Rules Permission: '${oldCanManage}' → '${newCanManage}'`);
+        }
+
+        if (jobRole !== undefined && (targetProfile.job_role || '') !== jobRole) {
+          changes.push(`Job Role: '${targetProfile.job_role || ''}' → '${jobRole}'`);
+        }
+        if (workingHours !== undefined && (targetProfile.working_hours ?? 9.5) !== workingHours) {
+          changes.push(`Working Hours: '${targetProfile.working_hours ?? 9.5}' → '${workingHours}'`);
+        }
+        if (breakTime !== undefined && (targetProfile.break_time ?? 0) !== breakTime) {
+          changes.push(`Break: '${targetProfile.break_time ?? 0}' → '${breakTime}'`);
+        }
+        if (defaultSignIn !== undefined && (targetProfile.default_sign_in || '') !== defaultSignIn) {
+          changes.push(`Sign-in: '${targetProfile.default_sign_in || ''}' → '${defaultSignIn}'`);
+        }
+        if (defaultSignOut !== undefined && (targetProfile.default_sign_out || '') !== defaultSignOut) {
+          changes.push(`Sign-out: '${targetProfile.default_sign_out || ''}' → '${defaultSignOut}'`);
         }
       } else {
         changes.push(`Name: '${fullName.trim()}', Role: '${role}', Allowed Types: [${allowedTypes.join(', ')}], Quote Rules Permission: ${canManageRules}`);
