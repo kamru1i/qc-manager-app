@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { sendPushNotification } from '@/utils/webPushHelper';
@@ -108,6 +108,8 @@ export const useAdminStaffOperations = ({
   const [editEligibleOfficeLeave, setEditEligibleOfficeLeave] = useState(true);
   const [editEligibleGovtHoliday, setEditEligibleGovtHoliday] = useState(true);
 
+  const lastInitializedProfileIdRef = useRef<string | null>(null);
+
   // Synchronize first-time setup modal states during render to prevent 1-frame flashes
   const [prevProfileState, setPrevProfileState] = useState<Profile | null>(null);
 
@@ -130,29 +132,40 @@ export const useAdminStaffOperations = ({
   // Sync state values on profile change
   useEffect(() => {
     if (profile) {
-      setSetupUsername((profile.username || '').toUpperCase());
-      setSetupFullName(profile.full_name || '');
-      setSetupWorkingHours(Number(profile.working_hours || 9.5).toFixed(1));
-      setSetupBreakTime(String(profile.break_time || 0));
-      setSetupJobRole(profile.job_role || '');
-      setSetupSignInTime(profile.default_sign_in || '13:00');
-      setSetupSignOutTime(profile.default_sign_out || '22:30');
+      // Only initialize/sync if the modal is not open, OR if the profile ID itself has changed
+      const isNewProfileId = profile.id !== lastInitializedProfileIdRef.current;
+      
+      if (isNewProfileId) {
+        lastInitializedProfileIdRef.current = profile.id;
+      }
 
-      setEditFullName(profile.requested_full_name || profile.full_name || '');
-      setEditWorkingHours(Number(profile.requested_working_hours || profile.working_hours || 9.5).toFixed(1));
-      setEditBreakTime(String(profile.requested_break_time || profile.break_time || 0));
-      setEditJobRole(profile.requested_job_role || profile.job_role || '');
-      setProfileSignInTime(profile.requested_default_sign_in || profile.default_sign_in || '13:00');
-      setProfileSignOutTime(profile.requested_default_sign_out || profile.default_sign_out || '22:30');
-      setEditMaxFullLeaves(String(profile.max_full_leaves ?? 15));
-      setEditEligibleOfficeLeave(profile.eligible_office_leave !== false);
-      setEditEligibleGovtHoliday(profile.eligible_govt_holiday !== false);
-      setEditUsername((profile.username || '').toUpperCase());
-      setEditNeedsApproval(profile.needs_supervisor_approval !== false);
-      setEditAllowReserve(profile.allow_reserve === true);
-      setEditAllowOvertime(profile.allow_overtime === true);
+      if (!showOnboardingModal || isNewProfileId) {
+        setSetupUsername((profile.username || '').toUpperCase());
+        setSetupFullName(profile.full_name || '');
+        setSetupWorkingHours(Number(profile.working_hours || 9.5).toFixed(1));
+        setSetupBreakTime(String(profile.break_time || 0));
+        setSetupJobRole(profile.job_role || '');
+        setSetupSignInTime(profile.default_sign_in || '13:00');
+        setSetupSignOutTime(profile.default_sign_out || '22:30');
+      }
+
+      if (!showProfileSettingsModal || isNewProfileId) {
+        setEditFullName(profile.requested_full_name || profile.full_name || '');
+        setEditWorkingHours(Number(profile.requested_working_hours || profile.working_hours || 9.5).toFixed(1));
+        setEditBreakTime(String(profile.requested_break_time || profile.break_time || 0));
+        setEditJobRole(profile.requested_job_role || profile.job_role || '');
+        setProfileSignInTime(profile.requested_default_sign_in || profile.default_sign_in || '13:00');
+        setProfileSignOutTime(profile.requested_default_sign_out || profile.default_sign_out || '22:30');
+        setEditMaxFullLeaves(String(profile.max_full_leaves ?? 15));
+        setEditEligibleOfficeLeave(profile.eligible_office_leave !== false);
+        setEditEligibleGovtHoliday(profile.eligible_govt_holiday !== false);
+        setEditUsername((profile.username || '').toUpperCase());
+        setEditNeedsApproval(profile.needs_supervisor_approval !== false);
+        setEditAllowReserve(profile.allow_reserve === true);
+        setEditAllowOvertime(profile.allow_overtime === true);
+      }
     }
-  }, [profile]);
+  }, [profile, showOnboardingModal, showProfileSettingsModal]);
 
   // 10-minute auto-logout timer for first-time password change setup
   useEffect(() => {
