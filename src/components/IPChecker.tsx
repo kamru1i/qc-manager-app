@@ -449,12 +449,36 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
         const data = (await secureFetch(
           `https://api.criminalip.io/v1/ip/data?ip=${ip}`,
           { "x-api-key": keys.criminalip },
-        )) as unknown as CriminalIPResponse;
+        )) as unknown as any;
+
         if (data.error) throw new Error(data.error);
+        if (data.message && data.message.toLowerCase() === "limit exceeded") {
+          throw new Error("API Limit Exceeded");
+        }
+        if (data.status === 403 || data.status === "403") {
+          throw new Error(data.message || "Forbidden (403)");
+        }
 
         // CriminalIP outputs inbound/outbound score (higher inbound score means risk)
-        const inboundScore = data.score?.inbound ?? 0;
+        const rawInbound = data.score?.inbound;
+        let inboundScore = 0;
+        if (typeof rawInbound === 'number') {
+          inboundScore = rawInbound;
+        } else if (typeof rawInbound === 'string') {
+          const lower = rawInbound.toLowerCase();
+          if (lower === 'safe') inboundScore = 1;
+          else if (lower === 'low') inboundScore = 2;
+          else if (lower === 'moderate') inboundScore = 3;
+          else if (lower === 'high') inboundScore = 4;
+          else if (lower === 'critical') inboundScore = 5;
+          else {
+            const parsed = parseInt(rawInbound, 10);
+            if (!isNaN(parsed)) inboundScore = parsed;
+          }
+        }
+
         const isSuspicious = inboundScore > 2; // e.g. 3/5 or higher
+        const normalizedInboundText = typeof rawInbound === 'string' ? rawInbound : `${inboundScore}/5`;
 
         return {
           success: true,
@@ -463,9 +487,13 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
           isp: data.isp || data.org_name,
           isProxyOrVpn: isSuspicious,
           riskDetails: isSuspicious
-            ? [`High risk score: ${inboundScore}/5`]
+            ? [`High risk score: ${normalizedInboundText}`]
             : [],
-          rawData: data,
+          rawData: {
+            ...data,
+            normalizedInboundScore: inboundScore,
+            normalizedInboundText,
+          },
         };
       } catch (err: unknown) {
         return {
@@ -867,23 +895,17 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
 
                       {/* Criminal IP risk percentage */}
                       {sourceName === "CriminalIP.io" &&
-                        (result.rawData as CriminalIPResponse)?.score && (
+                        (result.rawData as any)?.normalizedInboundScore !== undefined && (
                           <p className="flex justify-between border-t border-slate-900/50 pt-1.5 mt-1.5">
                             <span>API Risk Rating:</span>
                             <strong
                               className={
-                                ((result.rawData as CriminalIPResponse)
-                                  .score?.inbound ?? 0) > 2
+                                (result.rawData as any).normalizedInboundScore > 2
                                   ? "text-rose-400 font-bold"
                                   : "text-emerald-400 font-semibold"
                               }
                             >
-                              {((result.rawData as CriminalIPResponse).score
-                                ?.inbound ?? 0) * 20}
-                              % Risk (
-                              {(result.rawData as CriminalIPResponse).score
-                                ?.inbound ?? 0}
-                              /5)
+                              {(result.rawData as any).normalizedInboundScore * 20}% Risk ({(result.rawData as any).normalizedInboundText})
                             </strong>
                           </p>
                         )}
