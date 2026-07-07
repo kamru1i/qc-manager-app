@@ -384,6 +384,13 @@ export const DashboardModals = () => {
         approvingIds={approvingIds}
         handleSupervisorApproveChuti={handleSupervisorApproveChuti}
         profile={profile}
+        onSwitchToUserPanel={() => {
+          sessionStorage.setItem('supervisorNotificationMode', 'user');
+          setShowSupervisorApprovalModal(false);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('open-user-notifications-modal'));
+          }, 50);
+        }}
         showRevisionPromptModal={showRevisionPromptModal}
         setShowRevisionPromptModal={setShowRevisionPromptModal}
         submittingRevision={submittingRevision}

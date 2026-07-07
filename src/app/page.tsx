@@ -970,6 +970,13 @@ export default function AppPortal() {
             } else {
               setShowNotificationsModal(true);
             }
+          } else if (profile?.role === 'supervisor') {
+            const mode = sessionStorage.getItem('supervisorNotificationMode') || 'user';
+            if (mode === 'supervisor') {
+              window.dispatchEvent(new CustomEvent('open-supervisor-approvals-modal'));
+            } else {
+              setShowNotificationsModal(true);
+            }
           } else {
             setShowNotificationsModal(true);
           }
@@ -1019,6 +1026,7 @@ export default function AppPortal() {
             window.dispatchEvent(new CustomEvent('open-admin-approvals-modal'));
           }}
           onSwitchToSupervisorPanel={() => {
+            sessionStorage.setItem('supervisorNotificationMode', 'supervisor');
             setShowNotificationsModal(false);
             window.dispatchEvent(new CustomEvent('open-supervisor-approvals-modal'));
           }}

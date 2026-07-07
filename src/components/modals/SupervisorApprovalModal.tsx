@@ -17,6 +17,7 @@ interface SupervisorApprovalModalProps {
   approvingIds: Set<string>;
   handleSupervisorApproveChuti: (id: string, approve: boolean) => void;
   profile: Profile | null;
+  onSwitchToUserPanel?: () => void;
 
   // Custom Revision Prompt Modal
   showRevisionPromptModal: boolean;
@@ -38,6 +39,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
   approvingIds,
   handleSupervisorApproveChuti,
   profile,
+  onSwitchToUserPanel,
 
   showRevisionPromptModal,
   setShowRevisionPromptModal,
@@ -67,6 +69,16 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
         icon={<AlertTriangle className="h-5 w-5 text-blue-400 animate-pulse" />}
         maxWidthClass="max-w-3xl"
         glowClass="bg-blue-900/10"
+        headerExtra={
+          onSwitchToUserPanel ? (
+            <button
+              onClick={onSwitchToUserPanel}
+              className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer hover:bg-slate-800 transition-all font-sans"
+            >
+              Go to User Panel
+            </button>
+          ) : undefined
+        }
       >
         <LeaveApprovalPanel
           role="supervisor"
