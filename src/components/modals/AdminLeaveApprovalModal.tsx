@@ -24,6 +24,7 @@ interface AdminLeaveApprovalModalProps {
   pendingPasswordResetRequests?: Profile[];
   handleApprovePasswordResetRequest?: (id: string, approve: boolean) => void;
   onSwitchToUserPanel?: () => void;
+  userNotificationsCount?: number;
 }
 
 export function AdminLeaveApprovalModal({
@@ -44,6 +45,7 @@ export function AdminLeaveApprovalModal({
   handleApprovePasswordResetRequest = () => {},
   adminHolidayNotifications = [],
   onSwitchToUserPanel,
+  userNotificationsCount = 0,
 }: AdminLeaveApprovalModalProps) {
   if (profile?.role !== 'admin') return null;
 
@@ -61,9 +63,14 @@ export function AdminLeaveApprovalModal({
         onSwitchToUserPanel ? (
           <button
             onClick={onSwitchToUserPanel}
-            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer hover:bg-slate-800 transition-all font-sans"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
           >
-            Go to User Panel
+            <span>Go to User Panel</span>
+            {userNotificationsCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white animate-pulse">
+                {userNotificationsCount}
+              </span>
+            )}
           </button>
         ) : undefined
       }

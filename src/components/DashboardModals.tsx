@@ -63,6 +63,7 @@ export const DashboardModals = () => {
     groupedChutiRequests,
     adminHolidayNotifications,
     staffProfile,
+    unreadUserNotificationsCount,
   } = derivedState;
 
   const {
@@ -391,6 +392,7 @@ export const DashboardModals = () => {
             window.dispatchEvent(new CustomEvent('open-user-notifications-modal'));
           }, 50);
         }}
+        userNotificationsCount={unreadUserNotificationsCount}
         showRevisionPromptModal={showRevisionPromptModal}
         setShowRevisionPromptModal={setShowRevisionPromptModal}
         submittingRevision={submittingRevision}
@@ -477,6 +479,7 @@ export const DashboardModals = () => {
             window.dispatchEvent(new CustomEvent('open-user-notifications-modal'));
           }, 50);
         }}
+        userNotificationsCount={unreadUserNotificationsCount}
       />
 
       <AdminEditRecordModal

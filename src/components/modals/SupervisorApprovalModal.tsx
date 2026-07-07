@@ -18,6 +18,7 @@ interface SupervisorApprovalModalProps {
   handleSupervisorApproveChuti: (id: string, approve: boolean) => void;
   profile: Profile | null;
   onSwitchToUserPanel?: () => void;
+  userNotificationsCount?: number;
 
   // Custom Revision Prompt Modal
   showRevisionPromptModal: boolean;
@@ -40,6 +41,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
   handleSupervisorApproveChuti,
   profile,
   onSwitchToUserPanel,
+  userNotificationsCount = 0,
 
   showRevisionPromptModal,
   setShowRevisionPromptModal,
@@ -73,9 +75,14 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
           onSwitchToUserPanel ? (
             <button
               onClick={onSwitchToUserPanel}
-              className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer hover:bg-slate-800 transition-all font-sans"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
             >
-              Go to User Panel
+              <span>Go to User Panel</span>
+              {userNotificationsCount > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white animate-pulse">
+                  {userNotificationsCount}
+                </span>
+              )}
             </button>
           ) : undefined
         }
