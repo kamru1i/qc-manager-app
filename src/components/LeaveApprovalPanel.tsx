@@ -599,18 +599,10 @@ export function LeaveApprovalPanel({
     }
   };
 
-  const guidelinesText = role === 'supervisor'
-    ? "Supervisors cannot directly reject a leave request. If there is an error or correction needed, click the 'Needs Review' button to send it back to the user for correction. Once the user updates the information and resubmits, it will come back to you for verification."
-    : "Supervisors or Admins cannot directly reject a leave request. If there is an error or correction needed, click the 'Needs Review' button to send it back to the user for correction. Once the user updates the information and resubmits, it will go back through the supervisor approval process and finally reach the admin.";
-
   const totalLabel = role === 'supervisor' ? 'Pending Verifications' : 'Notifications';
 
   return (
     <div className="space-y-6 pr-1 font-sans">
-      <div className="p-4 rounded-xl bg-slate-955/40 border border-slate-800/80 text-xs text-slate-400 space-y-1">
-        <p className="font-semibold text-purple-400 font-sans">💡 Guidelines for Modifying Information:</p>
-        <p className="font-sans leading-relaxed">{guidelinesText}</p>
-      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-955/20 border border-slate-800/60 relative">
         <div className="relative">
