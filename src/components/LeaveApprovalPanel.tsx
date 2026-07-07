@@ -666,7 +666,7 @@ export function LeaveApprovalPanel({
             No matching items found.
           </div>
         ) : (
-          <div className="space-y-4 font-sans max-h-[50vh] overflow-y-auto pr-1">
+          <div className="space-y-4 font-sans max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
             {combinedNotifications.map(renderNotificationItem)}
           </div>
         )}

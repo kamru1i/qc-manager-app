@@ -113,7 +113,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
       {isOpen && (
         <div 
-          className="absolute left-0 mt-1 w-full min-w-[150px] bg-slate-955 border border-slate-800 rounded-lg shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 max-h-64 overflow-y-auto"
+          className="absolute left-0 mt-1 w-full min-w-[150px] bg-slate-955 border border-slate-800 rounded-lg shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 max-h-64 overflow-y-auto custom-scrollbar"
           style={{ overscrollBehavior: 'contain' }}
         >
           {options.map((option, idx) => {

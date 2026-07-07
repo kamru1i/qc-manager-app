@@ -139,7 +139,7 @@ export function useGlobalNotifications(
           const freshIds = new Set<string>();
           
           for (const [id, timestamp] of Object.entries(parsed)) {
-            if (now - timestamp < 24 * 60 * 60 * 1000) {
+            if (now - timestamp < 30 * 24 * 60 * 60 * 1000) {
               fresh[id] = timestamp;
               freshIds.add(id);
             }
@@ -317,7 +317,21 @@ export function useGlobalNotifications(
       });
     });
 
-    const filtered = list.filter(n => !dismissedNotificationIds?.has(n.id));
+    const filtered = list.filter(n => {
+      // 1. Filter out dismissed notifications
+      if (dismissedNotificationIds?.has(n.id)) return false;
+
+      // 2. Filter out non-actionable notifications older than 7 days
+      const isActionable = n.type === 'govt_holiday_prompt' || (n.type === 'revision' && n.record?.status === 'needs_review');
+      if (!isActionable && n.timestamp) {
+        const ageMs = new Date(currentSessionTime).getTime() - new Date(n.timestamp).getTime();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+        if (ageMs > sevenDaysMs) {
+          return false;
+        }
+      }
+      return true;
+    });
     return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [
     sessionUser, 

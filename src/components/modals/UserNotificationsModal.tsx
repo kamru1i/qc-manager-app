@@ -106,7 +106,7 @@ export function UserNotificationsModal({
               background: transparent;
             }
             .notification-scrollbar::-webkit-scrollbar-thumb {
-              background: rgba(148, 163, 184, 0.08);
+              background: transparent;
               border-radius: 9999px;
               transition: background 0.15s ease;
             }
@@ -114,7 +114,7 @@ export function UserNotificationsModal({
               background: rgba(148, 163, 184, 0.2);
             }
             .notification-scrollbar::-webkit-scrollbar-thumb:hover {
-              background: rgba(148, 163, 184, 0.3);
+              background: rgba(148, 163, 184, 0.35);
             }
           `,
         }}
