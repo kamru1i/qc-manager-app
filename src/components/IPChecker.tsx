@@ -90,15 +90,38 @@ interface CriminalIPResponse {
 
 interface ScamalyticsResponse {
   error?: string;
-  score?: number | string;
-  risk?: string;
-  proxy?: string | boolean;
-  vpn?: string | boolean;
-  tor?: string | boolean;
-  city?: string;
-  region?: string;
-  country?: string;
-  isp?: string;
+  scamalytics?: {
+    status?: string;
+    scamalytics_score?: number;
+    scamalytics_risk?: string;
+    scamalytics_isp?: string;
+    scamalytics_org?: string;
+    scamalytics_proxy?: {
+      is_datacenter?: boolean;
+      is_vpn?: boolean;
+      is_apple_icloud_private_relay?: boolean;
+      is_amazon_aws?: boolean;
+      is_google?: boolean;
+    };
+  };
+  external_datasources?: {
+    dbip?: {
+      ip_country_code?: string;
+      ip_country_name?: string;
+      ip_city?: string;
+      ip_state_name?: string;
+      connection_type?: string;
+      isp_name?: string;
+    };
+    maxmind_geolite2?: {
+      ip_country_code?: string;
+      ip_country_name?: string;
+    };
+    ipinfo?: {
+      ip_country_code?: string;
+      ip_country_name?: string;
+    };
+  };
 }
 
 interface IPInfoResponse {
@@ -498,43 +521,50 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
         )) as unknown as ScamalyticsResponse;
         if (data.error) throw new Error(data.error);
 
-        const score = typeof data.score === 'number'
-          ? data.score
-          : typeof data.score === 'string'
-            ? parseInt(data.score, 10)
-            : 0;
+        const sc = data.scamalytics;
+        const dbip = data.external_datasources?.dbip;
+        const maxmind = data.external_datasources?.maxmind_geolite2;
+        const ipinfoVal = data.external_datasources?.ipinfo;
 
-        const isSuspicious = score > 30;
+        const score = sc?.scamalytics_score ?? 0;
+        const isSuspiciousScore = score > 30;
 
-        const countryName = String(data.country || '');
-        let countryCode = '';
-        if (
-          countryName.toLowerCase().includes('united kingdom') ||
-          countryName.toLowerCase().includes('great britain') ||
-          countryName.toLowerCase() === 'uk' ||
-          countryName.toLowerCase() === 'gb'
-        ) {
-          countryCode = 'GB';
-        } else if (countryName.length === 2) {
-          countryCode = countryName.toUpperCase();
-        }
+        // Parse country code
+        let countryCode = dbip?.ip_country_code || maxmind?.ip_country_code || ipinfoVal?.ip_country_code || '';
+        countryCode = countryCode.toUpperCase();
+
+        // Parse country name/location
+        const city = dbip?.ip_city || '';
+        const state = dbip?.ip_state_name || '';
+        const country = dbip?.ip_country_name || maxmind?.ip_country_name || ipinfoVal?.ip_country_name || '';
+        const countryName = city || state || country
+          ? `${city}${city && state ? ', ' : ''}${state}${state && country ? ', ' : ''}${country}`
+          : 'Unknown';
+
+        // Parse proxy flags
+        const proxyObj = sc?.scamalytics_proxy;
+        const isVpn = proxyObj?.is_vpn === true;
+        const isDatacenter = proxyObj?.is_datacenter === true;
+        const isPrivateRelay = proxyObj?.is_apple_icloud_private_relay === true;
+        const isAWS = proxyObj?.is_amazon_aws === true;
+        const isGoogle = proxyObj?.is_google === true;
 
         const risks: string[] = [];
-        const isVpn = data.vpn === 'yes' || data.vpn === true;
-        const isProxy = data.proxy === 'yes' || data.proxy === true;
-        const isTor = data.tor === 'yes' || data.tor === true;
-
         if (isVpn) risks.push("VPN");
-        if (isProxy) risks.push("Proxy");
-        if (isTor) risks.push("Tor");
+        if (isDatacenter) risks.push("Datacenter");
+        if (isPrivateRelay) risks.push("Apple iCloud Private Relay");
+        if (isAWS) risks.push("AWS");
+        if (isGoogle) risks.push("Google Cloud");
         if (score > 0) risks.push(`Fraud Score: ${score}/100`);
+
+        const isProxyOrVpn = isVpn || isDatacenter || isPrivateRelay || isAWS || isGoogle || isSuspiciousScore;
 
         return {
           success: true,
           countryCode,
           countryName,
-          isp: String(data.isp || ''),
-          isProxyOrVpn: isVpn || isProxy || isTor || isSuspicious,
+          isp: sc?.scamalytics_isp || sc?.scamalytics_org || dbip?.isp_name || 'N/A',
+          isProxyOrVpn,
           riskDetails: risks,
           rawData: data,
         };
@@ -858,21 +888,23 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
                           </p>
                         )}
 
+
+
                       {/* Scamalytics risk percentage */}
                       {sourceName === "Scamalytics.com" &&
-                        (result.rawData as any)?.score !== undefined && (
+                        (result.rawData as any)?.scamalytics?.scamalytics_score !== undefined && (
                           <p className="flex justify-between border-t border-slate-900/50 pt-1.5 mt-1.5">
                             <span>Fraud Score:</span>
                             <strong
                               className={
-                                Number((result.rawData as any).score) > 30
+                                Number((result.rawData as any).scamalytics.scamalytics_score) > 30
                                   ? "text-rose-400 font-bold"
                                   : "text-emerald-400 font-semibold"
                               }
                             >
-                              {Number((result.rawData as any).score)}
+                              {Number((result.rawData as any).scamalytics.scamalytics_score)}
                               % Risk (
-                              {(result.rawData as any).risk || "low"}
+                              {(result.rawData as any).scamalytics.scamalytics_risk || "low"}
                               )
                             </strong>
                           </p>
