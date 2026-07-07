@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.2.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.3.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,12 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.2.0 — Minor Release (Current)
+### 🚀 v3.3.0 — Minor Release (Current)
+*   **macOS & Windows Unified Auto-Updater Pipeline**: Integrated a custom updater builder script (`combine-latest-json.js`) into the GitHub Actions build workflow. This merges signatures and artifact payloads from both Windows and macOS platforms into a single, clean `latest.json` file on release, resolving the 404/signature validation issue.
+*   **macOS System Integration**: Restored macOS native menu functionality (`Menu::default`) including support for native keyboard shortcuts (`Cmd+A`, `Cmd+C`, `Cmd+V`, `Cmd+X`, and `Cmd+R` for page reload).
+*   **Profile Leave History Syncing**: Fixed a syncing issue where self-submitted leaves (made by Admin, Supervisor, or normal users) were not showing up under User Profile leave history. Now, pending/approved leaves are correctly visible across both the User Dashboard and the User Profile details in the User Management tab.
+
+### 🚀 v3.2.0 — Minor Release
 *   **Database-Level Badge Syncing**: Migrated top performer badge calculations, consecutive month streaks, and annual wins computation entirely to PostgreSQL level (`sync_top_performer_badges` RPC). Removed client-side heavy record fetching (up to 15,000 records) to eliminate memory overhead, network delays, and connection pool issues.
 -   **User Leave Editing & Supervisor Access Delegation**:
     *   Implemented Temporary Access Delegation modal for supervisors to securely delegate their team's view/approval roles using circular checkbox selectors and circular context menu items (Edit & Remove Access) loaded directly under body portal context menus.
