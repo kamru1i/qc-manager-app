@@ -290,89 +290,6 @@ export function useGlobalNotifications(
       });
     });
 
-    // 4. Admin and Supervisor approvals
-    if (profile?.role === 'admin') {
-      // Group 1: Leave Requests
-      const adminPendingChuti = adminPendingRecords.filter(
-        r => r.status === 'approved_by_supervisor' && r.leave_type !== 'Overtime'
-      );
-      adminPendingChuti.forEach(r => {
-        const staff = profilesList.find(p => p.id === r.user_id);
-        const staffName = staff?.full_name || staff?.username || r.username || 'Staff member';
-        list.push({
-          id: `admin-chuti-appr-${r.id}`,
-          type: 'pending_admin_chuti_request',
-          timestamp: r.created_at || r.date || currentSessionTime,
-          title: 'Leave Approval Required 📋',
-          body: `${staffName} applied for ${r.leave_type} on ${r.date}.`,
-          record: r
-        });
-      });
-
-      // Group 2: Reserve / Overtime / Adjustment
-      const adminPendingReserve = adminPendingRecords.filter(
-        r => (r.leave_type === 'Overtime' && r.status === 'approved_by_supervisor') ||
-             (r.reserve_adjustment_status === 'pending')
-      );
-      adminPendingReserve.forEach(r => {
-        const staff = profilesList.find(p => p.id === r.user_id);
-        const staffName = staff?.full_name || staff?.username || r.username || 'Staff member';
-        list.push({
-          id: `admin-reserve-appr-${r.id}`,
-          type: 'pending_admin_reserve_request',
-          timestamp: r.created_at || r.date || currentSessionTime,
-          title: r.leave_type === 'Overtime' ? 'Overtime Approval Required ⏱️' : 'Reserve Adjustment Approval Required 📋',
-          body: r.leave_type === 'Overtime'
-            ? `${staffName} requested Overtime on ${r.date}.`
-            : `${staffName} requested Reserve Adjustment on ${r.date}.`,
-          record: r
-        });
-      });
-
-      // Group 3: Profile Edit
-      profilesList.filter(p => p.profile_change_status === 'pending').forEach(p => {
-        list.push({
-          id: `admin-profile-appr-${p.id}`,
-          type: 'pending_admin_profile_request',
-          timestamp: p.created_at || currentSessionTime,
-          title: 'Profile Change Approval Required 👤',
-          body: `${p.full_name || p.username} submitted profile updates for approval.`,
-        });
-      });
-
-      // Group 4: Password Reset
-      profilesList.filter(p => p.password_reset_status === 'pending').forEach(p => {
-        list.push({
-          id: `admin-password-appr-${p.id}`,
-          type: 'pending_admin_password_request',
-          timestamp: p.created_at || currentSessionTime,
-          title: 'Password Reset Approval Required 🔑',
-          body: `${p.full_name || p.username} requested a password reset.`,
-        });
-      });
-    }
-
-    if (profile?.role === 'supervisor') {
-      const myTeamPending = supervisorPendingRecords.filter(r => {
-        const meta = r.admin_edit_request && typeof r.admin_edit_request === 'object'
-          ? (r.admin_edit_request as { supervisor_ids?: string[] })
-          : null;
-        return meta && Array.isArray(meta.supervisor_ids) && meta.supervisor_ids.includes(profile.id);
-      });
-      myTeamPending.forEach(r => {
-        const staff = profilesList.find(p => p.id === r.user_id);
-        const staffName = staff?.full_name || staff?.username || r.username || 'Team member';
-        list.push({
-          id: `supervisor-chuti-appr-${r.id}`,
-          type: 'pending_supervisor_request',
-          timestamp: r.created_at || r.date || currentSessionTime,
-          title: 'Team Leave Verification Required 📋',
-          body: `${staffName} requested ${r.leave_type} on ${r.date} and requires supervisor verification.`,
-          record: r
-        });
-      });
-    }
-
     const filtered = list.filter(n => !dismissedNotificationIds?.has(n.id));
     return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [
@@ -381,29 +298,50 @@ export function useGlobalNotifications(
     userRecords, 
     holidayResponses, 
     rulesRecords, 
-    adminPendingRecords, 
-    supervisorPendingRecords, 
     profilesList, 
     globalSettings.govt_holidays, 
     currentSessionTime, 
     dismissedNotificationIds
   ]);
 
+  const approvalsCount = useMemo(() => {
+    let count = 0;
+    if (profile?.role === 'admin') {
+      const adminPendingChutiCount = adminPendingRecords.filter(
+        r => r.status === 'approved_by_supervisor' && r.leave_type !== 'Overtime'
+      ).length;
+      
+      const adminPendingReserveCount = adminPendingRecords.filter(
+        r => (r.leave_type === 'Overtime' && r.status === 'approved_by_supervisor') ||
+             (r.reserve_adjustment_status === 'pending')
+      ).length;
+      
+      const profileChangeCount = profilesList.filter(p => p.profile_change_status === 'pending').length;
+      const passwordResetCount = profilesList.filter(p => p.password_reset_status === 'pending').length;
+      
+      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount;
+    }
+    
+    if (profile?.role === 'supervisor') {
+      const myTeamPendingCount = supervisorPendingRecords.filter(r => {
+        const meta = r.admin_edit_request && typeof r.admin_edit_request === 'object'
+          ? (r.admin_edit_request as { supervisor_ids?: string[] })
+          : null;
+        return meta && Array.isArray(meta.supervisor_ids) && meta.supervisor_ids.includes(profile.id);
+      }).length;
+      
+      count += myTeamPendingCount;
+    }
+    return count;
+  }, [profile, adminPendingRecords, supervisorPendingRecords, profilesList]);
+
   // Compute unread count
   const unreadCount = useMemo(() => {
-    return notificationsList.filter(n => {
-      if (
-        n.type === 'pending_admin_chuti_request' ||
-        n.type === 'pending_admin_reserve_request' ||
-        n.type === 'pending_admin_profile_request' ||
-        n.type === 'pending_admin_password_request' ||
-        n.type === 'pending_supervisor_request'
-      ) {
-        return true;
-      }
-      return !lastViewedTime || new Date(n.timestamp).getTime() > new Date(lastViewedTime).getTime();
-    }).length;
-  }, [notificationsList, lastViewedTime]);
+    const standardUnread = notificationsList.filter(
+      n => !lastViewedTime || new Date(n.timestamp).getTime() > new Date(lastViewedTime).getTime()
+    ).length;
+    return standardUnread + approvalsCount;
+  }, [notificationsList, lastViewedTime, approvalsCount]);
 
   const handleOpenNotifications = useCallback(() => {
     setShowNotificationsModal(true);
