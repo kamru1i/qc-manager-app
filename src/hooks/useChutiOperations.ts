@@ -436,10 +436,9 @@ export const useChutiOperations = ({
     }
   };
 
-  // Confirm Delete
-  const handleConfirmDelete = async () => {
-    if (!recordToDelete || !sessionUser) return;
-    const record = recordToDelete;
+  // executeDeleteRecord handles the actual deletion DB call
+  const executeDeleteRecord = async (record: ChutiRecord) => {
+    if (!sessionUser) return;
     setDeletingRecord(true);
     
     try {
@@ -486,9 +485,15 @@ export const useChutiOperations = ({
       setMessage({ type: 'error', text: (err as Error).message || 'An error occurred while deleting the record.' });
     } finally {
       setDeletingRecord(false);
-      setShowDeleteModal(false);
-      setRecordToDelete(null);
     }
+  };
+
+  // Confirm Delete (used by the global DeleteConfirmModal if triggered)
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete) return;
+    await executeDeleteRecord(recordToDelete);
+    setShowDeleteModal(false);
+    setRecordToDelete(null);
   };
 
   // User submits revision for a revision-requested record
@@ -1027,9 +1032,9 @@ export const useChutiOperations = ({
     }
   };
 
-  const triggerDeleteRecord = (record: ChutiRecord) => {
-    setRecordToDelete(record);
-    setShowDeleteModal(true);
+  const triggerDeleteRecord = async (record: ChutiRecord) => {
+    // Delete directly since the table has already confirmed via its own ConfirmModal
+    await executeDeleteRecord(record);
   };
 
   return {
