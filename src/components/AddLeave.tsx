@@ -632,10 +632,14 @@ export function AddLeave({
             throw new Error(errJson.error || 'Server failed to add leave');
           }
 
-          const resJson = await response.json();
+           const resJson = await response.json();
           data = resJson.data;
         } catch (fetchErr: unknown) {
           console.error('API route fetch error:', fetchErr);
+          const errorMsg = (fetchErr as Error).message || '';
+          if (errorMsg && errorMsg !== 'Failed to fetch' && errorMsg !== 'Load failed') {
+            throw new Error(errorMsg);
+          }
           if (directError) {
             throw new Error(directError.message || 'Permission denied: Unable to add leave for this user.');
           }

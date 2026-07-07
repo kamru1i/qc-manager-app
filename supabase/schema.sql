@@ -502,6 +502,25 @@ CREATE POLICY "Allow admins to insert chuti for all users"
 ON public.chuti FOR INSERT
 WITH CHECK (public.is_admin());
 
+CREATE POLICY "Allow supervisors to insert chuti for supervised users"
+ON public.chuti FOR INSERT
+WITH CHECK (
+  public.is_supervisor() AND (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = chuti.user_id
+      AND auth.uid() = ANY(supervisor_ids)
+    )
+    OR
+    EXISTS (
+      SELECT 1 FROM public.profiles u
+      JOIN public.profiles s ON s.id = ANY(u.supervisor_ids)
+      WHERE u.id = chuti.user_id
+      AND s.delegated_supervisor_id = auth.uid()
+    )
+  )
+);
+
 CREATE POLICY "Allow users to update their own chuti"
 ON public.chuti FOR UPDATE
 USING (auth.uid() = user_id)
