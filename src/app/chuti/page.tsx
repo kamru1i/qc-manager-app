@@ -569,6 +569,10 @@ export default function Dashboard({
       setShowLeaveApprovalModal(true);
     };
 
+    const handleOpenSupervisorApprovalsModal = () => {
+      setShowSupervisorApprovalModal(true);
+    };
+
     window.addEventListener('open-profile-settings', handleOpenProfileSettings);
     window.addEventListener('trigger-manual-sync', handleTriggerSync);
     window.addEventListener('open-revision-modal', handleOpenRevisionModal);
@@ -578,6 +582,7 @@ export default function Dashboard({
     window.addEventListener('approve-password-reset', handleApprovePasswordEvent);
     window.addEventListener('supervisor-approve-chuti', handleSupervisorApproveEvent);
     window.addEventListener('open-admin-approvals-modal', handleOpenAdminApprovalsModal);
+    window.addEventListener('open-supervisor-approvals-modal', handleOpenSupervisorApprovalsModal);
 
     return () => {
       window.removeEventListener('open-profile-settings', handleOpenProfileSettings);
@@ -589,6 +594,7 @@ export default function Dashboard({
       window.removeEventListener('approve-password-reset', handleApprovePasswordEvent);
       window.removeEventListener('supervisor-approve-chuti', handleSupervisorApproveEvent);
       window.removeEventListener('open-admin-approvals-modal', handleOpenAdminApprovalsModal);
+      window.removeEventListener('open-supervisor-approvals-modal', handleOpenSupervisorApprovalsModal);
     };
   }, [
     handleOpenProfileSettingsForSelf,
@@ -610,6 +616,7 @@ export default function Dashboard({
     handleApprovePasswordResetRequest,
     handleSupervisorApproveChuti,
     setShowLeaveApprovalModal,
+    setShowSupervisorApprovalModal,
   ]);
 
   if (!sessionUser && !loading) {

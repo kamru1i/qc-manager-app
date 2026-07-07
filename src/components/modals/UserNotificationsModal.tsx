@@ -22,6 +22,7 @@ interface UserNotificationsModalProps {
   reviewingIds?: Set<string>;
   approvedIds?: Set<string>;
   onSwitchToAdminPanel?: () => void;
+  onSwitchToSupervisorPanel?: () => void;
   onDismiss: (id: string) => void;
   onDismissAll: () => void;
   approvalsCount?: number;
@@ -43,6 +44,7 @@ export function UserNotificationsModal({
   reviewingIds = new Set(),
   approvedIds = new Set(),
   onSwitchToAdminPanel,
+  onSwitchToSupervisorPanel,
   onDismiss,
   onDismissAll,
   approvalsCount = 0,
@@ -72,6 +74,18 @@ export function UserNotificationsModal({
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
           >
             <span>Go to Admin Panel</span>
+            {approvalsCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white animate-pulse">
+                {approvalsCount}
+              </span>
+            )}
+          </button>
+        ) : profile?.role === 'supervisor' && onSwitchToSupervisorPanel ? (
+          <button
+            onClick={onSwitchToSupervisorPanel}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
+          >
+            <span>Go to Supervisor Panel</span>
             {approvalsCount > 0 && (
               <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white animate-pulse">
                 {approvalsCount}

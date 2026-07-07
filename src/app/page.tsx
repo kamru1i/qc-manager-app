@@ -1018,6 +1018,10 @@ export default function AppPortal() {
             setShowNotificationsModal(false);
             window.dispatchEvent(new CustomEvent('open-admin-approvals-modal'));
           }}
+          onSwitchToSupervisorPanel={() => {
+            setShowNotificationsModal(false);
+            window.dispatchEvent(new CustomEvent('open-supervisor-approvals-modal'));
+          }}
         />
       )}
 

@@ -107,7 +107,7 @@ export function useGlobalNotifications(
       if (profile?.role === 'supervisor') {
         const { data: supervisorChutiData, error: supervisorChutiError } = await supabase
           .from('chuti')
-          .select('*')
+          .select('*, profiles (username, full_name, role, supervisor_ids)')
           .eq('status', 'pending_supervisor')
           .is('deleted_at', null);
 
@@ -366,10 +366,17 @@ export function useGlobalNotifications(
     
     if (profile?.role === 'supervisor') {
       const myTeamPendingCount = supervisorPendingRecords.filter(r => {
+        // Only count if this supervisor is assigned to the user
+        const userSupervisorIds = (r as any).profiles?.supervisor_ids || [];
+        if (!userSupervisorIds.includes(profile.id)) return false;
+
         const meta = r.admin_edit_request && typeof r.admin_edit_request === 'object'
           ? (r.admin_edit_request as { supervisor_ids?: string[] })
           : null;
-        return meta && Array.isArray(meta.supervisor_ids) && meta.supervisor_ids.includes(profile.id);
+        if (meta && Array.isArray(meta.supervisor_ids) && meta.supervisor_ids.length > 0) {
+          return meta.supervisor_ids.includes(profile.id);
+        }
+        return true;
       }).length;
       
       count += myTeamPendingCount;
