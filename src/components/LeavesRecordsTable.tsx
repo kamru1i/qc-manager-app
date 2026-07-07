@@ -188,17 +188,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
 
   const handleRowContextMenu = (e: React.MouseEvent, record: ChutiRecord) => {
     e.preventDefault();
-    if (hideDelete) return;
-    const menuWidth = 144;
-    const menuHeight = 120;
-    const x =
-      e.clientX + menuWidth > window.innerWidth
-        ? e.clientX - menuWidth
-        : e.clientX;
-    const y =
-      e.clientY + menuHeight > window.innerHeight
-        ? e.clientY - menuHeight
-        : e.clientY;
+    const x = e.clientX;
+    const y = e.clientY;
 
     setContextMenu({
       x,
