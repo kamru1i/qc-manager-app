@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { RecordItem, Profile } from '@/types';
 import { VerifiedBadge } from './VerifiedBadge';
-import { calculateTopPerformerBadges } from '@/utils/leaderboardHelper';
 import { AnalyticsSkeleton } from './skeleton/AnalyticsSkeleton';
 import {
   FileText,
@@ -460,10 +459,16 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
     return sortedLeaderboard.slice(0, 5);
   }, [systemMetricsFilteredRecords, profilesList]);
 
-  // Compute top performer badges from records cache
+  // Read top performer badges directly from profiles list database values
   const topPerformerBadges = useMemo(() => {
-    return calculateTopPerformerBadges(allRecords, profilesList);
-  }, [allRecords, profilesList]);
+    const loadedBadges: Record<string, any> = {};
+    profilesList.forEach((p) => {
+      if (p.global_settings?.top_performer_badge) {
+        loadedBadges[p.id] = p.global_settings.top_performer_badge;
+      }
+    });
+    return loadedBadges;
+  }, [profilesList]);
 
 
 

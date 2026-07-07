@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/UnifiedSidebar";
 import { Navbar } from "@/components/Navbar";
-import { calculateTopPerformerBadges } from "@/utils/leaderboardHelper";
 import { Toaster, toast } from 'react-hot-toast';
 import { useGlobalNotifications } from "@/hooks/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/modals/UserNotificationsModal";
@@ -184,7 +183,6 @@ export default function AppPortal() {
 
   const [isOnline, setIsOnline] = useState(true);
   const [isUserManagementFullView, setIsUserManagementFullView] = useState(false);
-  const [quotesRecords, setQuotesRecords] = useState<any[]>([]);
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
 
   useEffect(() => {
@@ -215,85 +213,33 @@ export default function AppPortal() {
       }
     };
 
-    const fetchRecords = async () => {
-      const allRecords: any[] = [];
-      let page = 0;
-      const pageSize = 1000;
-      const maxPages = 15; // Safety limit: max 15000 records for badge calculation
-      let hasMore = true;
+    const deferTimer = setTimeout(() => {
+      fetchProfiles();
+    }, 3000);
 
-      // Filter to fetch records only from January 1st of the previous year to optimize performance
-      const today = new Date();
-      const prevYear = today.getFullYear() - 1;
-      const filterDateStr = `${prevYear}-01-01T00:00:00Z`;
-
+    // Call the database function to calculate and sync badges once on mount/login
+    const triggerBadgeSync = async () => {
       try {
-        while (hasMore && page < maxPages) {
-          const from = page * pageSize;
-          const to = from + pageSize - 1;
-          const { data, error } = await supabase
-            .from("records")
-            .select("user_id, submitted_at")
-            .gte("submitted_at", filterDateStr)
-            .order("submitted_at", { ascending: false })
-            .range(from, to);
-
-          if (error) throw error;
-          if (data && data.length > 0) {
-            allRecords.push(...data);
-            if (data.length < pageSize) {
-              hasMore = false;
-            } else {
-              page++;
-            }
-          } else {
-            hasMore = false;
-          }
+        const { error } = await supabase.rpc("sync_top_performer_badges");
+        if (error) {
+          console.error("Failed to sync top performer badges from DB:", error.message);
+        } else {
+          // Re-fetch profiles after sync to get the latest updated badge settings
+          fetchProfiles();
         }
-        setQuotesRecords(allRecords);
-      } catch (err: any) {
-        console.error("Error fetching all records:", err?.message || err?.details || err);
+      } catch (err) {
+        console.error("Error triggering top performer badges sync:", err);
       }
     };
 
-    // Defer background data fetches — these are only needed for leaderboard
-    // badges and user-management panels, not for the initial dashboard render.
-    // Using a 3s delay lets the main UI show first, then load supplementary data.
-    // Skip fetchRecords on user_management tab — records are only for badges,
-    // not needed there, and the paginated loop exhausts the connection pool.
-    const deferTimer = setTimeout(() => {
-      fetchProfiles();
-      if (activeTabRef.current !== 'user_management') {
-        fetchRecords();
-      }
-    }, 3000);
-
-    // Subscribe to supabase changes on records table to dynamically refresh badges
-    const channel = supabase
-      .channel("records_root_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "records" },
-        () => {
-          // Skip real-time record refresh when on user_management — not needed
-          if (activeTabRef.current !== 'user_management') {
-            fetchRecords();
-          }
-        },
-      )
-      .subscribe();
+    triggerBadgeSync();
 
     return () => {
       clearTimeout(deferTimer);
-      supabase.removeChannel(channel);
     };
   }, [sessionUser]);
 
   const [topPerformerBadges, setTopPerformerBadges] = useState<Record<string, any>>({});
-
-  const profilesKey = useMemo(() => {
-    return profilesList.map((p) => `${p.id}-${p.username}`).join(",");
-  }, [profilesList]);
 
   // Synchronize display badges directly from profilesList (database values) for all roles
   useEffect(() => {
@@ -305,51 +251,6 @@ export default function AppPortal() {
     });
     setTopPerformerBadges(loadedBadges);
   }, [profilesList]);
-
-  // Only Admins calculate and sync badges to the database when quotesRecords load
-  useEffect(() => {
-    if (!profile || profile.role !== "admin") return;
-    if (quotesRecords.length === 0 || profilesList.length === 0) return;
-
-    const calculated = calculateTopPerformerBadges(quotesRecords, profilesList);
-
-    const syncBadges = async () => {
-      try {
-        for (const p of profilesList) {
-          const currentBadge = p.global_settings?.top_performer_badge || null;
-          const newBadge = calculated[p.id] || null;
-
-          if (JSON.stringify(currentBadge) !== JSON.stringify(newBadge)) {
-            const updatedSettings = {
-              ...(p.global_settings || {}),
-              top_performer_badge: newBadge,
-            };
-
-            // Update in database
-            const { error } = await supabase
-              .from("profiles")
-              .update({ global_settings: updatedSettings })
-              .eq("id", p.id);
-
-            if (error) {
-              console.error(`Failed to sync badge for user ${p.id}:`, error.message);
-            } else {
-              // Dynamically update the local profiles list immutably so changes reflect in UI immediately
-              setProfilesList((prev) =>
-                prev.map((item) =>
-                  item.id === p.id ? { ...item, global_settings: updatedSettings } : item
-                )
-              );
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error syncing badges to Supabase profiles:", err);
-      }
-    };
-
-    syncBadges();
-  }, [quotesRecords, profilesKey, profile]);
 
   const [chutiOfflineCount, setChutiOfflineCount] = useState(0);
 
