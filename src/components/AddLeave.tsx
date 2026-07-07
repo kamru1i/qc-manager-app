@@ -492,7 +492,11 @@ export function AddLeave({
       targetProfile.supervisor_ids.length === 0;
     let finalStatus = 'pending_supervisor';
     if (profile?.role === 'admin') {
-      finalStatus = 'approved';
+      if (targetProfile.id === profile.id) {
+        finalStatus = 'approved_by_supervisor';
+      } else {
+        finalStatus = 'approved';
+      }
     } else if (bypassSupervisor) {
       finalStatus = 'approved_by_supervisor';
     }
@@ -535,7 +539,7 @@ export function AddLeave({
 
     datesWithAdjustment.forEach(item => {
       let commentWithCategory = comment.trim();
-      if (profile?.role === 'admin') {
+      if (profile?.role === 'admin' && targetProfile.id !== profile.id) {
         const adminUsername = profile?.username || 'Admin';
         const updatedCommentPrefix = `${adminUsername} Approved`;
         commentWithCategory = commentWithCategory
@@ -556,7 +560,7 @@ export function AddLeave({
       }
 
       let adminEditRequest: AdminEditRequest | null = null;
-      if (profile?.role === 'admin') {
+      if (profile?.role === 'admin' && targetProfile.id !== profile.id) {
         adminEditRequest = {
           notifications: [
             {
@@ -660,7 +664,7 @@ export function AddLeave({
       }
 
       // Notify User if added directly by Admin
-      if (profile?.role === 'admin') {
+      if (profile?.role === 'admin' && targetProfile.id !== profile.id) {
         sendPushNotification({
           userIds: [targetProfile.id],
           title: 'Leave Added by Admin ✅',
