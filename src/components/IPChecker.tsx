@@ -88,6 +88,19 @@ interface CriminalIPResponse {
   score?: { inbound?: number; outbound?: number };
 }
 
+interface ScamalyticsResponse {
+  error?: string;
+  score?: number | string;
+  risk?: string;
+  proxy?: string | boolean;
+  vpn?: string | boolean;
+  tor?: string | boolean;
+  city?: string;
+  region?: string;
+  country?: string;
+  isp?: string;
+}
+
 interface IPInfoResponse {
   error?: { message?: string };
   country?: string;
@@ -220,6 +233,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
       url.includes("ip2location.io") ||
       url.includes("criminalip.io") ||
       url.includes("ipwho.is") ||
+      url.includes("scamalytics.com") ||
       url.startsWith("http:");
 
     if (needsProxy) {
@@ -476,14 +490,71 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
       }
     };
 
-    // Run all 6 queries in parallel
-    const [net, whois, api, ip2l, crim, info] = await Promise.all([
+    // ─── QUERY SOURCE 7: SCAMALYTICS.COM ───
+    const fetchScamalytics = async (): Promise<SourceResult> => {
+      try {
+        const data = (await secureFetch(
+          `https://api11.scamalytics.com/v3/6a4caf1a23e50/?key=fcbc5dd07402794248daa4c76840b64c760f0d27c3100a7255ba1323d212507d&ip=${ip}`
+        )) as unknown as ScamalyticsResponse;
+        if (data.error) throw new Error(data.error);
+
+        const score = typeof data.score === 'number'
+          ? data.score
+          : typeof data.score === 'string'
+            ? parseInt(data.score, 10)
+            : 0;
+
+        const isSuspicious = score > 30;
+
+        const countryName = String(data.country || '');
+        let countryCode = '';
+        if (
+          countryName.toLowerCase().includes('united kingdom') ||
+          countryName.toLowerCase().includes('great britain') ||
+          countryName.toLowerCase() === 'uk' ||
+          countryName.toLowerCase() === 'gb'
+        ) {
+          countryCode = 'GB';
+        } else if (countryName.length === 2) {
+          countryCode = countryName.toUpperCase();
+        }
+
+        const risks: string[] = [];
+        const isVpn = data.vpn === 'yes' || data.vpn === true;
+        const isProxy = data.proxy === 'yes' || data.proxy === true;
+        const isTor = data.tor === 'yes' || data.tor === true;
+
+        if (isVpn) risks.push("VPN");
+        if (isProxy) risks.push("Proxy");
+        if (isTor) risks.push("Tor");
+        if (score > 0) risks.push(`Fraud Score: ${score}/100`);
+
+        return {
+          success: true,
+          countryCode,
+          countryName,
+          isp: String(data.isp || ''),
+          isProxyOrVpn: isVpn || isProxy || isTor || isSuspicious,
+          riskDetails: risks,
+          rawData: data,
+        };
+      } catch (err: unknown) {
+        return {
+          success: false,
+          error: (err as Error).message || "Request failed",
+        };
+      }
+    };
+
+    // Run all 7 queries in parallel
+    const [net, whois, api, ip2l, crim, info, scam] = await Promise.all([
       fetchIPLocationNet(),
       fetchIPWhoIs(),
       fetchIPApi(),
       fetchIP2Location(),
       fetchCriminalIP(),
       fetchIPInfo(),
+      fetchScamalytics(),
     ]);
 
     setResults({
@@ -493,6 +564,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
       "IP2Location.io": ip2l,
       "CriminalIP.io": crim,
       "IPInfo.io": info,
+      "Scamalytics.com": scam,
     });
     setLoading(false);
   };
@@ -785,6 +857,26 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
                             </strong>
                           </p>
                         )}
+
+                      {/* Scamalytics risk percentage */}
+                      {sourceName === "Scamalytics.com" &&
+                        (result.rawData as any)?.score !== undefined && (
+                          <p className="flex justify-between border-t border-slate-900/50 pt-1.5 mt-1.5">
+                            <span>Fraud Score:</span>
+                            <strong
+                              className={
+                                Number((result.rawData as any).score) > 30
+                                  ? "text-rose-400 font-bold"
+                                  : "text-emerald-400 font-semibold"
+                              }
+                            >
+                              {Number((result.rawData as any).score)}
+                              % Risk (
+                              {(result.rawData as any).risk || "low"}
+                              )
+                            </strong>
+                          </p>
+                        )}
                     </div>
                   ) : (
                     <div className="mt-2 p-2 bg-rose-950/20 border border-rose-900/30 rounded-lg text-[10px] text-rose-400 font-medium">
@@ -820,7 +912,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
               Awaiting IP Input
             </p>
             <p className="text-xs text-slate-550 max-w-sm mt-1 leading-relaxed">
-              Enter an IP address above or click "My IP" to query all 6
+              Enter an IP address above or click "My IP" to query all 7
               diagnostic security databases.
             </p>
           </div>
