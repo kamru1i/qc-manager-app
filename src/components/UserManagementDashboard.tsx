@@ -149,7 +149,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditAllowOvertime(!!viewingStaff.allow_overtime);
       setEditAllowReserve(!!viewingStaff.allow_reserve);
       setEditUserJobRole(viewingStaff.job_role || '');
-      setEditUserWorkingHours((viewingStaff.working_hours ?? 9.5).toString());
+      setEditUserWorkingHours(Number(viewingStaff.working_hours ?? 9.5).toFixed(1));
       setEditUserBreakTime((viewingStaff.break_time ?? 0).toString());
       setEditUserSignInTime(viewingStaff.default_sign_in || '');
       setEditUserSignOutTime(viewingStaff.default_sign_out || '');
