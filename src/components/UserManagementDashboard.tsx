@@ -132,6 +132,26 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [updatingCredentials, setUpdatingCredentials] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
 
+  const hasStaffAccess = useCallback((viewingStaffProfile: Profile) => {
+    if (!profile) return false;
+    if (profile.role === 'admin') return true;
+    if (viewingStaffProfile.id === profile.id) return true;
+    
+    if (profile.role === 'supervisor') {
+      const supervisorIds = viewingStaffProfile.supervisor_ids || [];
+      // 1. Direct supervision
+      if (supervisorIds.includes(profile.id)) return true;
+      
+      // 2. Delegated supervision
+      const delegatedFromSupervisorIds = profiles
+        .filter(p => p.delegated_supervisor_id === profile.id)
+        .map(p => p.id);
+      if (supervisorIds.some(id => delegatedFromSupervisorIds.includes(id))) return true;
+    }
+    
+    return false;
+  }, [profile, profiles]);
+
   // Sync edit states when viewingStaff changes
   useEffect(() => {
     if (viewingStaff) {
@@ -192,22 +212,22 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Fallback if viewingStaff has no quotes access and active tab is quotes/kpi
   useEffect(() => {
     if (viewingStaff) {
-      const isSupervisedByMe = profile?.role === 'admin' || (profile?.role === 'supervisor' && Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile.id));
+      const isSupervisedByMe = hasStaffAccess(viewingStaff);
       if (!viewingStaff.has_quotes_access && (activeSubTab === 'quotes' || activeSubTab === 'kpi')) {
         setActiveSubTab(isSupervisedByMe ? 'leave' : 'profile');
       }
     }
-  }, [viewingStaff, activeSubTab, profile]);
+  }, [viewingStaff, activeSubTab, profile, hasStaffAccess]);
 
   // Enforce access control for Leave History tab: redirect if active tab is leave but supervisor doesn't supervise user
   useEffect(() => {
     if (viewingStaff && profile?.role === 'supervisor') {
-      const isSupervisedByMe = Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile.id);
+      const isSupervisedByMe = hasStaffAccess(viewingStaff);
       if (activeSubTab === 'leave' && !isSupervisedByMe) {
         setActiveSubTab(viewingStaff.has_quotes_access ? 'quotes' : 'profile');
       }
     }
-  }, [viewingStaff, activeSubTab, profile]);
+  }, [viewingStaff, activeSubTab, profile, hasStaffAccess]);
 
   // Reset subtab selection to 'leave' when viewingStaff is closed
   useEffect(() => {
@@ -306,7 +326,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Fetch leave data on mount/change of selected staff member
   useEffect(() => {
     if (viewingStaff) {
-      const isSupervisedByMe = profile?.role === 'admin' || (profile?.role === 'supervisor' && Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile?.id));
+      const isSupervisedByMe = hasStaffAccess(viewingStaff);
       if (isSupervisedByMe) {
         fetchStaffLeaveData(viewingStaff.id);
       } else {
@@ -317,13 +337,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         setGlobalSettings(getGlobalSettingsFromProfile(profile));
       }
     }
-  }, [viewingStaff, fetchStaffLeaveData, profile]);
+  }, [viewingStaff, fetchStaffLeaveData, profile, hasStaffAccess]);
 
   // Real-time synchronization for viewed staff leave data
   useEffect(() => {
     if (!viewingStaff) return;
 
-    const isSupervisedByMe = profile?.role === 'admin' || (profile?.role === 'supervisor' && Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile?.id));
+    const isSupervisedByMe = hasStaffAccess(viewingStaff);
     if (!isSupervisedByMe) return;
 
     const chutiChannel = supabase
@@ -364,7 +384,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       supabase.removeChannel(settlementsChannel);
       supabase.removeChannel(holidayResponsesChannel);
     };
-  }, [viewingStaff, debouncedFetchStaffLeaveData, profile]);
+  }, [viewingStaff, debouncedFetchStaffLeaveData, profile, hasStaffAccess]);
 
   // Toggle adjustment handler for leaves in details view
   const handleToggleAdjustment = async (record: ChutiRecord) => {
@@ -621,9 +641,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const visibleProfiles = profiles
     .filter((u) => {
       if (profile?.role === 'supervisor') {
-        // Supervisor sees users they supervise OR users who have quotes access
-        const isSupervisedByMe = Array.isArray(u.supervisor_ids) && u.supervisor_ids.includes(profile.id);
-        return isSupervisedByMe || !!u.has_quotes_access;
+        // Supervisor sees users they supervise (direct/delegated), themselves, OR users who have quotes access
+        return hasStaffAccess(u) || !!u.has_quotes_access;
       }
       return true;
     })
@@ -1013,7 +1032,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                       <tr 
                         key={u.id} 
                         onDoubleClick={() => {
-                          const isSupervisedByMe = profile?.role === 'admin' || (profile?.role === 'supervisor' && Array.isArray(u.supervisor_ids) && u.supervisor_ids.includes(profile.id));
+                          const isSupervisedByMe = hasStaffAccess(u);
                           if (isSupervisedByMe) {
                             setActiveSubTab('leave');
                           } else {

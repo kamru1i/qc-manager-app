@@ -9,7 +9,8 @@ import {
   getOfflineRecords, 
   saveOfflineDelete, 
   deleteOfflineRecord,
-  generateUUID 
+  generateUUID,
+  removeCacheItems
 } from '@/utils/offlineSync';
 import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError } from '@/utils/dashboardHelpers';
 import { sendPushNotification } from '@/utils/webPushHelper';
@@ -473,6 +474,31 @@ export const useChutiOperations = ({
       if (error) throw error;
       
       if (!data || data.length === 0) {
+        // Double check: does this record exist on the server?
+        const { data: serverCheck, error: checkError } = await supabase
+          .from('chuti')
+          .select('id')
+          .eq('id', record.id || '')
+          .maybeSingle();
+
+        if (!checkError && !serverCheck) {
+          // Record is a ghost record (not found in the database at all)
+          // Clean it up from local caches
+          await removeCacheItems('chuti_cache', [record.id || '']);
+          const offlineRecords = await getOfflineRecords();
+          const targetOffline = offlineRecords.find(r => r.id === record.id);
+          if (targetOffline && targetOffline.localId) {
+            await deleteOfflineRecord(targetOffline.localId);
+          }
+          // Remove from local states
+          setUserRecords(prev => prev.filter(r => r.id !== record.id));
+          setAdminRecords(prev => prev.filter(r => r.id !== record.id));
+          
+          checkOfflineQueue();
+          setMessage({ type: 'success', text: 'This record was not found in the database. It has been cleaned up from your local browser cache.' });
+          return;
+        }
+
         throw new Error('You do not have permission to delete this record or it was not found in the database.');
       }
       
@@ -717,12 +743,26 @@ export const useChutiOperations = ({
           setUserRecords(prev => prev.map(r => r.id === t.id ? { ...r, ...updates } : r));
           setAdminRecords(prev => prev.map(r => r.id === t.id ? { ...r, ...updates } : r));
 
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from('chuti')
             .update(updates)
-            .eq('id', t.id);
+            .eq('id', t.id)
+            .select();
 
           if (error) throw error;
+
+          if (!data || data.length === 0) {
+            // Prune local caches
+            await removeCacheItems('chuti_cache', [t.id]);
+            const offlineRecords = await getOfflineRecords();
+            const targetOffline = offlineRecords.find(r => r.id === t.id);
+            if (targetOffline && targetOffline.localId) {
+              await deleteOfflineRecord(targetOffline.localId);
+            }
+            setUserRecords(prev => prev.filter(r => r.id !== t.id));
+            setAdminRecords(prev => prev.filter(r => r.id !== t.id));
+            throw new Error(`The request for date ${formatDate(t.date)} was not found in the database. Cleaned up from local cache.`);
+          }
         }));
 
         if (user_id) {
@@ -765,12 +805,26 @@ export const useChutiOperations = ({
           setUserRecords(prev => prev.map(r => r.id === t.id ? { ...r, ...updates } : r));
           setAdminRecords(prev => prev.map(r => r.id === t.id ? { ...r, ...updates } : r));
 
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from('chuti')
             .update(updates)
-            .eq('id', t.id);
+            .eq('id', t.id)
+            .select();
 
           if (error) throw error;
+
+          if (!data || data.length === 0) {
+            // Prune local caches
+            await removeCacheItems('chuti_cache', [t.id]);
+            const offlineRecords = await getOfflineRecords();
+            const targetOffline = offlineRecords.find(r => r.id === t.id);
+            if (targetOffline && targetOffline.localId) {
+              await deleteOfflineRecord(targetOffline.localId);
+            }
+            setUserRecords(prev => prev.filter(r => r.id !== t.id));
+            setAdminRecords(prev => prev.filter(r => r.id !== t.id));
+            throw new Error(`The request for date ${formatDate(t.date)} was not found in the database. Cleaned up from local cache.`);
+          }
         }));
 
         if (user_id) {
@@ -853,12 +907,26 @@ export const useChutiOperations = ({
           }
         };
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('chuti')
           .update(updates)
-          .eq('id', t.id);
+          .eq('id', t.id)
+          .select();
 
         if (error) throw error;
+
+        if (!data || data.length === 0) {
+          // Prune local caches
+          await removeCacheItems('chuti_cache', [t.id]);
+          const offlineRecords = await getOfflineRecords();
+          const targetOffline = offlineRecords.find(r => r.id === t.id);
+          if (targetOffline && targetOffline.localId) {
+            await deleteOfflineRecord(targetOffline.localId);
+          }
+          setUserRecords(prev => prev.filter(r => r.id !== t.id));
+          setAdminRecords(prev => prev.filter(r => r.id !== t.id));
+          throw new Error(`The request for date ${formatDate(t.date)} was not found in the database. Cleaned up from local cache.`);
+        }
       }));
 
       // Trigger Web Push Notification to Admins
@@ -973,12 +1041,26 @@ export const useChutiOperations = ({
           }
         };
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('chuti')
           .update(updates)
-          .eq('id', t.id);
+          .eq('id', t.id)
+          .select();
 
         if (error) throw error;
+
+        if (!data || data.length === 0) {
+          // Prune local caches
+          await removeCacheItems('chuti_cache', [t.id]);
+          const offlineRecords = await getOfflineRecords();
+          const targetOffline = offlineRecords.find(r => r.id === t.id);
+          if (targetOffline && targetOffline.localId) {
+            await deleteOfflineRecord(targetOffline.localId);
+          }
+          setUserRecords(prev => prev.filter(r => r.id !== t.id));
+          setAdminRecords(prev => prev.filter(r => r.id !== t.id));
+          throw new Error(`The request for date ${formatDate(t.date)} was not found in the database. Cleaned up from local cache.`);
+        }
       }));
 
       if (user_id) {
