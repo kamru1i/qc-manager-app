@@ -485,6 +485,38 @@ export default function Dashboard({
     window.dispatchEvent(new CustomEvent('chuti-offline-count-change', { detail: offlineCount }));
   }, [offlineCount]);
 
+  // Synchronize approvals count to root page
+  useEffect(() => {
+    let count = 0;
+    if (profile) {
+      if (profile.role === 'admin') {
+        count = groupedChutiRequests.length +
+                pendingReserveRequests.length +
+                pendingProfileRequests.length +
+                pendingPasswordResetRequests.length +
+                adminHolidayNotifications.length;
+      } else if (profile.role === 'supervisor') {
+        count = groupedSupervisorRequests.length;
+      }
+    }
+    console.log('Chuti page dispatching approvals count:', count, {
+      groupedChutiRequests: groupedChutiRequests.length,
+      pendingReserveRequests: pendingReserveRequests.length,
+      pendingProfileRequests: pendingProfileRequests.length,
+      pendingPasswordResetRequests: pendingPasswordResetRequests.length,
+      adminHolidayNotifications: adminHolidayNotifications.length
+    });
+    window.dispatchEvent(new CustomEvent('chuti-approvals-count-sync', { detail: count }));
+  }, [
+    profile,
+    groupedChutiRequests,
+    pendingReserveRequests,
+    pendingProfileRequests,
+    pendingPasswordResetRequests,
+    adminHolidayNotifications,
+    groupedSupervisorRequests
+  ]);
+
   // Handle events from unified root Navbar and global modals
   useEffect(() => {
     const handleOpenProfileSettings = () => {

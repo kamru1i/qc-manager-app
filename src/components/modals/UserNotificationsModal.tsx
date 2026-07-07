@@ -69,11 +69,7 @@ export function UserNotificationsModal({
         profile?.role === 'admin' && onSwitchToAdminPanel ? (
           <button
             onClick={onSwitchToAdminPanel}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans border ${
-              approvalsCount > 0
-                ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-500 shadow-[0_0_12px_rgba(147,51,234,0.5)] scale-[1.02] active:scale-[0.98]'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
-            }`}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
           >
             <span>Go to Admin Panel</span>
             {approvalsCount > 0 && (

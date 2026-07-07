@@ -21,6 +21,22 @@ export function useGlobalNotifications(
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
+  const [syncedApprovalsCount, setSyncedApprovalsCount] = useState<number | null>(null);
+
+  // Sync approvals count from dashboard event in real-time
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<number>;
+      if (typeof customEvent.detail === 'number') {
+        console.log('useGlobalNotifications received synced count:', customEvent.detail);
+        setSyncedApprovalsCount(customEvent.detail);
+      }
+    };
+    window.addEventListener('chuti-approvals-count-sync', handleSync);
+    return () => {
+      window.removeEventListener('chuti-approvals-count-sync', handleSync);
+    };
+  }, []);
 
   // Get stable session time for notification timestamp fallback
   const currentSessionTime = useMemo(() => new Date().toISOString(), []);
@@ -43,13 +59,25 @@ export function useGlobalNotifications(
       }
 
       // 2. Fetch user's holiday responses
-      const { data: holidayData, error: holidayError } = await supabase
-        .from('govt_holiday_responses')
-        .select('*')
-        .eq('user_id', sessionUser.id);
+      if (profile?.role === 'admin' || profile?.role === 'supervisor') {
+        const { data: holidayData, error: holidayError } = await supabase
+          .from('govt_holiday_responses')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (!holidayError && holidayData) {
-        setHolidayResponses(holidayData);
+        if (!holidayError && holidayData) {
+          setHolidayResponses(holidayData);
+        }
+      } else {
+        const { data: holidayData, error: holidayError } = await supabase
+          .from('govt_holiday_responses')
+          .select('*')
+          .eq('user_id', sessionUser.id)
+          .order('created_at', { ascending: false });
+
+        if (!holidayError && holidayData) {
+          setHolidayResponses(holidayData);
+        }
       }
 
       // 3. Fetch active compliance rules
@@ -67,7 +95,6 @@ export function useGlobalNotifications(
         const { data: adminChutiData, error: adminChutiError } = await supabase
           .from('chuti')
           .select('*')
-          .or('status.eq.approved_by_supervisor,reserve_adjustment_status.eq.pending')
           .is('deleted_at', null);
 
         if (!adminChutiError && adminChutiData) {
@@ -155,7 +182,7 @@ export function useGlobalNotifications(
       .channel('global-holiday-notif-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'govt_holiday_responses', filter: `user_id=eq.${sessionUser.id}` },
+        { event: '*', schema: 'public', table: 'govt_holiday_responses', ...(filter ? { filter } : {}) },
         () => {
           fetchNotificationsData();
         }
@@ -305,6 +332,10 @@ export function useGlobalNotifications(
   ]);
 
   const approvalsCount = useMemo(() => {
+    if (syncedApprovalsCount !== null) {
+      return syncedApprovalsCount;
+    }
+
     let count = 0;
     if (profile?.role === 'admin') {
       const adminPendingChutiCount = adminPendingRecords.filter(
@@ -319,7 +350,18 @@ export function useGlobalNotifications(
       const profileChangeCount = profilesList.filter(p => p.profile_change_status === 'pending').length;
       const passwordResetCount = profilesList.filter(p => p.password_reset_status === 'pending').length;
       
-      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount;
+      // Count govt holiday responses for admin (where user is reserve-enabled)
+      const adminHolidayNotifCount = holidayResponses.filter((r: any) => {
+        const staff = profilesList.find(p => p.id === r.user_id);
+        const isReserveEnabled = staff ? staff.allow_reserve !== false : true;
+        if (!isReserveEnabled) return false;
+        
+        // Also check if dismissed
+        const notifId = `admin-holiday-resp-${r.id}`;
+        return !dismissedNotificationIds?.has(notifId);
+      }).length;
+
+      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount + adminHolidayNotifCount;
     }
     
     if (profile?.role === 'supervisor') {
@@ -333,7 +375,7 @@ export function useGlobalNotifications(
       count += myTeamPendingCount;
     }
     return count;
-  }, [profile, adminPendingRecords, supervisorPendingRecords, profilesList]);
+  }, [syncedApprovalsCount, profile, adminPendingRecords, supervisorPendingRecords, profilesList, holidayResponses, dismissedNotificationIds]);
 
   // Compute unread count
   const unreadCount = useMemo(() => {
