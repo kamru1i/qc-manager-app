@@ -77,6 +77,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   const [selectedMonth, setSelectedMonth] = useState(() => String(new Date().getMonth() + 1).padStart(2, '0'));
   const [archiveTodos, setArchiveTodos] = useState<TodoItem[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
+  const [copiedDates, setCopiedDates] = useState<Record<string, boolean>>({});
 
   const yearsList = React.useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -520,6 +521,36 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyDateTodos = (dateStr: string, list: TodoItem[]) => {
+    const parts = dateStr.split('-');
+    let formattedDate = dateStr;
+    if (parts.length === 3) {
+      formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    const header = `✅ *Tasks Summery — ${formattedDate}*\n`;
+
+    const body = list
+      .map((t) => {
+        if (t.status === 'Completed') {
+          if (t.comment && t.comment.trim() !== '') {
+            return `- ${t.task} — Completed — ${t.comment.trim()}`;
+          }
+          return `- ${t.task} — Completed`;
+        }
+        if (t.comment && t.comment.trim() !== '') {
+          return `- ${t.task} — Working — ${t.comment.trim()}`;
+        }
+        return `- ${t.task} — Working`;
+      })
+      .join('\n');
+
+    navigator.clipboard.writeText(header + body);
+    setCopiedDates(prev => ({ ...prev, [dateStr]: true }));
+    setTimeout(() => {
+      setCopiedDates(prev => ({ ...prev, [dateStr]: false }));
+    }, 2000);
+  };
+
   // Group historical todos by Date
   const groupedArchiveTodos = React.useMemo(() => {
     const groups: Record<string, TodoItem[]> = {};
@@ -923,11 +954,34 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-1 custom-scrollbar">
               {Object.entries(groupedArchiveTodos).map(([date, list]) => (
                 <div key={date} className="space-y-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-slate-800/80 border border-slate-750 text-slate-300 font-mono text-[10px] font-bold rounded-lg tracking-wider">
-                      {formatDateDisplay(date)}
-                    </span>
-                    <span className="text-[10px] text-slate-550 font-medium">({list.length} {list.length === 1 ? 'task' : 'tasks'})</span>
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 bg-slate-800/80 border border-slate-750 text-slate-300 font-mono text-[10px] font-bold rounded-lg tracking-wider">
+                        {formatDateDisplay(date)}
+                      </span>
+                      <span className="text-[10px] text-slate-550 font-medium">({list.length} {list.length === 1 ? 'task' : 'tasks'})</span>
+                    </div>
+                    {/* Copy Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleCopyDateTodos(date, list)}
+                      className={`flex items-center gap-1 px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-750 text-[10px] font-bold rounded-lg transition-all active:scale-95 cursor-pointer ${
+                        copiedDates[date] ? 'text-emerald-500 bg-emerald-500/5 border border-emerald-500/10' : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Copy formatted checklist to clipboard"
+                    >
+                      {copiedDates[date] ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-500 animate-fade-in" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy List</span>
+                        </>
+                      )}
+                    </button>
                   </div>
 
                   <div className="bg-slate-955 border border-slate-850/60 rounded-xl overflow-hidden shadow-inner">
