@@ -435,6 +435,7 @@ export function useGlobalNotifications(
     handleSaveHolidayResponse,
     handleDismissNotification,
     handleDismissAllNotifications,
-    fetchNotificationsData
+    fetchNotificationsData,
+    approvalsCount
   };
 }

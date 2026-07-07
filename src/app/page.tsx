@@ -373,6 +373,7 @@ export default function AppPortal() {
     handleSaveHolidayResponse,
     handleDismissNotification,
     handleDismissAllNotifications,
+    approvalsCount: globalApprovalsCount,
   } = useGlobalNotifications(sessionUser, profile, profilesList);
 
   // Global Tauri Desktop Notification Listener (active on all tabs)
@@ -993,6 +994,7 @@ export default function AppPortal() {
           onSaveHolidayResponse={handleSaveHolidayResponse}
           onDismiss={handleDismissNotification}
           onDismissAll={handleDismissAllNotifications}
+          approvalsCount={globalApprovalsCount}
           onRevisionClick={(record) => {
             window.dispatchEvent(new CustomEvent('open-revision-modal', { detail: record }));
           }}

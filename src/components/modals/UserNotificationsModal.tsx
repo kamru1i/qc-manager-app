@@ -24,6 +24,7 @@ interface UserNotificationsModalProps {
   onSwitchToAdminPanel?: () => void;
   onDismiss: (id: string) => void;
   onDismissAll: () => void;
+  approvalsCount?: number;
 }
 
 export function UserNotificationsModal({
@@ -44,6 +45,7 @@ export function UserNotificationsModal({
   onSwitchToAdminPanel,
   onDismiss,
   onDismissAll,
+  approvalsCount = 0,
 }: UserNotificationsModalProps) {
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
@@ -67,9 +69,18 @@ export function UserNotificationsModal({
         profile?.role === 'admin' && onSwitchToAdminPanel ? (
           <button
             onClick={onSwitchToAdminPanel}
-            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer hover:bg-slate-800 transition-all font-sans"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans border ${
+              approvalsCount > 0
+                ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-500 shadow-[0_0_12px_rgba(147,51,234,0.5)] scale-[1.02] active:scale-[0.98]'
+                : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+            }`}
           >
-            Go to Admin Panel
+            <span>Go to Admin Panel</span>
+            {approvalsCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white animate-pulse">
+                {approvalsCount}
+              </span>
+            )}
           </button>
         ) : undefined
       }
