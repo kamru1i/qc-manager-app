@@ -219,13 +219,12 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
       }
     }
 
-    // If running in local browser development (localhost)
-    const isLocalhost =
+    // If running in browser web build (localhost or Vercel production)
+    const isBrowser =
       typeof window !== "undefined" &&
-      (window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1");
+      !(window as any).__TAURI_INTERNALS__;
 
-    if (isLocalhost) {
+    if (isBrowser) {
       let localUrl = url;
       if (url.includes("api.ip2location.io")) {
         localUrl = url.replace(
@@ -244,7 +243,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({
         if (res.ok) return await res.json();
       } catch (err) {
         console.warn(
-          "Local Next.js proxy failed, falling back to public proxies:",
+          "Next.js rewrite proxy failed, falling back to public proxies:",
           err,
         );
       }

@@ -7,6 +7,20 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    // Disable rewrites during static Tauri exports
+    if (isTauri) return [];
+    return [
+      {
+        source: '/api-proxy/ip2location',
+        destination: 'https://api.ip2location.io/',
+      },
+      {
+        source: '/api-proxy/criminalip/:path*',
+        destination: 'https://api.criminalip.io/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
