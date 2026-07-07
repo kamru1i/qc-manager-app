@@ -6,7 +6,7 @@ on:
       - main
       - master
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -20,18 +20,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'windows-latest'
-            target: 'x86_64-pc-windows-msvc'
-            label: 'windows-x64'
-          - platform: 'windows-latest'
-            target: 'i686-pc-windows-msvc'
-            label: 'windows-x86'
-          - platform: 'macos-latest'
-            target: 'x86_64-apple-darwin'
-            label: 'macos-intel'
-          - platform: 'macos-latest'
-            target: 'aarch64-apple-darwin'
-            label: 'macos-arm'
+          - platform: "windows-latest"
+            target: "x86_64-pc-windows-msvc"
+            label: "windows-x64"
+          - platform: "windows-latest"
+            target: "i686-pc-windows-msvc"
+            label: "windows-x86"
+          - platform: "macos-latest"
+            target: "x86_64-apple-darwin"
+            label: "macos-intel"
+          - platform: "macos-latest"
+            target: "aarch64-apple-darwin"
+            label: "macos-arm"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -52,7 +52,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: 'src-tauri'
+          workspaces: "src-tauri"
 
       - name: Install dependencies
         run: npm ci
@@ -111,15 +111,14 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.1.0** introduces a comprehensive Team Daily Leave Records report, customized Excel/PDF exports with date/supervisor filenames, custom loading skeletons, back button fixes, and codebase optimizations.
+            **v3.2.0* introduces database-level badge syncing, an advanced temporary access delegation system for supervisors, expanded editing workflows for users and admins, and decoupled UI badge rendering for seamless performance.
 
-            #### 🛠 What's New in v3.1.0:
+            #### 🛠 What's New in v3.2.0:
 
-            - **Team Daily Leave Records Dashboard** — Supervisors can view/filter daily records of their team members (admins see all records) with customized Name & Codename column grids.
-            - **Excel & PDF Exports** — Added spreadsheet and report exports with automated filename convention: `[Date]-[Supervisor Name]'s Team Leave record`.
-            - **Custom Skeleton loaders** — Tailored skeleton structures that prevent layout shifts and match exact daily table headers.
-            - **Direct Back Navigation** — Clicking back exits directly to the main leave tracker form.
-            - **Codebase optimizations** — Resolved conditional hook rules of hooks issues and ESLint prefer-const violations.
+            - **Database-Level Badge Syncing** — Migrated top performer badge, streak, and annual win calculations entirely to PostgreSQL (`sync_top_performer_badges` RPC), eliminating heavy client-side record fetching (up to 15,000 records) and network or connection pool overhead.
+            - **Temporary Access Delegation** — Added a secure delegation modal for supervisors to assign view/approval roles using circular checkbox selectors and body portal-loaded context menus (Edit & Remove Access).
+            - **Flexible Record & Leave Editing** — Allowed normal users to edit their own leave records (automatically resetting settled requests to `pending_supervisor` via `needsReapproval` checks), and granted admins/supervisors full control to modify sign-in/out times, break durations, working hours, and job roles.
+            - **Decoupled Badge UI & Optimizations** — Completely removed `localStorage` caching of computed badges, rendering them directly from the database's `profilesList` state across Navbar, User Management, and Leaderboards to prevent stale data. Removed redundant `Total` text wrap constraints in leave usage summaries.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.1.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 3.2.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v3.1.0 — Minor Release (Current)
+### 🚀 v3.2.0 — Minor Release (Current)
+*   **Database-Level Badge Syncing**: Migrated top performer badge calculations, consecutive month streaks, and annual wins computation entirely to PostgreSQL level (`sync_top_performer_badges` RPC). Removed client-side heavy record fetching (up to 15,000 records) to eliminate memory overhead, network delays, and connection pool issues.
+-   **User Leave Editing & Supervisor Access Delegation**:
+    *   Implemented Temporary Access Delegation modal for supervisors to securely delegate their team's view/approval roles using circular checkbox selectors and circular context menu items (Edit & Remove Access) loaded directly under body portal context menus.
+    *   Allowed normal users to edit their own leave records. Modified `needsReapproval` checking to reset leave requests back to `pending_supervisor` when settled requests are edited.
+    *   Added full admin/supervisor editing capabilities for user sign-in/out times, break durations, working hours, and job roles.
+*   **Decoupled Badge Display & UI Enhancements**: Completely removed `localStorage` caching of computed badges. Rendered all top performer badges directly from the database's `profilesList` state across Navbar, User Management, and Leaderboards to prevent mismatches or stale visual updates. Removed redundant `Total` text wrap constraints inside leave usages summaries.
+
+### 🚀 v3.1.0 — Minor Release
 *   **Team Daily Leave Records Report**: Implemented a comprehensive daily leave records dashboard allowing supervisors to filter and view their team members' active daily leaves (full & short leaves), and administrators to view all organization daily leaves. Supported custom Excel and PDF exports with dynamic filename formatting.
 *   **Custom Skeleton Loaders & UX Improvements**: Designed new tailor-made skeleton loaders (`team-leaves-report` and `leaves-table` variants) to seamlessly match loading columns and eliminate action button grids. Fixed Back button routing navigation to exit directly to the leave application landing tab.
 *   **Code Quality & Linting Compliance**: Resolved React conditional hook violations and cleaned up unused lucide imports, unused variables, and type safety constraints (such as `any[]` array responses in Excel helpers and Postgrest catch block type bindings) to ensure clean next build compilation.
