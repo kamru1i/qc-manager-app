@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { Toggle } from './Toggle';
 import { CategoryCheckboxList } from './CategoryCheckboxList';
 import { Profile } from '@/types';
+import { formatTimeToAMPM } from '@/utils/dashboardHelpers';
 
 interface StaffSettingsFormProps {
   isNewUser: boolean;
@@ -222,7 +223,14 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sign-In Time</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Sign-In Time</label>
+              {signInTime && (
+                <span className="text-[10px] font-bold text-blue-450 tracking-wider">
+                  {formatTimeToAMPM(signInTime)}
+                </span>
+              )}
+            </div>
             {(isAdmin || isSupervisor) ? (
               <input
                 type="time"
@@ -232,13 +240,20 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {signInTime || '—'}
+                {signInTime ? formatTimeToAMPM(signInTime) : '—'}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sign-Out Time</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Sign-Out Time</label>
+              {signOutTime && (
+                <span className="text-[10px] font-bold text-blue-450 tracking-wider">
+                  {formatTimeToAMPM(signOutTime)}
+                </span>
+              )}
+            </div>
             {(isAdmin || isSupervisor) ? (
               <input
                 type="time"
@@ -248,7 +263,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               />
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
-                {signOutTime || '—'}
+                {signOutTime ? formatTimeToAMPM(signOutTime) : '—'}
               </div>
             )}
           </div>
