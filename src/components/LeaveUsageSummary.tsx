@@ -145,7 +145,6 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
           <span className="text-blue-400 block text-[9px] uppercase font-semibold">Allocated Office Leave</span>
           <div className="flex justify-between items-start mt-1">
             {renderRemainingNode(finalOfficeRemaining, officeDeduction)}
-            <span className="text-slate-500 text-[10px] font-mono whitespace-nowrap mt-0.5">Total: {officeTotalDisplay}</span>
           </div>
           {officeSubtext && <span className="text-[9px] text-slate-500 block mt-1">{officeSubtext}</span>}
           {finalOfficeRemaining < 0 && (
@@ -169,7 +168,6 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
                   Remaining: {govtHolidayRemaining} days
                 </span>
               )}
-              <span className="text-slate-500 text-[10px] font-mono">Total: {govtHolidayTotal} days</span>
             </div>
           </div>
         )}
@@ -188,7 +186,6 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
                   Remaining: {eidFitrRemaining} days
                 </span>
               )}
-              <span className="text-slate-500 text-[10px] font-mono">Total: {eidFitrTotal} days</span>
             </div>
           </div>
         )}
@@ -207,7 +204,6 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
                   Remaining: {eidAdhaRemaining} days
                 </span>
               )}
-              <span className="text-slate-500 text-[10px] font-mono">Total: {eidAdhaTotal} days</span>
             </div>
           </div>
         )}
