@@ -191,6 +191,12 @@ export async function checkSubscriptionStatus(userId: string): Promise<{
       const auth = rawSub.keys?.auth;
 
       if (endpoint && p256dh && auth) {
+        // Delete conflicting subscription endpoint first (belonging to another user on the same browser)
+        await supabase
+          .from('push_subscriptions')
+          .delete()
+          .eq('endpoint', endpoint);
+
         const { error: rpcError } = await supabase.rpc('register_push_subscription', {
           p_user_id: userId,
           p_endpoint: endpoint,
