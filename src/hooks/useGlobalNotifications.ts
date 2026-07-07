@@ -62,9 +62,34 @@ export function useGlobalNotifications(
         setRulesRecords(rulesData);
       }
 
-      // 4. Fetch admin/supervisor approvals - Not needed in user panel notifications
-      setAdminPendingRecords([]);
-      setSupervisorPendingRecords([]);
+      // 4. Fetch admin/supervisor approvals
+      if (profile?.role === 'admin') {
+        const { data: adminChutiData, error: adminChutiError } = await supabase
+          .from('chuti')
+          .select('*')
+          .or('status.eq.approved_by_supervisor,reserve_adjustment_status.eq.pending')
+          .is('deleted_at', null);
+
+        if (!adminChutiError && adminChutiData) {
+          setAdminPendingRecords(adminChutiData);
+        }
+      } else {
+        setAdminPendingRecords([]);
+      }
+
+      if (profile?.role === 'supervisor') {
+        const { data: supervisorChutiData, error: supervisorChutiError } = await supabase
+          .from('chuti')
+          .select('*')
+          .eq('status', 'pending_supervisor')
+          .is('deleted_at', null);
+
+        if (!supervisorChutiError && supervisorChutiData) {
+          setSupervisorPendingRecords(supervisorChutiData);
+        }
+      } else {
+        setSupervisorPendingRecords([]);
+      }
     } catch (err) {
       console.error('Failed to fetch global notifications data:', err);
     }
@@ -112,7 +137,8 @@ export function useGlobalNotifications(
   useEffect(() => {
     if (!sessionUser) return;
 
-    const filter = `user_id=eq.${sessionUser.id}`;
+    const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
+    const filter = isApprover ? undefined : `user_id=eq.${sessionUser.id}`;
 
     const chutiChannel = supabase
       .channel('global-chuti-notif-changes')
@@ -147,10 +173,22 @@ export function useGlobalNotifications(
       )
       .subscribe();
 
+    const profilesChannel = supabase
+      .channel('global-profiles-notif-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          fetchNotificationsData();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(chutiChannel);
       supabase.removeChannel(holidayChannel);
       supabase.removeChannel(rulesChannel);
+      supabase.removeChannel(profilesChannel);
     };
   }, [sessionUser, profile, fetchNotificationsData]);
 
@@ -252,7 +290,88 @@ export function useGlobalNotifications(
       });
     });
 
-    // 4. Admin and Supervisor approvals are handled strictly inside the admin approvals panel / modal, not here.
+    // 4. Admin and Supervisor approvals
+    if (profile?.role === 'admin') {
+      // Group 1: Leave Requests
+      const adminPendingChuti = adminPendingRecords.filter(
+        r => r.status === 'approved_by_supervisor' && r.leave_type !== 'Overtime'
+      );
+      adminPendingChuti.forEach(r => {
+        const staff = profilesList.find(p => p.id === r.user_id);
+        const staffName = staff?.full_name || staff?.username || r.username || 'Staff member';
+        list.push({
+          id: `admin-chuti-appr-${r.id}`,
+          type: 'pending_admin_chuti_request',
+          timestamp: r.created_at || r.date || currentSessionTime,
+          title: 'Leave Approval Required 📋',
+          body: `${staffName} applied for ${r.leave_type} on ${r.date}.`,
+          record: r
+        });
+      });
+
+      // Group 2: Reserve / Overtime / Adjustment
+      const adminPendingReserve = adminPendingRecords.filter(
+        r => (r.leave_type === 'Overtime' && r.status === 'approved_by_supervisor') ||
+             (r.reserve_adjustment_status === 'pending')
+      );
+      adminPendingReserve.forEach(r => {
+        const staff = profilesList.find(p => p.id === r.user_id);
+        const staffName = staff?.full_name || staff?.username || r.username || 'Staff member';
+        list.push({
+          id: `admin-reserve-appr-${r.id}`,
+          type: 'pending_admin_reserve_request',
+          timestamp: r.created_at || r.date || currentSessionTime,
+          title: r.leave_type === 'Overtime' ? 'Overtime Approval Required ⏱️' : 'Reserve Adjustment Approval Required 📋',
+          body: r.leave_type === 'Overtime'
+            ? `${staffName} requested Overtime on ${r.date}.`
+            : `${staffName} requested Reserve Adjustment on ${r.date}.`,
+          record: r
+        });
+      });
+
+      // Group 3: Profile Edit
+      profilesList.filter(p => p.profile_change_status === 'pending').forEach(p => {
+        list.push({
+          id: `admin-profile-appr-${p.id}`,
+          type: 'pending_admin_profile_request',
+          timestamp: p.created_at || currentSessionTime,
+          title: 'Profile Change Approval Required 👤',
+          body: `${p.full_name || p.username} submitted profile updates for approval.`,
+        });
+      });
+
+      // Group 4: Password Reset
+      profilesList.filter(p => p.password_reset_status === 'pending').forEach(p => {
+        list.push({
+          id: `admin-password-appr-${p.id}`,
+          type: 'pending_admin_password_request',
+          timestamp: p.created_at || currentSessionTime,
+          title: 'Password Reset Approval Required 🔑',
+          body: `${p.full_name || p.username} requested a password reset.`,
+        });
+      });
+    }
+
+    if (profile?.role === 'supervisor') {
+      const myTeamPending = supervisorPendingRecords.filter(r => {
+        const meta = r.admin_edit_request && typeof r.admin_edit_request === 'object'
+          ? (r.admin_edit_request as { supervisor_ids?: string[] })
+          : null;
+        return meta && Array.isArray(meta.supervisor_ids) && meta.supervisor_ids.includes(profile.id);
+      });
+      myTeamPending.forEach(r => {
+        const staff = profilesList.find(p => p.id === r.user_id);
+        const staffName = staff?.full_name || staff?.username || r.username || 'Team member';
+        list.push({
+          id: `supervisor-chuti-appr-${r.id}`,
+          type: 'pending_supervisor_request',
+          timestamp: r.created_at || r.date || currentSessionTime,
+          title: 'Team Leave Verification Required 📋',
+          body: `${staffName} requested ${r.leave_type} on ${r.date} and requires supervisor verification.`,
+          record: r
+        });
+      });
+    }
 
     const filtered = list.filter(n => !dismissedNotificationIds?.has(n.id));
     return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -272,9 +391,18 @@ export function useGlobalNotifications(
 
   // Compute unread count
   const unreadCount = useMemo(() => {
-    return notificationsList.filter(
-      n => !lastViewedTime || new Date(n.timestamp).getTime() > new Date(lastViewedTime).getTime()
-    ).length;
+    return notificationsList.filter(n => {
+      if (
+        n.type === 'pending_admin_chuti_request' ||
+        n.type === 'pending_admin_reserve_request' ||
+        n.type === 'pending_admin_profile_request' ||
+        n.type === 'pending_admin_password_request' ||
+        n.type === 'pending_supervisor_request'
+      ) {
+        return true;
+      }
+      return !lastViewedTime || new Date(n.timestamp).getTime() > new Date(lastViewedTime).getTime();
+    }).length;
   }, [notificationsList, lastViewedTime]);
 
   const handleOpenNotifications = useCallback(() => {
