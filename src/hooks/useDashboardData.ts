@@ -960,12 +960,10 @@ export const useDashboardData = () => {
       setIsOnline(navigator.onLine);
       const handleOnline = () => {
         setIsOnline(true);
-        setMessage({ type: 'success', text: 'You are back online.' });
         triggerAutoSync();
       };
       const handleOffline = () => {
         setIsOnline(false);
-        setMessage({ type: 'error', text: 'Internet disconnected. You are in offline mode.' });
       };
 
       window.addEventListener('online', handleOnline);
@@ -976,7 +974,7 @@ export const useDashboardData = () => {
         window.removeEventListener('offline', handleOffline);
       };
     }
-  }, [triggerAutoSync, setMessage]);
+  }, [triggerAutoSync]);
 
   // Listen for real-time updates from Supabase
   useEffect(() => {

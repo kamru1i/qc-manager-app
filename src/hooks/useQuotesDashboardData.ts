@@ -826,12 +826,10 @@ export const useQuotesDashboardData = () => {
       setIsOnline(navigator.onLine);
       const handleOnline = () => {
         setIsOnline(true);
-        showToast('success', 'You are back online.');
         fetchRecords(true);
       };
       const handleOffline = () => {
         setIsOnline(false);
-        showToast('error', 'Your internet connection is offline.');
       };
 
       window.addEventListener('online', handleOnline);
@@ -842,7 +840,7 @@ export const useQuotesDashboardData = () => {
         window.removeEventListener('offline', handleOffline);
       };
     }
-  }, [fetchRecords, showToast]);
+  }, [fetchRecords]);
 
   // Debounce ref for real-time record change events to prevent double-fetching
   // when user's own mutations already trigger explicit fetchRecords() calls.
