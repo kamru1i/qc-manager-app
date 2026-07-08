@@ -805,7 +805,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             </div>
 
             {/* Custom Department Indicators */}
-            {department !== "Data Entry" && setKpiDeptIndicators && (
+            {setKpiDeptIndicators && (
               <div className="border-t border-slate-850/60 pt-4 space-y-3">
                 <div>
                   <h4 className="text-xs font-bold text-white mb-1">

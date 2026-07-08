@@ -716,7 +716,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     }
 
     // Serial 2: Custom Department indicators
-    if (department !== 'Data Entry' && kpiDeptIndicators.length > 0) {
+    if (kpiDeptIndicators.length > 0) {
       const deptSrl = currentSrl++;
       kpiDeptIndicators.forEach((indicator: string) => {
         const key = `dept_${indicator}`;
@@ -1177,7 +1177,7 @@ USING (auth.uid() = user_id OR EXISTS (
               {(() => {
                 let currentSrl = 1;
                 const dataEntrySrl = performsDataEntry ? currentSrl++ : null;
-                const deptKpiSrl = (department !== 'Data Entry' && kpiDeptIndicators.length > 0) ? currentSrl++ : null;
+                const deptKpiSrl = kpiDeptIndicators.length > 0 ? currentSrl++ : null;
                 const reportSrl = performsDataEntry ? currentSrl++ : null;
                 const selfDevSrl = currentSrl++;
 
