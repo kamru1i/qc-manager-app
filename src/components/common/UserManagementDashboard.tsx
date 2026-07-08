@@ -96,6 +96,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [editUserSignOutTime, setEditUserSignOutTime] = useState('');
   const [editUserKpiSkills, setEditUserKpiSkills] = useState<string[]>([]);
   const [editUserKpiDeptIndicators, setEditUserKpiDeptIndicators] = useState<string[]>([]);
+  const [editUserKpiOtherDeptIndicators, setEditUserKpiOtherDeptIndicators] = useState<string[]>([]);
   const [editUserPerformsDataEntry, setEditUserPerformsDataEntry] = useState(true);
   const [editUserDepartment, setEditUserDepartment] = useState('Data Entry');
   const [editUserPerformsOtherDeptTasks, setEditUserPerformsOtherDeptTasks] = useState(false);
@@ -181,6 +182,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditUserSignOutTime(viewingStaff.default_sign_out || '');
       setEditUserKpiSkills(viewingStaff.global_settings?.kpi_skills || []);
       setEditUserKpiDeptIndicators(viewingStaff.global_settings?.kpi_dept_indicators || []);
+      setEditUserKpiOtherDeptIndicators(viewingStaff.global_settings?.kpi_other_dept_indicators || []);
       setEditUserPerformsDataEntry(viewingStaff.global_settings?.performs_data_entry !== false);
       setEditUserDepartment(viewingStaff.global_settings?.department || 'Data Entry');
       setEditUserPerformsOtherDeptTasks(!!viewingStaff.global_settings?.performs_other_dept_tasks);
@@ -622,7 +624,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       editUserPerformsDataEntry,
       editUserDepartment,
       editUserPerformsOtherDeptTasks,
-      editUserOtherDepartment
+      editUserOtherDepartment,
+      editUserKpiOtherDeptIndicators
     );
 
     setSubmitting(false);
@@ -866,6 +869,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setEditUserKpiSkills={setEditUserKpiSkills}
                   editUserKpiDeptIndicators={editUserKpiDeptIndicators}
                   setEditUserKpiDeptIndicators={setEditUserKpiDeptIndicators}
+                  editUserKpiOtherDeptIndicators={editUserKpiOtherDeptIndicators}
+                  setEditUserKpiOtherDeptIndicators={setEditUserKpiOtherDeptIndicators}
                   editUserPerformsDataEntry={editUserPerformsDataEntry}
                   setEditUserPerformsDataEntry={setEditUserPerformsDataEntry}
                   editUserDepartment={editUserDepartment}

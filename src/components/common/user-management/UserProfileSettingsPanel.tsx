@@ -63,6 +63,8 @@ interface UserProfileSettingsPanelProps {
   setEditUserKpiSkills: (val: string[]) => void;
   editUserKpiDeptIndicators: string[];
   setEditUserKpiDeptIndicators: (val: string[]) => void;
+  editUserKpiOtherDeptIndicators: string[];
+  setEditUserKpiOtherDeptIndicators: (val: string[]) => void;
   editUserPerformsDataEntry: boolean;
   setEditUserPerformsDataEntry: (val: boolean) => void;
   editUserDepartment: string;
@@ -125,6 +127,8 @@ export const UserProfileSettingsPanel: React.FC<
   setEditUserKpiSkills,
   editUserKpiDeptIndicators,
   setEditUserKpiDeptIndicators,
+  editUserKpiOtherDeptIndicators,
+  setEditUserKpiOtherDeptIndicators,
   editUserPerformsDataEntry,
   setEditUserPerformsDataEntry,
   editUserDepartment,
@@ -191,6 +195,8 @@ export const UserProfileSettingsPanel: React.FC<
         setKpiSkills={setEditUserKpiSkills}
         kpiDeptIndicators={editUserKpiDeptIndicators}
         setKpiDeptIndicators={setEditUserKpiDeptIndicators}
+        kpiOtherDeptIndicators={editUserKpiOtherDeptIndicators}
+        setKpiOtherDeptIndicators={setEditUserKpiOtherDeptIndicators}
         performsDataEntry={editUserPerformsDataEntry}
         setPerformsDataEntry={setEditUserPerformsDataEntry}
         department={editUserDepartment}

@@ -230,7 +230,8 @@ export const useAdminActions = ({
     performsDataEntry?: boolean,
     department?: string,
     performsOtherDeptTasks?: boolean,
-    otherDepartment?: string
+    otherDepartment?: string,
+    kpiOtherDeptIndicators?: string[]
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -273,6 +274,7 @@ export const useAdminActions = ({
         ...existingSettings,
         kpi_skills: kpiSkills || [],
         kpi_dept_indicators: kpiDeptIndicators || [],
+        kpi_other_dept_indicators: kpiOtherDeptIndicators || [],
         performs_data_entry: performsDataEntry !== undefined ? performsDataEntry : true,
         department: department || 'Data Entry',
         performs_other_dept_tasks: performsOtherDeptTasks !== undefined ? performsOtherDeptTasks : false,
