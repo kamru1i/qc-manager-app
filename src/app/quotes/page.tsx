@@ -1024,9 +1024,9 @@ export default function Dashboard({
 
   // Loading Screen
   if (loading) {
-    let loaderType: "form" | "table" | "analytics" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "generic" = "generic";
+    let loaderType: "form" | "table" | "analytics" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "generic" = "generic";
     if (activeTab === "entry") loaderType = "form";
-    else if (activeTab === "asitis_causality") loaderType = "form";
+    else if (activeTab === "asitis_causality") loaderType = "asitis_causality";
     else if (activeTab === "monthly") loaderType = "table";
     else if (activeTab === "analytics") loaderType = "analytics";
     else if (activeTab === "audit_logs") loaderType = "audit-logs";

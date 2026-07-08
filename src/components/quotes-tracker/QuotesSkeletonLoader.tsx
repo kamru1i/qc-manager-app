@@ -7,6 +7,7 @@ import { AnalyticsSkeleton } from "@/components/common/skeleton/AnalyticsSkeleto
 import { AuditLogsSkeleton } from "@/components/common/skeleton/AuditLogsSkeleton";
 import { IPCheckerSkeleton } from "@/components/common/skeleton/IPCheckerSkeleton";
 import { LoginCodesSkeleton } from "@/components/common/skeleton/LoginCodesSkeleton";
+import { AsitisCausalitySkeleton } from "@/components/common/skeleton/AsitisCausalitySkeleton";
 
 interface SkeletonLoaderProps {
   type?:
@@ -22,6 +23,7 @@ interface SkeletonLoaderProps {
     | "audit-logs"
     | "ip_checker"
     | "login_codes"
+    | "asitis_causality"
     | "generic";
   rows?: number;
 }
@@ -197,6 +199,10 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
 
   if (type === "login_codes") {
     return <LoginCodesSkeleton />;
+  }
+
+  if (type === "asitis_causality") {
+    return <AsitisCausalitySkeleton />;
   }
 
   // default / generic

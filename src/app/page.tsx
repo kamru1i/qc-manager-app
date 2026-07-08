@@ -938,7 +938,7 @@ export default function AppPortal() {
                 ) : activeTab === "quotes" ? (
                   <QuotesSkeletonLoader type={
                     activeQuotesTab === "entry" ? "form" : 
-                    activeQuotesTab === "asitis_causality" ? "form" :
+                    activeQuotesTab === "asitis_causality" ? "asitis_causality" :
                     activeQuotesTab === "monthly" ? "table" : 
                     activeQuotesTab === "rules" ? "rules" : 
                     activeQuotesTab === "analytics" ? "analytics" : 
