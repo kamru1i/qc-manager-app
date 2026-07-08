@@ -132,10 +132,11 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     return { from: startStr, to: endStr };
   }, [selectedMonth, selectedYear]);
 
+  const globalSettingsStr = JSON.stringify(targetStaff.global_settings || {});
   const performsDataEntry = targetStaff.global_settings?.performs_data_entry !== false;
   const kpiDeptIndicators = useMemo(() => {
     return targetStaff.global_settings?.kpi_dept_indicators || [];
-  }, [targetStaff.global_settings]);
+  }, [globalSettingsStr]);
 
   const allowedTypesStr = JSON.stringify(targetStaff.allowed_types || []);
   const supervisorIdsStr = JSON.stringify(targetStaff.supervisor_ids || []);
@@ -269,7 +270,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     }
 
     return finalWeightages;
-  }, [activeFileTypes, allowedTypesStr, performsDataEntry, kpiDeptIndicators]);
+  }, [activeFileTypes, allowedTypesStr, performsDataEntry, globalSettingsStr]);
 
   // Core Section Max for Self-Scores scaling
   const coreSelfMax = useMemo(() => {
@@ -342,10 +343,16 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   }, [performsDataEntry, activeFileTypes, kpiDeptIndicators, weightages, defaultWeightages, computedSelfScores, selfScores, supervisorScores]);
 
   // Fetch from Database
+  const lastLoadedRef = React.useRef({ id: '', monthYear: '' });
+
   useEffect(() => {
     let active = true;
     const fetchAssessment = async () => {
-      setLoading(true);
+      const isNewFetch = lastLoadedRef.current.id !== targetStaff.id || lastLoadedRef.current.monthYear !== monthYearKey;
+      if (isNewFetch) {
+        setLoading(true);
+        lastLoadedRef.current = { id: targetStaff.id, monthYear: monthYearKey };
+      }
       try {
         const { data, error } = await supabase
           .from('kpi_assessments')

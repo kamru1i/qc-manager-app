@@ -644,12 +644,17 @@ export default function AppPortal() {
       if (session) {
         setSessionUser(session.user);
         await loadUserProfile(session.user.id);
-      } else {
-        addLog("onAuthStateChange no session, setting loading to false");
+      } else if (event === 'SIGNED_OUT') {
+        addLog("onAuthStateChange SIGNED_OUT, clearing profile and setting loading to false");
         setSessionUser(null);
         setProfile(null);
         setActiveTab(null);
         setLoading(false);
+      } else {
+        addLog(`onAuthStateChange transient event ${event} without session, skipping unmount`);
+        if (loading) {
+          setLoading(false);
+        }
       }
     });
 
