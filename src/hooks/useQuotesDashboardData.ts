@@ -693,12 +693,25 @@ export const useQuotesDashboardData = () => {
   };
 
 
-  // Fetch session on load
   useEffect(() => {
     const getSession = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          if (typeof window !== "undefined") {
+            for (const key of Object.keys(localStorage)) {
+              if (key.startsWith("sb-")) {
+                localStorage.removeItem(key);
+              }
+            }
+          }
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutErr) {
+            console.warn("Failed to clear stale auth session:", signOutErr);
+          }
+          throw sessionError;
+        }
 
         if (!session) {
           setLoading(false);

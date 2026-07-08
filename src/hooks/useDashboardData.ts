@@ -1079,6 +1079,21 @@ export const useDashboardData = () => {
 
           if (sessionError) {
             console.error('Supabase session fetch error:', sessionError);
+            
+            // Clear any stale local storage auth keys to prevent loop console warnings
+            if (typeof window !== 'undefined') {
+              for (const key of Object.keys(localStorage)) {
+                if (key.startsWith('sb-')) {
+                  localStorage.removeItem(key);
+                }
+              }
+            }
+            try {
+              await supabase.auth.signOut();
+            } catch (signOutErr) {
+              console.warn('Failed to clear stale auth session:', signOutErr);
+            }
+
             // If offline, try to continue with cached profile instead of redirecting to login
             if (typeof window !== 'undefined' && !navigator.onLine) {
               console.log('Session error while offline, attempting cached profile recovery...');

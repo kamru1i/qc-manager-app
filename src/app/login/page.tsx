@@ -101,7 +101,21 @@ export default function LoginPage() {
           getSessionPromise,
           timeoutPromise,
         ]);
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          if (typeof window !== "undefined") {
+            for (const key of Object.keys(localStorage)) {
+              if (key.startsWith("sb-")) {
+                localStorage.removeItem(key);
+              }
+            }
+          }
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {
+            console.warn("Failed to clear stale auth session:", e);
+          }
+          throw sessionError;
+        }
 
         const session = data?.session;
 
@@ -135,6 +149,18 @@ export default function LoginPage() {
         }
       } catch (err) {
         console.error("Error during checkUser session check:", err);
+        if (typeof window !== "undefined") {
+          for (const key of Object.keys(localStorage)) {
+            if (key.startsWith("sb-")) {
+              localStorage.removeItem(key);
+            }
+          }
+        }
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          console.warn("Failed to clear stale auth session:", e);
+        }
       }
     };
     checkUser();
