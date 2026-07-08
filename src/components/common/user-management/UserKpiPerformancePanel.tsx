@@ -14,7 +14,9 @@ import {
   Calendar,
   Edit2,
   Trash2,
-  Info
+  Info,
+  FileSpreadsheet,
+  Target
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -45,6 +47,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   const [appraiseeSearchText, setAppraiseeSearchText] = useState('');
   const [assignedAppraisees, setAssignedAppraisees] = useState<any[]>([]);
   const [searchingAppraisee, setSearchingAppraisee] = useState(false);
+  const [hasAssignedAppraisees, setHasAssignedAppraisees] = useState(false);
   
   // Date Selection
   const now = new Date();
@@ -463,16 +466,43 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
           
         if (profilesData) {
           setAssignedAppraisees(profilesData);
+          setHasAssignedAppraisees(profilesData.length > 0);
           return;
         }
       }
       setAssignedAppraisees([]);
+      setHasAssignedAppraisees(false);
     } catch (err) {
       console.error('Failed to load appraisees:', err);
     } finally {
       setSearchingAppraisee(false);
     }
   };
+
+  // Check if current user has any assigned appraisees to show "View KPI" button
+  useEffect(() => {
+    let active = true;
+    const checkAppraisees = async () => {
+      if (!currentUser) return;
+      try {
+        const { data: assessments, error } = await supabase
+          .from('kpi_assessments')
+          .select('user_id')
+          .eq('month_year', monthYearKey)
+          .or(`appraiser_name.ilike.%${currentUser.full_name || 'NOTHING_HERE'}%,appraiser_name.ilike.%${currentUser.username || 'NOTHING_HERE'}%`);
+          
+        if (error) throw error;
+        
+        if (active) {
+          setHasAssignedAppraisees(assessments && assessments.length > 0);
+        }
+      } catch (err) {
+        console.error('Failed checking appraisees:', err);
+      }
+    };
+    checkAppraisees();
+    return () => { active = false; };
+  }, [currentUser, monthYearKey]);
 
   const handleLoadAppraiseeByCodename = async (codename: string) => {
     const clean = codename.trim().toUpperCase();
@@ -617,6 +647,168 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     window.print();
   };
 
+  // Excel export trigger
+  const handleExportExcel = () => {
+    const headers = [
+      "Serial No",
+      "Key Result Area",
+      "Key Performance Indicator",
+      "Measurable Criteria",
+      "Target",
+      "Weightage",
+      "Self Score",
+      "Supervisor Score",
+      "Comments"
+    ];
+
+    const rows: string[][] = [
+      [
+        `Performance Assessment: ${selectedMonth + 1}-${selectedYear}`,
+        `Employee Name: ${targetStaff.full_name || targetStaff.username}`,
+        `Employee ID: ${empId}`,
+        `Department: ${department}`,
+        `Appraiser: ${appraiserName}`,
+        `Reviewer: ${reviewerName}`,
+        `Date of Joining: ${dateOfJoining}`
+      ],
+      [], // blank line
+      headers
+    ];
+
+    let currentSrl = 1;
+    
+    // Serial 1: Data Entry
+    if (performsDataEntry) {
+      const dataSrl = currentSrl++;
+      activeFileTypes.forEach((type) => {
+        rows.push([
+          String(dataSrl),
+          department,
+          type.label,
+          "Quality, Quantity & Timeliness",
+          "100%",
+          `${weightages[type.key] ?? defaultWeightages[type.key] ?? 0}%`,
+          `${computedSelfScores[type.key] || 0}%`,
+          `${supervisorScores[type.key] !== undefined ? supervisorScores[type.key] : 0}%`,
+          comments[type.key] || ""
+        ]);
+      });
+
+      // Mistakes row
+      rows.push([
+        String(dataSrl),
+        department,
+        "Number of Mistakes",
+        "Quality, Quantity & Timeliness",
+        "0%",
+        `${weightages['mistakes'] ?? 0}%`,
+        `${selfScores['mistakes'] ?? 0}%`,
+        `${supervisorScores['mistakes'] !== undefined ? supervisorScores['mistakes'] : 0}%`,
+        comments['mistakes'] || ""
+      ]);
+    }
+
+    // Serial 2: Custom Department indicators
+    if (department !== 'Data Entry' && kpiDeptIndicators.length > 0) {
+      const deptSrl = currentSrl++;
+      kpiDeptIndicators.forEach((indicator: string) => {
+        const key = `dept_${indicator}`;
+        rows.push([
+          String(deptSrl),
+          department,
+          indicator,
+          "Quality, Quantity & Timeliness",
+          "100%",
+          `${weightages[key] ?? defaultWeightages[key] ?? 0}%`,
+          `${selfScores[key] ?? 0}%`,
+          `${supervisorScores[key] !== undefined ? supervisorScores[key] : 0}%`,
+          comments[key] || ""
+        ]);
+      });
+    }
+
+    // Serial 3: Monthly Reports
+    if (performsDataEntry) {
+      const reportSrl = currentSrl++;
+      rows.push([
+        String(reportSrl),
+        "Monthly Data Entry Report",
+        "Monthly Reports",
+        "Quality, Quantity & Timeliness",
+        "100%",
+        `${weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 5}%`,
+        `${selfScores['monthly_reports'] ?? 0}%`,
+        `${supervisorScores['monthly_reports'] !== undefined ? supervisorScores['monthly_reports'] : 0}%`,
+        comments['monthly_reports'] || ""
+      ]);
+    }
+
+    // Serial 4: Self Development
+    const selfDevSrl = currentSrl++;
+    rows.push([
+      String(selfDevSrl),
+      "Self Development Initiative",
+      kpiSkillsJoined,
+      "Quality, Quantity & Timeliness",
+      "100%",
+      `${weightages['self_development'] ?? defaultWeightages['self_development'] ?? 5}%`,
+      `${selfScores['self_development'] ?? 0}%`,
+      `${supervisorScores['self_development'] !== undefined ? supervisorScores['self_development'] : 0}%`,
+      comments['self_development'] || ""
+    ]);
+
+    // Total Row
+    rows.push([]);
+    rows.push([
+      "Total",
+      "",
+      "",
+      "",
+      "",
+      `${totals.weightage.toFixed(1)}%`,
+      `${totals.self.toFixed(1)}%`,
+      `${totals.supervisor.toFixed(1)}%`,
+      ""
+    ]);
+
+    // Signatures
+    rows.push([]);
+    rows.push([
+      `Appraisee Signed: ${appraiseeSigned ? 'YES' : 'NO'}`,
+      `Appraisee Sign Date: ${appraiseeSignDate || 'N/A'}`,
+      "",
+      `Appraiser Signed: ${appraiserSigned ? 'YES' : 'NO'}`,
+      `Appraiser Sign Date: ${appraiserSignDate || 'N/A'}`
+    ]);
+
+    // Convert to Excel HTML table format
+    const htmlRows = rows.map(r => 
+      `<tr>${r.map(val => `<td style="border: 1px solid #ddd; padding: 6px;">${val}</td>`).join("")}</tr>`
+    ).join("\n");
+    
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>KPI Assessment</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+      </head>
+      <body style="font-family: sans-serif;">
+        <table style="border-collapse: collapse;">${htmlRows}</table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `KPI_Assessment_${targetStaff.username || 'user'}_${monthYearKey}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("KPI sheet exported to Excel format!");
+  };
+
   // Weightage adjustment triggers
   const handleWeightageChange = (key: string, value: number) => {
     setWeightages(prev => ({
@@ -689,24 +881,27 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
         {/* Date Month Selector */}
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => {
-              setShowViewKpiModal(true);
-              fetchAssignedAppraisees();
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              if (evaluatorModeProfile) {
-                setEvaluatorModeProfile(null);
-                toast.success("Reset view to your own KPI sheet.");
-              }
-            }}
-            className="px-3 py-2 bg-transparent hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-            title="Evaluate assigned employee sheets (Right click to reset)"
-          >
-            👁️ View KPI
-          </button>
+          {hasAssignedAppraisees && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowViewKpiModal(true);
+                fetchAssignedAppraisees();
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                if (evaluatorModeProfile) {
+                  setEvaluatorModeProfile(null);
+                  toast.success("Reset view to your own KPI sheet.");
+                }
+              }}
+              className="px-3 py-2 bg-transparent hover:bg-slate-900 border border-slate-800 text-slate-450 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors group"
+              title="Evaluate assigned employee sheets (Right click to reset)"
+            >
+              <Target className="h-3.5 w-3.5 text-slate-400 group-hover:text-white" />
+              <span>View KPI</span>
+            </button>
+          )}
 
           <div className="flex bg-slate-950/80 border border-slate-800 rounded-xl p-1 shrink-0">
             <select
@@ -724,7 +919,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               className="bg-transparent text-xs font-semibold text-slate-300 px-2 py-1.5 focus:outline-hidden cursor-pointer border-l border-slate-800/80"
             >
               {years.map(y => (
-                <option key={y} value={y} className="bg-slate-950 text-slate-355">{y}</option>
+                <option key={y} value={y} className="bg-slate-955">{y}</option>
               ))}
             </select>
           </div>
@@ -736,6 +931,15 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
             title="Print assessment sheet"
           >
             <Printer className="h-4 w-4" /> Print / PDF
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            className="p-2 bg-emerald-950/20 hover:bg-emerald-900/20 border border-emerald-900/40 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors print:hidden"
+            title="Export assessment sheet to Excel"
+          >
+            <FileSpreadsheet className="h-4 w-4" /> Export Excel
           </button>
 
           <button
