@@ -140,7 +140,8 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
 
       if (error) throw error;
       if (data && data.length > 0) {
-        setLoginCodes(data);
+        const filtered = data.filter((item: any) => item.login_id !== "__asitis_causality_template__");
+        setLoginCodes(filtered);
       } else {
         setLoginCodes(DEFAULT_LOGIN_CODES);
       }

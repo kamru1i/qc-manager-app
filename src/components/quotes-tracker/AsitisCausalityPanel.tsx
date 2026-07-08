@@ -63,7 +63,7 @@ const getDriverDefaultTitles = (id: number): TitleItem[] => {
     { id: `drv-${id}-name`, text: `Add ${paddedId}: –` },
     { id: `drv-${id}-occ`, text: "Occupation –" },
     { id: `drv-${id}-ind`, text: "Industry –" },
-    { id: `drv-${id}-lic`, text: "Licence obtained date" },
+    { id: `drv-${id}-lic`, text: "Licence obtained date :" },
     { id: `drv-${id}-rel_status`, text: "Relationship status :" },
     { id: `drv-${id}-acc`, text: "Access to other car :" },
     { id: `drv-${id}-res`, text: "UK Residency:" }
