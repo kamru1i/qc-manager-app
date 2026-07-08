@@ -554,6 +554,15 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
       {/* 1. Header controls (Not printed) */}
       <div className="flex flex-wrap justify-between items-center gap-4 bg-slate-900/35 border border-slate-850 p-4 rounded-2xl shadow-lg print:hidden">
         <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-3.5 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-350 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              ← Back
+            </button>
+          )}
           <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl">
             <FileText className="h-5 w-5" />
           </div>
@@ -585,16 +594,6 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               ))}
             </select>
           </div>
-
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="px-3.5 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              ← Back
-            </button>
-          )}
 
           <button
             type="button"
