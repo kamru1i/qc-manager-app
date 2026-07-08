@@ -132,6 +132,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 }) => {
   const [newSkillText, setNewSkillText] = React.useState("");
   const [newDeptIndicatorText, setNewDeptIndicatorText] = React.useState("");
+  const allDepts = ["Data Entry", "IT", "Accounts", "HR", "Other"];
+  const otherDeptOptions = allDepts.filter((d) => d !== department);
 
   return (
     <div className="space-y-6">
@@ -736,134 +738,18 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   onChange={(e) => {
                     const dept = e.target.value;
                     if (setDepartment) setDepartment(dept);
-                    
-                    // Pre-populate default department indicators based on selected department!
-                    if (setKpiDeptIndicators) {
-                      if (dept === "IT") {
-                        setKpiDeptIndicators([
-                          "Server Maintenance & Security",
-                          "Technical Support & Troubleshooting",
-                          "Software & System Updates",
-                          "Database & Backup Management"
-                        ]);
-                      } else if (dept === "Accounts") {
-                        setKpiDeptIndicators([
-                          "Financial Reporting & Billing",
-                          "Expense & Invoice Processing",
-                          "Audit Compliance & Accounts Reconciliation"
-                        ]);
-                      } else if (dept === "HR") {
-                        setKpiDeptIndicators([
-                          "Employee Recruitment & Onboarding",
-                          "Payroll Processing",
-                          "Leave & Attendance Tracking",
-                          "Policy Enforcement & Conflict Resolution"
-                        ]);
-                      } else if (dept === "Data Entry") {
-                        // Empty for Data Entry since they use file type records by default
-                        setKpiDeptIndicators([]);
-                      } else {
-                        setKpiDeptIndicators(["Task Efficiency", "Team Collaboration"]);
-                      }
+                    if (setPerformsOtherDeptTasks) setPerformsOtherDeptTasks(false);
+                    if (setOtherDepartment) {
+                      const allDepts = ["Data Entry", "IT", "Accounts", "HR", "Other"];
+                      const newOthers = allDepts.filter(d => d !== dept);
+                      setOtherDepartment(newOthers[0]);
                     }
-                  }}
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
-                >
-                  <option value="Data Entry" className="bg-slate-950">Data Entry</option>
-                  <option value="IT" className="bg-slate-950">IT</option>
-                  <option value="Accounts" className="bg-slate-950">Accounts</option>
-                  <option value="HR" className="bg-slate-950">HR</option>
-                  <option value="Other" className="bg-slate-950">Other</option>
-                </select>
-              </div>
 
-              {/* Perform Data Entry Tasks checkbox */}
-              {department !== "Data Entry" && setPerformsDataEntry && (
-                <div className="flex flex-col justify-end">
-                  <label className="flex items-center gap-2.5 cursor-pointer select-none group py-2">
-                    <input
-                      type="checkbox"
-                      checked={performsDataEntry}
-                      disabled={!isAdmin && !isSupervisor}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        if (!checked) {
-                          const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
-                          if (!confirmHide) return;
-                        }
-                        setPerformsDataEntry(checked);
-                      }}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                        performsDataEntry
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-955 text-transparent"
-                      }`}
-                    >
-                      {performsDataEntry && <Check className="h-3.5 w-3.5 stroke-3" />}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-350 group-hover:text-white transition-colors">
-                      Does this user also perform Data Entry tasks?
-                    </span>
-                  </label>
-                </div>
-              )}
-
-              {/* Perform other department tasks checkbox */}
-              {department === "Data Entry" && setPerformsOtherDeptTasks && (
-                <div className="flex flex-col justify-end">
-                  <label className="flex items-center gap-2.5 cursor-pointer select-none group py-2">
-                    <input
-                      type="checkbox"
-                      checked={performsOtherDeptTasks}
-                      disabled={!isAdmin && !isSupervisor}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setPerformsOtherDeptTasks(checked);
-                        if (checked && setKpiDeptIndicators && kpiDeptIndicators.length === 0) {
-                          setKpiDeptIndicators([
-                            "Server Maintenance & Security",
-                            "Technical Support & Troubleshooting",
-                            "Software & System Updates",
-                            "Database & Backup Management"
-                          ]);
-                        } else if (!checked && setKpiDeptIndicators) {
-                          setKpiDeptIndicators([]);
-                        }
-                      }}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
-                        performsOtherDeptTasks
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-955 text-transparent"
-                      }`}
-                    >
-                      {performsOtherDeptTasks && <Check className="h-3.5 w-3.5 stroke-3" />}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-350 group-hover:text-white transition-colors">
-                      Does this user also manage tasks for another department?
-                    </span>
-                  </label>
-                </div>
-              )}
-
-              {/* Select Other Department Dropdown */}
-              {department === "Data Entry" && performsOtherDeptTasks && setOtherDepartment && (
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Select Other Department
-                  </label>
-                  <select
-                    value={otherDepartment}
-                    disabled={!isAdmin && !isSupervisor}
-                    onChange={(e) => {
-                      const dept = e.target.value;
-                      if (setOtherDepartment) setOtherDepartment(dept);
-                      
+                    if (dept === "Data Entry") {
+                      if (setPerformsDataEntry) setPerformsDataEntry(true);
+                      if (setKpiDeptIndicators) setKpiDeptIndicators([]);
+                    } else {
+                      if (setPerformsDataEntry) setPerformsDataEntry(false);
                       if (setKpiDeptIndicators) {
                         if (dept === "IT") {
                           setKpiDeptIndicators([
@@ -889,13 +775,158 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           setKpiDeptIndicators(["Task Efficiency", "Team Collaboration"]);
                         }
                       }
+                    }
+                  }}
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
+                >
+                  <option value="Data Entry" className="bg-slate-950">Data Entry</option>
+                  <option value="IT" className="bg-slate-950">IT</option>
+                  <option value="Accounts" className="bg-slate-950">Accounts</option>
+                  <option value="HR" className="bg-slate-950">HR</option>
+                  <option value="Other" className="bg-slate-950">Other</option>
+                </select>
+              </div>
+
+              {/* Perform other department tasks checkbox */}
+              {setPerformsOtherDeptTasks && (
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none group py-2">
+                    <input
+                      type="checkbox"
+                      checked={performsOtherDeptTasks}
+                      disabled={!isAdmin && !isSupervisor}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        
+                        // If unchecking, and they had Data Entry enabled, ask for confirmation
+                        if (!checked && department !== "Data Entry" && otherDepartment === "Data Entry") {
+                          const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
+                          if (!confirmHide) return;
+                        }
+
+                        if (setPerformsOtherDeptTasks) setPerformsOtherDeptTasks(checked);
+                        
+                        if (checked) {
+                          // Default chosen other department is the first available option in otherDeptOptions
+                          const defaultOther = otherDeptOptions[0];
+                          if (setOtherDepartment) setOtherDepartment(defaultOther);
+
+                          if (department !== "Data Entry" && defaultOther === "Data Entry") {
+                            if (setPerformsDataEntry) setPerformsDataEntry(true);
+                          } else {
+                            if (setPerformsDataEntry) setPerformsDataEntry(false);
+                          }
+
+                          // Pre-populate default indicators if they chosen an indicator-based department
+                          if (setKpiDeptIndicators) {
+                            if (defaultOther === "IT") {
+                              setKpiDeptIndicators([
+                                "Server Maintenance & Security",
+                                "Technical Support & Troubleshooting",
+                                "Software & System Updates",
+                                "Database & Backup Management"
+                              ]);
+                            } else if (defaultOther === "Accounts") {
+                              setKpiDeptIndicators([
+                                "Financial Reporting & Billing",
+                                "Expense & Invoice Processing",
+                                "Audit Compliance & Accounts Reconciliation"
+                              ]);
+                            } else if (defaultOther === "HR") {
+                              setKpiDeptIndicators([
+                                "Employee Recruitment & Onboarding",
+                                "Payroll Processing",
+                                "Leave & Attendance Tracking",
+                                "Policy Enforcement & Conflict Resolution"
+                              ]);
+                            } else {
+                              setKpiDeptIndicators(defaultOther === "Data Entry" ? [] : ["Task Efficiency", "Team Collaboration"]);
+                            }
+                          }
+                        } else {
+                          // Unchecked
+                          if (setPerformsDataEntry) setPerformsDataEntry(false);
+                          if (setKpiDeptIndicators) setKpiDeptIndicators([]);
+                        }
+                      }}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        performsOtherDeptTasks
+                          ? "bg-blue-600 border-blue-500 text-white font-bold"
+                          : "border-slate-700 bg-slate-955 text-transparent"
+                      }`}
+                    >
+                      {performsOtherDeptTasks && <Check className="h-3.5 w-3.5 stroke-3" />}
+                    </div>
+                    <span className="text-xs font-semibold text-slate-350 group-hover:text-white transition-colors">
+                      Does this user also manage tasks for another department?
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* Select Other Department Dropdown */}
+              {performsOtherDeptTasks && setOtherDepartment && (
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Select Other Department
+                  </label>
+                  <select
+                    value={otherDepartment}
+                    disabled={!isAdmin && !isSupervisor}
+                    onChange={(e) => {
+                      const dept = e.target.value;
+                      
+                      // If changing away from Data Entry, confirm if needed
+                      if (department !== "Data Entry" && otherDepartment === "Data Entry" && dept !== "Data Entry") {
+                        const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
+                        if (!confirmHide) return;
+                      }
+
+                      if (setOtherDepartment) setOtherDepartment(dept);
+
+                      if (department !== "Data Entry" && dept === "Data Entry") {
+                        if (setPerformsDataEntry) setPerformsDataEntry(true);
+                      } else {
+                        if (setPerformsDataEntry) setPerformsDataEntry(false);
+                      }
+
+                      // Pre-populate default indicators
+                      if (setKpiDeptIndicators) {
+                        if (dept === "IT") {
+                          setKpiDeptIndicators([
+                            "Server Maintenance & Security",
+                            "Technical Support & Troubleshooting",
+                            "Software & System Updates",
+                            "Database & Backup Management"
+                          ]);
+                        } else if (dept === "Accounts") {
+                          setKpiDeptIndicators([
+                            "Financial Reporting & Billing",
+                            "Expense & Invoice Processing",
+                            "Audit Compliance & Accounts Reconciliation"
+                          ]);
+                        } else if (dept === "HR") {
+                          setKpiDeptIndicators([
+                            "Employee Recruitment & Onboarding",
+                            "Payroll Processing",
+                            "Leave & Attendance Tracking",
+                            "Policy Enforcement & Conflict Resolution"
+                          ]);
+                        } else {
+                          setKpiDeptIndicators(dept === "Data Entry" ? [] : ["Task Efficiency", "Team Collaboration"]);
+                        }
+                      }
                     }}
                     className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
                   >
-                    <option value="IT" className="bg-slate-950">IT</option>
-                    <option value="Accounts" className="bg-slate-950">Accounts</option>
-                    <option value="HR" className="bg-slate-950">HR</option>
-                    <option value="Other" className="bg-slate-950">Other</option>
+                    {otherDeptOptions.map((opt) => (
+                      <option key={opt} value={opt} className="bg-slate-950">
+                        {opt}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}

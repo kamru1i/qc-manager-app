@@ -147,11 +147,15 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
   // Filter allowed file types for this user
   const activeFileTypes = useMemo(() => {
-    const parsed = JSON.parse(allowedTypesStr);
-    return CORE_FILE_TYPES.filter(t => 
-      !targetStaff.allowed_types || parsed.includes(t.key)
-    );
-  }, [allowedTypesStr]);
+    if (!targetStaff.has_quotes_access) return [];
+    try {
+      const parsed = JSON.parse(allowedTypesStr);
+      if (!Array.isArray(parsed) || parsed.length === 0) return [];
+      return CORE_FILE_TYPES.filter(t => parsed.includes(t.key));
+    } catch {
+      return [];
+    }
+  }, [allowedTypesStr, targetStaff.has_quotes_access]);
 
   // Month key for lookup (e.g. "2026-07")
   const monthYearKey = useMemo(() => {
