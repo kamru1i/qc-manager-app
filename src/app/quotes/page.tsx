@@ -584,13 +584,55 @@ export default function Dashboard({
 
   // Statistics calculation for today's entries (filtered by search terms)
   const todayStats = useMemo(() => {
-    return calculateSummaryStats(todayFilteredRecords);
-  }, [todayFilteredRecords]);
+    const stats = calculateSummaryStats(todayFilteredRecords);
+    if (todaySearchQuery) {
+      const activeTabOtherSiteTotal = todayRecords.filter(r => {
+        if (todaySelectedBranch) {
+          return r.branch_name.toUpperCase().trim() === todaySelectedBranch.toUpperCase().trim();
+        }
+        return true;
+      }).filter(r => r.file_type === 'Other Site').length;
+      return {
+        ...stats,
+        datasetOtherSiteTotal: activeTabOtherSiteTotal
+      };
+    }
+    return stats;
+  }, [todayFilteredRecords, todaySearchQuery, todayRecords, todaySelectedBranch]);
 
   // Statistics calculation for monthly entries (filtered by search query)
   const monthlyStats = useMemo(() => {
-    return calculateSummaryStats(monthlyFilteredRecords);
-  }, [monthlyFilteredRecords]);
+    const stats = calculateSummaryStats(monthlyFilteredRecords);
+    if (searchQuery) {
+      const activeTabOtherSiteTotal = records.filter((r) => {
+        if (
+          (profile?.role === "admin" || profile?.role === "supervisor") &&
+          adminViewMode === "mine" &&
+          r.user_id !== sessionUser?.id
+        ) {
+          return false;
+        }
+        if (selectedDate) {
+          const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
+          if (recordDate !== selectedDate) {
+            return false;
+          }
+        }
+        if (selectedBranch) {
+          if (r.branch_name.toUpperCase().trim() !== selectedBranch.toUpperCase().trim()) {
+            return false;
+          }
+        }
+        return true;
+      }).filter(r => r.file_type === 'Other Site').length;
+
+      return {
+        ...stats,
+        datasetOtherSiteTotal: activeTabOtherSiteTotal
+      };
+    }
+    return stats;
+  }, [monthlyFilteredRecords, searchQuery, records, adminViewMode, selectedDate, selectedBranch, profile, sessionUser]);
 
   // Export handlers
   const handleExportTodayExcel = () => {

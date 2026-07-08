@@ -14,6 +14,7 @@ interface Stats {
   van: number;
   bike: number;
   sale: number;
+  datasetOtherSiteTotal?: number;
 }
 
 interface StatsGridProps {
@@ -30,7 +31,12 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ stats, isLoading = false }
   };
 
   const formatOtherSite = (count: number) => {
-    return String(count).padStart(2, '0');
+    const padded = String(count).padStart(2, '0');
+    if (stats.datasetOtherSiteTotal !== undefined && stats.datasetOtherSiteTotal > 0) {
+      const percentage = ((count / stats.datasetOtherSiteTotal) * 100).toFixed(2);
+      return `${padded} (${percentage}%)`;
+    }
+    return padded;
   };
 
   if (isLoading) {

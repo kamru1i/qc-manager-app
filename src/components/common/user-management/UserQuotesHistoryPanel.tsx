@@ -33,6 +33,41 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
   const [editSubmittedTime, setEditSubmittedTime] = useState('');
   const [editSaleStatus, setEditSaleStatus] = useState<'SOLD' | 'UNSOLD'>('SOLD');
 
+  const [globalOtherSiteCount, setGlobalOtherSiteCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchGlobalOtherSiteCount = async () => {
+      try {
+        const yearInt = parseInt(selectedYear);
+        const monthInt = parseInt(selectedMonth);
+        const nextMonth = monthInt === 12 ? 1 : monthInt + 1;
+        const nextYear = monthInt === 12 ? yearInt + 1 : yearInt;
+        
+        const startISO = new Date(yearInt, monthInt - 1, 1, 0, 0, 0, 0).toISOString();
+        const endISO = new Date(nextYear, nextMonth - 1, 1, 0, 0, 0, 0).toISOString();
+
+        let query = supabase
+          .from('records')
+          .select('id', { count: 'exact', head: true })
+          .eq('file_type', 'Other Site')
+          .gte('submitted_at', startISO)
+          .lt('submitted_at', endISO);
+
+        if (selectedBranch) {
+          query = query.eq('branch_name', selectedBranch);
+        }
+
+        const { count, error } = await query;
+        if (error) throw error;
+        setGlobalOtherSiteCount(count || 0);
+      } catch (err) {
+        console.error("Error fetching global other site count:", err);
+      }
+    };
+
+    fetchGlobalOtherSiteCount();
+  }, [selectedMonth, selectedYear, selectedBranch]);
+
   const fetchRecords = useCallback(async () => {
     setLoading(true);
     try {
@@ -127,8 +162,12 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
 
   // Stats summary grid
   const monthlyStats = useMemo(() => {
-    return calculateSummaryStats(monthlyFilteredRecords);
-  }, [monthlyFilteredRecords]);
+    const stats = calculateSummaryStats(monthlyFilteredRecords);
+    return {
+      ...stats,
+      datasetOtherSiteTotal: globalOtherSiteCount
+    };
+  }, [monthlyFilteredRecords, globalOtherSiteCount]);
 
   // Handle inline modification and delete directly if needed
   const handleToggleDelete = async (id: string) => {
