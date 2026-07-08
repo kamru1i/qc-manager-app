@@ -1089,39 +1089,31 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
           <button
             type="button"
-            disabled={isDirty}
             onClick={handlePrint}
-            className={`p-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
-              isDirty ? 'opacity-40 cursor-not-allowed' : ''
-            }`}
-            title={isDirty ? "Please save changes before printing/generating PDF" : "Print assessment sheet"}
+            className="p-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+            title="Print assessment sheet / Save as PDF"
           >
-            <Printer className="h-4 w-4" /> Print / PDF
+            <Printer className="h-4 w-4" /> PDF
           </button>
 
           <button
             type="button"
-            disabled={isDirty}
             onClick={handleExportExcel}
-            className={`p-2 bg-emerald-950/20 hover:bg-emerald-900/20 border border-emerald-900/40 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors print:hidden ${
-              isDirty ? 'opacity-40 cursor-not-allowed' : ''
-            }`}
-            title={isDirty ? "Please save changes before exporting to Excel" : "Export assessment sheet to Excel"}
+            className="p-2 bg-emerald-950/20 hover:bg-emerald-900/20 border border-emerald-900/40 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors print:hidden"
+            title="Export assessment sheet to Excel"
           >
-            <FileSpreadsheet className="h-4 w-4" /> Export Excel
+            <FileSpreadsheet className="h-4 w-4" /> Excel
           </button>
 
           <button
             type="button"
-            disabled={saving || !isDirty}
+            disabled={saving}
             onClick={handleSave}
-            className={`px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg shadow-blue-950/20 border border-blue-700/30 transition-all ${
-              (saving || !isDirty) ? 'opacity-40 cursor-not-allowed' : ''
-            }`}
-            title={!isDirty ? "No changes to save" : "Save assessment changes"}
+            className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg shadow-blue-950/20 border border-blue-700/30 transition-all disabled:opacity-50"
+            title="Save assessment sheet"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            Save Sheet
+            Save
           </button>
         </div>
       </div>
