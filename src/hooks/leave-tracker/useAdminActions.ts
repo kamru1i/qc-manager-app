@@ -225,7 +225,10 @@ export const useAdminActions = ({
     breakTime?: number,
     defaultSignIn?: string,
     defaultSignOut?: string,
-    kpiSkills?: string[]
+    kpiSkills?: string[],
+    kpiDeptIndicators?: string[],
+    performsDataEntry?: boolean,
+    department?: string
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -266,7 +269,10 @@ export const useAdminActions = ({
       const existingSettings = targetProfile?.global_settings || {};
       const updatedSettings = {
         ...existingSettings,
-        kpi_skills: kpiSkills || []
+        kpi_skills: kpiSkills || [],
+        kpi_dept_indicators: kpiDeptIndicators || [],
+        performs_data_entry: performsDataEntry !== undefined ? performsDataEntry : true,
+        department: department || 'Data Entry'
       };
 
       const updatePayload: any = {

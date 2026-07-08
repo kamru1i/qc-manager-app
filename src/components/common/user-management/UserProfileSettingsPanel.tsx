@@ -61,6 +61,12 @@ interface UserProfileSettingsPanelProps {
   setEditUserSignOutTime: (val: string) => void;
   editUserKpiSkills: string[];
   setEditUserKpiSkills: (val: string[]) => void;
+  editUserKpiDeptIndicators: string[];
+  setEditUserKpiDeptIndicators: (val: string[]) => void;
+  editUserPerformsDataEntry: boolean;
+  setEditUserPerformsDataEntry: (val: boolean) => void;
+  editUserDepartment: string;
+  setEditUserDepartment: (val: string) => void;
 }
 
 export const UserProfileSettingsPanel: React.FC<
@@ -113,6 +119,12 @@ export const UserProfileSettingsPanel: React.FC<
   setEditUserSignOutTime,
   editUserKpiSkills,
   setEditUserKpiSkills,
+  editUserKpiDeptIndicators,
+  setEditUserKpiDeptIndicators,
+  editUserPerformsDataEntry,
+  setEditUserPerformsDataEntry,
+  editUserDepartment,
+  setEditUserDepartment,
 }) => {
   const isTargetAdmin = viewingStaff.role === "admin";
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
@@ -169,6 +181,12 @@ export const UserProfileSettingsPanel: React.FC<
         setSignOutTime={setEditUserSignOutTime}
         kpiSkills={editUserKpiSkills}
         setKpiSkills={setEditUserKpiSkills}
+        kpiDeptIndicators={editUserKpiDeptIndicators}
+        setKpiDeptIndicators={setEditUserKpiDeptIndicators}
+        performsDataEntry={editUserPerformsDataEntry}
+        setPerformsDataEntry={setEditUserPerformsDataEntry}
+        department={editUserDepartment}
+        setDepartment={setEditUserDepartment}
       />
 
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">

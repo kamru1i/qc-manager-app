@@ -36,6 +36,15 @@ const CORE_FILE_TYPES = [
 export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = ({ viewingStaff, onBack }) => {
   // Session User Info
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
+
+  // External Evaluator Mode state
+  const [evaluatorModeProfile, setEvaluatorModeProfile] = useState<Profile | null>(null);
+  const targetStaff = evaluatorModeProfile || viewingStaff;
+
+  const [showViewKpiModal, setShowViewKpiModal] = useState(false);
+  const [appraiseeSearchText, setAppraiseeSearchText] = useState('');
+  const [assignedAppraisees, setAssignedAppraisees] = useState<any[]>([]);
+  const [searchingAppraisee, setSearchingAppraisee] = useState(false);
   
   // Date Selection
   const now = new Date();
@@ -97,14 +106,15 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   // Is current viewer allowed to edit supervisor/appraiser fields?
   const isSupervisorOrAdmin = useMemo(() => {
     if (!currentUser) return false;
+    if (evaluatorModeProfile) return true;
     return currentUser.role === 'admin' || currentUser.role === 'supervisor';
-  }, [currentUser]);
+  }, [currentUser, evaluatorModeProfile]);
 
   // Is current viewer the appraisee (the user themselves)?
   const isAppraisee = useMemo(() => {
     if (!currentUser) return false;
-    return currentUser.id === viewingStaff.id;
-  }, [currentUser, viewingStaff]);
+    return currentUser.id === targetStaff.id;
+  }, [currentUser, targetStaff]);
 
   // Can the viewer modify appraisee details?
   const canEditAppraiseeFields = useMemo(() => {
@@ -119,16 +129,21 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     return { from: startStr, to: endStr };
   }, [selectedMonth, selectedYear]);
 
-  const allowedTypesStr = JSON.stringify(viewingStaff.allowed_types || []);
-  const supervisorIdsStr = JSON.stringify(viewingStaff.supervisor_ids || []);
-  const staffGlobalEmpId = viewingStaff.global_settings?.emp_id || '';
-  const staffGlobalDoj = viewingStaff.global_settings?.date_of_joining || '';
+  const performsDataEntry = targetStaff.global_settings?.performs_data_entry !== false;
+  const kpiDeptIndicators = useMemo(() => {
+    return targetStaff.global_settings?.kpi_dept_indicators || [];
+  }, [targetStaff.global_settings]);
+
+  const allowedTypesStr = JSON.stringify(targetStaff.allowed_types || []);
+  const supervisorIdsStr = JSON.stringify(targetStaff.supervisor_ids || []);
+  const staffGlobalEmpId = targetStaff.global_settings?.emp_id || '';
+  const staffGlobalDoj = targetStaff.global_settings?.date_of_joining || '';
 
   // Filter allowed file types for this user
   const activeFileTypes = useMemo(() => {
     const parsed = JSON.parse(allowedTypesStr);
     return CORE_FILE_TYPES.filter(t => 
-      !viewingStaff.allowed_types || parsed.includes(t.key)
+      !targetStaff.allowed_types || parsed.includes(t.key)
     );
   }, [allowedTypesStr]);
 
@@ -142,11 +157,11 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     let active = true;
     const fetchProductionData = async () => {
       // 1. Fetch default supervisor name if empty
-      if (viewingStaff.supervisor_ids && viewingStaff.supervisor_ids.length > 0) {
+      if (targetStaff.supervisor_ids && targetStaff.supervisor_ids.length > 0) {
         const { data } = await supabase
           .from('profiles')
           .select('full_name')
-          .in('id', viewingStaff.supervisor_ids)
+          .in('id', targetStaff.supervisor_ids)
           .limit(1);
         if (data && data.length > 0 && active && !appraiserName) {
           setAppraiserName(data[0].full_name || '');
@@ -160,7 +175,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
       const { data: recordData } = await supabase
         .from('records')
         .select('file_type')
-        .eq('user_id', viewingStaff.id)
+        .eq('user_id', targetStaff.id)
         .gte('submitted_at', startDate.toISOString())
         .lte('submitted_at', endDate.toISOString());
 
@@ -178,58 +193,88 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
     fetchProductionData();
     return () => { active = false; };
-  }, [viewingStaff.id, supervisorIdsStr, selectedMonth, selectedYear]);
+  }, [targetStaff.id, supervisorIdsStr, selectedMonth, selectedYear]);
 
   // Default Weightages
   const defaultWeightages = useMemo(() => {
-    const defaults: Record<string, number> = {
-      'Quote': 20,
-      'Review': 10,
-      'Individual Review': 10,
-      'Requote': 20,
-      'Bike': 5,
-      'Van': 5,
-      'Sale': 20,
-      'mistakes': 0,
-      'monthly_reports': 5,
-      'self_development': 5
-    };
-    
-    // Core file types sum
-    const otherSum = (defaults['monthly_reports'] || 0) + (defaults['self_development'] || 0);
-    const coreTargetSum = 100 - otherSum;
-
-    // Filter to active types
-    const activeKeys = activeFileTypes.map(t => t.key);
-    const activeCoreWeightageSum = activeKeys.reduce((acc, k) => acc + (defaults[k] || 0), 0);
-
-    // If active keys sum is 0 or doesn't match, distribute equally
     const finalWeightages: Record<string, number> = {};
-    if (activeCoreWeightageSum > 0) {
-      activeFileTypes.forEach(t => {
-        // scale proportionally to target core weightage
-        finalWeightages[t.key] = Math.round(((defaults[t.key] || 0) / activeCoreWeightageSum) * coreTargetSum);
-      });
-    } else if (activeFileTypes.length > 0) {
-      const share = Math.floor(coreTargetSum / activeFileTypes.length);
-      activeFileTypes.forEach(t => {
-        finalWeightages[t.key] = share;
-      });
+
+    if (performsDataEntry) {
+      const defaults: Record<string, number> = {
+        'Quote': 20,
+        'Review': 10,
+        'Individual Review': 10,
+        'Requote': 20,
+        'Bike': 5,
+        'Van': 5,
+        'Sale': 20,
+        'mistakes': 0,
+        'monthly_reports': 5,
+        'self_development': 5
+      };
+
+      const deptKpisCount = kpiDeptIndicators.length;
+      const deptWeightageTotal = deptKpisCount > 0 ? 10 : 0; // Allocate 10% total for custom dept KPIs if present
+
+      const otherSum = 5 + 5 + deptWeightageTotal; // monthly_reports (5) + self_development (5) + dept KPIs (10)
+      const coreTargetSum = 100 - otherSum;
+
+      const activeKeys = activeFileTypes.map(t => t.key);
+      const activeCoreWeightageSum = activeKeys.reduce((acc, k) => acc + (defaults[k] || 0), 0);
+
+      if (activeCoreWeightageSum > 0) {
+        activeFileTypes.forEach(t => {
+          finalWeightages[t.key] = Math.round(((defaults[t.key] || 0) / activeCoreWeightageSum) * coreTargetSum);
+        });
+      } else if (activeFileTypes.length > 0) {
+        const share = Math.floor(coreTargetSum / activeFileTypes.length);
+        activeFileTypes.forEach(t => {
+          finalWeightages[t.key] = share;
+        });
+      }
+
+      finalWeightages['mistakes'] = 0;
+      finalWeightages['monthly_reports'] = 5;
+      finalWeightages['self_development'] = 5;
+
+      if (deptKpisCount > 0) {
+        const deptShare = Math.floor(deptWeightageTotal / deptKpisCount);
+        kpiDeptIndicators.forEach((indicator: string, idx: number) => {
+          if (idx === deptKpisCount - 1) {
+            finalWeightages[`dept_${indicator}`] = deptWeightageTotal - (deptShare * (deptKpisCount - 1));
+          } else {
+            finalWeightages[`dept_${indicator}`] = deptShare;
+          }
+        });
+      }
+    } else {
+      // If performsDataEntry is false, we only evaluate custom indicators and self development (10% self_development)
+      finalWeightages['self_development'] = 10;
+      const deptKpisCount = kpiDeptIndicators.length;
+      if (deptKpisCount > 0) {
+        const share = Math.floor(90 / deptKpisCount);
+        kpiDeptIndicators.forEach((indicator: string, idx: number) => {
+          if (idx === deptKpisCount - 1) {
+            finalWeightages[`dept_${indicator}`] = 90 - (share * (deptKpisCount - 1));
+          } else {
+            finalWeightages[`dept_${indicator}`] = share;
+          }
+        });
+      } else {
+        finalWeightages['self_development'] = 100;
+      }
     }
 
-    finalWeightages['mistakes'] = 0;
-    finalWeightages['monthly_reports'] = defaults['monthly_reports'];
-    finalWeightages['self_development'] = defaults['self_development'];
-
     return finalWeightages;
-  }, [activeFileTypes]);
+  }, [activeFileTypes, allowedTypesStr, performsDataEntry, kpiDeptIndicators]);
 
   // Core Section Max for Self-Scores scaling
   const coreSelfMax = useMemo(() => {
     const reportSelf = selfScores['monthly_reports'] ?? 0;
     const devSelf = selfScores['self_development'] ?? 0;
-    return 100 - reportSelf - devSelf;
-  }, [selfScores]);
+    const deptSelfSum = kpiDeptIndicators.reduce((acc: number, ind: string) => acc + (selfScores[`dept_${ind}`] || 0), 0);
+    return 100 - reportSelf - devSelf - deptSelfSum;
+  }, [selfScores, kpiDeptIndicators]);
 
   // Compute Auto Self-Scores for Serial 1 File Types
   const computedSelfScores = useMemo(() => {
@@ -254,24 +299,34 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     let selfSum = 0;
     let supervisorSum = 0;
 
-    // Serial 1 File Types
-    activeFileTypes.forEach(t => {
-      weightSum += weightages[t.key] ?? defaultWeightages[t.key] ?? 0;
-      selfSum += computedSelfScores[t.key] || 0;
-      supervisorSum += supervisorScores[t.key] || 0;
+    if (performsDataEntry) {
+      // Serial 1 File Types
+      activeFileTypes.forEach(t => {
+        weightSum += weightages[t.key] ?? defaultWeightages[t.key] ?? 0;
+        selfSum += computedSelfScores[t.key] || 0;
+        supervisorSum += supervisorScores[t.key] || 0;
+      });
+
+      // Mistakes row
+      weightSum += weightages['mistakes'] ?? 0;
+      selfSum += selfScores['mistakes'] ?? 0;
+      supervisorSum += supervisorScores['mistakes'] ?? 0;
+
+      // Monthly reports
+      weightSum += weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 0;
+      selfSum += selfScores['monthly_reports'] ?? 0;
+      supervisorSum += supervisorScores['monthly_reports'] ?? 0;
+    }
+
+    // Department Specific tasks
+    kpiDeptIndicators.forEach((ind: string) => {
+      const key = `dept_${ind}`;
+      weightSum += weightages[key] ?? defaultWeightages[key] ?? 0;
+      selfSum += selfScores[key] ?? 0;
+      supervisorSum += supervisorScores[key] ?? 0;
     });
 
-    // Mistakes row
-    weightSum += weightages['mistakes'] ?? 0;
-    selfSum += selfScores['mistakes'] ?? 0;
-    supervisorSum += supervisorScores['mistakes'] ?? 0;
-
-    // Serial 2
-    weightSum += weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 0;
-    selfSum += selfScores['monthly_reports'] ?? 0;
-    supervisorSum += supervisorScores['monthly_reports'] ?? 0;
-
-    // Serial 3
+    // Self Development
     weightSum += weightages['self_development'] ?? defaultWeightages['self_development'] ?? 0;
     selfSum += selfScores['self_development'] ?? 0;
     supervisorSum += supervisorScores['self_development'] ?? 0;
@@ -281,7 +336,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
       self: selfSum,
       supervisor: supervisorSum
     };
-  }, [activeFileTypes, weightages, defaultWeightages, computedSelfScores, selfScores, supervisorScores]);
+  }, [performsDataEntry, activeFileTypes, kpiDeptIndicators, weightages, defaultWeightages, computedSelfScores, selfScores, supervisorScores]);
 
   // Fetch from Database
   useEffect(() => {
@@ -292,7 +347,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         const { data, error } = await supabase
           .from('kpi_assessments')
           .select('*')
-          .eq('user_id', viewingStaff.id)
+          .eq('user_id', targetStaff.id)
           .eq('month_year', monthYearKey)
           .maybeSingle();
 
@@ -322,9 +377,9 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         } else {
           // Initialize default state
           if (active) {
-            setEmpId(viewingStaff.global_settings?.emp_id || '');
-            setDateOfJoining(viewingStaff.global_settings?.date_of_joining || '');
-            setDepartment('Data Entry');
+            setEmpId(targetStaff.global_settings?.emp_id || '');
+            setDateOfJoining(targetStaff.global_settings?.date_of_joining || '');
+            setDepartment(targetStaff.global_settings?.department || 'Data Entry');
             setReviewerName('');
             setWeightages(defaultWeightages);
             setSelfScores({ mistakes: 0, monthly_reports: 0, self_development: 0 });
@@ -342,7 +397,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         // Fallback to localStorage sandbox mock
         if (active) {
           setDbState('local');
-          const localKey = `kpi_${viewingStaff.id}_${monthYearKey}`;
+          const localKey = `kpi_${targetStaff.id}_${monthYearKey}`;
           const localDataStr = localStorage.getItem(localKey);
           if (localDataStr) {
             try {
@@ -366,7 +421,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
           } else {
             setEmpId('');
             setDateOfJoining('');
-            setDepartment('Data Entry');
+            setDepartment(targetStaff.global_settings?.department || 'Data Entry');
             setReviewerName('');
             setWeightages(defaultWeightages);
             setSelfScores({ mistakes: 0, monthly_reports: 0, self_development: 0 });
@@ -385,7 +440,61 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
     fetchAssessment();
     return () => { active = false; };
-  }, [viewingStaff.id, monthYearKey, defaultWeightages, staffGlobalEmpId, staffGlobalDoj]);
+  }, [targetStaff.id, monthYearKey, defaultWeightages, staffGlobalEmpId, staffGlobalDoj]);
+
+  const fetchAssignedAppraisees = async () => {
+    if (!currentUser) return;
+    setSearchingAppraisee(true);
+    try {
+      const { data: assessments, error } = await supabase
+        .from('kpi_assessments')
+        .select('user_id')
+        .eq('month_year', monthYearKey)
+        .or(`appraiser_name.ilike.%${currentUser.full_name || 'NOTHING_HERE'}%,appraiser_name.ilike.%${currentUser.username || 'NOTHING_HERE'}%`);
+        
+      if (error) throw error;
+      
+      if (assessments && assessments.length > 0) {
+        const userIds = Array.from(new Set(assessments.map((a: any) => a.user_id)));
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, role, allowed_types, global_settings')
+          .in('id', userIds);
+          
+        if (profilesData) {
+          setAssignedAppraisees(profilesData);
+          return;
+        }
+      }
+      setAssignedAppraisees([]);
+    } catch (err) {
+      console.error('Failed to load appraisees:', err);
+    } finally {
+      setSearchingAppraisee(false);
+    }
+  };
+
+  const handleLoadAppraiseeByCodename = async (codename: string) => {
+    const clean = codename.trim().toUpperCase();
+    if (!clean) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', clean)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) {
+        setEvaluatorModeProfile(data);
+        setShowViewKpiModal(false);
+        toast.success(`Loaded KPI sheet for ${data.full_name || data.username} in Evaluator Mode.`);
+      } else {
+        toast.error(`No user found with codename "${clean}"`);
+      }
+    } catch (err) {
+      toast.error('Failed to look up codename: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  };
 
   // Save to Database / LocalStorage fallback
   const handleSave = async () => {
@@ -403,7 +512,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     };
 
     const updateObj = {
-      user_id: viewingStaff.id,
+      user_id: targetStaff.id,
       month_year: monthYearKey,
       emp_id: empId,
       date_of_joining: dateOfJoining,
@@ -427,7 +536,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         if (error) throw error;
         
         // Also save emp_id and dateOfJoining to user's global settings in profile for future default use
-        const existingGlobal = viewingStaff.global_settings || {};
+        const existingGlobal = targetStaff.global_settings || {};
         if (existingGlobal.emp_id !== empId || existingGlobal.date_of_joining !== dateOfJoining) {
           await supabase
             .from('profiles')
@@ -438,7 +547,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
                 date_of_joining: dateOfJoining
               }
             })
-            .eq('id', viewingStaff.id);
+            .eq('id', targetStaff.id);
         }
 
         toast.success('Performance Assessment saved successfully!');
@@ -457,7 +566,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   };
 
   const saveLocally = () => {
-    const localKey = `kpi_${viewingStaff.id}_${monthYearKey}`;
+    const localKey = `kpi_${targetStaff.id}_${monthYearKey}`;
     const payload = {
       emp_id: empId,
       date_of_joining: dateOfJoining,
@@ -542,9 +651,9 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
   // Joined KPI Skills string
   const kpiSkillsJoined = useMemo(() => {
-    const skills = viewingStaff.global_settings?.kpi_skills || [];
+    const skills = targetStaff.global_settings?.kpi_skills || [];
     return skills.length > 0 ? skills.join(', ') : 'Spoken English, Communication skill';
-  }, [viewingStaff.global_settings]);
+  }, [targetStaff.global_settings]);
 
   if (loading) {
     return (
@@ -580,6 +689,25 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
         {/* Date Month Selector */}
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setShowViewKpiModal(true);
+              fetchAssignedAppraisees();
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              if (evaluatorModeProfile) {
+                setEvaluatorModeProfile(null);
+                toast.success("Reset view to your own KPI sheet.");
+              }
+            }}
+            className="px-3 py-2 bg-transparent hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+            title="Evaluate assigned employee sheets (Right click to reset)"
+          >
+            👁️ View KPI
+          </button>
+
           <div className="flex bg-slate-950/80 border border-slate-800 rounded-xl p-1 shrink-0">
             <select
               value={selectedMonth}
@@ -587,7 +715,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               className="bg-transparent text-xs font-semibold text-slate-300 px-2 py-1.5 focus:outline-hidden cursor-pointer"
             >
               {months.map((m, i) => (
-                <option key={m} value={i} className="bg-slate-950 text-slate-350">{m}</option>
+                <option key={m} value={i} className="bg-slate-950 text-slate-355">{m}</option>
               ))}
             </select>
             <select
@@ -596,7 +724,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               className="bg-transparent text-xs font-semibold text-slate-300 px-2 py-1.5 focus:outline-hidden cursor-pointer border-l border-slate-800/80"
             >
               {years.map(y => (
-                <option key={y} value={y} className="bg-slate-950 text-slate-350">{y}</option>
+                <option key={y} value={y} className="bg-slate-950 text-slate-355">{y}</option>
               ))}
             </select>
           </div>
@@ -621,6 +749,22 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
           </button>
         </div>
       </div>
+
+      {evaluatorModeProfile && (
+        <div className="bg-blue-950/30 border border-blue-900/60 p-4 rounded-2xl text-xs text-blue-300 font-semibold flex justify-between items-center font-sans print:hidden animate-fade-in">
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-blue-500 animate-ping" />
+            <span>Currently evaluating Appraisee: <strong className="text-white font-black">{evaluatorModeProfile.full_name} ({evaluatorModeProfile.username})</strong></span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setEvaluatorModeProfile(null)}
+            className="px-3 py-1 bg-blue-900/40 hover:bg-blue-900/60 border border-blue-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+          >
+            Exit Evaluator Mode
+          </button>
+        </div>
+      )}
 
       {/* Database state notification warning (Not printed) */}
       {dbState === 'local' && (
@@ -689,7 +833,7 @@ USING (auth.uid() = user_id OR EXISTS (
           {/* Appraisee Name */}
           <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
             <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Appraisee Name</span>
-            <span className="font-medium text-white print:text-black">{viewingStaff.full_name || viewingStaff.username}</span>
+            <span className="font-medium text-white print:text-black">{targetStaff.full_name || targetStaff.username}</span>
           </div>
 
           {/* Department */}
@@ -757,7 +901,7 @@ USING (auth.uid() = user_id OR EXISTS (
           {/* Designation */}
           <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
             <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Designation</span>
-            <span className="font-medium text-white print:text-black">{viewingStaff.job_role || 'Executive'}</span>
+            <span className="font-medium text-white print:text-black">{targetStaff.job_role || 'Executive'}</span>
           </div>
 
           {/* Reviewer's Name */}
@@ -821,383 +965,528 @@ USING (auth.uid() = user_id OR EXISTS (
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-850 print:divide-black">
-              {/* SERIAL 1: Core Submissions Section (Rowspan elements) */}
-              {activeFileTypes.map((type, idx) => {
-                const isFirst = idx === 0;
-                const totalRows = activeFileTypes.length + 1; // including Mistakes row
+              {(() => {
+                let currentSrl = 1;
+                const dataEntrySrl = performsDataEntry ? currentSrl++ : null;
+                const deptKpiSrl = (department !== 'Data Entry' && kpiDeptIndicators.length > 0) ? currentSrl++ : null;
+                const reportSrl = performsDataEntry ? currentSrl++ : null;
+                const selfDevSrl = currentSrl++;
 
                 return (
-                  <tr key={type.key} className="hover:bg-slate-950/20 transition-colors">
-                    {/* Rowspans */}
-                    {isFirst && (
+                  <>
+                    {/* SERIAL 1: Core Submissions Section (Data Entry) */}
+                    {performsDataEntry && (
                       <>
-                        <td 
-                          rowSpan={totalRows} 
-                          className="py-4 px-3 text-center align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-950/50 print:border-black print:bg-transparent print:text-black"
-                        >
-                          1
-                        </td>
-                        <td 
-                          rowSpan={totalRows} 
-                          className="py-4 px-4 align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-950/50 print:border-black print:bg-transparent print:text-black"
-                        >
-                          {department}
-                        </td>
+                        {activeFileTypes.map((type, idx) => {
+                          const isFirst = idx === 0;
+                          const totalRows = activeFileTypes.length + 1; // including Mistakes row
+
+                          return (
+                            <tr key={type.key} className="hover:bg-slate-950/20 transition-colors">
+                              {/* Rowspans */}
+                              {isFirst && (
+                                <>
+                                  <td 
+                                    rowSpan={totalRows} 
+                                    className="py-4 px-3 text-center align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                  >
+                                    {dataEntrySrl}
+                                  </td>
+                                  <td 
+                                    rowSpan={totalRows} 
+                                    className="py-4 px-4 align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                  >
+                                    {department}
+                                  </td>
+                                </>
+                              )}
+
+                              {/* KPI Columns */}
+                              <td className="py-2.5 px-4 border-r border-slate-850 font-medium text-slate-200 print:border-black print:text-black">
+                                {type.label}
+                              </td>
+                              <td className="py-2.5 px-4 border-r border-slate-850 text-slate-400 print:border-black print:text-black">
+                                Quality, Quantity & Timeliness
+                              </td>
+                              <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-400 print:border-black print:text-black">
+                                100%
+                              </td>
+
+                              {/* Weightage */}
+                              <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                                {isSupervisorOrAdmin ? (
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="100"
+                                      value={weightages[type.key] ?? defaultWeightages[type.key] ?? 0}
+                                      onChange={(e) => handleWeightageChange(type.key, Number(e.target.value))}
+                                      className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                    />
+                                    <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                  </div>
+                                ) : (
+                                  <span className="font-bold text-slate-350 print:text-black">
+                                    {weightages[type.key] ?? defaultWeightages[type.key] ?? 0}%
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Self Score */}
+                              <td className="py-2.5 px-3 text-center border-r border-slate-850 font-bold text-blue-400 bg-blue-955/5 print:border-black print:bg-transparent print:text-black">
+                                {computedSelfScores[type.key] || 0}%
+                              </td>
+
+                              {/* Supervisor score */}
+                              <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                                {isSupervisorOrAdmin ? (
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="100"
+                                      value={supervisorScores[type.key] ?? 0}
+                                      onChange={(e) => handleSupervisorScoreChange(type.key, Number(e.target.value))}
+                                      className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                    />
+                                    <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                  </div>
+                                ) : (
+                                  <span className="font-bold text-slate-350 print:text-black">
+                                    {supervisorScores[type.key] !== undefined ? `${supervisorScores[type.key]}%` : '—'}
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Comments */}
+                              <td className="py-2 px-3">
+                                {isSupervisorOrAdmin ? (
+                                  <input
+                                    type="text"
+                                    placeholder="Add feedback"
+                                    value={comments[type.key] || ''}
+                                    onChange={(e) => handleCommentChange(type.key, e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                                  />
+                                ) : (
+                                  <span className="text-slate-400 italic text-[11px] print:text-black">
+                                    {comments[type.key] || '—'}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+
+                        {/* Number of Mistakes Row (Final Row of Serial 1 block) */}
+                        <tr className="hover:bg-slate-950/20 transition-colors">
+                          {activeFileTypes.length === 0 && (
+                            <>
+                              <td className="py-4 px-3 text-center align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black">
+                                {dataEntrySrl}
+                              </td>
+                              <td className="py-4 px-4 align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black">
+                                {department}
+                              </td>
+                            </>
+                          )}
+                          <td className="py-2.5 px-4 border-r border-slate-850 font-bold text-red-400 print:border-black">
+                            Number of Mistakes
+                          </td>
+                          <td className="py-2.5 px-4 border-r border-slate-850 text-slate-450 print:border-black">
+                            Quality, Quantity & Timeliness
+                          </td>
+                          <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-450 print:border-black">
+                            0%
+                          </td>
+                          
+                          {/* Weightage */}
+                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                            {isSupervisorOrAdmin ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={weightages['mistakes'] ?? 0}
+                                  onChange={(e) => handleWeightageChange('mistakes', Number(e.target.value))}
+                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                />
+                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-slate-350 print:text-black">
+                                {weightages['mistakes'] ?? 0}%
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Self */}
+                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                            {isAppraisee || isSupervisorOrAdmin ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={selfScores['mistakes'] ?? 0}
+                                  onChange={(e) => handleSelfScoreChange('mistakes', Number(e.target.value))}
+                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                />
+                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-slate-350 print:text-black">
+                                {selfScores['mistakes'] ?? 0}%
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Supervisor */}
+                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                            {isSupervisorOrAdmin ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={supervisorScores['mistakes'] ?? 0}
+                                  onChange={(e) => handleSupervisorScoreChange('mistakes', Number(e.target.value))}
+                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                />
+                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-slate-350 print:text-black">
+                                {supervisorScores['mistakes'] !== undefined ? `${supervisorScores['mistakes']}%` : '—'}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Comments */}
+                          <td className="py-2 px-3">
+                            {isSupervisorOrAdmin ? (
+                              <input
+                                type="text"
+                                placeholder="Add feedback"
+                                value={comments['mistakes'] || ''}
+                                onChange={(e) => handleCommentChange('mistakes', e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                              />
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px] print:text-black">
+                                {comments['mistakes'] || '—'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
                       </>
                     )}
 
-                    {/* KPI Columns */}
-                    <td className="py-2.5 px-4 border-r border-slate-850 font-medium text-slate-200 print:border-black print:text-black">
-                      {type.label}
-                    </td>
-                    <td className="py-2.5 px-4 border-r border-slate-850 text-slate-400 print:border-black print:text-black">
-                      Quality, Quantity & Timeliness
-                    </td>
-                    <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-400 print:border-black print:text-black">
-                      100%
-                    </td>
+                    {/* SERIAL 2: Custom Department Specific Indicators */}
+                    {deptKpiSrl !== null && kpiDeptIndicators.map((indicator: string, idx: number) => {
+                      const isFirst = idx === 0;
+                      const key = `dept_${indicator}`;
+                      const totalRows = kpiDeptIndicators.length;
 
-                    {/* Weightage (Supervisor/Admin editable) */}
-                    <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                      {isSupervisorOrAdmin ? (
-                        <div className="flex items-center justify-center gap-1.5">
+                      return (
+                        <tr key={key} className="hover:bg-slate-950/20 transition-colors">
+                          {isFirst && (
+                            <>
+                              <td 
+                                rowSpan={totalRows} 
+                                className="py-4 px-3 text-center align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                              >
+                                {deptKpiSrl}
+                              </td>
+                              <td 
+                                rowSpan={totalRows} 
+                                className="py-4 px-4 align-middle font-bold text-slate-355 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                              >
+                                {department}
+                              </td>
+                            </>
+                          )}
+
+                          {/* KPI Columns */}
+                          <td className="py-2.5 px-4 border-r border-slate-850 font-medium text-slate-200 print:border-black print:text-black">
+                            {indicator}
+                          </td>
+                          <td className="py-2.5 px-4 border-r border-slate-850 text-slate-400 print:border-black print:text-black">
+                            Quality, Quantity & Timeliness
+                          </td>
+                          <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-400 print:border-black print:text-black">
+                            100%
+                          </td>
+
+                          {/* Weightage */}
+                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                            {isSupervisorOrAdmin ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={weightages[key] ?? defaultWeightages[key] ?? 0}
+                                  onChange={(e) => handleWeightageChange(key, Number(e.target.value))}
+                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                />
+                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-slate-350 print:text-black">
+                                {weightages[key] ?? defaultWeightages[key] ?? 0}%
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Self */}
+                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                            {isAppraisee || isSupervisorOrAdmin ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={selfScores[key] ?? 0}
+                                  onChange={(e) => handleSelfScoreChange(key, Number(e.target.value))}
+                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                />
+                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              </div>
+                            ) : (
+                              <span className="font-bold print:text-black">
+                                {selfScores[key] ?? 0}%
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Supervisor */}
+                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                            {isSupervisorOrAdmin ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={supervisorScores[key] ?? 0}
+                                  onChange={(e) => handleSupervisorScoreChange(key, Number(e.target.value))}
+                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                />
+                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              </div>
+                            ) : (
+                              <span className="font-bold print:text-black">
+                                {supervisorScores[key] !== undefined ? `${supervisorScores[key]}%` : '—'}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Comments */}
+                          <td className="py-2 px-3">
+                            {isSupervisorOrAdmin ? (
+                              <input
+                                type="text"
+                                placeholder="Add feedback"
+                                value={comments[key] || ''}
+                                onChange={(e) => handleCommentChange(key, e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                              />
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px] print:text-black">
+                                {comments[key] || '—'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {/* SERIAL 3/2: Monthly Data Entry Report */}
+                    {reportSrl !== null && (
+                      <tr className="bg-emerald-950/15 border-t border-b border-slate-800 text-emerald-400 hover:bg-emerald-950/20 transition-colors print:bg-neutral-50 print:text-black print:border-black">
+                        <td className="py-3 px-3 text-center align-middle font-bold border-r border-slate-800 print:border-black">{reportSrl}</td>
+                        <td className="py-3 px-4 font-bold border-r border-slate-800 print:border-black">Monthly Data Entry Report</td>
+                        <td className="py-3 px-4 font-medium border-r border-slate-850 print:border-black">Monthly Reports</td>
+                        <td className="py-3 px-4 text-slate-400 border-r border-slate-850 print:border-black print:text-black">Quality, Quantity & Timeliness</td>
+                        <td className="py-3 px-3 text-center font-semibold border-r border-slate-855 print:border-black">100%</td>
+                        
+                        {/* Weightage */}
+                        <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          {isSupervisorOrAdmin ? (
+                            <div className="flex items-center justify-center gap-1.5">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 5}
+                                onChange={(e) => handleWeightageChange('monthly_reports', Number(e.target.value))}
+                                className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                              />
+                              <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                            </div>
+                          ) : (
+                            <span className="font-bold print:text-black">
+                              {weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 5}%
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Self */}
+                        <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                          {isAppraisee || isSupervisorOrAdmin ? (
+                            <div className="flex items-center justify-center gap-1.5">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={selfScores['monthly_reports'] ?? 0}
+                                onChange={(e) => handleSelfScoreChange('monthly_reports', Number(e.target.value))}
+                                className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                              />
+                              <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                            </div>
+                          ) : (
+                            <span className="font-bold print:text-black">
+                              {selfScores['monthly_reports'] ?? 0}%
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Supervisor */}
+                        <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                          {isSupervisorOrAdmin ? (
+                            <div className="flex items-center justify-center gap-1.5">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={supervisorScores['monthly_reports'] ?? 0}
+                                onChange={(e) => handleSupervisorScoreChange('monthly_reports', Number(e.target.value))}
+                                className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                              />
+                              <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                            </div>
+                          ) : (
+                            <span className="font-bold print:text-black">
+                              {supervisorScores['monthly_reports'] !== undefined ? `${supervisorScores['monthly_reports']}%` : '—'}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Comments */}
+                        <td className="py-2 px-3">
+                          {isSupervisorOrAdmin ? (
+                            <input
+                              type="text"
+                              placeholder="Add feedback"
+                              value={comments['monthly_reports'] || ''}
+                              onChange={(e) => handleCommentChange('monthly_reports', e.target.value)}
+                              className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                            />
+                          ) : (
+                            <span className="text-slate-400 italic text-[11px] print:text-black">
+                              {comments['monthly_reports'] || '—'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* SERIAL 4/3/2/1: Self Development Initiative */}
+                    <tr className="bg-emerald-950/15 text-emerald-400 hover:bg-emerald-950/20 transition-colors print:bg-neutral-50 print:text-black">
+                      <td className="py-3 px-3 text-center align-middle font-bold border-r border-slate-800 print:border-black">{selfDevSrl}</td>
+                      <td className="py-3 px-4 font-bold border-r border-slate-800 print:border-black">Self Development Initiative</td>
+                      <td className="py-3 px-4 font-medium border-r border-slate-850 print:border-black truncate max-w-xs" title={kpiSkillsJoined}>
+                        {kpiSkillsJoined}
+                      </td>
+                      <td className="py-3 px-4 text-slate-400 border-r border-slate-850 print:border-black print:text-black">Quality, Quantity & Timeliness</td>
+                      <td className="py-3 px-3 text-center font-semibold border-r border-slate-850 print:border-black">100%</td>
+                      
+                      {/* Weightage */}
+                      <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                        {isSupervisorOrAdmin ? (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={weightages['self_development'] ?? defaultWeightages['self_development'] ?? 5}
+                              onChange={(e) => handleWeightageChange('self_development', Number(e.target.value))}
+                              className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                            />
+                            <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                          </div>
+                        ) : (
+                          <span className="font-bold print:text-black">
+                            {weightages['self_development'] ?? defaultWeightages['self_development'] ?? 5}%
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Self */}
+                      <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                        {isAppraisee || isSupervisorOrAdmin ? (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={selfScores['self_development'] ?? 0}
+                              onChange={(e) => handleSelfScoreChange('self_development', Number(e.target.value))}
+                              className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                            />
+                            <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                          </div>
+                        ) : (
+                          <span className="font-bold print:text-black">
+                            {selfScores['self_development'] ?? 0}%
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Supervisor */}
+                      <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                        {isSupervisorOrAdmin ? (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={supervisorScores['self_development'] ?? 0}
+                              onChange={(e) => handleSupervisorScoreChange('self_development', Number(e.target.value))}
+                              className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                            />
+                            <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                          </div>
+                        ) : (
+                          <span className="font-bold print:text-black">
+                            {supervisorScores['self_development'] !== undefined ? `${supervisorScores['self_development']}%` : '—'}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Comments */}
+                      <td className="py-2 px-3">
+                        {isSupervisorOrAdmin ? (
                           <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={weightages[type.key] ?? defaultWeightages[type.key] ?? 0}
-                            onChange={(e) => handleWeightageChange(type.key, Number(e.target.value))}
-                            className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                            type="text"
+                            placeholder="Add feedback"
+                            value={comments['self_development'] || ''}
+                            onChange={(e) => handleCommentChange('self_development', e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
                           />
-                          <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                        </div>
-                      ) : (
-                        <span className="font-bold text-slate-350 print:text-black">
-                          {weightages[type.key] ?? defaultWeightages[type.key] ?? 0}%
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Self Score (Auto-calculated for File Types!) */}
-                    <td className="py-2.5 px-3 text-center border-r border-slate-850 font-bold text-blue-400 bg-blue-950/5 print:border-black print:bg-transparent print:text-black">
-                      {computedSelfScores[type.key] || 0}%
-                    </td>
-
-                    {/* Supervisor score */}
-                    <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                      {isSupervisorOrAdmin ? (
-                        <div className="flex items-center justify-center gap-1.5">
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={supervisorScores[type.key] ?? 0}
-                            onChange={(e) => handleSupervisorScoreChange(type.key, Number(e.target.value))}
-                            className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
-                          />
-                          <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                        </div>
-                      ) : (
-                        <span className="font-bold text-slate-350 print:text-black">
-                          {supervisorScores[type.key] !== undefined ? `${supervisorScores[type.key]}%` : '—'}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Comments */}
-                    <td className="py-2 px-3">
-                      {isSupervisorOrAdmin ? (
-                        <input
-                          type="text"
-                          placeholder="Add feedback"
-                          value={comments[type.key] || ''}
-                          onChange={(e) => handleCommentChange(type.key, e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
-                        />
-                      ) : (
-                        <span className="text-slate-400 italic text-[11px] print:text-black">
-                          {comments[type.key] || '—'}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px] print:text-black">
+                            {comments['self_development'] || '—'}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  </>
                 );
-              })}
-
-              {/* Number of Mistakes Row (Final Row of Serial 1 block) */}
-              <tr className="hover:bg-slate-950/20 transition-colors">
-                <td className="py-2.5 px-4 border-r border-slate-850 font-bold text-red-400 print:border-black">
-                  Number of Mistakes
-                </td>
-                <td className="py-2.5 px-4 border-r border-slate-850 text-slate-450 print:border-black">
-                  Quality, Quantity & Timeliness
-                </td>
-                <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-450 print:border-black">
-                  0%
-                </td>
-                
-                {/* Weightage */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={weightages['mistakes'] ?? 0}
-                        onChange={(e) => handleWeightageChange('mistakes', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold text-slate-350 print:text-black">
-                      {weightages['mistakes'] ?? 0}%
-                    </span>
-                  )}
-                </td>
-
-                {/* Self */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isAppraisee || isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={selfScores['mistakes'] ?? 0}
-                        onChange={(e) => handleSelfScoreChange('mistakes', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold text-slate-350 print:text-black">
-                      {selfScores['mistakes'] ?? 0}%
-                    </span>
-                  )}
-                </td>
-
-                {/* Supervisor */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={supervisorScores['mistakes'] ?? 0}
-                        onChange={(e) => handleSupervisorScoreChange('mistakes', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold text-slate-350 print:text-black">
-                      {supervisorScores['mistakes'] !== undefined ? `${supervisorScores['mistakes']}%` : '—'}
-                    </span>
-                  )}
-                </td>
-
-                {/* Comments */}
-                <td className="py-2 px-3">
-                  {isSupervisorOrAdmin ? (
-                    <input
-                      type="text"
-                      placeholder="Add feedback"
-                      value={comments['mistakes'] || ''}
-                      onChange={(e) => handleCommentChange('mistakes', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
-                    />
-                  ) : (
-                    <span className="text-slate-400 italic text-[11px] print:text-black">
-                      {comments['mistakes'] || '—'}
-                    </span>
-                  )}
-                </td>
-              </tr>
-
-              {/* SERIAL 2: Monthly Data Entry Report */}
-              <tr className="bg-emerald-950/15 border-t border-b border-slate-800 text-emerald-400 hover:bg-emerald-950/20 transition-colors print:bg-neutral-50 print:text-black print:border-black">
-                <td className="py-3 px-3 text-center align-middle font-bold border-r border-slate-800 print:border-black">2</td>
-                <td className="py-3 px-4 font-bold border-r border-slate-800 print:border-black">Monthly Data Entry Report</td>
-                <td className="py-3 px-4 font-medium border-r border-slate-850 print:border-black">Monthly Reports</td>
-                <td className="py-3 px-4 text-slate-400 border-r border-slate-850 print:border-black print:text-black">Quality, Quantity & Timeliness</td>
-                <td className="py-3 px-3 text-center font-semibold border-r border-slate-850 print:border-black">100%</td>
-                
-                {/* Weightage */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 5}
-                        onChange={(e) => handleWeightageChange('monthly_reports', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold print:text-black">
-                      {weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 5}%
-                    </span>
-                  )}
-                </td>
-
-                {/* Self */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isAppraisee || isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={selfScores['monthly_reports'] ?? 0}
-                        onChange={(e) => handleSelfScoreChange('monthly_reports', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold print:text-black">
-                      {selfScores['monthly_reports'] ?? 0}%
-                    </span>
-                  )}
-                </td>
-
-                {/* Supervisor */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={supervisorScores['monthly_reports'] ?? 0}
-                        onChange={(e) => handleSupervisorScoreChange('monthly_reports', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold print:text-black">
-                      {supervisorScores['monthly_reports'] !== undefined ? `${supervisorScores['monthly_reports']}%` : '—'}
-                    </span>
-                  )}
-                </td>
-
-                {/* Comments */}
-                <td className="py-2 px-3">
-                  {isSupervisorOrAdmin ? (
-                    <input
-                      type="text"
-                      placeholder="Add feedback"
-                      value={comments['monthly_reports'] || ''}
-                      onChange={(e) => handleCommentChange('monthly_reports', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
-                    />
-                  ) : (
-                    <span className="text-slate-400 italic text-[11px] print:text-black">
-                      {comments['monthly_reports'] || '—'}
-                    </span>
-                  )}
-                </td>
-              </tr>
-
-              {/* SERIAL 3: Self Development Initiative */}
-              <tr className="bg-emerald-950/15 text-emerald-400 hover:bg-emerald-950/20 transition-colors print:bg-neutral-50 print:text-black">
-                <td className="py-3 px-3 text-center align-middle font-bold border-r border-slate-800 print:border-black">3</td>
-                <td className="py-3 px-4 font-bold border-r border-slate-800 print:border-black">Self Development Initiative</td>
-                <td className="py-3 px-4 font-medium border-r border-slate-850 print:border-black truncate max-w-xs" title={kpiSkillsJoined}>
-                  {kpiSkillsJoined}
-                </td>
-                <td className="py-3 px-4 text-slate-400 border-r border-slate-850 print:border-black print:text-black">Quality, Quantity & Timeliness</td>
-                <td className="py-3 px-3 text-center font-semibold border-r border-slate-850 print:border-black">100%</td>
-                
-                {/* Weightage */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={weightages['self_development'] ?? defaultWeightages['self_development'] ?? 5}
-                        onChange={(e) => handleWeightageChange('self_development', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold print:text-black">
-                      {weightages['self_development'] ?? defaultWeightages['self_development'] ?? 5}%
-                    </span>
-                  )}
-                </td>
-
-                {/* Self */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isAppraisee || isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={selfScores['self_development'] ?? 0}
-                        onChange={(e) => handleSelfScoreChange('self_development', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold print:text-black">
-                      {selfScores['self_development'] ?? 0}%
-                    </span>
-                  )}
-                </td>
-
-                {/* Supervisor */}
-                <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
-                  {isSupervisorOrAdmin ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={supervisorScores['self_development'] ?? 0}
-                        onChange={(e) => handleSupervisorScoreChange('self_development', Number(e.target.value))}
-                        className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
-                      />
-                      <span className="text-[10px] text-slate-550 font-semibold">%</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold print:text-black">
-                      {supervisorScores['self_development'] !== undefined ? `${supervisorScores['self_development']}%` : '—'}
-                    </span>
-                  )}
-                </td>
-
-                {/* Comments */}
-                <td className="py-2 px-3">
-                  {isSupervisorOrAdmin ? (
-                    <input
-                      type="text"
-                      placeholder="Add feedback"
-                      value={comments['self_development'] || ''}
-                      onChange={(e) => handleCommentChange('self_development', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
-                    />
-                  ) : (
-                    <span className="text-slate-400 italic text-[11px] print:text-black">
-                      {comments['self_development'] || '—'}
-                    </span>
-                  )}
-                </td>
-              </tr>
-
-              {/* TOTAL ROW */}
+              })()}
               <tr className="bg-slate-900/90 font-bold border-t-2 border-slate-800 text-white print:bg-neutral-100 print:text-black print:border-black print:border-t">
                 <td colSpan={5} className="py-3 px-4 text-right border-r border-slate-800 uppercase tracking-wider print:border-black">
                   Total Weightage (Max 100%)
@@ -1245,7 +1534,7 @@ USING (auth.uid() = user_id OR EXISTS (
             
             <div className="border-t border-slate-800/80 pt-2 space-y-1 w-72 print:border-black print:border-t">
               <div className="text-xs font-mono font-bold text-white uppercase tracking-wide print:text-black min-h-[16px]">
-                {appraiseeSigned ? (viewingStaff.full_name || viewingStaff.username) : ''}
+                {appraiseeSigned ? (targetStaff.full_name || targetStaff.username) : ''}
               </div>
               <div className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider print:text-black">
                 Appraisee Signature {appraiseeSigned && appraiseeSignDate && `| Date: ${appraiseeSignDate}`}
@@ -1276,11 +1565,104 @@ USING (auth.uid() = user_id OR EXISTS (
               <div className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider print:text-black">
                 Appraiser Signature {appraiserSigned && appraiserSignDate && `| Date: ${appraiserSignDate}`}
               </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      {/* External Appraiser Portal Modal */}
+      {showViewKpiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-fade-in print:hidden">
+          <div className="bg-slate-950 border border-slate-850 max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="text-sm font-bold text-white">Evaluate Appraisee KPI</h4>
+                <p className="text-[10px] text-slate-500 mt-0.5">Select a user who has designated you as Appraiser, or search by Codename.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowViewKpiModal(false)}
+                className="text-slate-500 hover:text-slate-300 font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Codename Search */}
+            <div className="space-y-1.5 pt-2">
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Search Appraisee by Codename
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. KI1024"
+                  value={appraiseeSearchText}
+                  onChange={(e) => setAppraiseeSearchText(e.target.value)}
+                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-700 uppercase focus:outline-hidden focus:border-blue-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleLoadAppraiseeByCodename(appraiseeSearchText);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleLoadAppraiseeByCodename(appraiseeSearchText)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Load Sheet
+                </button>
+              </div>
+            </div>
+
+            {/* Assigned list */}
+            <div className="border-t border-slate-900 pt-3 space-y-2">
+              <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Assigned Appraisees ({monthYearKey})</h5>
+              {searchingAppraisee ? (
+                <div className="flex items-center justify-center py-4 text-slate-500 gap-1.5">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                  <span className="text-xs">Searching database...</span>
+                </div>
+              ) : assignedAppraisees.length === 0 ? (
+                <p className="text-xs text-slate-500 italic py-2">No users have designated you as Appraiser in this month's KPI sheets yet.</p>
+              ) : (
+                <div className="max-h-40 overflow-y-auto space-y-1.5 divide-y divide-slate-900/60 pr-1">
+                  {assignedAppraisees.map((appraisee) => (
+                    <button
+                      key={appraisee.id}
+                      type="button"
+                      onClick={() => {
+                        setEvaluatorModeProfile(appraisee);
+                        setShowViewKpiModal(false);
+                        toast.success(`Loaded KPI sheet for ${appraisee.full_name || appraisee.username} in Evaluator Mode.`);
+                      }}
+                      className="w-full text-left py-2 px-2.5 rounded-lg hover:bg-slate-900/60 hover:text-white text-slate-350 transition-colors flex justify-between items-center text-xs font-medium cursor-pointer"
+                    >
+                      <span>{appraisee.full_name || appraisee.username}</span>
+                      <span className="text-[10px] font-mono text-slate-500 uppercase">{appraisee.username}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-900">
+              <button
+                type="button"
+                onClick={() => {
+                  setEvaluatorModeProfile(null);
+                  setShowViewKpiModal(false);
+                  toast.success("Reset view to your own KPI sheet.");
+                }}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Reset to Self
+              </button>
             </div>
           </div>
         </div>
-
-      </div>
+      )}
     </div>
   );
 };

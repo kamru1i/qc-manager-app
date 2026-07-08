@@ -64,6 +64,12 @@ interface StaffSettingsFormProps {
   setSignOutTime?: (val: string) => void;
   kpiSkills?: string[];
   setKpiSkills?: (val: string[]) => void;
+  kpiDeptIndicators?: string[];
+  setKpiDeptIndicators?: (val: string[]) => void;
+  performsDataEntry?: boolean;
+  setPerformsDataEntry?: (val: boolean) => void;
+  department?: string;
+  setDepartment?: (val: string) => void;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -109,8 +115,15 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setSignOutTime,
   kpiSkills = [],
   setKpiSkills,
+  kpiDeptIndicators = [],
+  setKpiDeptIndicators,
+  performsDataEntry = true,
+  setPerformsDataEntry,
+  department = "Data Entry",
+  setDepartment,
 }) => {
   const [newSkillText, setNewSkillText] = React.useState("");
+  const [newDeptIndicatorText, setNewDeptIndicatorText] = React.useState("");
 
   return (
     <div className="space-y-6">
@@ -295,7 +308,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
       </div>
 
       {/* Workspace Access & Permissions Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Leave Tracker Access Card */}
         <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
@@ -683,79 +696,6 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   history.
                 </p>
               </div>
-
-              {/* KPI Self-Development Skills */}
-              {setKpiSkills && (
-                <div className="border-t border-slate-800/60 pt-4 mt-4">
-                  <h4 className="text-xs font-bold text-white mb-1">
-                    KPI Development Skills
-                  </h4>
-                  <p className="text-[10px] text-slate-500 mb-3">
-                    Add self-development initiatives (e.g. Spoken English, Communication skill) for performance assessments.
-                  </p>
-                  
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      type="text"
-                      value={newSkillText}
-                      onChange={(e) => setNewSkillText(e.target.value)}
-                      placeholder="e.g. Spoken English"
-                      disabled={!isAdmin && !isSupervisor}
-                      className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = newSkillText.trim();
-                          if (val && !kpiSkills.includes(val)) {
-                            setKpiSkills([...kpiSkills, val]);
-                            setNewSkillText("");
-                          }
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      disabled={(!isAdmin && !isSupervisor) || !newSkillText.trim()}
-                      onClick={() => {
-                        const val = newSkillText.trim();
-                        if (val && !kpiSkills.includes(val)) {
-                          setKpiSkills([...kpiSkills, val]);
-                          setNewSkillText("");
-                        }
-                      }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-850 border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {kpiSkills.length === 0 ? (
-                      <span className="text-[11px] text-slate-500 italic">No skills added yet.</span>
-                    ) : (
-                      kpiSkills.map((skill) => (
-                        <div
-                          key={skill}
-                          className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-850/80 border border-slate-750 text-slate-350 rounded-lg text-xs font-medium"
-                        >
-                          <span>{skill}</span>
-                          {(isAdmin || isSupervisor) && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setKpiSkills(kpiSkills.filter((s) => s !== skill));
-                              }}
-                              className="text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer text-[10px]"
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             <p className="text-xs text-slate-500 italic py-4 text-center">
@@ -763,6 +703,226 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             </p>
           )}
         </div>
+
+        {/* KPI Settings Panel */}
+        {setKpiSkills && (
+          <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50" />
+                <h3 className="text-sm font-bold text-white">
+                  KPI & Performance Settings
+                </h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5">
+              {/* Department Dropdown */}
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Department
+                </label>
+                <select
+                  value={department}
+                  disabled={!isAdmin && !isSupervisor}
+                  onChange={(e) => {
+                    const dept = e.target.value;
+                    if (setDepartment) setDepartment(dept);
+                  }}
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
+                >
+                  <option value="Data Entry" className="bg-slate-950">Data Entry</option>
+                  <option value="IT" className="bg-slate-950">IT</option>
+                  <option value="Accounts" className="bg-slate-950">Accounts</option>
+                  <option value="HR" className="bg-slate-950">HR</option>
+                  <option value="Other" className="bg-slate-950">Other</option>
+                </select>
+              </div>
+
+              {/* Perform Data Entry Tasks checkbox */}
+              {department !== "Data Entry" && setPerformsDataEntry && (
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none group py-2">
+                    <input
+                      type="checkbox"
+                      checked={performsDataEntry}
+                      disabled={!isAdmin && !isSupervisor}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        if (!checked) {
+                          const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
+                          if (!confirmHide) return;
+                        }
+                        setPerformsDataEntry(checked);
+                      }}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all shrink-0 ${
+                        performsDataEntry
+                          ? "bg-blue-600 border-blue-500 text-white font-bold"
+                          : "border-slate-700 bg-slate-955 text-transparent"
+                      }`}
+                    >
+                      {performsDataEntry && <Check className="h-3.5 w-3.5 stroke-3" />}
+                    </div>
+                    <span className="text-xs font-semibold text-slate-350 group-hover:text-white transition-colors">
+                      Does this user also perform Data Entry tasks?
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Custom Department Indicators */}
+            {department !== "Data Entry" && setKpiDeptIndicators && (
+              <div className="border-t border-slate-850/60 pt-4 space-y-3">
+                <div>
+                  <h4 className="text-xs font-bold text-white mb-1">
+                    Department Specific KPIs ({department})
+                  </h4>
+                  <p className="text-[10px] text-slate-500">
+                    Add specific KPI tasks that this user is evaluated on for their role in the {department} department.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newDeptIndicatorText}
+                    onChange={(e) => setNewDeptIndicatorText(e.target.value)}
+                    placeholder="e.g. Server Maintenance, Tech Support"
+                    disabled={!isAdmin && !isSupervisor}
+                    className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = newDeptIndicatorText.trim();
+                        if (val && !kpiDeptIndicators.includes(val)) {
+                          setKpiDeptIndicators([...kpiDeptIndicators, val]);
+                          setNewDeptIndicatorText("");
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={(!isAdmin && !isSupervisor) || !newDeptIndicatorText.trim()}
+                    onClick={() => {
+                      const val = newDeptIndicatorText.trim();
+                      if (val && !kpiDeptIndicators.includes(val)) {
+                        setKpiDeptIndicators([...kpiDeptIndicators, val]);
+                        setNewDeptIndicatorText("");
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-850 border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {kpiDeptIndicators.length === 0 ? (
+                    <span className="text-[11px] text-slate-500 italic">No department specific KPIs added.</span>
+                  ) : (
+                    kpiDeptIndicators.map((indicator) => (
+                      <div
+                        key={indicator}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-950/20 border border-blue-900/30 text-blue-300 rounded-lg text-xs font-medium"
+                      >
+                        <span>{indicator}</span>
+                        {(isAdmin || isSupervisor) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setKpiDeptIndicators(kpiDeptIndicators.filter((s) => s !== indicator));
+                            }}
+                            className="text-blue-500 hover:text-red-400 font-bold transition-colors cursor-pointer text-[10px]"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* KPI Self-Development Skills */}
+            <div className="border-t border-slate-850/60 pt-4 space-y-3">
+              <div>
+                <h4 className="text-xs font-bold text-white mb-1">
+                  Self-Development Initiative Skills
+                </h4>
+                <p className="text-[10px] text-slate-500">
+                  Manage skills or training initiatives this employee is working on (e.g. Spoken English, Graphic Design).
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSkillText}
+                  onChange={(e) => setNewSkillText(e.target.value)}
+                  placeholder="e.g. Video Editing, Digital Marketing, SEO"
+                  disabled={!isAdmin && !isSupervisor}
+                  className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-650 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const val = newSkillText.trim();
+                      if (val && !kpiSkills.includes(val)) {
+                        setKpiSkills([...kpiSkills, val]);
+                        setNewSkillText("");
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={(!isAdmin && !isSupervisor) || !newSkillText.trim()}
+                  onClick={() => {
+                    const val = newSkillText.trim();
+                    if (val && !kpiSkills.includes(val)) {
+                      setKpiSkills([...kpiSkills, val]);
+                      setNewSkillText("");
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-850 border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {kpiSkills.length === 0 ? (
+                  <span className="text-[11px] text-slate-500 italic">No skills added yet.</span>
+                ) : (
+                  kpiSkills.map((skill) => (
+                    <div
+                      key={skill}
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-850/80 border border-slate-750 text-slate-350 rounded-lg text-xs font-medium"
+                    >
+                      <span>{skill}</span>
+                      {(isAdmin || isSupervisor) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setKpiSkills(kpiSkills.filter((s) => s !== skill));
+                          }}
+                          className="text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer text-[10px]"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
