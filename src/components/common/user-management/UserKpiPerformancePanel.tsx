@@ -1057,6 +1057,19 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
   return (
     <div className="space-y-6 max-w-full font-sans print:bg-white print:text-black print:p-0 print:border-0 print:space-y-4">
+      <style>{`
+        /* Hide spin buttons for Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        /* Hide spin buttons for Firefox */
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       {/* 1. Header controls (Not printed) */}
       <div className="flex flex-wrap justify-between items-center gap-4 bg-slate-900/35 border border-slate-850 p-4 rounded-2xl shadow-lg print:hidden">
         <div className="flex items-center gap-3">
