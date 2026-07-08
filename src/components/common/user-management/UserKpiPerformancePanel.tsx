@@ -227,11 +227,10 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     return `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
   }, [selectedMonth, selectedYear]);
 
-  // Fetch production counts & supervisor names
+  // 1. Fetch default supervisor name if empty (only when targetStaff or supervisors list changes)
   useEffect(() => {
     let active = true;
-    const fetchProductionData = async () => {
-      // 1. Fetch default supervisor name if empty
+    const fetchSupervisorName = async () => {
       if (targetStaff.supervisor_ids && targetStaff.supervisor_ids.length > 0) {
         const { data } = await supabase
           .from('profiles')
@@ -242,8 +241,15 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
           setAppraiserName(data[0].full_name || '');
         }
       }
+    };
+    fetchSupervisorName();
+    return () => { active = false; };
+  }, [targetStaff.id, supervisorIdsStr]);
 
-      // 2. Fetch record counts for the selected month
+  // 2. Fetch record counts for the selected month (only when targetStaff or selected month/year changes)
+  useEffect(() => {
+    let active = true;
+    const fetchProductionCounts = async () => {
       const startDate = new Date(selectedYear, selectedMonth, 1);
       const endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
 
@@ -266,9 +272,9 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
       }
     };
 
-    fetchProductionData();
+    fetchProductionCounts();
     return () => { active = false; };
-  }, [targetStaff.id, supervisorIdsStr, selectedMonth, selectedYear]);
+  }, [targetStaff.id, selectedMonth, selectedYear]);
 
   // Default Weightages
   const defaultWeightages = useMemo(() => {
@@ -561,47 +567,14 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
     fetchAssessment();
     return () => { active = false; };
-  }, [targetStaff.id, monthYearKey, defaultWeightages, staffGlobalEmpId, staffGlobalDoj]);
+  }, [targetStaff.id, monthYearKey]);
 
-  const fetchAssignedAppraisees = async () => {
-    if (!currentUser) return;
-    setSearchingAppraisee(true);
-    try {
-      const { data: assessments, error } = await supabase
-        .from('kpi_assessments')
-        .select('user_id')
-        .eq('month_year', monthYearKey)
-        .or(`appraiser_name.ilike.%${currentUser.full_name || 'NOTHING_HERE'}%,appraiser_name.ilike.%${currentUser.username || 'NOTHING_HERE'}%`);
-        
-      if (error) throw error;
-      
-      if (assessments && assessments.length > 0) {
-        const userIds = Array.from(new Set(assessments.map((a: any) => a.user_id)));
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, role, allowed_types, global_settings')
-          .in('id', userIds);
-          
-        if (profilesData) {
-          setAssignedAppraisees(profilesData);
-          setHasAssignedAppraisees(profilesData.length > 0);
-          return;
-        }
-      }
-      setAssignedAppraisees([]);
-      setHasAssignedAppraisees(false);
-    } catch (err) {
-      console.error('Failed to load appraisees:', err);
-    } finally {
-      setSearchingAppraisee(false);
-    }
-  };
-
-  // Check if current user has any assigned appraisees to show "View KPI" button
+  // Automatically load assigned appraisees on month or currentUser changes
   useEffect(() => {
     let active = true;
-    const checkAppraisees = async () => {
+    const loadAppraisees = async () => {
       if (!currentUser) return;
+      setSearchingAppraisee(true);
       try {
         const { data: assessments, error } = await supabase
           .from('kpi_assessments')
@@ -611,14 +584,32 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
           
         if (error) throw error;
         
+        if (assessments && assessments.length > 0 && active) {
+          const userIds = Array.from(new Set(assessments.map((a: any) => a.user_id)));
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, role, allowed_types, global_settings')
+            .in('id', userIds);
+            
+          if (profilesData && active) {
+            setAssignedAppraisees(profilesData);
+            setHasAssignedAppraisees(profilesData.length > 0);
+            return;
+          }
+        }
         if (active) {
-          setHasAssignedAppraisees(assessments && assessments.length > 0);
+          setAssignedAppraisees([]);
+          setHasAssignedAppraisees(false);
         }
       } catch (err) {
-        console.error('Failed checking appraisees:', err);
+        console.error('Failed to load appraisees:', err);
+      } finally {
+        if (active) {
+          setSearchingAppraisee(false);
+        }
       }
     };
-    checkAppraisees();
+    loadAppraisees();
     return () => { active = false; };
   }, [currentUser, monthYearKey]);
 
@@ -1112,7 +1103,6 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               type="button"
               onClick={() => {
                 setShowViewKpiModal(true);
-                fetchAssignedAppraisees();
               }}
               onContextMenu={(e) => {
                 e.preventDefault();
