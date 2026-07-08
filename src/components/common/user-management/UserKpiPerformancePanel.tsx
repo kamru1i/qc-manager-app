@@ -119,12 +119,18 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     return { from: startStr, to: endStr };
   }, [selectedMonth, selectedYear]);
 
+  const allowedTypesStr = JSON.stringify(viewingStaff.allowed_types || []);
+  const supervisorIdsStr = JSON.stringify(viewingStaff.supervisor_ids || []);
+  const staffGlobalEmpId = viewingStaff.global_settings?.emp_id || '';
+  const staffGlobalDoj = viewingStaff.global_settings?.date_of_joining || '';
+
   // Filter allowed file types for this user
   const activeFileTypes = useMemo(() => {
+    const parsed = JSON.parse(allowedTypesStr);
     return CORE_FILE_TYPES.filter(t => 
-      !viewingStaff.allowed_types || viewingStaff.allowed_types.includes(t.key)
+      !viewingStaff.allowed_types || parsed.includes(t.key)
     );
-  }, [viewingStaff.allowed_types]);
+  }, [allowedTypesStr]);
 
   // Month key for lookup (e.g. "2026-07")
   const monthYearKey = useMemo(() => {
@@ -172,7 +178,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
     fetchProductionData();
     return () => { active = false; };
-  }, [viewingStaff, selectedMonth, selectedYear]);
+  }, [viewingStaff.id, supervisorIdsStr, selectedMonth, selectedYear]);
 
   // Default Weightages
   const defaultWeightages = useMemo(() => {
@@ -379,7 +385,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
     fetchAssessment();
     return () => { active = false; };
-  }, [viewingStaff, monthYearKey, defaultWeightages]);
+  }, [viewingStaff.id, monthYearKey, defaultWeightages, staffGlobalEmpId, staffGlobalDoj]);
 
   // Save to Database / LocalStorage fallback
   const handleSave = async () => {
