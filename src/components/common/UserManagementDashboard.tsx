@@ -233,11 +233,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, [viewingStaff, activeSubTab, profile, hasStaffAccess]);
 
-  // Enforce access control for Leave History tab: redirect if active tab is leave but supervisor doesn't supervise user
+  // Enforce access control for Leave History and KPI tabs: redirect if active tab is restricted but supervisor doesn't supervise user
   useEffect(() => {
     if (viewingStaff && profile?.role === 'supervisor') {
       const isSupervisedByMe = hasStaffAccess(viewingStaff);
-      if (activeSubTab === 'leave' && !isSupervisedByMe) {
+      if ((activeSubTab === 'leave' || activeSubTab === 'kpi') && !isSupervisedByMe) {
         setActiveSubTab(viewingStaff.has_quotes_access ? 'quotes' : 'profile');
       }
     }
@@ -715,8 +715,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const visibleProfiles = profiles
     .filter((u) => {
       if (profile?.role === 'supervisor') {
-        // Supervisor only sees users they supervise (direct/delegated) and themselves
-        return hasStaffAccess(u);
+        // Supervisor sees users they supervise (direct/delegated), themselves, OR users who have quotes access
+        return hasStaffAccess(u) || !!u.has_quotes_access;
       }
       return true;
     })
@@ -820,20 +820,22 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <FileText className="h-3.5 w-3.5 text-purple-400" /> Quotes History
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSubTab('kpi');
-                    localStorage.setItem('user_management_active_subtab', 'kpi');
-                  }}
-                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeSubTab === 'kpi'
-                      ? 'border-blue-500 text-blue-400 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
-                </button>
+                {(profile?.role === 'admin' || hasStaffAccess(viewingStaff)) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSubTab('kpi');
+                      localStorage.setItem('user_management_active_subtab', 'kpi');
+                    }}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeSubTab === 'kpi'
+                        ? 'border-blue-500 text-blue-400 font-bold'
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
