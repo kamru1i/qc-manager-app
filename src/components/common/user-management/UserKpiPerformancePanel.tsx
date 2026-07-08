@@ -58,7 +58,6 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   const [empId, setEmpId] = useState('');
   const [dateOfJoining, setDateOfJoining] = useState('');
   const [department, setDepartment] = useState('Data Entry');
-  const [isEditingDept, setIsEditingDept] = useState(false);
   const [appraiserName, setAppraiserName] = useState('');
   const [reviewerName, setReviewerName] = useState('');
 
@@ -1207,33 +1206,9 @@ USING (auth.uid() = user_id OR EXISTS (
           {/* Department */}
           <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200 group">
             <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Department</span>
-            {isEditingDept && isSupervisorOrAdmin ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  onBlur={() => setIsEditingDept(false)}
-                  onKeyDown={(e) => e.key === 'Enter' && setIsEditingDept(false)}
-                  autoFocus
-                  className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-hidden focus:border-blue-500"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium text-white print:text-black">
-                  {performsOtherDeptTasks ? `${department} & ${otherDepartment}` : department}
-                </span>
-                {isSupervisorOrAdmin && (
-                  <button
-                    onClick={() => setIsEditingDept(true)}
-                    className="p-1 text-slate-500 hover:text-white transition-colors cursor-pointer print:hidden"
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-            )}
+            <span className="font-medium text-white print:text-black">
+              {performsOtherDeptTasks ? `${department} & ${otherDepartment}` : department}
+            </span>
           </div>
 
           {/* Emp ID */}
