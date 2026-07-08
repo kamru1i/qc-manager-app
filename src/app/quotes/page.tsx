@@ -1684,7 +1684,10 @@ export default function Dashboard({
 
           {/* TAB 9: ASITIS CAUSALITY */}
           {activeTab === "asitis_causality" && (
-            <AsitisCausalityPanel />
+            <AsitisCausalityPanel
+              profile={profile}
+              isOnline={isOnline}
+            />
           )}
 
 
