@@ -124,6 +124,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   } | null>(null);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch from database or fallback to localStorage / DEFAULT_LOGIN_CODES
   const fetchLoginCodes = useCallback(async () => {
@@ -322,11 +323,16 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   const handleContextMenuTrigger = (e: React.MouseEvent, item: LoginCode) => {
     if (!canEdit) return;
     e.preventDefault();
-    const menuWidth = 144;
-    const menuHeight = 80;
-    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
-    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
-    setContextMenu({ x, y, codeItem: item });
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const menuWidth = 144;
+      const menuHeight = 80;
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      const x = Math.min(clickX, rect.width - menuWidth - 8);
+      const y = Math.min(clickY, rect.height - menuHeight - 8);
+      setContextMenu({ x, y, codeItem: item });
+    }
   };
 
   // Reset page when filtering
@@ -391,6 +397,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
 
   return (
     <div
+      ref={containerRef}
       className="bg-slate-955/20 border border-slate-850 rounded-2xl p-5 space-y-6 relative flex flex-col min-h-[60vh] overflow-hidden"
       style={{
         fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', 'Inter', sans-serif",
@@ -735,7 +742,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       {contextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed bg-slate-900 border border-slate-800 rounded-lg shadow-2xl py-1 w-36 z-[60] text-xs animate-fade-in"
+          className="absolute bg-slate-900 border border-slate-800 rounded-lg shadow-2xl py-1 w-36 z-[60] text-xs animate-fade-in"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           <button
