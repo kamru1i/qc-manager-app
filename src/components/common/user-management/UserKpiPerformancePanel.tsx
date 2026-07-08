@@ -1280,7 +1280,7 @@ USING (auth.uid() = user_id OR EXISTS (
           {/* Appraiser's Name */}
           <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
             <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Appraiser's Name</span>
-            {!hasSupervisors && isSupervisorOrAdmin ? (
+            {!hasSupervisors && currentUser?.role === 'admin' ? (
               <div className="relative">
                 <input
                   type="text"
@@ -2133,7 +2133,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
       {/* External Appraiser Portal Modal */}
       {showViewKpiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-fade-in print:hidden">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-xs p-4 pt-[12vh] overflow-y-auto animate-fade-in print:hidden">
           <div className="bg-slate-950 border border-slate-850 max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-start">
               <div>
