@@ -765,18 +765,19 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
           height: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
+          background: transparent !important;
+          background-color: transparent !important;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: transparent;
+          background: rgba(148, 163, 184, 0.15) !important;
           border-radius: 9999px;
           transition: background 0.2s ease;
         }
         .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-          background: rgba(148, 163, 184, 0.2);
+          background: rgba(148, 163, 184, 0.3) !important;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(148, 163, 184, 0.35);
+          background: rgba(148, 163, 184, 0.45) !important;
         }
       `,
         }}
