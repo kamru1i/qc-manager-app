@@ -124,6 +124,17 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     return isAppraisee || isSupervisorOrAdmin;
   }, [isAppraisee, isSupervisorOrAdmin]);
 
+  // Is the current viewer the designated appraiser or an admin?
+  const isDesignatedAppraiser = useMemo(() => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin') return true;
+    const name = (currentUser.full_name || '').trim().toLowerCase();
+    const uname = (currentUser.username || '').trim().toLowerCase();
+    const appraiser = (appraiserName || '').trim().toLowerCase();
+    if (!appraiser) return false;
+    return name === appraiser || uname === appraiser;
+  }, [currentUser, appraiserName]);
+
   // Format dates for display
   const evaluationPeriod = useMemo(() => {
     const startStr = `01-${String(selectedMonth + 1).padStart(2, '0')}-${selectedYear}`;
@@ -1939,7 +1950,7 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
 
           {/* Appraiser Signature */}
-          <div className="space-y-4">
+          <div className="space-y-4 flex flex-col md:items-end print:items-end">
             <div className="flex items-center gap-2.5 print:hidden">
               <input
                 type="checkbox"
