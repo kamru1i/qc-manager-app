@@ -98,6 +98,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [editUserKpiDeptIndicators, setEditUserKpiDeptIndicators] = useState<string[]>([]);
   const [editUserPerformsDataEntry, setEditUserPerformsDataEntry] = useState(true);
   const [editUserDepartment, setEditUserDepartment] = useState('Data Entry');
+  const [editUserPerformsOtherDeptTasks, setEditUserPerformsOtherDeptTasks] = useState(false);
+  const [editUserOtherDepartment, setEditUserOtherDepartment] = useState('IT');
 
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
@@ -181,6 +183,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditUserKpiDeptIndicators(viewingStaff.global_settings?.kpi_dept_indicators || []);
       setEditUserPerformsDataEntry(viewingStaff.global_settings?.performs_data_entry !== false);
       setEditUserDepartment(viewingStaff.global_settings?.department || 'Data Entry');
+      setEditUserPerformsOtherDeptTasks(!!viewingStaff.global_settings?.performs_other_dept_tasks);
+      setEditUserOtherDepartment(viewingStaff.global_settings?.other_department || 'IT');
     }
   }, [viewingStaff]);
 
@@ -616,7 +620,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       editUserKpiSkills,
       editUserKpiDeptIndicators,
       editUserPerformsDataEntry,
-      editUserDepartment
+      editUserDepartment,
+      editUserPerformsOtherDeptTasks,
+      editUserOtherDepartment
     );
 
     setSubmitting(false);
@@ -864,6 +870,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setEditUserPerformsDataEntry={setEditUserPerformsDataEntry}
                   editUserDepartment={editUserDepartment}
                   setEditUserDepartment={setEditUserDepartment}
+                  editUserPerformsOtherDeptTasks={editUserPerformsOtherDeptTasks}
+                  setEditUserPerformsOtherDeptTasks={setEditUserPerformsOtherDeptTasks}
+                  editUserOtherDepartment={editUserOtherDepartment}
+                  setEditUserOtherDepartment={setEditUserOtherDepartment}
                 />
               )}
 

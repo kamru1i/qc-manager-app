@@ -134,6 +134,8 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
   const globalSettingsStr = JSON.stringify(targetStaff.global_settings || {});
   const performsDataEntry = targetStaff.global_settings?.performs_data_entry !== false;
+  const performsOtherDeptTasks = !!targetStaff.global_settings?.performs_other_dept_tasks;
+  const otherDepartment = targetStaff.global_settings?.other_department || 'IT';
   const kpiDeptIndicators = useMemo(() => {
     return targetStaff.global_settings?.kpi_dept_indicators || [];
   }, [globalSettingsStr]);
@@ -722,7 +724,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         const key = `dept_${indicator}`;
         rows.push([
           String(deptSrl),
-          department,
+          department === "Data Entry" && performsOtherDeptTasks ? otherDepartment : department,
           indicator,
           "Quality, Quantity & Timeliness",
           "100%",
@@ -1413,7 +1415,7 @@ USING (auth.uid() = user_id OR EXISTS (
                                 rowSpan={totalRows} 
                                 className="py-4 px-4 align-middle font-bold text-slate-355 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
                               >
-                                {department}
+                                {department === "Data Entry" && performsOtherDeptTasks ? otherDepartment : department}
                               </td>
                             </>
                           )}

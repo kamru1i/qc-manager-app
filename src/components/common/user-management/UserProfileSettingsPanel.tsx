@@ -67,6 +67,10 @@ interface UserProfileSettingsPanelProps {
   setEditUserPerformsDataEntry: (val: boolean) => void;
   editUserDepartment: string;
   setEditUserDepartment: (val: string) => void;
+  editUserPerformsOtherDeptTasks?: boolean;
+  setEditUserPerformsOtherDeptTasks?: (val: boolean) => void;
+  editUserOtherDepartment?: string;
+  setEditUserOtherDepartment?: (val: string) => void;
 }
 
 export const UserProfileSettingsPanel: React.FC<
@@ -125,6 +129,10 @@ export const UserProfileSettingsPanel: React.FC<
   setEditUserPerformsDataEntry,
   editUserDepartment,
   setEditUserDepartment,
+  editUserPerformsOtherDeptTasks,
+  setEditUserPerformsOtherDeptTasks,
+  editUserOtherDepartment,
+  setEditUserOtherDepartment,
 }) => {
   const isTargetAdmin = viewingStaff.role === "admin";
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
@@ -187,6 +195,10 @@ export const UserProfileSettingsPanel: React.FC<
         setPerformsDataEntry={setEditUserPerformsDataEntry}
         department={editUserDepartment}
         setDepartment={setEditUserDepartment}
+        performsOtherDeptTasks={editUserPerformsOtherDeptTasks}
+        setPerformsOtherDeptTasks={setEditUserPerformsOtherDeptTasks}
+        otherDepartment={editUserOtherDepartment}
+        setOtherDepartment={setEditUserOtherDepartment}
       />
 
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">

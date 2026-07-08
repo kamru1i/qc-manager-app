@@ -70,6 +70,10 @@ interface StaffSettingsFormProps {
   setPerformsDataEntry?: (val: boolean) => void;
   department?: string;
   setDepartment?: (val: string) => void;
+  performsOtherDeptTasks?: boolean;
+  setPerformsOtherDeptTasks?: (val: boolean) => void;
+  otherDepartment?: string;
+  setOtherDepartment?: (val: string) => void;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -121,6 +125,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setPerformsDataEntry,
   department = "Data Entry",
   setDepartment,
+  performsOtherDeptTasks = false,
+  setPerformsOtherDeptTasks,
+  otherDepartment = "IT",
+  setOtherDepartment,
 }) => {
   const [newSkillText, setNewSkillText] = React.useState("");
   const [newDeptIndicatorText, setNewDeptIndicatorText] = React.useState("");
@@ -788,7 +796,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       className="sr-only"
                     />
                     <div
-                      className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all shrink-0 ${
+                      className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         performsDataEntry
                           ? "bg-blue-600 border-blue-500 text-white font-bold"
                           : "border-slate-700 bg-slate-955 text-transparent"
@@ -802,17 +810,106 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   </label>
                 </div>
               )}
+
+              {/* Perform other department tasks checkbox */}
+              {department === "Data Entry" && setPerformsOtherDeptTasks && (
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none group py-2">
+                    <input
+                      type="checkbox"
+                      checked={performsOtherDeptTasks}
+                      disabled={!isAdmin && !isSupervisor}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setPerformsOtherDeptTasks(checked);
+                        if (checked && setKpiDeptIndicators && kpiDeptIndicators.length === 0) {
+                          setKpiDeptIndicators([
+                            "Server Maintenance & Security",
+                            "Technical Support & Troubleshooting",
+                            "Software & System Updates",
+                            "Database & Backup Management"
+                          ]);
+                        } else if (!checked && setKpiDeptIndicators) {
+                          setKpiDeptIndicators([]);
+                        }
+                      }}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                        performsOtherDeptTasks
+                          ? "bg-blue-600 border-blue-500 text-white font-bold"
+                          : "border-slate-700 bg-slate-955 text-transparent"
+                      }`}
+                    >
+                      {performsOtherDeptTasks && <Check className="h-3.5 w-3.5 stroke-3" />}
+                    </div>
+                    <span className="text-xs font-semibold text-slate-350 group-hover:text-white transition-colors">
+                      Does this user also manage tasks for another department?
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* Select Other Department Dropdown */}
+              {department === "Data Entry" && performsOtherDeptTasks && setOtherDepartment && (
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Select Other Department
+                  </label>
+                  <select
+                    value={otherDepartment}
+                    disabled={!isAdmin && !isSupervisor}
+                    onChange={(e) => {
+                      const dept = e.target.value;
+                      if (setOtherDepartment) setOtherDepartment(dept);
+                      
+                      if (setKpiDeptIndicators) {
+                        if (dept === "IT") {
+                          setKpiDeptIndicators([
+                            "Server Maintenance & Security",
+                            "Technical Support & Troubleshooting",
+                            "Software & System Updates",
+                            "Database & Backup Management"
+                          ]);
+                        } else if (dept === "Accounts") {
+                          setKpiDeptIndicators([
+                            "Financial Reporting & Billing",
+                            "Expense & Invoice Processing",
+                            "Audit Compliance & Accounts Reconciliation"
+                          ]);
+                        } else if (dept === "HR") {
+                          setKpiDeptIndicators([
+                            "Employee Recruitment & Onboarding",
+                            "Payroll Processing",
+                            "Leave & Attendance Tracking",
+                            "Policy Enforcement & Conflict Resolution"
+                          ]);
+                        } else {
+                          setKpiDeptIndicators(["Task Efficiency", "Team Collaboration"]);
+                        }
+                      }
+                    }}
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
+                  >
+                    <option value="IT" className="bg-slate-950">IT</option>
+                    <option value="Accounts" className="bg-slate-950">Accounts</option>
+                    <option value="HR" className="bg-slate-950">HR</option>
+                    <option value="Other" className="bg-slate-950">Other</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Custom Department Indicators */}
-            {setKpiDeptIndicators && (
+            {setKpiDeptIndicators && (department !== "Data Entry" || performsOtherDeptTasks) && (
               <div className="border-t border-slate-850/60 pt-4 space-y-3">
                 <div>
                   <h4 className="text-xs font-bold text-white mb-1">
-                    Department Specific KPIs ({department})
+                    Department Specific KPIs ({department === "Data Entry" ? otherDepartment : department})
                   </h4>
                   <p className="text-[10px] text-slate-500">
-                    Add specific KPI tasks that this user is evaluated on for their role in the {department} department.
+                    Add specific KPI tasks that this user is evaluated on for their role in the {department === "Data Entry" ? otherDepartment : department} department.
                   </p>
                 </div>
 
