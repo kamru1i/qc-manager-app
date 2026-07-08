@@ -547,14 +547,6 @@ export const useQuotesDashboardData = () => {
     if (!sessionUser || !profile || (profile.role !== 'admin' && profile.role !== 'supervisor')) return;
     setAuditLogsLoading(true);
     try {
-      // Auto cleanup logs older than 90 days
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      await supabase
-        .from('audit_logs')
-        .delete()
-        .lt('created_at', ninetyDaysAgo.toISOString());
-
       const { data, error } = await supabase
         .from('audit_logs')
         .select('*')

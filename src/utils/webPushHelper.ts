@@ -255,20 +255,15 @@ export async function sendPushNotification(params: {
       return false;
     }
 
-    const response = await fetch(getApiUrl('/api/send-push'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify(params)
+    const { data: resData, error: invokeError } = await supabase.functions.invoke('send-push', {
+      body: params
     });
 
-    const resData = await response.json();
-    if (resData.success !== true) {
-      console.warn('[WebPush] API failed to send notification:', resData.error || resData.message || JSON.stringify(resData));
+    if (invokeError) {
+      console.warn('[WebPush] Edge Function failed to send notification:', invokeError);
+      return false;
     }
-    return resData.success === true;
+    return resData?.success === true;
   } catch (error) {
     console.error('Error sending push notification:', error);
     return false;
