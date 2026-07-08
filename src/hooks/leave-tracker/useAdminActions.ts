@@ -224,7 +224,8 @@ export const useAdminActions = ({
     workingHours?: number,
     breakTime?: number,
     defaultSignIn?: string,
-    defaultSignOut?: string
+    defaultSignOut?: string,
+    kpiSkills?: string[]
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -262,7 +263,16 @@ export const useAdminActions = ({
         targetProfile.username = cleanUsername;
       }
 
-      const updatePayload: any = {};
+      const existingSettings = targetProfile?.global_settings || {};
+      const updatedSettings = {
+        ...existingSettings,
+        kpi_skills: kpiSkills || []
+      };
+
+      const updatePayload: any = {
+        global_settings: updatedSettings
+      };
+
       if (editorRole === 'admin') {
         updatePayload.full_name = fullName.trim() || null;
         updatePayload.role = role;

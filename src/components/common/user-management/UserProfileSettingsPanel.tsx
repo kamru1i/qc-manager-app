@@ -59,6 +59,8 @@ interface UserProfileSettingsPanelProps {
   setEditUserSignInTime: (val: string) => void;
   editUserSignOutTime: string;
   setEditUserSignOutTime: (val: string) => void;
+  editUserKpiSkills: string[];
+  setEditUserKpiSkills: (val: string[]) => void;
 }
 
 export const UserProfileSettingsPanel: React.FC<
@@ -109,6 +111,8 @@ export const UserProfileSettingsPanel: React.FC<
   setEditUserSignInTime,
   editUserSignOutTime,
   setEditUserSignOutTime,
+  editUserKpiSkills,
+  setEditUserKpiSkills,
 }) => {
   const isTargetAdmin = viewingStaff.role === "admin";
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
@@ -163,6 +167,8 @@ export const UserProfileSettingsPanel: React.FC<
         setSignInTime={setEditUserSignInTime}
         signOutTime={editUserSignOutTime}
         setSignOutTime={setEditUserSignOutTime}
+        kpiSkills={editUserKpiSkills}
+        setKpiSkills={setEditUserKpiSkills}
       />
 
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">

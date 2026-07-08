@@ -62,6 +62,8 @@ interface StaffSettingsFormProps {
   setSignInTime?: (val: string) => void;
   signOutTime?: string;
   setSignOutTime?: (val: string) => void;
+  kpiSkills?: string[];
+  setKpiSkills?: (val: string[]) => void;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -105,7 +107,11 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setSignInTime,
   signOutTime = "",
   setSignOutTime,
+  kpiSkills = [],
+  setKpiSkills,
 }) => {
+  const [newSkillText, setNewSkillText] = React.useState("");
+
   return (
     <div className="space-y-6">
       {/* Profile Details Fields */}
@@ -677,6 +683,79 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   history.
                 </p>
               </div>
+
+              {/* KPI Self-Development Skills */}
+              {setKpiSkills && (
+                <div className="border-t border-slate-800/60 pt-4 mt-4">
+                  <h4 className="text-xs font-bold text-white mb-1">
+                    KPI Development Skills
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mb-3">
+                    Add self-development initiatives (e.g. Spoken English, Communication skill) for performance assessments.
+                  </p>
+                  
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={newSkillText}
+                      onChange={(e) => setNewSkillText(e.target.value)}
+                      placeholder="e.g. Spoken English"
+                      disabled={!isAdmin && !isSupervisor}
+                      className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = newSkillText.trim();
+                          if (val && !kpiSkills.includes(val)) {
+                            setKpiSkills([...kpiSkills, val]);
+                            setNewSkillText("");
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={(!isAdmin && !isSupervisor) || !newSkillText.trim()}
+                      onClick={() => {
+                        const val = newSkillText.trim();
+                        if (val && !kpiSkills.includes(val)) {
+                          setKpiSkills([...kpiSkills, val]);
+                          setNewSkillText("");
+                        }
+                      }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-850 border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {kpiSkills.length === 0 ? (
+                      <span className="text-[11px] text-slate-500 italic">No skills added yet.</span>
+                    ) : (
+                      kpiSkills.map((skill) => (
+                        <div
+                          key={skill}
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-850/80 border border-slate-750 text-slate-350 rounded-lg text-xs font-medium"
+                        >
+                          <span>{skill}</span>
+                          {(isAdmin || isSupervisor) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setKpiSkills(kpiSkills.filter((s) => s !== skill));
+                              }}
+                              className="text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer text-[10px]"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-xs text-slate-500 italic py-4 text-center">

@@ -94,6 +94,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [editUserBreakTime, setEditUserBreakTime] = useState('0');
   const [editUserSignInTime, setEditUserSignInTime] = useState('');
   const [editUserSignOutTime, setEditUserSignOutTime] = useState('');
+  const [editUserKpiSkills, setEditUserKpiSkills] = useState<string[]>([]);
 
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
@@ -173,6 +174,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditUserBreakTime((viewingStaff.break_time ?? 0).toString());
       setEditUserSignInTime(viewingStaff.default_sign_in || '');
       setEditUserSignOutTime(viewingStaff.default_sign_out || '');
+      setEditUserKpiSkills(viewingStaff.global_settings?.kpi_skills || []);
     }
   }, [viewingStaff]);
 
@@ -604,7 +606,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       parseFloat(editUserWorkingHours) || 9.5,
       parseInt(editUserBreakTime) || 0,
       editUserSignInTime,
-      editUserSignOutTime
+      editUserSignOutTime,
+      editUserKpiSkills
     );
 
     setSubmitting(false);
@@ -846,6 +849,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setEditUserSignInTime={setEditUserSignInTime}
                   editUserSignOutTime={editUserSignOutTime}
                   setEditUserSignOutTime={setEditUserSignOutTime}
+                  editUserKpiSkills={editUserKpiSkills}
+                  setEditUserKpiSkills={setEditUserKpiSkills}
                 />
               )}
 
