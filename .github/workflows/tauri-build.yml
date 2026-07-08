@@ -121,15 +121,19 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v3.5.0** introduces the Asitis Causality format editor, Supabase real-time network egress optimizations, visual loading skeletons, and improved absolute mouse click menu alignment.
+            **v4.0.0** introduces the real-time welcome header sync, supervisor permission restructuring, read-only quotes visibility, and major KPI queries and egress performance optimizations.
 
-            #### 🛠 What's New in v3.5.0:
+            #### 🛠 What's New in v4.0.0:
 
-            - **Asitis Causality Format Editor** — Shipped a live-editable document template editor for Asitis Causality format. Features inline title editing, hover action keys (Add/Delete), and Supabase synchronization.
-            - **Realtime Database Egress Optimization** — Added a user-level filter (`user_id`) to the real-time WebSocket channel for records. This stops the app from making massive database re-fetches when other users submit records, reducing network egress usage by 99%.
-            - **Audit Logs Query Limiting** — Added a query limit of 150 records to the system audit logs fetcher, preventing loading unnecessary historical log records in the background.
-            - **Absolute Floating Context Menus** — Changed coordinate calculations to relative position bounding rects, ensuring right-click context menus open exactly under the cursor without layout shifts.
-            - **Dedicated Skeleton Loaders** — Designed and integrated a loading skeleton for the Asitis Causality workspace to ensure smooth UI transition states.
+            - **Welcome Greeting Sync** — Shipped dynamic localStorage cache reloading and `"profile-updated"` custom window events, resolving the stale "Welcome, User" greeting instantly on onboarding setup or settings update.
+            - **Supervisor Access Restructuring** — Restricted supervisors to view, edit, and update the Leave History, KPI sheets, and Profile Settings ONLY for staff under their direct or delegated supervision. Removed self-editing capability for supervisors.
+            - **Quotes History Visibility** — Supervisors can view the Quotes History and read-only Profile Settings of all users with quotes access, while their Leave and KPI details remain securely hidden.
+            - **Egress & Database Query Optimization** — Shipped three major database fetch optimizations to reduce Supabase egress and query count:
+              - Deprecated duplicate assessment checks inside the KPI panel, fetching once in the background on month changes and caching the appraisees.
+              - Separated supervisor lookups from monthly counts to prevent query loops on month selection.
+              - Cleaned up hook dependencies to prevent redundant read operations.
+            - **Appraiser Autocomplete Dropdown** — Designed a custom search suggestion dropdown matching the glassmorphic dark theme for the Appraiser Name field, with editing locks for supervisors/users.
+            - **Manual Numeric Inputs** — Disabled up/down browser spin buttons on all KPI numeric inputs to support clean manual typing.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

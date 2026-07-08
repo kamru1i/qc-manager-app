@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 3.5.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.0.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -172,6 +172,24 @@ npm run tauri build
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v4.0.0 — Major Release
+*   **Real-Time Welcome Greeting Sync**: Implemented dynamic localStorage cache reloading and `"profile-updated"` custom window events during onboarding setup and settings saving, ensuring the greeting header ("Welcome, User" issue) updates instantly without requiring browser refreshes.
+*   **Supervisor Permission Restructuring & Isolation**: Enforced robust access controls restricting supervisors to view and update KPI sheets, leave histories, and profile settings ONLY for staff under their direct or delegated supervision. Supervisors are prevented from editing their own profiles, KPI settings, or Quotes settings.
+*   **Quotes Access Visibility & History Reading**: Allowed supervisors to view the Quotes History and read-only Profile Settings of all users with quotes access, while hiding their sensitive Leave History and KPI tabs completely.
+*   **KPI Panel & Egress Query Optimization**: Dramatically reduced Supabase network egress and database query count inside `UserKpiPerformancePanel`:
+    - Removed redundant database query loops when saving or editing assessment fields.
+    - Decoupled supervisor name fetching from monthly record counting, running the query only when target staff changes.
+    - Merged `checkAppraisees` and `fetchAssignedAppraisees` into a single background-loaded hook, eliminating double-fetching and enabling instant modal loading.
+*   **Appraiser Autocomplete & Suggestion Dropdown**: Shipped an active profiles search suggestion dropdown to the "Appraiser's Name" field. Autocomplete input editing is locked to Admins when target users are not under supervision.
+*   **Clean Numeric Inputs**: Hidden browser spin arrows (up/down control buttons) from all KPI numeric inputs to support clean, manual typing.
+
+### 🚀 v3.5.0 — Minor Release
+*   **Asitis Causality Format Editor**: Shipped a live-editable document template editor for Asitis Causality format. Features inline title editing, hover action keys (Add/Delete), and Supabase synchronization.
+*   **Realtime Database Egress Optimization**: Added a user-level filter (`user_id`) to the real-time WebSocket channel for records, reducing network egress usage by 99%.
+*   **Audit Logs Query Limiting**: Added a query limit of 150 records to the system audit logs fetcher, preventing loading unnecessary historical log records in the background.
+*   **Absolute Floating Context Menus**: Changed coordinate calculations to relative position bounding rects, ensuring right-click context menus open exactly under the cursor without layout shifts.
+*   **Dedicated Skeleton Loaders**: Designed and integrated a loading skeleton for the Asitis Causality workspace to ensure smooth UI transition states.
 
 ### 🚀 v3.0.4 — Patch Release
 *   **Startup Auto-Update Installation**: Implemented automatic update downloading, installation, and relaunch on application startup, bypassing the manual restart button prompt.
