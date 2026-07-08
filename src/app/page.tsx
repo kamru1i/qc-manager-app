@@ -721,6 +721,18 @@ export default function AppPortal() {
       window.removeEventListener("workspace-change", handleWorkspaceChange);
   }, [profile]);
 
+  useEffect(() => {
+    const handleProfileUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setProfile(customEvent.detail);
+      }
+    };
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () =>
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+  }, []);
+
   if (!mounted) {
     return <div className="min-h-screen bg-slate-955" />;
   }

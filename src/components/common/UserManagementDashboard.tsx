@@ -630,6 +630,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const handleUpdateUser = async () => {
     if (!viewingStaff) return;
 
+    const isSupervisedByMe = hasStaffAccess(viewingStaff) && viewingStaff.id !== profile?.id;
+    const canEdit = isAdmin || (profile?.role === 'supervisor' && isSupervisedByMe);
+    if (!canEdit) {
+      toast.error('You do not have permission to update this profile.');
+      return;
+    }
+
     if (editHasQuotesAccess && editUserAllowedTypes.length === 0) {
       toast.error('Please select at least one permitted file type for Quotes.');
       return;
@@ -687,6 +694,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         const updated = mapped.find(p => p.id === viewingStaff.id);
         if (updated) {
           setViewingStaff(updated);
+          if (updated.id === profile?.id) {
+            localStorage.setItem(`cached_profile_${profile.id}`, JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent("profile-updated", { detail: updated }));
+          }
         }
       }
     }
@@ -704,8 +715,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const visibleProfiles = profiles
     .filter((u) => {
       if (profile?.role === 'supervisor') {
-        // Supervisor sees users they supervise (direct/delegated), themselves, OR users who have quotes access
-        return hasStaffAccess(u) || !!u.has_quotes_access;
+        // Supervisor only sees users they supervise (direct/delegated) and themselves
+        return hasStaffAccess(u);
       }
       return true;
     })
@@ -896,7 +907,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   }}
                   onDeleteAccountClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
                   onSaveProfileClick={handleUpdateUser}
-                  isSupervisor={profile?.role === 'supervisor'}
+                  isSupervisor={profile?.role === 'supervisor' && hasStaffAccess(viewingStaff) && viewingStaff.id !== profile.id}
                   editUserJobRole={editUserJobRole}
                   setEditUserJobRole={setEditUserJobRole}
                   editUserWorkingHours={editUserWorkingHours}

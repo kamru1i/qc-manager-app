@@ -464,6 +464,8 @@ export const useAdminStaffOperations = ({
       if (error) throw error;
 
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
+      localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
+      window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
       setEditFullName(updatedProfile.full_name || '');
       setEditWorkingHours(Number(updatedProfile.working_hours || 9.5).toFixed(1));
       setEditBreakTime(String(updatedProfile.break_time || 0));
@@ -523,6 +525,8 @@ export const useAdminStaffOperations = ({
 
       const mergedProfile = { ...profile, ...updatedProfile } as Profile;
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
+      localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(mergedProfile));
+      window.dispatchEvent(new CustomEvent("profile-updated", { detail: mergedProfile }));
       setEditFullName(mergedProfile.full_name || '');
       setEditWorkingHours(Number(mergedProfile.working_hours || 9.5).toFixed(1));
       setEditBreakTime(String(mergedProfile.break_time || 0));

@@ -129,12 +129,26 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     fetchAppUsers();
   }, []);
 
-  // Is current viewer allowed to edit supervisor/appraiser fields?
   const isSupervisorOrAdmin = useMemo(() => {
     if (!currentUser) return false;
     if (evaluatorModeProfile) return true;
-    return currentUser.role === 'admin' || currentUser.role === 'supervisor';
-  }, [currentUser, evaluatorModeProfile]);
+    if (currentUser.role === 'admin') return true;
+    
+    // For supervisor, they can edit if they are a direct supervisor OR the manually designated appraiser
+    if (currentUser.role === 'supervisor') {
+      const supervisorIds = targetStaff.supervisor_ids || [];
+      const isDirectSupervisor = supervisorIds.includes(currentUser.id);
+      
+      const name = (currentUser.full_name || '').trim().toLowerCase();
+      const uname = (currentUser.username || '').trim().toLowerCase();
+      const appraiser = (appraiserName || '').trim().toLowerCase();
+      const isDesignated = appraiser && (name === appraiser || uname === appraiser);
+      
+      return isDirectSupervisor || isDesignated;
+    }
+    
+    return false;
+  }, [currentUser, evaluatorModeProfile, targetStaff.supervisor_ids, appraiserName]);
 
   // Is current viewer the appraisee (the user themselves)?
   const isAppraisee = useMemo(() => {

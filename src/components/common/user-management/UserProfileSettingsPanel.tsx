@@ -241,7 +241,7 @@ export const UserProfileSettingsPanel: React.FC<
           )}
         </div>
 
-        {!showSupervisorWarning && (
+        {(isAdmin || isSupervisor) && (
           <div>
             <button
               type="button"
