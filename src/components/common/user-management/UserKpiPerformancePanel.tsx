@@ -217,12 +217,12 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     return finalWeightages;
   }, [activeFileTypes]);
 
-  // Core Section Weightage
-  const coreSectionWeightage = useMemo(() => {
-    const reportWeight = weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 5;
-    const devWeight = weightages['self_development'] ?? defaultWeightages['self_development'] ?? 5;
-    return 100 - reportWeight - devWeight;
-  }, [weightages, defaultWeightages]);
+  // Core Section Max for Self-Scores scaling
+  const coreSelfMax = useMemo(() => {
+    const reportSelf = selfScores['monthly_reports'] ?? 0;
+    const devSelf = selfScores['self_development'] ?? 0;
+    return 100 - reportSelf - devSelf;
+  }, [selfScores]);
 
   // Compute Auto Self-Scores for Serial 1 File Types
   const computedSelfScores = useMemo(() => {
@@ -235,11 +235,11 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
     activeFileTypes.forEach(t => {
       const count = typeCounts[t.key] || 0;
-      scores[t.key] = Math.round((count / totalSubmissions) * coreSectionWeightage);
+      scores[t.key] = Math.round((count / totalSubmissions) * coreSelfMax);
     });
 
     return scores;
-  }, [activeFileTypes, typeCounts, totalSubmissions, coreSectionWeightage]);
+  }, [activeFileTypes, typeCounts, totalSubmissions, coreSelfMax]);
 
   // Total sums
   const totals = useMemo(() => {
