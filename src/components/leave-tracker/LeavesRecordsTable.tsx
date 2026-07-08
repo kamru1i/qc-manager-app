@@ -100,6 +100,13 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     setIsMounted(true);
   }, []);
 
+  // Exit selection mode when all items are deselected
+  useEffect(() => {
+    if (selectedIds.length === 0) {
+      setIsSelectionMode(false);
+    }
+  }, [selectedIds]);
+
   // Dismiss context menu on click outside
   useEffect(() => {
     const handleOutsideClick = () => {
@@ -531,7 +538,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         >
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (!r.id) return;
                               const rid = r.id;
                               setSelectedIds((prev) =>
