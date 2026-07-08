@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 
 interface UserKpiPerformancePanelProps {
   viewingStaff: Profile;
+  onBack?: () => void;
 }
 
 const CORE_FILE_TYPES = [
@@ -32,7 +33,7 @@ const CORE_FILE_TYPES = [
   { key: 'Sale', label: 'Online Sales' }
 ];
 
-export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = ({ viewingStaff }) => {
+export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = ({ viewingStaff, onBack }) => {
   // Session User Info
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   
@@ -584,6 +585,16 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               ))}
             </select>
           </div>
+
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-3.5 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              ← Back
+            </button>
+          )}
 
           <button
             type="button"

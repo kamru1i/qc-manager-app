@@ -103,6 +103,8 @@ export default function AppPortal() {
   const fetchingRef = useRef<string | null>(null);
   // Always-current ref for activeTab — used inside async callbacks to avoid stale closures
   const activeTabRef = useRef<string>(activeTab);
+  const [previousTab, setPreviousTab] = useState<string>("chuti");
+  const prevTabRef = useRef<string>("chuti");
 
   useEffect(() => {
     setMounted(true);
@@ -362,7 +364,37 @@ export default function AppPortal() {
   // Keep activeTabRef in sync so async callbacks don't use stale closures
   useEffect(() => {
     activeTabRef.current = activeTab ?? '';
+    if (activeTab !== "kpi" && activeTab !== null) {
+      prevTabRef.current = activeTab;
+      setPreviousTab(activeTab);
+    }
   }, [activeTab]);
+
+  // Backspace key event listener when in KPI tab to go back
+  useEffect(() => {
+    if (activeTab !== "kpi") return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        const tag = activeEl.tagName.toUpperCase();
+        if (tag === "INPUT" || tag === "TEXTAREA" || activeEl.hasAttribute("contenteditable")) {
+          return;
+        }
+      }
+
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        setActiveTab(previousTab as any);
+        localStorage.setItem("last_active_dashboard", previousTab);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeTab, previousTab]);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -887,7 +919,8 @@ export default function AppPortal() {
         <div
           className={`shrink-0 ${
             (activeTab === "user_management" && isUserManagementFullView) || 
-            (activeTab === "chuti" && (activeChutiTab === "leave_history" || activeChutiTab === "govt_responses" || activeChutiTab === "settlement" || activeChutiTab === "team_leaves"))
+            (activeTab === "chuti" && (activeChutiTab === "leave_history" || activeChutiTab === "govt_responses" || activeChutiTab === "settlement" || activeChutiTab === "team_leaves")) ||
+            (activeTab === "kpi")
               ? "w-0 h-0 opacity-0 pointer-events-none overflow-hidden mb-0 md:mb-0 md:mr-0"
               : "w-full md:w-auto opacity-100 mb-6 md:mb-0 md:mr-6"
           }`}
@@ -997,7 +1030,13 @@ export default function AppPortal() {
               <TodoPanel profile={profile} />
             )}
             {activeTab === "kpi" && profile && (
-              <UserKpiPerformancePanel viewingStaff={profile} />
+              <UserKpiPerformancePanel 
+                viewingStaff={profile} 
+                onBack={() => {
+                  setActiveTab(previousTab as any);
+                  localStorage.setItem("last_active_dashboard", previousTab);
+                }}
+              />
             )}
           </Suspense>
         </section>
