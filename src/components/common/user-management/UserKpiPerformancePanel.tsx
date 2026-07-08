@@ -719,7 +719,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         `Performance Assessment: ${selectedMonth + 1}-${selectedYear}`,
         `Employee Name: ${targetStaff.full_name || targetStaff.username}`,
         `Employee ID: ${empId}`,
-        `Department: ${department}`,
+        `Department: ${performsOtherDeptTasks ? `${department} & ${otherDepartment}` : department}`,
         `Appraiser: ${appraiserName}`,
         `Reviewer: ${reviewerName}`,
         `Date of Joining: ${dateOfJoining}`
@@ -736,7 +736,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
       activeFileTypes.forEach((type) => {
         rows.push([
           String(dataSrl),
-          department,
+          "Data Entry",
           type.label,
           "Quality, Quantity & Timeliness",
           "100%",
@@ -750,7 +750,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
       // Mistakes row
       rows.push([
         String(dataSrl),
-        department,
+        "Data Entry",
         "Number of Mistakes",
         "Quality, Quantity & Timeliness",
         "0%",
@@ -1127,7 +1127,9 @@ USING (auth.uid() = user_id OR EXISTS (
               </div>
             ) : (
               <div className="flex items-center gap-1.5">
-                <span className="font-medium text-white print:text-black">{department}</span>
+                <span className="font-medium text-white print:text-black">
+                  {performsOtherDeptTasks ? `${department} & ${otherDepartment}` : department}
+                </span>
                 {isSupervisorOrAdmin && (
                   <button
                     onClick={() => setIsEditingDept(true)}
@@ -1271,7 +1273,7 @@ USING (auth.uid() = user_id OR EXISTS (
                                     rowSpan={totalRows} 
                                     className="py-4 px-4 align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
                                   >
-                                    {department}
+                                    Data Entry
                                   </td>
                                 </>
                               )}
