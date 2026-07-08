@@ -26,13 +26,16 @@ interface UserKpiPerformancePanelProps {
 }
 
 const CORE_FILE_TYPES = [
-  { key: 'Quote', label: 'Quotations' },
-  { key: 'Review', label: 'Review Quotations' },
-  { key: 'Individual Review', label: 'Review Quotations(Review)' },
-  { key: 'Requote', label: 'Re-Quotations' },
-  { key: 'Bike', label: 'Bike' },
+  { key: 'Quote', label: 'Quote' },
+  { key: 'Review', label: 'Review' },
+  { key: 'Individual Review', label: 'Individual Review' },
+  { key: 'Requote', label: 'Requote' },
+  { key: 'Requote Van', label: 'Requote Van' },
+  { key: 'Requote Bike', label: 'Requote Bike' },
   { key: 'Van', label: 'Van' },
-  { key: 'Sale', label: 'Online Sales' }
+  { key: 'Bike', label: 'Bike' },
+  { key: 'Other Site', label: 'Other Site' },
+  { key: 'Sale', label: 'Sale' }
 ];
 
 export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = ({ viewingStaff, onBack }) => {
