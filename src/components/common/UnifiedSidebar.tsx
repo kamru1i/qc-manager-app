@@ -403,24 +403,22 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         )}
 
         {/* Workspace: KPI & Performance */}
-        {hasQuotesAccess && (
-          <div className="space-y-1">
-            <button
-              onClick={handleKpiNav}
-              title={isSidebarCollapsed ? 'KPI & Performance' : undefined}
-              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-              } ${
-                activeSection === 'kpi'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
-              }`}
-            >
-              <BarChart2 className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">KPI & Performance</span>}
-            </button>
-          </div>
-        )}
+        <div className="space-y-1">
+          <button
+            onClick={handleKpiNav}
+            title={isSidebarCollapsed ? 'KPI & Performance' : undefined}
+            className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+              isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
+            } ${
+              activeSection === 'kpi'
+                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
+                : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+            }`}
+          >
+            <BarChart2 className="h-5 w-5 shrink-0" />
+            {!isSidebarCollapsed && <span className="whitespace-nowrap">KPI & Performance</span>}
+          </button>
+        </div>
 
         {/* Workspace: Todos (Only for superadmin Kamrul) */}
         {showTodoTab && (

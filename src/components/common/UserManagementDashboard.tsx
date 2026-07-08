@@ -217,11 +217,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingStaff, isCreatingNewUser]);
 
-  // Fallback if viewingStaff has no quotes access and active tab is quotes/kpi
+  // Fallback if viewingStaff has no quotes access and active tab is quotes
   useEffect(() => {
     if (viewingStaff) {
       const isSupervisedByMe = hasStaffAccess(viewingStaff);
-      if (!viewingStaff.has_quotes_access && (activeSubTab === 'quotes' || activeSubTab === 'kpi')) {
+      if (!viewingStaff.has_quotes_access && activeSubTab === 'quotes') {
         setActiveSubTab(isSupervisedByMe ? 'leave' : 'profile');
       }
     }
@@ -758,22 +758,20 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <FileText className="h-3.5 w-3.5 text-purple-400" /> Quotes History
                   </button>
                 )}
-                {viewingStaff.has_quotes_access && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveSubTab('kpi');
-                      localStorage.setItem('user_management_active_subtab', 'kpi');
-                    }}
-                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-                      activeSubTab === 'kpi'
-                        ? 'border-blue-500 text-blue-400 font-bold'
-                        : 'border-transparent text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSubTab('kpi');
+                    localStorage.setItem('user_management_active_subtab', 'kpi');
+                  }}
+                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeSubTab === 'kpi'
+                      ? 'border-blue-500 text-blue-400 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
+                </button>
                 <button
                   type="button"
                   onClick={() => {

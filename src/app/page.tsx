@@ -61,7 +61,6 @@ function getInitialState() {
       let lastActive = localStorage.getItem("last_active_dashboard") as any;
       if (lastActive === "chuti" && !hasChuti) lastActive = null;
       if (lastActive === "quotes" && !hasQuotes) lastActive = null;
-      if (lastActive === "kpi" && !hasQuotes) lastActive = null;
       if (
         lastActive === "user_management" &&
         !(cachedProfile.role === "admin" || cachedProfile.role === "supervisor")
@@ -479,7 +478,6 @@ export default function AppPortal() {
         | null;
       if (lastActive === "chuti" && !hasChuti) lastActive = null;
       if (lastActive === "quotes" && !hasQuotes) lastActive = null;
-      if (lastActive === "kpi" && !hasQuotes) lastActive = null;
       if (
         lastActive === "user_management" &&
         !(cachedProfile.role === "admin" || cachedProfile.role === "supervisor")
@@ -589,6 +587,7 @@ export default function AppPortal() {
         | "quotes"
         | "user_management"
         | "todo"
+        | "kpi"
         | null;
       if (lastActive === "chuti" && !hasChuti) lastActive = null;
       if (lastActive === "quotes" && !hasQuotes) lastActive = null;

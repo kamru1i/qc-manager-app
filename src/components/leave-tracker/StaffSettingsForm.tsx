@@ -728,6 +728,36 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   onChange={(e) => {
                     const dept = e.target.value;
                     if (setDepartment) setDepartment(dept);
+                    
+                    // Pre-populate default department indicators based on selected department!
+                    if (setKpiDeptIndicators) {
+                      if (dept === "IT") {
+                        setKpiDeptIndicators([
+                          "Server Maintenance & Security",
+                          "Technical Support & Troubleshooting",
+                          "Software & System Updates",
+                          "Database & Backup Management"
+                        ]);
+                      } else if (dept === "Accounts") {
+                        setKpiDeptIndicators([
+                          "Financial Reporting & Billing",
+                          "Expense & Invoice Processing",
+                          "Audit Compliance & Accounts Reconciliation"
+                        ]);
+                      } else if (dept === "HR") {
+                        setKpiDeptIndicators([
+                          "Employee Recruitment & Onboarding",
+                          "Payroll Processing",
+                          "Leave & Attendance Tracking",
+                          "Policy Enforcement & Conflict Resolution"
+                        ]);
+                      } else if (dept === "Data Entry") {
+                        // Empty for Data Entry since they use file type records by default
+                        setKpiDeptIndicators([]);
+                      } else {
+                        setKpiDeptIndicators(["Task Efficiency", "Team Collaboration"]);
+                      }
+                    }
                   }}
                   className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
                 >
