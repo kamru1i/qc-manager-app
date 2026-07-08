@@ -559,7 +559,8 @@ export const useQuotesDashboardData = () => {
       const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(150);
       
       if (error) throw error;
       setAuditLogs(data || []);
@@ -874,7 +875,7 @@ export const useQuotesDashboardData = () => {
       .channel('realtime-records-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'records' },
+        { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${sessionUser.id}` },
         () => {
           // Debounce: coalesce rapid realtime events (e.g. own mutation + realtime echo)
           if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
