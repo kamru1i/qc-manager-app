@@ -923,7 +923,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         `Performance Assessment: ${selectedMonth + 1}-${selectedYear}`,
         `Employee Name: ${targetStaff.full_name || targetStaff.username}`,
         `Employee ID: ${empId}`,
-        `Department: ${performsOtherDeptTasks ? `${department} & ${otherDepartment}` : department}`,
+        `Department: ${department}`,
         `Appraiser: ${appraiserName}`,
         `Reviewer: ${reviewerName}`,
         `Date of Joining: ${dateOfJoining}`
@@ -1426,7 +1426,7 @@ USING (auth.uid() = user_id OR EXISTS (
           <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200 group">
             <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Department</span>
             <span className="font-medium text-white print:text-black">
-              {performsOtherDeptTasks ? `${department} & ${otherDepartment}` : department}
+              {department}
             </span>
           </div>
 
