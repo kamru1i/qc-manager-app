@@ -539,13 +539,7 @@ export function AddLeave({
 
     datesWithAdjustment.forEach(item => {
       let commentWithCategory = comment.trim();
-      if (profile?.role === 'admin' && targetProfile.id !== profile.id) {
-        const adminUsername = profile?.username || 'Admin';
-        const updatedCommentPrefix = `${adminUsername} Approved`;
-        commentWithCategory = commentWithCategory
-          ? `${updatedCommentPrefix} | ${commentWithCategory}`
-          : updatedCommentPrefix;
-      } else if (leaveType === 'Full Leave') {
+      if (leaveType === 'Full Leave') {
         commentWithCategory = (item.adjustment && adjustmentCategory !== 'None')
           ? `Adjusted: ${adjustmentCategory} | ${comment.trim()}`
           : comment.trim();
@@ -557,6 +551,21 @@ export function AddLeave({
         commentWithCategory = `Adjusted with Short Leave | ${comment.trim()}`;
       } else if (leaveType === 'Overtime' && finalAdjustedHour) {
         commentWithCategory = `Partially Adjusted with Short Leave (${finalAdjustedHour.substring(0, 5)}) | ${comment.trim()}`;
+      }
+
+      // Prepend admin/supervisor signature
+      if (profile?.role === 'admin' && targetProfile.id !== profile.id) {
+        const adminUsername = profile?.username || 'Admin';
+        const updatedCommentPrefix = `${adminUsername} Approved`;
+        commentWithCategory = commentWithCategory
+          ? `${updatedCommentPrefix} | ${commentWithCategory}`
+          : updatedCommentPrefix;
+      } else if (profile?.role === 'supervisor' && targetProfile.id !== profile.id) {
+        const supervisorUsername = profile?.username || 'Supervisor';
+        const updatedCommentPrefix = `${supervisorUsername} Added`;
+        commentWithCategory = commentWithCategory
+          ? `${updatedCommentPrefix} | ${commentWithCategory}`
+          : updatedCommentPrefix;
       }
 
       let adminEditRequest: AdminEditRequest | null = null;
