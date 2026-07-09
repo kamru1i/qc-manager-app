@@ -268,6 +268,8 @@ export const DashboardModals = () => {
     setNewStaffSupervisorIds,
     editSupervisorIds,
     setEditSupervisorIds,
+    hiddenTabs,
+    setHiddenTabs,
   } = adminStaffOps;
 
   if (!mounted || typeof window === 'undefined') return null;
@@ -448,6 +450,8 @@ export const DashboardModals = () => {
         profilesList={profilesList}
         editSupervisorIds={editSupervisorIds}
         setEditSupervisorIds={setEditSupervisorIds}
+        hiddenTabs={hiddenTabs}
+        setHiddenTabs={setHiddenTabs}
       />
 
       <AdminLeaveApprovalModal

@@ -107,6 +107,7 @@ export const useAdminStaffOperations = ({
   const [editMaxFullLeaves, setEditMaxFullLeaves] = useState('15');
   const [editEligibleOfficeLeave, setEditEligibleOfficeLeave] = useState(true);
   const [editEligibleGovtHoliday, setEditEligibleGovtHoliday] = useState(true);
+  const [hiddenTabs, setHiddenTabs] = useState<string[]>([]);
 
   const lastInitializedProfileIdRef = useRef<string | null>(null);
 
@@ -163,6 +164,7 @@ export const useAdminStaffOperations = ({
         setEditNeedsApproval(profile.needs_supervisor_approval !== false);
         setEditAllowReserve(profile.allow_reserve === true);
         setEditAllowOvertime(profile.allow_overtime === true);
+        setHiddenTabs(profile.global_settings?.hidden_tabs || []);
       }
     }
   }, [profile, showOnboardingModal, showProfileSettingsModal]);
@@ -247,6 +249,10 @@ export const useAdminStaffOperations = ({
     const isEligibleOfficeChanged = editEligibleOfficeLeave !== !!targetProfile.eligible_office_leave;
     const isEligibleGovtChanged = editEligibleGovtHoliday !== !!targetProfile.eligible_govt_holiday;
     
+    const isHiddenTabsChanged = !editingStaffProfileId && (
+      JSON.stringify([...hiddenTabs].sort()) !== JSON.stringify([...(targetProfile.global_settings?.hidden_tabs || [])].sort())
+    );
+
     let isSupervisorsChanged = false;
     if (editingStaffProfileId) {
       const oldSups = [...(targetProfile.supervisor_ids || [])].sort();
@@ -264,7 +270,7 @@ export const useAdminStaffOperations = ({
       hasChanges = isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
                    isJobRoleChanged || isSignInChanged || isSignOutChanged || isNeedsApprovalChanged || 
                    isAllowReserveChanged || isAllowOvertimeChanged || isMaxLeavesChanged || 
-                   isEligibleOfficeChanged || isEligibleGovtChanged;
+                   isEligibleOfficeChanged || isEligibleGovtChanged || isHiddenTabsChanged;
     } else {
       hasChanges = isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
                    isJobRoleChanged || isSignInChanged || isSignOutChanged;
@@ -325,6 +331,10 @@ export const useAdminStaffOperations = ({
           max_short_leaves: 0,
           eligible_office_leave: editEligibleOfficeLeave,
           eligible_govt_holiday: editEligibleGovtHoliday,
+          global_settings: {
+            ...(profile.global_settings || {}),
+            hidden_tabs: hiddenTabs
+          }
         };
 
         const { data: updatedProfile, error } = await supabase
@@ -1161,6 +1171,8 @@ export const useAdminStaffOperations = ({
     profileSubmitting,
     editMaxFullLeaves,
     setEditMaxFullLeaves,
+    hiddenTabs,
+    setHiddenTabs,
 
     // Handlers
     handleUpdateSettings,

@@ -66,6 +66,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   const hasQuotesAccess = !!profile.has_quotes_access;
   const isSuperAdmin = profile.codename?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
   const showTodoTab = profile.username?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
+  const hiddenTabs = profile.global_settings?.hidden_tabs || [];
 
   // Navigation handlers
   const handleChutiNav = () => {
@@ -190,23 +191,25 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
 
                 {/* 3. Leave History (All Users) */}
-                <button
-                  onClick={() => onChutiTabChange('leave_history')}
-                  title={isSidebarCollapsed ? 'Leave History' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeChutiTab === 'leave_history'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <History className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave History</span>}
-                </button>
+                {!hiddenTabs.includes('leave_history') && (
+                  <button
+                    onClick={() => onChutiTabChange('leave_history')}
+                    title={isSidebarCollapsed ? 'Leave History' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeChutiTab === 'leave_history'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <History className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave History</span>}
+                  </button>
+                )}
 
                 {/* Team Leave Records (Admin and Supervisor Only) */}
-                {(profile?.role === 'admin' || profile?.role === 'supervisor') && (
+                {(profile?.role === 'admin' || profile?.role === 'supervisor') && !hiddenTabs.includes('team_leaves') && (
                   <button
                     onClick={() => onChutiTabChange('team_leaves')}
                     title={isSidebarCollapsed ? 'Team Leave Records' : undefined}
@@ -224,7 +227,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 )}
 
                 {/* 3. Govt Holiday Response (Admin Only) */}
-                {profile?.role === 'admin' && (
+                {profile?.role === 'admin' && !hiddenTabs.includes('govt_responses') && (
                   <button
                     onClick={() => onChutiTabChange('govt_responses')}
                     title={isSidebarCollapsed ? 'Govt Holiday Response' : undefined}
@@ -242,7 +245,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 )}
 
                 {/* 4. Review & Settlements (Admin Only) */}
-                {profile?.role === 'admin' && (
+                {profile?.role === 'admin' && !hiddenTabs.includes('settlement') && (
                   <button
                     onClick={() => onChutiTabChange('settlement')}
                     title={isSidebarCollapsed ? 'Review & Settlements' : undefined}
@@ -260,7 +263,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 )}
 
                 {/* 5. Leave Settings (Admin Only) */}
-                {profile?.role === 'admin' && (
+                {profile?.role === 'admin' && !hiddenTabs.includes('leave_settings') && (
                   <button
                     onClick={() => onChutiTabChange('leave_settings')}
                     title={isSidebarCollapsed ? 'Leave Settings' : undefined}
@@ -318,106 +321,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   {!isSidebarCollapsed && <span className="whitespace-nowrap">Daily Entry</span>}
                 </button>
 
-                {/* 2. Monthly List */}
-                <button
-                  onClick={() => onQuotesTabChange('monthly')}
-                  title={isSidebarCollapsed ? 'Monthly List' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'monthly'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <ScrollText className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Monthly List</span>}
-                </button>
-
-
-
-                {/* 4. Quote Rules */}
-                <button
-                  onClick={() => onQuotesTabChange('rules')}
-                  title={isSidebarCollapsed ? 'Quote Rules' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'rules'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <BookOpen className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Quote Rules</span>}
-                </button>
-
-                {/* 5. IP Checker */}
-                <button
-                  onClick={() => onQuotesTabChange('ip_checker')}
-                  title={isSidebarCollapsed ? 'IP Checker' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'ip_checker'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <Globe className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">IP Checker</span>}
-                </button>
-
-                {/* 6. Login Codes */}
-                <button
-                  onClick={() => onQuotesTabChange('login_codes')}
-                  title={isSidebarCollapsed ? 'Login Codes' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'login_codes'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <Key className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Login Codes</span>}
-                </button>
-
-                {/* 7. Asitis Causality */}
-                <button
-                  onClick={() => onQuotesTabChange('asitis_causality')}
-                  title={isSidebarCollapsed ? 'Asitis Causality' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'asitis_causality'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <FileText className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Asitis Causality</span>}
-                </button>
-
-                {/* 8. EUI Causality */}
-                <button
-                  onClick={() => onQuotesTabChange('eui_causality')}
-                  title={isSidebarCollapsed ? 'EUI Causality' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'eui_causality'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                  }`}
-                >
-                  <FileText className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">EUI Causality</span>}
-                </button>
-
-                {/* 9. Copy Helper (Superadmin only) */}
-                {isSuperAdmin && (
+                {/* Copy Helper (Superadmin only) */}
+                {isSuperAdmin && !hiddenTabs.includes('copy_helper') && (
                   <button
                     onClick={() => onQuotesTabChange?.('copy_helper')}
                     title={isSidebarCollapsed ? 'Copy Helper' : undefined}
@@ -434,8 +339,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   </button>
                 )}
 
-                {/* 10. Save File (Superadmin only) */}
-                {isSuperAdmin && (
+                {/* Save File (Superadmin only) */}
+                {isSuperAdmin && !hiddenTabs.includes('save_file') && (
                   <button
                     onClick={() => onQuotesTabChange?.('save_file')}
                     title={isSidebarCollapsed ? 'Save File' : undefined}
@@ -451,31 +356,143 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     {!isSidebarCollapsed && <span className="whitespace-nowrap">Save File</span>}
                   </button>
                 )}
+
+                {/* 2. Monthly List */}
+                {!hiddenTabs.includes('monthly') && (
+                  <button
+                    onClick={() => onQuotesTabChange('monthly')}
+                    title={isSidebarCollapsed ? 'Monthly List' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'monthly'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <ScrollText className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Monthly List</span>}
+                  </button>
+                )}
+
+
+
+                {/* 4. Quote Rules */}
+                {!hiddenTabs.includes('rules') && (
+                  <button
+                    onClick={() => onQuotesTabChange('rules')}
+                    title={isSidebarCollapsed ? 'Quote Rules' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'rules'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <BookOpen className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Quote Rules</span>}
+                  </button>
+                )}
+
+                {/* 5. IP Checker */}
+                {!hiddenTabs.includes('ip_checker') && (
+                  <button
+                    onClick={() => onQuotesTabChange('ip_checker')}
+                    title={isSidebarCollapsed ? 'IP Checker' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'ip_checker'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <Globe className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">IP Checker</span>}
+                  </button>
+                )}
+
+                {/* 6. Login Codes */}
+                {!hiddenTabs.includes('login_codes') && (
+                  <button
+                    onClick={() => onQuotesTabChange('login_codes')}
+                    title={isSidebarCollapsed ? 'Login Codes' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'login_codes'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <Key className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Login Codes</span>}
+                  </button>
+                )}
+
+                {/* 7. Asitis Causality */}
+                {!hiddenTabs.includes('asitis_causality') && (
+                  <button
+                    onClick={() => onQuotesTabChange('asitis_causality')}
+                    title={isSidebarCollapsed ? 'Asitis Causality' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'asitis_causality'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <FileText className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Asitis Causality</span>}
+                  </button>
+                )}
+
+                {/* 8. EUI Causality */}
+                {!hiddenTabs.includes('eui_causality') && (
+                  <button
+                    onClick={() => onQuotesTabChange('eui_causality')}
+                    title={isSidebarCollapsed ? 'EUI Causality' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'eui_causality'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <FileText className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">EUI Causality</span>}
+                  </button>
+                )}
               </div>
             )}
           </div>
         )}
 
         {/* Workspace: KPI & Performance */}
-        <div className="space-y-1">
-          <button
-            onClick={handleKpiNav}
-            title={isSidebarCollapsed ? 'KPI & Performance' : undefined}
-            className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-              isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-            } ${
-              activeSection === 'kpi'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
-            }`}
-          >
-            <BarChart2 className="h-5 w-5 shrink-0" />
-            {!isSidebarCollapsed && <span className="whitespace-nowrap">KPI & Performance</span>}
-          </button>
-        </div>
+        {!hiddenTabs.includes('kpi') && (
+          <div className="space-y-1">
+            <button
+              onClick={handleKpiNav}
+              title={isSidebarCollapsed ? 'KPI & Performance' : undefined}
+              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
+              } ${
+                activeSection === 'kpi'
+                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
+                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+              }`}
+            >
+              <BarChart2 className="h-5 w-5 shrink-0" />
+              {!isSidebarCollapsed && <span className="whitespace-nowrap">KPI & Performance</span>}
+            </button>
+          </div>
+        )}
 
         {/* Workspace: Todos (Only for superadmin Kamrul) */}
-        {showTodoTab && (
+        {showTodoTab && !hiddenTabs.includes('todo') && (
           <div className="space-y-1">
             <button
               onClick={handleTodoNav}
@@ -484,7 +501,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
               } ${
                 activeSection === 'todo'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-950/5'
+                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-955/5'
                   : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
               }`}
             >
@@ -495,7 +512,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         )}
 
         {/* Workspace: Analytics (Admin & Supervisor Only) */}
-        {(profile.role === 'admin' || profile.role === 'supervisor') && (
+        {(profile.role === 'admin' || profile.role === 'supervisor') && !hiddenTabs.includes('analytics') && (
           <div className="space-y-1">
             <button
               onClick={handleAnalyticsNav}
@@ -515,7 +532,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         )}
 
         {/* Workspace: Audit Logs (Admin & Supervisor Only) */}
-        {(profile.role === 'admin' || profile.role === 'supervisor') && (
+        {(profile.role === 'admin' || profile.role === 'supervisor') && !hiddenTabs.includes('audit_logs') && (
           <div className="space-y-1">
             <button
               onClick={handleAuditLogsNav}
@@ -535,7 +552,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         )}
 
         {/* Workspace 3: User Management (Admin & Supervisor Only) */}
-        {(profile.role === 'admin' || profile.role === 'supervisor') && (
+        {(profile.role === 'admin' || profile.role === 'supervisor') && !hiddenTabs.includes('user_management') && (
           <div className="space-y-1">
             <button
               onClick={handleUserManagementNav}

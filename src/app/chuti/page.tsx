@@ -337,6 +337,8 @@ export default function Dashboard({
     handleApprovePasswordResetRequest,
     handleConvertShortLeaveToFullLeave,
     setShowCreateUserModal,
+    hiddenTabs,
+    setHiddenTabs,
   } = adminStaffOps;
 
   // Export operations

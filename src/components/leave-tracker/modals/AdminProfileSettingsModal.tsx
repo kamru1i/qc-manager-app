@@ -53,6 +53,8 @@ interface AdminProfileSettingsModalProps {
   profilesList: Profile[];
   editSupervisorIds: string[];
   setEditSupervisorIds: (ids: string[]) => void;
+  hiddenTabs?: string[];
+  setHiddenTabs?: (tabs: string[]) => void;
 }
 
 export function AdminProfileSettingsModal({
@@ -101,6 +103,8 @@ export function AdminProfileSettingsModal({
   profilesList,
   editSupervisorIds,
   setEditSupervisorIds,
+  hiddenTabs = [],
+  setHiddenTabs,
 }: AdminProfileSettingsModalProps) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -534,6 +538,82 @@ export function AdminProfileSettingsModal({
                   <span className="block text-[10px] text-slate-400">If checked, overtime leave category will be enabled</span>
                 </div>
               </label>
+            </div>
+          )}
+
+          {/* Menu Tab Visibility Settings (Admin self only) */}
+          {profile?.role === 'admin' && !editingStaffProfileId && setHiddenTabs && (
+            <div className="space-y-4 pt-4 border-t border-slate-800/80">
+              <div>
+                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  Menu Tab Visibility ⚙️
+                </h4>
+                <p className="text-[10px] text-slate-500">
+                  Uncheck options to hide them from your side menu dashboard. Re-check them to restore visibility.
+                </p>
+              </div>
+
+              {/* Grouped by Categories */}
+              {['Main Workspace Sections', 'Quotes Tracker Subtabs', 'Leave Tracker Subtabs'].map((category) => {
+                const options = [
+                  { key: 'kpi', label: 'KPI & Performance', category: 'Main Workspace Sections' },
+                  { key: 'todo', label: 'Todos Panel', category: 'Main Workspace Sections' },
+                  { key: 'analytics', label: 'Analytics (Workspace)', category: 'Main Workspace Sections' },
+                  { key: 'audit_logs', label: 'Audit Logs (Workspace)', category: 'Main Workspace Sections' },
+                  { key: 'user_management', label: 'User Management', category: 'Main Workspace Sections' },
+
+                  { key: 'copy_helper', label: 'Copy Helper Subtab', category: 'Quotes Tracker Subtabs' },
+                  { key: 'save_file', label: 'Save File Subtab', category: 'Quotes Tracker Subtabs' },
+                  { key: 'monthly', label: 'Monthly List Subtab', category: 'Quotes Tracker Subtabs' },
+                  { key: 'rules', label: 'Quote Rules Subtab', category: 'Quotes Tracker Subtabs' },
+                  { key: 'login_codes', label: 'Login Codes Subtab', category: 'Quotes Tracker Subtabs' },
+                  { key: 'ip_checker', label: 'IP Checker Subtab', category: 'Quotes Tracker Subtabs' },
+                  { key: 'asitis_causality', label: 'Asitis Causality Subtab', category: 'Quotes Tracker Subtabs' },
+                  { key: 'eui_causality', label: 'EUI Causality Subtab', category: 'Quotes Tracker Subtabs' },
+
+                  { key: 'leave_history', label: 'My History Subtab', category: 'Leave Tracker Subtabs' },
+                  { key: 'govt_responses', label: 'Govt Responses Subtab', category: 'Leave Tracker Subtabs' },
+                  { key: 'settlement', label: 'Settlement Subtab', category: 'Leave Tracker Subtabs' },
+                  { key: 'leave_settings', label: 'Leave Settings Subtab', category: 'Leave Tracker Subtabs' },
+                  { key: 'team_leaves', label: 'Staff Leaves Subtab', category: 'Leave Tracker Subtabs' },
+                ].filter(opt => opt.category === category);
+
+                return (
+                  <div key={category} className="space-y-2">
+                    <span className="block text-[10px] font-bold text-slate-400/80 uppercase tracking-wider pl-1">
+                      {category}
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {options.map((opt) => {
+                        const isVisible = !hiddenTabs.includes(opt.key);
+                        return (
+                          <label
+                            key={opt.key}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all cursor-pointer select-none text-[11px] font-medium ${
+                              isVisible
+                                ? 'border-blue-500/20 bg-blue-955/20 text-slate-200 hover:bg-blue-950/30'
+                                : 'border-slate-850/60 bg-slate-900/30 text-slate-500 hover:bg-slate-850/20'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isVisible}
+                              onChange={() => {
+                                const newHidden = isVisible
+                                  ? [...hiddenTabs, opt.key]
+                                  : hiddenTabs.filter(k => k !== opt.key);
+                                setHiddenTabs(newHidden);
+                              }}
+                              className="rounded border-slate-700 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
