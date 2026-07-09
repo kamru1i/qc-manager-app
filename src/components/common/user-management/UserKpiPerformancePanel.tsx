@@ -1545,11 +1545,9 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
 
           {/* Evaluation Period */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200 justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Evaluation Period</span>
-              <span className="font-medium text-white print:text-black">From: {evaluationPeriod.from} To: {evaluationPeriod.to}</span>
-            </div>
+          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200 gap-1.5">
+            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Evaluation Period</span>
+            <span className="font-medium text-white print:text-black">From: {evaluationPeriod.from} To: {evaluationPeriod.to}</span>
             
             {/* Settings/Edit Icon next to dates */}
             {(currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && (
@@ -1571,7 +1569,7 @@ USING (auth.uid() = user_id OR EXISTS (
                   }
                   setCustomPeriodModalOpen(true);
                 }}
-                className="p-1 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-white transition-colors cursor-pointer print:hidden"
+                className="p-1 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-white transition-colors cursor-pointer print:hidden ml-1"
                 title="Edit Evaluation Period Settings"
               >
                 <Calendar className="h-3.5 w-3.5" />
