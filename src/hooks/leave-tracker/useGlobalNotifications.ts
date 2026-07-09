@@ -99,7 +99,8 @@ export function useGlobalNotifications(
         const { data: adminChutiData, error: adminChutiError } = await supabase
           .from('chuti')
           .select('*')
-          .is('deleted_at', null);
+          .is('deleted_at', null)
+          .or('status.eq.approved_by_supervisor,reserve_adjustment_status.eq.pending');
 
         if (!adminChutiError && adminChutiData) {
           setAdminPendingRecords(adminChutiData);
