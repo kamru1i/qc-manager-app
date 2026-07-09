@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, RotateCcw, Sparkles, CheckCircle2, DollarSign, ArrowRightLeft, FolderPlus, ShieldAlert } from 'lucide-react';
 import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
@@ -160,9 +160,14 @@ export function UserSettleModal({
     return [];
   }, [activeSettlements, globalSettings.settlement_active_year, globalSettings.settlement_active_period, globalSettings.settlement_active_category, selectedYear, halfYearlyStats, officeRemaining, govtRemaining, eidFitrRemaining, eidAdhaRemaining]);
 
+  const prevShowModalRef = useRef(false);
+
   // Initialize preference selections
   useEffect(() => {
-    if (showModal && profile) {
+    const wasOpen = prevShowModalRef.current;
+    prevShowModalRef.current = showModal;
+
+    if (showModal && !wasOpen && profile) {
       const initialSplits: Record<string, { carryForward: number; payment: number; adjustLeave: number }> = {};
       displayItems.forEach((item) => {
         if (!item.isCustom) {
@@ -196,15 +201,7 @@ export function UserSettleModal({
           };
         }
       });
-      setSplits((prev) => {
-        const isIdentical = Object.keys(initialSplits).length === Object.keys(prev).length &&
-          Object.keys(initialSplits).every((key) => {
-            const a = initialSplits[key];
-            const b = prev[key];
-            return b && a.carryForward === b.carryForward && a.payment === b.payment && a.adjustLeave === b.adjustLeave;
-          });
-        return isIdentical ? prev : initialSplits;
-      });
+      setSplits(initialSplits);
     } else if (!showModal) {
       setSplits({});
     }

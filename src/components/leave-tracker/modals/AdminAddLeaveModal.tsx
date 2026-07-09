@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { RefreshCw, Calendar, AlertTriangle, Loader } from "lucide-react";
 import { Profile } from "@/types";
 import { AddLeaveFormFields } from "@/components/leave-tracker/AddLeaveFormFields";
@@ -76,9 +76,14 @@ export function AdminAddLeaveModal({
     }
   }, [showModal, staffProfile]);
 
+  const prevShowModalRef = useRef(false);
+
   // Initialize today's date and default times when modal is opened
   useEffect(() => {
-    if (showModal && staffProfile) {
+    const wasOpen = prevShowModalRef.current;
+    prevShowModalRef.current = showModal;
+
+    if (showModal && !wasOpen && staffProfile) {
       const today = new Date();
       const localDate =
         today.getFullYear() +

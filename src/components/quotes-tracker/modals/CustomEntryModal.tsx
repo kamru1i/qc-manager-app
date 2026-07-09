@@ -148,9 +148,14 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
     targetAllowedCategories.includes("Review Van") ||
     targetAllowedCategories.includes("Review Bike");
 
+  const prevIsOpenRef = useRef(false);
+
   // Reset inputs when modal opens
   useEffect(() => {
-    if (isOpen) {
+    const wasOpen = prevIsOpenRef.current;
+    prevIsOpenRef.current = isOpen;
+
+    if (isOpen && !wasOpen) {
       setCustomFileName("");
       setCustomBranchName("");
       setCustomDate("");
