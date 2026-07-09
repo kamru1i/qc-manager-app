@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/utils/supabase";
 import { LoginCode } from "@/types";
 import {
@@ -115,6 +116,11 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   const [formCode, setFormCode] = useState("");
   const [formName, setFormName] = useState("");
   const [itemToDelete, setItemToDelete] = useState<LoginCode | null>(null);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{
@@ -633,9 +639,15 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       </div>
 
       {/* ─── ADD/EDIT OVERLAY MODAL ─── */}
-      {isFormOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
+      {isFormOpen && mounted && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in"
+          onClick={() => setIsFormOpen(false)}
+        >
+          <div 
+            className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setIsFormOpen(false)}
               className="absolute right-4 top-4 text-slate-450 hover:text-white transition-colors"
@@ -708,13 +720,20 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ─── DELETE CONFIRM OVERLAY ─── */}
-      {itemToDelete && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-xs shadow-2xl">
+      {itemToDelete && mounted && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in"
+          onClick={() => setItemToDelete(null)}
+        >
+          <div 
+            className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-xs shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h4 className="text-sm font-bold text-red-500 mb-2 flex items-center gap-1.5">
               <AlertCircle className="h-4.5 w-4.5 text-red-500" />
               Delete Login Code?
@@ -739,7 +758,8 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ─── FLOATING CONTEXT MENU ─── */}
