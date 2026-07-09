@@ -101,9 +101,9 @@ export default function AppPortal() {
   >(() => (_cachedInitialState?.initialTab as any) ?? "chuti");
   const fetchingRef = useRef<string | null>(null);
   const sessionUserRef = useRef<any>(null);
-  if (sessionUser && !sessionUserRef.current) {
+  useEffect(() => {
     sessionUserRef.current = sessionUser;
-  }
+  }, [sessionUser]);
   // Always-current ref for activeTab — used inside async callbacks to avoid stale closures
   const activeTabRef = useRef<string>(activeTab);
   const [previousTab, setPreviousTab] = useState<string>("chuti");
@@ -114,7 +114,7 @@ export default function AppPortal() {
   }, []);
 
   const [activeQuotesTab, setActiveQuotesTab] = useState<
-    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality"
+    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality"
   >(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("quotes_sales_active_tab");
@@ -126,7 +126,8 @@ export default function AppPortal() {
         saved === "rules" ||
         saved === "ip_checker" ||
         saved === "login_codes" ||
-        saved === "asitis_causality"
+        saved === "asitis_causality" ||
+        saved === "eui_causality"
       ) {
         return saved as
           | "entry"
@@ -136,7 +137,8 @@ export default function AppPortal() {
           | "rules"
           | "ip_checker"
           | "login_codes"
-          | "asitis_causality";
+          | "asitis_causality"
+          | "eui_causality";
       }
     }
     return "entry";
@@ -162,7 +164,7 @@ export default function AppPortal() {
   });
 
   const handleQuotesTabChange = (
-    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality",
+    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality",
   ) => {
     if (tab === "analytics" || tab === "audit_logs") {
       setActiveTab(tab);
@@ -1014,6 +1016,7 @@ export default function AppPortal() {
                   <QuotesSkeletonLoader type={
                     activeQuotesTab === "entry" ? "form" : 
                     activeQuotesTab === "asitis_causality" ? "asitis_causality" :
+                    activeQuotesTab === "eui_causality" ? "asitis_causality" :
                     activeQuotesTab === "monthly" ? "table" : 
                     activeQuotesTab === "rules" ? "rules" : 
                     activeQuotesTab === "analytics" ? "analytics" : 

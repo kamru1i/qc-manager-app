@@ -121,16 +121,13 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v4.0.1** is a patch release focused on maximizing Supabase database performance, eliminating unnecessary egress and realtime messages, and optimizing tab loading UX.
+            **v4.1.0** is a minor release introducing the custom EUI Causality format template workspace with dynamic sequential list numbering and dynamic supervisor signature logs on behalf of staff.
 
-            #### 🛠 What's New in v4.0.1:
+            #### 🛠 What's New in v4.1.0:
 
-            - **Realtime Broadcast Storm Fix** — Added dynamic role-based filters (`user_id=eq...` or `id=eq...`) to all active real-time channels (`chuti`, `profiles`, `leave_settlements`, `records`) for regular staff. This guarantees staff only listen to their own updates and completely eliminates company-wide database refetch storms.
-            - **Stale Auth Closure Fix** — Shipped `sessionUserRef` tracking inside `AppPortal` and `useDashboardData` to resolve stale closures, preventing full profile and records refetches on background token refreshes (`TOKEN_REFRESHED`).
-            - **Removed Redundant Audit Logs Subscription** — Removed background real-time listener for the `audit_logs` table. Audit logs are now fetched only on-demand when opening the tab, saving thousands of background read queries.
-            - **Selective Rules Fetching** — Restricted compliance rules fetching and subscriptions to only execute for users with active Quotes workspace access.
-            - **Admin Pending Review Filtering** — Optimized the global notifications approvals query for Admins to fetch only active pending reviews instead of downloading company-wide historical sheets.
-            - **Instant Tab Transitions** — Converted all lazy-loaded sub-tab views inside the Quotes Tracker (like Daily Entry and Monthly Entry forms/tables) into static imports, eliminating brief skeleton loader flashes.
+            - **EUI Causality Template Workspace** — Shipped a new fully customizable editor for the EUI Causality format, integrated with Supabase sync and local draft caching.
+            - **Dynamic List Numbering & AD Relationship Filtering** — Dynamically inject additional driver relationship fields only when drivers are present, automatically adjusting subsequent field serial numbers.
+            - **Dynamic Supervisor On-Behalf Commits** — Stamp the supervisor's actual codename on leaves added on behalf of staff (e.g. `MR720 Added | Reason`).
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

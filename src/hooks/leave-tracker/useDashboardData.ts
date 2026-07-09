@@ -14,9 +14,9 @@ export const useDashboardData = () => {
   const fetchingRef = useRef<boolean>(false);
   const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
   const sessionUserRef = useRef<SupabaseUser | null>(null);
-  if (sessionUser && !sessionUserRef.current) {
+  useEffect(() => {
     sessionUserRef.current = sessionUser;
-  }
+  }, [sessionUser]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isPushSubscribed, setIsPushSubscribed] = useState(false);
   const [isPushLoading, setIsPushLoading] = useState(false);

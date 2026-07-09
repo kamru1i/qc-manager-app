@@ -24,6 +24,7 @@ import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperP
 import { IPChecker } from "@/components/leave-tracker/IPChecker";
 import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
 import { AsitisCausalityPanel } from "@/components/quotes-tracker/AsitisCausalityPanel";
+import { EUICausalityPanel } from "@/components/quotes-tracker/EUICausalityPanel";
 import { validator } from "@/utils/quotesValidator";
 import {
   calculateSummaryStats,
@@ -62,8 +63,8 @@ const ALL_10_FILE_TYPES = [
 ];
 
 interface DashboardProps {
-  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality";
-  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality") => void;
+  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality";
+  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality") => void;
 }
 
 export default function Dashboard({
@@ -94,7 +95,9 @@ export default function Dashboard({
         targetTab === "audit_logs" ||
         targetTab === "rules" ||
         targetTab === "ip_checker" ||
-        targetTab === "login_codes"
+        targetTab === "login_codes" ||
+        targetTab === "asitis_causality" ||
+        targetTab === "eui_causality"
       ) {
         onTabChange(targetTab);
       }
@@ -1024,9 +1027,10 @@ export default function Dashboard({
 
   // Loading Screen
   if (loading) {
-    let loaderType: "form" | "table" | "analytics" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "generic" = "generic";
+    let loaderType: "form" | "table" | "analytics" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality" | "generic" = "generic";
     if (activeTab === "entry") loaderType = "form";
     else if (activeTab === "asitis_causality") loaderType = "asitis_causality";
+    else if (activeTab === "eui_causality") loaderType = "eui_causality";
     else if (activeTab === "monthly") loaderType = "table";
     else if (activeTab === "analytics") loaderType = "analytics";
     else if (activeTab === "audit_logs") loaderType = "audit-logs";
@@ -1685,6 +1689,14 @@ export default function Dashboard({
           {/* TAB 9: ASITIS CAUSALITY */}
           {activeTab === "asitis_causality" && (
             <AsitisCausalityPanel
+              profile={profile}
+              isOnline={isOnline}
+            />
+          )}
+
+          {/* TAB 10: EUI CAUSALITY */}
+          {activeTab === "eui_causality" && (
+            <EUICausalityPanel
               profile={profile}
               isOnline={isOnline}
             />

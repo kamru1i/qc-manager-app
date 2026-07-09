@@ -26,8 +26,8 @@ import {
 interface UnifiedSidebarProps {
   activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'analytics' | 'audit_logs' | 'kpi';
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality') => void;
   activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
@@ -396,6 +396,22 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 >
                   <FileText className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span className="whitespace-nowrap">Asitis Causality</span>}
+                </button>
+
+                {/* 8. EUI Causality */}
+                <button
+                  onClick={() => onQuotesTabChange('eui_causality')}
+                  title={isSidebarCollapsed ? 'EUI Causality' : undefined}
+                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                  } ${
+                    activeQuotesTab === 'eui_causality'
+                      ? 'bg-blue-500/10 text-blue-400'
+                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                  }`}
+                >
+                  <FileText className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span className="whitespace-nowrap">EUI Causality</span>}
                 </button>
               </div>
             )}

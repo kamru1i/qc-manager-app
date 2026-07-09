@@ -24,6 +24,7 @@ interface SkeletonLoaderProps {
     | "ip_checker"
     | "login_codes"
     | "asitis_causality"
+    | "eui_causality"
     | "generic";
   rows?: number;
 }
@@ -201,7 +202,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
     return <LoginCodesSkeleton />;
   }
 
-  if (type === "asitis_causality") {
+  if (type === "asitis_causality" || type === "eui_causality") {
     return <AsitisCausalitySkeleton />;
   }
 
