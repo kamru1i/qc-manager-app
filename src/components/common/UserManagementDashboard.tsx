@@ -117,6 +117,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
     return 'leave';
   });
+  const [preSelectedKpiPeriodKey, setPreSelectedKpiPeriodKey] = useState<string>('');
   const [viewingStaffRecords, setViewingStaffRecords] = useState<ChutiRecord[]>([]);
   const [viewingStaffSettlements, setViewingStaffSettlements] = useState<LeaveSettlement[]>([]);
   const [viewingStaffHolidayResponses, setViewingStaffHolidayResponses] = useState<GovtHolidayResponse[]>([]);
@@ -934,6 +935,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setEditUserPerformsOtherDeptTasks={setEditUserPerformsOtherDeptTasks}
                   editUserOtherDepartment={editUserOtherDepartment}
                   setEditUserOtherDepartment={setEditUserOtherDepartment}
+                  onViewKpiReport={(periodKey) => {
+                    setPreSelectedKpiPeriodKey(periodKey);
+                    setActiveSubTab('kpi');
+                  }}
                 />
               )}
 
@@ -1034,7 +1039,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               )}
 
               {activeSubTab === 'kpi' && viewingStaff && (
-                <UserKpiPerformancePanel viewingStaff={viewingStaff} />
+                <UserKpiPerformancePanel
+                  viewingStaff={viewingStaff}
+                  preSelectedPeriodKey={preSelectedKpiPeriodKey}
+                  setPreSelectedPeriodKey={setPreSelectedKpiPeriodKey}
+                />
               )}
             </>
           )}

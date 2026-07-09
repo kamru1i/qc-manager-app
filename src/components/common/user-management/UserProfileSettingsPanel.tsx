@@ -73,6 +73,7 @@ interface UserProfileSettingsPanelProps {
   setEditUserPerformsOtherDeptTasks?: (val: boolean) => void;
   editUserOtherDepartment?: string;
   setEditUserOtherDepartment?: (val: string) => void;
+  onViewKpiReport?: (periodKey: string) => void;
 }
 
 export const UserProfileSettingsPanel: React.FC<
@@ -137,6 +138,7 @@ export const UserProfileSettingsPanel: React.FC<
   setEditUserPerformsOtherDeptTasks,
   editUserOtherDepartment,
   setEditUserOtherDepartment,
+  onViewKpiReport,
 }) => {
   const isTargetAdmin = viewingStaff.role === "admin";
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
@@ -205,6 +207,8 @@ export const UserProfileSettingsPanel: React.FC<
         setPerformsOtherDeptTasks={setEditUserPerformsOtherDeptTasks}
         otherDepartment={editUserOtherDepartment}
         setOtherDepartment={setEditUserOtherDepartment}
+        viewingStaff={viewingStaff}
+        onViewKpiReport={onViewKpiReport}
       />
 
       <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">

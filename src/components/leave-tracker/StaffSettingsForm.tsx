@@ -4,6 +4,7 @@ import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
 import { Profile } from "@/types";
 import { formatTimeToAMPM } from "@/utils/dashboardHelpers";
+import { supabase } from "@/utils/supabase";
 
 interface StaffSettingsFormProps {
   isNewUser: boolean;
@@ -76,6 +77,8 @@ interface StaffSettingsFormProps {
   setOtherDepartment?: (val: string) => void;
   kpiOtherDeptIndicators?: string[];
   setKpiOtherDeptIndicators?: (val: string[]) => void;
+  viewingStaff?: Profile | null;
+  onViewKpiReport?: (periodKey: string) => void;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -133,10 +136,42 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setOtherDepartment,
   kpiOtherDeptIndicators = [],
   setKpiOtherDeptIndicators,
+  viewingStaff = null,
+  onViewKpiReport,
 }) => {
   const [newSkillText, setNewSkillText] = React.useState("");
   const [newDeptIndicatorText, setNewDeptIndicatorText] = React.useState("");
   const [newOtherDeptIndicatorText, setNewOtherDeptIndicatorText] = React.useState("");
+
+  const [previousEvaluations, setPreviousEvaluations] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (!viewingStaff) return;
+    const fetchPrevious = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('kpi_assessments')
+          .select('*')
+          .eq('user_id', viewingStaff.id)
+          .order('updated_at', { ascending: false });
+        if (data) {
+          setPreviousEvaluations(data);
+        }
+      } catch (err) {
+        console.error('Error fetching previous assessments in settings:', err);
+      }
+    };
+    fetchPrevious();
+  }, [viewingStaff]);
+
+  const formatDateToDMY = (dateStr: string) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('-') && dateStr.split('-')[0].length === 4) {
+      const parts = dateStr.split('-');
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
+  };
   const allDepts = ["Data Entry", "IT", "Accounts", "HR", "Other"];
   const otherDeptOptions = allDepts.filter((d) => d !== department);
 
@@ -323,7 +358,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
       </div>
 
       {/* Workspace Access & Permissions Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leave Tracker Access Card */}
         <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
@@ -718,9 +753,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             </p>
           )}
         </div>
+      </div>
 
-        {/* KPI Settings Panel */}
-        {setKpiSkills && (
+      {/* KPI Settings Panel */}
+      {setKpiSkills && (
           <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
               <div className="flex items-center gap-2">
@@ -1159,9 +1195,89 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Previous KPI Evaluations Section */}
+            {viewingStaff && previousEvaluations.length > 0 && (
+              <div className="border-t border-slate-800/80 pt-5 space-y-3">
+                <div>
+                  <h4 className="text-xs font-bold text-white mb-1">
+                    Previous KPI Evaluation Reports
+                  </h4>
+                  <p className="text-[10px] text-slate-500">
+                    Review or re-evaluate previously completed performance reports for this employee.
+                  </p>
+                </div>
+                
+                <div className="overflow-x-auto rounded-xl border border-slate-800/80 shadow-md">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-955/60 border-b border-slate-800 text-[10px] uppercase tracking-wider text-slate-400">
+                        <th className="py-2.5 px-3 font-semibold">Period</th>
+                        <th className="py-2.5 px-3 font-semibold">Date Range</th>
+                        <th className="py-2.5 px-3 font-semibold">Appraiser</th>
+                        <th className="py-2.5 px-3 font-semibold text-center">Status</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previousEvaluations.map((evalItem) => {
+                        const isCustom = !/^\d{4}-\d{2}$/.test(evalItem.month_year);
+                        const label = evalItem.kpis?.customPeriodLabel || evalItem.month_year;
+                        
+                        let dateRange = '—';
+                        if (isCustom && evalItem.kpis?.customPeriodFrom && evalItem.kpis?.customPeriodTo) {
+                          dateRange = `${formatDateToDMY(evalItem.kpis.customPeriodFrom)} to ${formatDateToDMY(evalItem.kpis.customPeriodTo)}`;
+                        } else if (!isCustom) {
+                          const parts = evalItem.month_year.split('-');
+                          const y = parts[0];
+                          const m = parseInt(parts[1]) - 1;
+                          const monthsNames = [
+                            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                          ];
+                          const lastDay = new Date(Number(y), m + 1, 0).getDate();
+                          dateRange = `01-${String(m + 1).padStart(2, '0')}-${y} to ${String(lastDay).padStart(2, '0')}-${String(m + 1).padStart(2, '0')}-${y}`;
+                        }
+                        
+                        const isCompleted = evalItem.appraiser_signed || evalItem.appraisee_signed;
+                        
+                        return (
+                          <tr key={evalItem.id} className="border-b border-slate-850 hover:bg-slate-900/20 text-slate-300">
+                            <td className="py-2 px-3 font-semibold text-white">{label}</td>
+                            <td className="py-2 px-3 text-[11px] font-mono">{dateRange}</td>
+                            <td className="py-2 px-3">{evalItem.appraiser_name || '—'}</td>
+                            <td className="py-2 px-3 text-center">
+                              {isCompleted ? (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950/30 border border-emerald-900/35 text-emerald-400">
+                                  Signed
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-955/20 border border-amber-900/30 text-amber-400">
+                                  Pending
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (onViewKpiReport) onViewKpiReport(evalItem.month_year);
+                                }}
+                                className="px-2 py-1 bg-blue-950/30 border border-blue-900/40 hover:bg-blue-900/20 text-blue-400 hover:text-blue-300 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                              >
+                                Re-evaluate
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
-      </div>
     </div>
   );
 };

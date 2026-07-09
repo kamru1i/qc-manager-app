@@ -19,10 +19,13 @@ import {
   Target
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Modal } from '@/components/common/Modal';
 
 interface UserKpiPerformancePanelProps {
   viewingStaff: Profile;
   onBack?: () => void;
+  preSelectedPeriodKey?: string;
+  setPreSelectedPeriodKey?: (val: string) => void;
 }
 
 const CORE_FILE_TYPES = [
@@ -38,7 +41,12 @@ const CORE_FILE_TYPES = [
   { key: 'Sale', label: 'Sale' }
 ];
 
-export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = ({ viewingStaff, onBack }) => {
+export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = ({
+  viewingStaff,
+  onBack,
+  preSelectedPeriodKey = '',
+  setPreSelectedPeriodKey
+}) => {
   // Session User Info
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
 
@@ -56,6 +64,85 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+
+  const [activePeriodKey, setActivePeriodKey] = useState<string>('');
+  const [dbCustomPeriodFrom, setDbCustomPeriodFrom] = useState<string>('');
+  const [dbCustomPeriodTo, setDbCustomPeriodTo] = useState<string>('');
+  const [dbCustomPeriodLabel, setDbCustomPeriodLabel] = useState<string>('');
+
+  const [customPeriodModalOpen, setCustomPeriodModalOpen] = useState(false);
+  const [newCustomPeriodLabel, setNewCustomPeriodLabel] = useState('');
+  const [newCustomPeriodFrom, setNewCustomPeriodFrom] = useState('');
+  const [newCustomPeriodTo, setNewCustomPeriodTo] = useState('');
+
+  const [savedPeriods, setSavedPeriods] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSavedPeriods = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('kpi_assessments')
+          .select('month_year, kpis, appraiser_signed, appraisee_signed')
+          .eq('user_id', targetStaff.id);
+        if (data) {
+          setSavedPeriods(data);
+        }
+      } catch (err) {
+        console.error('Error fetching saved periods:', err);
+      }
+    };
+    fetchSavedPeriods();
+  }, [targetStaff.id]);
+
+  const periodOptions = useMemo(() => {
+    const options: { key: string; label: string; isCustom: boolean }[] = [];
+    const currentYear = new Date().getFullYear();
+    const monthsNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    
+    for (let y = currentYear; y >= currentYear - 1; y--) {
+      for (let m = 11; m >= 0; m--) {
+        const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+        options.push({
+          key,
+          label: `${monthsNames[m]} ${y}`,
+          isCustom: false
+        });
+      }
+    }
+    
+    savedPeriods.forEach(p => {
+      const isStandardPattern = /^\d{4}-\d{2}$/.test(p.month_year);
+      if (!isStandardPattern) {
+        const customLabel = p.kpis?.customPeriodLabel || p.month_year;
+        if (!options.some(opt => opt.key === p.month_year)) {
+          options.push({
+            key: p.month_year,
+            label: customLabel,
+            isCustom: true
+          });
+        } 
+      }
+    });
+    
+    return options;
+  }, [savedPeriods]);
+
+  useEffect(() => {
+    if (preSelectedPeriodKey) {
+      setActivePeriodKey(preSelectedPeriodKey);
+      const isStandardPattern = /^\d{4}-\d{2}$/.test(preSelectedPeriodKey);
+      if (isStandardPattern) {
+        const parts = preSelectedPeriodKey.split('-');
+        setSelectedYear(Number(parts[0]));
+        setSelectedMonth(Number(parts[1]) - 1);
+        setActivePeriodKey('');
+      }
+      if (setPreSelectedPeriodKey) setPreSelectedPeriodKey('');
+    }
+  }, [preSelectedPeriodKey, setPreSelectedPeriodKey]);
 
   // Header inputs
   const [empId, setEmpId] = useState('');
@@ -186,13 +273,34 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     });
   }, [appraiserName, appUsers]);
 
+  // Month key for lookup (e.g. "2026-07")
+  const monthYearKey = useMemo(() => {
+    if (activePeriodKey) {
+      return activePeriodKey;
+    }
+    return `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+  }, [activePeriodKey, selectedMonth, selectedYear]);
+
+  const formatDateToDMY = (dateStr: string) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('-') && dateStr.split('-')[0].length === 4) {
+      const parts = dateStr.split('-');
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
+  };
+
   // Format dates for display
   const evaluationPeriod = useMemo(() => {
+    const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
+    if (isCustom && dbCustomPeriodFrom && dbCustomPeriodTo) {
+      return { from: formatDateToDMY(dbCustomPeriodFrom), to: formatDateToDMY(dbCustomPeriodTo) };
+    }
     const startStr = `01-${String(selectedMonth + 1).padStart(2, '0')}-${selectedYear}`;
     const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     const endStr = `${String(lastDay).padStart(2, '0')}-${String(selectedMonth + 1).padStart(2, '0')}-${selectedYear}`;
     return { from: startStr, to: endStr };
-  }, [selectedMonth, selectedYear]);
+  }, [monthYearKey, dbCustomPeriodFrom, dbCustomPeriodTo, selectedMonth, selectedYear]);
 
   const globalSettingsStr = JSON.stringify(targetStaff.global_settings || {});
   const performsDataEntry = targetStaff.global_settings?.performs_data_entry !== false;
@@ -222,10 +330,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     }
   }, [allowedTypesStr, targetStaff.has_quotes_access]);
 
-  // Month key for lookup (e.g. "2026-07")
-  const monthYearKey = useMemo(() => {
-    return `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
-  }, [selectedMonth, selectedYear]);
+
 
   // 1. Fetch default supervisor name if empty (only when targetStaff or supervisors list changes)
   useEffect(() => {
@@ -246,12 +351,22 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     return () => { active = false; };
   }, [targetStaff.id, supervisorIdsStr]);
 
-  // 2. Fetch record counts for the selected month (only when targetStaff or selected month/year changes)
+  // 2. Fetch record counts for the selected month/custom period
   useEffect(() => {
     let active = true;
     const fetchProductionCounts = async () => {
-      const startDate = new Date(selectedYear, selectedMonth, 1);
-      const endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+      let startDate: Date;
+      let endDate: Date;
+      
+      const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
+      if (isCustom && dbCustomPeriodFrom && dbCustomPeriodTo) {
+        startDate = new Date(dbCustomPeriodFrom);
+        endDate = new Date(dbCustomPeriodTo);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        startDate = new Date(selectedYear, selectedMonth, 1);
+        endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+      }
 
       const { data: recordData } = await supabase
         .from('records')
@@ -274,7 +389,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
     fetchProductionCounts();
     return () => { active = false; };
-  }, [targetStaff.id, selectedMonth, selectedYear]);
+  }, [targetStaff.id, selectedMonth, selectedYear, monthYearKey, dbCustomPeriodFrom, dbCustomPeriodTo]);
 
   // Default Weightages
   const defaultWeightages = useMemo(() => {
@@ -492,6 +607,11 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
             setSupervisorScores(savedKpi.supervisorScores || {});
             setComments(savedKpi.comments || {});
 
+            // Set custom period dates
+            setDbCustomPeriodFrom(savedKpi.customPeriodFrom || '');
+            setDbCustomPeriodTo(savedKpi.customPeriodTo || '');
+            setDbCustomPeriodLabel(savedKpi.customPeriodLabel || '');
+
             setAppraiseeSigned(!!data.appraisee_signed);
             setAppraiseeSignDate(data.appraisee_sign_date || '');
             setAppraiserSigned(!!data.appraiser_signed);
@@ -513,6 +633,13 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
             setAppraiseeSignDate('');
             setAppraiserSigned(false);
             setAppraiserSignDate('');
+
+            const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
+            if (!isCustom) {
+              setDbCustomPeriodFrom('');
+              setDbCustomPeriodTo('');
+              setDbCustomPeriodLabel('');
+            }
             setDbState('synced');
           }
         }
@@ -535,6 +662,11 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               setSelfScores(localData.kpis?.selfScores || {});
               setSupervisorScores(localData.kpis?.supervisorScores || {});
               setComments(localData.kpis?.comments || {});
+              
+              setDbCustomPeriodFrom(localData.kpis?.customPeriodFrom || '');
+              setDbCustomPeriodTo(localData.kpis?.customPeriodTo || '');
+              setDbCustomPeriodLabel(localData.kpis?.customPeriodLabel || '');
+
               setAppraiseeSigned(!!localData.appraisee_signed);
               setAppraiseeSignDate(localData.appraisee_sign_date || '');
               setAppraiserSigned(!!localData.appraiser_signed);
@@ -555,6 +687,10 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
             setAppraiseeSignDate('');
             setAppraiserSigned(false);
             setAppraiserSignDate('');
+            
+            setDbCustomPeriodFrom('');
+            setDbCustomPeriodTo('');
+            setDbCustomPeriodLabel('');
           }
         }
       } finally {
@@ -643,11 +779,15 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     }
 
     setSaving(true);
+    const activeKeyIsCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
     const kpisPayload = {
       weightages,
       selfScores,
       supervisorScores,
-      comments
+      comments,
+      customPeriodFrom: activeKeyIsCustom ? dbCustomPeriodFrom : null,
+      customPeriodTo: activeKeyIsCustom ? dbCustomPeriodTo : null,
+      customPeriodLabel: activeKeyIsCustom ? dbCustomPeriodLabel : null
     };
 
     const updateObj = {
@@ -707,6 +847,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
   const saveLocally = () => {
     const localKey = `kpi_${targetStaff.id}_${monthYearKey}`;
+    const activeKeyIsCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
     const payload = {
       emp_id: empId,
       date_of_joining: dateOfJoining,
@@ -717,7 +858,10 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         weightages,
         selfScores,
         supervisorScores,
-        comments
+        comments,
+        customPeriodFrom: activeKeyIsCustom ? dbCustomPeriodFrom : null,
+        customPeriodTo: activeKeyIsCustom ? dbCustomPeriodTo : null,
+        customPeriodLabel: activeKeyIsCustom ? dbCustomPeriodLabel : null
       },
       appraisee_signed: appraiseeSigned,
       appraisee_sign_date: appraiseeSignDate,
@@ -1119,25 +1263,46 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
             </button>
           )}
 
-          <div className="flex bg-slate-950/80 border border-slate-800 rounded-xl p-1 shrink-0">
+          <div className="flex bg-slate-950/80 border border-slate-800 rounded-xl p-1 shrink-0 items-center gap-1">
             <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-transparent text-xs font-semibold text-slate-300 px-2 py-1.5 focus:outline-hidden cursor-pointer"
+              value={activePeriodKey || `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`}
+              onChange={(e) => {
+                const val = e.target.value;
+                const isStandardPattern = /^\d{4}-\d{2}$/.test(val);
+                if (isStandardPattern) {
+                  const parts = val.split('-');
+                  setSelectedYear(Number(parts[0]));
+                  setSelectedMonth(Number(parts[1]) - 1);
+                  setActivePeriodKey('');
+                } else {
+                  setActivePeriodKey(val);
+                }
+              }}
+              className="bg-transparent text-xs font-semibold text-slate-300 px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[160px] truncate"
             >
-              {months.map((m, i) => (
-                <option key={m} value={i} className="bg-slate-950 text-slate-355">{m}</option>
+              {periodOptions.map((opt) => (
+                <option key={opt.key} value={opt.key} className="bg-slate-955 text-slate-355">
+                  {opt.label}
+                </option>
               ))}
             </select>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-transparent text-xs font-semibold text-slate-300 px-2 py-1.5 focus:outline-hidden cursor-pointer border-l border-slate-800/80"
-            >
-              {years.map(y => (
-                <option key={y} value={y} className="bg-slate-955">{y}</option>
-              ))}
-            </select>
+
+            {/* Create Custom Period Button */}
+            {(currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNewCustomPeriodLabel('');
+                  setNewCustomPeriodFrom('');
+                  setNewCustomPeriodTo('');
+                  setCustomPeriodModalOpen(true);
+                }}
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                title="Create Custom Period"
+              >
+                <Calendar className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <button
@@ -1380,9 +1545,38 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
 
           {/* Evaluation Period */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Evaluation Period</span>
-            <span className="font-medium text-white print:text-black">From: {evaluationPeriod.from} To: {evaluationPeriod.to}</span>
+          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200 justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Evaluation Period</span>
+              <span className="font-medium text-white print:text-black">From: {evaluationPeriod.from} To: {evaluationPeriod.to}</span>
+            </div>
+            
+            {/* Settings/Edit Icon next to dates */}
+            {(currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && (
+              <button
+                type="button"
+                onClick={() => {
+                  const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
+                  if (isCustom) {
+                    setNewCustomPeriodLabel(dbCustomPeriodLabel || monthYearKey);
+                    setNewCustomPeriodFrom(dbCustomPeriodFrom);
+                    setNewCustomPeriodTo(dbCustomPeriodTo);
+                  } else {
+                    setNewCustomPeriodLabel(`${months[selectedMonth]} ${selectedYear}`);
+                    const startStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`;
+                    const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+                    const endStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+                    setNewCustomPeriodFrom(startStr);
+                    setNewCustomPeriodTo(endStr);
+                  }
+                  setCustomPeriodModalOpen(true);
+                }}
+                className="p-1 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-white transition-colors cursor-pointer print:hidden"
+                title="Edit Evaluation Period Settings"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -2228,6 +2422,100 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
         </div>
       )}
+
+      {/* Custom Period Modal */}
+      <Modal
+        isOpen={customPeriodModalOpen}
+        onClose={() => setCustomPeriodModalOpen(false)}
+        title="Custom Evaluation Period"
+        icon={<Calendar className="h-5 w-5 text-blue-500" />}
+        maxWidthClass="max-w-sm"
+      >
+        <div className="space-y-4 pt-2 font-sans">
+          <div>
+            <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+              Period Label / Name
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Q1 2026, 1st Half 2026"
+              value={newCustomPeriodLabel}
+              onChange={(e) => setNewCustomPeriodLabel(e.target.value)}
+              className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                From Date
+              </label>
+              <input
+                type="date"
+                required
+                value={newCustomPeriodFrom}
+                onChange={(e) => setNewCustomPeriodFrom(e.target.value)}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                To Date
+              </label>
+              <input
+                type="date"
+                required
+                value={newCustomPeriodTo}
+                onChange={(e) => setNewCustomPeriodTo(e.target.value)}
+                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-3 border-t border-slate-850">
+            <button
+              type="button"
+              onClick={() => setCustomPeriodModalOpen(false)}
+              className="flex-1 py-2 px-3 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-355 hover:text-white rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!newCustomPeriodLabel.trim() || !newCustomPeriodFrom || !newCustomPeriodTo}
+              onClick={() => {
+                const label = newCustomPeriodLabel.trim();
+                setActivePeriodKey(label);
+                setDbCustomPeriodFrom(newCustomPeriodFrom);
+                setDbCustomPeriodTo(newCustomPeriodTo);
+                setDbCustomPeriodLabel(label);
+                
+                // Add dynamically to local options if not already present
+                if (!savedPeriods.some(p => p.month_year === label)) {
+                  setSavedPeriods(prev => [
+                    ...prev,
+                    {
+                      month_year: label,
+                      kpis: {
+                        customPeriodFrom: newCustomPeriodFrom,
+                        customPeriodTo: newCustomPeriodTo,
+                        customPeriodLabel: label
+                      }
+                    }
+                  ]);
+                }
+                
+                setCustomPeriodModalOpen(false);
+                setIsDirty(true);
+              }}
+              className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
