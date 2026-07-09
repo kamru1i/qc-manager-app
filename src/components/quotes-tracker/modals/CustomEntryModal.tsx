@@ -15,7 +15,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { FileType, Profile } from "@/types";
-import { formatDate } from "@/utils/quotesDashboardHelpers";
+import { formatDate, cleanFileName } from "@/utils/quotesDashboardHelpers";
 import { CategorySelector } from "@/components/quotes-tracker/CategorySelector";
 import { BranchSelector } from "@/components/common/BranchSelector";
 
@@ -198,8 +198,10 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleaned = cleanFileName(customFileName);
+    setCustomFileName(cleaned);
     const success = await onSubmit(
-      customFileName,
+      cleaned,
       customBranchName,
       customFileType,
       customUserId,
@@ -329,6 +331,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
                 placeholder="e.g. Williams James"
                 value={customFileName}
                 onChange={(e) => setCustomFileName(e.target.value)}
+                onBlur={(e) => setCustomFileName(cleanFileName(e.target.value))}
                 className="block w-full px-3.5 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
               />
             </div>

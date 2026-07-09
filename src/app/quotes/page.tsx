@@ -30,6 +30,7 @@ import {
   calculateSummaryStats,
   formatDate,
   exportToCSV,
+  cleanFileName,
 } from "@/utils/quotesDashboardHelpers";
 import { FileType, RecordItem } from "@/types";
 import {
@@ -789,8 +790,11 @@ export default function Dashboard({
     e.preventDefault();
     if (submitting) return;
 
+    const cleanedFileName = cleanFileName(fileName);
+    setFileName(cleanedFileName);
+
     const formValidation = validator.validateRecordForm({
-      file_name: fileName,
+      file_name: cleanedFileName,
       branch_name: branchName,
       codename: codenameInput,
       file_type: fileType,
@@ -803,14 +807,14 @@ export default function Dashboard({
 
     if (fileType === "Sale") {
       setSaleFormDetails({
-        fileName,
+        fileName: cleanedFileName,
         branchName,
         codename: codenameInput,
         fileType,
       });
       setShowSaleModal(true);
     } else {
-      await submitNewEntry(fileName, branchName, codenameInput, fileType);
+      await submitNewEntry(cleanedFileName, branchName, codenameInput, fileType);
     }
   };
 

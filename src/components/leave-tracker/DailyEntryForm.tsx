@@ -3,6 +3,7 @@ import { FileText, MapPin, UserCheck, Plus, Loader2, X } from "lucide-react";
 import { FileType } from "@/types";
 import { CategorySelector } from "@/components/quotes-tracker/CategorySelector";
 import { BranchSelector } from "@/components/common/BranchSelector";
+import { cleanFileName } from "@/utils/quotesDashboardHelpers";
 
 interface DailyEntryFormProps {
   fileName: string;
@@ -63,6 +64,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
             placeholder="e.g. Williams James"
             value={fileName}
             onChange={(e) => setFileName(e.target.value)}
+            onBlur={(e) => setFileName(cleanFileName(e.target.value))}
             className="block w-full px-3.5 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
           />
         </div>

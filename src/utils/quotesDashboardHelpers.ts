@@ -152,3 +152,83 @@ export const exportToCSV = (records: RecordItem[], fileName: string) => {
   link.click();
   document.body.removeChild(link);
 };
+
+// Sanitizes pasted/typed quote file names by stripping comments, file types, branch names, dots, etc.
+export const cleanFileName = (name: string): string => {
+  if (!name) return "";
+  
+  let cleaned = name;
+
+  // 1. Literal phrases to remove (case-insensitive)
+  const phrasesToRemove = [
+    /\(?check\s+note\)?/gi,
+    /\(?expert\s+please\)?/gi,
+    /\(?\(?dot\)?\)?/gi,
+  ];
+
+  // 2. File types to remove (case-insensitive)
+  const fileTypesToRemove = [
+    /\bIndividual\s+Review\b/gi,
+    /\bOther\s+Site\b/gi,
+    /\bRequote\s+Van\b/gi,
+    /\bRequote\s+Bike\b/gi,
+    /\bReview\s+Van\b/gi,
+    /\bReview\s+Bike\b/gi,
+    /\bRequote\b/gi,
+    /\bReview\b/gi,
+    /\bQuote\b/gi,
+    /\bSale\b/gi,
+    /\bVan\b/gi,
+    /\bBike\b/gi,
+  ];
+
+  // 3. Branch names to remove (case-insensitive)
+  const branchesToRemove = [
+    /\bPRIDE\s+COMPARE\b/gi,
+    /\bEAZY\s+COMPARE\b/gi,
+    /\bSWANDRIVE\b/gi,
+    /\bMIDDLESURE\b/gi,
+    /\bIRESURE\b/gi,
+    /\bBRISTOL\b/gi,
+    /\bSHEFFIELD\b/gi,
+    /\bPRIDE\b/gi,
+    /\bEAZY\b/gi,
+    /\bNOTTS\b/gi,
+    /\bRIDE\b/gi,
+    /\bSORT\b/gi,
+    /\bGET\b/gi,
+    /\bADI\b/gi,
+    /\bAQ\b/gi,
+    /\bBC\b/gi,
+    /\bMK\b/gi,
+    /\bBI\b/gi,
+    /\bNN\b/gi,
+  ];
+
+  let prev = "";
+  let iterations = 0;
+  while (cleaned !== prev && iterations < 5) {
+    prev = cleaned;
+    iterations++;
+
+    for (const regex of phrasesToRemove) {
+      cleaned = cleaned.replace(regex, "");
+    }
+    for (const regex of fileTypesToRemove) {
+      cleaned = cleaned.replace(regex, "");
+    }
+    for (const regex of branchesToRemove) {
+      cleaned = cleaned.replace(regex, "");
+    }
+
+    // Replace symbols, dashes, dots, parents, slashes with spaces
+    cleaned = cleaned
+      .replace(/[-\s.,()/\\]+/g, " ")
+      .trim();
+  }
+
+  return cleaned
+    .replace(/^[-_.\s]+|[-_.\s]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
