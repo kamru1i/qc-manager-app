@@ -117,8 +117,17 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       const todayDate = new Date().toDateString();
 
       if (isTauri) {
-        const { invoke } = (window as any).__TAURI__.core;
-        const selectedDir = await invoke("pick_directory") as string;
+        const { open } = await import('@tauri-apps/plugin-dialog');
+        const selectedDir = await open({
+          directory: true,
+          multiple: false,
+          title: "Select Save Directory"
+        }) as string | null;
+
+        if (!selectedDir) {
+          return null; // User cancelled
+        }
+
         setBaseDirectory(selectedDir);
         localStorage.setItem("quotes_sales_base_save_dir", selectedDir);
         localStorage.setItem("quotes_sales_base_save_dir_date", todayDate);
@@ -206,14 +215,17 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       if (isTauri) {
         const encoder = new TextEncoder();
         const bytes = encoder.encode(wrappedHtml);
-        const { invoke } = (window as any).__TAURI__.core;
+        const { join } = await import('@tauri-apps/api/path');
+        const { mkdir, writeFile } = await import('@tauri-apps/plugin-fs');
 
-        savedPath = await invoke("save_file_to_dir", {
-          baseDir: currentBaseDir,
-          subFolder,
-          fileName: generatedFileName,
-          content: Array.from(bytes),
-        }) as string;
+        let targetDir = currentBaseDir || "";
+        if (subFolder) {
+          targetDir = await join(currentBaseDir || "", subFolder);
+          await mkdir(targetDir, { recursive: true });
+        }
+        const finalPath = await join(targetDir, generatedFileName);
+        await writeFile(finalPath, bytes);
+        savedPath = finalPath;
       } else {
         // Web Fallback: Use showSaveFilePicker directly for clean file saving without folder permission warnings
         if (typeof window !== "undefined" && "showSaveFilePicker" in window) {
@@ -295,12 +307,11 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       if (isTauri) {
         const encoder = new TextEncoder();
         const bytes = encoder.encode(wrappedHtml);
-        const { invoke } = (window as any).__TAURI__.core;
+        const { writeFile } = await import('@tauri-apps/plugin-fs');
 
-        await invoke("overwrite_file", {
-          filePath: savedFilePath,
-          content: Array.from(bytes),
-        });
+        if (savedFilePath) {
+          await writeFile(savedFilePath, bytes);
+        }
         showToast("success", `File updated successfully!`);
       } else {
         // Web Fallback: Check if file handle exists to overwrite

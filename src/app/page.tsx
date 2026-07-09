@@ -114,7 +114,7 @@ export default function AppPortal() {
   }, []);
 
   const [activeQuotesTab, setActiveQuotesTab] = useState<
-    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality"
+    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality" | "copy_helper" | "save_file"
   >(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("quotes_sales_active_tab");
@@ -127,7 +127,9 @@ export default function AppPortal() {
         saved === "ip_checker" ||
         saved === "login_codes" ||
         saved === "asitis_causality" ||
-        saved === "eui_causality"
+        saved === "eui_causality" ||
+        saved === "copy_helper" ||
+        saved === "save_file"
       ) {
         return saved as
           | "entry"
@@ -138,7 +140,9 @@ export default function AppPortal() {
           | "ip_checker"
           | "login_codes"
           | "asitis_causality"
-          | "eui_causality";
+          | "eui_causality"
+          | "copy_helper"
+          | "save_file";
       }
     }
     return "entry";
@@ -164,7 +168,7 @@ export default function AppPortal() {
   });
 
   const handleQuotesTabChange = (
-    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality",
+    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality" | "copy_helper" | "save_file",
   ) => {
     if (tab === "analytics" || tab === "audit_logs") {
       setActiveTab(tab);
@@ -1023,6 +1027,8 @@ export default function AppPortal() {
                     activeQuotesTab === "audit_logs" ? "audit-logs" : 
                     activeQuotesTab === "ip_checker" ? "ip_checker" :
                     activeQuotesTab === "login_codes" ? "login_codes" :
+                    activeQuotesTab === "copy_helper" ? "copy_helper" :
+                    activeQuotesTab === "save_file" ? "save_file" :
                     "generic"
                   } />
                 ) : activeTab === "user_management" ? (

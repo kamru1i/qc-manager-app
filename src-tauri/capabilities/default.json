@@ -12,6 +12,9 @@
     "process:allow-restart",
     "dialog:default",
     "fs:default",
+    "fs:allow-read-all",
+    "fs:allow-write-all",
+    "fs:allow-mkdir-all",
     "notification:default"
   ]
 }

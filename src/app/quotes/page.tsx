@@ -63,8 +63,8 @@ const ALL_10_FILE_TYPES = [
 ];
 
 interface DashboardProps {
-  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality";
-  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality") => void;
+  activeTab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality" | "copy_helper" | "save_file";
+  onTabChange: (tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality" | "copy_helper" | "save_file") => void;
 }
 
 export default function Dashboard({
@@ -97,7 +97,9 @@ export default function Dashboard({
         targetTab === "ip_checker" ||
         targetTab === "login_codes" ||
         targetTab === "asitis_causality" ||
-        targetTab === "eui_causality"
+        targetTab === "eui_causality" ||
+        targetTab === "copy_helper" ||
+        targetTab === "save_file"
       ) {
         onTabChange(targetTab);
       }
@@ -135,6 +137,8 @@ export default function Dashboard({
     fetchAuditLogs,
     logActivity,
   } = dashboardData;
+
+  const isSuperAdmin = profile?.codename?.toUpperCase() === 'KAMRUL' || profile?.full_name === 'Kamrul Islam';
 
 
 
@@ -1253,38 +1257,6 @@ export default function Dashboard({
                   {/* Filter Controls */}
                   <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                     <button
-                      onClick={() => {
-                        setShowReportHelper(!showReportHelper);
-                        if (showSaveFileHelper) setShowSaveFileHelper(false);
-                      }}
-                      className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg border transition-all cursor-pointer shadow-md text-xs font-semibold ${
-                        showReportHelper
-                          ? "border-blue-500/35 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300"
-                          : "border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white"
-                      }`}
-                      title="Copy Helper Dashboard"
-                    >
-                      <ScrollText className="h-3.5 w-3.5" />
-                      <span>Copy Helper</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowSaveFileHelper(!showSaveFileHelper);
-                        if (showReportHelper) setShowReportHelper(false);
-                      }}
-                      className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg border transition-all cursor-pointer shadow-md text-xs font-semibold ${
-                        showSaveFileHelper
-                          ? "border-blue-500/35 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300"
-                          : "border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white"
-                      }`}
-                      title="Save Outlook Data as Word"
-                    >
-                      <Save className="h-3.5 w-3.5" />
-                      <span>Save File</span>
-                    </button>
-
-                    <button
                       onClick={handleExportTodayExcel}
                       className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer shadow-md"
                       title="Export to Excel"
@@ -1302,59 +1274,7 @@ export default function Dashboard({
                   </div>
                 </div>
 
-                {showReportHelper ? (
-                  <Suspense fallback={<SkeletonLoader type="copy-helper" />}>
-                    <CopyHelperPanel
-                      profile={profile}
-                      codenameInput={codenameInput}
-                      spokeTo={spokeTo}
-                      setSpokeTo={setSpokeTo}
-                      soldDate={soldDate}
-                      setSoldDate={setSoldDate}
-                      pcUsed={pcUsed}
-                      handlePcUsedChange={handlePcUsedChange}
-                      reportNotes={reportNotes}
-                      handleNotesChange={handleNotesChange}
-                      totalAttempt={totalAttempt}
-                      soldCount={soldCount}
-                      unsoldCount={unsoldCount}
-                      allSales={allSales}
-                      hasSubmissions={hasSubmissions}
-                      todayUserRecords={todayUserRecords}
-                      copyBox1={copyBox1}
-                      copyBox2={copyBox2}
-                      copyBox4={copyBox4}
-                      copyText1={copyText1}
-                      copyText2={copyText2}
-                      copyNotes={copyNotes}
-                      copiedStates={copiedStates}
-                      setShowReportHelper={setShowReportHelper}
-                    />
-                  </Suspense>
-                ) : showSaveFileHelper ? (
-                  <Suspense fallback={<SkeletonLoader type="save-file" />}>
-                    <SaveFileHelperPanel
-                      editorRef={editorRef}
-                      baseDirectory={baseDirectory}
-                      handleChooseDirectory={handleChooseDirectory}
-                      todayUserRecords={todayUserRecords}
-                      savedRecordIds={savedRecordIds}
-                      selectedRecordIdForSave={selectedRecordIdForSave}
-                      setSelectedRecordIdForSave={setSelectedRecordIdForSave}
-                      savedFilePath={savedFilePath}
-                      handleUpdateWord={handleUpdateWord}
-                      handleCancelEdit={handleCancelEdit}
-                      handleSaveAsWord={handleSaveAsWord}
-                      savedDocuments={savedDocuments}
-                      handleEditDocument={handleEditDocument}
-                      handleDeleteDocument={handleDeleteDocument}
-                      setShowSaveFileHelper={setShowSaveFileHelper}
-                      permissionModal={permissionModal}
-                      setPermissionModal={setPermissionModal}
-                    />
-                  </Suspense>
-                ) : (
-                  <>
+                <>
                     {/* Search Filters for Today's Table - BEFORE Stats */}
                     <div className="flex flex-col sm:flex-row gap-2">
                       <div className="relative flex-1">
@@ -1427,7 +1347,6 @@ export default function Dashboard({
                       />
                     </Suspense>
                   </>
-                )}
               </div>
             </div>
           )}
@@ -1702,6 +1621,63 @@ export default function Dashboard({
               profile={profile}
               isOnline={isOnline}
             />
+          )}
+
+          {/* TAB 11: COPY HELPER (Superadmin only) */}
+          {activeTab === "copy_helper" && isSuperAdmin && (
+            <Suspense fallback={<SkeletonLoader type="copy-helper" />}>
+              <CopyHelperPanel
+                profile={profile}
+                codenameInput={codenameInput}
+                spokeTo={spokeTo}
+                setSpokeTo={setSpokeTo}
+                soldDate={soldDate}
+                setSoldDate={setSoldDate}
+                pcUsed={pcUsed}
+                handlePcUsedChange={handlePcUsedChange}
+                reportNotes={reportNotes}
+                handleNotesChange={handleNotesChange}
+                totalAttempt={totalAttempt}
+                soldCount={soldCount}
+                unsoldCount={unsoldCount}
+                allSales={allSales}
+                hasSubmissions={hasSubmissions}
+                todayUserRecords={todayUserRecords}
+                copyBox1={copyBox1}
+                copyBox2={copyBox2}
+                copyBox4={copyBox4}
+                copyText1={copyText1}
+                copyText2={copyText2}
+                copyNotes={copyNotes}
+                copiedStates={copiedStates}
+                setShowReportHelper={() => onTabChange("entry")}
+              />
+            </Suspense>
+          )}
+
+          {/* TAB 12: SAVE FILE (Superadmin only) */}
+          {activeTab === "save_file" && isSuperAdmin && (
+            <Suspense fallback={<SkeletonLoader type="save-file" />}>
+              <SaveFileHelperPanel
+                editorRef={editorRef}
+                baseDirectory={baseDirectory}
+                handleChooseDirectory={handleChooseDirectory}
+                todayUserRecords={todayUserRecords}
+                savedRecordIds={savedRecordIds}
+                selectedRecordIdForSave={selectedRecordIdForSave}
+                setSelectedRecordIdForSave={setSelectedRecordIdForSave}
+                savedFilePath={savedFilePath}
+                handleUpdateWord={handleUpdateWord}
+                handleCancelEdit={handleCancelEdit}
+                handleSaveAsWord={handleSaveAsWord}
+                savedDocuments={savedDocuments}
+                handleEditDocument={handleEditDocument}
+                handleDeleteDocument={handleDeleteDocument}
+                setShowSaveFileHelper={() => onTabChange("entry")}
+                permissionModal={permissionModal}
+                setPermissionModal={setPermissionModal}
+              />
+            </Suspense>
           )}
 
 

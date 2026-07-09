@@ -37,6 +37,7 @@ export interface Profile {
   password_reset_status?: 'none' | 'pending' | 'approved' | 'rejected';
   
   // Quotes & Sales Tracker Integration
+  codename?: string | null;
   allowed_types?: string[];
   quotes_role?: 'admin' | 'user';
   can_manage_rules?: boolean;

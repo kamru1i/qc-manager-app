@@ -113,25 +113,32 @@ export const exportToCSV = (records: RecordItem[], fileName: string) => {
   // Prepended \uFEFF Byte Order Mark (BOM) allows Excel to render non-ASCII characters (e.g. Bengali script) correctly
   const fullContent = '\uFEFF' + csvContent;
 
-  const isTauri = typeof window !== 'undefined' && (window as unknown as TauriWindow).__TAURI__ !== undefined;
+  const isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || (window as any).__TAURI__ !== undefined);
   if (isTauri) {
-    try {
-      const encoder = new TextEncoder();
-      const bytes = encoder.encode(fullContent);
-      const { invoke } = (window as unknown as TauriWindow).__TAURI__!.core;
-      invoke('save_file', { fileName: `${fileName}.csv`, content: Array.from(bytes) })
-        .then((savedPath: string) => {
-          toast.success(`Excel saved to: ${savedPath}`);
-        })
-        .catch((err: unknown) => {
-          const errMsg = String(err);
-          if (errMsg !== 'Save cancelled') {
-            toast.error(`Failed to save Excel: ${errMsg}`);
-          }
+    (async () => {
+      try {
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        const { writeFile } = await import('@tauri-apps/plugin-fs');
+        
+        const filePath = await save({
+          defaultPath: `${fileName}.csv`,
+          filters: [{
+            name: 'CSV File',
+            extensions: ['csv']
+          }]
         });
-    } catch {
-      toast.error('Failed to export Excel in desktop app.');
-    }
+
+        if (filePath) {
+          const encoder = new TextEncoder();
+          const bytes = encoder.encode(fullContent);
+          await writeFile(filePath, bytes);
+          toast.success('Excel saved successfully!');
+        }
+      } catch (err: any) {
+        console.error(err);
+        toast.error('Failed to export Excel.');
+      }
+    })();
     return;
   }
   

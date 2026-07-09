@@ -20,14 +20,15 @@ import {
   History,
   BarChart2,
   Globe,
-  Key
+  Key,
+  Save
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
   activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'analytics' | 'audit_logs' | 'kpi';
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality' | 'copy_helper' | 'save_file';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality' | 'copy_helper' | 'save_file') => void;
   activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
@@ -63,6 +64,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   const hasChutiAccess = !!profile.has_chuti_access;
   const hasQuotesAccess = !!profile.has_quotes_access;
+  const isSuperAdmin = profile.codename?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
   const showTodoTab = profile.username?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
 
   // Navigation handlers
@@ -413,6 +415,42 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   <FileText className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span className="whitespace-nowrap">EUI Causality</span>}
                 </button>
+
+                {/* 9. Copy Helper (Superadmin only) */}
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => onQuotesTabChange?.('copy_helper')}
+                    title={isSidebarCollapsed ? 'Copy Helper' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'copy_helper'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <ScrollText className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Copy Helper</span>}
+                  </button>
+                )}
+
+                {/* 10. Save File (Superadmin only) */}
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => onQuotesTabChange?.('save_file')}
+                    title={isSidebarCollapsed ? 'Save File' : undefined}
+                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
+                    } ${
+                      activeQuotesTab === 'save_file'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                    }`}
+                  >
+                    <Save className="h-4 w-4 shrink-0" />
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Save File</span>}
+                  </button>
+                )}
               </div>
             )}
           </div>

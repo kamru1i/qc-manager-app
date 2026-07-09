@@ -25,6 +25,8 @@ interface SkeletonLoaderProps {
     | "login_codes"
     | "asitis_causality"
     | "eui_causality"
+    | "copy_helper"
+    | "save_file"
     | "generic";
   rows?: number;
 }
