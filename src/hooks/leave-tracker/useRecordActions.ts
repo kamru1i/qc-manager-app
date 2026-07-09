@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import { Profile, RecordItem, FileType } from '@/types';
@@ -38,6 +38,8 @@ export const useRecordActions = ({
   updateLastActivity,
 }: UseRecordActionsOptions) => {
 
+  const isAddingRef = useRef(false);
+
   // Add a new Quote or Sales Entry
   const addRecord = useCallback(async (
     fileName: string,
@@ -48,6 +50,11 @@ export const useRecordActions = ({
     customSubmittedAt?: string
   ) => {
     if (!sessionUser) return false;
+    if (isAddingRef.current) {
+      console.log('Record insertion already in progress, skipping duplicate call.');
+      return false;
+    }
+    isAddingRef.current = true;
     setSubmitting(true);
     updateLastActivity();
 
@@ -83,7 +90,6 @@ export const useRecordActions = ({
         await fetchRecords(true);
         await fetchAvailableDates();
         showToast('success', 'Saved offline! Data will sync when online.');
-        setSubmitting(false);
         return true;
       }
 
@@ -103,13 +109,14 @@ export const useRecordActions = ({
       await fetchRecords(true);
       await fetchAvailableDates();
       showToast('success', 'Data entry saved successfully!');
-      setSubmitting(false);
       return true;
     } catch (err) {
       console.error('Error adding record:', err);
       showToast('error', 'Failed to save data: ' + (err instanceof Error ? err.message : String(err)));
-      setSubmitting(false);
       return false;
+    } finally {
+      isAddingRef.current = false;
+      setSubmitting(false);
     }
   }, [sessionUser, profile, showToast, fetchRecords, fetchAvailableDates, setSubmitting, updateLastActivity]);
 

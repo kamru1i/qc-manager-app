@@ -208,12 +208,20 @@ export interface SyncConflict {
   reason: string;
 }
 
+let isSyncing = false;
+
 // Sync all local records to Supabase with conflict resolution (Server Wins)
 export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => void): Promise<{ success: boolean; syncedCount: number; conflicts: SyncConflict[]; error?: string }> => {
   if (typeof window === 'undefined' || !navigator.onLine) {
     return { success: false, syncedCount: 0, conflicts: [], error: 'Device is offline' };
   }
 
+  if (isSyncing) {
+    console.log('syncOfflineData: Sync already in progress, skipping concurrent run.');
+    return { success: true, syncedCount: 0, conflicts: [] };
+  }
+
+  isSyncing = true;
   try {
     const offlineRecords = await getOfflineRecords();
     if (offlineRecords.length === 0) {
@@ -318,6 +326,8 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
     console.error('Offline sync failed:', err);
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, syncedCount: 0, conflicts: [], error: message };
+  } finally {
+    isSyncing = false;
   }
 };
 

@@ -753,6 +753,7 @@ export default function Dashboard({
     cName: string,
     fType: FileType,
   ) => {
+    if (submitting) return;
     const success = await addRecord(fName, bName, cName, fType);
     if (success) {
       setFileName("");
@@ -767,7 +768,7 @@ export default function Dashboard({
   };
 
   const handleConfirmSaleStatus = async (status: "SOLD" | "UNSOLD") => {
-    if (!saleFormDetails) return;
+    if (!saleFormDetails || submitting) return;
     const finalFileName = `${saleFormDetails.fileName} [${status}]`;
     setShowSaleModal(false);
     await submitNewEntry(
@@ -782,6 +783,7 @@ export default function Dashboard({
   // Submit Daily Entry
   const handleAddEntry = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
 
     const formValidation = validator.validateRecordForm({
       file_name: fileName,
