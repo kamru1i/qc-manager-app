@@ -121,16 +121,12 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v4.2.0** is a minor release introducing customizable KPI evaluation periods, historical report re-evaluation switching, optimized column settings layout, main department display rules, app icon updates, and paginated June duplicates cleanup.
+            **v4.2.1** is a patch release re-generating Tauri desktop app icon formats from the updated logo asset, and filtering out system template entries from the Login Codes Directory view.
 
-            #### 🛠 What's New in v4.2.0:
+            #### 🛠 What's New in v4.2.1:
 
-            - **Historical KPI Evaluation Reports** — Implemented previous KPI report history lookup and re-evaluation switching workflow in profile settings.
-            - **Dynamic KPI Evaluation Periods** — Added support for custom date-range evaluation periods (e.g. Quarterly or Annual evaluations) with an inline settings button next to date labels.
-            - **Improved Workspace Layout** — Relocated KPI and Performance settings to a full-width section at the bottom, keeping Leave and Quotes workspace access cards cleaner side-by-side.
-            - **Enforced Main Department Display** — Ensured that both the printed sheet and Excel export output display only the main department, even if secondary tasks are assigned.
-            - **Database Duplicate Records Cleanup** — Safely resolved 4,718 duplicate database entries from June 2026 logs using paginated querying.
-            - **App Icon & Favicon Refresh** — Re-generated all desktop platform icon resolutions (Windows, macOS, Linux) and web assets from the new brand logo asset.
+            - **App Icon & Favicon Regeneration** — Generated Tauri desktop application icons and web assets across all platform resolutions from the new brand asset.
+            - **Login Codes System Key Filtering** — Filtered out system templates and settings records starting with double underscores `__` from showing up as normal entries in the Login Codes Directory.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.2.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.2.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -173,13 +173,16 @@ npm run tauri build
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
 
+### 🚀 v4.2.1 — Patch Release
+*   **App Icon & Favicon Regeneration** — Generated Tauri desktop application icons and web assets across all platform resolutions from the new brand asset.
+*   **Login Codes System Key Filtering** — Filtered out system templates and settings records starting with double underscores `__` from showing up as normal entries in the Login Codes Directory.
+
 ### 🚀 v4.2.0 — Minor Release
 *   **Historical KPI Evaluation Reports** — Implemented previous KPI report history lookup and re-evaluation switching workflow in profile settings.
 *   **Dynamic KPI Evaluation Periods** — Added support for custom date-range evaluation periods (e.g. Quarterly or Annual evaluations) with an inline settings button next to date labels.
 *   **Improved Workspace Layout** — Relocated KPI and Performance settings to a full-width section at the bottom, keeping Leave and Quotes workspace access cards cleaner side-by-side.
 *   **Enforced Main Department Display** — Ensured that both the printed sheet and Excel export output display only the main department, even if secondary tasks are assigned.
 *   **Database Duplicate Records Cleanup** — Safely resolved 4,718 duplicate database entries from June 2026 logs using paginated querying.
-*   **App Icon & Favicon Refresh** — Generated Tauri desktop application icons and web assets across all platform resolutions from the new brand asset.
 
 ### 🚀 v4.1.3 — Patch Release
 *   **Duplicate Record Cleanups**: Identified and removed 717 duplicate database records by grouping matching `codename`, `file_name`, and `submitted_at` values.
