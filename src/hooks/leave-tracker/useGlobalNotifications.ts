@@ -80,14 +80,18 @@ export function useGlobalNotifications(
         }
       }
 
-      // 3. Fetch active compliance rules
-      const { data: rulesData, error: rulesError } = await supabase
-        .from('compliance_rules')
-        .select('*')
-        .eq('is_deleted', false);
+      // 3. Fetch active compliance rules (only if user has quotes workspace access)
+      if (profile?.has_quotes_access) {
+        const { data: rulesData, error: rulesError } = await supabase
+          .from('compliance_rules')
+          .select('*')
+          .eq('is_deleted', false);
 
-      if (!rulesError && rulesData) {
-        setRulesRecords(rulesData);
+        if (!rulesError && rulesData) {
+          setRulesRecords(rulesData);
+        }
+      } else {
+        setRulesRecords([]);
       }
 
       // 4. Fetch admin/supervisor approvals
@@ -189,21 +193,26 @@ export function useGlobalNotifications(
       )
       .subscribe();
 
-    const rulesChannel = supabase
-      .channel('global-rules-notif-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'compliance_rules' },
-        () => {
-          fetchNotificationsData();
-        }
-      )
-      .subscribe();
+    let rulesChannel: any = null;
+    if (profile?.has_quotes_access) {
+      rulesChannel = supabase
+        .channel(`global-rules-notif-changes-${sessionUser.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'compliance_rules' },
+          () => {
+            fetchNotificationsData();
+          }
+        )
+        .subscribe();
+    }
 
     return () => {
       supabase.removeChannel(chutiChannel);
       supabase.removeChannel(holidayChannel);
-      supabase.removeChannel(rulesChannel);
+      if (rulesChannel) {
+        supabase.removeChannel(rulesChannel);
+      }
     };
   }, [sessionUser, profile, fetchNotificationsData]);
 

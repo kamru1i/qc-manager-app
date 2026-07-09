@@ -959,30 +959,12 @@ export const useQuotesDashboardData = () => {
       )
       .subscribe();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let auditLogsChannel: any = null;
-    if ((profile?.role === 'admin' || profile?.role === 'supervisor')) {
-      auditLogsChannel = supabase
-        .channel('realtime-audit-logs-changes')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'audit_logs' },
-          () => {
-            fetchAuditLogs();
-          }
-        )
-        .subscribe();
-    }
-
     return () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
       supabase.removeChannel(recordsChannel);
       supabase.removeChannel(profilesChannel);
-      if (auditLogsChannel) {
-        supabase.removeChannel(auditLogsChannel);
-      }
     };
-  }, [sessionUser, profile, fetchRecords, fetchAvailableDates, fetchAuditLogs, router, setProfile, setProfilesList]);
+  }, [sessionUser, profile, fetchRecords, fetchAvailableDates, router, setProfile, setProfilesList]);
 
   const handleLogout = async () => {
     lastFetchedKeyRef.current = '';
