@@ -121,13 +121,11 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v4.1.1** is a patch release fixing the double record insertion issue and correcting ESLint hook validation rules.
+            **v4.1.2** is a patch release fixing the auto-fetch input clearing issues in modals.
 
-            #### 🛠 What's New in v4.1.1:
+            #### 🛠 What's New in v4.1.2:
 
-            - **Double Submission Prevention** — Implemented synchronous execution locks (`isAddingRef`) and UI submission guards (`submitting`) to discard duplicate submissions from double clicks.
-            - **Sync Concurrency Lock** — Added background task sync locks (`isSyncing`) inside `quotesOfflineSync.ts` to prevent parallel concurrent offline sync tasks from uploading duplicate rows.
-            - **React Hooks & ESLint Fix** — Resolved hook ref rules violations in `page.tsx` and `useDashboardData.ts` to enforce correct render practices.
+            - **Modal Input Reset Prevention** — Implemented state transition checking using `prevShowModalRef`/`prevIsOpenRef` on form inputs inside `CustomEntryModal`, `AdminAddLeaveModal` and `UserSettleModal`. This prevents background queries or profile refetches from clearing typed/selected form inputs while modals are open.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.
