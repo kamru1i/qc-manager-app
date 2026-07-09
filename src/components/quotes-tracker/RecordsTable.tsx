@@ -306,13 +306,28 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     };
   }, []);
 
+  const prevRecordsRef = useRef<RecordItem[]>([]);
+
   // Reset page, clear selection, and exit selection mode when records list changes (due to filtering or month change)
   useEffect(() => {
-    setCurrentPage(1);
-    setSelectedIds([]);
-    setIsSelectionMode(false);
-    setEditedRecords({});
-    setEditingCell(null);
+    const prevRecords = prevRecordsRef.current;
+    prevRecordsRef.current = records;
+
+    // Check if there is any overlap in record IDs
+    const hasOverlap = records.some(r => prevRecords.some(pr => pr.id === r.id));
+
+    // If there was previous records, and now there is no overlap, it means filters/month changed completely
+    if (prevRecords.length > 0 && !hasOverlap) {
+      setCurrentPage(1);
+      setSelectedIds([]);
+      setIsSelectionMode(false);
+      setEditedRecords({});
+      setEditingCell(null);
+    } else {
+      // If there is overlap, or if it's the initial load, we don't want to clear selection.
+      // But we filter out selectedIds that are no longer present in records.
+      setSelectedIds(prev => prev.filter(id => records.some(r => r.id === id)));
+    }
   }, [records]);
 
   // Clear selection and exit selection mode on page/items change
