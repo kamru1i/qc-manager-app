@@ -118,19 +118,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     };
   }, []);
 
-  // Press Escape to exit Selection Mode and clear selection
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSelectedIds([]);
-        setIsSelectionMode(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   const yearOptions = [
     { value: 'all', label: 'All' },
@@ -259,6 +246,31 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     });
     setDeleteConfirmOpen(true);
   };
+
+  // Keyboard handlers: Escape to exit/clear selection, Delete to bulk delete
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+      } else if (e.key === 'Delete') {
+        const activeEl = document.activeElement;
+        const isTyping = activeEl && (
+          activeEl.tagName === 'INPUT' || 
+          activeEl.tagName === 'TEXTAREA' || 
+          activeEl.getAttribute('contenteditable') === 'true'
+        );
+        if (!isTyping && selectedIds.length > 0) {
+          e.preventDefault();
+          handleBulkDelete();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedIds, handleBulkDelete]);
 
   const handleReset = () => {
     setSearchTerm('');

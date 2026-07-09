@@ -292,19 +292,30 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     };
   }, []);
 
-  // Press Escape to exit Selection Mode and clear selection
+  // Keyboard handlers: Escape to exit/clear selection, Delete to bulk delete
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setSelectedIds([]);
         setIsSelectionMode(false);
+      } else if (e.key === "Delete") {
+        const activeEl = document.activeElement;
+        const isTyping = activeEl && (
+          activeEl.tagName === 'INPUT' || 
+          activeEl.tagName === 'TEXTAREA' || 
+          activeEl.getAttribute('contenteditable') === 'true'
+        );
+        if (!isTyping && selectedIds.length > 0 && onBulkDelete) {
+          e.preventDefault();
+          onBulkDelete(selectedIds);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [selectedIds, onBulkDelete]);
 
   const prevRecordsRef = useRef<RecordItem[]>([]);
 
