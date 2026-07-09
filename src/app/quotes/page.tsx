@@ -7,20 +7,20 @@ import { useQuotesDashboardData } from "@/hooks/quotes-tracker/useQuotesDashboar
 import { useSaveFileHelper } from "@/hooks/quotes-tracker/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/quotes-tracker/useCopyHelper";
 
-const StatsGrid = lazy(() => import("@/components/common/StatsGrid").then(m => ({ default: m.StatsGrid })));
-const RecordsTable = lazy(() => import("@/components/quotes-tracker/RecordsTable").then(m => ({ default: m.RecordsTable })));
-const DailyEntryForm = lazy(() => import("@/components/leave-tracker/DailyEntryForm").then(m => ({ default: m.DailyEntryForm })));
+import { StatsGrid } from "@/components/common/StatsGrid";
+import { RecordsTable } from "@/components/quotes-tracker/RecordsTable";
+import { DailyEntryForm } from "@/components/leave-tracker/DailyEntryForm";
 import { EditRecordModal } from "@/components/quotes-tracker/modals/EditRecordModal";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
 import { CustomEntryModal } from "@/components/quotes-tracker/modals/CustomEntryModal";
 import { SaleStatusModal } from "@/components/quotes-tracker/modals/SaleStatusModal";
 import { AdminViewToggle } from "@/components/leave-tracker/AdminViewToggle";
 import { SkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
-const AnalyticsPanel = lazy(() => import("@/components/leave-tracker/AnalyticsPanel").then(m => ({ default: m.AnalyticsPanel })));
-const AuditLogsPanel = lazy(() => import("@/components/common/AuditLogsPanel").then(m => ({ default: m.AuditLogsPanel })));
-const QuoteRulesPanel = lazy(() => import("@/components/quotes-tracker/QuoteRulesPanel").then(m => ({ default: m.QuoteRulesPanel })));
-const CopyHelperPanel = lazy(() => import("@/components/quotes-tracker/CopyHelperPanel").then(m => ({ default: m.CopyHelperPanel })));
-const SaveFileHelperPanel = lazy(() => import("@/components/quotes-tracker/SaveFileHelperPanel").then(m => ({ default: m.SaveFileHelperPanel })));
+import { AnalyticsPanel } from "@/components/leave-tracker/AnalyticsPanel";
+import { AuditLogsPanel } from "@/components/common/AuditLogsPanel";
+import { QuoteRulesPanel } from "@/components/quotes-tracker/QuoteRulesPanel";
+import { CopyHelperPanel } from "@/components/quotes-tracker/CopyHelperPanel";
+import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperPanel";
 import { IPChecker } from "@/components/leave-tracker/IPChecker";
 import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
 import { AsitisCausalityPanel } from "@/components/quotes-tracker/AsitisCausalityPanel";

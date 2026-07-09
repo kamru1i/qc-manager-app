@@ -100,6 +100,10 @@ export default function AppPortal() {
     | null
   >(() => (_cachedInitialState?.initialTab as any) ?? "chuti");
   const fetchingRef = useRef<string | null>(null);
+  const sessionUserRef = useRef<any>(null);
+  if (sessionUser && !sessionUserRef.current) {
+    sessionUserRef.current = sessionUser;
+  }
   // Always-current ref for activeTab — used inside async callbacks to avoid stale closures
   const activeTabRef = useRef<string>(activeTab);
   const [previousTab, setPreviousTab] = useState<string>("chuti");
@@ -636,16 +640,38 @@ export default function AppPortal() {
       // the quotes RECOVERY system while the new auth token is being applied.
       if (event === 'USER_UPDATED') {
         addLog('onAuthStateChange: USER_UPDATED skipped (password change, no reload needed)');
-        if (session) setSessionUser(session.user);
+        if (session) {
+          setSessionUser(session.user);
+          sessionUserRef.current = session.user;
+        }
+        return;
+      }
+
+      if (event === 'TOKEN_REFRESHED') {
+        addLog('onAuthStateChange: TOKEN_REFRESHED event received. Updating token only.');
+        if (session) {
+          setSessionUser(session.user);
+          sessionUserRef.current = session.user;
+        }
         return;
       }
 
       if (session) {
+        const currentUserId = sessionUserRef.current?.id;
+        if (currentUserId === session.user.id) {
+          addLog("onAuthStateChange: Same user session already active. Skipping profile fetch.");
+          setSessionUser(session.user);
+          sessionUserRef.current = session.user;
+          return;
+        }
+
         setSessionUser(session.user);
+        sessionUserRef.current = session.user;
         await loadUserProfile(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         addLog("onAuthStateChange SIGNED_OUT, clearing profile and setting loading to false");
         setSessionUser(null);
+        sessionUserRef.current = null;
         setProfile(null);
         setActiveTab(null);
         setLoading(false);

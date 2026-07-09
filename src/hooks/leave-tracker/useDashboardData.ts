@@ -13,6 +13,10 @@ export const useDashboardData = () => {
 
   const fetchingRef = useRef<boolean>(false);
   const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
+  const sessionUserRef = useRef<SupabaseUser | null>(null);
+  if (sessionUser && !sessionUserRef.current) {
+    sessionUserRef.current = sessionUser;
+  }
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isPushSubscribed, setIsPushSubscribed] = useState(false);
   const [isPushLoading, setIsPushLoading] = useState(false);
@@ -1307,10 +1311,30 @@ export const useDashboardData = () => {
     // Subscribe to auth state changes to detect login/logout in real-time
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Real-time auth state changed:', event, session?.user?.id);
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        fetchSession(session);
+      if (event === 'SIGNED_IN') {
+        const currentUserId = sessionUserRef.current?.id;
+        if (currentUserId === session?.user?.id) {
+          console.log('useDashboardData: Same user session already active. Skipping profile fetch.');
+          if (session) {
+            setSessionUser(session.user);
+            sessionUserRef.current = session.user;
+          }
+          return;
+        }
+
+        if (session) {
+          setSessionUser(session.user);
+          sessionUserRef.current = session.user;
+          fetchSession(session);
+        }
+      } else if (event === 'TOKEN_REFRESHED') {
+        if (session) {
+          setSessionUser(session.user);
+          sessionUserRef.current = session.user;
+        }
       } else if (event === 'SIGNED_OUT') {
         setSessionUser(null);
+        sessionUserRef.current = null;
         setProfile(null);
         setLoading(false);
       }
