@@ -121,13 +121,13 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v4.1.0** is a minor release introducing the custom EUI Causality format template workspace with dynamic sequential list numbering and dynamic supervisor signature logs on behalf of staff.
+            **v4.1.1** is a patch release fixing the double record insertion issue and correcting ESLint hook validation rules.
 
-            #### 🛠 What's New in v4.1.0:
+            #### 🛠 What's New in v4.1.1:
 
-            - **EUI Causality Template Workspace** — Shipped a new fully customizable editor for the EUI Causality format, integrated with Supabase sync and local draft caching.
-            - **Dynamic List Numbering & AD Relationship Filtering** — Dynamically inject additional driver relationship fields only when drivers are present, automatically adjusting subsequent field serial numbers.
-            - **Dynamic Supervisor On-Behalf Commits** — Stamp the supervisor's actual codename on leaves added on behalf of staff (e.g. `MR720 Added | Reason`).
+            - **Double Submission Prevention** — Implemented synchronous execution locks (`isAddingRef`) and UI submission guards (`submitting`) to discard duplicate submissions from double clicks.
+            - **Sync Concurrency Lock** — Added background task sync locks (`isSyncing`) inside `quotesOfflineSync.ts` to prevent parallel concurrent offline sync tasks from uploading duplicate rows.
+            - **React Hooks & ESLint Fix** — Resolved hook ref rules violations in `page.tsx` and `useDashboardData.ts` to enforce correct render practices.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

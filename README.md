@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.1.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.1.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -172,6 +172,10 @@ npm run tauri build
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v4.1.1 — Patch Release
+*   **Duplicate Record Submissions Prevention**: Resolved race conditions causing double insertions into the Supabase database. Implemented synchronous `useRef` locks at the execution layer (`useRecordActions.ts`), event handler submission checks at the view layer (`page.tsx`), and query concurrency flags during IndexedDB background uploads (`quotesOfflineSync.ts`).
+*   **React Hooks and ESLint Validation**: Resolved React hooks and reference violations inside `src/app/page.tsx` and `useDashboardData.ts` to satisfy compiler rules.
 
 ### 🚀 v4.1.0 — Minor Release
 *   **EUI Causality Format Template Editor**: Shipped a new premium, fully custom workspace editor for EUI Causality format. Supports real-time layout rendering, field edits, dynamic additional drivers (up to 5), Cloud database synchronization (`login_codes` table using `__eui_causality_template__` key), and copy-to-clipboard functionality.
