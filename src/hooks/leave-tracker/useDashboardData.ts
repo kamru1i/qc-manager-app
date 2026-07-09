@@ -984,13 +984,20 @@ export const useDashboardData = () => {
 
   // Listen for real-time updates from Supabase
   useEffect(() => {
-    if (!sessionUser) return;
+    if (!sessionUser || !profile) return;
+
+    const isApprover = profile.role === 'admin' || profile.role === 'supervisor';
 
     const chutiChannel = supabase
-      .channel('realtime-chuti-changes')
+      .channel(`realtime-chuti-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'chuti' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'chuti',
+          ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` })
+        },
         (payload) => {
           console.log('Realtime chuti change received:', payload);
           fetchRecords();
@@ -999,10 +1006,15 @@ export const useDashboardData = () => {
       .subscribe();
 
     const profilesChannel = supabase
-      .channel('realtime-profile-changes')
+      .channel(`realtime-profile-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'profiles' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'profiles',
+          ...(isApprover ? {} : { filter: `id=eq.${sessionUser.id}` })
+        },
         (payload) => {
           console.log('Realtime profile change received:', payload);
           if (payload.eventType === 'DELETE' && payload.old && payload.old.id === sessionUser.id) {
@@ -1038,22 +1050,29 @@ export const useDashboardData = () => {
               oldUser.break_time !== payload.new.break_time ||
               oldUser.is_setup_completed !== payload.new.is_setup_completed;
 
-            if (hasSubstantialChange) {
+            if (hasSubstantialChange && isApprover) {
               fetchRecords();
             }
           } else {
             // INSERT or DELETE
-            fetchRecords();
+            if (isApprover) {
+              fetchRecords();
+            }
           }
         }
       )
       .subscribe();
 
     const settlementsChannel = supabase
-      .channel('realtime-settlement-changes')
+      .channel(`realtime-settlement-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'leave_settlements' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'leave_settlements',
+          ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` })
+        },
         (payload) => {
           console.log('Realtime settlement change received:', payload);
           fetchRecords();
@@ -1066,7 +1085,7 @@ export const useDashboardData = () => {
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(settlementsChannel);
     };
-  }, [sessionUser, fetchRecords, setMessage]);
+  }, [sessionUser, profile, fetchRecords, setMessage]);
 
   // Check Authentication and Fetch Profile on Mount and Auth Changes
   useEffect(() => {

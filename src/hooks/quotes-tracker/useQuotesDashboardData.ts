@@ -887,11 +887,18 @@ export const useQuotesDashboardData = () => {
       )
       .subscribe();
 
+    const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
+
     const profilesChannel = supabase
-      .channel('realtime-profiles-changes')
+      .channel(`realtime-profiles-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'profiles' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'profiles',
+          ...(isApprover ? {} : { filter: `id=eq.${sessionUser.id}` })
+        },
         (payload) => {
           if (payload.eventType === 'DELETE' && payload.old && payload.old.id === sessionUser.id) {
             console.log('User profile deleted. Force logging out...');

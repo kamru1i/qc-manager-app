@@ -200,22 +200,10 @@ export function useGlobalNotifications(
       )
       .subscribe();
 
-    const profilesChannel = supabase
-      .channel('global-profiles-notif-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'profiles' },
-        () => {
-          fetchNotificationsData();
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(chutiChannel);
       supabase.removeChannel(holidayChannel);
       supabase.removeChannel(rulesChannel);
-      supabase.removeChannel(profilesChannel);
     };
   }, [sessionUser, profile, fetchNotificationsData]);
 
