@@ -121,19 +121,16 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v4.0.0** introduces the real-time welcome header sync, supervisor permission restructuring, read-only quotes visibility, and major KPI queries and egress performance optimizations.
+            **v4.0.1** is a patch release focused on maximizing Supabase database performance, eliminating unnecessary egress and realtime messages, and optimizing tab loading UX.
 
-            #### 🛠 What's New in v4.0.0:
+            #### 🛠 What's New in v4.0.1:
 
-            - **Welcome Greeting Sync** — Shipped dynamic localStorage cache reloading and `"profile-updated"` custom window events, resolving the stale "Welcome, User" greeting instantly on onboarding setup or settings update.
-            - **Supervisor Access Restructuring** — Restricted supervisors to view, edit, and update the Leave History, KPI sheets, and Profile Settings ONLY for staff under their direct or delegated supervision. Removed self-editing capability for supervisors.
-            - **Quotes History Visibility** — Supervisors can view the Quotes History and read-only Profile Settings of all users with quotes access, while their Leave and KPI details remain securely hidden.
-            - **Egress & Database Query Optimization** — Shipped three major database fetch optimizations to reduce Supabase egress and query count:
-              - Deprecated duplicate assessment checks inside the KPI panel, fetching once in the background on month changes and caching the appraisees.
-              - Separated supervisor lookups from monthly counts to prevent query loops on month selection.
-              - Cleaned up hook dependencies to prevent redundant read operations.
-            - **Appraiser Autocomplete Dropdown** — Designed a custom search suggestion dropdown matching the glassmorphic dark theme for the Appraiser Name field, with editing locks for supervisors/users.
-            - **Manual Numeric Inputs** — Disabled up/down browser spin buttons on all KPI numeric inputs to support clean manual typing.
+            - **Realtime Broadcast Storm Fix** — Added dynamic role-based filters (`user_id=eq...` or `id=eq...`) to all active real-time channels (`chuti`, `profiles`, `leave_settlements`, `records`) for regular staff. This guarantees staff only listen to their own updates and completely eliminates company-wide database refetch storms.
+            - **Stale Auth Closure Fix** — Shipped `sessionUserRef` tracking inside `AppPortal` and `useDashboardData` to resolve stale closures, preventing full profile and records refetches on background token refreshes (`TOKEN_REFRESHED`).
+            - **Removed Redundant Audit Logs Subscription** — Removed background real-time listener for the `audit_logs` table. Audit logs are now fetched only on-demand when opening the tab, saving thousands of background read queries.
+            - **Selective Rules Fetching** — Restricted compliance rules fetching and subscriptions to only execute for users with active Quotes workspace access.
+            - **Admin Pending Review Filtering** — Optimized the global notifications approvals query for Admins to fetch only active pending reviews instead of downloading company-wide historical sheets.
+            - **Instant Tab Transitions** — Converted all lazy-loaded sub-tab views inside the Quotes Tracker (like Daily Entry and Monthly Entry forms/tables) into static imports, eliminating brief skeleton loader flashes.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.0.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.0.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -172,6 +172,14 @@ npm run tauri build
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v4.0.1 — Patch Release
+*   **Realtime Egress Broadcast Storm Prevention**: Restructured all active real-time channels (`chuti`, `profiles`, `leave_settlements`, `records`) to apply dynamic role-based filters (`user_id=eq...` or `id=eq...`) for regular staff. This guarantees users only listen to their own updates and completely eliminates company-wide database refetch storms on multi-user writes.
+*   **Stale Auth Closure Fix**: Added `sessionUserRef` tracking inside `AppPortal` and `useDashboardData` to resolve stale closures. Prevents the app from executing full profile downloads and record refetches on background token refreshes (`TOKEN_REFRESHED`).
+*   **Removed Redundant Audit Logs Subscription**: Removed background real-time listener for the `audit_logs` table. Audit logs are now fetched only on-demand when opening the tab, saving thousands of background read queries.
+*   **Selective Compliance Rules Fetching**: Wrapped compliance rules fetching and subscriptions to only execute for users with active Quotes workspace access.
+*   **Admin Pending Review Query Filtering**: Optimized the global notifications approvals query for Admins to fetch only active pending rows (`status.eq.approved_by_supervisor` or pending reserve adjustments) instead of downloading company-wide historical sheets.
+*   **Instant Tab Transitions (UX Optimization)**: Converted all lazy-loaded sub-tab views inside the Quotes Tracker (like Daily Entry and Monthly Entry forms/tables) into static imports. This eliminates brief skeleton loader flashes, enabling millisecond-level snappy tab switches.
 
 ### 🚀 v4.0.0 — Major Release
 *   **Real-Time Welcome Greeting Sync**: Implemented dynamic localStorage cache reloading and `"profile-updated"` custom window events during onboarding setup and settings saving, ensuring the greeting header ("Welcome, User" issue) updates instantly without requiring browser refreshes.
