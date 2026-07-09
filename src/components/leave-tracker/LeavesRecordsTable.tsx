@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit, Trash2, Search, Plus } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
@@ -228,7 +228,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     setDeleteConfirmOpen(true);
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = useCallback(() => {
     setDeleteConfirmTitle("Delete Selected Leaves");
     setDeleteConfirmMessage(`Are you sure you want to delete ${selectedIds.length} selected records? This action cannot be undone.`);
     setOnConfirmDeleteAction(() => async () => {
@@ -245,7 +245,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       }
     });
     setDeleteConfirmOpen(true);
-  };
+  }, [selectedIds, records, onDeleteClick]);
 
   // Keyboard handlers: Escape to exit/clear selection, Delete to bulk delete
   useEffect(() => {

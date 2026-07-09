@@ -374,7 +374,7 @@ export const useRecordActions = ({
         
         for (const id of recordIds) {
           const updates = updatesMap[id];
-          const dbUpdates: any = {};
+          const dbUpdates: Partial<RecordItem> = {};
           if (updates.file_name !== undefined) dbUpdates.file_name = updates.file_name;
           if (updates.branch_name !== undefined) dbUpdates.branch_name = updates.branch_name.toUpperCase().trim();
           if (updates.codename !== undefined) dbUpdates.codename = updates.codename.toUpperCase().trim();
@@ -396,7 +396,7 @@ export const useRecordActions = ({
         const updatedCache = cached.map(r => {
           if (updatesMap[r.id]) {
             const rowUpdates = updatesMap[r.id];
-            const dbUpdates: any = {};
+            const dbUpdates: Partial<RecordItem> = {};
             if (rowUpdates.file_name !== undefined) dbUpdates.file_name = rowUpdates.file_name;
             if (rowUpdates.branch_name !== undefined) dbUpdates.branch_name = rowUpdates.branch_name.toUpperCase().trim();
             if (rowUpdates.codename !== undefined) dbUpdates.codename = rowUpdates.codename.toUpperCase().trim();
@@ -426,7 +426,7 @@ export const useRecordActions = ({
       // Online: Run all updates in parallel
       const updatePromises = recordIds.map(async (id) => {
         const rowUpdates = updatesMap[id];
-        const dbUpdates: any = {};
+        const dbUpdates: Partial<RecordItem> = {};
         if (rowUpdates.file_name !== undefined) dbUpdates.file_name = rowUpdates.file_name;
         if (rowUpdates.branch_name !== undefined) dbUpdates.branch_name = rowUpdates.branch_name.toUpperCase().trim();
         if (rowUpdates.codename !== undefined) dbUpdates.codename = rowUpdates.codename.toUpperCase().trim();

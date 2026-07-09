@@ -6,8 +6,6 @@ import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getOutstandingOfficeLeave, formatDaysAndHours } from '@/utils/dashboardHelpers';
 import { Modal } from '@/components/common/Modal';
-import { supabase } from '@/utils/supabase';
-import { sendPushNotification } from '@/utils/webPushHelper';
 
 interface UserSettleModalProps {
   showModal: boolean;
@@ -18,7 +16,7 @@ interface UserSettleModalProps {
   globalSettings: GlobalSettings;
   settlements: LeaveSettlement[];
   holidayResponses: GovtHolidayResponse[];
-  onSaveSettlementsBulk: (settlementsList: any[]) => Promise<boolean>;
+  onSaveSettlementsBulk: (settlementsList: Partial<LeaveSettlement>[]) => Promise<boolean>;
 }
 
 export function UserSettleModal({
@@ -491,7 +489,7 @@ export function UserSettleModal({
                                     placeholder="0"
                                   />
                                   <span className="text-[9px] text-slate-500 font-bold">d</span>
-                                  <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -506,7 +504,7 @@ export function UserSettleModal({
                                     placeholder="0"
                                   />
                                   <span className="text-[9px] text-slate-500 font-bold">h</span>
-                                  <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -564,7 +562,7 @@ export function UserSettleModal({
                                     placeholder="0"
                                   />
                                   <span className="text-[9px] text-slate-500 font-bold">d</span>
-                                  <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -579,7 +577,7 @@ export function UserSettleModal({
                                     placeholder="0"
                                   />
                                   <span className="text-[9px] text-slate-500 font-bold">h</span>
-                                  <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -638,7 +636,7 @@ export function UserSettleModal({
                                       placeholder="0"
                                     />
                                     <span className="text-[9px] text-slate-500 font-bold">d</span>
-                                    <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                                    <div className="w-px h-3 bg-slate-800 mx-0.5" />
                                     <input
                                       type="number"
                                       min={0}
@@ -653,7 +651,7 @@ export function UserSettleModal({
                                       placeholder="0"
                                     />
                                     <span className="text-[9px] text-slate-500 font-bold">h</span>
-                                    <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                                    <div className="w-px h-3 bg-slate-800 mx-0.5" />
                                     <input
                                       type="number"
                                       min={0}
@@ -732,7 +730,7 @@ export function UserSettleModal({
             type="button"
             onClick={handleSave}
             disabled={submitting || displayItems.length === 0 || !isAllAllocatedCorrectly}
-            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {submitting ? 'Submitting...' : 'Submit Preferences'}

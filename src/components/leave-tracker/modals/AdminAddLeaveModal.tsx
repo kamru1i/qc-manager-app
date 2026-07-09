@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { RefreshCw, Calendar, AlertTriangle, Loader } from "lucide-react";
-import { Profile } from "@/types";
+import { Profile, LeaveSettlement, GovtHolidayResponse } from "@/types";
 import { AddLeaveFormFields } from "@/components/leave-tracker/AddLeaveFormFields";
 import { supabase } from "@/utils/supabase";
 import {
@@ -28,7 +28,7 @@ interface AdminAddLeaveModalProps {
   onSuccess: () => void;
   records: ChutiRecord[];
   globalSettings: GlobalSettings;
-  leaveSettlements?: any[];
+  leaveSettlements?: LeaveSettlement[];
 }
 
 export function AdminAddLeaveModal({
@@ -52,7 +52,7 @@ export function AdminAddLeaveModal({
   const [bulkDates, setBulkDates] = useState<string[]>([]);
   const [bulkAdjustments, setBulkAdjustments] = useState<boolean[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [userResponses, setUserResponses] = useState<any[]>([]);
+  const [userResponses, setUserResponses] = useState<GovtHolidayResponse[]>([]);
   const [loadingResponses, setLoadingResponses] = useState(true);
 
   // Fetch responses when staffProfile changes
@@ -154,7 +154,7 @@ export function AdminAddLeaveModal({
     : 0;
 
   const reservedCount = userResponses.filter(
-    (r: any) => r.response === "reserve",
+    (r: GovtHolidayResponse) => r.response === "reserve",
   ).length;
   const govtHolidayTotal = reservedCount;
   const govtHolidayRemaining = Math.max(
@@ -493,7 +493,7 @@ export function AdminAddLeaveModal({
                     disabled={
                       submitting || !!validationError || isDuplicateDate
                     }
-                    className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {submitting && (
                       <RefreshCw className="h-3.5 w-3.5 animate-spin" />
