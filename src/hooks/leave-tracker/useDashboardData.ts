@@ -51,6 +51,8 @@ export const useDashboardData = () => {
     profilesListRef.current = profilesList;
   }, [profilesList]);
 
+  const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
   // Navigation / Tab states
   const [adminActiveTab, setAdminActiveTab] = useState<'user' | 'admin'>('admin');
   const [viewingStaffId, setViewingStaffIdState] = useState<string | null>(() => {
@@ -992,8 +994,15 @@ export const useDashboardData = () => {
 
     const isApprover = profile.role === 'admin' || profile.role === 'supervisor';
 
-    const chutiChannel = supabase
-      .channel(`realtime-chuti-changes-${sessionUser.id}`)
+    const handleRealtimeChange = () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+      realtimeDebounceRef.current = setTimeout(() => {
+        fetchRecords();
+      }, 800);
+    };
+
+    const dashboardChannel = supabase
+      .channel(`realtime-dashboard-${sessionUser.id}`)
       .on(
         'postgres_changes',
         { 
@@ -1004,13 +1013,9 @@ export const useDashboardData = () => {
         },
         (payload) => {
           console.log('Realtime chuti change received:', payload);
-          fetchRecords();
+          handleRealtimeChange();
         }
       )
-      .subscribe();
-
-    const profilesChannel = supabase
-      .channel(`realtime-profile-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
         { 
@@ -1055,20 +1060,16 @@ export const useDashboardData = () => {
               oldUser.is_setup_completed !== payload.new.is_setup_completed;
 
             if (hasSubstantialChange && isApprover) {
-              fetchRecords();
+              handleRealtimeChange();
             }
           } else {
             // INSERT or DELETE
             if (isApprover) {
-              fetchRecords();
+              handleRealtimeChange();
             }
           }
         }
       )
-      .subscribe();
-
-    const settlementsChannel = supabase
-      .channel(`realtime-settlement-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
         { 
@@ -1079,15 +1080,14 @@ export const useDashboardData = () => {
         },
         (payload) => {
           console.log('Realtime settlement change received:', payload);
-          fetchRecords();
+          handleRealtimeChange();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(chutiChannel);
-      supabase.removeChannel(profilesChannel);
-      supabase.removeChannel(settlementsChannel);
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+      supabase.removeChannel(dashboardChannel);
     };
   }, [sessionUser, profile, fetchRecords, setMessage]);
 

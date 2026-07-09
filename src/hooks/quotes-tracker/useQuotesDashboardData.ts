@@ -871,8 +871,10 @@ export const useQuotesDashboardData = () => {
   useEffect(() => {
     if (!sessionUser) return;
 
-    const recordsChannel = supabase
-      .channel('realtime-records-changes')
+    const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
+
+    const quotesChannel = supabase
+      .channel(`realtime-quotes-${sessionUser.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${sessionUser.id}` },
@@ -885,12 +887,6 @@ export const useQuotesDashboardData = () => {
           }, 500);
         }
       )
-      .subscribe();
-
-    const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
-
-    const profilesChannel = supabase
-      .channel(`realtime-profiles-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
         { 
@@ -961,8 +957,7 @@ export const useQuotesDashboardData = () => {
 
     return () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      supabase.removeChannel(recordsChannel);
-      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(quotesChannel);
     };
   }, [sessionUser, profile, fetchRecords, fetchAvailableDates, router, setProfile, setProfilesList]);
 

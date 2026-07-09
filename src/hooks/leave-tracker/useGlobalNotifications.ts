@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
@@ -22,6 +22,7 @@ export function useGlobalNotifications(
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
   const [syncedApprovalsCount, setSyncedApprovalsCount] = useState<number | null>(null);
+  const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync approvals count from dashboard event in real-time
   useEffect(() => {
@@ -172,48 +173,39 @@ export function useGlobalNotifications(
     const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
     const filter = isApprover ? undefined : `user_id=eq.${sessionUser.id}`;
 
-    const chutiChannel = supabase
-      .channel('global-chuti-notif-changes')
+    const handleRealtimeChange = () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+      realtimeDebounceRef.current = setTimeout(() => {
+        fetchNotificationsData();
+      }, 1000);
+    };
+
+    const notifChannel = supabase
+      .channel(`global-notif-changes-${sessionUser.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chuti', ...(filter ? { filter } : {}) },
-        () => {
-          fetchNotificationsData();
-        }
+        handleRealtimeChange
       )
-      .subscribe();
-
-    const holidayChannel = supabase
-      .channel('global-holiday-notif-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'govt_holiday_responses', ...(filter ? { filter } : {}) },
-        () => {
-          fetchNotificationsData();
-        }
-      )
-      .subscribe();
+        handleRealtimeChange
+      );
 
-    let rulesChannel: any = null;
     if (profile?.has_quotes_access) {
-      rulesChannel = supabase
-        .channel(`global-rules-notif-changes-${sessionUser.id}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'compliance_rules' },
-          () => {
-            fetchNotificationsData();
-          }
-        )
-        .subscribe();
+      notifChannel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'compliance_rules' },
+        handleRealtimeChange
+      );
     }
 
+    notifChannel.subscribe();
+
     return () => {
-      supabase.removeChannel(chutiChannel);
-      supabase.removeChannel(holidayChannel);
-      if (rulesChannel) {
-        supabase.removeChannel(rulesChannel);
-      }
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+      supabase.removeChannel(notifChannel);
     };
   }, [sessionUser, profile, fetchNotificationsData]);
 

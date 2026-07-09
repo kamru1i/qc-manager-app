@@ -361,8 +361,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     const isSupervisedByMe = hasStaffAccess(viewingStaff);
     if (!isSupervisedByMe) return;
 
-    const chutiChannel = supabase
-      .channel(`rt-viewing-staff-chuti-${viewingStaff.id}`)
+    const staffChannel = supabase
+      .channel(`rt-viewing-staff-${viewingStaff.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chuti', filter: `user_id=eq.${viewingStaff.id}` },
@@ -370,10 +370,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
           debouncedFetchStaffLeaveData(viewingStaff.id);
         }
       )
-      .subscribe();
-
-    const settlementsChannel = supabase
-      .channel(`rt-viewing-staff-settlements-${viewingStaff.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'leave_settlements', filter: `user_id=eq.${viewingStaff.id}` },
@@ -381,10 +377,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
           debouncedFetchStaffLeaveData(viewingStaff.id);
         }
       )
-      .subscribe();
-
-    const holidayResponsesChannel = supabase
-      .channel(`rt-viewing-staff-holidays-${viewingStaff.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'govt_holiday_responses', filter: `user_id=eq.${viewingStaff.id}` },
@@ -395,9 +387,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       .subscribe();
 
     return () => {
-      supabase.removeChannel(chutiChannel);
-      supabase.removeChannel(settlementsChannel);
-      supabase.removeChannel(holidayResponsesChannel);
+      supabase.removeChannel(staffChannel);
     };
   }, [viewingStaff, debouncedFetchStaffLeaveData, profile, hasStaffAccess]);
 
