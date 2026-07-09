@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.1.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.1.3** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -172,6 +172,12 @@ npm run tauri build
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v4.1.3 — Patch Release
+*   **Duplicate Record Cleanups**: Identified and removed 717 duplicate database records by grouping matching `codename`, `file_name`, and `submitted_at` values.
+*   **Persistent Grid Row Selection**: Refactored selection state hooks inside `RecordsTable.tsx` to preserve row selections during background refetches or database updates.
+*   **Keyboard Deletion Shortcuts**: Integrated a global `Delete` keyboard shortcut in Quotes and Leaves tables to trigger bulk-deletion flows on selected records (with input-typing guards).
+*   **Code Quality & Warnings Remediation**: Addressed ESLint warnings, resolved `any` declarations with typed props, fixed hoist ordering, and cleaned up duplicate CSS styles in `UserSettleModal`, `AdminAddLeaveModal`, and `useRecordActions`.
 
 ### 🚀 v4.1.2 — Patch Release
 *   **Auto Fetch and Input Clearing Fix**: Resolved issues in multiple modals (`CustomEntryModal`, `AdminAddLeaveModal`, `UserSettleModal`) where inputs were cleared upon background updates or data fetches. Implemented transition guards to verify `showModal`/`isOpen` state shifts, preventing field resets.
