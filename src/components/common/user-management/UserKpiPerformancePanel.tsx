@@ -979,7 +979,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
   // Joined KPI Skills string
   const skills = targetStaff.global_settings?.kpi_skills || [];
-  const kpiSkillsJoined = skills.length > 0 ? skills.join(', ') : 'Spoken English, Communication skill';
+  const kpiSkillsJoined = skills.length > 0 ? skills.join(', ') : '';
 
   if (loading) {
     return (

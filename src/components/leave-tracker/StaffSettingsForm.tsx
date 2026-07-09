@@ -1140,7 +1140,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   kpiSkills.map((skill) => (
                     <div
                       key={skill}
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-850/80 border border-slate-750 text-slate-350 rounded-lg text-xs font-medium"
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-950/20 border border-blue-900/30 text-blue-300 rounded-lg text-xs font-medium"
                     >
                       <span>{skill}</span>
                       {(isAdmin || isSupervisor) && (
@@ -1149,7 +1149,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           onClick={() => {
                             setKpiSkills(kpiSkills.filter((s) => s !== skill));
                           }}
-                          className="text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer text-[10px]"
+                          className="text-blue-500 hover:text-red-400 font-bold transition-colors cursor-pointer text-[10px]"
                         >
                           ✕
                         </button>
