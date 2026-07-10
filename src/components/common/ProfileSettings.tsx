@@ -333,7 +333,7 @@ export function ProfileSettings({
             Personal & Shift Settings
           </h3>
 
-          <form onSubmit={handleSaveSettings} className="space-y-4">
+          <form id="profile-settings-form" onSubmit={handleSaveSettings} className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Codename</label>
@@ -380,26 +380,7 @@ export function ProfileSettings({
               disabled={profile?.profile_change_status === 'pending'}
             />
 
-            {profile?.profile_change_status !== 'pending' && (
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting || !hasChanges}
-                  className={`w-full flex justify-center py-2.5 px-4 border rounded-xl shadow-lg text-xs font-bold transition-all items-center gap-2 ${
-                    submitting || !hasChanges
-                      ? 'border-slate-800 bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-50'
-                      : 'border-transparent text-white bg-blue-600 hover:bg-blue-500 hover:shadow-blue-600/10 cursor-pointer active:scale-98'
-                  }`}
-                >
-                  {submitting && <RefreshCw className="h-4 w-4 animate-spin" />}
-                  {submitting
-                    ? 'Updating...'
-                    : (profile?.role === 'admin' || !profile?.has_edited_profile
-                        ? 'Save Changes'
-                        : 'Submit Request for Approval')}
-                </button>
-              </div>
-            )}
+
           </form>
         </div>
 
@@ -612,6 +593,29 @@ export function ProfileSettings({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Bottom Save Changes Bar */}
+      {profile?.profile_change_status !== 'pending' && (
+        <div className="flex justify-end pt-4 border-t border-slate-800/60 max-w-4xl">
+          <button
+            type="submit"
+            form="profile-settings-form"
+            disabled={submitting || !hasChanges}
+            className={`w-full md:w-auto md:px-10 flex justify-center py-3 px-6 border rounded-xl shadow-lg text-xs font-bold transition-all items-center gap-2 ${
+              submitting || !hasChanges
+                ? 'border-slate-800 bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-50'
+                : 'border-transparent text-white bg-blue-600 hover:bg-blue-500 hover:shadow-blue-600/10 cursor-pointer active:scale-98'
+            }`}
+          >
+            {submitting && <RefreshCw className="h-4 w-4 animate-spin" />}
+            {submitting
+              ? 'Updating...'
+              : (profile?.role === 'admin' || !profile?.has_edited_profile
+                  ? 'Save Changes'
+                  : 'Submit Request for Approval')}
+          </button>
         </div>
       )}
     </div>
