@@ -76,8 +76,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
 }) => {
   // Staff Stats and Quota calculations for the Leave History sub-tab
   const staffStatsData = React.useMemo(() => {
-    const approved = viewingStaffRecords.filter(r => r.status === 'approved' && r.date && r.date.substring(0, 4) === selectedYear);
-    const baseStats = calculateStats(approved, viewingStaff.working_hours || 9.5);
+    const yearlyRecords = viewingStaffRecords.filter(r => selectedYear === 'all' || (r.date && r.date.substring(0, 4) === selectedYear));
+    const baseStats = calculateStats(yearlyRecords, viewingStaff.working_hours || 9.5);
     const totalShortMins = parseIntervalToMinutes(baseStats.shortHours);
     const netShortMins = Math.max(0, totalShortMins - (viewingStaff.converted_short_leaves_hours ?? 0) * 60);
     const displayShortHours = formatDuration(netShortMins);
