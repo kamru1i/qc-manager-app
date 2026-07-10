@@ -161,7 +161,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   // Filtered records for Leave History list
   const filteredStaffRecords = React.useMemo(() => {
     return viewingStaffRecords.filter(r => {
-      if (r.date && r.date.substring(0, 4) !== selectedYear) return false;
+      const isApproved = r.status === 'approved';
+      if (isApproved && selectedYear !== 'all' && r.date && r.date.substring(0, 4) !== selectedYear) return false;
       if (leaveFilterType !== 'all') {
         if (leaveFilterType === 'adjustment' && !r.adjustment) return false;
         if (leaveFilterType !== 'adjustment' && r.leave_type !== leaveFilterType) return false;
@@ -207,6 +208,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         globalSettings={globalSettings}
         filteredUserRecords={filteredStaffRecords}
         userRecords={viewingStaffRecords}
+        title={`${viewingStaff.full_name}'s Leave Records`}
+        emptyMessage={`No leave records found for ${viewingStaff.full_name}.`}
         selectedYear={selectedYear}
         setSelectedYear={setSelectedYear}
         availableYears={availableYears}

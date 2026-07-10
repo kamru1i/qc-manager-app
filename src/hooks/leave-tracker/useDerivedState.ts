@@ -64,7 +64,8 @@ export function useDerivedState({
   // --- Record Filtering ---
   const applyFilters = useCallback(<T extends ChutiRecord>(records: T[]): T[] => {
     return records.filter(r => {
-      if (selectedYear !== 'all' && r.date && r.date.substring(0, 4) !== selectedYear) return false;
+      const isApproved = r.status === 'approved';
+      if (isApproved && selectedYear !== 'all' && r.date && r.date.substring(0, 4) !== selectedYear) return false;
       if (filterType !== 'all' && r.leave_type !== filterType) return false;
       if (filterStartDate && r.date < filterStartDate) return false;
       if (filterEndDate && r.date > filterEndDate) return false;

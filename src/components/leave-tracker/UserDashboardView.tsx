@@ -61,6 +61,8 @@ interface UserDashboardViewProps {
   hideDelete?: boolean;
   /** When false, hides Add Leave button (normal user view) */
   showAddLeave?: boolean;
+  title?: string;
+  emptyMessage?: string;
 }
 
 export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
@@ -95,6 +97,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   onBackClick,
   hideDelete = false,
   showAddLeave = true,
+  title = "My Annual Leave Records",
+  emptyMessage = "No leave records found. Submit a new entry.",
 }) => {
   // Eligibility & Deduction
   const isOfficeLeaveEligible = profile?.eligible_office_leave !== false;
@@ -460,8 +464,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         formatDate={formatDate}
         formatTimeToAMPM={formatTimeToAMPM}
         getCleanComment={getCleanComment}
-        title="My Annual Leave Records"
-        emptyMessage="No leave records found. Submit a new entry."
+        title={title}
+        emptyMessage={emptyMessage}
         showPendingBadge={true}
         initialFetchDone={initialFetchDone}
         hideDelete={hideDelete}

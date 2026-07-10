@@ -132,6 +132,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [leaveFilterEndDate, setLeaveFilterEndDate] = useState('');
   const [leaveSearchQuery, setLeaveSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState<string>(() => new Date().getFullYear().toString());
+  const [detailSelectedYear, setDetailSelectedYear] = useState<string>('all');
 
   // Change Credentials Modal State
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
@@ -1017,8 +1018,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     viewingStaffHolidayResponses={viewingStaffHolidayResponses}
                     globalSettings={globalSettings}
                     loadingLeaveData={loadingLeaveData}
-                    selectedYear={selectedYear}
-                    setSelectedYear={setSelectedYear}
+                    selectedYear={detailSelectedYear}
+                    setSelectedYear={setDetailSelectedYear}
                     availableYears={availableYears}
                     leaveFilterType={leaveFilterType}
                     setLeaveFilterType={setLeaveFilterType}
