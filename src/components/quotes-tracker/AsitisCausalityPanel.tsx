@@ -95,13 +95,12 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
       if (data && data.code) {
         const parsed = JSON.parse(data.code);
         if (parsed.mainTitles) setMainTitles(parsed.mainTitles);
-        if (parsed.drivers) setDrivers(parsed.drivers);
+        // Drivers are session-level – load from draft, not from DB template
       } else {
         const savedDraft = localStorage.getItem("quotes_asitis_causality_template_draft");
         if (savedDraft) {
           const parsed = JSON.parse(savedDraft);
           if (parsed.mainTitles) setMainTitles(parsed.mainTitles);
-          if (parsed.drivers) setDrivers(parsed.drivers);
         }
       }
     } catch {
@@ -110,7 +109,6 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
         try {
           const parsed = JSON.parse(savedDraft);
           if (parsed.mainTitles) setMainTitles(parsed.mainTitles);
-          if (parsed.drivers) setDrivers(parsed.drivers);
         } catch {}
       }
     } finally {
@@ -122,9 +120,9 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
 
   useEffect(() => {
     if (!dbLoading) {
-      localStorage.setItem("quotes_asitis_causality_template_draft", JSON.stringify({ mainTitles, drivers }));
+      localStorage.setItem("quotes_asitis_causality_template_draft", JSON.stringify({ mainTitles }));
     }
-  }, [mainTitles, drivers, dbLoading]);
+  }, [mainTitles, dbLoading]);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -136,6 +134,7 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
     return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
+  // ─── Template (field text) editing ───────────────────────────────────────
   const handleMainTitleChange = (id: string, newText: string) =>
     setMainTitles((prev) => prev.map((t) => (t.id === id ? { ...t, text: newText } : t)));
 
@@ -180,6 +179,7 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
     }
   };
 
+  // ─── Driver section management (available to all users) ──────────────────
   const handleAddDriver = () => {
     if (drivers.length >= 5) { toast.error("You can add up to 5 additional drivers only."); return; }
     const nextId = drivers.length + 1;
@@ -203,10 +203,10 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
     );
   };
 
+  // ─── Misc handlers ────────────────────────────────────────────────────────
   const handleReset = () => {
     if (!confirm("Are you sure you want to reset the Asitis template to its default layout?")) return;
     setMainTitles(DEFAULT_MAIN_TITLES);
-    setDrivers([]);
     localStorage.removeItem("quotes_asitis_causality_template_draft");
     toast.success("Asitis template reset to defaults.");
   };
@@ -233,7 +233,7 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
     try {
       const { error } = await supabase.from("login_codes").upsert({
         login_id: "__asitis_causality_template__",
-        code: JSON.stringify({ mainTitles, drivers }),
+        code: JSON.stringify({ mainTitles }),
         name: "Asitis Causality Template",
         updated_at: new Date().toISOString()
       });
@@ -269,7 +269,7 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
 
   return (
     <div className="space-y-5" ref={containerRef}>
-      {/* Header row */}
+      {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-indigo-400" />
@@ -278,28 +278,25 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
         <div className="flex items-center gap-2">
           {isEditMode ? (
             <>
-              <button
-                onClick={handleSaveToDB}
-                disabled={dbSaving}
-                className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
-              >
+              <button onClick={handleSaveToDB} disabled={dbSaving}
+                className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50">
                 {dbSaving ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving...</> : <><CloudLightning className="h-3.5 w-3.5" />Save to Cloud</>}
               </button>
-              <button onClick={handleCancelEdit} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer">
+              <button onClick={handleCancelEdit}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer">
                 <X className="h-3.5 w-3.5" />Cancel
               </button>
             </>
           ) : (
             <>
               {canManageTemplate && (
-                <button onClick={() => setIsEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer">
+                <button onClick={() => setIsEditMode(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer">
                   <Edit2 className="h-3.5 w-3.5 text-indigo-400" />Edit Template
                 </button>
               )}
-              <button
-                onClick={handleCopyText}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-md ${copied ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400" : "bg-slate-900 hover:bg-slate-800 border-slate-800 text-white"}`}
-              >
+              <button onClick={handleCopyText}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer shadow-md ${copied ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400" : "bg-slate-900 hover:bg-slate-800 border-slate-800 text-white"}`}>
                 {copied ? <><Check className="h-3.5 w-3.5" />Copied</> : <><Copy className="h-3.5 w-3.5" />Copy Template</>}
               </button>
             </>
@@ -307,85 +304,160 @@ export const AsitisCausalityPanel: React.FC<AsitisCausalityPanelProps> = ({ prof
         </div>
       </div>
 
-      {/* Layout grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {isEditMode && (
-          <div className="lg:col-span-7 space-y-6 animate-fade-in animate-duration-250">
+      {/* ── Edit Mode: two-column editor + preview ─────────────────────── */}
+      {isEditMode ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Editor column */}
+          <div className="lg:col-span-7 space-y-5 animate-fade-in animate-duration-250">
             <div className="flex justify-end">
-              <button onClick={handleReset} className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-900 border border-slate-850 hover:bg-slate-800 text-[10px] text-slate-400 hover:text-white transition-all cursor-pointer font-semibold">
+              <button onClick={handleReset}
+                className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-900 border border-slate-850 hover:bg-slate-800 text-[10px] text-slate-400 hover:text-white transition-all cursor-pointer font-semibold">
                 <RotateCcw className="h-3 w-3" />Reset Defaults
               </button>
             </div>
+
+            {/* Main titles editor */}
             <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
               <h5 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Main Applicant Format</h5>
               <div className="space-y-2">
                 {mainTitles.map((title) => (
                   <div key={title.id} className="flex items-center gap-2 group">
-                    <input
-                      type="text"
-                      value={title.text}
+                    <input type="text" value={title.text}
                       onChange={(e) => handleMainTitleChange(title.id, e.target.value)}
                       placeholder="Field title..."
-                      className="flex-1 px-3 py-1.5 bg-slate-955 border border-slate-850 hover:border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-xs transition-all font-semibold"
-                    />
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button type="button" onClick={() => addTitleBelow(title.id)} className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-indigo-500 hover:text-indigo-400 text-slate-400 transition-all cursor-pointer" title="Add field below"><Plus className="h-3.5 w-3.5" /></button>
-                      <button type="button" onClick={() => deleteTitle(title.id)} className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-red-500 hover:text-red-400 text-slate-400 transition-all cursor-pointer" title="Delete field"><Trash2 className="h-3.5 w-3.5" /></button>
+                      className="flex-1 px-3 py-1.5 bg-slate-955 border border-slate-850 hover:border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition-all font-semibold" />
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button type="button" onClick={() => addTitleBelow(title.id)}
+                        className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-indigo-500 hover:text-indigo-400 text-slate-400 transition-all cursor-pointer" title="Add below">
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                      <button type="button" onClick={() => deleteTitle(title.id)}
+                        className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-red-500 hover:text-red-400 text-slate-400 transition-all cursor-pointer" title="Delete">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Driver editors (only in edit mode) */}
             {drivers.map((driver) => (
               <div key={driver.id} className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-5 space-y-4 animate-fade-in">
                 <div className="flex justify-between items-center border-b border-slate-850/60 pb-2 border-dashed">
-                  <h5 className="text-xs font-bold text-teal-400 uppercase tracking-wider">Additional Driver {String(driver.id).padStart(2, "0")} Format</h5>
-                  <button type="button" onClick={() => handleRemoveDriver(driver.id)} className="flex items-center gap-1 text-[10px] text-red-500 hover:text-red-400 font-semibold bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md transition-all cursor-pointer"><Trash2 className="h-3 w-3" />Remove</button>
+                  <h5 className="text-xs font-bold text-teal-400 uppercase tracking-wider">
+                    Additional Driver {String(driver.id).padStart(2, "0")} Format
+                  </h5>
+                  <button type="button" onClick={() => handleRemoveDriver(driver.id)}
+                    className="flex items-center gap-1 text-[10px] text-red-500 hover:text-red-400 font-semibold bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md transition-all cursor-pointer">
+                    <Trash2 className="h-3 w-3" />Remove
+                  </button>
                 </div>
                 <div className="space-y-2">
                   {driver.titles.map((title) => (
                     <div key={title.id} className="flex items-center gap-2 group">
-                      <input type="text" value={title.text} onChange={(e) => handleDriverTitleChange(driver.id, title.id, e.target.value)} placeholder="Driver field title..." className="flex-1 px-3 py-1.5 bg-slate-955 border border-slate-850 hover:border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-xs transition-all font-semibold" />
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button type="button" onClick={() => addTitleBelow(title.id, driver.id)} className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-teal-500 hover:text-teal-400 text-slate-400 transition-all cursor-pointer" title="Add field below"><Plus className="h-3.5 w-3.5" /></button>
-                        <button type="button" onClick={() => deleteTitle(title.id, driver.id)} className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-red-500 hover:text-red-400 text-slate-400 transition-all cursor-pointer" title="Delete field"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <input type="text" value={title.text}
+                        onChange={(e) => handleDriverTitleChange(driver.id, title.id, e.target.value)}
+                        placeholder="Driver field title..."
+                        className="flex-1 px-3 py-1.5 bg-slate-955 border border-slate-850 hover:border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs transition-all font-semibold" />
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button type="button" onClick={() => addTitleBelow(title.id, driver.id)}
+                          className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-teal-500 hover:text-teal-400 text-slate-400 transition-all cursor-pointer" title="Add below">
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                        <button type="button" onClick={() => deleteTitle(title.id, driver.id)}
+                          className="p-1.5 rounded bg-slate-900 border border-slate-800 hover:border-red-500 hover:text-red-400 text-slate-400 transition-all cursor-pointer" title="Delete">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
+
+            {/* Add Driver — visible in edit mode */}
             {drivers.length < 5 && (
-              <button onClick={handleAddDriver} className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-slate-800 hover:border-indigo-500/40 rounded-xl bg-transparent hover:bg-slate-900/20 text-slate-400 hover:text-indigo-400 transition-all font-semibold text-xs cursor-pointer">
-                <PlusCircle className="h-4 w-4" />Add Driver {String(drivers.length + 1).padStart(2, "0")}
+              <button onClick={handleAddDriver}
+                className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-slate-800 hover:border-indigo-500/40 rounded-xl bg-transparent hover:bg-slate-900/20 text-slate-400 hover:text-indigo-400 transition-all font-semibold text-xs cursor-pointer">
+                <PlusCircle className="h-4 w-4" />
+                Add Driver {String(drivers.length + 1).padStart(2, "0")}
               </button>
             )}
           </div>
-        )}
 
-        <div className={`space-y-3 transition-all duration-300 ${isEditMode ? "lg:col-span-5" : "lg:col-span-12"}`}>
-          <div className="flex justify-between items-center flex-wrap gap-2">
-            <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{isEditMode ? "Live Preview" : "Template Format"}</h5>
-            <span className="text-[10px] text-slate-500 italic font-semibold">{isEditMode ? "Updates instantly as you edit" : "Ready to copy to clipboard"}</span>
+          {/* Live preview column */}
+          <div className="lg:col-span-5 space-y-3">
+            <div className="flex justify-between items-center">
+              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Preview</h5>
+              <span className="text-[10px] text-slate-500 italic font-semibold">Updates instantly as you edit</span>
+            </div>
+            <div
+              onContextMenu={handlePreviewContextMenu}
+              className="w-full rounded-2xl bg-slate-950 border border-slate-900 shadow-inner px-5 py-4 font-mono text-xs text-slate-300 leading-relaxed break-all relative whitespace-pre-wrap select-all">
+              {mainTitles.map((t, idx) => <div key={idx}>{t.text}</div>)}
+              {drivers.map((d) => (
+                <div key={d.id} className="mt-4">{d.titles.map((t) => <div key={t.id}>{t.text}</div>)}</div>
+              ))}
+            </div>
           </div>
-          <div
-            onContextMenu={handlePreviewContextMenu}
-            className="w-full rounded-2xl bg-slate-950 border border-slate-900 shadow-inner px-5 py-4 font-mono text-xs text-slate-300 leading-relaxed break-all relative whitespace-pre-wrap select-all"
-          >
-            {mainTitles.map((t, idx) => <div key={idx}>{t.text}</div>)}
+        </div>
+      ) : (
+        /* ── View Mode: full-width preview + driver management ─────────── */
+        <div className="space-y-4">
+          {/* Full-width preview */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Template Format</h5>
+              <span className="text-[10px] text-slate-500 italic font-semibold">Ready to copy to clipboard</span>
+            </div>
+            <div
+              onContextMenu={handlePreviewContextMenu}
+              className="w-full rounded-2xl bg-slate-950 border border-slate-900 shadow-inner px-5 py-4 font-mono text-xs text-slate-300 leading-relaxed break-all relative whitespace-pre-wrap select-all">
+              {mainTitles.map((t, idx) => <div key={idx}>{t.text}</div>)}
+              {drivers.map((d) => (
+                <div key={d.id} className="mt-4">{d.titles.map((t) => <div key={t.id}>{t.text}</div>)}</div>
+              ))}
+              {/* Context menu (admin/supervisor only) */}
+              {previewContextMenu && (
+                <div ref={previewContextMenuRef}
+                  style={{ top: `${previewContextMenu.y}px`, left: `${previewContextMenu.x}px` }}
+                  className="absolute z-30 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1 min-w-[120px] overflow-hidden">
+                  <button type="button" onClick={() => { handleCopyText(); setPreviewContextMenu(null); }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-indigo-600 hover:text-white transition-all text-xs font-bold text-slate-200 cursor-pointer flex items-center gap-1.5">
+                    <Copy className="h-3.5 w-3.5" />Copy Layout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Driver management — ALWAYS visible in view mode */}
+          <div className="space-y-2">
+            {/* Existing driver blocks with remove */}
             {drivers.map((d) => (
-              <div key={d.id} className="mt-4">{d.titles.map((t) => <div key={t.id}>{t.text}</div>)}</div>
-            ))}
-            {previewContextMenu && (
-              <div ref={previewContextMenuRef} style={{ top: `${previewContextMenu.y}px`, left: `${previewContextMenu.x}px` }} className="absolute z-30 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1 min-w-[120px] overflow-hidden">
-                <button type="button" onClick={() => { handleCopyText(); setPreviewContextMenu(null); }} className="w-full text-left px-3.5 py-2 hover:bg-indigo-600 hover:text-white transition-all text-xs font-bold text-slate-200 cursor-pointer flex items-center gap-1.5">
-                  <Copy className="h-3.5 w-3.5" />Copy Layout
+              <div key={d.id}
+                className="flex items-center justify-between px-4 py-2.5 bg-slate-900/40 border border-slate-800/60 rounded-xl">
+                <span className="text-xs font-bold text-teal-400">
+                  Additional Driver {String(d.id).padStart(2, "0")}
+                </span>
+                <button type="button" onClick={() => handleRemoveDriver(d.id)}
+                  className="flex items-center gap-1 text-[10px] text-red-500 hover:text-red-400 font-semibold bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md transition-all cursor-pointer">
+                  <Trash2 className="h-3 w-3" />Remove
                 </button>
               </div>
+            ))}
+            {/* Add Driver button — always visible */}
+            {drivers.length < 5 && (
+              <button onClick={handleAddDriver}
+                className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-slate-800 hover:border-indigo-500/40 rounded-xl bg-transparent hover:bg-slate-900/20 text-slate-400 hover:text-indigo-400 transition-all font-semibold text-xs cursor-pointer">
+                <PlusCircle className="h-4 w-4" />
+                Add Driver {String(drivers.length + 1).padStart(2, "0")}
+              </button>
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
