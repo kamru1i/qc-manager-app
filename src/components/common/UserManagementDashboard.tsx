@@ -315,20 +315,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setViewingStaffRecords(chutiRes.data || []);
       setViewingStaffSettlements(sRes.data || []);
       setViewingStaffHolidayResponses(hrRes.data || []);
-
-      // Fetch global settings from admin profile
-      const { data: adminProfile, error: apError } = await supabase
-        .from('profiles')
-        .select('global_settings')
-        .eq('role', 'admin')
-        .limit(1)
-        .single();
-
-      if (!apError && adminProfile && adminProfile.global_settings) {
-        setGlobalSettings(adminProfile.global_settings);
-      } else {
-        setGlobalSettings(getGlobalSettingsFromProfile(profile));
-      }
+      // NOTE: admin global_settings are loaded once via a dedicated effect below,
+      // not on every staff-data load — they rarely change and this fires on each realtime event.
     } catch (e: unknown) {
       console.error('Failed to load staff leave data:', e);
       const err = e as Error & { status?: number };
@@ -342,6 +330,31 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     } finally {
       setLoadingLeaveData(false);
     }
+  }, []);
+
+  // Load admin global_settings once per mount (they rarely change). Previously this ran on
+  // every fetchStaffLeaveData call, issuing a profiles query per realtime event.
+  const adminSettingsFetchedRef = React.useRef(false);
+  useEffect(() => {
+    if (!profile || adminSettingsFetchedRef.current) return;
+    adminSettingsFetchedRef.current = true;
+
+    let cancelled = false;
+    (async () => {
+      const { data: adminProfile, error: apError } = await supabase
+        .from('profiles')
+        .select('global_settings')
+        .eq('role', 'admin')
+        .limit(1)
+        .single();
+      if (cancelled) return;
+      if (!apError && adminProfile && adminProfile.global_settings) {
+        setGlobalSettings(adminProfile.global_settings);
+      } else {
+        setGlobalSettings(prev => prev ?? getGlobalSettingsFromProfile(profile));
+      }
+    })();
+    return () => { cancelled = true; };
   }, [profile]);
 
   // Debounced wrapper to prevent duplicate fetch calls when realtime events and user actions fire together

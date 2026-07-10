@@ -208,30 +208,35 @@ export async function POST(request: NextRequest) {
     console.log(`[SendPush] Found ${subscriptions?.length || 0} subscriptions in database.`);
 
     // BROADCAST TO ACTIVE DESKTOP CLIENTS (TAURI)
-    // Even if they don't have a web push subscription, active desktop users will receive this broadcast
+    // Even if they don't have a web push subscription, active desktop users will receive this broadcast.
+    // Send to a per-user channel (`desktop-notifications-<userId>`) instead of one shared channel so
+    // only the targeted recipient's client receives the message — this avoids fanning every broadcast
+    // out to every connected desktop client (major realtime egress saver).
     try {
-      const response = await fetch(`${supabaseUrl}/realtime/v1/broadcast`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseServiceKey,
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          channel: 'desktop-notifications',
-          event: 'os-push',
-          payload: {
-            targetUserIds,
-            title,
-            body
-          }
-        }),
-      });
-      if (response.ok) {
-        console.log('[SendPush] Broadcasted notification to desktop clients successfully via REST API.');
-      } else {
-        console.warn('[SendPush] REST broadcast response status:', response.status);
-      }
+      const broadcastResults = await Promise.all(
+        targetUserIds.map(async (uid) => {
+          const response = await fetch(`${supabaseUrl}/realtime/v1/broadcast`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseServiceKey,
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              channel: `desktop-notifications-${uid}`,
+              event: 'os-push',
+              payload: {
+                targetUserIds: [uid],
+                title,
+                body
+              }
+            }),
+          });
+          return response.ok;
+        })
+      );
+      const okCount = broadcastResults.filter(Boolean).length;
+      console.log(`[SendPush] Broadcasted notification to ${okCount}/${targetUserIds.length} desktop client channels via REST API.`);
     } catch (broadcastErr) {
       console.warn('[SendPush] Failed to broadcast to desktop clients:', broadcastErr);
     }

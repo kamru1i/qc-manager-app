@@ -22,9 +22,11 @@ export function useDesktopNotifications(profileId?: string) {
         
         if (!permissionGranted || !mounted) return;
 
-        // Subscribe to Supabase realtime Broadcasts sent by /api/send-push
+        // Subscribe to Supabase realtime Broadcasts sent by /api/send-push.
+        // Per-user channel so this client only receives broadcasts targeted at it,
+        // instead of every desktop broadcast in the workspace.
         activeChannel = supabase
-          .channel('desktop-notifications')
+          .channel(`desktop-notifications-${profileId}`)
           .on(
             'broadcast',
             { event: 'os-push' },

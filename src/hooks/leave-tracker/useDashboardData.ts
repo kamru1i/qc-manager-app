@@ -989,14 +989,27 @@ export const useDashboardData = () => {
   }, [triggerAutoSync]);
 
   // Listen for real-time updates from Supabase
+  // Throttle: prevent rapid cascading refetches — minimum 3s between full fetches
+  const lastRealtimeFetchRef = useRef<number>(0);
+  const REALTIME_THROTTLE_MS = 3000;
+
   useEffect(() => {
     if (!sessionUser || !profile) return;
 
     const isApprover = profile.role === 'admin' || profile.role === 'supervisor';
 
     const handleRealtimeChange = () => {
+      // Notify useGlobalNotifications via DOM event (replaces its duplicate subscription)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('realtime-data-changed'));
+      }
+
+      const now = Date.now();
+      if (now - lastRealtimeFetchRef.current < REALTIME_THROTTLE_MS) return; // Throttle
+
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
       realtimeDebounceRef.current = setTimeout(() => {
+        lastRealtimeFetchRef.current = Date.now();
         fetchRecords();
       }, 800);
     };
@@ -1047,8 +1060,7 @@ export const useDashboardData = () => {
               setProfile(prev => prev ? { ...prev, ...payload.new } : (payload.new as Profile));
             }
             
-            // Only refetch if username, role, active status, or codename changed.
-            // Avoid refetching when only session activity (lastActive/global_settings) updates.
+            // Inline update profilesList from payload to avoid full refetch
             const oldUser = profilesListRef.current.find(p => p.id === payload.new.id);
             const hasSubstantialChange = !oldUser ||
               oldUser.username !== payload.new.username ||
@@ -1060,10 +1072,23 @@ export const useDashboardData = () => {
               oldUser.is_setup_completed !== payload.new.is_setup_completed;
 
             if (hasSubstantialChange && isApprover) {
-              handleRealtimeChange();
+              // Inline update the profiles list instead of full refetch
+              setProfilesList(prev => {
+                const idx = prev.findIndex(p => p.id === payload.new.id);
+                if (idx >= 0) {
+                  const updated = [...prev];
+                  updated[idx] = { ...updated[idx], ...payload.new } as Profile;
+                  return updated;
+                }
+                return prev;
+              });
+              // Notify notification hook
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('realtime-data-changed'));
+              }
             }
           } else {
-            // INSERT or DELETE
+            // INSERT or DELETE — needs full refetch for profiles
             if (isApprover) {
               handleRealtimeChange();
             }

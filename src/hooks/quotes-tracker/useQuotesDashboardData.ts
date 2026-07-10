@@ -354,7 +354,15 @@ export const useQuotesDashboardData = () => {
       // DANGER RECOVERY AUTO-RESTORE TRIGGER
       // Only trigger if: admin/supervisor, has 100+ cached records, AND the server count is
       // explicitly 0 (not null/undefined which can happen during auth token refresh after password change).
-      const hasAttemptedRestore = typeof window !== 'undefined' && sessionStorage.getItem('has_attempted_restore') === 'true';
+      // Guard against re-triggering the restore. sessionStorage alone is per-tab, so a fresh tab
+      // would have no guard and could re-upload everything (duplication). Also check a DB-level flag
+      // in the admin's profile.global_settings, which persists across tabs AND devices.
+      const existingSettings = (profile?.global_settings && typeof profile.global_settings === 'object')
+        ? (profile.global_settings as Record<string, any>)
+        : {};
+      const restoreDoneInDb = !!existingSettings.records_restored_at;
+      const hasAttemptedRestore = restoreDoneInDb ||
+        (typeof window !== 'undefined' && sessionStorage.getItem('has_attempted_restore') === 'true');
       if (profile && (profile.role === 'admin' || profile.role === 'supervisor') && cachedRecords.length > 100 && !hasAttemptedRestore) {
         try {
           const { count, error: countErr } = await supabase
@@ -374,32 +382,48 @@ export const useQuotesDashboardData = () => {
               if (typeof window !== 'undefined') {
                 sessionStorage.setItem('has_attempted_restore', 'true');
               }
-              console.log(`RECOVERY: Server records count is 0. Starting automated restoration of ${cachedRecords.length} records...`);
-              showToast('success', `Restoring ${cachedRecords.length} records from local cache. Please do not close the app...`);
-              
-              // Upload in batches of 100
-              const batchSize = 100;
-              let successCount = 0;
-              for (let i = 0; i < cachedRecords.length; i += batchSize) {
-                const batch = cachedRecords.slice(i, i + batchSize).map(r => ({
-                  user_id: r.user_id,
-                  file_name: r.file_name,
-                  branch_name: r.branch_name,
-                  codename: r.codename,
-                  file_type: r.file_type,
-                  submitted_at: r.submitted_at,
-                  created_at: r.created_at
-                }));
-                
-                const { error: insertError } = await supabase.from('records').insert(batch);
-                if (insertError) {
-                  console.error(`RECOVERY: Error restoring batch ${i}:`, insertError.message, insertError.details, insertError.hint, insertError.code);
-                } else {
-                  successCount += batch.length;
-                  console.log(`RECOVERY: Restored batch ${i} to ${i + batch.length}`);
+
+              // Persist a DB-level lock BEFORE uploading so other tabs/devices that also see an
+              // empty server won't independently trigger a restore and duplicate everything.
+              // If the lock write fails, skip the restore entirely — better to require a manual
+              // recovery than to risk duplicating the whole dataset.
+              const restoreLockSettings = { ...existingSettings, records_restored_at: new Date().toISOString() };
+              const { error: lockErr } = await supabase
+                .from('profiles')
+                .update({ global_settings: restoreLockSettings })
+                .eq('id', profile.id);
+
+              if (lockErr) {
+                console.error('RECOVERY: Failed to set DB restore lock — skipping restore to avoid duplication:', lockErr.message);
+              } else {
+                setProfile(prev => prev ? ({ ...prev, global_settings: restoreLockSettings } as Profile) : prev);
+                console.log(`RECOVERY: Server records count is 0. Starting automated restoration of ${cachedRecords.length} records...`);
+                showToast('success', `Restoring ${cachedRecords.length} records from local cache. Please do not close the app...`);
+
+                // Upload in batches of 100
+                const batchSize = 100;
+                let successCount = 0;
+                for (let i = 0; i < cachedRecords.length; i += batchSize) {
+                  const batch = cachedRecords.slice(i, i + batchSize).map(r => ({
+                    user_id: r.user_id,
+                    file_name: r.file_name,
+                    branch_name: r.branch_name,
+                    codename: r.codename,
+                    file_type: r.file_type,
+                    submitted_at: r.submitted_at,
+                    created_at: r.created_at
+                  }));
+
+                  const { error: insertError } = await supabase.from('records').insert(batch);
+                  if (insertError) {
+                    console.error(`RECOVERY: Error restoring batch ${i}:`, insertError.message, insertError.details, insertError.hint, insertError.code);
+                  } else {
+                    successCount += batch.length;
+                    console.log(`RECOVERY: Restored batch ${i} to ${i + batch.length}`);
+                  }
                 }
+                showToast('success', `Database successfully restored! ${successCount} records uploaded.`);
               }
-              showToast('success', `Database successfully restored! ${successCount} records uploaded.`);
             } else {
               console.log('RECOVERY: Double-check count was non-zero or errored — skipping restore to avoid false trigger.');
             }
@@ -930,13 +954,17 @@ export const useQuotesDashboardData = () => {
                 oldUser.is_setup_completed !== payload.new.is_setup_completed;
 
               if (hasSubstantialChange) {
-                supabase
-                  .from('profiles')
-                  .select('*')
-                  .order('username', { ascending: true })
-                  .then(({ data }) => {
-                    if (data) setProfilesList(data || []);
-                  });
+                // Inline-update the changed profile from the realtime payload
+                // instead of refetching the entire profiles list (egress saver).
+                setProfilesList(prev => {
+                  const idx = prev.findIndex(p => p.id === payload.new.id);
+                  if (idx >= 0) {
+                    const updated = [...prev];
+                    updated[idx] = { ...updated[idx], ...payload.new } as Profile;
+                    return updated;
+                  }
+                  return prev;
+                });
               }
             }
           } else {

@@ -166,48 +166,35 @@ export function useGlobalNotifications(
     }
   }, [sessionUser, profile, fetchNotificationsData]);
 
-  // Subscribe to changes for real-time notifications
+  // Instead of subscribing to Supabase realtime channels (which duplicates
+  // the subscriptions in useDashboardData and useQuotesDashboardData), listen
+  // for a lightweight custom DOM event that those hooks dispatch whenever
+  // they receive a realtime change. This eliminates 2-3 duplicate Supabase
+  // channels and prevents cascading full-refetches.
+  const lastNotifFetchRef = useRef<number>(0);
+  const NOTIF_THROTTLE_MS = 5000; // Minimum 5s between notification refetches
+
   useEffect(() => {
     if (!sessionUser) return;
 
-    const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
-    const filter = isApprover ? undefined : `user_id=eq.${sessionUser.id}`;
+    const handleRealtimeDataChanged = () => {
+      const now = Date.now();
+      if (now - lastNotifFetchRef.current < NOTIF_THROTTLE_MS) return; // Throttle
 
-    const handleRealtimeChange = () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
       realtimeDebounceRef.current = setTimeout(() => {
+        lastNotifFetchRef.current = Date.now();
         fetchNotificationsData();
-      }, 1000);
+      }, 2000);
     };
 
-    const notifChannel = supabase
-      .channel(`global-notif-changes-${sessionUser.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'chuti', ...(filter ? { filter } : {}) },
-        handleRealtimeChange
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'govt_holiday_responses', ...(filter ? { filter } : {}) },
-        handleRealtimeChange
-      );
-
-    if (profile?.has_quotes_access) {
-      notifChannel.on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'compliance_rules' },
-        handleRealtimeChange
-      );
-    }
-
-    notifChannel.subscribe();
+    window.addEventListener('realtime-data-changed', handleRealtimeDataChanged);
 
     return () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      supabase.removeChannel(notifChannel);
+      window.removeEventListener('realtime-data-changed', handleRealtimeDataChanged);
     };
-  }, [sessionUser, profile, fetchNotificationsData]);
+  }, [sessionUser, fetchNotificationsData]);
 
   // Compute global settings (needed for govt holidays list)
   const globalSettings = useMemo(() => {
