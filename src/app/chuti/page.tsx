@@ -4,12 +4,12 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-const UserDashboardView = lazy(() => import('@/components/leave-tracker/UserDashboardView').then(m => ({ default: m.UserDashboardView })));
-const AdminDashboardView = lazy(() => import('@/components/leave-tracker/AdminDashboardView').then(m => ({ default: m.AdminDashboardView })));
-const AddLeave = lazy(() => import('@/components/leave-tracker/AddLeave').then(m => ({ default: m.AddLeave })));
-const AdminLeaveSettings = lazy(() => import('@/components/leave-tracker/AdminLeaveSettings').then(m => ({ default: m.AdminLeaveSettings })));
-const TeamLeaveRecords = lazy(() => import('@/components/leave-tracker/TeamLeaveRecords').then(m => ({ default: m.TeamLeaveRecords })));
-const DashboardModals = lazy(() => import('@/components/leave-tracker/DashboardModals').then(m => ({ default: m.DashboardModals })));
+import { UserDashboardView } from '@/components/leave-tracker/UserDashboardView';
+import { AdminDashboardView } from '@/components/leave-tracker/AdminDashboardView';
+import { AddLeave } from '@/components/leave-tracker/AddLeave';
+import { AdminLeaveSettings } from '@/components/leave-tracker/AdminLeaveSettings';
+import { TeamLeaveRecords } from '@/components/leave-tracker/TeamLeaveRecords';
+import { DashboardModals } from '@/components/leave-tracker/DashboardModals';
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 import { DashboardProvider } from '@/contexts/DashboardContext';
 import { ChutiRecord } from '@/utils/offlineSync';
@@ -633,19 +633,20 @@ export default function Dashboard({
   }
 
   if (sessionUser && !profile) {
-    return (
-      <div className="w-full">
-        <SkeletonLoader variant={
-          activeChutiTab === 'add_leave' ? 'chuti-form' : 
-          activeChutiTab === 'leave_history' ? 'leave-history' : 
-          activeChutiTab === 'govt_responses' ? 'responses-table' : 
-          activeChutiTab === 'settlement' ? 'settlements-table' : 
-          activeChutiTab === 'leave_settings' ? 'leave-settings' : 
-          activeChutiTab === 'team_leaves' ? 'team-leaves-report' :
-          'leaves-table'
-        } />
-      </div>
-    );
+    if (activeChutiTab !== 'leave_history') {
+      return (
+        <div className="w-full">
+          <SkeletonLoader variant={
+            activeChutiTab === 'add_leave' ? 'chuti-form' : 
+            activeChutiTab === 'govt_responses' ? 'responses-table' : 
+            activeChutiTab === 'settlement' ? 'settlements-table' : 
+            activeChutiTab === 'leave_settings' ? 'leave-settings' : 
+            activeChutiTab === 'team_leaves' ? 'team-leaves-report' :
+            'leaves-table'
+          } />
+        </div>
+      );
+    }
   }
 
   if (profile && (profile.has_changed_password === false || !profile.is_setup_completed)) {
@@ -663,19 +664,20 @@ export default function Dashboard({
   }
 
   if (loading && !initialFetchDone) {
-    let loaderVariant: 'chuti-form' | 'leaves-table' | 'responses-table' | 'settlements-table' | 'leave-history' | 'leave-settings' | 'team-leaves-report' = 'leaves-table';
-    if (activeChutiTab === 'add_leave') loaderVariant = 'chuti-form';
-    else if (activeChutiTab === 'leave_history') loaderVariant = 'leave-history';
-    else if (activeChutiTab === 'govt_responses') loaderVariant = 'responses-table';
-    else if (activeChutiTab === 'settlement') loaderVariant = 'settlements-table';
-    else if (activeChutiTab === 'leave_settings') loaderVariant = 'leave-settings';
-    else if (activeChutiTab === 'team_leaves') loaderVariant = 'team-leaves-report';
+    if (activeChutiTab !== 'leave_history') {
+      let loaderVariant: 'chuti-form' | 'leaves-table' | 'responses-table' | 'settlements-table' | 'leave-history' | 'leave-settings' | 'team-leaves-report' = 'leaves-table';
+      if (activeChutiTab === 'add_leave') loaderVariant = 'chuti-form';
+      else if (activeChutiTab === 'govt_responses') loaderVariant = 'responses-table';
+      else if (activeChutiTab === 'settlement') loaderVariant = 'settlements-table';
+      else if (activeChutiTab === 'leave_settings') loaderVariant = 'leave-settings';
+      else if (activeChutiTab === 'team_leaves') loaderVariant = 'team-leaves-report';
 
-    return (
-      <div className="w-full">
-        <SkeletonLoader variant={loaderVariant} />
-      </div>
-    );
+      return (
+        <div className="w-full">
+          <SkeletonLoader variant={loaderVariant} />
+        </div>
+      );
+    }
   }
 
 
@@ -731,8 +733,7 @@ export default function Dashboard({
           />
         )}
 
-        {/* ================= USER'S OWN LEAVE VIEW (Leave History) ================= */}
-        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab === 'leave_history' && (
+        {((!profile && activeChutiTab === 'leave_history') || (profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab === 'leave_history')) && (
           <UserDashboardView
             profile={profile}
             userStats={userStats}

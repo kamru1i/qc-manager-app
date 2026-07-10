@@ -17,19 +17,11 @@ import { useDesktopNotifications } from "@/hooks/common/useDesktopNotifications"
 import { checkInactivity, registerAndCheckSession, updateSessionLastActiveInDb } from "@/utils/sessionHelper";
 
 import { UserKpiPerformancePanel } from "@/components/common/user-management/UserKpiPerformancePanel";
-const ChutiDashboard = lazy(() => import("@/app/chuti/page"));
-const QuotesDashboard = lazy(() => import("@/app/quotes/page"));
-const UserManagementDashboard = lazy(() =>
-  import("@/components/common/UserManagementDashboard").then((m) => ({
-    default: m.UserManagementDashboard,
-  })),
-);
-const TodoPanel = lazy(() =>
-  import("@/components/common/TodoPanel").then((m) => ({ default: m.TodoPanel })),
-);
-const ProfileSettings = lazy(() =>
-  import("@/components/common/ProfileSettings").then((m) => ({ default: m.ProfileSettings }))
-);
+import ChutiDashboard from "@/app/chuti/page";
+import QuotesDashboard from "@/app/quotes/page";
+import { UserManagementDashboard } from "@/components/common/UserManagementDashboard";
+import { TodoPanel } from "@/components/common/TodoPanel";
+import { ProfileSettings } from "@/components/common/ProfileSettings";
 
 
 function getInitialState() {
@@ -1011,15 +1003,16 @@ export default function AppPortal() {
             fallback={
               <div className="w-full">
                 {activeTab === "chuti" ? (
-                  <SkeletonLoader variant={
-                    activeChutiTab === "add_leave" ? "chuti-form" : 
-                    activeChutiTab === "leave_history" ? "leave-history" : 
-                    activeChutiTab === "govt_responses" ? "responses-table" : 
-                    activeChutiTab === "settlement" ? "settlements-table" : 
-                    activeChutiTab === "leave_settings" ? "leave-settings" : 
-                    activeChutiTab === "team_leaves" ? "leaves-table" :
-                    "leaves-table"
-                  } />
+                  activeChutiTab === "leave_history" ? null : (
+                    <SkeletonLoader variant={
+                      activeChutiTab === "add_leave" ? "chuti-form" : 
+                      activeChutiTab === "govt_responses" ? "responses-table" : 
+                      activeChutiTab === "settlement" ? "settlements-table" : 
+                      activeChutiTab === "leave_settings" ? "leave-settings" : 
+                      activeChutiTab === "team_leaves" ? "leaves-table" :
+                      "leaves-table"
+                    } />
+                  )
                 ) : activeTab === "quotes" ? (
                   <QuotesSkeletonLoader type={
                     activeQuotesTab === "entry" ? "form" : 
@@ -1062,14 +1055,12 @@ export default function AppPortal() {
               />
             )}
             {/* ChutiDashboard: always mounted to keep global event listeners (like open-profile-settings) and approval modals active on all tabs */}
-            {profile && (
-              <div className={activeTab !== 'chuti' ? 'hidden' : undefined}>
-                <ChutiDashboard
-                  activeChutiTab={activeChutiTab}
-                  onChutiTabChange={handleChutiTabChange}
-                />
-              </div>
-            )}
+            <div className={activeTab !== 'chuti' ? 'hidden' : undefined}>
+              <ChutiDashboard
+                activeChutiTab={activeChutiTab}
+                onChutiTabChange={handleChutiTabChange}
+              />
+            </div>
             {activeTab === "user_management" && (
               <UserManagementDashboard
                 sessionUser={sessionUser}
