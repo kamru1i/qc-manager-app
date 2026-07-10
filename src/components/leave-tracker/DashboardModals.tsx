@@ -10,7 +10,6 @@ import { UserRevisionModal } from '@/components/leave-tracker/modals/UserRevisio
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
 import { AdjustmentModal } from '@/components/leave-tracker/modals/AdjustmentModal';
 import { SupervisorApprovalModal } from '@/components/leave-tracker/modals/SupervisorApprovalModal';
-import { AdminProfileSettingsModal } from '@/components/leave-tracker/modals/AdminProfileSettingsModal';
 import { AdminLeaveApprovalModal } from '@/components/leave-tracker/modals/AdminLeaveApprovalModal';
 import { AdminEditRecordModal } from '@/components/leave-tracker/modals/AdminEditRecordModal';
 import { AdminCancelAdjustmentModal } from '@/components/leave-tracker/modals/AdminCancelAdjustmentModal';
@@ -402,56 +401,6 @@ export const DashboardModals = () => {
         setRevisionPromptText={setRevisionPromptText}
         revisionPromptText={revisionPromptText}
         submitRevisionWithReason={submitRevisionWithReason}
-      />
-
-      <AdminProfileSettingsModal
-        showProfileSettingsModal={showProfileSettingsModal}
-        setShowProfileSettingsModal={setShowProfileSettingsModal}
-        profile={profile}
-        editingStaffProfileId={editingStaffProfileId}
-        sessionUser={sessionUser}
-        isPushSubscribed={isPushSubscribed}
-        setIsPushSubscribed={setIsPushSubscribed}
-        isPushLoading={isPushLoading}
-        setIsPushLoading={setIsPushLoading}
-        adminActiveTab={adminActiveTab}
-        setAdminActiveTab={setAdminActiveTab}
-        setViewingStaffId={setViewingStaffId}
-        isCodenameEditable={isCodenameEditable}
-        setIsCodenameEditable={setIsCodenameEditable}
-        editUsername={editUsername}
-        setEditUsername={setEditUsername}
-        editFullName={editFullName}
-        setEditFullName={setEditFullName}
-        editJobRole={editJobRole}
-        setEditJobRole={setEditJobRole}
-        editWorkingHours={editWorkingHours}
-        setEditWorkingHours={setEditWorkingHours}
-        editBreakTime={editBreakTime}
-        setEditBreakTime={setEditBreakTime}
-        profileSignInTime={profileSignInTime}
-        setProfileSignInTime={setProfileSignInTime}
-        profileSignOutTime={profileSignOutTime}
-        setProfileSignOutTime={setProfileSignOutTime}
-        editNeedsApproval={editNeedsApproval}
-        setEditNeedsApproval={setEditNeedsApproval}
-        editAllowReserve={editAllowReserve}
-        setEditAllowReserve={setEditAllowReserve}
-        editAllowOvertime={editAllowOvertime}
-        setEditAllowOvertime={setEditAllowOvertime}
-        editEligibleOfficeLeave={editEligibleOfficeLeave}
-        setEditEligibleOfficeLeave={setEditEligibleOfficeLeave}
-        editEligibleGovtHoliday={editEligibleGovtHoliday}
-        setEditEligibleGovtHoliday={setEditEligibleGovtHoliday}
-        isEditRequestMode={isEditRequestMode}
-        setIsEditRequestMode={setIsEditRequestMode}
-        setupSubmitting={setupSubmitting}
-        handleUpdateSettings={handleUpdateSettings}
-        profilesList={profilesList}
-        editSupervisorIds={editSupervisorIds}
-        setEditSupervisorIds={setEditSupervisorIds}
-        hiddenTabs={hiddenTabs}
-        setHiddenTabs={setHiddenTabs}
       />
 
       <AdminLeaveApprovalModal

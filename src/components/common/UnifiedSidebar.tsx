@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
-  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'analytics' | 'audit_logs' | 'kpi';
+  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'analytics' | 'audit_logs' | 'kpi' | 'profile_settings';
   profile: Profile | null;
   activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality' | 'copy_helper' | 'save_file';
   onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality' | 'copy_helper' | 'save_file') => void;
@@ -124,6 +124,12 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   const handleAuditLogsNav = () => {
     localStorage.setItem('last_active_dashboard', 'audit_logs');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'audit_logs' }));
+    router.push('/');
+  };
+
+  const handleProfileSettingsNav = () => {
+    localStorage.setItem('last_active_dashboard', 'profile_settings');
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'profile_settings' }));
     router.push('/');
   };
 
@@ -547,6 +553,26 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             >
               <ScrollText className="h-5 w-5 shrink-0" />
               {!isSidebarCollapsed && <span className="whitespace-nowrap">Audit Logs</span>}
+            </button>
+          </div>
+        )}
+
+        {/* Workspace: Profile Settings (All Users) */}
+        {!hiddenTabs.includes('profile_settings') && (
+          <div className="space-y-1">
+            <button
+              onClick={handleProfileSettingsNav}
+              title={isSidebarCollapsed ? 'Profile Settings' : undefined}
+              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
+              } ${
+                activeSection === 'profile_settings'
+                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
+                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+              }`}
+            >
+              <Settings className="h-5 w-5 shrink-0" />
+              {!isSidebarCollapsed && <span className="whitespace-nowrap">Profile Settings</span>}
             </button>
           </div>
         )}

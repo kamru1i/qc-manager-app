@@ -203,6 +203,21 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, [profiles, viewingStaff]);
 
+  // Pre-select staff member from sessionStorage when redirected from other pages
+  useEffect(() => {
+    if (profiles.length > 0) {
+      const savedStaffId = sessionStorage.getItem("viewingStaffId");
+      if (savedStaffId) {
+        const staff = profiles.find(p => p.id === savedStaffId);
+        if (staff) {
+          setViewingStaff(staff);
+          setActiveSubTab('profile');
+          sessionStorage.removeItem("viewingStaffId");
+        }
+      }
+    }
+  }, [profiles]);
+
   // Backspace to go back from details view
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

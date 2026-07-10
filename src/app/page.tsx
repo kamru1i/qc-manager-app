@@ -27,6 +27,9 @@ const UserManagementDashboard = lazy(() =>
 const TodoPanel = lazy(() =>
   import("@/components/common/TodoPanel").then((m) => ({ default: m.TodoPanel })),
 );
+const ProfileSettings = lazy(() =>
+  import("@/components/common/ProfileSettings").then((m) => ({ default: m.ProfileSettings }))
+);
 
 
 function getInitialState() {
@@ -97,6 +100,7 @@ export default function AppPortal() {
     | "analytics"
     | "audit_logs"
     | "kpi"
+    | "profile_settings"
     | null
   >(() => (_cachedInitialState?.initialTab as any) ?? "chuti");
   const fetchingRef = useRef<string | null>(null);
@@ -707,7 +711,8 @@ export default function AppPortal() {
         | "todo"
         | "kpi"
         | "audit_logs"
-        | "analytics";
+        | "analytics"
+        | "profile_settings";
       addLog(`custom workspace-change event detected: ${targetWorkspace}`);
 
       // Clear flag when navigating to any workspace from the sidebar
@@ -888,9 +893,10 @@ export default function AppPortal() {
         onThemeToggle={handleThemeToggle}
         onLogout={handleLogout}
         badges={topPerformerBadges}
-        onProfileSettingsClick={() =>
-          window.dispatchEvent(new CustomEvent("open-profile-settings"))
-        }
+        onProfileSettingsClick={() => {
+          setActiveTab("profile_settings");
+          localStorage.setItem("last_active_dashboard", "profile_settings");
+        }}
         onNotificationClick={() => {
           if (profile?.role === 'admin') {
             const mode = sessionStorage.getItem('adminNotificationMode') || 'user';
@@ -990,7 +996,9 @@ export default function AppPortal() {
                           ? "quotes"
                           : activeTab === "kpi"
                             ? "kpi"
-                            : "chuti"
+                            : activeTab === "profile_settings"
+                              ? "profile_settings"
+                              : "chuti"
             }
             profile={profile}
             activeQuotesTab={activeQuotesTab}
@@ -1083,6 +1091,17 @@ export default function AppPortal() {
             {activeTab === "kpi" && profile && (
               <UserKpiPerformancePanel 
                 viewingStaff={profile} 
+                onBack={() => {
+                  setActiveTab(previousTab as any);
+                  localStorage.setItem("last_active_dashboard", previousTab);
+                }}
+              />
+            )}
+            {activeTab === "profile_settings" && profile && (
+              <ProfileSettings
+                profile={profile}
+                setProfile={setProfile}
+                sessionUser={sessionUser}
                 onBack={() => {
                   setActiveTab(previousTab as any);
                   localStorage.setItem("last_active_dashboard", previousTab);
