@@ -11,7 +11,6 @@ import {
   Apple,
   Clock,
   Coffee,
-  Menu,
   Bell,
   RefreshCw
 } from 'lucide-react';
@@ -29,7 +28,6 @@ interface NavbarProps {
   onThemeToggle: () => void;
   onLogout: () => void;
   badges?: Record<string, BadgeInfo>;
-  onProfileSettingsClick?: () => void;
   onNotificationClick?: () => void;
   notificationCount?: number;
   offlineCount?: number;
@@ -43,7 +41,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onThemeToggle,
   onLogout,
   badges,
-  onProfileSettingsClick,
   onNotificationClick,
   notificationCount = 0,
   offlineCount = 0,
@@ -97,15 +94,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="bg-slate-900/40 backdrop-blur-md border-b border-slate-800/50 px-4 py-4 sm:px-6 lg:px-8 z-30">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
-          {onProfileSettingsClick && (
-            <button
-              onClick={onProfileSettingsClick}
-              className="p-2.5 bg-blue-600/15 hover:bg-blue-600/25 active:scale-95 border border-blue-500/20 text-blue-400 rounded-xl transition-all cursor-pointer shrink-0"
-              title="Profile Settings"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-          )}
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <span className="flex items-center">

@@ -893,10 +893,6 @@ export default function AppPortal() {
         onThemeToggle={handleThemeToggle}
         onLogout={handleLogout}
         badges={topPerformerBadges}
-        onProfileSettingsClick={() => {
-          setActiveTab("profile_settings");
-          localStorage.setItem("last_active_dashboard", "profile_settings");
-        }}
         onNotificationClick={() => {
           if (profile?.role === 'admin') {
             const mode = sessionStorage.getItem('adminNotificationMode') || 'user';
