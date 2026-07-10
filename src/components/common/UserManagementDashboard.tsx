@@ -779,7 +779,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
             {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
             {!isCreatingNewUser && viewingStaff && (
               <div className="flex border-b border-slate-800 gap-1 mt-2">
-                {(profile?.role === 'admin' || (profile?.role === 'supervisor' && viewingStaff && Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile.id))) && (
+                {(profile?.role === 'admin' || (profile?.role === 'supervisor' && viewingStaff && (viewingStaff.id === profile.id || (Array.isArray(viewingStaff.supervisor_ids) && viewingStaff.supervisor_ids.includes(profile.id))))) && (
                   <button
                     type="button"
                     onClick={() => {

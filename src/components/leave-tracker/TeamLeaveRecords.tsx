@@ -82,7 +82,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
       .filter((p) => p.delegated_supervisor_id === profile.id)
       .map((p) => p.id);
 
-    return profilesList
+    const memberIds = profilesList
       .filter(
         (p) =>
           (p.supervisor_ids && p.supervisor_ids.includes(profile.id)) ||
@@ -92,6 +92,8 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
             )),
       )
       .map((p) => p.id);
+
+    return [...memberIds, profile.id];
   }, [profile, profilesList]);
 
   // Filter chuti records for the selected date and correct team membership
@@ -115,12 +117,15 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     if (profile.role !== "admin") {
       const groups = [];
 
-      // 1. Supervisor's own team records
-      const ownTeamUserIds = profilesList
-        .filter(
-          (p) => p.supervisor_ids && p.supervisor_ids.includes(profile.id),
-        )
-        .map((p) => p.id);
+      // 1. Supervisor's own team records (including the supervisor themselves)
+      const ownTeamUserIds = [
+        ...profilesList
+          .filter(
+            (p) => p.supervisor_ids && p.supervisor_ids.includes(profile.id),
+          )
+          .map((p) => p.id),
+        profile.id,
+      ];
       const ownRecords = dailyRecords.filter((r) =>
         ownTeamUserIds.includes(r.user_id),
       );
@@ -189,7 +194,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     sortedSupervisors.forEach((sup) => {
       const teamRecords = dailyRecords.filter((r) => {
         const staff = profilesList.find((p) => p.id === r.user_id);
-        return staff?.supervisor_ids?.includes(sup.id);
+        return (staff?.supervisor_ids?.includes(sup.id)) || r.user_id === sup.id;
       });
 
       if (teamRecords.length > 0) {

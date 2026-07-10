@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.3.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.3.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -172,6 +172,10 @@ npm run tauri build
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v4.3.1 — Patch Release
+*   **Supervisor Self-Management and Grouping** — Included supervisor's own leave records on the Team Leave Records page under their own team list. Allowed supervisors to select their own profile in the User Management Dashboard, view their own leave history, and add leave entries for themselves (bypassing supervisor approval directly to Admin approval).
+*   **Backend Supervisor Verification bypass** — Allowed supervisor self-add operations to pass backend authorization checks.
 
 ### 🚀 v4.3.0 — Minor Release
 *   **Automatic Date Validation & Year Guard** — Restricted leave date picker inputs strictly to the running year (e.g. 2026), with real-time day/month input validation and auto-correction. Prevents submit actions if validation errors exist.

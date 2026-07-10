@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const isSupervisedByMe = Array.isArray(targetProfile.supervisor_ids) && targetProfile.supervisor_ids.includes(user.id);
+        const isSupervisedByMe = targetUserId === user.id || (Array.isArray(targetProfile.supervisor_ids) && targetProfile.supervisor_ids.includes(user.id));
         if (!isSupervisedByMe) {
           return NextResponse.json(
             { error: `Forbidden: You do not supervise the user ${targetUserId}` },
