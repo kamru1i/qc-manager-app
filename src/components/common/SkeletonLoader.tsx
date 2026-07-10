@@ -15,9 +15,10 @@ import { AnalyticsSkeleton } from '@/components/common/skeleton/AnalyticsSkeleto
 import { AuditLogsSkeleton } from '@/components/common/skeleton/AuditLogsSkeleton';
 import { TeamLeaveRecordsSkeleton } from '@/components/common/skeleton/TeamLeaveRecordsSkeleton';
 import { ProfileSettingsSkeleton } from '@/components/common/skeleton/ProfileSettingsSkeleton';
+import { KpiSkeleton } from '@/components/common/skeleton/KpiSkeleton';
 
 interface SkeletonLoaderProps {
-  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'analytics' | 'audit-logs' | 'team-leaves-report' | 'profile-settings';
+  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'analytics' | 'audit-logs' | 'team-leaves-report' | 'profile-settings' | 'kpi';
   rows?: number;
   cards?: number;
   className?: string;
@@ -64,6 +65,8 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
       return <TeamLeaveRecordsSkeleton />;
     case 'profile-settings':
       return <ProfileSettingsSkeleton className={className} />;
+    case 'kpi':
+      return <KpiSkeleton className={className} />;
     case 'table':
     default:
       return <TableSkeleton rows={rows} className={className} />;
