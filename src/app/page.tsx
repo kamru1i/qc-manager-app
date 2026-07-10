@@ -110,7 +110,7 @@ export default function AppPortal() {
   }, []);
 
   const [activeQuotesTab, setActiveQuotesTab] = useState<
-    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality" | "copy_helper" | "save_file"
+    "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file"
   >(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("quotes_sales_active_tab");
@@ -124,10 +124,13 @@ export default function AppPortal() {
         saved === "login_codes" ||
         saved === "asitis_causality" ||
         saved === "eui_causality" ||
+        saved === "causality" ||
         saved === "copy_helper" ||
         saved === "save_file"
       ) {
-        return saved as
+        // Migrate legacy tab names to unified causality
+        const migratedTab = (saved === "asitis_causality" || saved === "eui_causality") ? "causality" : saved;
+        return migratedTab as
           | "entry"
           | "monthly"
           | "analytics"
@@ -135,8 +138,7 @@ export default function AppPortal() {
           | "rules"
           | "ip_checker"
           | "login_codes"
-          | "asitis_causality"
-          | "eui_causality"
+          | "causality"
           | "copy_helper"
           | "save_file";
       }
@@ -164,7 +166,7 @@ export default function AppPortal() {
   });
 
   const handleQuotesTabChange = (
-    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "asitis_causality" | "eui_causality" | "copy_helper" | "save_file",
+    tab: "entry" | "monthly" | "analytics" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file",
   ) => {
     if (tab === "analytics" || tab === "audit_logs") {
       setActiveTab(tab);
@@ -1016,8 +1018,7 @@ export default function AppPortal() {
                 ) : activeTab === "quotes" ? (
                   <QuotesSkeletonLoader type={
                     activeQuotesTab === "entry" ? "form" : 
-                    activeQuotesTab === "asitis_causality" ? "asitis_causality" :
-                    activeQuotesTab === "eui_causality" ? "asitis_causality" :
+                    activeQuotesTab === "causality" ? "causality" :
                     activeQuotesTab === "monthly" ? "table" : 
                     activeQuotesTab === "rules" ? "rules" : 
                     activeQuotesTab === "analytics" ? "analytics" : 

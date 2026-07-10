@@ -27,8 +27,8 @@ import {
 interface UnifiedSidebarProps {
   activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'analytics' | 'audit_logs' | 'kpi' | 'profile_settings';
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality' | 'copy_helper' | 'save_file';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'asitis_causality' | 'eui_causality' | 'copy_helper' | 'save_file') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'analytics' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file') => void;
   activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
@@ -437,39 +437,21 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   </button>
                 )}
 
-                {/* 7. Asitis Causality */}
-                {!hiddenTabs.includes('asitis_causality') && (
+                {/* 7. Causality (Asitis + EUI) */}
+                {!hiddenTabs.includes('causality') && (
                   <button
-                    onClick={() => onQuotesTabChange('asitis_causality')}
-                    title={isSidebarCollapsed ? 'Asitis Causality' : undefined}
+                    onClick={() => onQuotesTabChange('causality')}
+                    title={isSidebarCollapsed ? 'Causality' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
                     } ${
-                      activeQuotesTab === 'asitis_causality'
+                      activeQuotesTab === 'causality'
                         ? 'bg-blue-500/10 text-blue-400'
                         : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
                     }`}
                   >
                     <FileText className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Asitis Causality</span>}
-                  </button>
-                )}
-
-                {/* 8. EUI Causality */}
-                {!hiddenTabs.includes('eui_causality') && (
-                  <button
-                    onClick={() => onQuotesTabChange('eui_causality')}
-                    title={isSidebarCollapsed ? 'EUI Causality' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'eui_causality'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
-                    }`}
-                  >
-                    <FileText className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">EUI Causality</span>}
+                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Causality</span>}
                   </button>
                 )}
               </div>

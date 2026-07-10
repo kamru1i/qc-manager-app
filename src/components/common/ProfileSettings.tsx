@@ -546,8 +546,7 @@ export function ProfileSettings({
                 { key: 'rules', label: 'Quote Rules Subtab', category: 'Quotes Tracker Subtabs' },
                 { key: 'login_codes', label: 'Login Codes Subtab', category: 'Quotes Tracker Subtabs' },
                 { key: 'ip_checker', label: 'IP Checker Subtab', category: 'Quotes Tracker Subtabs' },
-                { key: 'asitis_causality', label: 'Asitis Causality Subtab', category: 'Quotes Tracker Subtabs' },
-                { key: 'eui_causality', label: 'EUI Causality Subtab', category: 'Quotes Tracker Subtabs' },
+                { key: 'causality', label: 'Causality Subtab', category: 'Quotes Tracker Subtabs' },
 
                 { key: 'leave_history', label: 'My History Subtab', category: 'Leave Tracker Subtabs' },
                 { key: 'govt_responses', label: 'Govt Responses Subtab', category: 'Leave Tracker Subtabs' },
