@@ -121,12 +121,12 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v4.2.1** is a patch release re-generating Tauri desktop app icon formats from the updated logo asset, and filtering out system template entries from the Login Codes Directory view.
+            **v__VERSION__** is a minor release implementing a reusable Jummah Prayer short leave adjustment on Fridays, and resolving the perpetual loading loop in the User Profile's Leave History tab.
 
-            #### 🛠 What's New in v4.2.1:
+            #### 🛠 What's New in v__VERSION__:
 
-            - **App Icon & Favicon Regeneration** — Generated Tauri desktop application icons and web assets across all platform resolutions from the new brand asset.
-            - **Login Codes System Key Filtering** — Filtered out system templates and settings records starting with double underscores `__` from showing up as normal entries in the Login Codes Directory.
+            - **Jummah Prayer Short Leave Adjustment** — Automatically deducts 20 minutes from Friday short leaves and inserts/appends the `20 Min Adjusted with Jummah Prayer` comment.
+            - **Leave History Loading State Fix** — Resolved the bug where navigating to Employee 360 -> User Profile -> Leave History remains stuck in a loading loop due to uninitialized global settings.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.
