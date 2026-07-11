@@ -158,30 +158,34 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 5. Broadcast to active desktop clients (Tauri)
+      // 5. Broadcast to active desktop clients (Tauri) using per-user channels
+      // Each Tauri client subscribes to `desktop-notifications-${profileId}`,
+      // so we must broadcast to each admin's individual channel.
       try {
-        const response = await fetch(`${supabaseUrl}/realtime/v1/broadcast`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseServiceKey,
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            channel: 'desktop-notifications',
-            event: 'os-push',
-            payload: {
-              targetUserIds: adminIds,
-              title,
-              body: notificationBody,
-            }
-          }),
-        });
-        if (response.ok) {
-          console.log('[ForgotPassword] Broadcasted notification to desktop clients successfully via REST API.');
-        } else {
-          console.warn('[ForgotPassword] REST broadcast response status:', response.status);
-        }
+        const broadcastResults = await Promise.all(
+          adminIds.map(async (uid: string) => {
+            const response = await fetch(`${supabaseUrl}/realtime/v1/broadcast`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseServiceKey,
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({
+                channel: `desktop-notifications-${uid}`,
+                event: 'os-push',
+                payload: {
+                  targetUserIds: [uid],
+                  title,
+                  body: notificationBody,
+                }
+              }),
+            });
+            return response.ok;
+          })
+        );
+        const okCount = broadcastResults.filter(Boolean).length;
+        console.log(`[ForgotPassword] Broadcasted notification to ${okCount}/${adminIds.length} desktop client channels via REST API.`);
       } catch (broadcastErr) {
         console.warn('[ForgotPassword] Failed to broadcast to desktop clients:', broadcastErr);
       }
