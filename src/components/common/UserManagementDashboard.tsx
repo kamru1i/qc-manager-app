@@ -9,6 +9,7 @@ import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
 import { Modal } from '@/components/common/Modal';
 import { UserManagementSkeleton } from '@/components/common/skeleton/UserManagementSkeleton';
 import toast from 'react-hot-toast';
+import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import {
   Search,
   UserPlus,
@@ -357,13 +358,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     return () => { cancelled = true; };
   }, [profile]);
 
-  // Debounced wrapper to prevent duplicate fetch calls when realtime events and user actions fire together
+  // Debounced + throttled wrapper to prevent cascading refetches from rapid realtime events
   const fetchTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const lastStaffFetchRef = React.useRef<number>(0);
+  const STAFF_THROTTLE_MS = 3000;
   const debouncedFetchStaffLeaveData = useCallback((staffId: string, isSilent = true) => {
+    const now = Date.now();
+    if (now - lastStaffFetchRef.current < STAFF_THROTTLE_MS) return; // Throttle
+
     if (fetchTimerRef.current) {
       clearTimeout(fetchTimerRef.current);
     }
     fetchTimerRef.current = setTimeout(() => {
+      lastStaffFetchRef.current = Date.now();
       fetchStaffLeaveData(staffId, isSilent);
     }, 150);
   }, [fetchStaffLeaveData]);
@@ -386,29 +393,28 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   // Real-time synchronization for viewed staff leave data.
   //
-  // chuti + leave_settlements changes are already received by the always-mounted leave dashboard
-  // (unfiltered for approvers), which forwards each as a `realtime-table-payload` DOM event.
-  // We consume those (filtered to the viewed staff) instead of opening our own duplicate chuti/
-  // settlements subscriptions. Only govt_holiday_responses — which the dashboard does NOT
-  // subscribe to — keeps a dedicated (staff-filtered) postgres subscription here.
+  // All table changes now come via the centralized RealtimeProvider:
+  // - govt_holiday_responses: directly via useRealtimeHandler (client-side filtered to viewed staff)
+  // - chuti + leave_settlements: forwarded as DOM events by the dashboard handler
+
+  // ── govt_holiday_responses handler ──
+  const handleHolidayResponseRealtime = useCallback((payload: any) => {
+    if (!viewingStaff) return;
+    const rec = payload?.new || payload?.old;
+    if (rec?.user_id === viewingStaff.id) {
+      debouncedFetchStaffLeaveData(viewingStaff.id);
+    }
+  }, [viewingStaff, debouncedFetchStaffLeaveData]);
+
+  useRealtimeHandler('govt_holiday_responses', handleHolidayResponseRealtime);
+
+  // ── chuti + leave_settlements (via DOM events from dashboard) ──
   useEffect(() => {
     if (!viewingStaff) return;
 
     const isSupervisedByMe = hasStaffAccess(viewingStaff);
     if (!isSupervisedByMe) return;
 
-    const staffChannel = supabase
-      .channel(`rt-viewing-staff-${viewingStaff.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'govt_holiday_responses', filter: `user_id=eq.${viewingStaff.id}` },
-        () => {
-          debouncedFetchStaffLeaveData(viewingStaff.id);
-        }
-      )
-      .subscribe();
-
-    // Refetch when a forwarded chuti/settlement change belongs to the staff currently in view.
     const handleTablePayload = (e: Event) => {
       const detail = (e as CustomEvent).detail as { table?: string; payload?: any } | undefined;
       if (!detail || (detail.table !== 'chuti' && detail.table !== 'leave_settlements')) return;
@@ -420,7 +426,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     window.addEventListener('realtime-table-payload', handleTablePayload);
 
     return () => {
-      supabase.removeChannel(staffChannel);
       window.removeEventListener('realtime-table-payload', handleTablePayload);
     };
   }, [viewingStaff, debouncedFetchStaffLeaveData, profile, hasStaffAccess]);

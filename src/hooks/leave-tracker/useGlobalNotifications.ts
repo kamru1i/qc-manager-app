@@ -11,7 +11,9 @@ import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings }
 export function useGlobalNotifications(
   sessionUser: any,
   profile: Profile | null,
-  profilesList: Profile[]
+  profilesList: Profile[],
+  sharedUserRecords?: ChutiRecord[],
+  sharedHolidayResponses?: any[]
 ) {
   const [userRecords, setUserRecords] = useState<ChutiRecord[]>([]);
   const [holidayResponses, setHolidayResponses] = useState<any[]>([]);
@@ -23,6 +25,20 @@ export function useGlobalNotifications(
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
   const [syncedApprovalsCount, setSyncedApprovalsCount] = useState<number | null>(null);
   const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // R2: When shared data is available from the always-mounted ChutiDashboard,
+  // sync it into local state instead of fetching independently.
+  useEffect(() => {
+    if (sharedUserRecords && sharedUserRecords.length > 0) {
+      setUserRecords(sharedUserRecords);
+    }
+  }, [sharedUserRecords]);
+
+  useEffect(() => {
+    if (sharedHolidayResponses && sharedHolidayResponses.length > 0) {
+      setHolidayResponses(sharedHolidayResponses);
+    }
+  }, [sharedHolidayResponses]);
 
   // Sync approvals count from dashboard event in real-time
   useEffect(() => {
@@ -42,42 +58,50 @@ export function useGlobalNotifications(
   // Get stable session time for notification timestamp fallback
   const currentSessionTime = useMemo(() => new Date().toISOString(), []);
 
-  // Fetch initial notifications data (only for the logged-in user)
+  // Fetch notifications data. When shared data is available, skip the
+  // user-records and holiday-responses queries (R2 data sharing).
+  const hasSharedUserRecords = !!sharedUserRecords && sharedUserRecords.length > 0;
+  const hasSharedHolidayResponses = !!sharedHolidayResponses && sharedHolidayResponses.length > 0;
+
   const fetchNotificationsData = useCallback(async () => {
     if (!sessionUser || !profile) return;
 
     try {
-      // 1. Fetch user's own chuti records (only columns needed for notification derivation)
-      const { data: chutiData, error: chutiError } = await supabase
-        .from('chuti')
-        .select('id, user_id, date, leave_type, leave_hour, status, comment, adjustment, reserve_holiday, reserve_adjustment_status, admin_edit_request, sign_in_time, sign_out_time, synced, created_at, updated_at')
-        .eq('user_id', sessionUser.id)
-        .is('deleted_at', null)
-        .order('date', { ascending: false });
+      // 1. Fetch user's own chuti records — SKIP if shared data from ChutiDashboard is available
+      if (!hasSharedUserRecords) {
+        const { data: chutiData, error: chutiError } = await supabase
+          .from('chuti')
+          .select('id, user_id, date, leave_type, leave_hour, status, comment, adjustment, reserve_holiday, reserve_adjustment_status, admin_edit_request, sign_in_time, sign_out_time, synced, created_at, updated_at')
+          .eq('user_id', sessionUser.id)
+          .is('deleted_at', null)
+          .order('date', { ascending: false });
 
-      if (!chutiError && chutiData) {
-        setUserRecords(chutiData);
+        if (!chutiError && chutiData) {
+          setUserRecords(chutiData);
+        }
       }
 
-      // 2. Fetch user's holiday responses
-      if (profile?.role === 'admin' || profile?.role === 'supervisor') {
-        const { data: holidayData, error: holidayError } = await supabase
-          .from('govt_holiday_responses')
-          .select('id, user_id, holiday_date, response, created_at')
-          .order('created_at', { ascending: false });
+      // 2. Fetch holiday responses — SKIP if shared data from ChutiDashboard is available
+      if (!hasSharedHolidayResponses) {
+        if (profile?.role === 'admin' || profile?.role === 'supervisor') {
+          const { data: holidayData, error: holidayError } = await supabase
+            .from('govt_holiday_responses')
+            .select('id, user_id, holiday_date, response, created_at')
+            .order('created_at', { ascending: false });
 
-        if (!holidayError && holidayData) {
-          setHolidayResponses(holidayData);
-        }
-      } else {
-        const { data: holidayData, error: holidayError } = await supabase
-          .from('govt_holiday_responses')
-          .select('id, user_id, holiday_date, response, created_at')
-          .eq('user_id', sessionUser.id)
-          .order('created_at', { ascending: false });
+          if (!holidayError && holidayData) {
+            setHolidayResponses(holidayData);
+          }
+        } else {
+          const { data: holidayData, error: holidayError } = await supabase
+            .from('govt_holiday_responses')
+            .select('id, user_id, holiday_date, response, created_at')
+            .eq('user_id', sessionUser.id)
+            .order('created_at', { ascending: false });
 
-        if (!holidayError && holidayData) {
-          setHolidayResponses(holidayData);
+          if (!holidayError && holidayData) {
+            setHolidayResponses(holidayData);
+          }
         }
       }
 
@@ -132,7 +156,7 @@ export function useGlobalNotifications(
     } catch (err) {
       console.error('Failed to fetch global notifications data:', err);
     }
-  }, [sessionUser, profile]);
+  }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses]);
 
   // Load last viewed time and clean up dismissed notifications on mount
   useEffect(() => {

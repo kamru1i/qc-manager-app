@@ -15,6 +15,7 @@ import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/quotes-trac
 import { subscribeUserToPush } from "@/utils/webPushHelper";
 import { useDesktopNotifications } from "@/hooks/common/useDesktopNotifications";
 import { checkInactivity, registerAndCheckSession, updateSessionLastActiveInDb } from "@/utils/sessionHelper";
+import { RealtimeProvider } from "@/contexts/RealtimeContext";
 
 import { UserKpiPerformancePanel } from "@/components/common/user-management/UserKpiPerformancePanel";
 import ChutiDashboard from "@/app/chuti/page";
@@ -278,6 +279,13 @@ export default function AppPortal() {
 
   const [chutiOfflineCount, setChutiOfflineCount] = useState(0);
 
+  // R2: Shared data from the always-mounted ChutiDashboard, passed to
+  // useGlobalNotifications so it skips its own duplicate fetches.
+  const [sharedChutiData, setSharedChutiData] = useState<{ userRecords: any[]; holidayResponses: any[] }>({ userRecords: [], holidayResponses: [] });
+  const handleChutiDataReady = useCallback((data: { userRecords: any[]; holidayResponses: any[] }) => {
+    setSharedChutiData(data);
+  }, []);
+
   const {
     unreadCount: globalUnreadCount,
     notificationsList: globalNotificationsList,
@@ -287,7 +295,7 @@ export default function AppPortal() {
     handleDismissNotification,
     handleDismissAllNotifications,
     approvalsCount: globalApprovalsCount,
-  } = useGlobalNotifications(sessionUser, profile, profilesList);
+  } = useGlobalNotifications(sessionUser, profile, profilesList, sharedChutiData.userRecords, sharedChutiData.holidayResponses);
 
   // Global Tauri Desktop Notification Listener (active on all tabs)
   useDesktopNotifications(profile?.id);
@@ -851,6 +859,7 @@ export default function AppPortal() {
 
   // Authenticated -> Render single layout shell wrapping active workspace component
   return (
+    <RealtimeProvider sessionUser={sessionUser} profile={profile}>
     <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12 text-white selection:bg-purple-650 selection:text-white">
       <Toaster
         position="top-right"
@@ -1060,6 +1069,7 @@ export default function AppPortal() {
               <ChutiDashboard
                 activeChutiTab={activeChutiTab}
                 onChutiTabChange={handleChutiTabChange}
+                onDataReady={handleChutiDataReady}
               />
             </div>
             {activeTab === "user_management" && (
@@ -1102,5 +1112,6 @@ export default function AppPortal() {
         </section>
       </main>
     </div>
+    </RealtimeProvider>
   );
 }

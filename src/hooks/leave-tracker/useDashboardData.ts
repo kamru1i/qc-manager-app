@@ -8,6 +8,7 @@ import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse }
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 import { checkSubscriptionStatus, sendPushNotification } from '@/utils/webPushHelper';
 import { getGlobalSettingsFromProfile, defaultGlobalSettings, GlobalSettings, formatDate, parseHolidayItem } from '@/utils/dashboardHelpers';
+import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 
 export const useDashboardData = () => {
 
@@ -988,147 +989,123 @@ export const useDashboardData = () => {
     }
   }, [triggerAutoSync]);
 
-  // Listen for real-time updates from Supabase
+  // Listen for real-time updates via the centralized RealtimeProvider.
   // Throttle: prevent rapid cascading refetches — minimum 3s between full fetches
   const lastRealtimeFetchRef = useRef<number>(0);
   const REALTIME_THROTTLE_MS = 3000;
 
-  useEffect(() => {
-    if (!sessionUser || !profile) return;
+  const handleRealtimeChange = useCallback(() => {
+    // Notify useGlobalNotifications via DOM event (replaces its duplicate subscription)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('realtime-data-changed'));
+    }
 
-    const isApprover = profile.role === 'admin' || profile.role === 'supervisor';
+    const now = Date.now();
+    if (now - lastRealtimeFetchRef.current < REALTIME_THROTTLE_MS) return; // Throttle
 
-    const handleRealtimeChange = () => {
-      // Notify useGlobalNotifications via DOM event (replaces its duplicate subscription)
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('realtime-data-changed'));
+    if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+    realtimeDebounceRef.current = setTimeout(() => {
+      lastRealtimeFetchRef.current = Date.now();
+      fetchRecords();
+    }, 800);
+  }, [fetchRecords]);
+
+  // ── chuti handler ──
+  const handleChutiRealtime = useCallback((payload: any) => {
+    console.log('Realtime chuti change received:', payload);
+    // Forward so UserManagementDashboard can react without its own chuti subscription
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'chuti', payload } }));
+    }
+    handleRealtimeChange();
+  }, [handleRealtimeChange]);
+
+  // ── profiles handler ──
+  const handleProfilesRealtime = useCallback((payload: any) => {
+    if (!sessionUser) return;
+    console.log('Realtime profile change received:', payload);
+    // Forward for quotes workspace
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('realtime-profile-payload', { detail: payload }));
+    }
+    if (payload.eventType === 'DELETE' && payload.old && payload.old.id === sessionUser.id) {
+      console.log('Your profile has been deleted by admin. Logging out...');
+      const handleForceLogout = async () => {
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          console.error(e);
+        }
+        localStorage.removeItem(`session_start_time_${sessionUser.id}`);
+        localStorage.removeItem(`last_access_time_${sessionUser.id}`);
+        setSessionUser(null);
+        setProfile(null);
+      };
+      handleForceLogout();
+      return;
+    }
+    if (payload.eventType === 'UPDATE' && payload.new) {
+      if (payload.new.id === sessionUser.id) {
+        setProfile(prev => prev ? { ...prev, ...payload.new } : (payload.new as Profile));
       }
 
-      const now = Date.now();
-      if (now - lastRealtimeFetchRef.current < REALTIME_THROTTLE_MS) return; // Throttle
+      // Inline update profilesList from payload to avoid full refetch
+      const oldUser = profilesListRef.current.find(p => p.id === payload.new.id);
+      const hasSubstantialChange = !oldUser ||
+        oldUser.username !== payload.new.username ||
+        oldUser.role !== payload.new.role ||
+        oldUser.full_name !== payload.new.full_name ||
+        oldUser.job_role !== payload.new.job_role ||
+        oldUser.working_hours !== payload.new.working_hours ||
+        oldUser.break_time !== payload.new.break_time ||
+        oldUser.is_setup_completed !== payload.new.is_setup_completed;
 
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      realtimeDebounceRef.current = setTimeout(() => {
-        lastRealtimeFetchRef.current = Date.now();
-        fetchRecords();
-      }, 800);
-    };
-
-    const dashboardChannel = supabase
-      .channel(`realtime-dashboard-${sessionUser.id}`)
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'chuti',
-          ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` })
-        },
-        (payload) => {
-          console.log('Realtime chuti change received:', payload);
-          // Forward the payload so scoped consumers (e.g. the staff-leave panel) can react
-          // without keeping a duplicate chuti subscription.
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'chuti', payload } }));
+      const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
+      if (hasSubstantialChange && isApprover) {
+        // Inline update the profiles list instead of full refetch
+        setProfilesList(prev => {
+          const idx = prev.findIndex(p => p.id === payload.new.id);
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], ...payload.new } as Profile;
+            return updated;
           }
-          handleRealtimeChange();
+          return prev;
+        });
+        // Notify notification hook
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('realtime-data-changed'));
         }
-      )
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'profiles',
-          ...(isApprover ? {} : { filter: `id=eq.${sessionUser.id}` })
-        },
-        (payload) => {
-          console.log('Realtime profile change received:', payload);
-          // Forward the raw payload so other workspaces (e.g. quotes) can react without keeping
-          // their own duplicate `profiles` realtime subscription. This hook is always mounted
-          // (ChutiDashboard is never unmounted), so it's a reliable single source for profile events.
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('realtime-profile-payload', { detail: payload }));
-          }
-          if (payload.eventType === 'DELETE' && payload.old && payload.old.id === sessionUser.id) {
-            console.log('Your profile has been deleted by admin. Logging out...');
-            const handleForceLogout = async () => {
-              try {
-                await supabase.auth.signOut();
-              } catch (e) {
-                console.error(e);
-              }
-              localStorage.removeItem(`session_start_time_${sessionUser.id}`);
-              localStorage.removeItem(`last_access_time_${sessionUser.id}`);
-              setSessionUser(null);
-              setProfile(null);
-            };
-            handleForceLogout();
-            return;
-          }
-          if (payload.eventType === 'UPDATE' && payload.new) {
-            if (payload.new.id === sessionUser.id) {
-              setProfile(prev => prev ? { ...prev, ...payload.new } : (payload.new as Profile));
-            }
-            
-            // Inline update profilesList from payload to avoid full refetch
-            const oldUser = profilesListRef.current.find(p => p.id === payload.new.id);
-            const hasSubstantialChange = !oldUser ||
-              oldUser.username !== payload.new.username ||
-              oldUser.role !== payload.new.role ||
-              oldUser.full_name !== payload.new.full_name ||
-              oldUser.job_role !== payload.new.job_role ||
-              oldUser.working_hours !== payload.new.working_hours ||
-              oldUser.break_time !== payload.new.break_time ||
-              oldUser.is_setup_completed !== payload.new.is_setup_completed;
+      }
+    } else {
+      // INSERT or DELETE — needs full refetch for profiles
+      const isApprover = profile?.role === 'admin' || profile?.role === 'supervisor';
+      if (isApprover) {
+        handleRealtimeChange();
+      }
+    }
+  }, [sessionUser, profile, handleRealtimeChange]);
 
-            if (hasSubstantialChange && isApprover) {
-              // Inline update the profiles list instead of full refetch
-              setProfilesList(prev => {
-                const idx = prev.findIndex(p => p.id === payload.new.id);
-                if (idx >= 0) {
-                  const updated = [...prev];
-                  updated[idx] = { ...updated[idx], ...payload.new } as Profile;
-                  return updated;
-                }
-                return prev;
-              });
-              // Notify notification hook
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new Event('realtime-data-changed'));
-              }
-            }
-          } else {
-            // INSERT or DELETE — needs full refetch for profiles
-            if (isApprover) {
-              handleRealtimeChange();
-            }
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'leave_settlements',
-          ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` })
-        },
-        (payload) => {
-          console.log('Realtime settlement change received:', payload);
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'leave_settlements', payload } }));
-          }
-          handleRealtimeChange();
-        }
-      )
-      .subscribe();
+  // ── leave_settlements handler ──
+  const handleSettlementsRealtime = useCallback((payload: any) => {
+    console.log('Realtime settlement change received:', payload);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'leave_settlements', payload } }));
+    }
+    handleRealtimeChange();
+  }, [handleRealtimeChange]);
 
+  // Register handlers with the centralized RealtimeProvider
+  useRealtimeHandler('chuti', handleChutiRealtime);
+  useRealtimeHandler('profiles', handleProfilesRealtime);
+  useRealtimeHandler('leave_settlements', handleSettlementsRealtime);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
     return () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      supabase.removeChannel(dashboardChannel);
     };
-  }, [sessionUser, profile, fetchRecords, setMessage]);
+  }, []);
 
   // Check Authentication and Fetch Profile on Mount and Auth Changes
   useEffect(() => {

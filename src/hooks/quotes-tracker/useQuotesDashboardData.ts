@@ -9,6 +9,7 @@ import { useQuotesTheme } from '@/hooks/quotes-tracker/useQuotesTheme';
 import { useRecordActions } from '@/hooks/leave-tracker/useRecordActions';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
 import { toast } from 'react-hot-toast';
+import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import {
   syncOfflineData,
   setCacheData,
@@ -890,35 +891,31 @@ export const useQuotesDashboardData = () => {
   // Debounce ref for real-time record change events to prevent double-fetching
   // when user's own mutations already trigger explicit fetchRecords() calls.
   const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Throttle: prevent cascading refetches — minimum 3s between full fetches
+  const lastQuotesRealtimeFetchRef = useRef<number>(0);
+  const QUOTES_REALTIME_THROTTLE_MS = 3000;
 
-  // Real-time Database Subscriptions
-  //
-  // We intentionally do NOT subscribe to `profiles` here. The always-mounted leave dashboard
-  // (useDashboardData) owns the single `profiles` realtime subscription and re-broadcasts each
-  // change as a `realtime-profile-payload` DOM event. Subscribing here too would double every
-  // profile realtime message whenever the quotes workspace is open. We keep only the
-  // quotes-specific `records` subscription and consume profile changes via that event.
+  // ── records handler (via centralized RealtimeProvider) ──
+  const handleRecordsRealtime = useCallback(() => {
+    const now = Date.now();
+    if (now - lastQuotesRealtimeFetchRef.current < QUOTES_REALTIME_THROTTLE_MS) return; // Throttle
+
+    // Debounce: coalesce rapid realtime events (e.g. own mutation + realtime echo)
+    if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+    realtimeDebounceRef.current = setTimeout(() => {
+      lastQuotesRealtimeFetchRef.current = Date.now();
+      fetchRecords(true);
+      fetchAvailableDates();
+    }, 500);
+  }, [fetchRecords, fetchAvailableDates]);
+
+  useRealtimeHandler('records', handleRecordsRealtime);
+
+  // Consume profile changes forwarded by the shared (leave-dashboard) profiles handler.
+  // Same handling as before — only the event source changed, not the logic.
   useEffect(() => {
     if (!sessionUser) return;
 
-    const quotesChannel = supabase
-      .channel(`realtime-quotes-${sessionUser.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${sessionUser.id}` },
-        () => {
-          // Debounce: coalesce rapid realtime events (e.g. own mutation + realtime echo)
-          if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-          realtimeDebounceRef.current = setTimeout(() => {
-            fetchRecords(true);
-            fetchAvailableDates();
-          }, 500);
-        }
-      )
-      .subscribe();
-
-    // Consume profile changes forwarded by the shared (leave-dashboard) profiles subscription.
-    // Same handling as before — only the event source changed, not the logic.
     const handleProfilePayload = (e: Event) => {
       const payload = (e as CustomEvent).detail;
       if (!payload) return;
@@ -990,7 +987,6 @@ export const useQuotesDashboardData = () => {
 
     return () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      supabase.removeChannel(quotesChannel);
       if (typeof window !== 'undefined') {
         window.removeEventListener('realtime-profile-payload', handleProfilePayload);
       }

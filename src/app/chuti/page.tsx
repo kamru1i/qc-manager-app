@@ -26,11 +26,14 @@ import { useModalHandlers } from '@/hooks/leave-tracker/useModalHandlers';
 interface DashboardProps {
   activeChutiTab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
+  /** R2: Callback to share data upward so useGlobalNotifications doesn't duplicate fetches */
+  onDataReady?: (data: { userRecords: any[]; holidayResponses: any[] }) => void;
 }
 
 export default function Dashboard({
   activeChutiTab,
   onChutiTabChange,
+  onDataReady,
 }: DashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -87,6 +90,13 @@ export default function Dashboard({
     handleDeleteLeaveSettlement,
     initialFetchDone,
   } = dashboardData;
+
+  // R2: Push data upward so useGlobalNotifications can skip its own duplicate fetches.
+  useEffect(() => {
+    if (onDataReady && (userRecords.length > 0 || holidayResponses.length > 0)) {
+      onDataReady({ userRecords, holidayResponses });
+    }
+  }, [userRecords, holidayResponses, onDataReady]);
 
   // View Filter states
   const [filterType, setFilterType] = useState('all');
