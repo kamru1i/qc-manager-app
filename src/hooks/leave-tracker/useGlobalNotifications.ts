@@ -97,28 +97,34 @@ export function useGlobalNotifications(
 
       // 4. Fetch admin/supervisor approvals
       if (profile?.role === 'admin') {
+        // Only used for the approvals count below (status / leave_type / reserve_adjustment_status),
+        // so select just those columns instead of every chuti field incl. heavy JSON.
         const { data: adminChutiData, error: adminChutiError } = await supabase
           .from('chuti')
-          .select('*')
+          .select('id, status, leave_type, reserve_adjustment_status')
           .is('deleted_at', null)
           .or('status.eq.approved_by_supervisor,reserve_adjustment_status.eq.pending');
 
         if (!adminChutiError && adminChutiData) {
-          setAdminPendingRecords(adminChutiData);
+          // Partial row (count-only); cast to the state's record type.
+          setAdminPendingRecords(adminChutiData as unknown as ChutiRecord[]);
         }
       } else {
         setAdminPendingRecords([]);
       }
 
       if (profile?.role === 'supervisor') {
+        // Only used for the team-pending count below, which reads admin_edit_request and the
+        // joined profiles.supervisor_ids — so skip the rest of the chuti columns.
         const { data: supervisorChutiData, error: supervisorChutiError } = await supabase
           .from('chuti')
-          .select('*, profiles (username, full_name, role, supervisor_ids)')
+          .select('id, status, admin_edit_request, profiles (username, full_name, role, supervisor_ids)')
           .eq('status', 'pending_supervisor')
           .is('deleted_at', null);
 
         if (!supervisorChutiError && supervisorChutiData) {
-          setSupervisorPendingRecords(supervisorChutiData);
+          // Partial row + profiles join (count-only); cast to the state's record type.
+          setSupervisorPendingRecords(supervisorChutiData as unknown as ChutiRecord[]);
         }
       } else {
         setSupervisorPendingRecords([]);
