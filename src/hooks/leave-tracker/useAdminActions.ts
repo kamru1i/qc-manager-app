@@ -336,89 +336,228 @@ export const useAdminActions = ({
       if (error) throw error;
 
       // Try to resolve target user info and track specific changes
-      const targetName = targetProfile ? `${targetProfile.username}` : `ID ${userId}`;
-
       const changes: string[] = [];
+      const formatBool = (val: boolean) => val ? 'Yes' : 'No';
+
       if (targetProfile) {
-        if (editorRole === 'admin' && oldUsername && cleanUsername && oldUsername !== cleanUsername) {
-          changes.push(`Codename: '${oldUsername}' → '${cleanUsername}'`);
-        }
-        const oldName = (targetProfile.full_name || '').trim();
-        const newName = fullName.trim();
-        if (oldName !== newName) {
-          changes.push(`Name: '${oldName}' → '${newName}'`);
+        // 1. Codename
+        if (editorRole === 'admin' && oldUsername && cleanUsername && oldUsername.toUpperCase() !== cleanUsername.toUpperCase()) {
+          changes.push(`Codename:\n${oldUsername} → ${cleanUsername}`);
         }
 
-        const oldRole = targetProfile.role;
-        const newRole = role;
-        if (editorRole === 'admin' && oldRole !== newRole) {
-          changes.push(`Role: '${oldRole}' → '${newRole}'`);
-        }
-
-        const oldChuti = !!targetProfile.has_chuti_access;
-        if (editorRole === 'admin' && oldChuti !== hasChutiAccess) {
-          changes.push(`Leave Tracker: ${oldChuti} → ${hasChutiAccess}`);
-        }
-
-        const oldQuotes = !!targetProfile.has_quotes_access;
-        if (editorRole === 'admin' && oldQuotes !== hasQuotesAccess) {
-          changes.push(`Quotes Tracker: ${oldQuotes} → ${hasQuotesAccess}`);
-        }
-
-        const oldAllowed = [...(targetProfile.allowed_types || [])].sort();
-        const newAllowed = [...allowedTypes].sort();
-        const oldAllowedStr = oldAllowed.join(', ');
-        const newAllowedStr = newAllowed.join(', ');
-
-        if (oldAllowedStr !== newAllowedStr) {
-          const added = allowedTypes.filter(x => !(targetProfile.allowed_types || []).includes(x));
-          const removed = (targetProfile.allowed_types || []).filter(x => !allowedTypes.includes(x));
-
-          const permChanges: string[] = [];
-          if (added.length > 0) {
-            permChanges.push(`Granted: [${added.join(', ')}]`);
+        // 2. Full Name
+        if (editorRole === 'admin') {
+          const oldName = (targetProfile.full_name || '').trim();
+          const newName = fullName.trim();
+          if (oldName !== newName) {
+            changes.push(`Full Name:\n${oldName || 'None'} → ${newName || 'None'}`);
           }
-          if (removed.length > 0) {
-            permChanges.push(`Revoked: [${removed.join(', ')}]`);
+        }
+
+        // 3. Role
+        if (editorRole === 'admin') {
+          const oldRole = targetProfile.role;
+          const newRole = role;
+          if (oldRole !== newRole) {
+            changes.push(`Role:\n${oldRole} → ${newRole}`);
           }
-          changes.push(`Permissions: ${permChanges.join(' & ')}`);
         }
 
-        const oldCanManage = !!targetProfile.can_manage_rules;
-        const newCanManage = canManageRules;
-        if (oldCanManage !== newCanManage) {
-          changes.push(`Quote Rules Permission: '${oldCanManage}' → '${newCanManage}'`);
+        // 4. Leave Tracker Access
+        if (editorRole === 'admin') {
+          const oldChuti = !!targetProfile.has_chuti_access;
+          if (oldChuti !== hasChutiAccess) {
+            changes.push(`Leave Tracker:\n${formatBool(oldChuti)} → ${formatBool(hasChutiAccess)}`);
+          }
         }
 
-        if (jobRole !== undefined && (targetProfile.job_role || '') !== jobRole) {
-          changes.push(`Job Role: '${targetProfile.job_role || ''}' → '${jobRole}'`);
+        // 5. Quotes Tracker Access
+        if (editorRole === 'admin') {
+          const oldQuotes = !!targetProfile.has_quotes_access;
+          if (oldQuotes !== hasQuotesAccess) {
+            changes.push(`Quotes Tracker:\n${formatBool(oldQuotes)} → ${formatBool(hasQuotesAccess)}`);
+          }
         }
-        if (workingHours !== undefined && (targetProfile.working_hours ?? 9.5) !== workingHours) {
-          changes.push(`Working Hours: '${targetProfile.working_hours ?? 9.5}' → '${workingHours}'`);
+
+        // 6. Allowed Types
+        const oldAllowed = [...(targetProfile.allowed_types || [])].sort().join(', ');
+        const newAllowed = [...allowedTypes].sort().join(', ');
+        if (oldAllowed !== newAllowed) {
+          changes.push(`Allowed Types:\n${oldAllowed || 'None'} → ${newAllowed || 'None'}`);
         }
-        if (breakTime !== undefined && (targetProfile.break_time ?? 0) !== breakTime) {
-          changes.push(`Break: '${targetProfile.break_time ?? 0}' → '${breakTime}'`);
+
+        // 7. Quote Rules Permission
+        if (editorRole === 'admin') {
+          const oldCanManage = !!targetProfile.can_manage_rules;
+          const newCanManage = canManageRules;
+          if (oldCanManage !== newCanManage) {
+            changes.push(`Quote Rules Permission:\n${formatBool(oldCanManage)} → ${formatBool(newCanManage)}`);
+          }
         }
-        if (defaultSignIn !== undefined && (targetProfile.default_sign_in || '') !== defaultSignIn) {
-          changes.push(`Sign-in: '${targetProfile.default_sign_in || ''}' → '${defaultSignIn}'`);
+
+        // 8. Needs Supervisor Approval
+        if (editorRole === 'admin') {
+          const oldNeedsApproval = !!targetProfile.needs_supervisor_approval;
+          const newNeedsApproval = !!needsSupervisorApproval;
+          if (oldNeedsApproval !== newNeedsApproval) {
+            changes.push(`Needs Supervisor Approval:\n${formatBool(oldNeedsApproval)} → ${formatBool(newNeedsApproval)}`);
+          }
         }
-        if (defaultSignOut !== undefined && (targetProfile.default_sign_out || '') !== defaultSignOut) {
-          changes.push(`Sign-out: '${targetProfile.default_sign_out || ''}' → '${defaultSignOut}'`);
+
+        // 9. Supervisor IDs
+        if (editorRole === 'admin') {
+          const getSupervisorNames = (ids: string[] | null | undefined): string => {
+            if (!ids || ids.length === 0) return 'None';
+            return ids
+              .map(id => {
+                const p = profilesList.find(prof => prof.id === id);
+                return p ? p.username : id;
+              })
+              .sort()
+              .join(', ');
+          };
+          const oldSups = getSupervisorNames(targetProfile.supervisor_ids);
+          const newSups = getSupervisorNames(supervisorIds);
+          if (oldSups !== newSups) {
+            changes.push(`Supervisors:\n${oldSups} → ${newSups}`);
+          }
+        }
+
+        // 10. Eligible Govt Holiday
+        if (editorRole === 'admin') {
+          const oldEligibleGovt = !!targetProfile.eligible_govt_holiday;
+          const newEligibleGovt = !!eligibleGovtHoliday;
+          if (oldEligibleGovt !== newEligibleGovt) {
+            changes.push(`Eligible for Govt Holiday:\n${formatBool(oldEligibleGovt)} → ${formatBool(newEligibleGovt)}`);
+          }
+        }
+
+        // 11. Eligible Office Leave
+        if (editorRole === 'admin') {
+          const oldEligibleOffice = !!targetProfile.eligible_office_leave;
+          const newEligibleOffice = !!eligibleOfficeLeave;
+          if (oldEligibleOffice !== newEligibleOffice) {
+            changes.push(`Eligible for Office Leave:\n${formatBool(oldEligibleOffice)} → ${formatBool(newEligibleOffice)}`);
+          }
+        }
+
+        // 12. Allow Overtime
+        if (editorRole === 'admin') {
+          const oldAllowOT = !!targetProfile.allow_overtime;
+          const newAllowOT = !!allowOvertime;
+          if (oldAllowOT !== newAllowOT) {
+            changes.push(`Allow Overtime:\n${formatBool(oldAllowOT)} → ${formatBool(newAllowOT)}`);
+          }
+        }
+
+        // 13. Allow Reserve
+        if (editorRole === 'admin') {
+          const oldAllowReserve = !!targetProfile.allow_reserve;
+          const newAllowReserve = !!allowReserve;
+          if (oldAllowReserve !== newAllowReserve) {
+            changes.push(`Allow Reserve:\n${formatBool(oldAllowReserve)} → ${formatBool(newAllowReserve)}`);
+          }
+        }
+
+        // 14. Job Role
+        if (editorRole === 'admin' && jobRole !== undefined) {
+          const oldJobRole = (targetProfile.job_role || '').trim();
+          const newJobRole = jobRole.trim();
+          if (oldJobRole !== newJobRole) {
+            changes.push(`Job Role:\n${oldJobRole || 'None'} → ${newJobRole || 'None'}`);
+          }
+        }
+
+        // 15. Working Hours
+        if (editorRole === 'admin' && workingHours !== undefined) {
+          const oldHours = targetProfile.working_hours ?? 9.5;
+          if (oldHours !== workingHours) {
+            changes.push(`Working Hours:\n${oldHours} → ${workingHours}`);
+          }
+        }
+
+        // 16. Break Time
+        const oldBreak = targetProfile.break_time ?? 0;
+        if (breakTime !== undefined && oldBreak !== breakTime) {
+          changes.push(`Break:\n${oldBreak} → ${breakTime}`);
+        }
+
+        // 17. Default Sign-in
+        const oldSignIn = (targetProfile.default_sign_in || '').trim();
+        if (defaultSignIn !== undefined && oldSignIn !== defaultSignIn.trim()) {
+          changes.push(`Sign-in:\n${oldSignIn || 'None'} → ${defaultSignIn.trim() || 'None'}`);
+        }
+
+        // 18. Default Sign-out
+        const oldSignOut = (targetProfile.default_sign_out || '').trim();
+        if (defaultSignOut !== undefined && oldSignOut !== defaultSignOut.trim()) {
+          changes.push(`Sign-out:\n${oldSignOut || 'None'} → ${defaultSignOut.trim() || 'None'}`);
+        }
+
+        // 19. Department
+        const oldDept = (existingSettings.department || 'Data Entry').trim();
+        const newDept = (department || 'Data Entry').trim();
+        if (oldDept !== newDept) {
+          changes.push(`Department:\n${oldDept} → ${newDept}`);
+        }
+
+        // 20. Other Department
+        const oldOtherDept = (existingSettings.other_department || 'IT').trim();
+        const newOtherDept = (otherDepartment || 'IT').trim();
+        if (oldOtherDept !== newOtherDept) {
+          changes.push(`Other Department:\n${oldOtherDept} → ${newOtherDept}`);
+        }
+
+        // 21. Performs Data Entry
+        const oldPDE = existingSettings.performs_data_entry !== false;
+        const newPDE = performsDataEntry !== false;
+        if (performsDataEntry !== undefined && oldPDE !== newPDE) {
+          changes.push(`Performs Data Entry:\n${formatBool(oldPDE)} → ${formatBool(newPDE)}`);
+        }
+
+        // 22. Performs Other Dept Tasks
+        const oldPOD = !!existingSettings.performs_other_dept_tasks;
+        const newPOD = !!performsOtherDeptTasks;
+        if (performsOtherDeptTasks !== undefined && oldPOD !== newPOD) {
+          changes.push(`Performs Other Department Tasks:\n${formatBool(oldPOD)} → ${formatBool(newPOD)}`);
+        }
+
+        // 23. KPI Skills
+        const oldKpiSkills = [...(existingSettings.kpi_skills || [])].sort().join(', ');
+        const newKpiSkills = [...(kpiSkills || [])].sort().join(', ');
+        if (kpiSkills !== undefined && oldKpiSkills !== newKpiSkills) {
+          changes.push(`KPI Skills:\n${oldKpiSkills || 'None'} → ${newKpiSkills || 'None'}`);
+        }
+
+        // 24. KPI Dept Indicators
+        const oldKpiDept = [...(existingSettings.kpi_dept_indicators || [])].sort().join(', ');
+        const newKpiDept = [...(kpiDeptIndicators || [])].sort().join(', ');
+        if (kpiDeptIndicators !== undefined && oldKpiDept !== newKpiDept) {
+          changes.push(`KPI Department Indicators:\n${oldKpiDept || 'None'} → ${newKpiDept || 'None'}`);
+        }
+
+        // 25. KPI Other Dept Indicators
+        const oldKpiOtherDept = [...(existingSettings.kpi_other_dept_indicators || [])].sort().join(', ');
+        const newKpiOtherDept = [...(kpiOtherDeptIndicators || [])].sort().join(', ');
+        if (kpiOtherDeptIndicators !== undefined && oldKpiOtherDept !== newKpiOtherDept) {
+          changes.push(`KPI Other Department Indicators:\n${oldKpiOtherDept || 'None'} → ${newKpiOtherDept || 'None'}`);
         }
       } else {
-        changes.push(`Name: '${fullName.trim()}', Role: '${role}', Allowed Types: [${allowedTypes.join(', ')}], Quote Rules Permission: ${canManageRules}`);
+        changes.push(`Full Name:\nNone → ${fullName.trim()}`);
+        changes.push(`Role:\nNone → ${role}`);
+        changes.push(`Allowed Types:\nNone → ${allowedTypes.join(', ')}`);
+        changes.push(`Quote Rules Permission:\nNone → ${formatBool(canManageRules)}`);
       }
 
-      const logDetails = changes.length > 0 
-        ? `Updated user '${targetName}' properties (${changes.join(' | ')})`
-        : `Updated user '${targetName}' (no changes made)`;
-
-      // Audit Log
-      await logActivity(
-        'UPDATE_USER',
-        userId,
-        logDetails
-      );
+      // Audit Log: Only create if at least one field has changed
+      if (changes.length > 0) {
+        const logDetails = `Updated user profile\n\n${changes.join('\n\n')}`;
+        await logActivity(
+          'UPDATE_USER',
+          userId,
+          logDetails
+        );
+      }
 
       // Refresh profiles list
       const { data: profiles } = await supabase
