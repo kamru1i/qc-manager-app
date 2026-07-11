@@ -121,16 +121,12 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v__VERSION__** is a critical security-hardening release implementing fixes for vulnerabilities identified during a penetration review.
+            **v__VERSION__** is a patch release addressing audit logging noise and complete cascading synchronization on user codename updates.
 
             #### 🛠 What's New in v__VERSION__:
 
-            - **Forgot-Password Hardening (H1)** — Implemented IP-based rate limiting (5 req/min) and switched to silent success responses for unregistered users to prevent username enumeration.
-            - **Supervisor RLS Scoping (H2)** — Scoped supervisor `UPDATE` and `DELETE` database policies on `chuti` exclusively to supervised team members.
-            - **Leave Submission Payload Sanitization (H3)** — Sandboxed the supervisor leave submission API route to ignore client-controlled security/audit fields.
-            - **RPC Executions Revocation (M1)** — Revoked public execute permissions on sensitive `SECURITY DEFINER` database helper functions.
-            - **Audit Trail Spoofing Block (M2)** — Enforced matching user IDs (`actor_id = auth.uid()`) on audit log insertion events.
-            - **Push Subscription Scope & Entropy Updates (L1/L2)** — Restricted push notifications deletion and upgraded session identifier entropy using cryptographically secure UUIDs.
+            - **Audit Log Change Detection (Bug Fix)** — Suppressed the generation of duplicate or empty `"no changes made"` logs when saving profiles without updates. Details now display only altered values in `Old Value → New Value` format.
+            - **Cascading Codename Synchronization** — Resolves code/DB mismatches where updating a user's codename did not align auth metadata or update references. The backend now cascades codename edits to auth `user_metadata`, Quotes App `records`, Todo `todos`, and past `audit_logs` history tables.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

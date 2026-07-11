@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.4.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.4.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -172,6 +172,10 @@ npm run tauri build
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v4.4.2 — Patch Release (Audit Hardening & Codename Sync)
+*   **Audit Log Change Detection Fix** — Blocked the insertion of empty/redundant `"no changes made"` logs when saving a user profile without adjustments. Configured the details log to extract and print only altered properties (representing the `Old Value → New Value` transitions).
+*   **Cascading Codename Synchronization** — Fixed a key dependency gap where codename edits only updated `profiles` and login email. The API route now automatically cascades the new codename into the `user_metadata` in Supabase Auth, Quotes App `records`, Todo Checklist `todos`, and the past `audit_logs` history tables to preserve data integrity and prevent broken lookups.
 
 ### 🚀 v4.4.1 — Patch Release (Security Hardening)
 *   **Security Audit Remediation** — Implemented comprehensive fixes for vulnerabilities identified during a penetration review:
