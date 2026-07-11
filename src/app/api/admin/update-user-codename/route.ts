@@ -81,14 +81,39 @@ export async function POST(request: NextRequest) {
 
     const newEmail = `${cleanUsername.toLowerCase()}@${suffix}`;
 
+    // Update user_metadata alongside email to keep auth metadata in sync
+    const currentMetadata = userData.user.user_metadata || {};
+    const updatedMetadata = {
+      ...currentMetadata,
+      username: cleanUsername
+    };
+
     const { error: authError } = await supabaseServer.auth.admin.updateUserById(userId, {
       email: newEmail,
-      email_confirm: true
+      email_confirm: true,
+      user_metadata: updatedMetadata
     });
 
     if (authError) {
       console.error('[UpdateUserCodename] Auth update error:', authError.message);
       return NextResponse.json({ error: 'Failed to update user auth email: ' + authError.message }, { status: 500, headers: getCorsHeaders(request) });
+    }
+
+    // 6. Synchronize codename across all related databases/tables for data integrity
+    const [recordsRes, todosRes, auditLogsRes] = await Promise.all([
+      supabaseServer.from('records').update({ codename: cleanUsername }).eq('user_id', userId),
+      supabaseServer.from('todos').update({ codename: cleanUsername }).eq('user_id', userId),
+      supabaseServer.from('audit_logs').update({ actor_codename: cleanUsername }).eq('actor_id', userId)
+    ]);
+
+    if (recordsRes.error) {
+      console.error('[UpdateUserCodename] Warning: Failed to update records codename:', recordsRes.error.message);
+    }
+    if (todosRes.error) {
+      console.error('[UpdateUserCodename] Warning: Failed to update todos codename:', todosRes.error.message);
+    }
+    if (auditLogsRes.error) {
+      console.error('[UpdateUserCodename] Warning: Failed to update audit logs actor_codename:', auditLogsRes.error.message);
     }
 
     return NextResponse.json({ success: true, newEmail }, { headers: getCorsHeaders(request) });
