@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback, lazy, Suspense, useMemo } from "react";
 import { supabase } from "@/utils/supabase";
 import { Profile } from "@/types";
+import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { Loader2 } from "lucide-react";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/common/UnifiedSidebar";
@@ -230,10 +231,7 @@ export default function AppPortal() {
     const fetchProfiles = async () => {
       const { data, error } = await supabase.from("profiles").select("*");
       if (data && !error) {
-        const mappedData = data.map((p: any) => ({
-          ...p,
-          password_reset_status: p.password_reset_status || p.global_settings?.password_reset_status || 'none'
-        }));
+        const mappedData = data.map((p: any) => mapProfilePasswordResetStatus(p));
         setProfilesList(mappedData);
       }
     };
@@ -565,10 +563,7 @@ export default function AppPortal() {
         return;
       }
 
-      const userProfile = {
-        ...profileData,
-        password_reset_status: profileData.password_reset_status || profileData.global_settings?.password_reset_status || 'none'
-      } as Profile;
+      const userProfile = mapProfilePasswordResetStatus(profileData) as Profile;
 
       // Perform inactivity and concurrent session checks
       const isLoggedOut = await checkInactivity(userId);

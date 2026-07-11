@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { getCorsHeaders } from '@/utils/apiHelpers';
 
 // Initialize web-push
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -12,15 +13,6 @@ if (vapidPublicKey && vapidPrivateKey) {
     vapidPublicKey,
     vapidPrivateKey
   );
-}
-
-function getCorsHeaders(request: NextRequest) {
-  const origin = request.headers.get('origin') || '';
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
 }
 
 export async function OPTIONS(request: NextRequest) {

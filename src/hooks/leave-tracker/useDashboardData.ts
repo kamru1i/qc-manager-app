@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse } from '@/types';
+import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 import { checkSubscriptionStatus, sendPushNotification } from '@/utils/webPushHelper';
 import { getGlobalSettingsFromProfile, defaultGlobalSettings, GlobalSettings, formatDate, parseHolidayItem } from '@/utils/dashboardHelpers';
@@ -180,10 +181,7 @@ export const useDashboardData = () => {
           .order('username', { ascending: true });
 
         if (!profilesErr && profiles) {
-          const mapped = profiles.map((p) => ({
-            ...p,
-            password_reset_status: p.password_reset_status || (p.global_settings as Record<string, string> | undefined)?.password_reset_status || 'none'
-          }));
+          const mapped = profiles.map((p) => mapProfilePasswordResetStatus(p));
           profilesData = mapped;
           setProfilesList(mapped);
         }
@@ -1237,10 +1235,7 @@ export const useDashboardData = () => {
             profileError = error;
 
             if (!profileError && userProfile) {
-              userProfile = {
-                ...userProfile,
-                password_reset_status: userProfile.password_reset_status || userProfile.global_settings?.password_reset_status || 'none'
-              };
+              userProfile = mapProfilePasswordResetStatus(userProfile);
               // Asynchronously update profile cache
               try {
                 await upsertCacheItem('profiles_cache', userProfile);

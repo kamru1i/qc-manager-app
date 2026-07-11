@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
+import { getCorsHeaders, CooldownLimiter } from '@/utils/apiHelpers';
 
 // Initialize web-push
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -16,9 +17,8 @@ if (!vapidPublicKey || !vapidPrivateKey) {
   );
 }
 
-// Simple in-memory storage for rate limiting (storing userId -> timestamp)
-const rateLimitMap = new Map<string, number>();
-const RATE_LIMIT_WINDOW_MS = 5000; // 5 seconds cooldown
+// Bounded cooldown limiter: 5 seconds per user (regular users only)
+const cooldownLimiter = new CooldownLimiter(5000);
 
 interface PushSubscriptionRow {
   sub_id: string;
@@ -26,15 +26,6 @@ interface PushSubscriptionRow {
   sub_endpoint: string;
   sub_p256dh: string;
   sub_auth: string;
-}
-
-function getCorsHeaders(request: NextRequest) {
-  const origin = request.headers.get('origin') || '';
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -121,16 +112,13 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting check (Only for regular users to prevent spam)
     if (isRateLimitedRole) {
-      const now = Date.now();
-      const lastRequestTime = rateLimitMap.get(user.id);
-      if (lastRequestTime && (now - lastRequestTime < RATE_LIMIT_WINDOW_MS)) {
+      if (cooldownLimiter.isLimited(user.id)) {
         console.warn(`[SendPush] Rate limit hit for user ${user.id}`);
         return NextResponse.json(
           { error: 'Too Many Requests: Please wait 5 seconds between notification requests.' },
           { status: 429, headers: getCorsHeaders(request) }
         );
       }
-      rateLimitMap.set(user.id, now);
     }
 
     console.log(`[SendPush] Authenticated user: ${user.email} (ID: ${user.id})`);

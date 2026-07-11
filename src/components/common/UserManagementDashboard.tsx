@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
+import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
 import { Modal } from '@/components/common/Modal';
@@ -608,10 +609,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         .order('username', { ascending: true });
       if (error) throw error;
       if (data) {
-        const mapped = data.map((p) => ({
-          ...p,
-          password_reset_status: p.password_reset_status || (p.global_settings as Record<string, string> | undefined)?.password_reset_status || 'none'
-        }));
+        const mapped = data.map((p) => mapProfilePasswordResetStatus(p));
         setProfiles(mapped);
       }
     } catch (e: unknown) {
@@ -747,10 +745,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         .select('*')
         .order('username', { ascending: true });
       if (data) {
-        const mapped = data.map((p) => ({
-          ...p,
-          password_reset_status: p.password_reset_status || (p.global_settings as Record<string, string> | undefined)?.password_reset_status || 'none'
-        }));
+        const mapped = data.map((p) => mapProfilePasswordResetStatus(p));
         setProfiles(mapped);
         const updated = mapped.find(p => p.id === viewingStaff.id);
         if (updated) {

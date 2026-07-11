@@ -1,37 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getCorsHeaders, RateLimiter } from '@/utils/apiHelpers';
 
-// Basic in-memory rate limiting map (IP -> array of timestamps)
-const rateLimits = new Map<string, number[]>();
-const LIMIT_WINDOW_MS = 60000; // 1 minute window
-const MAX_REQUESTS = 10; // max 10 attempts per IP per minute
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  if (!rateLimits.has(ip)) {
-    rateLimits.set(ip, [now]);
-    return false;
-  }
-
-  const timestamps = rateLimits.get(ip)!.filter(t => now - t < LIMIT_WINDOW_MS);
-  if (timestamps.length >= MAX_REQUESTS) {
-    rateLimits.set(ip, timestamps);
-    return true;
-  }
-
-  timestamps.push(now);
-  rateLimits.set(ip, timestamps);
-  return false;
-}
-
-function getCorsHeaders(request: NextRequest) {
-  const origin = request.headers.get('origin') || '';
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
-}
+// Bounded rate limiter: 10 requests per minute per IP
+const rateLimiter = new RateLimiter(60000, 10);
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -58,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Basic IP detection from headers
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
 
-    if (isRateLimited(ip)) {
+    if (rateLimiter.isLimited(ip)) {
       console.warn(`[ResolveEmail] Rate limit hit for IP: ${ip}`);
       return NextResponse.json(
         { error: 'Too many login attempts. Please wait a minute and try again.' },
