@@ -15,6 +15,12 @@
     "fs:read-all",
     "fs:write-all",
     "fs:allow-mkdir",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "**" }
+      ]
+    },
     "notification:default"
   ]
 }
