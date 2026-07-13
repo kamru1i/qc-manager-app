@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { RecordItem, SavedDocument } from '@/types';
 import { isTauriApp } from '@/utils/apiUrlHelper';
+import { asBlob } from 'html-docx-ts';
 
 interface UseSaveFileHelperOptions {
   showToast: (type: 'success' | 'error', text: string) => void;
@@ -100,8 +101,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
 </html>`;
   };
 
-  const fallbackDownload = (htmlContent: string, fileName: string) => {
-    const blob = new Blob([htmlContent], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  const fallbackDownload = (blob: Blob, fileName: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -210,11 +210,12 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
 
     try {
       const wrappedHtml = wrapHtmlForDocx(editorHtml);
+      const docxBlob = (await asBlob(wrappedHtml)) as Blob;
       let savedPath = "";
 
       if (isTauri) {
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(wrappedHtml);
+        const arrayBuffer = await docxBlob.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
         const { join } = await import('@tauri-apps/api/path');
         const { mkdir, writeFile } = await import('@tauri-apps/plugin-fs');
 
@@ -240,7 +241,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
               }]
             });
             const writable = await handle.createWritable();
-            await writable.write(wrappedHtml);
+            await writable.write(docxBlob);
             await writable.close();
             
             savedPath = `Local_File/${handle.name}`;
@@ -250,11 +251,11 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
               throw new Error("Save cancelled");
             }
             console.error("Failed to save via save file picker:", writeErr);
-            fallbackDownload(wrappedHtml, generatedFileName);
+            fallbackDownload(docxBlob, generatedFileName);
             savedPath = `Web_Downloads/${generatedFileName}`;
           }
         } else {
-          fallbackDownload(wrappedHtml, generatedFileName);
+          fallbackDownload(docxBlob, generatedFileName);
           savedPath = `Web_Downloads/${generatedFileName}`;
         }
       }
@@ -303,10 +304,11 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     try {
       const isTauri = isTauriApp();
       const wrappedHtml = wrapHtmlForDocx(editorHtml);
+      const docxBlob = (await asBlob(wrappedHtml)) as Blob;
 
       if (isTauri) {
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(wrappedHtml);
+        const arrayBuffer = await docxBlob.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
         const { writeFile } = await import('@tauri-apps/plugin-fs');
 
         if (savedFilePath) {
@@ -319,7 +321,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
         if (cachedHandle) {
           try {
             const writable = await cachedHandle.createWritable();
-            await writable.write(wrappedHtml);
+            await writable.write(docxBlob);
             await writable.close();
             showToast("success", `File updated successfully!`);
           } catch (writeErr) {
@@ -334,7 +336,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
               }]
             });
             const writable = await handle.createWritable();
-            await writable.write(wrappedHtml);
+            await writable.write(docxBlob);
             await writable.close();
             
             fileHandlesRef.current[savedFilePath] = handle;
@@ -342,7 +344,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
           }
         } else {
           const filename = savedFilePath.split("/").pop() || "document.docx";
-          fallbackDownload(wrappedHtml, filename);
+          fallbackDownload(docxBlob, filename);
           showToast("success", `Updated file downloaded as ${filename}`);
         }
       }
