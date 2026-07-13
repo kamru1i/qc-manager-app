@@ -66,7 +66,7 @@ export const canAccessModule = (
     }
     if (module === 'kpi') return targetUser ? targetUser.id === currentUser.id : true;
     if (module === 'leave') return targetUser ? targetUser.id === currentUser.id : true;
-    if (module === 'profile_settings') return targetUser ? targetUser.id === currentUser.id : false;
+    if (module === 'profile_settings') return true;
     if (module === 'quotes') return !!currentUser.has_quotes_access;
     return false;
   }
