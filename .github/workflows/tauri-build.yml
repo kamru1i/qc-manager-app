@@ -121,12 +121,14 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v__VERSION__** is a patch release addressing audit logging noise and complete cascading synchronization on user codename updates.
+            **v__VERSION__** is a patch release addressing badge sync triggers, settings access rules, cost optimizations, and client safeguards.
 
             #### 🛠 What's New in v__VERSION__:
 
-            - **Audit Log Change Detection (Bug Fix)** — Suppressed the generation of duplicate or empty `"no changes made"` logs when saving profiles without updates. Details now display only altered values in `Old Value → New Value` format.
-            - **Cascading Codename Synchronization** — Resolves code/DB mismatches where updating a user's codename did not align auth metadata or update references. The backend now cascades codename edits to auth `user_metadata`, Quotes App `records`, Todo `todos`, and past `audit_logs` history tables.
+            - **Top Performer Badge Sync (Security Fix)** — Resolves the trigger exception `"Unauthorized profile modification."` when client page loads attempt to execute badge sync on behalf of other users. Implemented transaction-local security bypasses inside the postgres RPC function.
+            - **Self-Profile Settings Tab Access Fix** — Resolves a permission boundary check where regular users were blocked from opening their own Settings workspace due to targetUser constraints.
+            - **Supabase Cost Optimizations** — Replaced conditional dashboard panel mounting with hidden DOM containers to eliminate duplicate database select queries and realtime channel re-subscriptions when switching workspace tabs.
+            - **Clock Skew Protection & Concurrency Safeguards** — Restores authentications from negative clock skews and blocks concurrent duplicate database submissions.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.4.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.4.3** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -172,6 +172,13 @@ npm run tauri build
 *   **Custom Alert Confirmation Modal**: Replaced standard browser `confirm` prompts with custom modal designs when deleting leaves in the user profile view.
 *   **Right-Click Protection**: Disabled default browser context menus globally while keeping custom project context menus operational. Also disabled custom context menu options for supervisors on non-deletable records.
 *   **Linter & Styling Cleanup**: Resolved all remaining TypeScript compiler warning types and corrected Tailwind class formatting.
+
+### 🚀 v4.4.3 — Patch Release (Security, Settings & Cost Optimizations)
+*   **Top Performer Badge Sync Trigger Fix** — Resolved a critical trigger exception `"Unauthorized profile modification."` raised in PostgreSQL when regular users mounted the dashboard. Configured transaction-local security bypasses (`app.bypass_profile_security`) inside the RPC function to allow safe badge sync updates.
+*   **Self-Profile Settings Tab Access Fix** — Allows users of role `'user'` to access their own Profile Settings workspace tab successfully.
+*   **Supabase Cost Optimizations** — Replaced conditional dashboard panel mounting with hidden DOM containers to eliminate duplicate database select queries and realtime channel re-subscriptions when switching workspace tabs.
+*   **Clock Skew Protection & Concurrency Safeguards** — Restores authentications from negative clock skews and blocks concurrent duplicate database submissions.
+*   **Dead Code Cleanup** — Pruned unused components (`StaffMasterTable.tsx`), empty API paths (`api/leaderboard`), and redundant imports/variables across the codebase.
 
 ### 🚀 v4.4.2 — Patch Release (Audit Hardening & Codename Sync)
 *   **Audit Log Change Detection Fix** — Blocked the insertion of empty/redundant `"no changes made"` logs when saving a user profile without adjustments. Configured the details log to extract and print only altered properties (representing the `Old Value → New Value` transitions).
