@@ -89,9 +89,32 @@
   --color-indigo-955: var(--indigo-955);
 
   --color-cyan-400: var(--cyan-400);
+
+  --color-theme-page-bg: var(--bg-page);
+  --color-theme-card-bg: var(--bg-card);
+  --color-theme-card-container: var(--bg-card-container);
+  --color-theme-border-muted: var(--border-muted);
+  --color-theme-border-input: var(--border-input);
+  --color-theme-border-active: var(--border-active);
+  --color-theme-text-primary: var(--text-primary);
+  --color-theme-text-secondary: var(--text-secondary);
+  --color-theme-text-muted: var(--text-muted);
+  --color-theme-text-inverse: var(--text-inverse);
 }
 
 :root {
+  /* Semantic Design Tokens */
+  --bg-page: var(--slate-955);
+  --bg-card-container: var(--slate-950);
+  --bg-card: var(--slate-900);
+  --border-muted: var(--slate-850);
+  --border-input: var(--slate-800);
+  --border-active: var(--slate-700);
+  --text-muted: var(--slate-400);
+  --text-secondary: var(--slate-300);
+  --text-primary: var(--slate-100);
+  --text-inverse: var(--slate-50);
+
   /* Light Mode Palette - Light backgrounds, dark text with blue/violet accents */
   --slate-955: #fcfcfc; /* page background */
   --slate-950: #f7f7f7; /* card container background */

@@ -723,12 +723,12 @@ export default function AppPortal() {
   }, []);
 
   if (!mounted) {
-    return <div className="min-h-screen bg-slate-955" />;
+    return <div className="min-h-screen bg-theme-page-bg" />;
   }
 
   if (loading && !sessionUser) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
+      <main className="min-h-screen flex items-center justify-center bg-radial from-theme-card-bg via-theme-card-container to-black text-theme-text-primary p-4">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700" />
         <div className="relative z-10 flex flex-col items-center gap-4">
@@ -739,7 +739,7 @@ export default function AppPortal() {
           <h1 className="text-2xl font-bold bg-linear-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
             QC Manager
           </h1>
-          <p className="text-sm text-slate-400 tracking-wide animate-pulse">
+          <p className="text-sm text-theme-text-muted tracking-wide animate-pulse">
             Configuring your workspaces...
           </p>
         </div>
@@ -749,17 +749,17 @@ export default function AppPortal() {
 
   if (errorMsg) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
+      <main className="min-h-screen flex items-center justify-center bg-radial from-theme-card-bg via-theme-card-container to-black text-theme-text-primary p-4">
         <div className="w-full max-w-md relative z-10">
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center">
+          <div className="bg-theme-card-bg/60 backdrop-blur-xl border border-theme-border-input/80 rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center">
             <div className="space-y-4">
               <div className="h-16 w-16 bg-red-950/40 border border-red-500/20 text-red-400 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner animate-bounce">
                 ⚠️
               </div>
-              <h2 className="text-xl font-semibold text-slate-100">
+              <h2 className="text-xl font-semibold text-theme-text-primary">
                 Access Restricted
               </h2>
-              <p className="text-sm text-slate-400 leading-relaxed px-2">
+              <p className="text-sm text-theme-text-muted leading-relaxed px-2">
                 {errorMsg}
               </p>
               <button
@@ -788,7 +788,7 @@ export default function AppPortal() {
   // Session exists but Profile is loading -> Show splash screen
   if (!profile) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-radial from-slate-900 via-slate-950 to-black text-white p-4">
+      <main className="min-h-screen flex items-center justify-center bg-radial from-theme-card-bg via-theme-card-container to-black text-theme-text-primary p-4">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none animate-pulse delay-700" />
         <div className="relative z-10 flex flex-col items-center gap-4">
@@ -799,7 +799,7 @@ export default function AppPortal() {
           <h1 className="text-2xl font-bold bg-linear-to-r from-purple-400 via-blue-400 to-purple-300 bg-clip-text text-transparent">
             QC Manager
           </h1>
-          <p className="text-sm text-slate-400 tracking-wide animate-pulse">
+          <p className="text-sm text-theme-text-muted tracking-wide animate-pulse">
             Configuring your workspaces...
           </p>
         </div>
@@ -810,7 +810,7 @@ export default function AppPortal() {
   // Authenticated -> Render single layout shell wrapping active workspace component
   return (
     <RealtimeProvider sessionUser={sessionUser} profile={profile}>
-    <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden pb-12 text-white selection:bg-purple-650 selection:text-white">
+    <div className="flex-1 min-h-screen flex flex-col bg-theme-page-bg relative overflow-hidden pb-12 text-white selection:bg-purple-650 selection:text-white">
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -959,7 +959,7 @@ export default function AppPortal() {
           />
         </div>
 
-        <section className="flex-1 min-w-0 w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 shadow-xl min-h-125">
+        <section className="flex-1 min-w-0 w-full bg-theme-card-bg/50 backdrop-blur-xl border border-theme-border-input/80 rounded-2xl p-6 shadow-xl min-h-125">
           <Suspense
             fallback={
               <div className="w-full">

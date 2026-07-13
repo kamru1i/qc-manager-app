@@ -15,7 +15,7 @@ export const Toggle: React.FC<ToggleProps> = ({ checked, onChange, label, disabl
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none cursor-pointer ${
-          checked ? 'bg-blue-600' : 'bg-slate-800'
+          checked ? 'bg-blue-600' : 'bg-theme-border-muted'
         }`}
       >
         <span
@@ -24,7 +24,7 @@ export const Toggle: React.FC<ToggleProps> = ({ checked, onChange, label, disabl
           }`}
         />
       </button>
-      {label && <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{label}</span>}
+      {label && <span className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">{label}</span>}
     </label>
   );
 };

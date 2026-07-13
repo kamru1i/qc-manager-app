@@ -98,11 +98,11 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 bg-slate-900 border border-slate-800 text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed text-left min-h-[32px] select-none"
+        className="w-full flex items-center justify-between gap-2 bg-theme-card-bg border border-theme-border-input text-theme-text-primary rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed text-left min-h-[32px] select-none"
       >
         <span className="truncate">{activeOption ? activeOption.label : value}</span>
         <svg
-          className={`h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 text-theme-text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -110,16 +110,16 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-
+ 
       {isOpen && (
         <div 
-          className="absolute left-0 mt-1 w-full min-w-[150px] bg-slate-955 border border-slate-800 rounded-lg shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 max-h-64 overflow-y-auto custom-scrollbar"
+          className="absolute left-0 mt-1 w-full min-w-[150px] bg-theme-page-bg border border-theme-border-input rounded-lg shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 max-h-64 overflow-y-auto custom-scrollbar"
           style={{ overscrollBehavior: 'contain' }}
         >
           {options.map((option, idx) => {
             const isSelected = option.value === value;
             const isHighlighted = idx === highlightedIndex;
-
+ 
             return (
               <button
                 key={option.value}
@@ -133,8 +133,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   isSelected
                     ? 'bg-indigo-650/15 text-indigo-400'
                     : isHighlighted
-                    ? 'bg-slate-800 text-white'
-                    : 'text-slate-355 hover:text-white'
+                    ? 'bg-theme-border-input text-theme-text-inverse'
+                    : 'text-theme-text-secondary hover:text-theme-text-inverse'
                 }`}
               >
                 {option.label}

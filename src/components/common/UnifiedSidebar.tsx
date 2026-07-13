@@ -136,14 +136,14 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   return (
     <aside
-      className={`shrink-0 bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-4 shadow-xl select-none transition-all duration-300 ease-out ${
+      className={`shrink-0 bg-theme-card-bg/50 backdrop-blur-xl border border-theme-border-input/80 rounded-2xl p-4 shadow-xl select-none transition-all duration-300 ease-out ${
         isSidebarCollapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* Sidebar Header / Toggle Button */}
       <div className={`flex items-center mb-5 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
         {!isSidebarCollapsed && (
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
             Workspaces
           </span>
         )}
@@ -151,7 +151,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
           type="button"
           onClick={onSidebarToggle}
           title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-800 bg-slate-955/60 text-slate-400 hover:text-white hover:bg-slate-850 transition-all cursor-pointer hover:scale-105 active:scale-95"
+          className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-theme-border-input bg-theme-page-bg/60 text-theme-text-secondary hover:text-theme-text-inverse hover:bg-theme-border-active transition-all cursor-pointer hover:scale-105 active:scale-95"
         >
           {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
@@ -169,17 +169,17 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
               } ${
                 activeSection === 'chuti'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-950/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-955/5'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <Calendar className="h-5 w-5 shrink-0" />
               {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Tracker</span>}
             </button>
-
+ 
             {/* Embedded Chuti sub-tabs when chuti section is active */}
             {activeSection === 'chuti' && isChutiExpanded && onChutiTabChange && activeChutiTab && (
-              <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-slate-800/80 ml-6'}`}>
+              <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-theme-border-input/80 ml-6'}`}>
                 {/* 1. Add Leave */}
                 <button
                   onClick={() => onChutiTabChange('add_leave')}
@@ -189,7 +189,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   } ${
                     activeChutiTab === 'add_leave'
                       ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                      : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                   }`}
                 >
                   <Plus className="h-4 w-4 shrink-0" />
@@ -207,7 +207,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeChutiTab === 'leave_history'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <History className="h-4 w-4 shrink-0" />
@@ -225,7 +225,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeChutiTab === 'team_leaves'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <Users className="h-4 w-4 shrink-0" />
@@ -243,7 +243,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeChutiTab === 'govt_responses'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <Calendar className="h-4 w-4 shrink-0" />
@@ -261,7 +261,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeChutiTab === 'settlement'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <RotateCcw className="h-4 w-4 shrink-0" />
@@ -279,7 +279,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeChutiTab === 'leave_settings'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <Settings className="h-4 w-4 shrink-0" />
@@ -302,7 +302,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               } ${
                 activeSection === 'quotes'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <FileText className="h-5 w-5 shrink-0" />
@@ -311,7 +311,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
             {/* Embedded Quotes sub-tabs when quotes section is active */}
             {activeSection === 'quotes' && isQuotesExpanded && onQuotesTabChange && activeQuotesTab && (
-              <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-slate-800/80 ml-6'}`}>
+              <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-theme-border-input/80 ml-6'}`}>
                 {/* 1. Daily Entry */}
                 <button
                   onClick={() => onQuotesTabChange('entry')}
@@ -321,7 +321,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   } ${
                     activeQuotesTab === 'entry'
                       ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                      : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                   }`}
                 >
                   <Clock className="h-4 w-4 shrink-0" />
@@ -338,7 +338,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeQuotesTab === 'copy_helper'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <ScrollText className="h-4 w-4 shrink-0" />
@@ -356,7 +356,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeQuotesTab === 'save_file'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <Save className="h-4 w-4 shrink-0" />
@@ -374,7 +374,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeQuotesTab === 'monthly'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <ScrollText className="h-4 w-4 shrink-0" />
@@ -394,7 +394,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeQuotesTab === 'rules'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <BookOpen className="h-4 w-4 shrink-0" />
@@ -412,7 +412,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeQuotesTab === 'ip_checker'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <Globe className="h-4 w-4 shrink-0" />
@@ -430,7 +430,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeQuotesTab === 'login_codes'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <Key className="h-4 w-4 shrink-0" />
@@ -448,7 +448,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                     } ${
                       activeQuotesTab === 'causality'
                         ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-slate-400 hover:bg-slate-850/60 hover:text-white'
+                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
                     }`}
                   >
                     <FileText className="h-4 w-4 shrink-0" />
@@ -471,7 +471,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               } ${
                 activeSection === 'kpi'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <BarChart2 className="h-5 w-5 shrink-0" />
@@ -491,7 +491,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               } ${
                 activeSection === 'todo'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-955/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <ListTodo className="h-5 w-5 shrink-0" />
@@ -511,7 +511,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               } ${
                 activeSection === 'analytics'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <TrendingUp className="h-5 w-5 shrink-0" />
@@ -531,7 +531,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               } ${
                 activeSection === 'audit_logs'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <ScrollText className="h-5 w-5 shrink-0" />
@@ -551,7 +551,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               } ${
                 activeSection === 'profile_settings'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <Settings className="h-5 w-5 shrink-0" />
@@ -571,7 +571,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               } ${
                 activeSection === 'user_management'
                   ? 'bg-purple-600/15 border border-purple-500/30 text-purple-400 shadow-md shadow-purple-900/5'
-                  : 'text-slate-400 hover:bg-slate-850/80 hover:text-white border border-transparent'
+                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <Users className="h-5 w-5 shrink-0" />

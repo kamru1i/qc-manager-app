@@ -380,13 +380,13 @@ export function ProfileSettings({
       <div className="absolute bottom-[-10%] left-[-15%] w-[35%] h-[35%] rounded-full bg-purple-900/5 blur-[70px] pointer-events-none" />
 
       {/* Page Title Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-slate-800/80">
+      <div className="flex justify-between items-center pb-4 border-b border-theme-border-input/80">
         <div>
-          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
+          <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2.5">
             <Settings className="h-5.5 w-5.5 text-blue-500" />
             Profile Settings
           </h2>
-          <p className="text-xs text-slate-400 mt-1">Manage your shift hours, default shift times, password settings, and custom preferences.</p>
+          <p className="text-xs text-theme-text-muted mt-1">Manage your shift hours, default shift times, password settings, and custom preferences.</p>
         </div>
       </div>
 
@@ -404,8 +404,8 @@ export function ProfileSettings({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Column 1: Settings Form */}
-        <div className="lg:col-span-7 bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6 space-y-5">
-          <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-800/40">
+        <div className="lg:col-span-7 bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-5">
+          <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
             <User className="h-4 w-4 text-blue-400" />
             Personal & Shift Settings
           </h3>
@@ -413,7 +413,7 @@ export function ProfileSettings({
           <form id="profile-settings-form" onSubmit={handleSaveSettings} className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Codename</label>
+                <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">Codename</label>
                 {profile?.role === 'admin' && (
                   <button
                     type="button"
@@ -433,10 +433,10 @@ export function ProfileSettings({
                 disabled={!isCodenameEditable}
                 value={editUsername}
                 onChange={(e) => setEditUsername(e.target.value)}
-                className={`mt-1 block w-full px-3.5 py-2 bg-slate-955 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono ${
+                className={`mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono ${
                   isCodenameEditable
                     ? 'border-blue-500/50 text-white cursor-text opacity-100 ring-1 ring-blue-500/30'
-                    : 'border-slate-850 text-slate-500 cursor-not-allowed opacity-60'
+                    : 'border-theme-border-muted text-theme-text-muted/60 cursor-not-allowed opacity-60'
                 }`}
               />
             </div>
@@ -465,8 +465,8 @@ export function ProfileSettings({
         <div className="lg:col-span-5 space-y-6">
 
           {/* Notifications Panel */}
-          <div className="bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6 space-y-4">
-            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-800/40">
+          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
+            <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
               <Bell className="h-4 w-4 text-blue-400" />
               Notifications
             </h3>
@@ -492,7 +492,7 @@ export function ProfileSettings({
                         </button>
                       )}
                     </div>
-                    <span className="block text-[10px] text-slate-400 mt-1">Receive live alerts and dashboard leave notifications.</span>
+                    <span className="block text-[10px] text-theme-text-muted mt-1">Receive live alerts and dashboard leave notifications.</span>
                   </div>
                   <button
                     type="button"
@@ -526,7 +526,7 @@ export function ProfileSettings({
                       }
                     }}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      isPushSubscribed ? 'bg-blue-600' : 'bg-slate-850'
+                      isPushSubscribed ? 'bg-blue-600' : 'bg-theme-border-muted'
                     } ${isPushLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
                     <span
@@ -541,10 +541,10 @@ export function ProfileSettings({
           </div>
 
           {/* Change Password Panel */}
-          <div className="bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6 space-y-4">
+          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
             <h3
               onClick={() => setShowPasswordFields(!showPasswordFields)}
-              className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center justify-between pb-2 border-b border-slate-800/40 cursor-pointer hover:text-blue-400 transition-colors select-none"
+              className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center justify-between pb-2 border-b border-theme-border-input/40 cursor-pointer hover:text-blue-400 transition-colors select-none"
             >
               <span className="flex items-center gap-2">
                 <Key className="h-4 w-4 text-blue-400" />
@@ -562,29 +562,29 @@ export function ProfileSettings({
             >
               <form onSubmit={handleUpdatePassword} className="space-y-3.5 pt-1">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">New Password</label>
+                  <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">New Password</label>
                   <input
                     type="password"
                     placeholder="Enter at least 6 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3.5 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-100"
+                    className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Confirm New Password</label>
+                  <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Confirm New Password</label>
                   <input
                     type="password"
                     placeholder="Verify new password"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3.5 py-2 bg-slate-955 border border-slate-850 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-100"
+                    className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={passwordSubmitting}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-slate-800 hover:bg-slate-750 hover:text-white cursor-pointer disabled:opacity-50 transition-all items-center gap-2 active:scale-98"
+                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-theme-border-input hover:bg-theme-border-active hover:text-theme-text-inverse cursor-pointer disabled:opacity-50 transition-all items-center gap-2 active:scale-98"
                 >
                   {passwordSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   <span>{passwordSubmitting ? 'Updating...' : 'Update Password'}</span>
@@ -597,13 +597,13 @@ export function ProfileSettings({
 
       {/* Menu Visibility Configuration */}
       {profile && (
-        <div className="bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6 space-y-4 max-w-4xl">
+        <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4 max-w-4xl">
           <div>
-            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-800/40">
+            <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
               <Layout className="h-4 w-4 text-blue-400" />
               Menu Tab Visibility Settings ⚙️
             </h3>
-            <p className="text-[11px] text-slate-400 mt-2">
+            <p className="text-[11px] text-theme-text-muted mt-2">
               Uncheck options to hide them from your sidebar navigation dashboard, and click the <strong>Save Changes</strong> button above to persist.
             </p>
           </div>
@@ -636,7 +636,7 @@ export function ProfileSettings({
 
               return (
                 <div key={category} className="space-y-2.5">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1 border-l-2 border-blue-500/60">
+                  <span className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider pl-1 border-l-2 border-blue-500/60">
                     {category}
                   </span>
                   <div className="flex flex-col gap-2">
@@ -647,8 +647,8 @@ export function ProfileSettings({
                           key={opt.key}
                           className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all cursor-pointer select-none text-[11px] font-medium ${
                             isVisible
-                              ? 'border-blue-500/20 bg-blue-955/20 text-slate-200 hover:bg-blue-950/30'
-                              : 'border-slate-850/60 bg-slate-900/30 text-slate-500 hover:bg-slate-850/20'
+                              ? 'border-blue-500/20 bg-blue-955/20 text-theme-text-secondary hover:bg-blue-955/30'
+                              : 'border-theme-border-muted/60 bg-theme-card-bg/30 text-theme-text-muted/70 hover:bg-theme-border-muted/20'
                           }`}
                         >
                           <input
@@ -660,7 +660,7 @@ export function ProfileSettings({
                                 : hiddenTabs.filter((k) => k !== opt.key);
                               setHiddenTabs(newHidden);
                             }}
-                            className="rounded border-slate-700 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
+                            className="rounded border-theme-border-active bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-theme-page-bg h-3.5 w-3.5 cursor-pointer"
                           />
                           <span>{opt.label}</span>
                         </label>
@@ -676,14 +676,14 @@ export function ProfileSettings({
 
       {/* Bottom Save Changes Bar */}
       {profile?.profile_change_status !== 'pending' && (
-        <div className="flex justify-end pt-4 border-t border-slate-800/60 max-w-4xl">
+        <div className="flex justify-end pt-4 border-t border-theme-border-input/60 max-w-4xl">
           <button
             type="submit"
             form="profile-settings-form"
             disabled={submitting || !hasChanges}
             className={`w-full md:w-auto md:px-10 flex justify-center py-3 px-6 border rounded-xl shadow-lg text-xs font-bold transition-all items-center gap-2 ${
               submitting || !hasChanges
-                ? 'border-slate-800 bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-50'
+                ? 'border-theme-border-input bg-theme-border-input/40 text-theme-text-muted/60 cursor-not-allowed opacity-50'
                 : 'border-transparent text-white bg-blue-600 hover:bg-blue-500 hover:shadow-blue-600/10 cursor-pointer active:scale-98'
             }`}
           >
