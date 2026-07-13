@@ -194,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Bell className="h-4.5 w-4.5" />
               {notificationCount > 0 && (
-                <span className="absolute top-[-4px] right-[-4px] flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse">
+                <span className="absolute top-[-4px] right-[-4px] flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-red-500 text-[9px] leading-none font-bold text-white animate-pulse">
                   {notificationCount}
                 </span>
               )}

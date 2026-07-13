@@ -79,7 +79,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
             >
               <span>Go to User Panel</span>
               {userNotificationsCount > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white animate-pulse">
+                <span className="flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-red-500 text-[9px] leading-none font-bold text-white animate-pulse">
                   {userNotificationsCount}
                 </span>
               )}
