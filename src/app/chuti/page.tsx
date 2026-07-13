@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -21,6 +21,8 @@ import { useAdminStaffOperations } from '@/hooks/leave-tracker/useAdminStaffOper
 import { useDerivedState } from '@/hooks/leave-tracker/useDerivedState';
 import { useExportOperations } from '@/hooks/leave-tracker/useExportOperations';
 import { useModalHandlers } from '@/hooks/leave-tracker/useModalHandlers';
+import { supabase } from '@/utils/supabase';
+import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 
 
 interface DashboardProps {
@@ -125,10 +127,10 @@ export default function Dashboard({
     return new Date().getFullYear().toString();
   });
 
-  // State to track dismissed notifications (persistent in localStorage, cleaned after 24 hrs)
+  // State to track dismissed notifications (persistent in localStorage, cleaned after 30 days, synced with DB)
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
 
-  // Load and clean up old dismissed notifications
+  // Load and clean up old dismissed notifications on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem('dismissed_notifications');
@@ -139,7 +141,7 @@ export default function Dashboard({
         const freshIds = new Set<string>();
         
         for (const [id, timestamp] of Object.entries(parsed)) {
-          if (now - timestamp < 24 * 60 * 60 * 1000) {
+          if (now - timestamp < 30 * 24 * 60 * 60 * 1000) {
             fresh[id] = timestamp;
             freshIds.add(id);
           }
@@ -148,9 +150,82 @@ export default function Dashboard({
         setDismissedNotificationIds(freshIds);
       }
     } catch (e) {
-      console.error('Failed to load dismissed notifications:', e);
+      console.error('Failed to load dismissed notifications from localStorage:', e);
     }
   }, []);
+
+  // Fetch dismissed notifications from DB on mount / login
+  useEffect(() => {
+    if (!sessionUser) return;
+    const fetchDismissed = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('dismissed_notifications')
+          .select('notification_id')
+          .eq('user_id', sessionUser.id);
+        if (!error && data) {
+          const dbIds = data.map(d => d.notification_id);
+          setDismissedNotificationIds(prev => {
+            const merged = new Set(prev);
+            dbIds.forEach(id => merged.add(id));
+            
+            // Sync merged set back to localStorage
+            try {
+              const stored = localStorage.getItem('dismissed_notifications');
+              const current = stored ? JSON.parse(stored) as Record<string, number> : {};
+              const now = Date.now();
+              let changed = false;
+              dbIds.forEach(id => {
+                if (!current[id]) {
+                  current[id] = now;
+                  changed = true;
+                }
+              });
+              if (changed) {
+                localStorage.setItem('dismissed_notifications', JSON.stringify(current));
+              }
+            } catch (e) {
+              console.error('Failed to sync DB dismissals to localStorage:', e);
+            }
+            
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch dismissed notifications from DB:', err);
+      }
+    };
+    fetchDismissed();
+  }, [sessionUser]);
+
+  // Realtime synchronization for dismissed notifications across devices
+  useRealtimeHandler(
+    'dismissed_notifications',
+    useCallback(
+      (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const nid = payload.new.notification_id as string;
+          if (nid) {
+            setDismissedNotificationIds((prev) => {
+              const next = new Set(prev);
+              next.add(nid);
+              return next;
+            });
+            // Update local storage too to keep it in sync
+            try {
+              const stored = localStorage.getItem('dismissed_notifications');
+              const current = stored ? JSON.parse(stored) as Record<string, number> : {};
+              current[nid] = Date.now();
+              localStorage.setItem('dismissed_notifications', JSON.stringify(current));
+            } catch (e) {
+              console.error('Failed to sync realtime dismiss to localStorage:', e);
+            }
+          }
+        }
+      },
+      [setDismissedNotificationIds]
+    )
+  );
 
   const [editingRecord, setEditingRecord] = useState<ChutiRecord | null>(null);
 
@@ -208,10 +283,11 @@ export default function Dashboard({
   } = derivedState;
 
   // Dismiss currently visible notifications from the panel
-  const handleDismissNotifications = (type: 'user' | 'admin') => {
+  const handleDismissNotifications = useCallback(async (type: 'user' | 'admin') => {
     const listToDismiss = type === 'user' ? userNotificationsList : adminHolidayNotifications;
-    if (!listToDismiss || listToDismiss.length === 0) return;
+    if (!listToDismiss || listToDismiss.length === 0 || !sessionUser) return;
     
+    // 1. Local update
     try {
       const stored = localStorage.getItem('dismissed_notifications');
       const current = stored ? JSON.parse(stored) as Record<string, number> : {};
@@ -226,9 +302,25 @@ export default function Dashboard({
       localStorage.setItem('dismissed_notifications', JSON.stringify(current));
       setDismissedNotificationIds(newIds);
     } catch (e) {
-      console.error('Failed to dismiss notifications:', e);
+      console.error('Failed to dismiss notifications locally:', e);
     }
-  };
+
+    // 2. DB persistence
+    try {
+      const inserts = listToDismiss.map((n: { id: string }) => ({
+        user_id: sessionUser.id,
+        notification_id: n.id
+      }));
+      
+      const { error } = await supabase
+        .from('dismissed_notifications')
+        .insert(inserts);
+        
+      if (error) throw error;
+    } catch (e) {
+      console.error('Failed to persist dismissed notifications:', e);
+    }
+  }, [userNotificationsList, adminHolidayNotifications, dismissedNotificationIds, sessionUser, setDismissedNotificationIds]);
 
   // Leave operations controller
   const chutiOps = useChutiOperations({

@@ -8,6 +8,7 @@ import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
 import { toast } from 'react-hot-toast';
 import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 
 export function useGlobalNotifications(
   sessionUser: SupabaseUser | null,
@@ -154,10 +155,74 @@ export function useGlobalNotifications(
       } else {
         setSupervisorPendingRecords([]);
       }
+
+      // 5. Fetch dismissed notification IDs from DB
+      const { data: dismissedData, error: dismissedError } = await supabase
+        .from('dismissed_notifications')
+        .select('notification_id')
+        .eq('user_id', sessionUser.id);
+
+      if (!dismissedError && dismissedData) {
+        const dbIds = dismissedData.map(d => d.notification_id);
+        setDismissedNotificationIds(prev => {
+          const merged = new Set(prev);
+          dbIds.forEach(id => merged.add(id));
+          
+          // Sync merged set back to localStorage for faster initial loads on this device
+          try {
+            const stored = localStorage.getItem('dismissed_notifications');
+            const current = stored ? JSON.parse(stored) as Record<string, number> : {};
+            const now = Date.now();
+            let changed = false;
+            dbIds.forEach(id => {
+              if (!current[id]) {
+                current[id] = now;
+                changed = true;
+              }
+            });
+            if (changed) {
+              localStorage.setItem('dismissed_notifications', JSON.stringify(current));
+            }
+          } catch (e) {
+            console.error('Failed to sync DB dismissals to localStorage:', e);
+          }
+
+          return merged;
+        });
+      }
     } catch (err) {
       console.error('Failed to fetch global notifications data:', err);
     }
   }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses]);
+
+  // Register realtime handler to sync dismissals across active sessions in real time
+  useRealtimeHandler(
+    'dismissed_notifications',
+    useCallback(
+      (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const nid = payload.new.notification_id as string;
+          if (nid) {
+            setDismissedNotificationIds((prev) => {
+              const next = new Set(prev);
+              next.add(nid);
+              return next;
+            });
+            // Update local storage too to keep it in sync
+            try {
+              const stored = localStorage.getItem('dismissed_notifications');
+              const current = stored ? JSON.parse(stored) as Record<string, number> : {};
+              current[nid] = Date.now();
+              localStorage.setItem('dismissed_notifications', JSON.stringify(current));
+            } catch (e) {
+              console.error('Failed to sync realtime dismiss to localStorage:', e);
+            }
+          }
+        }
+      },
+      []
+    )
+  );
 
   // Load last viewed time and clean up dismissed notifications on mount
   useEffect(() => {
@@ -431,7 +496,10 @@ export function useGlobalNotifications(
     setShowNotificationsModal(false);
   }, []);
 
-  const handleDismissNotification = useCallback((id: string) => {
+  const handleDismissNotification = useCallback(async (id: string) => {
+    if (!sessionUser) return;
+
+    // 1. Optimistic local update
     try {
       const stored = localStorage.getItem('dismissed_notifications');
       const current = stored ? JSON.parse(stored) as Record<string, number> : {};
@@ -446,12 +514,29 @@ export function useGlobalNotifications(
         return next;
       });
     } catch (e) {
-      console.error('Failed to dismiss notification:', e);
+      console.error('Failed to save dismissal locally:', e);
     }
-  }, []);
 
-  const handleDismissAllNotifications = useCallback(() => {
-    if (notificationsList.length === 0) return;
+    // 2. DB persistence
+    try {
+      const { error } = await supabase
+        .from('dismissed_notifications')
+        .insert({
+          user_id: sessionUser.id,
+          notification_id: id
+        });
+      if (error && error.code !== '23505') { // Ignore unique constraint violation
+        throw error;
+      }
+    } catch (e) {
+      console.error('Failed to persist notification dismissal:', e);
+    }
+  }, [sessionUser]);
+
+  const handleDismissAllNotifications = useCallback(async () => {
+    if (notificationsList.length === 0 || !sessionUser) return;
+
+    // 1. Optimistic local update
     try {
       const stored = localStorage.getItem('dismissed_notifications');
       const current = stored ? JSON.parse(stored) as Record<string, number> : {};
@@ -466,9 +551,25 @@ export function useGlobalNotifications(
       localStorage.setItem('dismissed_notifications', JSON.stringify(current));
       setDismissedNotificationIds(newIds);
     } catch (e) {
-      console.error('Failed to dismiss all notifications:', e);
+      console.error('Failed to save dismiss all locally:', e);
     }
-  }, [notificationsList, dismissedNotificationIds]);
+
+    // 2. DB persistence
+    try {
+      const inserts = notificationsList.map((n) => ({
+        user_id: sessionUser.id,
+        notification_id: n.id
+      }));
+
+      const { error } = await supabase
+        .from('dismissed_notifications')
+        .insert(inserts);
+
+      if (error) throw error;
+    } catch (e) {
+      console.error('Failed to persist dismiss all notifications:', e);
+    }
+  }, [notificationsList, dismissedNotificationIds, sessionUser]);
 
   const handleSaveHolidayResponse = useCallback(async (holidayDate: string, holidayName: string, choice: 'paid' | 'reserve') => {
     if (!profile) return false;

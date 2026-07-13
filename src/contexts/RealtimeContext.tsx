@@ -12,7 +12,8 @@ export type RealtimeTable =
   | 'profiles'
   | 'leave_settlements'
   | 'records'
-  | 'govt_holiday_responses';
+  | 'govt_holiday_responses'
+  | 'dismissed_notifications';
 
 /** Minimal interface for Supabase postgres_changes payloads */
 export interface RealtimePayload {
@@ -148,6 +149,17 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
           ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
         },
         (payload) => dispatch('govt_holiday_responses', payload as unknown as RealtimePayload)
+      )
+      // ── dismissed_notifications ──
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'dismissed_notifications',
+          filter: `user_id=eq.${sessionUser.id}`,
+        },
+        (payload) => dispatch('dismissed_notifications', payload as unknown as RealtimePayload)
       )
       .subscribe((status, err) => {
         if (!active) return;
