@@ -54,21 +54,21 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
 
         {/* Custom Hover Tooltip for Codename & Role Info */}
         {showTooltip && (
-          <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-44 p-2.5 text-[11px] leading-relaxed text-slate-350 bg-slate-955/95 border border-slate-800 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto normal-case font-normal text-left">
-            <div className="font-semibold text-white flex items-center flex-wrap gap-1">
+          <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-44 p-2.5 text-[11px] leading-relaxed text-theme-text-secondary bg-theme-page-bg/95 border border-theme-border-input rounded-xl shadow-2xl backdrop-blur-md animate-fade-in pointer-events-auto normal-case font-normal text-left">
+            <div className="font-semibold text-theme-text-primary flex items-center flex-wrap gap-1">
               <span>Codename:</span>
               <span className="text-blue-400 font-mono select-all">{profile.username ? profile.username.toUpperCase() : ''}</span>
               {profile.role && (
-                <span className="text-[10px] text-slate-400 font-normal">
+                <span className="text-[10px] text-theme-text-muted font-normal">
                   ({profile.role === 'admin' ? 'Admin' : profile.role === 'supervisor' ? 'Supervisor' : 'Staff'})
                 </span>
               )}
             </div>
             {profile.job_role && (
               <>
-                <div className="border-t border-slate-850 my-0.5"></div>
-                <div className="text-slate-400">
-                  Job Role: <span className="text-slate-200 font-semibold ml-1">{profile.job_role}</span>
+                <div className="border-t border-theme-border-muted my-0.5"></div>
+                <div className="text-theme-text-muted">
+                  Job Role: <span className="text-theme-text-primary font-semibold ml-1">{profile.job_role}</span>
                 </div>
               </>
             )}

@@ -150,12 +150,12 @@ export function AdminLeaveSettings({
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in font-sans">
       {/* Title Header */}
-      <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 p-6 rounded-2xl shadow-xl">
-        <h3 className="text-md font-bold text-white flex items-center gap-2">
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted p-6 rounded-2xl shadow-xl">
+        <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
           <Settings className="h-4.5 w-4.5 text-blue-400" />
           Leave Settings
         </h3>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-theme-text-muted mt-1">
           Directly configure and manage the company leave policy quotas, Eid holidays, and government calendar leaves.
         </p>
       </div>
@@ -167,16 +167,16 @@ export function AdminLeaveSettings({
         <div className="lg:col-span-1 flex flex-col gap-6">
           
           {/* Card 1: Office Allocated Leave Settings */}
-          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-xl rounded-2xl p-5 flex flex-col gap-4">
+          <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-xl rounded-2xl p-5 flex flex-col gap-4">
             <div>
               <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider">Office Allocated Leaves</h4>
-              <p className="text-[10px] text-slate-500 mt-0.5">Configure allocated days for H1 and H2 periods</p>
+              <p className="text-[10px] text-theme-text-muted mt-0.5">Configure allocated days for H1 and H2 periods</p>
             </div>
             
             <form onSubmit={handleSaveOffice} className="space-y-4 text-xs font-medium">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">H1 (Jan - Jun)</label>
+                  <label className="block text-theme-text-muted font-semibold mb-1">H1 (Jan - Jun)</label>
                   <input
                     type="number"
                     min="0"
@@ -184,12 +184,12 @@ export function AdminLeaveSettings({
                     required
                     value={officeLeaveH1}
                     onChange={(e) => setOfficeLeaveH1(Math.round(parseFloat(e.target.value) || 0))}
-                    className="block w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 font-mono"
+                    className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
                   />
-                  <span className="text-[9px] text-slate-500 mt-1 block">Usually 7 Days</span>
+                  <span className="text-[9px] text-theme-text-muted mt-1 block">Usually 7 Days</span>
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">H2 (Jul - Dec)</label>
+                  <label className="block text-theme-text-muted font-semibold mb-1">H2 (Jul - Dec)</label>
                   <input
                     type="number"
                     min="0"
@@ -197,13 +197,13 @@ export function AdminLeaveSettings({
                     required
                     value={officeLeaveH2}
                     onChange={(e) => setOfficeLeaveH2(Math.round(parseFloat(e.target.value) || 0))}
-                    className="block w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 font-mono"
+                    className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
                   />
-                  <span className="text-[9px] text-slate-500 mt-1 block">Usually 7 Days</span>
+                  <span className="text-[9px] text-theme-text-muted mt-1 block">Usually 7 Days</span>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-850">
+              <div className="pt-2 border-t border-theme-border-muted">
                 <button
                   type="submit"
                   disabled={submittingOffice}
@@ -217,15 +217,15 @@ export function AdminLeaveSettings({
           </div>
 
           {/* Card 2: Eid Leave Settings */}
-          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-xl rounded-2xl p-5 flex flex-col gap-4">
+          <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-xl rounded-2xl p-5 flex flex-col gap-4">
             <div>
               <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider">Eid Festival Leaves</h4>
-              <p className="text-[10px] text-slate-500 mt-0.5">Configure allocated days for Eid-ul-Fitr and Eid-ul-Adha</p>
+              <p className="text-[10px] text-theme-text-muted mt-0.5">Configure allocated days for Eid-ul-Fitr and Eid-ul-Adha</p>
             </div>
             
             <form onSubmit={handleSaveEid} className="space-y-4 text-xs font-medium">
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Eid-ul-Fitr Leave (Days)</label>
+                <label className="block text-theme-text-muted font-semibold mb-1">Eid-ul-Fitr Leave (Days)</label>
                 <input
                   type="number"
                   min="0"
@@ -233,12 +233,12 @@ export function AdminLeaveSettings({
                   required
                   value={eidFitrLeave}
                   onChange={(e) => setEidFitrLeave(Math.round(parseFloat(e.target.value) || 0))}
-                  className="block w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 font-mono"
+                  className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Eid-ul-Adha Leave (Days)</label>
+                <label className="block text-theme-text-muted font-semibold mb-1">Eid-ul-Adha Leave (Days)</label>
                 <input
                   type="number"
                   min="0"
@@ -246,11 +246,11 @@ export function AdminLeaveSettings({
                   required
                   value={eidAdhaLeave}
                   onChange={(e) => setEidAdhaLeave(Math.round(parseFloat(e.target.value) || 0))}
-                  className="block w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 font-mono"
+                  className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
                 />
               </div>
 
-              <div className="pt-2 border-t border-slate-850">
+              <div className="pt-2 border-t border-theme-border-muted">
                 <button
                   type="submit"
                   disabled={submittingEid}
@@ -267,30 +267,30 @@ export function AdminLeaveSettings({
 
         {/* Right Column: Government Holidays List (Takes 2 cols) */}
         <div className="lg:col-span-2">
-          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-xl rounded-2xl p-5 flex flex-col gap-4 h-full">
+          <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-xl rounded-2xl p-5 flex flex-col gap-4 h-full">
             <div>
               <h4 className="text-xs font-bold text-teal-400 uppercase tracking-wider">Government Holidays Calendar</h4>
-              <p className="text-[10px] text-slate-500 mt-0.5">Manage and add government holiday dates for response preferences</p>
+              <p className="text-[10px] text-theme-text-muted mt-0.5">Manage and add government holiday dates for response preferences</p>
             </div>
 
             {/* Add Holiday Subform */}
-            <div className="flex flex-col sm:flex-row gap-3 bg-slate-955 border border-slate-850 p-3.5 rounded-xl items-end">
+            <div className="flex flex-col sm:flex-row gap-3 bg-theme-page-bg border border-theme-border-muted p-3.5 rounded-xl items-end">
               <div className="flex-1 w-full">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Holiday Date</label>
+                <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Holiday Date</label>
                 <DateInput
                   value={newDate}
                   onChange={(val) => setNewDate(val)}
-                  className="bg-slate-900 border-slate-800"
+                  className="bg-theme-card-bg border-theme-border-input"
                 />
               </div>
               <div className="flex-1 w-full">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Holiday Name</label>
+                <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Holiday Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Shab-e-Barat, Victory Day"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 h-[34px]"
+                  className="w-full px-3 py-2 bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 h-[34px]"
                 />
               </div>
               <button
@@ -304,19 +304,19 @@ export function AdminLeaveSettings({
 
             {/* Holidays List */}
             <div className="flex-1 flex flex-col gap-2 min-h-[220px]">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Holidays List ({govtHolidays.length} {govtHolidays.length === 1 ? 'day' : 'days'})</label>
+              <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Holidays List ({govtHolidays.length} {govtHolidays.length === 1 ? 'day' : 'days'})</label>
               
               {govtHolidays.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center py-12 text-center text-slate-500 border border-dashed border-slate-850 rounded-xl bg-slate-955/20 text-xs">
+                <div className="flex-1 flex items-center justify-center py-12 text-center text-theme-text-muted border border-dashed border-theme-border-muted rounded-xl bg-theme-page-bg/20 text-xs">
                   No government holidays have been added for the current year.
                 </div>
               ) : (
-                <div className="flex-1 overflow-y-auto max-h-[300px] border border-slate-850 rounded-xl bg-slate-955/20 divide-y divide-slate-850/60 font-mono text-xs">
+                <div className="flex-1 overflow-y-auto max-h-[300px] border border-theme-border-muted rounded-xl bg-theme-page-bg/20 divide-y divide-theme-border-muted/60 font-mono text-xs">
                   {govtHolidays.map((h) => (
-                    <div key={h.date} className="flex justify-between items-center px-4 py-2.5 hover:bg-slate-900/30 transition-all">
+                    <div key={h.date} className="flex justify-between items-center px-4 py-2.5 hover:bg-theme-card-bg/30 transition-all">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-white font-semibold">{formatDate(h.date)}</span>
-                        <span className="text-slate-400 text-[10px] font-sans">{h.name}</span>
+                        <span className="text-theme-text-primary font-semibold">{formatDate(h.date)}</span>
+                        <span className="text-theme-text-muted text-[10px] font-sans">{h.name}</span>
                       </div>
                       <button
                         type="button"
@@ -333,7 +333,7 @@ export function AdminLeaveSettings({
             </div>
 
             {/* Save Button for Govt Holidays */}
-            <div className="pt-3 border-t border-slate-850 flex justify-end">
+            <div className="pt-3 border-t border-theme-border-muted flex justify-end">
               <button
                 type="button"
                 onClick={handleSaveGovt}

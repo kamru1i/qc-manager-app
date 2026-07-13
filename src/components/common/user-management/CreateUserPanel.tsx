@@ -163,12 +163,12 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
         otherDepartment={newOtherDepartment}
         setOtherDepartment={setNewOtherDepartment}
       />
-      <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
+      <div className="bg-theme-card-bg/20 border border-theme-border-muted/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6">
         <div className="flex flex-wrap gap-2.5 font-sans">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+            className="px-4 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
           >
             <X className="h-3.5 w-3.5 text-red-400" /> Cancel
           </button>

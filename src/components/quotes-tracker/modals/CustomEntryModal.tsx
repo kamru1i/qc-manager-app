@@ -230,19 +230,19 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-455 hover:text-white transition-all cursor-pointer"
+          className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-1.5">
+        <h3 className="text-lg font-bold text-theme-text-primary mb-1 flex items-center gap-1.5">
           <Calendar className="h-5 w-5 text-blue-500" />
           Custom Date Entry
         </h3>
-        <p className="text-xs text-slate-455 mb-6">
+        <p className="text-xs text-theme-text-muted mb-6">
           {adminMode
             ? "Submit data for a selected user on a custom backdated or future date."
             : "Submit your data on a custom backdated or future date."}
@@ -257,14 +257,14 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
             {/* Target User Selector - Only show for admin mode */}
             {adminMode && (
               <div>
-                <label className="flex text-xs font-semibold text-slate-355 mb-1.5 items-center gap-1.5">
+                <label className="flex text-xs font-semibold text-theme-text-secondary mb-1.5 items-center gap-1.5">
                   <User className="h-3.5 w-3.5 text-blue-500" /> Target User
                 </label>
                 <select
                   required
                   value={customUserId}
                   onChange={(e) => setCustomUserId(e.target.value)}
-                  className="block w-full px-3.5 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  className="block w-full px-3.5 py-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 >
                   <option value="">-- Select User --</option>
                   {profilesList.map((u) => (
@@ -279,17 +279,17 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
             {/* Display User Info for non-admin mode */}
             {!adminMode && currentUserProfile && (
               <div>
-                <label className="flex text-xs font-semibold text-slate-355 mb-1.5 items-center gap-1.5">
+                <label className="flex text-xs font-semibold text-theme-text-secondary mb-1.5 items-center gap-1.5">
                   <User className="h-3.5 w-3.5 text-blue-500" /> Your Codename
                 </label>
-                <div className="px-3.5 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white text-xs font-semibold">
+                <div className="px-3.5 py-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-xs font-semibold">
                   {currentUserProfile.username.toUpperCase()}
                 </div>
               </div>
             )}
 
             <div>
-              <label className="flex text-xs font-semibold text-slate-355 mb-1.5 items-center gap-1.5">
+              <label className="flex text-xs font-semibold text-theme-text-secondary mb-1.5 items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-blue-500" /> Target Date
               </label>
               <div className="flex gap-1.5 items-center">
@@ -300,7 +300,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
                   value={modalDateInputVal}
                   onChange={(e) => handleModalDateInputChange(e.target.value)}
                   maxLength={10}
-                  className="block w-full px-3.5 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10.5"
+                  className="block w-full px-3.5 py-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10.5"
                 />
                 <input
                   type="date"
@@ -313,7 +313,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
                 <button
                   type="button"
                   onClick={handleOpenCustomDatePicker}
-                  className="p-2.5 bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-400 rounded-xl transition-all duration-200 flex items-center justify-center shrink-0 w-10.5 h-10.5 cursor-pointer"
+                  className="p-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-xl transition-all duration-200 flex items-center justify-center shrink-0 w-10.5 h-10.5 cursor-pointer"
                   title="Open Calendar"
                 >
                   <Calendar className="h-4.5 w-4.5" />
@@ -322,7 +322,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
             </div>
 
             <div>
-              <label className="flex text-xs font-semibold text-slate-355 mb-1.5 items-center gap-1.5">
+              <label className="flex text-xs font-semibold text-theme-text-secondary mb-1.5 items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5 text-blue-500" /> File Name
               </label>
               <input
@@ -332,12 +332,12 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
                 value={customFileName}
                 onChange={(e) => setCustomFileName(e.target.value)}
                 onBlur={(e) => setCustomFileName(cleanFileName(e.target.value))}
-                className="block w-full px-3.5 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
+                className="block w-full px-3.5 py-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
               />
             </div>
 
             <div>
-              <label className="flex text-xs font-semibold text-slate-355 mb-1.5 items-center gap-1.5">
+              <label className="flex text-xs font-semibold text-theme-text-secondary mb-1.5 items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-blue-500" /> Branch Name
               </label>
               <BranchSelector
@@ -350,7 +350,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
           {/* Right Side Category/Type Grid */}
           <div className="space-y-4 flex flex-col justify-between">
             <div>
-              <label className="block text-xs font-semibold text-slate-355 mb-2.5">
+              <label className="block text-xs font-semibold text-theme-text-secondary mb-2.5">
                 Select File Type
               </label>
 
@@ -361,22 +361,22 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
               />
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-slate-800">
+            <div className="flex gap-3 pt-4 border-t border-theme-border-input">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 px-4 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="flex-1 py-3 px-4 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 flex items-center justify-center gap-1.5 py-3 px-4 border border-transparent rounded-xl shadow-lg text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-purple-900/20 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+                className="flex-1 flex items-center justify-center gap-1.5 py-3 px-4 border border-transparent rounded-xl shadow-lg text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-purple-900/20 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-theme-card-container"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="animate-spin h-3.5 w-3.5 text-white" />{" "}
+                    <Loader2 className="animate-spin h-3.5 w-3.5 text-theme-text-primary" />{" "}
                     Submitting...
                   </>
                 ) : (

@@ -297,16 +297,16 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       )}
 
       {/* Records Table */}
-      <div className="bg-slate-900/40 border border-slate-900 shadow-2xl rounded-2xl overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-slate-800/80 flex flex-col lg:flex-row justify-between items-center gap-4">
+      <div className="bg-theme-card-bg/40 border border-theme-card-bg shadow-2xl rounded-2xl overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-theme-border-input/80 flex flex-col lg:flex-row justify-between items-center gap-4">
           <div className="flex flex-col">
-            <h3 className="text-base font-bold text-white">{title}</h3>
-            <span className="text-xs text-slate-400 mt-0.5">Total: {filteredRecords.length} {filteredRecords.length === 1 ? 'entry' : 'entries'}</span>
+            <h3 className="text-base font-bold text-theme-text-primary">{title}</h3>
+            <span className="text-xs text-theme-text-muted mt-0.5">Total: {filteredRecords.length} {filteredRecords.length === 1 ? 'entry' : 'entries'}</span>
           </div>
           
           {/* Quick Search */}
           <div className="relative w-full lg:max-w-xs">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 dark:text-slate-500">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-text-muted dark:text-theme-text-muted">
               <Search className="h-4 w-4" />
             </div>
             <input
@@ -314,12 +314,12 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               placeholder="Search by comment or leave type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-10 py-1.5 bg-white border border-slate-800 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all dark:bg-slate-955/80 dark:border-slate-800 dark:text-white dark:placeholder-slate-500"
+              className="w-full pl-9 pr-10 py-1.5 bg-white border border-theme-border-input rounded-lg text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all dark:bg-theme-page-bg/80 dark:border-theme-border-input dark:text-theme-text-primary dark:placeholder-theme-text-muted/50"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors cursor-pointer text-sm font-semibold"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer text-sm font-semibold"
                 title="Clear search"
               >
                 ✕
@@ -354,37 +354,37 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               <SkeletonLoader variant="leaves-table" rows={5} allowOvertime={allowOvertime} showNameColumn={showNameColumn} />
             </div>
           ) : filteredRecords.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 text-sm">
+            <div className="py-12 text-center text-theme-text-muted text-sm">
               {emptyMessage}
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
-              <thead className="bg-slate-955/60">
+            <table className="min-w-full divide-y divide-theme-border-input text-left text-sm">
+              <thead className="bg-theme-page-bg/60">
                 <tr>
                   {showNameColumn ? (
                     <>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                         Name
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                         Codename
                       </th>
                     </>
                   ) : (
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                       Date
                     </th>
                   )}
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Type</th>
                   {!hideAdjustmentAndOvertime && (
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Adjustment</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Adjustment</th>
                   )}
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Sign In/Out</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Leave Hours</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Sign In/Out</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Leave Hours</th>
                   {allowOvertime && !hideAdjustmentAndOvertime && (
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Overtime</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Overtime</th>
                   )}
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Comment</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Comment</th>
                   <th
                     className="p-0 text-center overflow-hidden border-0"
                     style={cellStyle}
@@ -397,7 +397,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         <button
                           type="button"
                           onClick={handleBulkDelete}
-                          className={`p-1 text-red-500 hover:text-red-400 hover:bg-slate-800/80 rounded cursor-pointer flex items-center justify-center shrink-0 transition-all duration-300 transform ${
+                          className={`p-1 text-red-500 hover:text-red-400 hover:bg-theme-border-input/80 rounded cursor-pointer flex items-center justify-center shrink-0 transition-all duration-300 transform ${
                             selectedIds.length > 0
                               ? "scale-100 opacity-100 w-6"
                               : "scale-0 opacity-0 w-0"
@@ -410,7 +410,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                       <button
                         type="button"
                         onClick={handleSelectAllToggle}
-                        className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                        className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
                           filteredRecords.length > 0 && filteredRecords.every((r) => selectedIds.includes(r.id || ''))
                             ? 'bg-blue-500 border-blue-500'
                             : ''
@@ -426,10 +426,10 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                       </button>
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850 bg-slate-900/20">
+              <tbody className="divide-y divide-theme-border-muted bg-theme-card-bg/20">
                 {filteredRecords.map((r) => {
                   const isTemp = typeof r.id === 'string' && r.id.startsWith('temp-');
                   return (
@@ -443,13 +443,13 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         if (showNameColumn) return;
                         handleRowClick(r);
                       }}
-                      className={`hover:bg-slate-900/30 transition-all ${
+                      className={`hover:bg-theme-card-bg/30 transition-all ${
                         isSelectionMode && !showNameColumn ? "cursor-pointer select-none" : ""
                       }`}
                     >
                       {showNameColumn ? (
                         <>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center justify-start gap-2">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-theme-text-primary flex items-center justify-start gap-2">
                             {(() => {
                               const staffProfile = profilesList?.find(p => p.id === r.user_id);
                               return staffProfile?.full_name || staffProfile?.username || r.username || r.user_id;
@@ -460,7 +460,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 text-center font-mono">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center font-mono">
                             {(() => {
                               const staffProfile = profilesList?.find(p => p.id === r.user_id);
                               return staffProfile?.username || r.username || '-';
@@ -468,7 +468,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           </td>
                         </>
                       ) : (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white flex items-center justify-center gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-theme-text-primary flex items-center justify-center gap-2">
                           {formatDate(r.date)}
                           {showPendingBadge && isTemp && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
@@ -477,7 +477,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           )}
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${
                           r.leave_type === 'Full Leave' 
                             ? 'bg-red-955/50 border border-red-800 text-red-300' 
@@ -489,7 +489,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         </span>
                       </td>
                       {!hideAdjustmentAndOvertime && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button
                               type="button"
@@ -499,7 +499,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                                 onToggleAdjustment(r);
                               }}
                               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'bg-blue-600' : 'bg-slate-800'
+                                (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'bg-blue-600' : 'bg-theme-border-input'
                               }`}
                             >
                               <span
@@ -516,27 +516,27 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                               ) : r.adjusted_hour ? (
                                 <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
                               ) : r.reserve_adjustment_status === 'rejected' ? (
-                                <span className="text-slate-500">No (Rejected)</span>
+                                <span className="text-theme-text-muted">No (Rejected)</span>
                               ) : (
-                                <span className="text-slate-500">No</span>
+                                <span className="text-theme-text-muted">No</span>
                               )}
                             </span>
                           </div>
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-355 font-mono text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary font-mono text-center">
                         {r.leave_type === 'Full Leave' ? '-' : `${formatTimeToAMPM(r.sign_in_time)} / ${formatTimeToAMPM(r.sign_out_time)}`}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300 font-mono font-bold text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary font-mono font-bold text-center">
                         {r.leave_type === 'Full Leave' || r.leave_type === 'Overtime' ? '-' : (r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '-')}
                       </td>
                       {allowOvertime && !hideAdjustmentAndOvertime && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300 font-mono font-bold text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary font-mono font-bold text-center">
                           {r.leave_type === 'Overtime' ? (r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '-') : '-'}
                         </td>
                       )}
                       {/* Comment Column */}
-                      <td className="px-6 py-4 text-sm text-slate-400 max-w-[150px] truncate text-center" title={getCleanComment(r.comment)}>
+                      <td className="px-6 py-4 text-sm text-theme-text-muted max-w-[150px] truncate text-center" title={getCleanComment(r.comment)}>
                         {getCleanComment(r.comment) || '-'}
                       </td>
                       {/* Animated selection checkbox column in place of Action */}
@@ -558,7 +558,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                                 prev.includes(rid) ? prev.filter((x) => x !== rid) : [...prev, rid]
                               );
                             }}
-                            className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                            className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
                               selectedIds.includes(r.id || '') ? 'bg-blue-500 border-blue-500' : ''
                             } ${
                               isSelectionMode
@@ -597,14 +597,14 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
         createPortal(
           <div
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-            className="fixed z-50 backdrop-blur-lg bg-slate-900/95 border border-slate-800 rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
+            className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
           >
             {!hideDelete && (
               selectedIds.includes(contextMenu.record.id || '') ? (
                 <button
                   type="button"
                   onClick={() => handleContextDeselect(contextMenu.record)}
-                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
                 >
                   <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
                   Deselect
@@ -613,7 +613,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 <button
                   type="button"
                   onClick={() => handleContextSelect(contextMenu.record)}
-                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
                 >
                   <div className="h-2 w-2 rounded-full bg-blue-500" />
                   Select
@@ -624,9 +624,9 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               <button
                 type="button"
                 onClick={() => handleContextEdit(contextMenu.record)}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-355 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
               >
-                <Edit className="h-3.5 w-3.5 text-slate-500" />
+                <Edit className="h-3.5 w-3.5 text-theme-text-muted" />
                 Edit
               </button>
             )}

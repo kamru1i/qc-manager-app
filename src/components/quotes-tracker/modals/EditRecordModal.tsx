@@ -76,23 +76,23 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md shadow-2xl relative">
+      <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-md shadow-2xl relative">
         <button
           onClick={onClose}
           disabled={submitting}
-          className="absolute right-4 top-4 text-slate-450 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h3 className="text-lg font-bold text-white mb-1">Edit Entry</h3>
-        <p className="text-xs text-slate-450 mb-5">
+        <h3 className="text-lg font-bold text-theme-text-primary mb-1">Edit Entry</h3>
+        <p className="text-xs text-theme-text-muted mb-5">
           Modify the details of the selected file below.
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-350 mb-1">
+            <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
               File Name
             </label>
             <input
@@ -100,12 +100,12 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
               disabled={submitting}
               value={editFileName}
               onChange={(e) => setEditFileName(e.target.value)}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-355 mb-1">
+            <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
               Branch Name
             </label>
             <BranchSelector
@@ -117,7 +117,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-355 mb-1">
+            <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
               Codename
             </label>
             <input
@@ -125,19 +125,19 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
               disabled={submitting}
               value={editCodename}
               onChange={(e) => setEditCodename(e.target.value.toUpperCase())}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-355 mb-1.5">
+            <label className="block text-xs font-semibold text-theme-text-secondary mb-1.5">
               File Category
             </label>
             <select
               value={editFileType}
               disabled={submitting}
               onChange={(e) => setEditFileType(e.target.value as FileType)}
-              className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+              className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
             >
               {allowedCategories.map((type) => (
                 <option key={type} value={type}>
@@ -149,7 +149,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
 
           {editFileType === "Sale" && editSaleStatus && setEditSaleStatus && (
             <div>
-              <label className="block text-xs font-semibold text-slate-355 mb-1.5">
+              <label className="block text-xs font-semibold text-theme-text-secondary mb-1.5">
                 Sale Status
               </label>
               <select
@@ -158,7 +158,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
                 onChange={(e) =>
                   setEditSaleStatus(e.target.value as "SOLD" | "UNSOLD")
                 }
-                className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
               >
                 <option value="SOLD">Sold</option>
                 <option value="UNSOLD">Unsold</option>
@@ -169,7 +169,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           {canEditSubmittedAt && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-355 mb-1">
+                <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
                   Submitted Date
                 </label>
                 <input
@@ -180,12 +180,12 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
                   placeholder="DD-MM-YYYY"
                   value={editSubmittedDate}
                   onChange={(e) => handleDateChange(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                  className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-355 mb-1">
+                <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
                   Submitted Time
                 </label>
                 <input
@@ -197,7 +197,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
                   onChange={(e) =>
                     setEditSubmittedTime(e.target.value.toUpperCase())
                   }
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                  className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -207,7 +207,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
             <button
               onClick={onClose}
               disabled={submitting}
-              className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

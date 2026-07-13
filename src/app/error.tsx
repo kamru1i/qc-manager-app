@@ -18,7 +18,7 @@ export default function ErrorBoundary({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-950 relative overflow-hidden text-slate-100">
+    <div className="min-h-screen flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-theme-card-container relative overflow-hidden text-theme-text-primary">
       {/* Background gradients */}
       <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-red-900/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-900/10 blur-[120px] pointer-events-none" />
@@ -30,20 +30,20 @@ export default function ErrorBoundary({
         <h2 className="text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-linear-to-r from-red-400 to-purple-400">
           Failed to load the system!
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-400 max-w-xs mx-auto">
+        <p className="mt-2 text-center text-sm text-theme-text-muted max-w-xs mx-auto">
           An unexpected error occurred while loading the application.
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10 px-4 sm:px-0">
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 py-8 px-4 shadow-2xl rounded-2xl sm:px-10 text-center space-y-6">
-          <div className="text-left p-4 bg-slate-955/80 border border-slate-800 rounded-lg max-h-48 overflow-y-auto font-mono text-xs text-red-400 select-text">
-            <span className="block font-semibold text-slate-400 mb-1">
+        <div className="bg-theme-card-bg/50 backdrop-blur-xl border border-theme-border-input/80 py-8 px-4 shadow-2xl rounded-2xl sm:px-10 text-center space-y-6">
+          <div className="text-left p-4 bg-theme-page-bg/80 border border-theme-border-input rounded-lg max-h-48 overflow-y-auto font-mono text-xs text-red-400 select-text">
+            <span className="block font-semibold text-theme-text-muted mb-1">
               {"// Error message:"}
             </span>
             {error.message || "Unknown runtime error occurred."}
             {error.digest && (
-              <span className="block text-slate-500 mt-2">
+              <span className="block text-theme-text-muted mt-2">
                 Digest ID: {error.digest}
               </span>
             )}
@@ -63,7 +63,7 @@ export default function ErrorBoundary({
                 reset();
                 router.push("/");
               }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-slate-850 rounded-lg text-sm font-medium text-slate-300 bg-slate-955 hover:bg-slate-900 hover:text-white border-transparent hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 cursor-pointer transition-all duration-200"
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-theme-border-muted rounded-lg text-sm font-medium text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg hover:text-theme-text-primary border-transparent hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-border-active cursor-pointer transition-all duration-200"
             >
               <Home className="h-4 w-4" />
               <span>Go to Home</span>

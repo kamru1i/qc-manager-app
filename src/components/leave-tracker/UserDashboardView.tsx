@@ -292,33 +292,33 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
       {onBackClick && (
         <button
           onClick={onBackClick}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer w-fit p-2 bg-slate-950/60 hover:bg-slate-900 border border-slate-800 rounded-xl shadow-md"
+          className="flex items-center gap-2 text-xs font-semibold text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer w-fit p-2 bg-theme-card-container/60 hover:bg-theme-card-bg border border-theme-border-input rounded-xl shadow-md"
         >
           <ArrowLeft className="h-4 w-4 text-blue-400" /> Back to Add Leave
         </button>
       )}
       {/* Staff Leave Leave Settlement Alert Banner */}
       {showSettlementBanner && (
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-indigo-900/40 p-4 rounded-2xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-indigo-900/40 p-4 rounded-2xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-start gap-3">
             <div className="p-2.5 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-xl shrink-0 mt-0.5">
               <RotateCcw className="h-5 w-5 text-indigo-500" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">
+              <h4 className="text-sm font-bold text-theme-text-primary">
                 {initiatedSettlements.length > 0
                   ? 'Leave Preferences Requested by Admin 📅'
                   : respondedSettlements.length > 0
                     ? 'Submitted Leave Preferences (Review Mode) 📅'
                     : `Leave Settlement Review Active (${selectedYear}) 📅`}
               </h4>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              <p className="text-xs text-theme-text-muted mt-1 leading-relaxed">
                 {initiatedSettlements.length > 0 || respondedSettlements.length > 0 ? (
                   <>
                     {initiatedSettlements.length > 0
                       ? 'Admin has requested your preferences for: '
                       : 'You have submitted your preferences for (pending admin process): '}
-                    <span className="font-semibold text-slate-200">{
+                    <span className="font-semibold text-theme-text-primary">{
                       [...initiatedSettlements, ...respondedSettlements].map(s => {
                         const periodLabel = s.period === 'Instant' ? 'Instant' : s.period;
                         const choiceLabel = getSettlementLabel(s, workingHours);
@@ -328,7 +328,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
                   </>
                 ) : (
                   <>
-                    Leave settlement review is active for <span className="font-semibold text-slate-200">{broadcastCategory} ({broadcastPeriod === 'H1' ? 'January-June (H1)' : broadcastPeriod === 'H2' ? 'July-December (H2)' : 'Instant'})</span> — {selectedYear}.{' '}
+                    Leave settlement review is active for <span className="font-semibold text-theme-text-primary">{broadcastCategory} ({broadcastPeriod === 'H1' ? 'January-June (H1)' : broadcastPeriod === 'H2' ? 'July-December (H2)' : 'Instant'})</span> — {selectedYear}.{' '}
                     {broadcastRemaining < 0 ? (
                       <>
                         You have an outstanding deficit of <span className="font-semibold text-rose-455 font-mono">{Math.abs(broadcastRemaining)} days</span>. Please select how to resolve it.
@@ -354,19 +354,19 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
 
       {/* Pending Govt Holiday Response Alert Banner */}
       {initialFetchDone && profile && profile.eligible_govt_holiday !== false && profile.allow_reserve !== false && pendingHolidays.length > 0 && (
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-purple-900/40 p-4 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-purple-900/40 p-4 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-start gap-3">
             <div className="p-2.5 bg-purple-600/10 border border-purple-500/20 text-purple-400 rounded-xl shrink-0 mt-0.5">
               <Calendar className="h-5 w-5 text-purple-500" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Government Holiday Preferences Pending 🔔</h4>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              <h4 className="text-sm font-bold text-theme-text-primary">Government Holiday Preferences Pending 🔔</h4>
+              <p className="text-xs text-theme-text-muted mt-1 leading-relaxed">
                 Please select what you would like to do for the following government holidays. You can either get paid or reserve the leave:
               </p>
               <div className="flex flex-wrap gap-2 mt-2.5">
                 {pendingHolidays.map((holiday, idx) => (
-                  <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs font-semibold text-slate-300 gap-1.5 font-sans">
+                  <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-theme-card-container border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-secondary gap-1.5 font-sans">
                     <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                     {holiday.name} ({formatDate(holiday.date)})
                   </span>
@@ -375,12 +375,12 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 w-full md:w-auto shrink-0 border-t border-slate-850/80 md:border-t-0 pt-3 md:pt-0">
+          <div className="flex flex-col gap-2 w-full md:w-auto shrink-0 border-t border-theme-border-muted/80 md:border-t-0 pt-3 md:pt-0">
             {pendingHolidays.map((holiday) => {
               const isSubmitting = submittingDates.includes(holiday.date);
               return (
-                <div key={holiday.date} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-955/60 border border-slate-850 rounded-xl md:w-80 font-sans">
-                  <div className="text-[11px] font-semibold text-slate-300">
+                <div key={holiday.date} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-theme-page-bg/60 border border-theme-border-muted rounded-xl md:w-80 font-sans">
+                  <div className="text-[11px] font-semibold text-theme-text-secondary">
                     {holiday.name}
                   </div>
                   <div className="flex gap-2 shrink-0">

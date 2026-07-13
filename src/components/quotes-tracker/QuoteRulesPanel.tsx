@@ -58,22 +58,22 @@ const AccordionSection: React.FC<AccordionSectionProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-2xl border border-slate-850 bg-slate-900/20 overflow-hidden transition-all duration-300 hover:border-slate-800/80">
+    <div className="rounded-2xl border border-theme-border-muted bg-theme-card-bg/20 overflow-hidden transition-all duration-300 hover:border-theme-border-input/80">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-3 px-5 py-4 hover:bg-slate-850/20 transition-colors duration-200"
+        className="w-full flex items-center gap-3 px-5 py-4 hover:bg-theme-border-muted/20 transition-colors duration-200"
       >
         <span className={`shrink-0 ${accent}`}>{icon}</span>
-        <h3 className="text-sm font-semibold tracking-wide text-slate-200 flex-1 text-left">
+        <h3 className="text-sm font-semibold tracking-wide text-theme-text-primary flex-1 text-left">
           {title}
         </h3>
         {count !== undefined && (
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-750">
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-theme-border-input/80 text-theme-text-muted border border-theme-border-active">
             {count}
           </span>
         )}
         <ChevronDown
-          className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-theme-text-muted transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
       <div
@@ -879,11 +879,11 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
       {/* ─── HEADER PANEL ─── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-blue-500" />
             Compliance & Quote Rules Portal
           </h2>
-          <p className="text-xs text-slate-450 mt-1">
+          <p className="text-xs text-theme-text-muted mt-1">
             Search branch rules, universal policies, announcements, and fines.
           </p>
         </div>
@@ -893,7 +893,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
           {canEdit && (
             <button
               onClick={() => handleOpenAddModal("company")}
-              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-theme-card-container"
             >
               <PlusCircle className="h-3.5 w-3.5" />
               Add Rule
@@ -906,20 +906,20 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
       <div className="w-full max-w-2xl mx-auto relative z-30">
         <div className="relative flex items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-text-muted pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               placeholder="Search insurance company by name or tag (e.g. acorn, marshmallow)..."
-              className="w-full bg-slate-900/40 backdrop-blur-md border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 rounded-l-xl py-2.5 pl-10 pr-4 text-sm placeholder-slate-650 transition-all duration-300 shadow-md outline-none"
+              className="w-full bg-theme-card-bg/40 backdrop-blur-md border border-theme-border-muted focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 rounded-l-xl py-2.5 pl-10 pr-4 text-sm placeholder-theme-text-muted/60 transition-all duration-300 shadow-md outline-none"
             />
           </div>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-24 top-1/2 -translate-y-1/2 p-0.5 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white"
+              className="absolute right-24 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -931,7 +931,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                 setSearchQuery("");
               }
             }}
-            className="shrink-0 px-5 py-2.5 bg-blue-600/10 border border-l-0 border-slate-850 hover:bg-blue-600/20 hover:border-blue-500/30 rounded-r-xl text-blue-400 text-sm font-semibold transition-all duration-200"
+            className="shrink-0 px-5 py-2.5 bg-blue-600/10 border border-l-0 border-theme-border-muted hover:bg-blue-600/20 hover:border-blue-500/30 rounded-r-xl text-blue-400 text-sm font-semibold transition-all duration-200"
           >
             Search
           </button>
@@ -941,7 +941,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
         {showDropdown && (
           <div
             ref={dropdownRef}
-            className="absolute w-full bg-slate-900 border border-slate-800 rounded-xl mt-1.5 overflow-hidden shadow-2xl z-50 animate-fade-in"
+            className="absolute w-full bg-theme-card-bg border border-theme-border-input rounded-xl mt-1.5 overflow-hidden shadow-2xl z-50 animate-fade-in"
           >
             <div className="py-1 max-h-56 overflow-y-auto">
               {suggestions.map((company) => (
@@ -952,17 +952,17 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                     setSearchQuery("");
                     setSearchFocused(false);
                   }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-slate-800/60 transition-colors flex items-center justify-between group"
+                  className="w-full text-left px-4 py-2.5 hover:bg-theme-border-input/60 transition-colors flex items-center justify-between group"
                 >
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">
+                    <p className="text-xs font-semibold text-theme-text-primary">
                       {company.name}
                     </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-theme-text-muted mt-0.5">
                       {company.tags.map((t) => `#${t}`).join("  ")}
                     </p>
                   </div>
-                  <Sparkles className="w-3.5 h-3.5 text-slate-700 group-hover:text-blue-400 transition-colors shrink-0" />
+                  <Sparkles className="w-3.5 h-3.5 text-theme-text-muted/65 group-hover:text-blue-400 transition-colors shrink-0" />
                 </button>
               ))}
             </div>
@@ -972,7 +972,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
         {/* Quick search tags */}
         {!selectedCompanyName && !searchQuery && (
           <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] text-theme-text-muted uppercase tracking-wider">
               Quick Select:
             </span>
             {[
@@ -996,7 +996,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                       setSelectedCompanyName(nameKey);
                     }
                   }}
-                  className="text-[11px] text-slate-400 hover:text-blue-400 bg-slate-900/60 hover:bg-slate-850 border border-slate-850 px-2.5 py-1 rounded-lg transition-all duration-200"
+                  className="text-[11px] text-theme-text-muted hover:text-blue-400 bg-theme-card-bg/60 hover:bg-theme-border-muted border border-theme-border-muted px-2.5 py-1 rounded-lg transition-all duration-200"
                 >
                   {nameKey}
                 </button>
@@ -1012,54 +1012,54 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
           {/* Skeletons for Announcements */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Critical Rule Skeleton */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/10 p-5 space-y-4">
+            <div className="rounded-2xl border border-theme-border-input bg-theme-card-bg/10 p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-slate-800" />
-                <div className="w-32 h-4 bg-slate-800 rounded" />
+                <div className="w-5 h-5 rounded bg-theme-border-input" />
+                <div className="w-32 h-4 bg-theme-border-input rounded" />
               </div>
               <div className="space-y-2">
-                <div className="w-full h-3 bg-slate-850 rounded" />
-                <div className="w-5/6 h-3 bg-slate-850 rounded" />
-                <div className="w-4/5 h-3 bg-slate-850 rounded" />
+                <div className="w-full h-3 bg-theme-border-muted rounded" />
+                <div className="w-5/6 h-3 bg-theme-border-muted rounded" />
+                <div className="w-4/5 h-3 bg-theme-border-muted rounded" />
               </div>
             </div>
 
             {/* General Rule Skeleton */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/10 p-5 space-y-4">
+            <div className="rounded-2xl border border-theme-border-input bg-theme-card-bg/10 p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-slate-800" />
-                <div className="w-36 h-4 bg-slate-800 rounded" />
+                <div className="w-5 h-5 rounded bg-theme-border-input" />
+                <div className="w-36 h-4 bg-theme-border-input rounded" />
               </div>
               <div className="space-y-2">
-                <div className="w-full h-3 bg-slate-850 rounded" />
-                <div className="w-11/12 h-3 bg-slate-850 rounded" />
-                <div className="w-3/4 h-3 bg-slate-850 rounded" />
+                <div className="w-full h-3 bg-theme-border-muted rounded" />
+                <div className="w-11/12 h-3 bg-theme-border-muted rounded" />
+                <div className="w-3/4 h-3 bg-theme-border-muted rounded" />
               </div>
             </div>
           </div>
 
           {/* Skeletons for Fines & Penalties */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/10 p-5 space-y-4">
-            <div className="w-40 h-4 bg-slate-800 rounded" />
+          <div className="rounded-2xl border border-theme-border-input bg-theme-card-bg/10 p-5 space-y-4">
+            <div className="w-40 h-4 bg-theme-border-input rounded" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Fine Item 1 */}
-              <div className="p-4 bg-slate-900/20 border border-slate-850/60 rounded-xl space-y-3">
+              <div className="p-4 bg-theme-card-bg/20 border border-theme-border-muted/60 rounded-xl space-y-3">
                 <div className="flex justify-between items-center">
-                  <div className="w-24 h-3.5 bg-slate-800 rounded" />
-                  <div className="w-16 h-4 bg-slate-800 rounded-full" />
+                  <div className="w-24 h-3.5 bg-theme-border-input rounded" />
+                  <div className="w-16 h-4 bg-theme-border-input rounded-full" />
                 </div>
-                <div className="w-full h-3 bg-slate-850 rounded" />
-                <div className="w-5/6 h-3 bg-slate-850 rounded" />
+                <div className="w-full h-3 bg-theme-border-muted rounded" />
+                <div className="w-5/6 h-3 bg-theme-border-muted rounded" />
               </div>
 
               {/* Fine Item 2 */}
-              <div className="p-4 bg-slate-900/20 border border-slate-850/60 rounded-xl space-y-3">
+              <div className="p-4 bg-theme-card-bg/20 border border-theme-border-muted/60 rounded-xl space-y-3">
                 <div className="flex justify-between items-center">
-                  <div className="w-28 h-3.5 bg-slate-800 rounded" />
-                  <div className="w-14 h-4 bg-slate-800 rounded-full" />
+                  <div className="w-28 h-3.5 bg-theme-border-input rounded" />
+                  <div className="w-14 h-4 bg-theme-border-input rounded-full" />
                 </div>
-                <div className="w-full h-3 bg-slate-850 rounded" />
-                <div className="w-2/3 h-3 bg-slate-850 rounded" />
+                <div className="w-full h-3 bg-theme-border-muted rounded" />
+                <div className="w-2/3 h-3 bg-theme-border-muted rounded" />
               </div>
             </div>
           </div>
@@ -1067,21 +1067,21 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
           {/* Skeletons for Accordion Sections */}
           <div className="space-y-4">
             {/* Accordion 1 */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/10 px-5 py-4 flex items-center justify-between">
+            <div className="rounded-2xl border border-theme-border-input bg-theme-card-bg/10 px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-slate-800 rounded" />
-                <div className="w-48 h-4 bg-slate-800 rounded" />
+                <div className="w-5 h-5 bg-theme-border-input rounded" />
+                <div className="w-48 h-4 bg-theme-border-input rounded" />
               </div>
-              <div className="w-8 h-4 bg-slate-800 rounded-full" />
+              <div className="w-8 h-4 bg-theme-border-input rounded-full" />
             </div>
 
             {/* Accordion 2 */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/10 px-5 py-4 flex items-center justify-between">
+            <div className="rounded-2xl border border-theme-border-input bg-theme-card-bg/10 px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-slate-800 rounded" />
-                <div className="w-64 h-4 bg-slate-800 rounded" />
+                <div className="w-5 h-5 bg-theme-border-input rounded" />
+                <div className="w-64 h-4 bg-theme-border-input rounded" />
               </div>
-              <div className="w-8 h-4 bg-slate-800 rounded-full" />
+              <div className="w-8 h-4 bg-theme-border-input rounded-full" />
             </div>
           </div>
         </div>
@@ -1091,8 +1091,8 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
           {/*  COMPANY SPECIFIC RULES DISPLAY                             */}
           {/* ═══════════════════════════════════════════════════════════ */}
           {selectedCompanyName && (
-            <div className="bg-slate-900/40 border border-blue-900/10 p-5 rounded-2xl space-y-5 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-slate-850 pb-4">
+            <div className="bg-theme-card-bg/40 border border-blue-900/10 p-5 rounded-2xl space-y-5 animate-fade-in">
+              <div className="flex items-center justify-between border-b border-theme-border-muted pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center shrink-0">
                     <span className="text-sm font-bold text-blue-400">
@@ -1100,14 +1100,14 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white leading-tight">
+                    <h3 className="text-base font-bold text-theme-text-primary leading-tight">
                       {selectedCompanyName}
                     </h3>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {(selectedCompanyRules?.tags || []).map((tag: string) => (
                         <span
                           key={tag}
-                          className="text-[9px] px-2 py-0.5 rounded bg-slate-850 text-blue-400 border border-slate-800"
+                          className="text-[9px] px-2 py-0.5 rounded bg-theme-border-muted text-blue-400 border border-theme-border-input"
                         >
                           #{tag}
                         </span>
@@ -1118,7 +1118,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
 
                 <button
                   onClick={() => setSelectedCompanyName(null)}
-                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary text-xs font-medium transition-all cursor-pointer"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                   All Rules
@@ -1201,11 +1201,11 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
           {/* ═══════════════════════════════════════════════════════════ */}
           <div className="space-y-4">
             <div className="flex items-center gap-4 py-4">
-              <div className="flex-1 h-px bg-slate-850" />
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest shrink-0">
+              <div className="flex-1 h-px bg-theme-border-muted" />
+              <span className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-widest shrink-0">
                 Universal Guidelines
               </span>
-              <div className="flex-1 h-px bg-slate-850" />
+              <div className="flex-1 h-px bg-theme-border-muted" />
             </div>
 
             {/* NBY Rule */}
@@ -1225,7 +1225,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                     handleContextMenu(e, globalAnnouncements.nby_rule!)
                   }
                 >
-                  <p className="text-xs leading-relaxed text-slate-300/90 flex-1">
+                  <p className="text-xs leading-relaxed text-theme-text-secondary/90 flex-1">
                     {globalAnnouncements.nby_rule.content}
                   </p>
                   <CopyButton
@@ -1255,7 +1255,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                     handleContextMenu(e, globalAnnouncements.general_pricing!)
                   }
                 >
-                  <p className="text-xs leading-relaxed text-slate-300/90 flex-1">
+                  <p className="text-xs leading-relaxed text-theme-text-secondary/90 flex-1">
                     {globalAnnouncements.general_pricing.content}
                   </p>
                   <CopyButton
@@ -1279,7 +1279,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                   {canEdit && (
                     <button
                       onClick={() => handleOpenAddModal("fine")}
-                      className="p-1 text-slate-400 hover:text-white"
+                      className="p-1 text-theme-text-muted hover:text-theme-text-primary"
                     >
                       <PlusCircle className="h-4 w-4" />
                     </button>
@@ -1289,7 +1289,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                   {adminFines.map((fine, idx) => (
                     <div
                       key={fine.id}
-                      className="group relative flex items-start gap-3 p-3.5 bg-slate-900/30 border border-slate-850 rounded-xl hover:bg-slate-850/30 transition-all duration-200"
+                      className="group relative flex items-start gap-3 p-3.5 bg-theme-card-bg/30 border border-theme-border-muted rounded-xl hover:bg-theme-border-muted/30 transition-all duration-200"
                       onContextMenu={(e) => handleContextMenu(e, fine)}
                     >
                       <span className="shrink-0 mt-0.5 w-5 h-5 rounded-md bg-purple-500/10 flex items-center justify-center text-[10px] font-bold text-purple-400">
@@ -1304,7 +1304,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                             {fine.extra_info}
                           </span>
                         </div>
-                        <p className="mt-1 text-[11.5px] text-slate-400 leading-relaxed">
+                        <p className="mt-1 text-[11.5px] text-theme-text-muted leading-relaxed">
                           {fine.content}
                         </p>
                       </div>
@@ -1421,12 +1421,12 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
         createPortal(
           <div
             ref={contextMenuRef}
-            className="fixed bg-slate-900 border border-slate-800 rounded-lg shadow-2xl py-1 w-36 z-50 text-xs animate-fade-in"
+            className="fixed bg-theme-card-bg border border-theme-border-input rounded-lg shadow-2xl py-1 w-36 z-50 text-xs animate-fade-in"
             style={{ top: contextMenu.y, left: contextMenu.x }}
           >
             <button
               onClick={() => handleOpenEditModal(contextMenu.rule)}
-              className="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer"
+              className="w-full text-left px-3.5 py-2 hover:bg-theme-border-input text-theme-text-primary hover:text-theme-text-primary flex items-center gap-2 cursor-pointer"
             >
               <Edit className="h-3.5 w-3.5 text-blue-500" />
               Edit Rule
@@ -1436,7 +1436,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                 setRuleToDelete(contextMenu.rule);
                 setContextMenu(null);
               }}
-              className="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-red-400 hover:text-red-300 flex items-center gap-2 cursor-pointer border-t border-slate-800"
+              className="w-full text-left px-3.5 py-2 hover:bg-theme-border-input text-red-400 hover:text-red-300 flex items-center gap-2 cursor-pointer border-t border-theme-border-input"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Delete Rule
@@ -1450,14 +1450,14 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
         isAddModalOpen &&
         createPortal(
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="absolute right-4 top-4 text-slate-450 hover:text-white cursor-pointer"
+                className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h3 className="text-md font-bold text-white mb-4 flex items-center gap-1.5">
+              <h3 className="text-md font-bold text-theme-text-primary mb-4 flex items-center gap-1.5">
                 <PlusCircle className="h-4.5 w-4.5 text-blue-500" /> Add New
                 Rule
               </h3>
@@ -1467,7 +1467,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                       Category
                     </label>
                     <select
@@ -1484,7 +1484,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                           setFormSubCategory("common_rules");
                         }
                       }}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                      className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary cursor-pointer"
                     >
                       <option value="company">Company Specific</option>
                       <option value="universal">Universal Rule</option>
@@ -1494,7 +1494,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                       Sub Category
                     </label>
                     {formCategory === "company" ? (
@@ -1503,7 +1503,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         onChange={(e) =>
                           setFormSubCategory(e.target.value as any)
                         }
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary cursor-pointer"
                       >
                         <option value="common_rules">Common Rule</option>
                         <option value="branch_priority">Branch Priority</option>
@@ -1517,7 +1517,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         onChange={(e) =>
                           setFormSubCategory(e.target.value as any)
                         }
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary cursor-pointer"
                       >
                         <option value="employment">Employment</option>
                         <option value="driver_and_usage">
@@ -1536,7 +1536,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         onChange={(e) =>
                           setFormSubCategory(e.target.value as any)
                         }
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white cursor-pointer"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary cursor-pointer"
                       >
                         <option value="nby_rule">NBY Rule</option>
                         <option value="general_pricing">General Pricing</option>
@@ -1546,7 +1546,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         type="text"
                         disabled
                         value="Common Rules"
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500 opacity-60"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-muted opacity-60"
                       />
                     )}
                   </div>
@@ -1555,7 +1555,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                 {formCategory === "company" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Company Name
                       </label>
                       <input
@@ -1564,11 +1564,11 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         placeholder="e.g. Marshmallow"
                         value={formCompanyName}
                         onChange={(e) => setFormCompanyName(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Tags (Comma-separated)
                       </label>
                       <input
@@ -1578,7 +1578,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         onChange={(e) =>
                           setFormCompanyTagsInput(e.target.value)
                         }
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70"
                       />
                     </div>
                   </div>
@@ -1587,7 +1587,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                 {formCategory === "fine" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Fine Title
                       </label>
                       <input
@@ -1596,11 +1596,11 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         placeholder="e.g. ভুল আপডেট"
                         value={formTitle}
                         onChange={(e) => setFormTitle(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Penalty Amount
                       </label>
                       <input
@@ -1608,14 +1608,14 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         placeholder="e.g. ৫০০ টাকা জরিমানা"
                         value={formExtraInfo}
                         onChange={(e) => setFormExtraInfo(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70"
                       />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                  <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                     Rule Detail (Bengali or English)
                   </label>
                   <textarea
@@ -1624,7 +1624,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                     placeholder="Type the rule instruction..."
                     value={formContent}
                     onChange={(e) => setFormContent(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 resize-y"
+                    className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70 resize-y"
                   />
                 </div>
 
@@ -1632,7 +1632,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Cancel
                   </button>
@@ -1655,14 +1655,14 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
         ruleToEdit &&
         createPortal(
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="absolute right-4 top-4 text-slate-455 hover:text-white cursor-pointer"
+                className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h3 className="text-md font-bold text-white mb-4 flex items-center gap-1.5">
+              <h3 className="text-md font-bold text-theme-text-primary mb-4 flex items-center gap-1.5">
                 <Edit className="h-4.5 w-4.5 text-blue-500" /> Edit Rule
               </h3>
               <form
@@ -1671,25 +1671,25 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
               >
                 <div className="grid grid-cols-2 gap-3 opacity-60">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-muted mb-1">
                       Category
                     </label>
                     <input
                       type="text"
                       disabled
                       value={ruleToEdit.category.toUpperCase()}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500"
+                      className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-muted"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-muted mb-1">
                       Sub Category
                     </label>
                     <input
                       type="text"
                       disabled
                       value={ruleToEdit.sub_category.toUpperCase()}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-500"
+                      className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-muted"
                     />
                   </div>
                 </div>
@@ -1697,7 +1697,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                 {ruleToEdit.category === "company" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Company Name
                       </label>
                       <input
@@ -1706,11 +1706,11 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         placeholder="e.g. Marshmallow"
                         value={formCompanyName}
                         onChange={(e) => setFormCompanyName(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Tags (Comma-separated)
                       </label>
                       <input
@@ -1720,7 +1720,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         onChange={(e) =>
                           setFormCompanyTagsInput(e.target.value)
                         }
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary"
                       />
                     </div>
                   </div>
@@ -1729,7 +1729,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                 {ruleToEdit.category === "fine" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Fine Title
                       </label>
                       <input
@@ -1738,11 +1738,11 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         placeholder="e.g. ভুল আপডেট"
                         value={formTitle}
                         onChange={(e) => setFormTitle(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                      <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                         Penalty Amount
                       </label>
                       <input
@@ -1750,14 +1750,14 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                         placeholder="e.g. ৫০০ টাকা জরিমানা"
                         value={formExtraInfo}
                         onChange={(e) => setFormExtraInfo(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary"
                       />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                  <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                     Rule Detail (Bengali or English)
                   </label>
                   <textarea
@@ -1765,7 +1765,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                     rows={5}
                     value={formContent}
                     onChange={(e) => setFormContent(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white resize-y"
+                    className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary resize-y"
                   />
                 </div>
 
@@ -1774,7 +1774,7 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
                     type="button"
                     disabled={submitting}
                     onClick={() => setIsEditModalOpen(false)}
-                    className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
                     Cancel
                   </button>
@@ -1804,20 +1804,20 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
         ruleToDelete &&
         createPortal(
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative text-center">
+            <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-sm shadow-2xl relative text-center">
               <button
                 onClick={() => setRuleToDelete(null)}
-                className="absolute right-4 top-4 text-slate-455 hover:text-white"
+                className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary"
               >
                 <X className="h-5 w-5" />
               </button>
               <div className="mx-auto w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-4">
                 <Trash2 className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-bold text-white mb-2">
+              <h3 className="text-sm font-bold text-theme-text-primary mb-2">
                 Delete Rule?
               </h3>
-              <p className="text-xs text-slate-450 mb-6 leading-relaxed">
+              <p className="text-xs text-theme-text-muted mb-6 leading-relaxed">
                 Are you sure you want to delete this compliance rule? This
                 action will be logged in the system audit logs.
               </p>
@@ -1883,11 +1883,11 @@ const RuleItem: React.FC<RuleItemProps> = React.memo(
   ({ rule, onCopy, copiedId, onContextMenu }) => {
     return (
       <div
-        className="group relative flex items-start gap-2.5 py-2.5 px-3 rounded-xl hover:bg-slate-850/20 transition-all duration-200 border border-transparent hover:border-slate-850/50"
+        className="group relative flex items-start gap-2.5 py-2.5 px-3 rounded-xl hover:bg-theme-border-muted/20 transition-all duration-200 border border-transparent hover:border-theme-border-muted/50"
         onContextMenu={(e) => onContextMenu(e, rule)}
       >
         <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-blue-500/50" />
-        <p className="text-[12.5px] leading-[1.7] text-slate-300/90 flex-1">
+        <p className="text-[12.5px] leading-[1.7] text-theme-text-secondary/90 flex-1">
           {rule.content}
         </p>
 
@@ -1926,7 +1926,7 @@ const CopyButton: React.FC<CopyButtonProps> = React.memo(
         className={`shrink-0 p-1 rounded transition-all duration-300 cursor-pointer ${
           isCopied
             ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 scale-100"
-            : "bg-slate-800/40 text-slate-500 hover:text-slate-300 hover:bg-slate-750/50 opacity-0 group-hover:opacity-100 border border-transparent"
+            : "bg-theme-border-input/40 text-theme-text-muted hover:text-theme-text-secondary hover:bg-theme-border-active/50 opacity-0 group-hover:opacity-100 border border-transparent"
         }`}
         title={isCopied ? "Copied!" : "Copy to Clipboard"}
       >

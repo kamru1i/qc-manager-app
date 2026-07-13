@@ -322,14 +322,14 @@ export function UserSettleModal({
       icon={<RotateCcw className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-xl"
     >
-      <div className="space-y-6 font-sans text-xs text-slate-300">
+      <div className="space-y-6 font-sans text-xs text-theme-text-secondary">
         <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-6 custom-scrollbar">
           <div className="p-4 bg-indigo-950/20 border border-indigo-900/40 text-indigo-300 rounded-xl leading-relaxed">
-            <p className="font-bold flex items-center gap-1.5 text-slate-100 text-sm">
+            <p className="font-bold flex items-center gap-1.5 text-theme-text-primary text-sm">
               <Sparkles className="h-4.5 w-4.5 text-indigo-400 shrink-0" />
               Action Required: Settle Unused Leaves
             </p>
-            <p className="mt-1.5 text-[11px] text-slate-400">
+            <p className="mt-1.5 text-[11px] text-theme-text-muted">
               {activeSettlements.some(s => s.status === 'initiated')
                 ? 'The administrator has initiated a preference review for your unused leave balances. Please submit your choice for each item below.'
                 : 'A general leave review session is active. Please submit your preferred actions for your unused leave balances below.'}
@@ -337,10 +337,10 @@ export function UserSettleModal({
           </div>
 
           {displayItems.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 bg-slate-900/40 border border-slate-800 rounded-xl flex flex-col items-center justify-center gap-2">
+            <div className="p-8 text-center text-theme-text-muted bg-theme-card-bg/40 border border-theme-border-input rounded-xl flex flex-col items-center justify-center gap-2">
               <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-              <p className="font-semibold text-slate-300">All Settled!</p>
-              <p className="text-[11px] text-slate-500 font-medium">You have no remaining leave balances to settle.</p>
+              <p className="font-semibold text-theme-text-secondary">All Settled!</p>
+              <p className="text-[11px] text-theme-text-muted font-medium">You have no remaining leave balances to settle.</p>
             </div>
           ) : (
             <div className="space-y-5">
@@ -350,14 +350,14 @@ export function UserSettleModal({
                 const isCorrect = Math.abs(allocated - item.remaining_days) < 0.01;
 
                 return (
-                  <div key={item.id} className="p-4 bg-slate-955/40 border border-slate-850/80 rounded-2xl space-y-4">
+                  <div key={item.id} className="p-4 bg-theme-page-bg/40 border border-theme-border-muted/80 rounded-2xl space-y-4">
                     {/* Category Header */}
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-900">
+                    <div className="flex justify-between items-center pb-2 border-b border-theme-card-bg">
                       <div>
-                        <h4 className="text-sm font-bold text-white tracking-wide">
+                        <h4 className="text-sm font-bold text-theme-text-primary tracking-wide">
                           {item.leave_category === 'Office Leave' ? 'Allocated Office Leave' : item.leave_category}
                         </h4>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-455 mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[10px] text-theme-text-muted mt-0.5">
                           <span className="bg-indigo-650/15 text-indigo-400 border border-indigo-900/45 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
                             Period: {item.period === 'H1' ? 'January-June (H1)' : item.period === 'H2' ? 'July-December (H2)' : item.period}
                           </span>
@@ -366,7 +366,7 @@ export function UserSettleModal({
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">
+                        <span className="text-[10px] text-theme-text-muted block uppercase font-bold tracking-wider">
                           {item.remaining_days < 0 ? 'Outstanding Deficit' : 'Unused Balance'}
                         </span>
                         <span className={`text-lg font-bold font-mono ${item.remaining_days < 0 ? 'text-rose-500' : 'text-blue-400'}`}>
@@ -378,7 +378,7 @@ export function UserSettleModal({
                     {item.remaining_days < 0 ? (
                       /* Deficit Options for User */
                       <div className="space-y-3">
-                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        <span className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-2">
                           Deficit Resolution Options
                         </span>
                         <div className="flex flex-col gap-2.5">
@@ -389,17 +389,17 @@ export function UserSettleModal({
                             className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                               Math.abs(itemSplits.payment) > 0.01
                                 ? 'bg-rose-955/20 border-rose-500/80 shadow-[0_0_12px_rgba(239,68,68,0.15)]'
-                                : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                                : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                             }`}
                           >
                             <div>
-                              <span className="text-xs font-bold text-white block">Salary Deduction</span>
-                              <span className="text-[10px] text-slate-400 block mt-0.5">
+                              <span className="text-xs font-bold text-theme-text-primary block">Salary Deduction</span>
+                              <span className="text-[10px] text-theme-text-muted block mt-0.5">
                                 Deduct {formatDaysAndHours(Math.abs(item.remaining_days), workingHours)} from salary.
                               </span>
                             </div>
                             <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                              Math.abs(itemSplits.payment) > 0.01 ? 'border-rose-500' : 'border-slate-600'
+                              Math.abs(itemSplits.payment) > 0.01 ? 'border-rose-500' : 'border-theme-border-input'
                             }`}>
                               {Math.abs(itemSplits.payment) > 0.01 && <div className="w-2 h-2 rounded-full bg-rose-500" />}
                             </div>
@@ -413,17 +413,17 @@ export function UserSettleModal({
                               className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                                 Math.abs(itemSplits.carryForward) > 0.01
                                   ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                                  : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                                  : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                               }`}
                             >
                               <div>
-                                <span className="text-xs font-bold text-white block">Adjust with H2 Office Leave</span>
-                                <span className="text-[10px] text-slate-400 block mt-0.5">
+                                <span className="text-xs font-bold text-theme-text-primary block">Adjust with H2 Office Leave</span>
+                                <span className="text-[10px] text-theme-text-muted block mt-0.5">
                                   Deduct from H2 quota ({formatDaysAndHours(globalSettings.office_leave_h2, workingHours)} ➔ {formatDaysAndHours(globalSettings.office_leave_h2 - Math.abs(item.remaining_days), workingHours)} remaining).
                                 </span>
                               </div>
                               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-purple-500' : 'border-slate-600'
+                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-purple-500' : 'border-theme-border-input'
                               }`}>
                                 {Math.abs(itemSplits.carryForward) > 0.01 && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                               </div>
@@ -438,17 +438,17 @@ export function UserSettleModal({
                               className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                                 Math.abs(itemSplits.carryForward) > 0.01
                                   ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                                  : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                                  : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                               }`}
                             >
                               <div>
-                                <span className="text-xs font-bold text-white block">Adjust with Next Year's H1</span>
-                                <span className="text-[10px] text-slate-400 block mt-0.5">
+                                <span className="text-xs font-bold text-theme-text-primary block">Adjust with Next Year's H1</span>
+                                <span className="text-[10px] text-theme-text-muted block mt-0.5">
                                   Deduct from next year's H1 Office Leave quota.
                                 </span>
                               </div>
                               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-purple-500' : 'border-slate-600'
+                                Math.abs(itemSplits.carryForward) > 0.01 ? 'border-purple-500' : 'border-theme-border-input'
                               }`}>
                                 {Math.abs(itemSplits.carryForward) > 0.01 && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                               </div>
@@ -460,21 +460,21 @@ export function UserSettleModal({
                       /* Split Allocation Fields */
                       <div className="space-y-2.5">
                         {/* Carry Forward Option */}
-                        <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-indigo-500/60 transition-all">
+                        <div className="flex items-center justify-between p-3 rounded-xl border bg-theme-card-bg/30 border-theme-border-muted/80 focus-within:border-indigo-500/60 transition-all">
                           <div className="flex items-center gap-3">
                             <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-400/30 text-indigo-400">
                               <FolderPlus className="h-4 w-4" />
                             </div>
                             <div>
-                              <span className="text-xs font-bold text-slate-100 block">Reserve / Carry Forward</span>
-                              <span className="text-[10px] text-slate-400 block mt-0.5">Carry forward to the next period's active quota.</span>
+                              <span className="text-xs font-bold text-theme-text-primary block">Reserve / Carry Forward</span>
+                              <span className="text-[10px] text-theme-text-muted block mt-0.5">Carry forward to the next period's active quota.</span>
                             </div>
                           </div>
                           {(() => {
                             const { d: cfD, h: cfH, m: cfM } = getDaysHoursMins(itemSplits.carryForward);
                             return (
                               <div className="flex items-center gap-2 shrink-0">
-                                <div className="flex items-center gap-1 bg-slate-955 border border-slate-800 rounded-lg px-1.5 py-1 focus-within:border-indigo-500 transition-all">
+                                <div className="flex items-center gap-1 bg-theme-page-bg border border-theme-border-input rounded-lg px-1.5 py-1 focus-within:border-indigo-500 transition-all">
                                   <input
                                     type="number"
                                     min={0}
@@ -485,11 +485,11 @@ export function UserSettleModal({
                                       const newD = parseInt(e.target.value) || 0;
                                       handleSplitChange(item.id, 'carryForward', newD + (cfH + cfM / 60) / workingHours);
                                     }}
-                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                     placeholder="0"
                                   />
-                                  <span className="text-[9px] text-slate-500 font-bold">d</span>
-                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                                  <span className="text-[9px] text-theme-text-muted font-bold">d</span>
+                                  <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -500,11 +500,11 @@ export function UserSettleModal({
                                       const newH = parseInt(e.target.value) || 0;
                                       handleSplitChange(item.id, 'carryForward', cfD + (newH + cfM / 60) / workingHours);
                                     }}
-                                    className="w-7 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                    className="w-7 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                     placeholder="0"
                                   />
-                                  <span className="text-[9px] text-slate-500 font-bold">h</span>
-                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                                  <span className="text-[9px] text-theme-text-muted font-bold">h</span>
+                                  <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -515,10 +515,10 @@ export function UserSettleModal({
                                       const newM = parseInt(e.target.value) || 0;
                                       handleSplitChange(item.id, 'carryForward', cfD + (cfH + newM / 60) / workingHours);
                                     }}
-                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                     placeholder="0"
                                   />
-                                  <span className="text-[9px] text-slate-500 font-bold">m</span>
+                                  <span className="text-[9px] text-theme-text-muted font-bold">m</span>
                                 </div>
                                 <button
                                   type="button"
@@ -533,21 +533,21 @@ export function UserSettleModal({
                         </div>
 
                         {/* Cash Out Option */}
-                        <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-emerald-500/60 transition-all">
+                        <div className="flex items-center justify-between p-3 rounded-xl border bg-theme-card-bg/30 border-theme-border-muted/80 focus-within:border-emerald-500/60 transition-all">
                           <div className="flex items-center gap-3">
                             <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-400/30 text-emerald-400">
                               <DollarSign className="h-4 w-4" />
                             </div>
                             <div>
-                              <span className="text-xs font-bold text-slate-100 block">Get Cash Payment (Cash Out)</span>
-                              <span className="text-[10px] text-slate-400 block mt-0.5">Receive direct monetary payout.</span>
+                              <span className="text-xs font-bold text-theme-text-primary block">Get Cash Payment (Cash Out)</span>
+                              <span className="text-[10px] text-theme-text-muted block mt-0.5">Receive direct monetary payout.</span>
                             </div>
                           </div>
                           {(() => {
                             const { d: payD, h: payH, m: payM } = getDaysHoursMins(itemSplits.payment);
                             return (
                               <div className="flex items-center gap-2 shrink-0">
-                                <div className="flex items-center gap-1 bg-slate-955 border border-slate-800 rounded-lg px-1.5 py-1 focus-within:border-emerald-500 transition-all">
+                                <div className="flex items-center gap-1 bg-theme-page-bg border border-theme-border-input rounded-lg px-1.5 py-1 focus-within:border-emerald-500 transition-all">
                                   <input
                                     type="number"
                                     min={0}
@@ -558,11 +558,11 @@ export function UserSettleModal({
                                       const newD = parseInt(e.target.value) || 0;
                                       handleSplitChange(item.id, 'payment', newD + (payH + payM / 60) / workingHours);
                                     }}
-                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                     placeholder="0"
                                   />
-                                  <span className="text-[9px] text-slate-500 font-bold">d</span>
-                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                                  <span className="text-[9px] text-theme-text-muted font-bold">d</span>
+                                  <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -573,11 +573,11 @@ export function UserSettleModal({
                                       const newH = parseInt(e.target.value) || 0;
                                       handleSplitChange(item.id, 'payment', payD + (newH + payM / 60) / workingHours);
                                     }}
-                                    className="w-7 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                    className="w-7 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                     placeholder="0"
                                   />
-                                  <span className="text-[9px] text-slate-500 font-bold">h</span>
-                                  <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                                  <span className="text-[9px] text-theme-text-muted font-bold">h</span>
+                                  <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                                   <input
                                     type="number"
                                     min={0}
@@ -588,10 +588,10 @@ export function UserSettleModal({
                                       const newM = parseInt(e.target.value) || 0;
                                       handleSplitChange(item.id, 'payment', payD + (payH + newM / 60) / workingHours);
                                     }}
-                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                    className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                     placeholder="0"
                                   />
-                                  <span className="text-[9px] text-slate-500 font-bold">m</span>
+                                  <span className="text-[9px] text-theme-text-muted font-bold">m</span>
                                 </div>
                                 <button
                                   type="button"
@@ -607,21 +607,21 @@ export function UserSettleModal({
 
                         {/* Adjust Option */}
                         {totalOutstandingOffice > 0 && (
-                          <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-purple-500/60 transition-all">
+                          <div className="flex items-center justify-between p-3 rounded-xl border bg-theme-card-bg/30 border-theme-border-muted/80 focus-within:border-purple-500/60 transition-all">
                             <div className="flex items-center gap-3">
                               <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-400/30 text-purple-450">
                                 <ArrowRightLeft className="h-4 w-4" />
                               </div>
                               <div>
-                                <span className="text-xs font-bold text-slate-100 block">Adjust with Unpaid or Other Leaves</span>
-                                <span className="text-[10px] text-slate-400 block mt-0.5">Adjust against outstanding Office Leave ({totalOutstandingOffice} days).</span>
+                                <span className="text-xs font-bold text-theme-text-primary block">Adjust with Unpaid or Other Leaves</span>
+                                <span className="text-[10px] text-theme-text-muted block mt-0.5">Adjust against outstanding Office Leave ({totalOutstandingOffice} days).</span>
                               </div>
                             </div>
                             {(() => {
                               const { d: adjD, h: adjH, m: adjM } = getDaysHoursMins(itemSplits.adjustLeave);
                               return (
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <div className="flex items-center gap-1 bg-slate-955 border border-slate-850 rounded-lg px-1.5 py-1 focus-within:border-purple-500 transition-all">
+                                  <div className="flex items-center gap-1 bg-theme-page-bg border border-theme-border-muted rounded-lg px-1.5 py-1 focus-within:border-purple-500 transition-all">
                                     <input
                                       type="number"
                                       min={0}
@@ -632,11 +632,11 @@ export function UserSettleModal({
                                         const newD = parseInt(e.target.value) || 0;
                                         handleSplitChange(item.id, 'adjustLeave', newD + (adjH + adjM / 60) / workingHours);
                                       }}
-                                      className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                      className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                       placeholder="0"
                                     />
-                                    <span className="text-[9px] text-slate-500 font-bold">d</span>
-                                    <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                                    <span className="text-[9px] text-theme-text-muted font-bold">d</span>
+                                    <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                                     <input
                                       type="number"
                                       min={0}
@@ -647,11 +647,11 @@ export function UserSettleModal({
                                         const newH = parseInt(e.target.value) || 0;
                                         handleSplitChange(item.id, 'adjustLeave', adjD + (newH + adjM / 60) / workingHours);
                                       }}
-                                      className="w-7 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                      className="w-7 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                       placeholder="0"
                                     />
-                                    <span className="text-[9px] text-slate-500 font-bold">h</span>
-                                    <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                                    <span className="text-[9px] text-theme-text-muted font-bold">h</span>
+                                    <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                                     <input
                                       type="number"
                                       min={0}
@@ -662,10 +662,10 @@ export function UserSettleModal({
                                         const newM = parseInt(e.target.value) || 0;
                                         handleSplitChange(item.id, 'adjustLeave', adjD + (adjH + newM / 60) / workingHours);
                                       }}
-                                      className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                      className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                       placeholder="0"
                                     />
-                                    <span className="text-[9px] text-slate-500 font-bold">m</span>
+                                    <span className="text-[9px] text-theme-text-muted font-bold">m</span>
                                   </div>
                                   <button
                                     type="button"
@@ -684,15 +684,15 @@ export function UserSettleModal({
 
                     {/* Progress Bar & Validation Status for item */}
                     {item.remaining_days > 0 && (
-                      <div className="p-3 bg-slate-950/20 border border-slate-850 rounded-xl space-y-2">
-                        <div className="flex justify-between items-center text-[9px] font-bold text-slate-455 uppercase tracking-wide">
+                      <div className="p-3 bg-theme-card-container/20 border border-theme-border-muted rounded-xl space-y-2">
+                        <div className="flex justify-between items-center text-[9px] font-bold text-theme-text-muted uppercase tracking-wide">
                           <span>Allocation Progress</span>
                           <span className={isCorrect ? "text-emerald-400" : "text-rose-400 animate-pulse"}>
                             {allocated} / {item.remaining_days} days allocated
                           </span>
                         </div>
 
-                        <div className="h-1.5 w-full bg-slate-950/80 rounded-full overflow-hidden flex border border-slate-900">
+                        <div className="h-1.5 w-full bg-theme-card-container/80 rounded-full overflow-hidden flex border border-theme-card-bg">
                           {item.remaining_days > 0 ? (
                             <>
                               <div style={{ width: `${(itemSplits.carryForward / item.remaining_days) * 100}%` }} className="bg-indigo-500 h-full transition-all duration-300" />
@@ -718,11 +718,11 @@ export function UserSettleModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-slate-850">
+        <div className="flex gap-3 pt-4 border-t border-theme-border-muted">
           <button
             type="button"
             onClick={() => setShowModal(false)}
-            className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-950 hover:bg-slate-900 cursor-pointer transition-all"
+            className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-primary bg-theme-card-container hover:bg-theme-card-bg cursor-pointer transition-all"
           >
             Cancel
           </button>

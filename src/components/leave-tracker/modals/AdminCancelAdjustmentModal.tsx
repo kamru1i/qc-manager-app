@@ -46,7 +46,7 @@ export function AdminCancelAdjustmentModal({
         <div className="inline-flex p-3 bg-purple-600/10 border border-purple-500/20 text-purple-400 rounded-2xl mb-3">
           <AlertTriangle className="h-6 w-6" />
         </div>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-theme-text-muted mt-1">
           {isDirectCancel
             ? 'Are you sure you want to cancel the leave adjustment for this record?'
             : 'Are you sure you want to request cancellation of the leave adjustment for this record?'}
@@ -60,7 +60,7 @@ export function AdminCancelAdjustmentModal({
             setShowCancelAdjustmentModal(false);
             setCancelAdjustmentRecord(null);
           }}
-          className="flex-1 flex justify-center py-2.5 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
+          className="flex-1 flex justify-center py-2.5 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
         >
           No
         </button>

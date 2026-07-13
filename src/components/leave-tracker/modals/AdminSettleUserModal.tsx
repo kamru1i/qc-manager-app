@@ -335,15 +335,15 @@ export function AdminSettleUserModal({
       icon={<RotateCcw className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-xl"
     >
-      <div className="space-y-5 font-sans text-xs text-slate-350">
-        <div className="p-3.5 bg-slate-950/40 border border-slate-850 rounded-xl space-y-2">
+      <div className="space-y-5 font-sans text-xs text-theme-text-secondary">
+        <div className="p-3.5 bg-theme-card-container/40 border border-theme-border-muted rounded-xl space-y-2">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Leave Category</span>
-              <h4 className="text-sm font-bold text-slate-100 mt-0.5">{settlement.leave_category}</h4>
+              <span className="text-[10px] text-theme-text-muted uppercase font-bold tracking-wider">Leave Category</span>
+              <h4 className="text-sm font-bold text-theme-text-primary mt-0.5">{settlement.leave_category}</h4>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+              <span className="text-[10px] text-theme-text-muted uppercase font-bold tracking-wider">
                 {isNegative ? 'Outstanding Balance' : 'Unused Balance'}
               </span>
               <span className={`text-base font-bold font-mono block mt-0.5 ${isNegative ? 'text-rose-500 font-extrabold' : 'text-blue-400'}`}>
@@ -351,10 +351,10 @@ export function AdminSettleUserModal({
               </span>
             </div>
           </div>
-          <div className="flex gap-4 pt-1.5 border-t border-slate-900 text-[10px] text-slate-400">
-            <span>Year: <strong className="text-slate-300">{settlement.year}</strong></span>
-            <span>Period: <strong className="text-slate-300">{settlement.period === 'H1' ? 'January-June (H1)' : settlement.period === 'H2' ? 'July-December (H2)' : settlement.period}</strong></span>
-            <span>User Choice: <strong className="text-slate-300 capitalize">
+          <div className="flex gap-4 pt-1.5 border-t border-theme-card-bg text-[10px] text-theme-text-muted">
+            <span>Year: <strong className="text-theme-text-secondary">{settlement.year}</strong></span>
+            <span>Period: <strong className="text-theme-text-secondary">{settlement.period === 'H1' ? 'January-June (H1)' : settlement.period === 'H2' ? 'July-December (H2)' : settlement.period}</strong></span>
+            <span>User Choice: <strong className="text-theme-text-secondary capitalize">
               {settlement.status === 'initiated' ? 'Pending Response' : (isNegative ? 'Salary Deduction' : settlement.action_type.replace('_', ' '))}
             </strong></span>
           </div>
@@ -382,8 +382,8 @@ export function AdminSettleUserModal({
               {/* Dynamic Splits Section */}
         {isNegative ? (
           <div className="space-y-4">
-            <div className="p-3.5 bg-slate-955/60 border border-slate-850 rounded-xl space-y-3">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <div className="p-3.5 bg-theme-page-bg/60 border border-theme-border-muted rounded-xl space-y-3">
+              <span className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-2">
                 Deficit Resolution Options
               </span>
               <div className="flex flex-col gap-2.5">
@@ -394,17 +394,17 @@ export function AdminSettleUserModal({
                   className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                     negativeResolutionType === 'salary_deduction'
                       ? 'bg-rose-955/20 border-rose-500/80 shadow-[0_0_12px_rgba(239,68,68,0.15)]'
-                      : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                      : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                   }`}
                 >
                   <div>
-                    <span className="text-xs font-bold text-white block">Salary Deduction</span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                    <span className="text-xs font-bold text-theme-text-primary block">Salary Deduction</span>
+                    <span className="text-[10px] text-theme-text-muted block mt-0.5">
                       Deduct {Math.abs(total)} day(s) from salary.
                     </span>
                   </div>
                   <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                    negativeResolutionType === 'salary_deduction' ? 'border-rose-500' : 'border-slate-600'
+                    negativeResolutionType === 'salary_deduction' ? 'border-rose-500' : 'border-theme-border-input'
                   }`}>
                     {negativeResolutionType === 'salary_deduction' && <div className="w-2 h-2 rounded-full bg-rose-500" />}
                   </div>
@@ -418,17 +418,17 @@ export function AdminSettleUserModal({
                     className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                       negativeResolutionType === 'adjust_h2'
                         ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                        : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                        : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                     }`}
                   >
                     <div>
-                      <span className="text-xs font-bold text-white block">Adjust with H2 Office Leave</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                      <span className="text-xs font-bold text-theme-text-primary block">Adjust with H2 Office Leave</span>
+                      <span className="text-[10px] text-theme-text-muted block mt-0.5">
                         Deduct from H2 quota ({globalSettings.office_leave_h2} ➔ {globalSettings.office_leave_h2 - Math.abs(total)} days remaining).
                       </span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      negativeResolutionType === 'adjust_h2' ? 'border-purple-500' : 'border-slate-600'
+                      negativeResolutionType === 'adjust_h2' ? 'border-purple-500' : 'border-theme-border-input'
                     }`}>
                       {negativeResolutionType === 'adjust_h2' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                     </div>
@@ -443,17 +443,17 @@ export function AdminSettleUserModal({
                     className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                       negativeResolutionType === 'adjust_next_h1'
                         ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                        : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                        : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                     }`}
                   >
                     <div>
-                      <span className="text-xs font-bold text-white block">Adjust with Next Year's H1</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                      <span className="text-xs font-bold text-theme-text-primary block">Adjust with Next Year's H1</span>
+                      <span className="text-[10px] text-theme-text-muted block mt-0.5">
                         Deduct from next year's H1 Office Leave quota.
                       </span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      negativeResolutionType === 'adjust_next_h1' ? 'border-purple-500' : 'border-slate-600'
+                      negativeResolutionType === 'adjust_next_h1' ? 'border-purple-500' : 'border-theme-border-input'
                     }`}>
                       {negativeResolutionType === 'adjust_next_h1' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                     </div>
@@ -473,17 +473,17 @@ export function AdminSettleUserModal({
                     className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                       negativeResolutionType === 'adjust_reserve'
                         ? 'bg-teal-955/20 border-teal-500/80 shadow-[0_0_12px_rgba(20,184,166,0.15)]'
-                        : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                        : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                     }`}
                   >
                     <div>
-                      <span className="text-xs font-bold text-white block">Adjust with Unused Holiday/Eid Reserve</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                      <span className="text-xs font-bold text-theme-text-primary block">Adjust with Unused Holiday/Eid Reserve</span>
+                      <span className="text-[10px] text-theme-text-muted block mt-0.5">
                         Deduct from an available holiday or Eid reserve balance.
                       </span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      negativeResolutionType === 'adjust_reserve' ? 'border-teal-500' : 'border-slate-600'
+                      negativeResolutionType === 'adjust_reserve' ? 'border-teal-500' : 'border-theme-border-input'
                     }`}>
                       {negativeResolutionType === 'adjust_reserve' && <div className="w-2 h-2 rounded-full bg-teal-500" />}
                     </div>
@@ -493,17 +493,17 @@ export function AdminSettleUserModal({
 
               {/* Reserve Dropdown */}
               {negativeResolutionType === 'adjust_reserve' && reserveOptions.length > 0 && (
-                <div className="mt-3.5 p-3 bg-slate-900/50 border border-slate-855 rounded-xl space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="mt-3.5 p-3 bg-theme-card-bg/50 border border-theme-border-muted rounded-xl space-y-2">
+                  <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
                     Select Reserve Category
                   </label>
                   <select
                     value={selectedReserveCategory}
                     onChange={(e) => setSelectedReserveCategory(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500"
+                    className="w-full bg-theme-page-bg border border-theme-border-input rounded-lg px-3 py-2 text-xs text-theme-text-primary focus:outline-none focus:border-teal-500"
                   >
                     {reserveOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-slate-955 text-white">
+                      <option key={opt.value} value={opt.value} className="bg-theme-page-bg text-theme-text-primary">
                         {opt.label}
                       </option>
                     ))}
@@ -511,8 +511,8 @@ export function AdminSettleUserModal({
                 </div>
               )}
             </div>
-            <div className="p-3.5 bg-slate-955/20 border border-slate-850 rounded-xl flex justify-between items-center text-xs">
-              <span className="text-slate-400">Total Adjustment/Deduction Days</span>
+            <div className="p-3.5 bg-theme-page-bg/20 border border-theme-border-muted rounded-xl flex justify-between items-center text-xs">
+              <span className="text-theme-text-muted">Total Adjustment/Deduction Days</span>
               <span className={`font-mono font-bold text-sm ${
                 negativeResolutionType === 'salary_deduction' ? 'text-rose-400' :
                 negativeResolutionType === 'adjust_reserve' ? 'text-teal-400' : 'text-purple-450'
@@ -532,25 +532,25 @@ export function AdminSettleUserModal({
                   setManualCarryDays(settlement.carry_forward_days || 0);
                 }
               }}
-              className="flex items-center gap-2.5 p-3 bg-slate-955/50 border border-slate-850 rounded-xl cursor-pointer hover:bg-slate-900/40 transition-all select-none"
+              className="flex items-center gap-2.5 p-3 bg-theme-page-bg/50 border border-theme-border-muted rounded-xl cursor-pointer hover:bg-theme-card-bg/40 transition-all select-none"
             >
               <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                 isManualOverride
                   ? 'border-blue-500 bg-blue-500/10'
-                  : 'border-slate-700 bg-slate-950'
+                  : 'border-theme-border-active bg-theme-card-container'
               }`}>
                 {isManualOverride && (
                   <Check className="h-2.5 w-2.5 text-blue-500 stroke-[3.5]" />
                 )}
               </div>
-              <span className="text-[11px] font-bold text-slate-300 cursor-pointer select-none">
+              <span className="text-[11px] font-bold text-theme-text-secondary cursor-pointer select-none">
                 Manual Carry Forward Override (Onboarding / Mid-year start)
               </span>
             </div>
 
             {isManualOverride ? (
-              <div className="p-4 rounded-xl border bg-slate-900/20 border-slate-850/80 space-y-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Carry Forward Direction</span>
+              <div className="p-4 rounded-xl border bg-theme-card-bg/20 border-theme-border-muted/80 space-y-3">
+                <span className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider block">Carry Forward Direction</span>
                 <div className="flex flex-col sm:flex-row gap-2.5">
                   <button
                     type="button"
@@ -558,15 +558,15 @@ export function AdminSettleUserModal({
                     className={`flex-1 flex items-center justify-between p-3 rounded-xl border text-left cursor-pointer transition-all ${
                       carryForwardDirection === 'h1_to_h2'
                         ? 'bg-indigo-950/20 border-indigo-500/80 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
-                        : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                        : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                     }`}
                   >
                     <div>
-                      <span className="text-xs font-bold text-white block">H1 ➔ H2</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Carry current year's H1 to H2</span>
+                      <span className="text-xs font-bold text-theme-text-primary block">H1 ➔ H2</span>
+                      <span className="text-[10px] text-theme-text-muted block mt-0.5">Carry current year's H1 to H2</span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      carryForwardDirection === 'h1_to_h2' ? 'border-indigo-500' : 'border-slate-600'
+                      carryForwardDirection === 'h1_to_h2' ? 'border-indigo-500' : 'border-theme-border-input'
                     }`}>
                       {carryForwardDirection === 'h1_to_h2' && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
                     </div>
@@ -578,27 +578,27 @@ export function AdminSettleUserModal({
                     className={`flex-1 flex items-center justify-between p-3 rounded-xl border text-left cursor-pointer transition-all ${
                       carryForwardDirection === 'h2_to_next_h1'
                         ? 'bg-indigo-950/20 border-indigo-500/80 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
-                        : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                        : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                     }`}
                   >
                     <div>
-                      <span className="text-xs font-bold text-white block">H2 ➔ Next Year H1</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Carry current year's H2 to next year's H1</span>
+                      <span className="text-xs font-bold text-theme-text-primary block">H2 ➔ Next Year H1</span>
+                      <span className="text-[10px] text-theme-text-muted block mt-0.5">Carry current year's H2 to next year's H1</span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      carryForwardDirection === 'h2_to_next_h1' ? 'border-indigo-500' : 'border-slate-600'
+                      carryForwardDirection === 'h2_to_next_h1' ? 'border-indigo-500' : 'border-theme-border-input'
                     }`}>
                       {carryForwardDirection === 'h2_to_next_h1' && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
                     </div>
                   </button>
                 </div>
 
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Manual Carry Forward Days, Hours & Minutes</span>
+                <span className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider block">Manual Carry Forward Days, Hours & Minutes</span>
                 <div className="flex items-center gap-3">
                   {(() => {
                     const { d: mcfD, h: mcfH, m: mcfM } = getDaysHoursMins(manualCarryDays);
                     return (
-                      <div className="flex items-center gap-1.5 bg-slate-955 border border-slate-800 rounded-lg px-2 py-1.5 focus-within:border-indigo-500 transition-all flex-1">
+                      <div className="flex items-center gap-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg px-2 py-1.5 focus-within:border-indigo-500 transition-all flex-1">
                         <input
                           type="number"
                           min={0}
@@ -609,10 +609,10 @@ export function AdminSettleUserModal({
                             setManualCarryDays(newD + (mcfH + mcfM / 60) / workingHours);
                           }}
                           placeholder="0"
-                          className="w-12 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                          className="w-12 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                         />
-                        <span className="text-[10px] text-slate-500 font-bold">d</span>
-                        <div className="w-px h-3 bg-slate-800 mx-1" />
+                        <span className="text-[10px] text-theme-text-muted font-bold">d</span>
+                        <div className="w-px h-3 bg-theme-border-input mx-1" />
                         <input
                           type="number"
                           min={0}
@@ -624,10 +624,10 @@ export function AdminSettleUserModal({
                             setManualCarryDays(mcfD + (newH + mcfM / 60) / workingHours);
                           }}
                           placeholder="0"
-                          className="w-10 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                          className="w-10 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                         />
-                        <span className="text-[10px] text-slate-500 font-bold">h</span>
-                        <div className="w-px h-3 bg-slate-800 mx-1" />
+                        <span className="text-[10px] text-theme-text-muted font-bold">h</span>
+                        <div className="w-px h-3 bg-theme-border-input mx-1" />
                         <input
                           type="number"
                           min={0}
@@ -639,9 +639,9 @@ export function AdminSettleUserModal({
                             setManualCarryDays(mcfD + (mcfH + newM / 60) / workingHours);
                           }}
                           placeholder="0"
-                          className="w-10 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                          className="w-10 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                         />
-                        <span className="text-[10px] text-slate-500 font-bold">m</span>
+                        <span className="text-[10px] text-theme-text-muted font-bold">m</span>
                       </div>
                     );
                   })()}
@@ -651,32 +651,32 @@ export function AdminSettleUserModal({
                     ⚠ Carry forward value cannot be negative.
                   </p>
                 )}
-                <p className="text-[10px] text-slate-500 leading-relaxed">
+                <p className="text-[10px] text-theme-text-muted leading-relaxed">
                   Specify the exact number of unused leaves to carry forward for this user. The system will bypass calculations and directly use this value.
                 </p>
               </div>
             ) : total > 0 ? (
               <div className="space-y-3">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
                   Custom Splits Allocation
                 </label>
 
                 <div className="grid grid-cols-1 gap-2.5">
-                  <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-indigo-500/60 transition-all">
+                  <div className="flex items-center justify-between p-3 rounded-xl border bg-theme-card-bg/30 border-theme-border-muted/80 focus-within:border-indigo-500/60 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-400/30 text-indigo-400">
                         <FolderPlus className="h-4 w-4" />
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white block">Carry Forward / Reserve</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">Carry forward to the next period's active quota.</span>
+                        <span className="text-xs font-bold text-theme-text-primary block">Carry Forward / Reserve</span>
+                        <span className="text-[10px] text-theme-text-muted block mt-0.5">Carry forward to the next period's active quota.</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {(() => {
                         const { d: cfD, h: cfH, m: cfM } = getDaysHoursMins(carryForwardDays);
                         return (
-                          <div className="flex items-center gap-1 bg-slate-955 border border-slate-800 rounded-lg px-1.5 py-1 focus-within:border-indigo-500 transition-all">
+                          <div className="flex items-center gap-1 bg-theme-page-bg border border-theme-border-input rounded-lg px-1.5 py-1 focus-within:border-indigo-500 transition-all">
                             <input
                               type="number"
                               min={0}
@@ -687,11 +687,11 @@ export function AdminSettleUserModal({
                                 const newD = parseInt(e.target.value) || 0;
                                 setCarryForwardDays(newD + (cfH + cfM / 60) / workingHours);
                               }}
-                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-slate-500 font-bold">d</span>
-                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                            <span className="text-[9px] text-theme-text-muted font-bold">d</span>
+                            <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -702,11 +702,11 @@ export function AdminSettleUserModal({
                                 const newH = parseInt(e.target.value) || 0;
                                 setCarryForwardDays(cfD + (newH + cfM / 60) / workingHours);
                               }}
-                              className="w-7 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                              className="w-7 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-slate-500 font-bold">h</span>
-                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                            <span className="text-[9px] text-theme-text-muted font-bold">h</span>
+                            <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -717,10 +717,10 @@ export function AdminSettleUserModal({
                                 const newM = parseInt(e.target.value) || 0;
                                 setCarryForwardDays(cfD + (cfH + newM / 60) / workingHours);
                               }}
-                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-slate-500 font-bold">m</span>
+                            <span className="text-[9px] text-theme-text-muted font-bold">m</span>
                           </div>
                         );
                       })()}
@@ -735,21 +735,21 @@ export function AdminSettleUserModal({
                   </div>
 
                   {/* Cash Payment Option */}
-                  <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-emerald-500/60 transition-all">
+                  <div className="flex items-center justify-between p-3 rounded-xl border bg-theme-card-bg/30 border-theme-border-muted/80 focus-within:border-emerald-500/60 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-400/30 text-emerald-455">
                         <DollarSign className="h-4 w-4" />
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white block">Cash Payment (Payout)</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">Pay direct cash equivalent. Deducts from active quota.</span>
+                        <span className="text-xs font-bold text-theme-text-primary block">Cash Payment (Payout)</span>
+                        <span className="text-[10px] text-theme-text-muted block mt-0.5">Pay direct cash equivalent. Deducts from active quota.</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {(() => {
                         const { d: payD, h: payH, m: payM } = getDaysHoursMins(paymentDays);
                         return (
-                          <div className="flex items-center gap-1 bg-slate-955 border border-slate-800 rounded-lg px-1.5 py-1 focus-within:border-emerald-500 transition-all">
+                          <div className="flex items-center gap-1 bg-theme-page-bg border border-theme-border-input rounded-lg px-1.5 py-1 focus-within:border-emerald-500 transition-all">
                             <input
                               type="number"
                               min={0}
@@ -760,11 +760,11 @@ export function AdminSettleUserModal({
                                 const newD = parseInt(e.target.value) || 0;
                                 setPaymentDays(newD + (payH + payM / 60) / workingHours);
                               }}
-                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-slate-500 font-bold">d</span>
-                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                            <span className="text-[9px] text-theme-text-muted font-bold">d</span>
+                            <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -775,11 +775,11 @@ export function AdminSettleUserModal({
                                 const newH = parseInt(e.target.value) || 0;
                                 setPaymentDays(payD + (newH + payM / 60) / workingHours);
                               }}
-                              className="w-7 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                              className="w-7 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-slate-500 font-bold">h</span>
-                            <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                            <span className="text-[9px] text-theme-text-muted font-bold">h</span>
+                            <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                             <input
                               type="number"
                               min={0}
@@ -790,10 +790,10 @@ export function AdminSettleUserModal({
                                 const newM = parseInt(e.target.value) || 0;
                                 setPaymentDays(payD + (payH + newM / 60) / workingHours);
                               }}
-                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                              className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-slate-500 font-bold">m</span>
+                            <span className="text-[9px] text-theme-text-muted font-bold">m</span>
                           </div>
                         );
                       })()}
@@ -809,21 +809,21 @@ export function AdminSettleUserModal({
 
                   {/* Adjust Leaves Option */}
                   {totalOutstandingOffice > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-xl border bg-slate-900/30 border-slate-850/80 focus-within:border-purple-500/60 transition-all">
+                    <div className="flex items-center justify-between p-3 rounded-xl border bg-theme-card-bg/30 border-theme-border-muted/80 focus-within:border-purple-500/60 transition-all">
                       <div className="flex items-center gap-3">
                         <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-400/30 text-purple-400">
                           <ArrowRightLeft className="h-4 w-4" />
                         </div>
                         <div>
-                          <span className="text-xs font-bold text-white block">Adjust Leaves</span>
-                          <span className="text-[10px] text-slate-400 block mt-0.5">Adjust against outstanding Office Leave ({totalOutstandingOffice} days).</span>
+                          <span className="text-xs font-bold text-theme-text-primary block">Adjust Leaves</span>
+                          <span className="text-[10px] text-theme-text-muted block mt-0.5">Adjust against outstanding Office Leave ({totalOutstandingOffice} days).</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {(() => {
                           const { d: adjD, h: adjH, m: adjM } = getDaysHoursMins(adjustLeaveDays);
                           return (
-                            <div className="flex items-center gap-1 bg-slate-955 border border-slate-850 rounded-lg px-1.5 py-1 focus-within:border-purple-500 transition-all">
+                            <div className="flex items-center gap-1 bg-theme-page-bg border border-theme-border-muted rounded-lg px-1.5 py-1 focus-within:border-purple-500 transition-all">
                               <input
                                 type="number"
                                 min={0}
@@ -834,11 +834,11 @@ export function AdminSettleUserModal({
                                   const newD = parseInt(e.target.value) || 0;
                                   setAdjustLeaveDays(newD + (adjH + adjM / 60) / workingHours);
                                 }}
-                                className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                 placeholder="0"
                               />
-                              <span className="text-[9px] text-slate-500 font-bold">d</span>
-                              <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                              <span className="text-[9px] text-theme-text-muted font-bold">d</span>
+                              <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                               <input
                                 type="number"
                                 min={0}
@@ -849,11 +849,11 @@ export function AdminSettleUserModal({
                                   const newH = parseInt(e.target.value) || 0;
                                   setAdjustLeaveDays(adjD + (newH + adjM / 60) / workingHours);
                                 }}
-                                className="w-7 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                className="w-7 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                 placeholder="0"
                               />
-                              <span className="text-[9px] text-slate-500 font-bold">h</span>
-                              <div className="w-px h-3 bg-slate-800 mx-0.5" />
+                              <span className="text-[9px] text-theme-text-muted font-bold">h</span>
+                              <div className="w-px h-3 bg-theme-border-input mx-0.5" />
                               <input
                                 type="number"
                                 min={0}
@@ -864,10 +864,10 @@ export function AdminSettleUserModal({
                                   const newM = parseInt(e.target.value) || 0;
                                   setAdjustLeaveDays(adjD + (adjH + newM / 60) / workingHours);
                                 }}
-                                className="w-8 bg-transparent text-right text-xs font-mono font-bold text-white focus:outline-none"
+                                className="w-8 bg-transparent text-right text-xs font-mono font-bold text-theme-text-primary focus:outline-none"
                                 placeholder="0"
                               />
-                              <span className="text-[9px] text-slate-500 font-bold">m</span>
+                              <span className="text-[9px] text-theme-text-muted font-bold">m</span>
                             </div>
                           );
                         })()}
@@ -889,15 +889,15 @@ export function AdminSettleUserModal({
 
         {/* Visual Allocation Summary & Segment Bar */}
         {!isNegative && !isManualOverride && total > 0 && (
-          <div className="p-3.5 bg-slate-955 border border-slate-850 rounded-xl space-y-2.5">
-            <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="p-3.5 bg-theme-page-bg border border-theme-border-muted rounded-xl space-y-2.5">
+            <div className="flex justify-between items-center text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
               <span>Allocation Summary</span>
               <span className={isAllocatedCorrectly ? "text-emerald-400" : "text-rose-400 animate-pulse"}>
                 {formatDaysAndHours(allocated, workingHours)} / {formatDaysAndHours(total, workingHours)} Allocated
               </span>
             </div>
 
-            <div className="h-2 w-full bg-slate-950/80 rounded-full overflow-hidden flex border border-slate-900">
+            <div className="h-2 w-full bg-theme-card-container/80 rounded-full overflow-hidden flex border border-theme-card-bg">
               {total > 0 ? (
                 <>
                   <div style={{ width: `${(carryForwardDays / total) * 100}%` }} className="bg-indigo-500 h-full transition-all duration-300" />
@@ -920,11 +920,11 @@ export function AdminSettleUserModal({
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-slate-850">
+        <div className="flex gap-3 pt-4 border-t border-theme-border-muted">
           <button
             type="button"
             onClick={() => setShowModal(false)}
-            className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+            className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-primary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
           >
             Cancel
           </button>

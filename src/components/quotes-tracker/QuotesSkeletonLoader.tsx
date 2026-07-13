@@ -34,8 +34,8 @@ interface SkeletonLoaderProps {
 
 export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderProps) {
   // Common skeleton card wrapper style
-  const cardBg = "bg-slate-900/30 border border-slate-850/80 backdrop-blur-md rounded-2xl p-5 animate-pulse";
-  const innerBg = "bg-slate-800/40 rounded-lg";
+  const cardBg = "bg-theme-card-bg/30 border border-theme-border-muted/80 backdrop-blur-md rounded-2xl p-5 animate-pulse";
+  const innerBg = "bg-theme-border-input/40 rounded-lg";
 
   if (type === "stats") {
     return (
@@ -61,9 +61,9 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
 
   if (type === "copy-helper") {
     return (
-      <div className="bg-slate-955/20 border border-slate-850/80 rounded-2xl p-5 space-y-6 animate-pulse">
+      <div className="bg-theme-page-bg/20 border border-theme-border-muted/80 rounded-2xl p-5 space-y-6 animate-pulse">
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-slate-850/50 pb-4">
+        <div className="flex justify-between items-center border-b border-theme-border-muted/50 pb-4">
           <div className="space-y-2">
             <div className={`h-5 w-48 ${innerBg}`} />
             <div className={`h-3 w-64 ${innerBg}`} />
@@ -75,7 +75,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
           {/* Left Boxes */}
           <div className="space-y-5">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-slate-900/40 border border-slate-850/60 rounded-xl p-4.5 space-y-3">
+              <div key={i} className="bg-theme-card-bg/40 border border-theme-border-muted/60 rounded-xl p-4.5 space-y-3">
                 <div className={`h-4 w-28 ${innerBg}`} />
                 <div className="space-y-2">
                   <div className={`h-3 w-full ${innerBg}`} />
@@ -85,7 +85,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
             ))}
           </div>
           {/* Right Box (Notes) */}
-          <div className="bg-slate-900/40 border border-slate-850/60 rounded-xl p-4.5 space-y-3 flex flex-col h-full">
+          <div className="bg-theme-card-bg/40 border border-theme-border-muted/60 rounded-xl p-4.5 space-y-3 flex flex-col h-full">
             <div className={`h-4 w-32 ${innerBg}`} />
             <div className={`h-36 w-full ${innerBg} flex-1`} />
           </div>
@@ -96,9 +96,9 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
 
   if (type === "save-file") {
     return (
-      <div className="bg-slate-955/20 border border-slate-850/80 rounded-2xl p-5 space-y-6 animate-pulse">
+      <div className="bg-theme-page-bg/20 border border-theme-border-muted/80 rounded-2xl p-5 space-y-6 animate-pulse">
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-slate-850/50 pb-4">
+        <div className="flex justify-between items-center border-b border-theme-border-muted/50 pb-4">
           <div className="space-y-2">
             <div className={`h-5 w-44 ${innerBg}`} />
             <div className={`h-3 w-72 ${innerBg}`} />
@@ -119,12 +119,12 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
             </div>
             <div className={`h-10 w-44 bg-blue-600/30 rounded-xl`} />
           </div>
-          <div className="space-y-4 border-t lg:border-t-0 lg:border-l border-slate-850/60 pt-5 lg:pt-0 lg:pl-6">
+          <div className="space-y-4 border-t lg:border-t-0 lg:border-l border-theme-border-muted/60 pt-5 lg:pt-0 lg:pl-6">
             <div className={`h-4 w-36 ${innerBg}`} />
             <div className={`h-3 w-48 ${innerBg}`} />
             <div className="space-y-3 mt-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-3 bg-slate-900/40 border border-slate-850/50 rounded-xl space-y-2">
+                <div key={i} className="p-3 bg-theme-card-bg/40 border border-theme-border-muted/50 rounded-xl space-y-2">
                   <div className={`h-3.5 w-40 ${innerBg}`} />
                   <div className={`h-2.5 w-full ${innerBg}`} />
                   <div className="flex gap-2">
@@ -176,7 +176,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
                       <div className={`h-2.5 w-16 ${innerBg}`} />
                     </div>
                   </div>
-                  <div className="flex justify-between border-t border-slate-850/60 pt-3">
+                  <div className="flex justify-between border-t border-theme-border-muted/60 pt-3">
                     <div className={`h-5 w-12 ${innerBg}`} />
                     <div className={`h-5 w-12 ${innerBg}`} />
                   </div>
@@ -213,7 +213,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
   return (
     <div className="space-y-3 w-full py-4 animate-pulse">
       {[...Array(rows)].map((_, i) => (
-        <div key={i} className="flex flex-col gap-2 border border-slate-850/40 rounded-xl p-4">
+        <div key={i} className="flex flex-col gap-2 border border-theme-border-muted/40 rounded-xl p-4">
           <div className={`h-4 w-1/3 ${innerBg}`} />
           <div className={`h-3.5 w-full ${innerBg}`} />
           <div className={`h-3 w-2/3 ${innerBg}`} />

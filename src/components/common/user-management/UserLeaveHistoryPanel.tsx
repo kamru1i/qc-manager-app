@@ -181,9 +181,9 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
 
   if (loadingLeaveData && viewingStaffRecords.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 bg-slate-900/10 border border-slate-850/50 rounded-2xl">
+      <div className="flex flex-col items-center justify-center py-16 bg-theme-card-bg/10 border border-theme-border-muted/50 rounded-2xl">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <p className="mt-2 text-xs text-slate-400 font-medium">Loading leave quotas & records...</p>
+        <p className="mt-2 text-xs text-theme-text-muted font-medium">Loading leave quotas & records...</p>
       </div>
     );
   }
@@ -201,7 +201,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6">
+    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-2xl rounded-2xl p-6">
       <UserDashboardView
         profile={viewingStaff}
         userStats={dashboardStats}

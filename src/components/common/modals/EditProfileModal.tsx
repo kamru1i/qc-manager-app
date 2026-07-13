@@ -105,28 +105,28 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-modal-backdrop">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto animate-modal-content">
+      <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto animate-modal-content">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-455 hover:text-white transition-all cursor-pointer"
+          className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h3 className="text-lg font-bold text-white mb-1">
+        <h3 className="text-lg font-bold text-theme-text-primary mb-1">
           {editorRole === "supervisor"
             ? "Configure Permissions"
             : "Edit Profile"}
         </h3>
-        <p className="text-xs text-slate-455 mb-5">
-          User: <strong className="text-white">{username.toUpperCase()}</strong>
+        <p className="text-xs text-theme-text-muted mb-5">
+          User: <strong className="text-theme-text-primary">{username.toUpperCase()}</strong>
         </p>
 
         <div className="space-y-4">
           {editorRole === "admin" ? (
             <>
               <div>
-                <label className="block text-xs font-semibold text-slate-355 mb-1">
+                <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
                   Full Name
                 </label>
                 <input
@@ -134,12 +134,12 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   placeholder="e.g. Kamrul Islam"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-355 mb-1">
+                <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
                   Account Role
                 </label>
                 <select
@@ -154,7 +154,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       setCanManageRules(true);
                     }
                   }}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                  className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                 >
                   <option value="user">User</option>
                   <option value="supervisor">Supervisor</option>
@@ -163,8 +163,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               </div>
 
               {/* Leave / Quotes Workspace Toggles */}
-              <div className="border-t border-slate-800/80 pt-3">
-                <label className="block text-[11px] font-semibold text-slate-355 mb-2">
+              <div className="border-t border-theme-border-input/80 pt-3">
+                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-2">
                   Workspace Access
                 </label>
                 <div className="grid grid-cols-2 gap-4">
@@ -180,7 +180,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         <Check className="h-2.5 w-2.5 stroke-3" />
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-slate-300 transition-colors">
+                    <span className="text-xs font-semibold text-theme-text-secondary transition-colors">
                       Leave Tracker
                     </span>
                   </label>
@@ -196,8 +196,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       <div
                         className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                           hasQuotesAccess
-                            ? "bg-blue-600 border-blue-500 text-white font-bold"
-                            : "border-slate-700 bg-slate-900 text-transparent"
+                            ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                            : "border-theme-border-active bg-theme-card-bg text-transparent"
                         }`}
                       >
                         {hasQuotesAccess && (
@@ -205,7 +205,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         )}
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors">
                       Quotes Tracker
                     </span>
                   </label>
@@ -216,8 +216,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
           {/* Leave Tracker Permissions (always editable for admin) */}
           {editorRole === "admin" && (
-            <div className="border-t border-slate-800/80 pt-3 space-y-3">
-              <label className="block text-[11px] font-semibold text-slate-355">
+            <div className="border-t border-theme-border-input/80 pt-3 space-y-3">
+              <label className="block text-[11px] font-semibold text-theme-text-secondary">
                 Leave Tracker Permissions
               </label>
               <div className="grid grid-cols-1 gap-2.5">
@@ -235,8 +235,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div
                       className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         needsSupervisorApproval
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-900 text-transparent"
+                          ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                          : "border-theme-border-active bg-theme-card-bg text-transparent"
                       }`}
                     >
                       {needsSupervisorApproval && (
@@ -245,10 +245,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                       Supervisor Approval Required?
                     </span>
-                    <span className="text-[10px] text-slate-500 block leading-tight">
+                    <span className="text-[10px] text-theme-text-muted block leading-tight">
                       Requires supervisor approval for leaves
                     </span>
                   </div>
@@ -256,12 +256,12 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
                 {/* Supervisors Multiselect */}
                 {needsSupervisorApproval && supervisors.length > 0 && (
-                  <div className="space-y-2 bg-slate-955/40 p-2.5 rounded-lg border border-slate-800/80 ml-6.5">
+                  <div className="space-y-2 bg-theme-page-bg/40 p-2.5 rounded-lg border border-theme-border-input/80 ml-6.5">
                     <div className="flex justify-between items-center text-[10px]">
-                      <span className="font-semibold text-slate-400">
+                      <span className="font-semibold text-theme-text-muted">
                         Select Supervisors
                       </span>
-                      <span className="text-slate-500 font-mono">
+                      <span className="text-theme-text-muted font-mono">
                         {supervisorIds.length > 0
                           ? `${supervisorIds.length} Selected`
                           : "All Selected"}
@@ -272,7 +272,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[10px] ${
                           supervisorIds.length === 0
                             ? "border-blue-600 bg-blue-955/20 text-blue-400 font-semibold"
-                            : "border-slate-800 bg-slate-900 text-slate-405"
+                            : "border-theme-border-input bg-theme-card-bg text-theme-text-muted"
                         }`}
                       >
                         <input
@@ -291,7 +291,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[10px] ${
                               isChecked
                                 ? "border-blue-600 bg-blue-955/20 text-blue-400 font-semibold"
-                                : "border-slate-800 bg-slate-900 text-slate-405"
+                                : "border-theme-border-input bg-theme-card-bg text-theme-text-muted"
                             }`}
                           >
                             <input
@@ -328,8 +328,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div
                       className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         eligibleOfficeLeave
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-900 text-transparent"
+                          ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                          : "border-theme-border-active bg-theme-card-bg text-transparent"
                       }`}
                     >
                       {eligibleOfficeLeave && (
@@ -338,10 +338,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                       Office Leave Eligible?
                     </span>
-                    <span className="text-[10px] text-slate-500 block leading-tight">
+                    <span className="text-[10px] text-theme-text-muted block leading-tight">
                       Eligible for annual office leaves & Eid holidays
                     </span>
                   </div>
@@ -359,8 +359,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div
                       className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         eligibleGovtHoliday
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-900 text-transparent"
+                          ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                          : "border-theme-border-active bg-theme-card-bg text-transparent"
                       }`}
                     >
                       {eligibleGovtHoliday && (
@@ -369,10 +369,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                       Govt Holiday Eligible?
                     </span>
-                    <span className="text-[10px] text-slate-500 block leading-tight">
+                    <span className="text-[10px] text-theme-text-muted block leading-tight">
                       Eligible for government list holidays
                     </span>
                   </div>
@@ -390,8 +390,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div
                       className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         allowOvertime
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-900 text-transparent"
+                          ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                          : "border-theme-border-active bg-theme-card-bg text-transparent"
                       }`}
                     >
                       {allowOvertime && (
@@ -400,10 +400,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                       Overtime Category?
                     </span>
-                    <span className="text-[10px] text-slate-500 block leading-tight">
+                    <span className="text-[10px] text-theme-text-muted block leading-tight">
                       Allows overtime leave category
                     </span>
                   </div>
@@ -421,8 +421,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div
                       className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         allowReserve
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-900 text-transparent"
+                          ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                          : "border-theme-border-active bg-theme-card-bg text-transparent"
                       }`}
                     >
                       {allowReserve && (
@@ -431,10 +431,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                       Reserve Govt Holiday?
                     </span>
-                    <span className="text-[10px] text-slate-500 block leading-tight">
+                    <span className="text-[10px] text-theme-text-muted block leading-tight">
                       Option to reserve government holidays
                     </span>
                   </div>
@@ -452,7 +452,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               />
 
               {editorRole === "admin" && (
-                <div className="border-t border-slate-800/80 pt-3">
+                <div className="border-t border-theme-border-input/80 pt-3">
                   <label
                     className={`flex items-center gap-2.5 cursor-pointer group select-none ${role === "admin" ? "opacity-70 pointer-events-none" : ""}`}
                   >
@@ -467,8 +467,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       <div
                         className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                           canManageRules || role === "admin"
-                            ? "bg-blue-600 border-blue-500 text-white font-bold"
-                            : "border-slate-700 bg-slate-900 text-transparent"
+                            ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                            : "border-theme-border-active bg-theme-card-bg text-transparent"
                         }`}
                       >
                         {(canManageRules || role === "admin") && (
@@ -476,16 +476,16 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         )}
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors">
                       Can Manage Quote Rules?{" "}
                       {role === "admin" && (
-                        <span className="text-[10px] text-slate-500 font-normal italic ml-1">
+                        <span className="text-[10px] text-theme-text-muted font-normal italic ml-1">
                           (Always Allowed for Admin)
                         </span>
                       )}
                     </span>
                   </label>
-                  <p className="text-[10px] text-slate-455 mt-1 ml-6.5">
+                  <p className="text-[10px] text-theme-text-muted mt-1 ml-6.5">
                     Allows the user to add, edit, or delete compliance rules and
                     view archive history.
                   </p>
@@ -495,7 +495,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           )}
 
           {editorRole === "admin" && (
-            <div className="border-t border-slate-800/80 pt-3">
+            <div className="border-t border-theme-border-input/80 pt-3">
               <label className="flex items-center gap-2.5 cursor-pointer group select-none">
                 <div className="relative flex items-center">
                   <input
@@ -507,8 +507,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <div
                     className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       resetPassword
-                        ? "bg-blue-600 border-blue-500 text-white font-bold"
-                        : "border-slate-700 bg-slate-900 text-transparent"
+                        ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                        : "border-theme-border-active bg-theme-card-bg text-transparent"
                     }`}
                   >
                     {resetPassword && (
@@ -516,7 +516,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     )}
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors flex items-center gap-1.5">
                   <KeyRound className="h-4 w-4 text-blue-500" />
                   Reset Password to 1234?
                 </span>
@@ -528,7 +528,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             >
               Cancel
             </button>
@@ -536,7 +536,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               type="button"
               disabled={submitting || !isPasswordValid}
               onClick={handleUpdate}
-              className="flex-1 py-2.5 bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+              className="flex-1 py-2.5 bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-theme-card-container"
             >
               {submitting ? (
                 <Loader2 className="animate-spin h-3.5 w-3.5" />

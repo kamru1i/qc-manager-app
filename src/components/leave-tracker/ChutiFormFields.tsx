@@ -60,7 +60,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
   return (
     <>
       <div>
-        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
           Date
         </label>
         <div className="mt-1">
@@ -71,13 +71,13 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
             min={minDate}
             max={maxDate}
             onErrorChange={onDateErrorChange}
-            className="bg-slate-955 text-sm"
+            className="bg-theme-page-bg text-sm"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
           Leave Type
         </label>
         <CustomSelect
@@ -93,7 +93,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex justify-between items-center">
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
                   Start Time
                 </label>
                 {signInTime && (
@@ -107,12 +107,12 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                 required
                 value={signInTime}
                 onChange={(e) => setSignInTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
               <div className="flex justify-between items-center">
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
                   End Time
                 </label>
                 {signOutTime && (
@@ -126,13 +126,13 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                 required
                 value={signOutTime}
                 onChange={(e) => setSignOutTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
               {leaveType === 'Overtime' ? 'Total Overtime Duration' : 'Total Leave Duration'}
             </label>
             <input
@@ -141,7 +141,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
               placeholder="e.g., 02:30"
               value={leaveHour}
               onChange={(e) => setLeaveHour(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+              className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-muted rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
           </div>
         </>
@@ -149,12 +149,12 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
 
       {showAdjustmentSection && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80">
+          <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
             <div>
-              <span className="block text-xs font-medium text-white font-semibold">
+              <span className="block text-xs font-medium text-theme-text-primary font-semibold">
                 Adjustment
               </span>
-              <span className="block text-[10px] text-slate-400">
+              <span className="block text-[10px] text-theme-text-muted">
                 If checked, this will not add to total leaves
               </span>
             </div>
@@ -168,7 +168,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                 }
               }}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                adjustment ? 'bg-blue-600' : 'bg-slate-800'
+                adjustment ? 'bg-blue-600' : 'bg-theme-border-input'
               }`}
             >
               <span
@@ -180,12 +180,12 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
           </div>
 
           {leaveType === 'Overtime' && adjustment && (
-            <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80 font-sans">
+            <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 font-sans">
               <div>
-                <span className="block text-xs font-medium text-white font-semibold">
+                <span className="block text-xs font-medium text-theme-text-primary font-semibold">
                   Adjust with Short Leave?
                 </span>
-                <span className="block text-[10px] text-slate-400">
+                <span className="block text-[10px] text-theme-text-muted">
                   If checked, this will deduct from short leave balance
                 </span>
               </div>
@@ -193,7 +193,7 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
                 type="button"
                 onClick={() => setAdjustShortLeave(!adjustShortLeave)}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  adjustShortLeave ? 'bg-emerald-600' : 'bg-slate-800'
+                  adjustShortLeave ? 'bg-emerald-600' : 'bg-theme-border-input'
                 }`}
               >
                 <span
@@ -208,14 +208,14 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
       )}
 
       <div>
-        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
           Remarks / Reason
         </label>
         <textarea
           placeholder="Write a brief description of the leave..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-20 resize-none"
+          className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-20 resize-none"
         />
       </div>
     </>

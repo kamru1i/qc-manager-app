@@ -800,7 +800,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       {(viewingStaff || isCreatingNewUser) ? (
         <div className="space-y-6 animate-modal-content">
           {/* Header/Top Box */}
-          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 flex flex-col gap-4">
+          <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-2xl rounded-2xl p-6 flex flex-col gap-4">
             <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-6 w-full">
               <div className="flex items-center gap-4">
                 <button
@@ -809,13 +809,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     setViewingStaff(null);
                     setIsCreatingNewUser(false);
                   }}
-                  className="p-2.5 bg-slate-850 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-750 transition-all cursor-pointer"
+                  className="p-2.5 bg-theme-border-muted border border-theme-border-active text-theme-text-secondary rounded-xl hover:bg-theme-border-active transition-all cursor-pointer"
                   title="Go Back"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div>
-                  <h2 className="text-xl font-bold text-white flex items-center">
+                  <h2 className="text-xl font-bold text-theme-text-primary flex items-center">
                     {isCreatingNewUser ? (
                       'Add New Staff'
                     ) : (
@@ -829,9 +829,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     )}
                   </h2>
                   {!isCreatingNewUser && viewingStaff && (
-                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-405">
-                      <div>Working Hours: <strong className="text-white">{viewingStaff.working_hours || 9.5} hrs</strong></div>
-                      <div>Break Time: <strong className="text-white">{viewingStaff.break_time || 0} mins</strong></div>
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-theme-text-muted">
+                      <div>Working Hours: <strong className="text-theme-text-primary">{viewingStaff.working_hours || 9.5} hrs</strong></div>
+                      <div>Break Time: <strong className="text-theme-text-primary">{viewingStaff.break_time || 0} mins</strong></div>
                     </div>
                   )}
                 </div>
@@ -840,7 +840,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
             {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
             {!isCreatingNewUser && viewingStaff && (
-              <div className="flex border-b border-slate-800 gap-1 mt-2">
+              <div className="flex border-b border-theme-border-input gap-1 mt-2">
                 {canAccessModule(profile, viewingStaff, 'leave', profiles) && (
                   <button
                     type="button"
@@ -851,7 +851,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'leave'
                         ? 'border-blue-500 text-blue-400 font-bold'
-                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                        : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
                     }`}
                   >
                     <Calendar className="h-3.5 w-3.5" /> Leave History
@@ -867,7 +867,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'quotes'
                         ? 'border-blue-500 text-blue-400 font-bold'
-                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                        : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
                     }`}
                   >
                     <FileText className="h-3.5 w-3.5 text-purple-400" /> Quotes History
@@ -883,7 +883,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'kpi'
                         ? 'border-blue-500 text-blue-400 font-bold'
-                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                        : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
                     }`}
                   >
                     <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
@@ -898,7 +898,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeSubTab === 'profile'
                       ? 'border-blue-500 text-blue-400 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
                   }`}
                 >
                   <Settings className="h-3.5 w-3.5" /> Profile Settings
@@ -1003,29 +1003,29 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 (showAddLeaveForStaff || editingLeaveRecord) && (profile?.role === 'supervisor' || profile?.role === 'admin') && globalSettings ? (
                   // Full-page AddLeave view for supervisor/admin adding on behalf or editing
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3 pb-3 border-b border-slate-800/60">
+                    <div className="flex items-center gap-3 pb-3 border-b border-theme-border-input/60">
                       <button
                         onClick={() => {
                           setShowAddLeaveForStaff(false);
                           setEditingLeaveRecord(null);
                         }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-355 hover:text-white transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer"
                       >
                         <ArrowLeft className="h-3.5 w-3.5" />
                         Back to Leave History
                       </button>
                       <div>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-theme-text-muted">
                           {editingLeaveRecord ? (
                             <>
                               Editing leave for{' '}
-                              <span className="text-white font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
+                              <span className="text-theme-text-primary font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
                               ({viewingStaff.username?.toUpperCase()})
                             </>
                           ) : (
                             <>
                               Adding leave on behalf of{' '}
-                              <span className="text-white font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
+                              <span className="text-theme-text-primary font-semibold">{viewingStaff.full_name || viewingStaff.username}</span>{' '}
                               ({viewingStaff.username?.toUpperCase()})
                             </>
                           )}
@@ -1112,8 +1112,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-white">User Management</h2>
-              <p className="text-xs text-slate-450 mt-1">
+              <h2 className="text-xl font-bold text-theme-text-primary">User Management</h2>
+              <p className="text-xs text-theme-text-muted mt-1">
                 Add new staff members, set roles (Admin, Supervisor, User), and configure Leave and Quotes Tracker access permissions.
               </p>
             </div>
@@ -1134,9 +1134,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-955/45 p-4 rounded-xl border border-slate-800/40">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-theme-page-bg/45 p-4 rounded-xl border border-theme-border-input/40">
             <div className="relative w-full md:max-w-xs">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-theme-text-muted">
                 <Search className="h-4 w-4" />
               </span>
               <input
@@ -1144,30 +1144,30 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 placeholder="Search by name or codename..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                className="w-full pl-9 pr-8 py-2 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:border-blue-500/50 transition-colors"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-350 cursor-pointer"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-theme-text-muted hover:text-theme-text-secondary cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            <div className="text-[11px] text-slate-400">
-              Showing <span className="text-white font-semibold">{visibleProfiles.length}</span> users
+            <div className="text-[11px] text-theme-text-muted">
+              Showing <span className="text-theme-text-primary font-semibold">{visibleProfiles.length}</span> users
             </div>
           </div>
 
           {/* Users Table */}
-          <div className="bg-slate-955/20 rounded-xl border border-slate-850 overflow-hidden">
+          <div className="bg-theme-page-bg/20 rounded-xl border border-theme-border-muted overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/40 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                  <tr className="border-b border-theme-border-input bg-theme-card-bg/40 text-[10px] uppercase tracking-wider text-theme-text-muted font-semibold">
                     <th className="py-3 px-4">Name / Codename</th>
                     <th className="py-3 px-4 text-center">Role</th>
                     <th className="py-3 px-4 text-center">Leave Tracker</th>
@@ -1175,10 +1175,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <th className="py-3 px-4 text-center">File Type</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-850 text-xs text-slate-300">
+                <tbody className="divide-y divide-theme-border-muted text-xs text-theme-text-secondary">
                   {visibleProfiles.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-500">
+                      <td colSpan={5} className="py-12 text-center text-theme-text-muted">
                         No users found.
                       </td>
                     </tr>
@@ -1195,7 +1195,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                           }
                           setViewingStaff(u);
                         }}
-                        className="hover:bg-slate-900/25 transition-colors cursor-pointer select-none"
+                        className="hover:bg-theme-card-bg/25 transition-colors cursor-pointer select-none"
                         title="Double-click to view details"
                       >
                         <td className="py-3 px-4">
@@ -1206,7 +1206,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                               tooltipPosition="top"
                             />
                           </div>
-                          <div className="text-[10px] text-slate-455 uppercase mt-0.5 tracking-wider font-mono">
+                          <div className="text-[10px] text-theme-text-muted uppercase mt-0.5 tracking-wider font-mono">
                             {u.username.trim()}
                           </div>
                         </td>
@@ -1216,7 +1216,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                               ? 'bg-red-950/40 border-red-900/50 text-red-400'
                               : u.role === 'supervisor'
                               ? 'bg-purple-955/40 border-purple-800/50 text-purple-400'
-                              : 'bg-slate-850 border-slate-750 text-slate-400'
+                              : 'bg-theme-border-muted border-theme-border-active text-theme-text-muted'
                           }`}>
                             <Shield className="h-3 w-3 shrink-0" />
                             {u.role === 'admin' ? 'Admin' : u.role === 'supervisor' ? 'Supervisor' : 'User'}
@@ -1226,25 +1226,25 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                           {u.has_chuti_access ? (
                             <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
                           ) : (
-                            <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
+                            <XCircle className="h-4.5 w-4.5 text-theme-text-muted/65 mx-auto" />
                           )}
                         </td>
                         <td className="py-3 px-4 text-center">
                           {u.has_quotes_access ? (
                             <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
                           ) : (
-                            <XCircle className="h-4.5 w-4.5 text-slate-700 mx-auto" />
+                            <XCircle className="h-4.5 w-4.5 text-theme-text-muted/65 mx-auto" />
                           )}
                         </td>
                         <td className="py-3 px-4 text-center max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
                           {!u.has_quotes_access ? (
-                            <span className="text-slate-600 italic text-[11px]">No access</span>
+                            <span className="text-theme-text-muted/80 italic text-[11px]">No access</span>
                           ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === ALL_FILE_TYPES.length ? (
                             <span className="text-blue-400 font-medium text-[11px] block text-center">All Categories</span>
                           ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === 0 ? (
                             <span className="text-red-400/80 font-medium text-[11px] block text-center">None Allowed</span>
                           ) : (
-                            <span className="text-slate-400 text-[11px] block text-center">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
+                            <span className="text-theme-text-muted text-[11px] block text-center">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
                           )}
                         </td>
                       </tr>
@@ -1269,9 +1269,9 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               onConfirm={handleResetPasswordDefault}
               title="Reset Password to Default"
               message={
-                <div className="text-xs text-slate-300">
-                  Are you sure you want to reset the password for <strong className="text-white">{(viewingStaff?.username || '').toUpperCase()}</strong> to the default <strong className="text-blue-400">1234</strong>?
-                  <p className="text-[11px] text-slate-500 mt-2">The user will be forced to change this default password on their next login.</p>
+                <div className="text-xs text-theme-text-secondary">
+                  Are you sure you want to reset the password for <strong className="text-theme-text-primary">{(viewingStaff?.username || '').toUpperCase()}</strong> to the default <strong className="text-blue-400">1234</strong>?
+                  <p className="text-[11px] text-theme-text-muted mt-2">The user will be forced to change this default password on their next login.</p>
                 </div>
               }
               confirmText="Reset to 1234"
@@ -1291,36 +1291,36 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               >
                 <div className="space-y-4 font-sans">
                   <div className="p-3 bg-blue-955/20 border border-blue-900/30 rounded-xl text-xs text-blue-355">
-                    <p>💡 Here you can set a new <strong>password</strong> for <strong className="text-white">{viewingStaff.username.toUpperCase()}</strong>.</p>
+                    <p>💡 Here you can set a new <strong>password</strong> for <strong className="text-theme-text-primary">{viewingStaff.username.toUpperCase()}</strong>.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">New Password</label>
+                    <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">New Password</label>
                     <input
                       type="password"
                       placeholder="Enter new password"
                       value={credNewPassword}
                       onChange={(e) => setCredNewPassword(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-550"
+                      className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-550"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Confirm New Password</label>
+                    <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">Confirm New Password</label>
                     <input
                       type="password"
                       placeholder="Confirm new password"
                       value={credConfirmPassword}
                       onChange={(e) => setCredConfirmPassword(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-550"
+                      className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-550"
                     />
                   </div>
 
-                  <div className="flex gap-3 pt-4 border-t border-slate-800/80 font-sans">
+                  <div className="flex gap-3 pt-4 border-t border-theme-border-input/80 font-sans">
                     <button
                       type="button"
                       onClick={() => setShowCredentialsModal(false)}
-                      className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+                      className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
                     >
                       Cancel
                     </button>
@@ -1347,7 +1347,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               message={
                 <div>
                   Are you sure you want to permanently delete the user account{' '}
-                  <strong className="text-white">{(deletingUserAccount?.username || '').toUpperCase()}</strong>?
+                  <strong className="text-theme-text-primary">{(deletingUserAccount?.username || '').toUpperCase()}</strong>?
                   This will delete all corresponding profile info, leaves, and activity records. This action cannot be undone.
                 </div>
               }

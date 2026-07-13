@@ -45,8 +45,8 @@ export function AdminDeleteUserModal({
           <div className="inline-flex p-3 bg-red-600/10 border border-red-500/20 text-red-400 rounded-2xl mb-3">
             <AlertTriangle className="h-6 w-6 animate-pulse" />
           </div>
-          <p className="text-xs text-slate-355">
-            Are you sure you want to delete staff account <strong className="text-white">"{deleteTargetUser.full_name || deleteTargetUser.username}"</strong>?
+          <p className="text-xs text-theme-text-secondary">
+            Are you sure you want to delete staff account <strong className="text-theme-text-primary">"{deleteTargetUser.full_name || deleteTargetUser.username}"</strong>?
           </p>
           <p className="text-xs text-red-400 mt-2 font-semibold">
             ⚠️ Warning: Deleting the account will permanently delete all of their leave records, and this action cannot be undone.
@@ -57,7 +57,7 @@ export function AdminDeleteUserModal({
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+            className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
           >
             No, Cancel
           </button>

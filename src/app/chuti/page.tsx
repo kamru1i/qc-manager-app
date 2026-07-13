@@ -634,8 +634,8 @@ export default function Dashboard({
 
   if (!sessionUser && !loading) {
     return (
-      <div className="flex-1 min-h-screen flex flex-col bg-slate-955 items-center justify-center">
-        <div className="flex flex-col items-center gap-4 text-slate-400">
+      <div className="flex-1 min-h-screen flex flex-col bg-theme-page-bg items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-theme-text-muted">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           <p className="text-sm font-medium tracking-wide">Redirecting to login...</p>
         </div>
@@ -663,7 +663,7 @@ export default function Dashboard({
   if (profile && (profile.has_changed_password === false || !profile.is_setup_completed)) {
     return (
       <DashboardProvider value={contextValue}>
-        <div className="flex-1 min-h-screen flex flex-col bg-slate-955 relative overflow-hidden justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="flex-1 min-h-screen flex flex-col bg-theme-page-bg relative overflow-hidden justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
           {/* Background gradients */}
           <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
           <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
@@ -704,13 +704,13 @@ export default function Dashboard({
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab === 'add_leave' && (
           <div className="space-y-4">
             {editingRecord && (
-              <div className="flex items-center gap-3 pb-3 border-b border-slate-800/60">
+              <div className="flex items-center gap-3 pb-3 border-b border-theme-border-input/60">
                 <button
                   onClick={() => {
                     setEditingRecord(null);
                     onChutiTabChange('leave_history');
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-355 hover:text-white transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer"
                 >
                   Cancel Edit
                 </button>

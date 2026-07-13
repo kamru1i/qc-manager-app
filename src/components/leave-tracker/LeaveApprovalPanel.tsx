@@ -263,39 +263,39 @@ export function LeaveApprovalPanel({
         const user = profilesList.find(p => p.id === r.user_id);
         const tagLabel = role === 'supervisor' ? 'Verification Request' : 'Leave Request';
         return (
-          <div key={item.id} className="bg-slate-955/60 border border-slate-850 rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden">
+          <div key={item.id} className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
-            <div className="space-y-1 text-xs text-slate-355 pl-2 font-sans">
+            <div className="space-y-1 text-xs text-theme-text-secondary pl-2 font-sans">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-bold text-white text-sm">{user?.full_name || 'No Name'}</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">@{(user?.username || '').toUpperCase()}</span>
+                <span className="font-bold text-theme-text-primary text-sm">{user?.full_name || 'No Name'}</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">@{(user?.username || '').toUpperCase()}</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-900/60 text-blue-400 font-bold tracking-wide uppercase">{tagLabel}</span>
                 {item.timestamp && (
-                  <span className="text-[9px] text-slate-500 font-mono">
+                  <span className="text-[9px] text-theme-text-muted font-mono">
                     {new Date(item.timestamp).toLocaleString('en-US', { hour12: true })}
                   </span>
                 )}
               </div>
-              <p><span className="text-slate-500 font-medium">Date:</span> <span className="font-semibold text-slate-200">{r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date)}</span></p>
-              <p><span className="text-slate-500 font-medium">Leave Type:</span> <span className="font-bold text-blue-400">{r.leave_type}</span></p>
+              <p><span className="text-theme-text-muted font-medium">Date:</span> <span className="font-semibold text-theme-text-primary">{r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date)}</span></p>
+              <p><span className="text-theme-text-muted font-medium">Leave Type:</span> <span className="font-bold text-blue-400">{r.leave_type}</span></p>
               {r.leave_type !== 'Full Leave' && (
-                <p><span className="text-slate-500 font-medium">Time & Hours:</span> <span className="font-mono text-slate-300">{formatTimeToAMPM(r.sign_in_time)} - {formatTimeToAMPM(r.sign_out_time)} ({r.leave_hour ? r.leave_hour.substring(0, 5) : '-'} hrs)</span></p>
+                <p><span className="text-theme-text-muted font-medium">Time & Hours:</span> <span className="font-mono text-theme-text-secondary">{formatTimeToAMPM(r.sign_in_time)} - {formatTimeToAMPM(r.sign_out_time)} ({r.leave_hour ? r.leave_hour.substring(0, 5) : '-'} hrs)</span></p>
               )}
               <p>
-                <span className="text-slate-500 font-medium">Adjustment:</span>{' '}
-                <span className={`font-semibold ${r.adjustment ? 'text-blue-400 font-bold' : r.adjusted_hour ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>
+                <span className="text-theme-text-muted font-medium">Adjustment:</span>{' '}
+                <span className={`font-semibold ${r.adjustment ? 'text-blue-400 font-bold' : r.adjusted_hour ? 'text-cyan-400 font-bold' : 'text-theme-text-muted'}`}>
                   {r.adjustment ? 'Yes' : r.adjusted_hour ? `Partial (${r.adjusted_hour.toString().split('.')[0].substring(0, 5)} hrs)` : 'No'}
                 </span>
               </p>
               {r.leave_type === 'Overtime' && (
                 <p>
-                  <span className="text-slate-500 font-medium">Short Leave Adj:</span>{' '}
-                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
+                  <span className="text-theme-text-muted font-medium">Short Leave Adj:</span>{' '}
+                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-blue-400 font-bold' : 'text-theme-text-muted'}`}>
                     {r.adjust_short_leave ? 'Yes' : 'No'}
                   </span>
                 </p>
               )}
-              <p><span className="text-slate-500 font-medium">Reason/Comment:</span> <span className="italic text-slate-300 font-medium">{r.comment || '-'}</span></p>
+              <p><span className="text-theme-text-muted font-medium">Reason/Comment:</span> <span className="italic text-theme-text-secondary font-medium">{r.comment || '-'}</span></p>
             </div>
 
             <div className="flex md:flex-col justify-end items-end gap-2 shrink-0 font-sans pl-2">
@@ -329,19 +329,19 @@ export function LeaveApprovalPanel({
       case 'holiday_response': {
         const n = item.data;
         return (
-          <div key={item.id} className="bg-slate-955/60 border border-slate-850 rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4 relative overflow-hidden">
+          <div key={item.id} className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-500" />
-            <div className="space-y-1 text-xs text-slate-355 font-medium pl-2 font-sans">
+            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-bold text-white text-[13px]">{n.title}</span>
+                <span className="font-bold text-theme-text-primary text-[13px]">{n.title}</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-900/60 text-teal-400 font-bold tracking-wide uppercase">Holiday Response</span>
                 {n.timestamp && (
-                  <span className="text-[9px] text-slate-500 font-mono">
+                  <span className="text-[9px] text-theme-text-muted font-mono">
                     {new Date(n.timestamp).toLocaleString('en-US', { hour12: true })}
                   </span>
                 )}
               </div>
-              <p className="text-slate-300 font-normal leading-relaxed">{n.body}</p>
+              <p className="text-theme-text-secondary font-normal leading-relaxed">{n.body}</p>
             </div>
           </div>
         );
@@ -351,39 +351,39 @@ export function LeaveApprovalPanel({
         const user = profilesList.find(p => p.id === r.user_id);
         const isAdjustmentRequest = r.reserve_adjustment_status === 'pending';
         return (
-          <div key={item.id} className="bg-slate-955/60 border border-slate-850 rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden">
+          <div key={item.id} className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
-            <div className="space-y-1 text-xs text-slate-355 font-medium pl-2 font-sans">
+            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-bold text-white text-sm">{user?.full_name || 'No Name'}</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono font-bold">@{(user?.username || '').toUpperCase()}</span>
+                <span className="font-bold text-theme-text-primary text-sm">{user?.full_name || 'No Name'}</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono font-bold">@{(user?.username || '').toUpperCase()}</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-900/60 text-emerald-400 font-bold tracking-wide uppercase">Reserve & Adjustment</span>
                 {item.timestamp && (
-                  <span className="text-[9px] text-slate-500 font-mono">
+                  <span className="text-[9px] text-theme-text-muted font-mono">
                     {new Date(item.timestamp).toLocaleString('en-US', { hour12: true })}
                   </span>
                 )}
               </div>
-              <p><span className="text-slate-500 font-medium">Date:</span> <span className="font-semibold text-slate-200">{formatDate(r.date)}</span></p>
+              <p><span className="text-theme-text-muted font-medium">Date:</span> <span className="font-semibold text-theme-text-primary">{formatDate(r.date)}</span></p>
               <p>
-                <span className="text-slate-500 font-medium">Leave Type:</span>{' '}
+                <span className="text-theme-text-muted font-medium">Leave Type:</span>{' '}
                 <span className="font-bold text-emerald-500">
                   {r.leave_type}
                 </span>
               </p>
               {(r.leave_type === 'Overtime' || r.leave_type === 'Short Leave') && (
-                <p><span className="text-slate-500 font-medium">Time & Hours:</span> <span className="font-mono text-slate-300">{formatTimeToAMPM(r.sign_in_time)} - {formatTimeToAMPM(r.sign_out_time)} ({r.leave_hour ? r.leave_hour.substring(0, 5) : '-'} hrs)</span></p>
+                <p><span className="text-theme-text-muted font-medium">Time & Hours:</span> <span className="font-mono text-theme-text-secondary">{formatTimeToAMPM(r.sign_in_time)} - {formatTimeToAMPM(r.sign_out_time)} ({r.leave_hour ? r.leave_hour.substring(0, 5) : '-'} hrs)</span></p>
               )}
               <p>
-                <span className="text-slate-500 font-medium">Adjustment:</span>{' '}
-                <span className={`font-semibold ${(r.adjustment || isAdjustmentRequest) ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
+                <span className="text-theme-text-muted font-medium">Adjustment:</span>{' '}
+                <span className={`font-semibold ${(r.adjustment || isAdjustmentRequest) ? 'text-blue-400 font-bold' : 'text-theme-text-muted'}`}>
                   {(r.adjustment || isAdjustmentRequest) ? 'Yes' : 'No'}
                 </span>
               </p>
               {r.leave_type === 'Overtime' && (
                 <p>
-                  <span className="text-slate-500 font-medium">Short Leave Adj:</span>{' '}
-                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
+                  <span className="text-theme-text-muted font-medium">Short Leave Adj:</span>{' '}
+                  <span className={`font-semibold ${r.adjust_short_leave ? 'text-blue-400 font-bold' : 'text-theme-text-muted'}`}>
                     {r.adjust_short_leave ? 'Yes' : 'No'}
                   </span>
                 </p>
@@ -391,7 +391,7 @@ export function LeaveApprovalPanel({
               {isAdjustmentRequest && r.admin_edit_request && (
                 <div className="mt-1.5 p-2 bg-blue-955/40 border border-blue-900/40 rounded-lg text-blue-300 text-xs flex flex-col gap-0.5 font-sans">
                   <div>
-                    <span className="font-bold text-white">Requested Adjustment:</span>{' '}
+                    <span className="font-bold text-theme-text-primary">Requested Adjustment:</span>{' '}
                     {r.admin_edit_request.adjusted_hour ? (
                       <span className="font-semibold text-cyan-400">Partial Adjustment ({r.admin_edit_request.adjusted_hour.substring(0, 5)} hrs)</span>
                     ) : r.admin_edit_request.adjustment === false ? (
@@ -405,7 +405,7 @@ export function LeaveApprovalPanel({
                   </div>
                 </div>
               )}
-              <p><span className="text-slate-500 font-medium">Reason/Comment:</span> <span className="italic text-slate-300 font-medium">{r.comment || '-'}</span></p>
+              <p><span className="text-theme-text-muted font-medium">Reason/Comment:</span> <span className="italic text-theme-text-secondary font-medium">{r.comment || '-'}</span></p>
             </div>
 
             <div className="flex md:flex-col justify-end items-end gap-2 shrink-0 font-sans pl-2">
@@ -466,21 +466,21 @@ export function LeaveApprovalPanel({
       case 'profile_change': {
         const p = item.data;
         return (
-          <div key={item.id} className="bg-slate-955/60 border border-slate-850 rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden">
+          <div key={item.id} className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-cyan-500" />
             <div className="flex justify-between items-start pl-2 font-sans">
               <div>
-                <h4 className="text-xs font-bold text-white flex flex-wrap items-center gap-2">
+                <h4 className="text-xs font-bold text-theme-text-primary flex flex-wrap items-center gap-2">
                   <span>{p.full_name || 'No Name'}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">@{(p.username || '').toUpperCase()}</span>
+                  <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">@{(p.username || '').toUpperCase()}</span>
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-900/60 text-cyan-400 font-bold tracking-wide uppercase">Profile Edit</span>
                   {item.timestamp && (
-                    <span className="text-[9px] text-slate-500 font-mono">
+                    <span className="text-[9px] text-theme-text-muted font-mono">
                       {new Date(item.timestamp).toLocaleString('en-US', { hour12: true })}
                     </span>
                   )}
                 </h4>
-                <p className="text-[10px] text-slate-400 mt-0.5 font-medium font-sans">Role: {p.job_role || '-'}</p>
+                <p className="text-[10px] text-theme-text-muted mt-0.5 font-medium font-sans">Role: {p.job_role || '-'}</p>
               </div>
               <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-purple-955 border border-purple-800 text-purple-400">
                 Pending
@@ -488,38 +488,38 @@ export function LeaveApprovalPanel({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] pl-2 font-sans">
-              <div className="bg-slate-900/40 p-2.5 rounded-lg border border-slate-850">
-                <span className="block font-bold text-slate-400 mb-1.5 border-b border-slate-800 pb-1 font-semibold">Current Information</span>
-                <div className="space-y-1 text-slate-355 font-medium">
-                  <p><span className="text-slate-500 font-sans">Name:</span> {p.full_name || '-'}</p>
-                  <p><span className="text-slate-500 font-sans">Job Role:</span> {p.job_role || '-'}</p>
-                  <p><span className="text-slate-500 font-sans">Working Hours:</span> {p.working_hours} hrs</p>
-                  <p><span className="text-slate-500 font-sans">Break Time:</span> {p.break_time} mins</p>
-                  <p><span className="text-slate-500 font-sans">Sign-In Time:</span> {formatTimeToAMPM(p.default_sign_in || null) || '-'}</p>
-                  <p><span className="text-slate-500 font-sans">Sign-Out Time:</span> {formatTimeToAMPM(p.default_sign_out || null) || '-'}</p>
+              <div className="bg-theme-card-bg/40 p-2.5 rounded-lg border border-theme-border-muted">
+                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1 font-semibold">Current Information</span>
+                <div className="space-y-1 text-theme-text-secondary font-medium">
+                  <p><span className="text-theme-text-muted font-sans">Name:</span> {p.full_name || '-'}</p>
+                  <p><span className="text-theme-text-muted font-sans">Job Role:</span> {p.job_role || '-'}</p>
+                  <p><span className="text-theme-text-muted font-sans">Working Hours:</span> {p.working_hours} hrs</p>
+                  <p><span className="text-theme-text-muted font-sans">Break Time:</span> {p.break_time} mins</p>
+                  <p><span className="text-theme-text-muted font-sans">Sign-In Time:</span> {formatTimeToAMPM(p.default_sign_in || null) || '-'}</p>
+                  <p><span className="text-theme-text-muted font-sans">Sign-Out Time:</span> {formatTimeToAMPM(p.default_sign_out || null) || '-'}</p>
                 </div>
               </div>
 
               <div className="bg-blue-955/20 p-2.5 rounded-lg border border-blue-900/30">
                 <span className="block font-bold text-blue-400 mb-1.5 border-b border-blue-900/30 pb-1 font-semibold">Requested New Information</span>
-                <div className="space-y-1 text-slate-200 font-medium">
+                <div className="space-y-1 text-theme-text-primary font-medium">
                   <p className={p.requested_full_name && p.requested_full_name !== p.full_name ? 'text-blue-300 font-bold' : ''}>
-                    <span className="text-slate-500 font-sans">Name:</span> {p.requested_full_name || p.full_name || '-'}
+                    <span className="text-theme-text-muted font-sans">Name:</span> {p.requested_full_name || p.full_name || '-'}
                   </p>
                   <p className={p.requested_job_role && p.requested_job_role !== p.job_role ? 'text-blue-300 font-bold' : ''}>
-                    <span className="text-slate-500 font-sans">Job Role:</span> {p.requested_job_role || p.job_role || '-'}
+                    <span className="text-theme-text-muted font-sans">Job Role:</span> {p.requested_job_role || p.job_role || '-'}
                   </p>
                   <p className={p.requested_working_hours && p.requested_working_hours !== p.working_hours ? 'text-blue-300 font-bold' : ''}>
-                    <span className="text-slate-500 font-sans">Working Hours:</span> {p.requested_working_hours || p.working_hours} hrs
+                    <span className="text-theme-text-muted font-sans">Working Hours:</span> {p.requested_working_hours || p.working_hours} hrs
                   </p>
                   <p className={p.requested_break_time && p.requested_break_time !== p.break_time ? 'text-blue-300 font-bold' : ''}>
-                    <span className="text-slate-500 font-sans">Break Time:</span> {p.requested_break_time || p.break_time} mins
+                    <span className="text-theme-text-muted font-sans">Break Time:</span> {p.requested_break_time || p.break_time} mins
                   </p>
                   <p className={p.requested_default_sign_in && p.requested_default_sign_in !== p.default_sign_in ? 'text-blue-300 font-bold' : ''}>
-                    <span className="text-slate-500 font-sans">Sign-In Time:</span> {formatTimeToAMPM(p.requested_default_sign_in || p.default_sign_in || null) || '-'}
+                    <span className="text-theme-text-muted font-sans">Sign-In Time:</span> {formatTimeToAMPM(p.requested_default_sign_in || p.default_sign_in || null) || '-'}
                   </p>
                   <p className={p.requested_default_sign_out && p.requested_default_sign_out !== p.default_sign_out ? 'text-blue-300 font-bold' : ''}>
-                    <span className="text-slate-500 font-sans">Sign-Out Time:</span> {formatTimeToAMPM(p.requested_default_sign_out || p.default_sign_out || null) || '-'}
+                    <span className="text-theme-text-muted font-sans">Sign-Out Time:</span> {formatTimeToAMPM(p.requested_default_sign_out || p.default_sign_out || null) || '-'}
                   </p>
                 </div>
               </div>
@@ -553,20 +553,20 @@ export function LeaveApprovalPanel({
       case 'password_reset': {
         const p = item.data;
         return (
-          <div key={item.id} className="bg-slate-955/60 border border-slate-850 rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center relative overflow-hidden">
+          <div key={item.id} className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500" />
             <div className="space-y-1 pl-2 font-sans">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-sm">{p.full_name || 'No Name'}</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono">@{(p.username || '').toUpperCase()}</span>
+                <span className="font-bold text-theme-text-primary text-sm">{p.full_name || 'No Name'}</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">@{(p.username || '').toUpperCase()}</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-955/60 border border-red-900/60 text-red-400 font-bold tracking-wide uppercase">Password Reset</span>
                 {item.timestamp && (
-                  <span className="text-[9px] text-slate-500 font-mono">
+                  <span className="text-[9px] text-theme-text-muted font-mono">
                     {new Date(item.timestamp).toLocaleString('en-US', { hour12: true })}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-1 font-sans">Requesting password reset to default: <span className="font-mono text-blue-400 font-bold bg-slate-900 px-1 py-0.2 rounded border border-slate-800">1234</span></p>
+              <p className="text-xs text-theme-text-muted mt-1 font-sans">Requesting password reset to default: <span className="font-mono text-blue-400 font-bold bg-theme-card-bg px-1 py-0.2 rounded border border-theme-border-input">1234</span></p>
             </div>
 
             <div className="flex gap-2 font-sans shrink-0 pl-2">
@@ -604,11 +604,11 @@ export function LeaveApprovalPanel({
   return (
     <div className="space-y-6 pr-1 font-sans">
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-955/20 border border-slate-800/60 relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-theme-page-bg/20 border border-theme-border-input/60 relative">
         <div className="relative">
-          <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider font-bold">SEARCH STAFF (NAME OR CODENAME)</label>
+          <label className="block text-xs font-semibold text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">SEARCH STAFF (NAME OR CODENAME)</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-text-muted">
               <Search className="h-4 w-4" />
             </div>
             <input
@@ -616,12 +616,12 @@ export function LeaveApprovalPanel({
               placeholder="Search by Name or codename (@username)."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-sans"
+              className="w-full pl-9 pr-10 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-sans"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-355 transition-colors cursor-pointer text-sm font-semibold"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer text-sm font-semibold"
                 title="Clear search"
               >
                 ✕
@@ -632,7 +632,7 @@ export function LeaveApprovalPanel({
 
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider font-bold">
+            <label className="block text-xs font-semibold text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">
               {role === 'supervisor' ? 'Filter Category' : 'Filter Notification Type'}
             </label>
             <CustomSelect
@@ -648,7 +648,7 @@ export function LeaveApprovalPanel({
                 setSearchQuery('');
                 setNotificationTypeFilter('all');
               }}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-800 rounded-lg cursor-pointer transition-all shrink-0 flex items-center justify-center h-[32px] w-[32px]"
+              className="p-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-input rounded-lg cursor-pointer transition-all shrink-0 flex items-center justify-center h-[32px] w-[32px]"
               title="Reset Filter"
             >
               <RefreshCw className="h-4 w-4" />
@@ -658,11 +658,11 @@ export function LeaveApprovalPanel({
       </div>
 
       <div>
-        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5 border-b border-slate-800 pb-2">
+        <h4 className="text-xs font-bold text-theme-text-muted uppercase tracking-wider mb-4 flex items-center gap-1.5 border-b border-theme-border-input pb-2">
           <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> {totalLabel} (Total: {combinedNotifications.length})
         </h4>
         {combinedNotifications.length === 0 ? (
-          <div className="text-center py-10 bg-slate-955/40 border border-slate-850 rounded-xl text-slate-500 text-xs font-medium font-sans">
+          <div className="text-center py-10 bg-theme-page-bg/40 border border-theme-border-muted rounded-xl text-theme-text-muted text-xs font-medium font-sans">
             No matching items found.
           </div>
         ) : (

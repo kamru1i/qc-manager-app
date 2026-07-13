@@ -30,14 +30,14 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
   if (variant === 'small') {
     return (
-      <div className={`flex-1 min-w-[220px] max-w-[280px] bg-slate-900/20 border border-slate-900/80 rounded-xl p-4 flex items-center gap-3 ${className}`}>
+      <div className={`flex-1 min-w-[220px] max-w-[280px] bg-theme-card-bg/20 border border-theme-card-bg/80 rounded-xl p-4 flex items-center gap-3 ${className}`}>
         <Icon className={`h-5 w-5 shrink-0 ${iconColorClass}`} />
         <div className="flex-1">
-          <span className="block text-[11px] text-slate-400">{title}</span>
+          <span className="block text-[11px] text-theme-text-muted">{title}</span>
           {loading ? (
-            <div className="h-5 w-16 bg-slate-800/80 rounded animate-pulse mt-1" />
+            <div className="h-5 w-16 bg-theme-border-input/80 rounded animate-pulse mt-1" />
           ) : (
-            <span className="block text-lg font-bold text-white font-mono">{value}</span>
+            <span className="block text-lg font-bold text-theme-text-primary font-mono">{value}</span>
           )}
         </div>
       </div>
@@ -46,23 +46,23 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   // Large Variant
   return (
-    <div className={`flex-1 min-w-[250px] max-w-[350px] bg-slate-900/40 border border-slate-900 rounded-2xl p-5 flex items-center justify-between gap-4 ${className}`}>
+    <div className={`flex-1 min-w-[250px] max-w-[350px] bg-theme-card-bg/40 border border-theme-card-bg rounded-2xl p-5 flex items-center justify-between gap-4 ${className}`}>
       <div className="flex items-center gap-4 flex-1">
         <div className={`p-3 rounded-xl border shrink-0 ${iconBgClass} ${iconColorClass} ${iconBorderClass}`}>
           <Icon className="h-6 w-6" />
         </div>
         <div className="flex-1">
-          <span className="block text-xs text-slate-400 font-semibold">{title}</span>
+          <span className="block text-xs text-theme-text-muted font-semibold">{title}</span>
           {loading ? (
             <div className="space-y-1.5 mt-1.5 w-full">
-              <div className="h-6 w-24 bg-slate-800/80 rounded animate-pulse" />
-              {subtitle && <div className="h-3.5 w-40 bg-slate-850 rounded animate-pulse" />}
+              <div className="h-6 w-24 bg-theme-border-input/80 rounded animate-pulse" />
+              {subtitle && <div className="h-3.5 w-40 bg-theme-border-muted rounded animate-pulse" />}
             </div>
           ) : (
             <>
-              <div className="block text-2xl font-bold text-white mt-0.5">{value}</div>
+              <div className="block text-2xl font-bold text-theme-text-primary mt-0.5">{value}</div>
               {subtitle && (
-                <span className="block text-[10px] text-slate-500 mt-0.5">{subtitle}</span>
+                <span className="block text-[10px] text-theme-text-muted mt-0.5">{subtitle}</span>
               )}
             </>
           )}

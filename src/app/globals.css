@@ -100,10 +100,17 @@
   --color-theme-text-secondary: var(--text-secondary);
   --color-theme-text-muted: var(--text-muted);
   --color-theme-text-inverse: var(--text-inverse);
+  --color-theme-accent-bg: var(--accent-bg);
+  --color-theme-accent-border: var(--accent-border);
+  --color-theme-accent-text: var(--accent-text);
 }
 
 :root {
   /* Semantic Design Tokens */
+  --accent-bg: var(--blue-600);
+  --accent-border: var(--blue-500);
+  --accent-text: #ffffff;
+
   --bg-page: var(--slate-955);
   --bg-card-container: var(--slate-950);
   --bg-card: var(--slate-900);
@@ -209,6 +216,10 @@
 }
 
 .dark {
+  --accent-bg: var(--blue-500);
+  --accent-border: var(--blue-400);
+  --accent-text: #ffffff;
+
   /* Dark Mode Palette - Pure black background and neutral dark grey components */
   --slate-955: #000000; /* Pure black background */
   --slate-950: #050505; /* Card container background */

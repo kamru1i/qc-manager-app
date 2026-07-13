@@ -435,7 +435,7 @@ export function ProfileSettings({
                 onChange={(e) => setEditUsername(e.target.value)}
                 className={`mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono ${
                   isCodenameEditable
-                    ? 'border-blue-500/50 text-white cursor-text opacity-100 ring-1 ring-blue-500/30'
+                    ? 'border-blue-500/50 text-theme-text-primary cursor-text opacity-100 ring-1 ring-blue-500/30'
                     : 'border-theme-border-muted text-theme-text-muted/60 cursor-not-allowed opacity-60'
                 }`}
               />
@@ -479,7 +479,7 @@ export function ProfileSettings({
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-white">Desktop Notifications</span>
+                      <span className="text-xs font-semibold text-theme-text-primary">Desktop Notifications</span>
                       {isPushSubscribed && (
                         <button
                           type="button"
@@ -584,7 +584,7 @@ export function ProfileSettings({
                 <button
                   type="submit"
                   disabled={passwordSubmitting}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-theme-border-input hover:bg-theme-border-active hover:text-theme-text-inverse cursor-pointer disabled:opacity-50 transition-all items-center gap-2 active:scale-98"
+                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-theme-text-primary bg-theme-border-input hover:bg-theme-border-active hover:text-theme-text-inverse cursor-pointer disabled:opacity-50 transition-all items-center gap-2 active:scale-98"
                 >
                   {passwordSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   <span>{passwordSubmitting ? 'Updating...' : 'Update Password'}</span>

@@ -38,15 +38,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   ];
 
   return (
-    <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-900 shadow-2xl rounded-2xl p-6">
-      <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800/80 pb-3 mb-4">
+    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-card-bg shadow-2xl rounded-2xl p-6">
+      <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2 border-b border-theme-border-input/80 pb-3 mb-4">
         <SlidersHorizontal className="h-4 w-4 text-blue-500" /> Staff Leave Filter Panel
       </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Filter Leave Type */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Leave Type</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">Leave Type</label>
           <CustomSelect
             value={filterType}
             onChange={setFilterType}
@@ -57,28 +57,28 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
         {/* Start Date */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Start Date</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">Start Date</label>
           <div className="mt-1">
             <DateInput
               min={selectedYear === 'all' ? undefined : `${selectedYear}-01-01`}
               max={selectedYear === 'all' ? undefined : `${selectedYear}-12-31`}
               value={filterStartDate}
               onChange={setFilterStartDate}
-              className="bg-slate-955"
+              className="bg-theme-page-bg"
             />
           </div>
         </div>
 
         {/* End Date */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">End Date</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">End Date</label>
           <div className="mt-1">
             <DateInput
               min={selectedYear === 'all' ? undefined : `${selectedYear}-01-01`}
               max={selectedYear === 'all' ? undefined : `${selectedYear}-12-31`}
               value={filterEndDate}
               onChange={setFilterEndDate}
-              className="bg-slate-955"
+              className="bg-theme-page-bg"
             />
           </div>
         </div>
@@ -103,7 +103,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           </button>
           <button
             onClick={onResetFilters}
-            className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs cursor-pointer transition-all"
+            className="p-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs cursor-pointer transition-all"
             title="Filters Reset"
             type="button"
           >

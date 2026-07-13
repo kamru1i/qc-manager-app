@@ -10,13 +10,13 @@ export const AdminViewToggle: React.FC<AdminViewToggleProps> = ({
   onChange,
 }) => {
   return (
-    <div className="flex bg-slate-955 border border-slate-800 p-0.5 rounded-lg text-xs font-semibold self-start sm:self-auto shrink-0">
+    <div className="flex bg-theme-page-bg border border-theme-border-input p-0.5 rounded-lg text-xs font-semibold self-start sm:self-auto shrink-0">
       <button
         onClick={() => onChange("mine")}
         className={`px-3 py-1 rounded-md transition-all duration-200 cursor-pointer hover:scale-[1.03] active:scale-[0.97] ${
           viewMode === "mine"
             ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-950/10"
-            : "text-slate-455 hover:text-white hover:bg-slate-900/30"
+            : "text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-card-bg/30"
         }`}
       >
         My Data
@@ -26,7 +26,7 @@ export const AdminViewToggle: React.FC<AdminViewToggleProps> = ({
         className={`px-3 py-1 rounded-md transition-all duration-200 cursor-pointer hover:scale-[1.03] active:scale-[0.97] ${
           viewMode === "all"
             ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-950/10"
-            : "text-slate-455 hover:text-white hover:bg-slate-900/30"
+            : "text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-card-bg/30"
         }`}
       >
         All Data

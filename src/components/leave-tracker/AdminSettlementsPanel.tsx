@@ -357,15 +357,15 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
   }, [selectedPeriod]);
 
   return (
-    <div className="bg-slate-900/40 border border-slate-900 shadow-2xl rounded-2xl overflow-hidden flex flex-col animate-fade-in font-sans text-xs">
+    <div className="bg-theme-card-bg/40 border border-theme-card-bg shadow-2xl rounded-2xl overflow-hidden flex flex-col animate-fade-in font-sans text-xs">
       {/* Top Controller Header */}
-      <div className="px-6 py-5 border-b border-slate-800/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-955/20">
+      <div className="px-6 py-5 border-b border-theme-border-input/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-theme-page-bg/20">
         <div>
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <h3 className="text-base font-bold text-theme-text-primary flex items-center gap-2">
             <RotateCcw className="h-5 w-5 text-blue-500" />
             Unified Leave Review & Settlements ({selectedYear})
           </h3>
-          <p className="text-slate-400 text-[11px] mt-1">
+          <p className="text-theme-text-muted text-[11px] mt-1">
             Initiate preference requests and process cash outs, leave adjustments, or carry forwards.
           </p>
         </div>
@@ -386,10 +386,10 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
           </button>
         </div>
       </div>      {/* Select Period, Category, Search, and Broadcast row */}
-      <div className="px-6 py-4 bg-slate-955/20 border-b border-slate-850/60 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="px-6 py-4 bg-theme-page-bg/20 border-b border-theme-border-muted/60 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="flex flex-wrap gap-4 items-center flex-1">
           <div className="flex flex-col gap-1.5 min-w-[140px]">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Review Period</span>
+            <span className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Review Period</span>
             <CustomSelect
               value={selectedPeriod}
               onChange={(val) => {
@@ -411,7 +411,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
           </div>
 
           <div className="flex flex-col gap-1.5 min-w-[140px]">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Leave Category</span>
+            <span className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Leave Category</span>
             <CustomSelect
               value={selectedCategory}
               onChange={(val) => setSelectedCategory(val as 'Office Leave' | 'Govt Holiday' | 'Eid-ul-Fitr' | 'Eid-ul-Adha')}
@@ -422,20 +422,20 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
 
           {/* Search Box */}
           <div className="flex flex-col gap-1.5 flex-1 min-w-[180px]">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Search Staff</span>
+            <span className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Search Staff</span>
             <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Search name or codename..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-3 pr-8 py-1.5 bg-slate-955/80 border border-slate-850 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500/80 w-full transition-all"
+                className="pl-3 pr-8 py-1.5 bg-theme-page-bg/80 border border-theme-border-muted rounded-xl text-xs text-theme-text-primary focus:outline-none focus:border-indigo-500/80 w-full transition-all"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-350 transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer"
                   title="Clear search"
                 >
                   <X className="h-4 w-4" />
@@ -454,7 +454,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0 ${isBroadcastActive
                   ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400 hover:bg-purple-600/20'
                   : !hasEligibleStaffForBroadcast
-                    ? 'bg-slate-800/40 border border-slate-700/60 text-slate-500 cursor-not-allowed opacity-50'
+                    ? 'bg-theme-border-input/40 border border-theme-border-active/60 text-theme-text-muted cursor-not-allowed opacity-50'
                     : 'bg-indigo-600 border border-indigo-500 text-white hover:bg-indigo-500'
                 }`}
             >
@@ -500,20 +500,20 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
         <SkeletonLoader variant="settlements-table" rows={5} />
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-800">
-            <thead className="bg-slate-955/60">
+          <table className="min-w-full divide-y divide-theme-border-input">
+            <thead className="bg-theme-page-bg/60">
               <tr>
-                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Staff member</th>
-                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unused Balance</th>
-                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">User Preference</th>
-                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3.5 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Action</th>
+                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Staff member</th>
+                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Unused Balance</th>
+                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">User Preference</th>
+                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3.5 text-right text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-850 bg-slate-900/10">
+            <tbody className="divide-y divide-theme-border-muted bg-theme-card-bg/10">
               {filteredStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500 font-medium bg-slate-900/5">
+                  <td colSpan={5} className="px-6 py-10 text-center text-theme-text-muted font-medium bg-theme-card-bg/5">
                     All matching profiles settled or no unused leaves available.
                   </td>
                 </tr>
@@ -531,10 +531,10 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                   );
 
                   return (
-                    <tr key={staff.id} className="hover:bg-slate-900/30 transition-all">
+                    <tr key={staff.id} className="hover:bg-theme-card-bg/30 transition-all">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-bold text-white text-sm">{staff.full_name || '-'}</div>
-                        <div className="text-[10px] text-slate-455 font-mono mt-0.5 uppercase tracking-wide">
+                        <div className="font-bold text-theme-text-primary text-sm">{staff.full_name || '-'}</div>
+                        <div className="text-[10px] text-theme-text-muted font-mono mt-0.5 uppercase tracking-wide">
                           {staff.username} • {staff.job_role || (staff.role === 'supervisor' ? 'Supervisor' : 'Staff')}
                         </div>
                       </td>
@@ -562,7 +562,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                                 {dayStr}
                               </span>
                               {(hours > 0 || mins > 0) && (
-                                <span className="text-[10px] font-semibold text-slate-500 mt-0.5 block">
+                                <span className="text-[10px] font-semibold text-theme-text-muted mt-0.5 block">
                                   {timeStr}
                                 </span>
                               )}
@@ -573,7 +573,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
 
                       <td className="px-6 py-4">
                         {!settlement || settlement.status === 'initiated' ? (
-                          <span className="text-slate-500 italic text-[11px]">Not chosen yet</span>
+                          <span className="text-theme-text-muted italic text-[11px]">Not chosen yet</span>
                         ) : settlement.action_type === 'split' ? (
                           <div className="flex flex-wrap gap-1.5 max-w-[240px]">
                             {(settlement.carry_forward_days && settlement.carry_forward_days > 0) ? (
@@ -645,7 +645,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                         {!settlement ? (
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 border rounded font-semibold text-[10px] ${remaining < 0
                               ? 'bg-rose-955/25 border-rose-900/40 text-rose-455'
-                              : 'bg-slate-955 border border-slate-800 text-slate-500'
+                              : 'bg-theme-page-bg border border-theme-border-input text-theme-text-muted'
                             }`}>
                             {remaining < 0 ? 'Outstanding Unpaid' : 'Not Initiated'}
                           </span>
@@ -676,7 +676,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                                 disabled={initiatingId === staff.id}
                                 onClick={() => handleInitiatePreferenceRequest(staff, remaining)}
                                 title="Ask for Preference"
-                                className="p-2 bg-indigo-650/15 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-xl border border-indigo-500/20 disabled:bg-slate-900/40 disabled:border-slate-855 disabled:text-slate-600 transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center"
+                                className="p-2 bg-indigo-650/15 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-xl border border-indigo-500/20 disabled:bg-theme-card-bg/40 disabled:border-theme-border-muted disabled:text-theme-text-muted/80 transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center"
                               >
                                 <Send className="h-4 w-4" />
                               </button>
@@ -726,7 +726,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                                   setShowSettleModal(true);
                                 }}
                                 title="Re-process"
-                                className="p-2 bg-slate-800/60 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700/50 transition-all cursor-pointer flex items-center justify-center"
+                                className="p-2 bg-theme-border-input/60 hover:bg-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-xl border border-theme-border-active/50 transition-all cursor-pointer flex items-center justify-center"
                               >
                                 <Edit3 className="h-4 w-4" />
                               </button>
@@ -792,15 +792,15 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
           maxWidthClass="max-w-md"
           glowClass="bg-rose-900/10"
         >
-          <div className="space-y-4 font-sans text-xs text-slate-350">
-            <p className="text-slate-200 leading-relaxed text-left">
-              Are you sure you want to remove this settlement record? This will revert the user's status back to <span className="font-semibold text-slate-400">Not Initiated</span>.
+          <div className="space-y-4 font-sans text-xs text-theme-text-secondary">
+            <p className="text-theme-text-primary leading-relaxed text-left">
+              Are you sure you want to remove this settlement record? This will revert the user's status back to <span className="font-semibold text-theme-text-muted">Not Initiated</span>.
             </p>
-            <div className="flex gap-3 pt-4 border-t border-slate-850">
+            <div className="flex gap-3 pt-4 border-t border-theme-border-muted">
               <button
                 type="button"
                 onClick={() => setSettlementToDelete(null)}
-                className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-950 hover:bg-slate-900 cursor-pointer transition-all"
+                className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-primary bg-theme-card-container hover:bg-theme-card-bg cursor-pointer transition-all"
               >
                 Cancel
               </button>

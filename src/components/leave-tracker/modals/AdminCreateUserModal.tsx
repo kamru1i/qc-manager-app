@@ -87,19 +87,19 @@ export function AdminCreateUserModal({
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Codename (Username)</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">Codename (Username)</label>
           <input
             type="text"
             placeholder="e.g., KI1024"
             value={newStaffUsername}
             onChange={(e) => setNewStaffUsername(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono"
+            className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono"
           />
         </div>
 
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Role</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">Role</label>
           <CustomSelect
             value={newStaffRole}
             onChange={setNewStaffRole}
@@ -110,26 +110,26 @@ export function AdminCreateUserModal({
 
         {/* Checkboxes Grid */}
         <div className="grid grid-cols-1 gap-2.5 pt-2">
-          <label className="flex items-center gap-3 p-3 bg-slate-955/60 rounded-lg border border-slate-800/80 cursor-pointer hover:bg-slate-900 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 cursor-pointer hover:bg-theme-card-bg transition-colors">
             <input
               type="checkbox"
               checked={newStaffNeedsApproval}
               onChange={(e) => setNewStaffNeedsApproval(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-theme-border-input bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-theme-card-bg focus:ring-2 cursor-pointer"
             />
             <div>
-              <span className="block text-xs font-semibold text-white">Supervisor Approval?</span>
-              <span className="block text-[10px] text-slate-400">If checked, leaves will require supervisor approval</span>
+              <span className="block text-xs font-semibold text-theme-text-primary">Supervisor Approval?</span>
+              <span className="block text-[10px] text-theme-text-muted">If checked, leaves will require supervisor approval</span>
             </div>
           </label>
 
           {newStaffNeedsApproval && supervisors.length > 0 && (
-            <div className="space-y-2 bg-slate-955/40 p-3 rounded-lg border border-slate-800/80 -mt-1 ml-2">
+            <div className="space-y-2 bg-theme-page-bg/40 p-3 rounded-lg border border-theme-border-input/80 -mt-1 ml-2">
               <div className="flex justify-between items-center">
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="block text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider">
                   Select Supervisors
                 </label>
-                <span className="text-[10px] text-slate-500 font-mono">
+                <span className="text-[10px] text-theme-text-muted font-mono">
                   {newStaffSupervisorIds.length > 0 ? `${newStaffSupervisorIds.length} Selected` : 'All Selected'}
                 </span>
               </div>
@@ -137,13 +137,13 @@ export function AdminCreateUserModal({
                 <label className={`flex items-center gap-2 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[11px] ${
                   newStaffSupervisorIds.length === 0
                     ? 'border-blue-600 bg-blue-955/20 text-blue-400'
-                    : 'border-slate-850 bg-slate-900/60 text-slate-300'
+                    : 'border-theme-border-muted bg-theme-card-bg/60 text-theme-text-secondary'
                 }`}>
                   <input
                     type="checkbox"
                     checked={newStaffSupervisorIds.length === 0}
                     onChange={() => setNewStaffSupervisorIds([])}
-                    className="rounded-full border-slate-700 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
+                    className="rounded-full border-theme-border-active bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-500 focus:ring-offset-theme-card-bg h-3.5 w-3.5 cursor-pointer"
                   />
                   <span className="font-semibold">All</span>
                 </label>
@@ -156,7 +156,7 @@ export function AdminCreateUserModal({
                       className={`flex items-center gap-2 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[11px] ${
                         isChecked
                           ? 'border-blue-600 bg-blue-955/20 text-blue-400'
-                          : 'border-slate-850 bg-slate-900/60 text-slate-300'
+                          : 'border-theme-border-muted bg-theme-card-bg/60 text-theme-text-secondary'
                       }`}
                     >
                       <input
@@ -169,7 +169,7 @@ export function AdminCreateUserModal({
                             setNewStaffSupervisorIds([...newStaffSupervisorIds, sup.id]);
                           }
                         }}
-                        className="rounded-full border-slate-700 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 h-3.5 w-3.5 cursor-pointer"
+                        className="rounded-full border-theme-border-active bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-500 focus:ring-offset-theme-card-bg h-3.5 w-3.5 cursor-pointer"
                       />
                       <span className="font-semibold">
                         {sup.username} {sup.full_name ? `(${sup.full_name})` : ''}
@@ -181,64 +181,64 @@ export function AdminCreateUserModal({
             </div>
           )}
 
-          <label className="flex items-center gap-3 p-3 bg-slate-955/60 rounded-lg border border-slate-800/80 cursor-pointer hover:bg-slate-900 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 cursor-pointer hover:bg-theme-card-bg transition-colors">
             <input
               type="checkbox"
               checked={newStaffEligibleOfficeLeave}
               onChange={(e) => setNewStaffEligibleOfficeLeave(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-950 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-theme-border-input bg-theme-card-container text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-theme-card-bg focus:ring-2 cursor-pointer"
             />
             <div>
-              <span className="block text-xs font-semibold text-white">Office Leave Eligible?</span>
-              <span className="block text-[10px] text-slate-400">If enabled, eligible for annual office leaves and Eid holidays</span>
+              <span className="block text-xs font-semibold text-theme-text-primary">Office Leave Eligible?</span>
+              <span className="block text-[10px] text-theme-text-muted">If enabled, eligible for annual office leaves and Eid holidays</span>
             </div>
           </label>
 
-          <label className="flex items-center gap-3 p-3 bg-slate-955/60 rounded-lg border border-slate-800/80 cursor-pointer hover:bg-slate-900 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 cursor-pointer hover:bg-theme-card-bg transition-colors">
             <input
               type="checkbox"
               checked={newStaffEligibleGovtHoliday}
               onChange={(e) => setNewStaffEligibleGovtHoliday(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-theme-border-input bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-theme-card-bg focus:ring-2 cursor-pointer"
             />
             <div>
-              <span className="block text-xs font-semibold text-white">Govt Holiday Eligible?</span>
-              <span className="block text-[10px] text-slate-400">If enabled, eligible for leaves according to the government holiday list</span>
+              <span className="block text-xs font-semibold text-theme-text-primary">Govt Holiday Eligible?</span>
+              <span className="block text-[10px] text-theme-text-muted">If enabled, eligible for leaves according to the government holiday list</span>
             </div>
           </label>
 
-          <label className="flex items-center gap-3 p-3 bg-slate-955/60 rounded-lg border border-slate-800/80 cursor-pointer hover:bg-slate-900 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 cursor-pointer hover:bg-theme-card-bg transition-colors">
             <input
               type="checkbox"
               checked={newStaffAllowReserve}
               onChange={(e) => setNewStaffAllowReserve(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-theme-border-input bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-theme-card-bg focus:ring-2 cursor-pointer"
             />
             <div>
-              <span className="block text-xs font-semibold text-white">Reserve Govt Holiday?</span>
-              <span className="block text-[10px] text-slate-400">If checked, will have option to reserve government holidays</span>
+              <span className="block text-xs font-semibold text-theme-text-primary">Reserve Govt Holiday?</span>
+              <span className="block text-[10px] text-theme-text-muted">If checked, will have option to reserve government holidays</span>
             </div>
           </label>
 
-          <label className="flex items-center gap-3 p-3 bg-slate-955/60 rounded-lg border border-slate-800/80 cursor-pointer hover:bg-slate-900 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 cursor-pointer hover:bg-theme-card-bg transition-colors">
             <input
               type="checkbox"
               checked={newStaffAllowOvertime}
               onChange={(e) => setNewStaffAllowOvertime(e.target.checked)}
-              className="h-4.5 w-4.5 rounded-full border-slate-800 bg-slate-955 text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-slate-900 focus:ring-2 cursor-pointer"
+              className="h-4.5 w-4.5 rounded-full border-theme-border-input bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-theme-card-bg focus:ring-2 cursor-pointer"
             />
             <div>
-              <span className="block text-xs font-semibold text-white">Overtime Category?</span>
-              <span className="block text-[10px] text-slate-400">If checked, overtime leave category will be enabled</span>
+              <span className="block text-xs font-semibold text-theme-text-primary">Overtime Category?</span>
+              <span className="block text-[10px] text-theme-text-muted">If checked, overtime leave category will be enabled</span>
             </div>
           </label>
         </div>
 
-        <div className="flex gap-3 pt-4 border-t border-slate-800/80">
+        <div className="flex gap-3 pt-4 border-t border-theme-border-input/80">
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+            className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
           >
             Cancel
           </button>

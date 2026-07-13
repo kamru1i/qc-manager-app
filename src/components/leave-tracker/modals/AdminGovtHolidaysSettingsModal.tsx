@@ -136,20 +136,20 @@ export function AdminGovtHolidaysSettingsModal({
 
         <div className="space-y-4 text-xs font-sans">
           {/* Add Date Picker & Name Input */}
-          <div className="flex flex-col gap-2 bg-slate-955/60 p-3 rounded-lg border border-slate-850">
+          <div className="flex flex-col gap-2 bg-theme-page-bg/60 p-3 rounded-lg border border-theme-border-muted">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Holiday Date</label>
+                <label className="block text-theme-text-muted font-semibold mb-1">Holiday Date</label>
                 <DateInput
                   value={newDate}
                   onChange={(val) => {
                     setNewDate(val);
                   }}
-                  className="bg-slate-955"
+                  className="bg-theme-page-bg"
                 />
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Holiday Name</label>
+                <label className="block text-theme-text-muted font-semibold mb-1">Holiday Name</label>
                 <input
                   type="text"
                   placeholder="e.g. May Day"
@@ -157,7 +157,7 @@ export function AdminGovtHolidaysSettingsModal({
                   onChange={(e) => {
                     setNewName(e.target.value);
                   }}
-                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
+                  className="w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
                 />
               </div>
             </div>
@@ -172,19 +172,19 @@ export function AdminGovtHolidaysSettingsModal({
 
           {/* List of dates */}
           <div>
-            <label className="block text-slate-400 font-semibold mb-2">Govt Holidays ({govtHolidays.length} {govtHolidays.length === 1 ? 'day' : 'days'})</label>
+            <label className="block text-theme-text-muted font-semibold mb-2">Govt Holidays ({govtHolidays.length} {govtHolidays.length === 1 ? 'day' : 'days'})</label>
             
             {govtHolidays.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 border border-dashed border-slate-850 rounded-xl bg-slate-955/20">
+              <div className="py-8 text-center text-theme-text-muted border border-dashed border-theme-border-muted rounded-xl bg-theme-page-bg/20">
                 No government holidays have been added.
               </div>
             ) : (
-              <div className="max-h-48 overflow-y-auto border border-slate-850 rounded-xl bg-slate-955/20 divide-y divide-slate-850/60 font-mono">
+              <div className="max-h-48 overflow-y-auto border border-theme-border-muted rounded-xl bg-theme-page-bg/20 divide-y divide-theme-border-muted/60 font-mono">
                 {govtHolidays.map((h) => (
-                  <div key={h.date} className="flex justify-between items-center px-4 py-2.5 hover:bg-slate-900/30 transition-all">
+                  <div key={h.date} className="flex justify-between items-center px-4 py-2.5 hover:bg-theme-card-bg/30 transition-all">
                     <div className="flex flex-col">
-                      <span className="text-white font-semibold text-xs">{formatDate(h.date)}</span>
-                      <span className="text-slate-400 text-[10px]">{h.name}</span>
+                      <span className="text-theme-text-primary font-semibold text-xs">{formatDate(h.date)}</span>
+                      <span className="text-theme-text-muted text-[10px]">{h.name}</span>
                     </div>
                     <button
                       type="button"
@@ -200,11 +200,11 @@ export function AdminGovtHolidaysSettingsModal({
             )}
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-slate-800">
+          <div className="flex gap-3 pt-4 border-t border-theme-border-input">
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+              className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
             >
               Cancel
             </button>
@@ -223,19 +223,19 @@ export function AdminGovtHolidaysSettingsModal({
 
       {/* Custom Confirmation Modal */}
       {deleteConfirmInfo && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-955/90 backdrop-blur-md p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-850 shadow-2xl rounded-2xl w-full max-w-sm p-6 relative overflow-hidden font-sans text-center border-red-500/20">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-theme-page-bg/90 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-theme-card-bg border border-theme-border-muted shadow-2xl rounded-2xl w-full max-w-sm p-6 relative overflow-hidden font-sans text-center border-red-500/20">
             <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-red-900/10 blur-[80px] pointer-events-none" />
             
             <div className="flex flex-col items-center gap-3 mb-4">
               <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full">
                 <Trash2 className="h-6 w-6" />
               </div>
-              <h4 className="text-sm font-bold text-white">Delete Holiday Confirmation ⚠️</h4>
+              <h4 className="text-sm font-bold text-theme-text-primary">Delete Holiday Confirmation ⚠️</h4>
             </div>
 
-            <p className="text-slate-300 text-xs leading-relaxed mb-6">
-              Deleting this government holiday (<span className="text-red-400 font-semibold font-mono">{formatDate(deleteConfirmInfo.date)}</span> - <span className="text-white font-semibold">{deleteConfirmInfo.name}</span>) will completely remove it from all staff choices, reserve records, and response reports.
+            <p className="text-theme-text-secondary text-xs leading-relaxed mb-6">
+              Deleting this government holiday (<span className="text-red-400 font-semibold font-mono">{formatDate(deleteConfirmInfo.date)}</span> - <span className="text-theme-text-primary font-semibold">{deleteConfirmInfo.name}</span>) will completely remove it from all staff choices, reserve records, and response reports.
               <br /><br />
               <span className="text-purple-400 font-semibold">Are you sure you want to delete this?</span>
             </p>
@@ -244,7 +244,7 @@ export function AdminGovtHolidaysSettingsModal({
               <button
                 type="button"
                 onClick={() => setDeleteConfirmInfo(null)}
-                className="flex-1 py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all h-9"
+                className="flex-1 py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all h-9"
               >
                 No, Cancel
               </button>

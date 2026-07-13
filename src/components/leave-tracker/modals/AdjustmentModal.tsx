@@ -80,9 +80,9 @@ export function AdjustmentModal({
         <>
           {adjustmentRecord.leave_type === 'Short Leave' ? (
             <div className="space-y-4">
-              <p className="text-xs text-slate-400">For Short Leave, select whether you want to adjust the full duration or a partial duration:</p>
+              <p className="text-xs text-theme-text-muted">For Short Leave, select whether you want to adjust the full duration or a partial duration:</p>
               <div className="flex gap-4">
-                <label className="flex-1 flex items-center gap-2 p-3 bg-slate-955/60 border border-slate-800 rounded-lg cursor-pointer hover:border-slate-700 hover:scale-[1.01] transition-all">
+                <label className="flex-1 flex items-center gap-2 p-3 bg-theme-page-bg/60 border border-theme-border-input rounded-lg cursor-pointer hover:border-theme-border-active hover:scale-[1.01] transition-all">
                   <input
                     type="radio"
                     name="adjustmentType"
@@ -90,9 +90,9 @@ export function AdjustmentModal({
                     onChange={() => setAdjustmentType('full')}
                     className="text-blue-500 focus:ring-blue-500"
                   />
-                  <span className="text-xs text-white font-medium">Full Duration ({adjustmentRecord.leave_hour ? adjustmentRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '-'})</span>
+                  <span className="text-xs text-theme-text-primary font-medium">Full Duration ({adjustmentRecord.leave_hour ? adjustmentRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '-'})</span>
                 </label>
-                <label className="flex-1 flex items-center gap-2 p-3 bg-slate-955/60 border border-slate-800 rounded-lg cursor-pointer hover:border-slate-700 hover:scale-[1.01] transition-all">
+                <label className="flex-1 flex items-center gap-2 p-3 bg-theme-page-bg/60 border border-theme-border-input rounded-lg cursor-pointer hover:border-theme-border-active hover:scale-[1.01] transition-all">
                   <input
                     type="radio"
                     name="adjustmentType"
@@ -100,24 +100,24 @@ export function AdjustmentModal({
                     onChange={() => setAdjustmentType('partial')}
                     className="text-blue-500 focus:ring-blue-500"
                   />
-                  <span className="text-xs text-white font-medium">Partial Duration</span>
+                  <span className="text-xs text-theme-text-primary font-medium">Partial Duration</span>
                 </label>
               </div>
 
               {adjustmentType === 'partial' && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Partial Adjustment Duration (HH:MM)</label>
+                  <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">Partial Adjustment Duration (HH:MM)</label>
                   <input
                     type="text"
                     placeholder="e.g., 02:00"
                     value={partialAdjustmentTime}
                     onChange={(e) => setPartialAdjustmentTime(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
                 </div>
               )}
 
-              <div className="flex gap-3 pt-4 border-t border-slate-800/80">
+              <div className="flex gap-3 pt-4 border-t border-theme-border-input/80">
                 <button
                   type="button"
                   disabled={submitting}
@@ -125,7 +125,7 @@ export function AdjustmentModal({
                     setShowAdjustmentModal(false);
                     setAdjustmentRecord(null);
                   }}
-                  className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
+                  className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -142,7 +142,7 @@ export function AdjustmentModal({
             </div>
           ) : adjustmentRecord.leave_type === 'Overtime' ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-355 font-medium">For Overtime adjustment, do you want to deduct it from the Short Leave balance?</p>
+              <p className="text-sm text-theme-text-secondary font-medium">For Overtime adjustment, do you want to deduct it from the Short Leave balance?</p>
               <div className="flex flex-col gap-2 pt-4">
                 <button
                   type="button"
@@ -163,7 +163,7 @@ export function AdjustmentModal({
                     setAdjustShortLeaveOption(false);
                     handleSaveAdjustment(false);
                   }}
-                  className="w-full flex justify-center py-2.5 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="w-full flex justify-center py-2.5 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {submitting ? 'Processing...' : 'No, just discard Overtime'}
@@ -175,7 +175,7 @@ export function AdjustmentModal({
                     setShowAdjustmentModal(false);
                     setAdjustmentRecord(null);
                   }}
-                  className="w-full flex justify-center py-2.5 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
+                  className="w-full flex justify-center py-2.5 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -186,19 +186,19 @@ export function AdjustmentModal({
               {hasAnyCategoryRemaining ? (
                 <div className="space-y-4">
                   {/* Remaining Leave Summary */}
-                  <div className="bg-slate-955/60 border border-slate-850 p-3.5 rounded-xl space-y-2">
-                    <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-sans">Remaining Holiday Summary ({selectedYear})</span>
+                  <div className="bg-theme-page-bg/60 border border-theme-border-muted p-3.5 rounded-xl space-y-2">
+                    <span className="block text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider font-sans">Remaining Holiday Summary ({selectedYear})</span>
                     <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-medium font-sans">
-                      <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-850">
-                        <span className="text-slate-500 block text-[9px] uppercase font-bold font-sans">Govt Holiday</span>
+                      <div className="bg-theme-card-bg/50 p-2 rounded-lg border border-theme-border-muted">
+                        <span className="text-theme-text-muted block text-[9px] uppercase font-bold font-sans">Govt Holiday</span>
                         <span className="text-teal-400 font-bold font-mono">{govtHolidayRemaining} days</span>
                       </div>
-                      <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-850">
-                        <span className="text-slate-500 block text-[9px] uppercase font-bold font-sans">Eid-ul-Fitr</span>
+                      <div className="bg-theme-card-bg/50 p-2 rounded-lg border border-theme-border-muted">
+                        <span className="text-theme-text-muted block text-[9px] uppercase font-bold font-sans">Eid-ul-Fitr</span>
                         <span className="text-purple-400 font-bold font-mono">{eidFitrRemaining} days</span>
                       </div>
-                      <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-850">
-                        <span className="text-slate-500 block text-[9px] uppercase font-bold font-sans">Eid-ul-Adha</span>
+                      <div className="bg-theme-card-bg/50 p-2 rounded-lg border border-theme-border-muted">
+                        <span className="text-theme-text-muted block text-[9px] uppercase font-bold font-sans">Eid-ul-Adha</span>
                         <span className="text-purple-400 font-bold font-mono">{eidAdhaRemaining} days</span>
                       </div>
                     </div>
@@ -206,7 +206,7 @@ export function AdjustmentModal({
 
                   {/* Selection Category toggles */}
                   <div className="space-y-2.5">
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-sans">Select Adjustment Category</label>
+                    <label className="block text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider font-sans">Select Adjustment Category</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {/* General Option */}
                       <button
@@ -215,12 +215,12 @@ export function AdjustmentModal({
                         className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                           selectedCategory === 'None'
                             ? 'bg-blue-950/20 border-blue-500/80 shadow-[0_0_12px_rgba(249,115,22,0.15)]'
-                            : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                            : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                         }`}
                       >
-                        <span className="text-xs font-bold text-white font-sans">General Adjustment</span>
+                        <span className="text-xs font-bold text-theme-text-primary font-sans">General Adjustment</span>
                         <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                          selectedCategory === 'None' ? 'border-blue-500' : 'border-slate-600'
+                          selectedCategory === 'None' ? 'border-blue-500' : 'border-theme-border-input'
                         }`}>
                           {selectedCategory === 'None' && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                         </div>
@@ -234,12 +234,12 @@ export function AdjustmentModal({
                           className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                             selectedCategory === 'Govt Holiday'
                               ? 'bg-teal-955/20 border-teal-500/80 shadow-[0_0_12px_rgba(20,184,166,0.15)]'
-                              : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                              : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                           }`}
                         >
-                          <span className="text-xs font-bold text-white font-sans">Govt Holiday</span>
+                          <span className="text-xs font-bold text-theme-text-primary font-sans">Govt Holiday</span>
                           <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                            selectedCategory === 'Govt Holiday' ? 'border-teal-500' : 'border-slate-600'
+                            selectedCategory === 'Govt Holiday' ? 'border-teal-500' : 'border-theme-border-input'
                           }`}>
                             {selectedCategory === 'Govt Holiday' && <div className="w-2 h-2 rounded-full bg-teal-500" />}
                           </div>
@@ -254,12 +254,12 @@ export function AdjustmentModal({
                           className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                             selectedCategory === 'Eid-ul-Fitr'
                               ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                              : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                              : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                           }`}
                         >
-                          <span className="text-xs font-bold text-white font-sans">Eid-ul-Fitr</span>
+                          <span className="text-xs font-bold text-theme-text-primary font-sans">Eid-ul-Fitr</span>
                           <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                            selectedCategory === 'Eid-ul-Fitr' ? 'border-purple-500' : 'border-slate-600'
+                            selectedCategory === 'Eid-ul-Fitr' ? 'border-purple-500' : 'border-theme-border-input'
                           }`}>
                             {selectedCategory === 'Eid-ul-Fitr' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                           </div>
@@ -274,12 +274,12 @@ export function AdjustmentModal({
                           className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                             selectedCategory === 'Eid-ul-Adha'
                               ? 'bg-purple-955/20 border-purple-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                              : 'bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800'
+                              : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                           }`}
                         >
-                          <span className="text-xs font-bold text-white font-sans">Eid-ul-Adha</span>
+                          <span className="text-xs font-bold text-theme-text-primary font-sans">Eid-ul-Adha</span>
                           <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                            selectedCategory === 'Eid-ul-Adha' ? 'border-purple-500' : 'border-slate-600'
+                            selectedCategory === 'Eid-ul-Adha' ? 'border-purple-500' : 'border-theme-border-input'
                           }`}>
                             {selectedCategory === 'Eid-ul-Adha' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
                           </div>
@@ -290,12 +290,12 @@ export function AdjustmentModal({
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <p className="text-sm text-slate-355 font-medium font-sans">Are you sure you want to fully adjust this leave record?</p>
-                  <p className="text-[10px] text-slate-500 font-sans">Note: All special holiday pools (Govt Holiday, Eids) are fully taken.</p>
+                  <p className="text-sm text-theme-text-secondary font-medium font-sans">Are you sure you want to fully adjust this leave record?</p>
+                  <p className="text-[10px] text-theme-text-muted font-sans">Note: All special holiday pools (Govt Holiday, Eids) are fully taken.</p>
                 </div>
               )}
 
-              <div className="flex gap-3 pt-4 border-t border-slate-800/80">
+              <div className="flex gap-3 pt-4 border-t border-theme-border-input/80">
                 <button
                   type="button"
                   disabled={submitting}
@@ -303,7 +303,7 @@ export function AdjustmentModal({
                     setShowAdjustmentModal(false);
                     setAdjustmentRecord(null);
                   }}
-                  className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
+                  className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
                 >
                   Cancel
                 </button>

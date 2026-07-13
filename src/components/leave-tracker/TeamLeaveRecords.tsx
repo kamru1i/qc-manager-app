@@ -431,12 +431,12 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   return (
     <div className="space-y-6">
       {/* Premium Header */}
-      <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/80 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2.5 bg-slate-850 hover:bg-slate-800 border border-slate-800/80 text-slate-300 rounded-xl hover:text-white transition-all cursor-pointer shrink-0"
+              className="p-2.5 bg-theme-border-muted hover:bg-theme-border-input border border-theme-border-input/80 text-theme-text-secondary rounded-xl hover:text-theme-text-primary transition-all cursor-pointer shrink-0"
               title="Go Back"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -447,10 +447,10 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
               <Calendar className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">
+              <h4 className="text-sm font-bold text-theme-text-primary">
                 Daily Leave Records Report 📅
               </h4>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              <p className="text-xs text-theme-text-muted mt-1 leading-relaxed">
                 View full leaves and short leaves scheduled for today or any
                 other day.
               </p>
@@ -459,9 +459,9 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         </div>
 
         {/* Date Selector Control Group */}
-        <div className="flex items-center gap-3 w-full md:w-auto self-stretch md:self-auto border-t border-slate-850/80 md:border-t-0 pt-3 md:pt-0">
+        <div className="flex items-center gap-3 w-full md:w-auto self-stretch md:self-auto border-t border-theme-border-muted/80 md:border-t-0 pt-3 md:pt-0">
           <div className="flex-1 md:flex-none flex flex-col min-w-[170px]">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
               Select Date
             </label>
             <DateInput
@@ -473,7 +473,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           <div className="flex flex-col justify-end self-end">
             <button
               onClick={handleResetToToday}
-              className="flex items-center gap-1.5 py-2 px-3.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm"
+              className="flex items-center gap-1.5 py-2 px-3.5 bg-theme-card-container hover:bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-bold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-sm"
               title="Reset to today's date"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Today
@@ -507,7 +507,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                     setSelectedSupervisorId("");
                     setShowAccessModal(true);
                   }}
-                  className="flex items-center gap-1.5 py-2 px-3.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm"
+                  className="flex items-center gap-1.5 py-2 px-3.5 bg-theme-card-container hover:bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-bold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-sm"
                 >
                   Allow Access
                 </button>
@@ -564,19 +564,19 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         maxWidthClass="max-w-md"
       >
         <div className="space-y-4 font-sans text-xs">
-          <p className="text-slate-400 leading-relaxed">
+          <p className="text-theme-text-muted leading-relaxed">
             If you are going on leave, you can temporarily allow another
             supervisor to view and approve your team's leave records.
           </p>
 
-          <div className="border border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-800 bg-slate-950/40 max-h-[220px] overflow-y-auto">
+          <div className="border border-theme-border-input rounded-xl overflow-hidden divide-y divide-theme-border-input bg-theme-card-container/40 max-h-[220px] overflow-y-auto">
             {(() => {
               const otherSupervisors = profilesList.filter(
                 (p) => p.role === "supervisor" && p.id !== profile.id,
               );
               if (otherSupervisors.length === 0) {
                 return (
-                  <div className="p-4 text-center text-slate-500">
+                  <div className="p-4 text-center text-theme-text-muted">
                     No other supervisors found in the system.
                   </div>
                 );
@@ -585,9 +585,9 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                 <div
                   key={sup.id}
                   onClick={() => setSelectedSupervisorId(sup.id)}
-                  className="flex items-center justify-between p-3.5 hover:bg-slate-900/50 cursor-pointer transition-all"
+                  className="flex items-center justify-between p-3.5 hover:bg-theme-card-bg/50 cursor-pointer transition-all"
                 >
-                  <span className="text-sm font-semibold text-slate-200 uppercase tracking-wide">
+                  <span className="text-sm font-semibold text-theme-text-primary uppercase tracking-wide">
                     {sup.username} {sup.full_name ? `(${sup.full_name})` : ""}
                   </span>
 
@@ -596,11 +596,11 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                     className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
                       selectedSupervisorId === sup.id
                         ? "border-blue-500 bg-blue-600"
-                        : "border-slate-700 bg-transparent hover:border-slate-500"
+                        : "border-theme-border-active bg-transparent hover:border-theme-border-active"
                     }`}
                   >
                     {selectedSupervisorId === sup.id && (
-                      <Check className="h-3 w-3 text-white stroke-[3px]" />
+                      <Check className="h-3 w-3 text-theme-text-primary stroke-[3px]" />
                     )}
                   </div>
                 </div>
@@ -608,10 +608,10 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
             })()}
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800/80">
+          <div className="flex justify-end gap-3 pt-3 border-t border-theme-border-input/80">
             <button
               onClick={() => setShowAccessModal(false)}
-              className="py-2 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition-all cursor-pointer font-bold"
+              className="py-2 px-4 bg-theme-card-bg hover:bg-theme-border-muted border border-theme-border-input rounded-xl text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer font-bold"
             >
               Cancel
             </button>
@@ -641,16 +641,16 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
             />
             <div
               style={{ top: contextMenuPos.y + 5, left: contextMenuPos.x }}
-              className="fixed z-120 w-40 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl py-1.5 font-sans text-xs"
+              className="fixed z-120 w-40 bg-theme-card-container border border-theme-border-input rounded-lg shadow-2xl py-1.5 font-sans text-xs"
             >
               <button
                 onClick={() => {
                   setContextMenuPos(null);
                   setShowAccessModal(true);
                 }}
-                className="w-full text-left px-3 py-2 text-slate-350 hover:bg-slate-900 hover:text-white transition-colors cursor-pointer flex items-center gap-2 font-medium"
+                className="w-full text-left px-3 py-2 text-theme-text-secondary hover:bg-theme-card-bg hover:text-theme-text-primary transition-colors cursor-pointer flex items-center gap-2 font-medium"
               >
-                <Edit className="h-3.5 w-3.5 text-slate-405" />
+                <Edit className="h-3.5 w-3.5 text-theme-text-muted" />
                 Edit Access
               </button>
               <button
@@ -658,7 +658,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                   setContextMenuPos(null);
                   handleRemoveAccess();
                 }}
-                className="w-full text-left px-3 py-2 text-red-400 hover:bg-slate-900 hover:text-red-350 transition-colors cursor-pointer flex items-center gap-2 font-medium"
+                className="w-full text-left px-3 py-2 text-red-400 hover:bg-theme-card-bg hover:text-red-350 transition-colors cursor-pointer flex items-center gap-2 font-medium"
               >
                 <Trash2 className="h-3.5 w-3.5 text-red-405" />
                 Remove Access

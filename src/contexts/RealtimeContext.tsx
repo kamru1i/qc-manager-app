@@ -80,6 +80,8 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
 
     const isApprover = profile.role === 'admin' || profile.role === 'supervisor';
 
+    let active = true;
+
     const dispatch = (table: RealtimeTable, payload: RealtimePayload) => {
       handlersRef.current.get(table)?.forEach((handler) => {
         try {
@@ -148,6 +150,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
         (payload) => dispatch('govt_holiday_responses', payload as unknown as RealtimePayload)
       )
       .subscribe((status, err) => {
+        if (!active) return;
         if (typeof window !== 'undefined') {
           if (status === 'SUBSCRIBED') {
             window.dispatchEvent(new CustomEvent('realtime-connection-status', { detail: 'connected' }));
@@ -159,6 +162,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
       });
 
     return () => {
+      active = false;
       supabase.removeChannel(channel);
     };
     // Only re-create when user identity or role changes — not on every render.

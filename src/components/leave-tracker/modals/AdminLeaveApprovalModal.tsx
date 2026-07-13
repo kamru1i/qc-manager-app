@@ -63,7 +63,7 @@ export function AdminLeaveApprovalModal({
         onSwitchToUserPanel ? (
           <button
             onClick={onSwitchToUserPanel}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
           >
             <span>Go to User Panel</span>
             {userNotificationsCount > 0 && (

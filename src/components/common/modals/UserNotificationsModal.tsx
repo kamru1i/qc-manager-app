@@ -71,7 +71,7 @@ export function UserNotificationsModal({
         profile?.role === 'admin' && onSwitchToAdminPanel ? (
           <button
             onClick={onSwitchToAdminPanel}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
           >
             <span>Go to Admin Panel</span>
             {approvalsCount > 0 && (
@@ -83,7 +83,7 @@ export function UserNotificationsModal({
         ) : profile?.role === 'supervisor' && onSwitchToSupervisorPanel ? (
           <button
             onClick={onSwitchToSupervisorPanel}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
           >
             <span>Go to Supervisor Panel</span>
             {approvalsCount > 0 && (
@@ -121,15 +121,15 @@ export function UserNotificationsModal({
       />
       <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1 notification-scrollbar">
         {userNotificationsList.length === 0 ? (
-          <div className="py-8 text-center text-slate-500 text-sm">
+          <div className="py-8 text-center text-theme-text-muted text-sm">
             No notifications.
           </div>
         ) : (
           userNotificationsList.map((n) => (
-            <div key={n.id} className="p-4 bg-slate-955/60 border border-slate-855 rounded-xl flex flex-col gap-3 shadow-md">
+            <div key={n.id} className="p-4 bg-theme-page-bg/60 border border-theme-border-muted rounded-xl flex flex-col gap-3 shadow-md">
               <div className="flex justify-between items-start gap-2">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-slate-500 font-mono font-medium">
+                  <span className="text-xs text-theme-text-muted font-mono font-medium">
                     {n.timestamp ? new Date(n.timestamp).toLocaleString('en-US', { hour12: true }) : ''}
                   </span>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold w-fit ${
@@ -163,7 +163,7 @@ export function UserNotificationsModal({
                       ? 'bg-blue-955 border border-blue-900 text-blue-400'
                     : n.record?.leave_type === 'Short Leave'
                       ? 'bg-purple-955 border border-purple-900 text-purple-400'
-                    : 'bg-slate-955 border border-slate-900 text-slate-400'
+                    : 'bg-theme-page-bg border border-theme-card-bg text-theme-text-muted'
                   }`}>
                     {n.type === 'compliance_rule' ? 'Compliance Rule'
                      : n.type === 'govt_holiday_prompt' ? 'Govt Holiday (Choice)'
@@ -197,7 +197,7 @@ export function UserNotificationsModal({
                   )}
                   <button
                     onClick={() => onDismiss(n.id)}
-                    className="p-1 hover:bg-slate-800 text-slate-500 hover:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                    className="p-1 hover:bg-theme-border-input text-theme-text-muted hover:text-theme-text-secondary rounded-lg transition-colors cursor-pointer"
                     title="Dismiss notification"
                   >
                     <XCircle className="h-4 w-4" />
@@ -205,8 +205,8 @@ export function UserNotificationsModal({
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-900/60 border border-slate-800/80 text-slate-300 rounded-lg text-xs leading-relaxed font-sans whitespace-pre-wrap">
-                <span className="font-semibold text-slate-200 block mb-1">{n.title}</span>
+              <div className="p-3 bg-theme-card-bg/60 border border-theme-border-input/80 text-theme-text-secondary rounded-lg text-xs leading-relaxed font-sans whitespace-pre-wrap">
+                <span className="font-semibold text-theme-text-primary block mb-1">{n.title}</span>
                 {n.body || n.text}
               </div>
 
@@ -376,7 +376,7 @@ export function UserNotificationsModal({
         )}
       </div>
       
-      <div className="flex justify-between items-center pt-4 border-t border-slate-800/80 mt-5">
+      <div className="flex justify-between items-center pt-4 border-t border-theme-border-input/80 mt-5">
         {userNotificationsList.length > 0 ? (
           <button
             onClick={onDismissAll}
@@ -387,7 +387,7 @@ export function UserNotificationsModal({
         ) : <div />}
         <button
           onClick={() => setShowUserNotificationsModal(false)}
-          className="px-4 py-2 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+          className="px-4 py-2 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
         >
           Close
         </button>

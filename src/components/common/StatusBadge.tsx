@@ -27,7 +27,7 @@ export function StatusBadge({ record: r }: StatusBadgeProps) {
     );
   }
   return (
-    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-900 border border-slate-800 text-slate-400" title="Pending">
+    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-theme-card-bg border border-theme-border-input text-theme-text-muted" title="Pending">
       <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block animate-pulse"></span>
     </span>
   );

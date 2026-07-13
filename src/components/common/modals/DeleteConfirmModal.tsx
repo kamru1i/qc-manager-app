@@ -39,7 +39,7 @@ export function DeleteConfirmModal({
         <div className="inline-flex p-3 bg-red-600/10 border border-red-500/20 text-red-400 rounded-2xl mb-3">
           <Trash2 className="h-6 w-6" />
         </div>
-        <p className="text-xs text-slate-400">Are you sure you want to delete this record? This action cannot be undone.</p>
+        <p className="text-xs text-theme-text-muted">Are you sure you want to delete this record? This action cannot be undone.</p>
       </div>
       <div className="flex gap-3">
         <button
@@ -49,7 +49,7 @@ export function DeleteConfirmModal({
             setShowDeleteModal(false);
             setRecordToDelete(null);
           }}
-          className="flex-1 flex justify-center py-2.5 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
+          className="flex-1 flex justify-center py-2.5 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50"
         >
           No, cancel
         </button>

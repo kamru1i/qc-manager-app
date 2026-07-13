@@ -62,44 +62,44 @@ export function AdminCredentialsModal({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">New Codename (Username)</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">New Codename (Username)</label>
           <input
             type="text"
             placeholder="e.g., KMH"
             value={credNewUsername}
             onChange={(e) => setCredNewUsername(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono"
+            className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">New Password</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">New Password</label>
           <input
             type="password"
             placeholder="Leave blank to keep current password"
             value={credNewPassword}
             onChange={(e) => setCredNewPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Confirm New Password</label>
+          <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">Confirm New Password</label>
           <input
             type="password"
             placeholder="Enter the new password again"
             value={credConfirmPassword}
             onChange={(e) => setCredConfirmPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <PasswordMatchIndicator password={credNewPassword} confirmPassword={credConfirmPassword} />
         </div>
 
-        <div className="flex gap-3 pt-4 border-t border-slate-800/80 font-sans">
+        <div className="flex gap-3 pt-4 border-t border-theme-border-input/80 font-sans">
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-350 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+            className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
           >
             Cancel
           </button>

@@ -24,7 +24,7 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
   const isBlue = badge.badgeType === "blue" || forceBlue;
   const colorClass = isBlue
     ? "text-[#3b82f6] hover:text-[#60a5fa]"
-    : "text-slate-300 hover:text-slate-100";
+    : "text-theme-text-secondary hover:text-theme-text-primary";
 
   const tooltipPositionClass = position === 'bottom'
     ? 'top-full mt-2'
@@ -61,23 +61,23 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
 
       {/* Tooltip Popup */}
       {showTooltip && (
-        <span className={`absolute left-1/2 -translate-x-1/2 ${tooltipPositionClass} z-50 w-56 p-2 text-[10px] leading-relaxed text-slate-350 bg-slate-950/95 border border-slate-800 rounded-lg shadow-2xl backdrop-blur-md animate-fade-in`}>
-          <div className="font-bold text-white mb-0.5 flex items-center gap-1">
-            <span className={isBlue ? "text-[#3b82f6]" : "text-slate-300"}>✓</span>
+        <span className={`absolute left-1/2 -translate-x-1/2 ${tooltipPositionClass} z-50 w-56 p-2 text-[10px] leading-relaxed text-theme-text-secondary bg-theme-card-container/95 border border-theme-border-input rounded-lg shadow-2xl backdrop-blur-md animate-fade-in`}>
+          <div className="font-bold text-theme-text-primary mb-0.5 flex items-center gap-1">
+            <span className={isBlue ? "text-[#3b82f6]" : "text-theme-text-secondary"}>✓</span>
             {isBlue ? "Verified Top 3 Performer" : "Verified Top 5 Performer"}
           </div>
-          <div className="text-[9px] text-slate-500">for {badge.monthName}</div>
-          <div className="border-t border-slate-800 my-1"></div>
+          <div className="text-[9px] text-theme-text-muted">for {badge.monthName}</div>
+          <div className="border-t border-theme-border-input my-1"></div>
           <div>
             🏆 Streak:{" "}
-            <span className="text-white font-semibold">
+            <span className="text-theme-text-primary font-semibold">
               {badge.consecutiveMonths} month(s)
             </span>{" "}
             in Top 5
           </div>
           <div>
             📅 Annual Wins:{" "}
-            <span className="text-white font-semibold">
+            <span className="text-theme-text-primary font-semibold">
               {badge.yearlyTopPerformances} times
             </span>{" "}
             in {new Date().getFullYear()}

@@ -42,8 +42,8 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
   };
 
   const selectClass = size === 'sm'
-    ? "block w-full h-[34px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-    : "block w-full h-[42px] px-3.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer";
+    ? "block w-full h-[34px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+    : "block w-full h-[42px] px-3.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer";
 
   return (
     <div className="space-y-2">
@@ -55,7 +55,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
       >
         <option value="" className="text-theme-text-muted/60">-- Select Branch --</option>
         {mainBranches.map(b => (
-          <option key={b} value={b} className="bg-theme-card-container text-white">
+          <option key={b} value={b} className="bg-theme-card-container text-theme-text-primary">
             {b}
           </option>
         ))}
@@ -70,7 +70,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
               value === 'PRIDE'
                 ? 'bg-blue-600 border-blue-500 text-white shadow-md'
-                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-white'
+                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-theme-text-primary'
             }`}
           >
             Only PRIDE
@@ -81,7 +81,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
               value === 'PRIDE COMPARE'
                 ? 'bg-blue-600 border-blue-500 text-white shadow-md'
-                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-white'
+                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-theme-text-primary'
             }`}
           >
             + Compare
@@ -98,7 +98,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
               value === 'EAZY'
                 ? 'bg-blue-600 border-blue-500 text-white shadow-md'
-                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-white'
+                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-theme-text-primary'
             }`}
           >
             Only EAZY
@@ -109,7 +109,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
               value === 'EAZY COMPARE'
                 ? 'bg-blue-600 border-blue-500 text-white shadow-md'
-                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-white'
+                : 'bg-theme-card-bg border-theme-border-muted text-theme-text-muted hover:text-theme-text-primary'
             }`}
           >
             + Compare

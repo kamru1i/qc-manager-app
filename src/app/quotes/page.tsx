@@ -1055,16 +1055,16 @@ export default function Dashboard({
   // Force Password Change & Onboarding custom setup
   if (profile && profile.has_changed_password === false) {
     return (
-      <div className="flex-1 min-h-screen flex flex-col justify-center items-center bg-slate-955 px-4 relative overflow-hidden">
+      <div className="flex-1 min-h-screen flex flex-col justify-center items-center bg-theme-page-bg px-4 relative overflow-hidden">
         <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/20 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-violet-900/20 blur-[120px] pointer-events-none" />
 
-        <div className="max-w-md w-full bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 p-8 shadow-2xl rounded-2xl z-10 space-y-6">
+        <div className="max-w-md w-full bg-theme-card-bg/50 backdrop-blur-xl border border-theme-border-input/80 p-8 shadow-2xl rounded-2xl z-10 space-y-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-white bg-clip-text bg-linear-to-r from-blue-400 to-violet-400">
               Profile Settings & Password Change
             </h2>
-            <p className="text-xs text-slate-450 mt-1">
+            <p className="text-xs text-theme-text-muted mt-1">
               This is your first login. Please verify your details and set a new
               password.
             </p>
@@ -1072,10 +1072,10 @@ export default function Dashboard({
 
           <form onSubmit={handleFirstTimeSetup} className="space-y-4">
             <div>
-              <label className="flex text-xs font-semibold text-slate-350 mb-1 items-center gap-1">
+              <label className="flex text-xs font-semibold text-theme-text-secondary mb-1 items-center gap-1">
                 <Info className="h-3 w-3 text-blue-500" /> Your Full Name
                 {profile?.full_name && profile.full_name.trim() !== "" && (
-                  <span className="text-[10px] text-slate-500 font-normal">
+                  <span className="text-[10px] text-theme-text-muted font-normal">
                     (Locked - Admin only)
                   </span>
                 )}
@@ -1089,15 +1089,15 @@ export default function Dashboard({
                 placeholder="e.g. Kamrul Islam"
                 value={ownFullName}
                 onChange={(e) => setOwnFullName(e.target.value)}
-                className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-900/30"
+                className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30"
               />
             </div>
 
             <div>
-              <label className="flex text-xs font-semibold text-slate-355 mb-1 items-center gap-1">
+              <label className="flex text-xs font-semibold text-theme-text-secondary mb-1 items-center gap-1">
                 <UserCheck className="h-3 w-3 text-blue-500" /> Your Codename
                 {profile?.username && profile.username.trim() !== "" && (
-                  <span className="text-[10px] text-slate-500 font-normal">
+                  <span className="text-[10px] text-theme-text-muted font-normal">
                     (Locked - Admin only)
                   </span>
                 )}
@@ -1111,12 +1111,12 @@ export default function Dashboard({
                 placeholder="e.g. KI1024"
                 value={ownCodename}
                 onChange={(e) => setOwnCodename(e.target.value.toUpperCase())}
-                className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-900/30"
+                className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-350 mb-1">
+              <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
                 New Password
               </label>
               <div className="relative">
@@ -1126,12 +1126,12 @@ export default function Dashboard({
                   placeholder="6 to 12 character password"
                   value={ownPassword}
                   onChange={(e) => setOwnPassword(e.target.value)}
-                  className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
+                  className="block w-full px-3 pr-10 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowOwnPass(!showOwnPass)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors"
                 >
                   {showOwnPass ? (
                     <EyeOff className="h-4 w-4" />
@@ -1143,7 +1143,7 @@ export default function Dashboard({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-355 mb-1">
+              <label className="block text-xs font-semibold text-theme-text-secondary mb-1">
                 Confirm Password
               </label>
               <div className="relative">
@@ -1153,12 +1153,12 @@ export default function Dashboard({
                   placeholder="Re-enter new password"
                   value={ownConfirmPassword}
                   onChange={(e) => setOwnConfirmPassword(e.target.value)}
-                  className="block w-full px-3 pr-10 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
+                  className="block w-full px-3 pr-10 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowOwnConfirmPass(!showOwnConfirmPass)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors"
                 >
                   {showOwnConfirmPass ? (
                     <EyeOff className="h-4 w-4" />
@@ -1180,14 +1180,14 @@ export default function Dashboard({
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex-1 py-2.5 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                className="flex-1 py-2.5 border border-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-colors"
               >
                 Logout
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 disabled:opacity-50 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] shadow-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-theme-card-container"
               >
                 {submitting ? (
                   <>
@@ -1213,8 +1213,8 @@ export default function Dashboard({
           {activeTab === "entry" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-white">New File Entry</h2>
-                <p className="text-xs text-slate-450 mt-1">
+                <h2 className="text-xl font-bold text-theme-text-primary">New File Entry</h2>
+                <p className="text-xs text-theme-text-muted mt-1">
                   Fill out the form below to submit file data.
                 </p>
               </div>
@@ -1238,14 +1238,14 @@ export default function Dashboard({
               </Suspense>
 
               {/* Today's Data Title and Summary Stats */}
-              <div className="border-t border-slate-800/80 pt-6 space-y-4">
+              <div className="border-t border-theme-border-input/80 pt-6 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div>
-                    <h3 className="text-md font-bold text-white flex items-center gap-2">
+                    <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
                       <Clock className="h-4.5 w-4.5 text-blue-500" />
                       Today's File Entry List
                     </h3>
-                    <p className="text-[11px] text-slate-455 mt-0.5">
+                    <p className="text-[11px] text-theme-text-muted mt-0.5">
                       Date:{" "}
                       {new Date().toLocaleDateString("en-US", {
                         day: "numeric",
@@ -1259,7 +1259,7 @@ export default function Dashboard({
                   <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                     <button
                       onClick={handleExportTodayExcel}
-                      className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer shadow-md"
+                      className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
                       title="Export to Excel"
                     >
                       <FileSpreadsheet className="h-3.5 w-3.5" />
@@ -1284,14 +1284,14 @@ export default function Dashboard({
                           placeholder="Search name, codename..."
                           value={todaySearchQuery}
                           onChange={(e) => setTodaySearchQuery(e.target.value)}
-                          className="block w-full pl-8 pr-8 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-8"
+                          className="block w-full pl-8 pr-8 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-8"
                         />
-                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-555" />
+                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-theme-text-muted" />
                         {todaySearchQuery && (
                           <button
                             type="button"
                             onClick={() => setTodaySearchQuery("")}
-                            className="absolute right-2.5 top-1.5 flex items-center justify-center p-0.5 hover:bg-slate-800 rounded-full text-slate-405 hover:text-white transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
+                            className="absolute right-2.5 top-1.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
                             title="Clear search"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -1302,7 +1302,7 @@ export default function Dashboard({
                       <select
                         value={todaySelectedBranch}
                         onChange={(e) => setTodaySelectedBranch(e.target.value)}
-                        className="block w-full sm:w-44 px-3 py-1 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-8"
+                        className="block w-full sm:w-44 px-3 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-8"
                       >
                         <option value="">All Branches</option>
                         {uniqueBranches.map((b) => (
@@ -1316,7 +1316,7 @@ export default function Dashboard({
                         <button
                           type="button"
                           onClick={handleClearTodayFilters}
-                          className="px-3 py-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-[10px] text-slate-400 hover:text-white font-semibold rounded-lg transition-all h-8 cursor-pointer flex items-center gap-1 shrink-0"
+                          className="px-3 py-1 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-[10px] text-theme-text-muted hover:text-theme-text-primary font-semibold rounded-lg transition-all h-8 cursor-pointer flex items-center gap-1 shrink-0"
                         >
                           <X className="w-3.5 h-3.5" />
                           Clear
@@ -1357,10 +1357,10 @@ export default function Dashboard({
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-theme-text-primary">
                     Monthly Quotes & Sales Logs
                   </h2>
-                  <p className="text-xs text-slate-450 mt-1">
+                  <p className="text-xs text-theme-text-muted mt-1">
                     Filter and view data for all months and years.
                   </p>
                 </div>
@@ -1369,7 +1369,7 @@ export default function Dashboard({
                 <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                   <button
                     onClick={handleExportMonthlyExcel}
-                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer shadow-md"
+                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
                     title="Export to Excel"
                   >
                     <FileSpreadsheet className="h-3.5 w-3.5" />
@@ -1394,10 +1394,10 @@ export default function Dashboard({
 
               {/* Date selection row & Filters */}
               <div className="space-y-4">
-                <div className="bg-slate-955/40 p-4 rounded-2xl border border-slate-850 grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end w-full">
+                <div className="bg-theme-page-bg/40 p-4 rounded-2xl border border-theme-border-muted grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end w-full">
                   {/* 1. Search Box */}
                   <div className="md:col-span-3">
-                    <label className="block text-[11px] font-semibold text-slate-350 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                       Search
                     </label>
                     <div className="relative">
@@ -1406,14 +1406,14 @@ export default function Dashboard({
                         placeholder="Search name, codename..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="block w-full pl-8 pr-8 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
+                        className="block w-full pl-8 pr-8 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
                       />
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-555" />
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-theme-text-muted" />
                       {searchQuery && (
                         <button
                           type="button"
                           onClick={() => setSearchQuery("")}
-                          className="absolute right-2.5 top-2.5 flex items-center justify-center p-0.5 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
+                          className="absolute right-2.5 top-2.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
                           title="Clear search"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -1424,13 +1424,13 @@ export default function Dashboard({
 
                   {/* 2. Branch Selector */}
                   <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-slate-350 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                       Branch
                     </label>
                     <select
                       value={selectedBranch}
                       onChange={(e) => setSelectedBranch(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9"
+                      className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9"
                     >
                       <option value="">All Branches</option>
                       {uniqueBranches.map((b) => (
@@ -1443,7 +1443,7 @@ export default function Dashboard({
 
                   {/* 2. Year Selection */}
                   <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-slate-350 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                       Year
                     </label>
                     <select
@@ -1453,7 +1453,7 @@ export default function Dashboard({
                         setSelectedYear(e.target.value);
                         setSelectedDate(""); // Reset specific date filter
                       }}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-900/30 h-9"
+                      className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9"
                     >
                       {dynamicYears.map((year) => (
                         <option key={year} value={year}>
@@ -1465,7 +1465,7 @@ export default function Dashboard({
 
                   {/* 3. Month Selection */}
                   <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-slate-355 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                       Month
                     </label>
                     <select
@@ -1475,7 +1475,7 @@ export default function Dashboard({
                         setSelectedMonth(e.target.value);
                         setSelectedDate(""); // Reset specific date filter
                       }}
-                      className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-900/30 h-9"
+                      className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9"
                     >
                       {dynamicMonths.map((m) => (
                         <option key={m.val} value={m.val}>
@@ -1487,7 +1487,7 @@ export default function Dashboard({
 
                   {/* 4. Specific Date Input */}
                   <div className="md:col-span-3">
-                    <label className="block text-[11px] font-semibold text-slate-350 mb-1">
+                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                       Specific Date
                     </label>
                     <div className="flex gap-1.5 items-center">
@@ -1497,7 +1497,7 @@ export default function Dashboard({
                         value={dateInputVal}
                         onChange={(e) => handleDateInputChange(e.target.value)}
                         maxLength={10}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs placeholder-slate-650 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
+                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
                       />
                       <input
                         type="date"
@@ -1509,7 +1509,7 @@ export default function Dashboard({
                       <button
                         type="button"
                         onClick={handleOpenSpecificDatePicker}
-                        className="p-2 bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-400 rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
+                        className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
                         title="Open Calendar"
                       >
                         <Calendar className="h-4 w-4" />
@@ -1524,7 +1524,7 @@ export default function Dashboard({
                           setSelectedDate("");
                           setDateInputVal("");
                         }}
-                        className="p-2 bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-400 rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
+                        className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
                         title="Reset all filters"
                       >
                         <RefreshCw className="h-4 w-4" />
@@ -1767,16 +1767,16 @@ export default function Dashboard({
 
             {/* BULK DELETING OVERLAY */}
             {isBulkDeletingInProgress && (
-              <div className="fixed inset-0 bg-slate-955/70 backdrop-blur-xs z-9999 flex flex-col items-center justify-center select-none">
-                <div className="flex flex-col items-center p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl animate-fade-in max-w-sm w-full mx-4 text-center">
+              <div className="fixed inset-0 bg-theme-page-bg/70 backdrop-blur-xs z-9999 flex flex-col items-center justify-center select-none">
+                <div className="flex flex-col items-center p-6 bg-theme-card-bg border border-theme-border-input rounded-2xl shadow-2xl animate-fade-in max-w-sm w-full mx-4 text-center">
                   <div className="relative w-12 h-12 flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-theme-border-input border-t-blue-500 rounded-full animate-spin"></div>
                   </div>
-                  <h4 className="text-sm font-bold text-white mt-4 uppercase tracking-wider">Deleting Records...</h4>
-                  <p className="text-xs text-slate-400 mt-2">
+                  <h4 className="text-sm font-bold text-theme-text-primary mt-4 uppercase tracking-wider">Deleting Records...</h4>
+                  <p className="text-xs text-theme-text-muted mt-2">
                     Please wait while the selected entries are being permanently removed from the database.
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-4 italic">
+                  <p className="text-[10px] text-theme-text-muted mt-4 italic">
                     You can reload the page if it hangs.
                   </p>
                 </div>

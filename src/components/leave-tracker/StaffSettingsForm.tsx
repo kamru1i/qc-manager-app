@@ -192,11 +192,11 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   return (
     <div className="space-y-6">
       {/* Profile Details Fields */}
-      <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl">
+      <div className="bg-theme-card-bg/40 border border-theme-border-muted p-5 rounded-2xl shadow-xl">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {setCodename && (
             <div>
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
                 Codename
               </label>
               <input
@@ -206,13 +206,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 value={codename}
                 onChange={(e) => setCodename(e.target.value.toUpperCase())}
                 disabled={!isAdmin}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50 disabled:opacity-50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70 text-xs focus:outline-none focus:border-blue-500/50 disabled:opacity-50"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Full Name
             </label>
             {isAdmin ? (
@@ -221,17 +221,17 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 placeholder="e.g. Kamrul Islam"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70 text-xs focus:outline-none focus:border-blue-500/50"
               />
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
                 {fullName || "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Account Role
             </label>
             {isAdmin ? (
@@ -244,21 +244,21 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     setCanManageRules(true);
                   }
                 }}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer"
               >
                 <option value="user">User</option>
                 <option value="supervisor">Supervisor</option>
                 <option value="admin">Admin</option>
               </select>
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold capitalize">
+              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold capitalize">
                 {role || "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Job Role
             </label>
             {isAdmin ? (
@@ -267,24 +267,24 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 placeholder="e.g. IT Officer"
                 value={jobRole}
                 onChange={(e) => setJobRole?.(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70 text-xs focus:outline-none focus:border-blue-500/50"
               />
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
                 {jobRole || "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Working Hours
             </label>
             {isAdmin ? (
               <select
                 value={workingHours}
                 onChange={(e) => setWorkingHours?.(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer"
               >
                 <option value="7.5">7 Hours 30 Mins</option>
                 <option value="8.0">8 Hours</option>
@@ -294,14 +294,14 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 <option value="10.0">10 Hours</option>
               </select>
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
                 {workingHours ? `${workingHours} hrs` : "—"}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Break (Minutes)
             </label>
             {isAdmin || isSupervisor ? (
@@ -310,10 +310,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 min="0"
                 value={breakTime}
                 onChange={(e) => setBreakTime?.(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
               />
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
                 {breakTime !== undefined ? `${breakTime} mins` : "—"}
               </div>
             )}
@@ -321,7 +321,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
                 Sign-In Time
               </label>
               {signInTime && (
@@ -335,10 +335,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 type="time"
                 value={signInTime}
                 onChange={(e) => setSignInTime?.(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
               />
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
                 {signInTime ? formatTimeToAMPM(signInTime) : "—"}
               </div>
             )}
@@ -346,7 +346,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
                 Sign-Out Time
               </label>
               {signOutTime && (
@@ -360,10 +360,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 type="time"
                 value={signOutTime}
                 onChange={(e) => setSignOutTime?.(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
               />
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-slate-955/30 border border-slate-850/40 rounded-lg text-slate-300 text-xs font-semibold">
+              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
                 {signOutTime ? formatTimeToAMPM(signOutTime) : "—"}
               </div>
             )}
@@ -375,13 +375,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leave Tracker Access Card */}
         {showLeaveSettings && (
-          <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+          <div className="bg-theme-card-bg/40 border border-theme-border-muted p-5 rounded-2xl shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-theme-border-input/60 pb-3">
               <div className="flex items-center gap-2">
                 <span
-                  className={`h-2.5 w-2.5 rounded-full ${hasChutiAccess ? "bg-emerald-500 shadow-lg shadow-emerald-500/50" : "bg-slate-600"}`}
+                  className={`h-2.5 w-2.5 rounded-full ${hasChutiAccess ? "bg-emerald-500 shadow-lg shadow-emerald-500/50" : "bg-theme-border-muted"}`}
                 />
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-bold text-theme-text-primary">
                   Leave Tracker Workspace
                 </h3>
               </div>
@@ -395,7 +395,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             </div>
 
           {hasChutiAccess && (
-            <div className="space-y-4 text-xs text-slate-350 animate-fade-in">
+            <div className="space-y-4 text-xs text-theme-text-secondary animate-fade-in">
               {/* Supervisor Approval Required */}
               <label
                 className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
@@ -411,8 +411,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   <div
                     className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       needsApproval
-                        ? "bg-blue-600 border-blue-500 text-white font-bold"
-                        : "border-slate-700 bg-slate-955 text-transparent"
+                        ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                        : "border-theme-border-active bg-theme-page-bg text-transparent"
                     }`}
                   >
                     {needsApproval && (
@@ -421,10 +421,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                  <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                     Supervisor Approval Required?
                   </span>
-                  <span className="text-[10px] text-slate-500 block leading-tight">
+                  <span className="text-[10px] text-theme-text-muted block leading-tight">
                     Requires approval from a supervisor for any leave
                     submissions.
                   </span>
@@ -435,16 +435,16 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               {needsApproval && (
                 <div className="pl-6.5 space-y-1.5 animate-fade-in">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-semibold text-slate-450">
+                    <label className="block text-[10px] font-semibold text-theme-text-muted">
                       Select Supervisors
                     </label>
-                    <span className="text-[9px] font-semibold text-slate-500 bg-slate-950/60 border border-slate-850 px-2 py-0.5 rounded-full">
+                    <span className="text-[9px] font-semibold text-theme-text-muted bg-theme-card-container/60 border border-theme-border-muted px-2 py-0.5 rounded-full">
                       {supervisorIds.length} Selected
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 p-3 bg-slate-950/60 border border-slate-850 rounded-xl max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2 p-3 bg-theme-card-container/60 border border-theme-border-muted rounded-xl max-h-40 overflow-y-auto">
                     {supervisors.length === 0 ? (
-                      <span className="text-[10px] text-slate-500 italic">
+                      <span className="text-[10px] text-theme-text-muted italic">
                         No supervisor accounts found.
                       </span>
                     ) : (
@@ -457,7 +457,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           } ${
                             supervisorIds.length === supervisors.length
                               ? "bg-blue-950/40 border-blue-700/60 text-blue-400"
-                              : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                              : "bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
                           }`}
                         >
                           <input
@@ -478,8 +478,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           <div
                             className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                               supervisorIds.length === supervisors.length
-                                ? "bg-blue-600 border-blue-500 text-white"
-                                : "border-slate-700 bg-transparent text-transparent"
+                                ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text"
+                                : "border-theme-border-active bg-transparent text-transparent"
                             }`}
                           >
                             {supervisorIds.length === supervisors.length && (
@@ -500,8 +500,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                                   : "opacity-85 pointer-events-none"
                               } ${
                                 isSelected
-                                  ? "bg-blue-950/40 border-blue-750/70 text-blue-400"
-                                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                                  ? "bg-blue-950/40 border-blue-700/60 text-blue-400"
+                                  : "bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
                               }`}
                             >
                               <input
@@ -527,8 +527,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                               <div
                                 className={`h-3 w-3 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                                   isSelected
-                                    ? "bg-blue-600 border-blue-500 text-white"
-                                    : "border-slate-700 bg-transparent text-transparent"
+                                    ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text"
+                                    : "border-theme-border-active bg-transparent text-transparent"
                                 }`}
                               >
                                 {isSelected && (
@@ -562,8 +562,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   <div
                     className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       eligibleOfficeLeave
-                        ? "bg-blue-600 border-blue-500 text-white font-bold"
-                        : "border-slate-700 bg-slate-955 text-transparent"
+                        ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                        : "border-theme-border-active bg-theme-page-bg text-transparent"
                     }`}
                   >
                     {eligibleOfficeLeave && (
@@ -572,10 +572,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                  <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                     Office Leave Eligible?
                   </span>
-                  <span className="text-[10px] text-slate-500 block leading-tight">
+                  <span className="text-[10px] text-theme-text-muted block leading-tight">
                     Eligible for annual office leaves & Eid holidays.
                   </span>
                 </div>
@@ -596,8 +596,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   <div
                     className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       eligibleGovtHoliday
-                        ? "bg-blue-600 border-blue-500 text-white font-bold"
-                        : "border-slate-700 bg-slate-955 text-transparent"
+                        ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                        : "border-theme-border-active bg-theme-page-bg text-transparent"
                     }`}
                   >
                     {eligibleGovtHoliday && (
@@ -606,10 +606,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                  <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                     Govt Holiday Eligible?
                   </span>
-                  <span className="text-[10px] text-slate-500 block leading-tight">
+                  <span className="text-[10px] text-theme-text-muted block leading-tight">
                     Eligible for government list holidays.
                   </span>
                 </div>
@@ -630,8 +630,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   <div
                     className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       allowOvertime
-                        ? "bg-blue-600 border-blue-500 text-white font-bold"
-                        : "border-slate-700 bg-slate-955 text-transparent"
+                        ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                        : "border-theme-border-active bg-theme-page-bg text-transparent"
                     }`}
                   >
                     {allowOvertime && (
@@ -640,10 +640,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                  <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                     Overtime Category?
                   </span>
-                  <span className="text-[10px] text-slate-500 block leading-tight">
+                  <span className="text-[10px] text-theme-text-muted block leading-tight">
                     Allows overtime submission category.
                   </span>
                 </div>
@@ -664,18 +664,18 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   <div
                     className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       allowReserve
-                        ? "bg-blue-600 border-blue-500 text-white font-bold"
-                        : "border-slate-700 bg-slate-955 text-transparent"
+                        ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                        : "border-theme-border-active bg-theme-page-bg text-transparent"
                     }`}
                   >
                     {allowReserve && <Check className="h-2.5 w-2.5 stroke-3" />}
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors block">
+                  <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors block">
                     Reserve Govt Holiday?
                   </span>
-                  <span className="text-[10px] text-slate-500 block leading-tight">
+                  <span className="text-[10px] text-theme-text-muted block leading-tight">
                     Provides option to reserve government list holidays.
                   </span>
                 </div>
@@ -683,22 +683,22 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             </div>
           )}
           {!hasChutiAccess && (
-            <p className="text-xs text-slate-500 italic py-4 text-center">
+            <p className="text-xs text-theme-text-muted italic py-4 text-center">
               This user does not have access to the Leave Tracker workspace.
             </p>
           )}
 
           {/* Leave History delegation select box */}
           {delegatedLeaveSupervisorId !== undefined && setDelegatedLeaveSupervisorId && (
-            <div className="mt-4 pt-4 border-t border-slate-800/40">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+            <div className="mt-4 pt-4 border-t border-theme-border-input/40">
+              <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1.5">
                 Delegate Leave History To
               </label>
               <select
                 value={delegatedLeaveSupervisorId || ""}
                 onChange={(e) => setDelegatedLeaveSupervisorId(e.target.value || null)}
                 disabled={!(isAdmin || (currentUser && viewingStaff?.supervisor_ids?.includes(currentUser.id)))}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer disabled:opacity-50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer disabled:opacity-50"
               >
                 <option value="">No Delegation</option>
                 {supervisors
@@ -716,13 +716,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
         {/* Quotes Manager Access Card */}
         {showQuotesSettings && (
-          <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+          <div className="bg-theme-card-bg/40 border border-theme-border-muted p-5 rounded-2xl shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-theme-border-input/60 pb-3">
               <div className="flex items-center gap-2">
                 <span
-                  className={`h-2.5 w-2.5 rounded-full ${hasQuotesAccess ? "bg-emerald-500 shadow-lg shadow-emerald-500/50" : "bg-slate-600"}`}
+                  className={`h-2.5 w-2.5 rounded-full ${hasQuotesAccess ? "bg-emerald-500 shadow-lg shadow-emerald-500/50" : "bg-theme-border-muted"}`}
                 />
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-bold text-theme-text-primary">
                   Quotes Manager Workspace
                 </h3>
               </div>
@@ -745,7 +745,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 />
 
                 {/* Can Manage Quote Rules (Only Admin edits) */}
-                <div className="border-t border-slate-850/70 pt-3">
+                <div className="border-t border-theme-border-muted/70 pt-3">
                   <label
                     className={`flex items-center gap-2.5 select-none ${
                       isAdmin && role !== "admin"
@@ -764,8 +764,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       <div
                         className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                           canManageRules || role === "admin"
-                            ? "bg-blue-600 border-blue-500 text-white font-bold"
-                            : "border-slate-700 bg-slate-955 text-transparent"
+                            ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                            : "border-theme-border-active bg-theme-page-bg text-transparent"
                         }`}
                       >
                         {(canManageRules || role === "admin") && (
@@ -773,23 +773,23 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         )}
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors">
                       Can Manage Quote Rules?{" "}
                       {role === "admin" && (
-                        <span className="text-[10px] text-slate-500 font-normal italic ml-1">
+                        <span className="text-[10px] text-theme-text-muted font-normal italic ml-1">
                           (Always Allowed for Admin)
                         </span>
                       )}
                     </span>
                   </label>
-                  <p className="text-[10px] text-slate-500 mt-1 ml-6.5">
+                  <p className="text-[10px] text-theme-text-muted mt-1 ml-6.5">
                     Allows user to add, edit, or delete compliance rules and view
                     history.
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-500 italic py-4 text-center">
+              <p className="text-xs text-theme-text-muted italic py-4 text-center">
                 This user does not have access to the Quotes Manager workspace.
               </p>
             )}
@@ -799,11 +799,11 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
       {/* KPI Settings Panel */}
       {showKpiSettings && (
-          <div className="bg-slate-900/40 border border-slate-850 p-5 rounded-2xl shadow-xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+          <div className="bg-theme-card-bg/40 border border-theme-border-muted p-5 rounded-2xl shadow-xl space-y-5">
+            <div className="flex items-center justify-between border-b border-theme-border-input/60 pb-3">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50" />
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-bold text-theme-text-primary">
                   KPI & Performance Settings
                 </h3>
               </div>
@@ -812,7 +812,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             <div className="grid grid-cols-1 gap-5">
               {/* Department Dropdown */}
               <div>
-                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1.5">
                   Department
                 </label>
                 <select
@@ -860,25 +860,25 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       }
                     }
                   }}
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
+                  className="w-full bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
                 >
-                  <option value="Data Entry" className="bg-slate-950">Data Entry</option>
-                  <option value="IT" className="bg-slate-950">IT</option>
-                  <option value="Accounts" className="bg-slate-950">Accounts</option>
-                  <option value="HR" className="bg-slate-950">HR</option>
-                  <option value="Other" className="bg-slate-950">Other</option>
+                  <option value="Data Entry" className="bg-theme-card-container">Data Entry</option>
+                  <option value="IT" className="bg-theme-card-container">IT</option>
+                  <option value="Accounts" className="bg-theme-card-container">Accounts</option>
+                  <option value="HR" className="bg-theme-card-container">HR</option>
+                  <option value="Other" className="bg-theme-card-container">Other</option>
                 </select>
               </div>
             </div>
 
             {/* 1. Custom Main Department Indicators */}
             {setKpiDeptIndicators && (
-              <div className="border-t border-slate-850/60 pt-4 space-y-3">
+              <div className="border-t border-theme-border-muted/60 pt-4 space-y-3">
                 <div>
-                  <h4 className="text-xs font-bold text-white mb-1">
+                  <h4 className="text-xs font-bold text-theme-text-primary mb-1">
                     Department Specific KPIs ({department})
                   </h4>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[10px] text-theme-text-muted">
                     Add specific KPI tasks that this user is evaluated on for their role in the {department} department.
                   </p>
                 </div>
@@ -890,7 +890,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     onChange={(e) => setNewDeptIndicatorText(e.target.value)}
                     placeholder="e.g. Server Maintenance, Tech Support"
                     disabled={!isAdmin && !isSupervisor}
-                    className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
+                    className="flex-1 bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -912,7 +912,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         setNewDeptIndicatorText("");
                       }
                     }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-850 border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-theme-border-muted border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
                   >
                     Add
                   </button>
@@ -920,7 +920,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
                 <div className="flex flex-wrap gap-1.5">
                   {kpiDeptIndicators.length === 0 ? (
-                    <span className="text-[11px] text-slate-500 italic">No department specific KPIs added.</span>
+                    <span className="text-[11px] text-theme-text-muted italic">No department specific KPIs added.</span>
                   ) : (
                     kpiDeptIndicators.map((indicator) => (
                       <div
@@ -948,7 +948,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
             {/* 2. Secondary Department Checkbox & Dropdown */}
             {setPerformsOtherDeptTasks && (
-              <div className="border-t border-slate-850/60 pt-4 space-y-4">
+              <div className="border-t border-theme-border-muted/60 pt-4 space-y-4">
                 <div className="flex flex-col justify-end">
                   <label className="flex items-center gap-2.5 cursor-pointer select-none group py-2">
                     <input
@@ -1012,13 +1012,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     <div
                       className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                         performsOtherDeptTasks
-                          ? "bg-blue-600 border-blue-500 text-white font-bold"
-                          : "border-slate-700 bg-slate-955 text-transparent"
+                          ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                          : "border-theme-border-active bg-theme-page-bg text-transparent"
                       }`}
                     >
                       {performsOtherDeptTasks && <Check className="h-3.5 w-3.5 stroke-3" />}
                     </div>
-                    <span className="text-xs font-semibold text-slate-350 group-hover:text-white transition-colors">
+                    <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors">
                       Does this user also manage tasks for another department?
                     </span>
                   </label>
@@ -1027,7 +1027,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 {performsOtherDeptTasks && setOtherDepartment && (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                      <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1.5">
                         Select Other Department
                       </label>
                       <select
@@ -1076,10 +1076,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                             }
                           }
                         }}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
+                        className="w-full bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
                       >
                         {otherDeptOptions.map((opt) => (
-                          <option key={opt} value={opt} className="bg-slate-950">
+                          <option key={opt} value={opt} className="bg-theme-card-container">
                             {opt}
                           </option>
                         ))}
@@ -1088,12 +1088,12 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
                     {/* Custom Other Department Indicators */}
                     {setKpiOtherDeptIndicators && (
-                      <div className="border-t border-slate-855/40 pt-4 space-y-3">
+                      <div className="border-t border-theme-border-muted/40 pt-4 space-y-3">
                         <div>
-                          <h4 className="text-xs font-bold text-white mb-1">
+                          <h4 className="text-xs font-bold text-theme-text-primary mb-1">
                             Department Specific KPIs ({otherDepartment})
                           </h4>
-                          <p className="text-[10px] text-slate-500">
+                          <p className="text-[10px] text-theme-text-muted">
                             Add specific KPI tasks that this user is evaluated on for their role in the {otherDepartment} department.
                           </p>
                         </div>
@@ -1105,7 +1105,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                             onChange={(e) => setNewOtherDeptIndicatorText(e.target.value)}
                             placeholder="e.g. Server Maintenance, Tech Support"
                             disabled={!isAdmin && !isSupervisor}
-                            className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
+                            className="flex-1 bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -1127,7 +1127,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                                 setNewOtherDeptIndicatorText("");
                               }
                             }}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-850 border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-theme-border-muted border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
                           >
                             Add
                           </button>
@@ -1135,7 +1135,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
                         <div className="flex flex-wrap gap-1.5">
                           {kpiOtherDeptIndicators.length === 0 ? (
-                            <span className="text-[11px] text-slate-500 italic">No department specific KPIs added.</span>
+                            <span className="text-[11px] text-theme-text-muted italic">No department specific KPIs added.</span>
                           ) : (
                             kpiOtherDeptIndicators.map((indicator) => (
                               <div
@@ -1166,12 +1166,12 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             )}
 
             {/* KPI Self-Development Skills */}
-            <div className="border-t border-slate-850/60 pt-4 space-y-3">
+            <div className="border-t border-theme-border-muted/60 pt-4 space-y-3">
               <div>
-                <h4 className="text-xs font-bold text-white mb-1">
+                <h4 className="text-xs font-bold text-theme-text-primary mb-1">
                   Self-Development Initiative Skills
                 </h4>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-theme-text-muted">
                   Manage skills or training initiatives this employee is working on (e.g. Spoken English, Graphic Design).
                 </p>
               </div>
@@ -1183,7 +1183,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   onChange={(e) => setNewSkillText(e.target.value)}
                   placeholder="e.g. Video Editing, Digital Marketing, SEO"
                   disabled={!isAdmin && !isSupervisor}
-                  className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-650 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -1205,7 +1205,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       setNewSkillText("");
                     }
                   }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-850 border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-theme-border-muted border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
                 >
                   Add
                 </button>
@@ -1213,7 +1213,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
               <div className="flex flex-wrap gap-1.5">
                 {kpiSkills.length === 0 ? (
-                  <span className="text-[11px] text-slate-500 italic">No skills added yet.</span>
+                  <span className="text-[11px] text-theme-text-muted italic">No skills added yet.</span>
                 ) : (
                   kpiSkills.map((skill) => (
                     <div
@@ -1240,20 +1240,20 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
             {/* Previous KPI Evaluations Section */}
             {viewingStaff && previousEvaluations.length > 0 && (
-              <div className="border-t border-slate-800/80 pt-5 space-y-3">
+              <div className="border-t border-theme-border-input/80 pt-5 space-y-3">
                 <div>
-                  <h4 className="text-xs font-bold text-white mb-1">
+                  <h4 className="text-xs font-bold text-theme-text-primary mb-1">
                     Previous KPI Evaluation Reports
                   </h4>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[10px] text-theme-text-muted">
                     Review or re-evaluate previously completed performance reports for this employee.
                   </p>
                 </div>
                 
-                <div className="overflow-x-auto rounded-xl border border-slate-800/80 shadow-md">
+                <div className="overflow-x-auto rounded-xl border border-theme-border-input/80 shadow-md">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-955/60 border-b border-slate-800 text-[10px] uppercase tracking-wider text-slate-400">
+                      <tr className="bg-theme-page-bg/60 border-b border-theme-border-input text-[10px] uppercase tracking-wider text-theme-text-muted">
                         <th className="py-2.5 px-3 font-semibold">Period</th>
                         <th className="py-2.5 px-3 font-semibold">Date Range</th>
                         <th className="py-2.5 px-3 font-semibold">Appraiser</th>
@@ -1284,8 +1284,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         const isCompleted = evalItem.appraiser_signed || evalItem.appraisee_signed;
                         
                         return (
-                          <tr key={evalItem.id} className="border-b border-slate-850 hover:bg-slate-900/20 text-slate-300">
-                            <td className="py-2 px-3 font-semibold text-white">{label}</td>
+                          <tr key={evalItem.id} className="border-b border-theme-border-muted hover:bg-theme-card-bg/20 text-theme-text-secondary">
+                            <td className="py-2 px-3 font-semibold text-theme-text-primary">{label}</td>
                             <td className="py-2 px-3 text-[11px] font-mono">{dateRange}</td>
                             <td className="py-2 px-3">{evalItem.appraiser_name || '—'}</td>
                             <td className="py-2 px-3 text-center">
@@ -1321,15 +1321,15 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
             {/* KPI delegation select box */}
             {delegatedKpiSupervisorId !== undefined && setDelegatedKpiSupervisorId && (
-              <div className="mt-4 pt-4 border-t border-slate-800/40">
-                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+              <div className="mt-4 pt-4 border-t border-theme-border-input/40">
+                <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1.5">
                   Delegate KPI & Performance To
                 </label>
                 <select
                   value={delegatedKpiSupervisorId || ""}
                   onChange={(e) => setDelegatedKpiSupervisorId(e.target.value || null)}
                   disabled={!(isAdmin || (currentUser && viewingStaff?.supervisor_ids?.includes(currentUser.id)))}
-                  className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer disabled:opacity-50"
+                  className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer disabled:opacity-50"
                 >
                   <option value="">No Delegation</option>
                   {supervisors

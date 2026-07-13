@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="absolute right-0 mt-2 w-48 bg-theme-card-container border border-theme-border-input rounded-xl shadow-2xl p-2 z-999 animate-in fade-in slide-in-from-top-2 duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="px-2.5 py-1.5 border-b border-slate-900/10 mb-1">
+                  <div className="px-2.5 py-1.5 border-b border-theme-card-bg/10 mb-1">
                     <p className="text-[10px] text-theme-text-muted uppercase tracking-wider font-semibold">Download Platform</p>
                   </div>
                   <button

@@ -58,7 +58,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-slate-955 text-slate-100">
+      <body className="min-h-full flex flex-col bg-theme-page-bg text-theme-text-primary">
         <PWARegister />
         <AppUpdater />
         {children}

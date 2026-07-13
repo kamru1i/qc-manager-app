@@ -105,27 +105,27 @@ export function UserRevisionModal({
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Revision
                 Instructions (Supervisor/Admin Remark):
               </div>
-              <p className="text-slate-355">
+              <p className="text-theme-text-secondary">
                 {getCleanComment(revisionRecord.comment)}
               </p>
             </div>
           )}
 
-          <div className="flex gap-3 pt-4 border-t border-slate-800/80">
+          <div className="flex gap-3 pt-4 border-t border-theme-border-input/80">
             <button
               type="button"
               onClick={() => {
                 setShowUserRevisionModal(false);
                 setRevisionRecord(null);
               }}
-              className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+              className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || hasDateError}
-              className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
             >
               {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
               {submitting ? "Submitting..." : "Resubmit"}

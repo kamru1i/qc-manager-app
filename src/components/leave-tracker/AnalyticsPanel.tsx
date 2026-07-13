@@ -55,7 +55,7 @@ const GrowthBadge: React.FC<{
     );
   }
   return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-500/10 border border-slate-500/20 text-slate-400">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-500/10 border border-slate-500/20 text-theme-text-muted">
       <span className="w-1 h-1 rounded-full bg-slate-400 shrink-0"></span>
       {label}
     </span>
@@ -539,13 +539,13 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   return (
     <div className="space-y-6">
       {/* Upper Filter & Headers */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/20 p-4 border border-slate-800/40 rounded-2xl backdrop-blur-md">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-theme-card-bg/20 p-4 border border-theme-border-input/40 rounded-2xl backdrop-blur-md">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold text-theme-text-primary flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-500" />
             Performance Analytics Panel
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5 font-medium">
+          <p className="text-xs text-theme-text-muted mt-0.5 font-medium">
             Visualize your quotes, requotes, sales records, and leaderboard
             trends.
           </p>
@@ -553,13 +553,13 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
         <div className="flex flex-row flex-nowrap items-center gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 w-full lg:w-auto custom-scrollbar">
           {/* Time Scope Toggle: Yearly vs Monthly */}
-          <div className="flex items-center bg-slate-950/40 border border-slate-850 p-1 rounded-xl">
+          <div className="flex items-center bg-theme-card-container/40 border border-theme-border-muted p-1 rounded-xl">
             <button
               onClick={() => setMetricsTimeScope("yearly")}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 metricsTimeScope === "yearly"
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white font-medium"
+                  : "text-theme-text-muted hover:text-theme-text-primary font-medium"
               }`}
             >
               Yearly
@@ -569,7 +569,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 metricsTimeScope === "monthly"
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white font-medium"
+                  : "text-theme-text-muted hover:text-theme-text-primary font-medium"
               }`}
             >
               Monthly
@@ -577,18 +577,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           </div>
 
           {/* Month Selector (Always visible to everyone) */}
-          <div className="flex items-center gap-2 bg-slate-950/40 border border-slate-850 px-3 py-1.5 rounded-xl">
-            <Calendar className="h-4 w-4 text-slate-500" />
+          <div className="flex items-center gap-2 bg-theme-card-container/40 border border-theme-border-muted px-3 py-1.5 rounded-xl">
+            <Calendar className="h-4 w-4 text-theme-text-muted" />
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-xs text-slate-350 outline-none border-none cursor-pointer focus:text-white font-semibold"
+              className="bg-transparent text-xs text-theme-text-secondary outline-none border-none cursor-pointer focus:text-theme-text-primary font-semibold"
             >
               {monthsList.map((m) => (
                 <option
                   key={m.value}
                   value={m.value}
-                  className="bg-slate-950 text-slate-350"
+                  className="bg-theme-card-container text-theme-text-secondary"
                 >
                   {m.name}
                 </option>
@@ -597,18 +597,18 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           </div>
 
           {/* Year Selector */}
-          <div className="flex items-center gap-2 bg-slate-950/40 border border-slate-850 px-3 py-1.5 rounded-xl">
-            <Calendar className="h-4 w-4 text-slate-500" />
+          <div className="flex items-center gap-2 bg-theme-card-container/40 border border-theme-border-muted px-3 py-1.5 rounded-xl">
+            <Calendar className="h-4 w-4 text-theme-text-muted" />
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-transparent text-xs text-slate-350 outline-none border-none cursor-pointer focus:text-white font-semibold"
+              className="bg-transparent text-xs text-theme-text-secondary outline-none border-none cursor-pointer focus:text-theme-text-primary font-semibold"
             >
               {availableYears.map((year) => (
                 <option
                   key={year}
                   value={year}
-                  className="bg-slate-950 text-slate-350"
+                  className="bg-theme-card-container text-theme-text-secondary"
                 >
                   Year {year}
                 </option>
@@ -621,15 +621,15 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       {/* Grid: Key Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Card 1: Total Quotes */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#3b82f6]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#3b82f6]/5">
+        <div className="relative overflow-hidden bg-theme-card-container/30 border border-theme-border-input/40 hover:border-[#3b82f6]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#3b82f6]/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#3b82f6]/5 rounded-full blur-2xl group-hover:bg-[#3b82f6]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">
+              <p className="text-xs font-semibold text-theme-text-muted">
                 Total Quotes
               </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all">
                   {stats.quotes}
                 </h3>
                 <div>
@@ -643,29 +643,29 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <FileText className="h-5 w-5" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
+          <p className="text-[10px] text-theme-text-muted mt-4 font-medium flex justify-between items-center">
             <span>
               Quotes in{" "}
               {metricsTimeScope === "yearly"
                 ? selectedYear
                 : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
             </span>
-            <span className="text-[9px] text-slate-450 opacity-80">
+            <span className="text-[9px] text-theme-text-muted opacity-80">
               vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
             </span>
           </p>
         </div>
 
         {/* Card 2: Total Requotes */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#a855f7]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#a855f7]/5">
+        <div className="relative overflow-hidden bg-theme-card-container/30 border border-theme-border-input/40 hover:border-[#a855f7]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#a855f7]/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#a855f7]/5 rounded-full blur-2xl group-hover:bg-[#a855f7]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">
+              <p className="text-xs font-semibold text-theme-text-muted">
                 Total Requotes
               </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all">
                   {stats.requotes}
                 </h3>
                 <div>
@@ -679,29 +679,29 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <Clock className="h-5 w-5" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
+          <p className="text-[10px] text-theme-text-muted mt-4 font-medium flex justify-between items-center">
             <span>
               Requotes in{" "}
               {metricsTimeScope === "yearly"
                 ? selectedYear
                 : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
             </span>
-            <span className="text-[9px] text-slate-450 opacity-80">
+            <span className="text-[9px] text-theme-text-muted opacity-80">
               vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
             </span>
           </p>
         </div>
 
         {/* Card 3: Total Reviews */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#ec4899]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#ec4899]/5">
+        <div className="relative overflow-hidden bg-theme-card-container/30 border border-theme-border-input/40 hover:border-[#ec4899]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#ec4899]/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#ec4899]/5 rounded-full blur-2xl group-hover:bg-[#ec4899]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">
+              <p className="text-xs font-semibold text-theme-text-muted">
                 Total Reviews
               </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all">
                   {stats.reviews}
                 </h3>
                 <div>
@@ -715,29 +715,29 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <Eye className="h-5 w-5" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
+          <p className="text-[10px] text-theme-text-muted mt-4 font-medium flex justify-between items-center">
             <span>
               Reviews in{" "}
               {metricsTimeScope === "yearly"
                 ? selectedYear
                 : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
             </span>
-            <span className="text-[9px] text-slate-450 opacity-80">
+            <span className="text-[9px] text-theme-text-muted opacity-80">
               vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
             </span>
           </p>
         </div>
 
         {/* Card 4: Total Sales */}
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-[#10b981]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#10b981]/5">
+        <div className="relative overflow-hidden bg-theme-card-container/30 border border-theme-border-input/40 hover:border-[#10b981]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#10b981]/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#10b981]/5 rounded-full blur-2xl group-hover:bg-[#10b981]/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">
+              <p className="text-xs font-semibold text-theme-text-muted">
                 Total Sales
               </p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all">
                   {stats.sales}
                 </h3>
                 <div>
@@ -751,14 +751,14 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <CheckCircle className="h-5 w-5" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
+          <p className="text-[10px] text-theme-text-muted mt-4 font-medium flex justify-between items-center">
             <span>
               Sales in{" "}
               {metricsTimeScope === "yearly"
                 ? selectedYear
                 : `${monthsList.find((m) => m.value === selectedMonth)?.name} ${selectedYear}`}
             </span>
-            <span className="text-[9px] text-slate-450 opacity-80">
+            <span className="text-[9px] text-theme-text-muted opacity-80">
               vs. prev {metricsTimeScope === "yearly" ? "year" : "month"}
             </span>
           </p>
@@ -766,13 +766,13 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
         {/* Card 5: Conversion Rate (Commented out) */}
         {/*
-        <div className="relative overflow-hidden bg-slate-950/30 border border-slate-800/40 hover:border-purple-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-purple-950/10">
+        <div className="relative overflow-hidden bg-theme-card-container/30 border border-theme-border-input/40 hover:border-purple-500/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-purple-950/10">
           <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/5 rounded-full blur-2xl group-hover:bg-purple-600/10 transition-all duration-300"></div>
           <div className="flex justify-between items-start gap-2">
             <div className="space-y-1.5 min-w-0">
-              <p className="text-xs font-semibold text-slate-400">Conversion Rate</p>
+              <p className="text-xs font-semibold text-theme-text-muted">Conversion Rate</p>
               <div className="space-y-1 mt-1.5">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">{stats.conversionRate.toFixed(2)}%</h3>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all">{stats.conversionRate.toFixed(2)}%</h3>
                 <div>
                   <GrowthBadge {...getRateGrowthStats(stats.conversionRate, previousStats.conversionRate)} />
                 </div>
@@ -782,9 +782,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               <Percent className="h-5 w-5" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
+          <p className="text-[10px] text-theme-text-muted mt-4 font-medium flex justify-between items-center">
             <span>Ratio in {metricsTimeScope === 'yearly' ? selectedYear : `${monthsList.find(m => m.value === selectedMonth)?.name} ${selectedYear}`}</span>
-            <span className="text-[9px] text-slate-450 opacity-80">vs. prev {metricsTimeScope === 'yearly' ? 'year' : 'month'}</span>
+            <span className="text-[9px] text-theme-text-muted opacity-80">vs. prev {metricsTimeScope === 'yearly' ? 'year' : 'month'}</span>
           </p>
         </div>
         */}
@@ -793,8 +793,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       {/* Grid: Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Monthly submissions grouped bar chart (Occupies 2 columns on desktop) */}
-        <div className="lg:col-span-2 bg-slate-950/30 border border-slate-800/40 p-5 rounded-2xl shadow-xl relative min-h-96">
-          <h4 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
+        <div className="lg:col-span-2 bg-theme-card-container/30 border border-theme-border-input/40 p-5 rounded-2xl shadow-xl relative min-h-96">
+          <h4 className="text-sm font-bold text-theme-text-primary mb-6 flex items-center gap-2">
             <Calendar className="h-4.5 w-4.5 text-blue-400" />
             Monthly Submission Volumes ({selectedYear})
           </h4>
@@ -1048,14 +1048,14 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             {/* Render HTML Hover Tooltip for monthly bar chart */}
             {hoveredBar && (
               <div
-                className="absolute bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-white shadow-2xl pointer-events-none z-45 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100"
+                className="absolute bg-theme-card-container border border-theme-border-input rounded-xl px-3 py-2 text-[11px] text-theme-text-primary shadow-2xl pointer-events-none z-45 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100"
                 style={{
                   left: `${hoveredBar.x}px`,
                   top: `${hoveredBar.y}px`,
                   transform: "translateX(-50%)",
                 }}
               >
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                <span className="text-[10px] text-theme-text-muted font-bold uppercase tracking-wider">
                   {hoveredBar.month}
                 </span>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -1079,27 +1079,27 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           <div className="flex justify-center items-center gap-6 mt-2 text-xs">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded bg-[#3b82f6] border border-[#1d4ed8]/50"></span>
-              <span className="text-slate-400 font-medium">Quotes</span>
+              <span className="text-theme-text-muted font-medium">Quotes</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded bg-[#a855f7] border border-[#7e22ce]/50"></span>
-              <span className="text-slate-400 font-medium">Requotes</span>
+              <span className="text-theme-text-muted font-medium">Requotes</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded bg-[#ec4899] border border-[#be185d]/50"></span>
-              <span className="text-slate-400 font-medium">Reviews</span>
+              <span className="text-theme-text-muted font-medium">Reviews</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded bg-[#10b981] border border-[#047857]/50"></span>
-              <span className="text-slate-400 font-medium">Sales</span>
+              <span className="text-theme-text-muted font-medium">Sales</span>
             </div>
           </div>
         </div>
 
         {/* Right column: Branch distributions */}
-        <div className="bg-slate-950/30 border border-slate-800/40 p-5 rounded-2xl shadow-xl flex flex-col h-full">
+        <div className="bg-theme-card-container/30 border border-theme-border-input/40 p-5 rounded-2xl shadow-xl flex flex-col h-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <h4 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
               <MapPin className="h-4.5 w-4.5 text-emerald-400" />
               Branches Contribution (
               {metricsTimeScope === "yearly"
@@ -1110,8 +1110,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           </div>
 
           {branchData.length === 0 ? (
-            <div className="flex-1 flex flex-col justify-center items-center text-slate-500 py-10">
-              <MapPin className="h-10 w-10 text-slate-650 stroke-[1.5] mb-2" />
+            <div className="flex-1 flex flex-col justify-center items-center text-theme-text-muted py-10">
+              <MapPin className="h-10 w-10 text-theme-text-muted/60 stroke-[1.5] mb-2" />
               <p className="text-xs">No branch records available.</p>
             </div>
           ) : (
@@ -1130,16 +1130,16 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 return (
                   <div key={branch.name} className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-slate-350">
+                      <span className="font-bold text-theme-text-secondary">
                         {branch.name}
                       </span>
-                      <span className="font-extrabold text-white">
+                      <span className="font-extrabold text-theme-text-primary">
                         {branch.count} entries ({branch.percentage}%)
                       </span>
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full h-2.5 bg-slate-900 border border-slate-850 rounded-full overflow-hidden">
+                    <div className="w-full h-2.5 bg-theme-card-bg border border-theme-border-muted rounded-full overflow-hidden">
                       <div
                         className={`h-full bg-linear-to-r ${colorClass} rounded-full transition-all duration-1000 ease-out`}
                         style={{ width: `${branch.percentage}%` }}
@@ -1154,10 +1154,10 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       </div>
 
       {/* Segment 3: Bottom Section (Leaderboard) */}
-      <div className="bg-slate-950/30 border border-slate-800/40 p-5 rounded-2xl shadow-xl min-h-80">
+      <div className="bg-theme-card-container/30 border border-theme-border-input/40 p-5 rounded-2xl shadow-xl min-h-80">
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <h4 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
               <Award className="h-4.5 w-4.5 text-purple-400" />
               Staff Performance Leaderboard (
               {metricsTimeScope === "yearly"
@@ -1168,8 +1168,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           </div>
 
           {leaderboardData.length === 0 ? (
-            <div className="flex flex-col justify-center items-center text-slate-500 py-12">
-              <Award className="h-10 w-10 text-slate-650 stroke-[1.5] mb-2" />
+            <div className="flex flex-col justify-center items-center text-theme-text-muted py-12">
+              <Award className="h-10 w-10 text-theme-text-muted/60 stroke-[1.5] mb-2" />
               <p className="text-xs">No active staff records found.</p>
             </div>
           ) : (
@@ -1178,26 +1178,26 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                 {leaderboardData.map((user, idx) => {
                   const medalColors = [
                     "bg-purple-500/10 border-purple-500/30 text-purple-500 shadow-purple-900/5",
-                    "bg-slate-400/10 border-slate-400/30 text-slate-350 shadow-slate-900/5",
+                    "bg-slate-400/10 border-slate-400/30 text-theme-text-secondary shadow-slate-900/5",
                     "bg-purple-700/10 border-purple-700/30 text-purple-700 shadow-purple-900/5",
-                    "bg-slate-900 border-slate-800 text-slate-400",
-                    "bg-slate-900 border-slate-800 text-slate-400",
+                    "bg-theme-card-bg border-theme-border-input text-theme-text-muted",
+                    "bg-theme-card-bg border-theme-border-input text-theme-text-muted",
                   ];
 
                   return (
                     <div
                       key={user.codename}
-                      className="relative overflow-hidden bg-slate-950/50 border border-slate-850 hover:border-slate-800 p-4 rounded-xl flex flex-col justify-between items-center text-center shadow-lg transition-all duration-300 hover:scale-[1.02] group"
+                      className="relative overflow-hidden bg-theme-card-container/50 border border-theme-border-muted hover:border-theme-border-input p-4 rounded-xl flex flex-col justify-between items-center text-center shadow-lg transition-all duration-300 hover:scale-[1.02] group"
                     >
                       {/* Rank Medal */}
                       <span
-                        className={`w-8 h-8 rounded-full border text-xs font-extrabold flex items-center justify-center shadow-md ${idx < 5 ? medalColors[idx] : "bg-slate-900 border-slate-800 text-slate-400"}`}
+                        className={`w-8 h-8 rounded-full border text-xs font-extrabold flex items-center justify-center shadow-md ${idx < 5 ? medalColors[idx] : "bg-theme-card-bg border-theme-border-input text-theme-text-muted"}`}
                       >
                         {idx + 1}
                       </span>
 
                       <div className="mt-3.5 space-y-1">
-                        <h5 className="text-xs font-extrabold text-white truncate max-w-full group-hover:text-blue-400 transition-colors flex items-center justify-center">
+                        <h5 className="text-xs font-extrabold text-theme-text-primary truncate max-w-full group-hover:text-blue-400 transition-colors flex items-center justify-center">
                           <span>{user.name}</span>
                           {topPerformerBadges[user.userId] && (
                             <VerifiedBadge
@@ -1205,13 +1205,13 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                             />
                           )}
                         </h5>
-                        <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">
+                        <p className="text-[10px] font-bold text-theme-text-muted tracking-wider uppercase">
                           {user.codename}
                         </p>
                       </div>
 
-                      <div className="mt-4 pt-3.5 border-t border-slate-900/30 w-full">
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
+                      <div className="mt-4 pt-3.5 border-t border-theme-card-bg/30 w-full">
+                        <span className="text-[10px] text-theme-text-muted font-semibold uppercase tracking-wider block">
                           Submissions
                         </span>
                         <span className="text-lg font-extrabold text-blue-400 mt-1 block">
@@ -1225,8 +1225,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
 
               {/* Streak & Wins Highlights Box */}
               {leaderboardData.some((u) => topPerformerBadges[u.userId]) && (
-                <div className="mt-6 bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl">
-                  <h5 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <div className="mt-6 bg-theme-card-bg/40 border border-theme-border-input/60 p-4 rounded-xl">
+                  <h5 className="text-xs font-bold text-theme-text-secondary uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     🏆 Streak & Performance Highlights
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -1237,23 +1237,23 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
                         return (
                           <div
                             key={user.userId}
-                            className="bg-slate-950/45 border border-slate-850/50 p-3 rounded-lg flex flex-col justify-center space-y-1"
+                            className="bg-theme-card-container/45 border border-theme-border-muted/50 p-3 rounded-lg flex flex-col justify-center space-y-1"
                           >
-                            <div className="flex items-center justify-between text-xs border-b border-slate-900 pb-1.5 mb-1.5">
-                              <span className="font-bold text-white truncate">
+                            <div className="flex items-center justify-between text-xs border-b border-theme-card-bg pb-1.5 mb-1.5">
+                              <span className="font-bold text-theme-text-primary truncate">
                                 {user.name}
                               </span>
-                              <span className="text-[9px] font-mono text-slate-500 uppercase">
+                              <span className="text-[9px] font-mono text-theme-text-muted uppercase">
                                 {user.codename}
                               </span>
                             </div>
-                            <div className="flex justify-between text-[11px] text-slate-400">
+                            <div className="flex justify-between text-[11px] text-theme-text-muted">
                               <span>Consecutive:</span>
                               <span className="text-blue-400 font-bold">
                                 {badge.consecutiveMonths} mo
                               </span>
                             </div>
-                            <div className="flex justify-between text-[11px] text-slate-400">
+                            <div className="flex justify-between text-[11px] text-theme-text-muted">
                               <span>Yearly Wins:</span>
                               <span className="text-purple-400 font-bold">
                                 {badge.yearlyTopPerformances}x
@@ -1273,8 +1273,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       {/* Segment 4: Category Breakdown & Operational Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 columns: Category Distribution */}
-        <div className="lg:col-span-2 bg-slate-955/30 border border-slate-800/40 p-5 rounded-2xl shadow-xl flex flex-col min-h-96">
-          <h4 className="text-sm font-bold text-white mb-5 flex items-center gap-2">
+        <div className="lg:col-span-2 bg-theme-page-bg/30 border border-theme-border-input/40 p-5 rounded-2xl shadow-xl flex flex-col min-h-96">
+          <h4 className="text-sm font-bold text-theme-text-primary mb-5 flex items-center gap-2">
             <FileText className="h-4.5 w-4.5 text-blue-400 animate-pulse" />
             File Category Distribution Breakdown (
             {metricsTimeScope === "yearly"
@@ -1283,7 +1283,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             )
           </h4>
 
-          <p className="text-xs text-slate-400 mb-4 font-medium">
+          <p className="text-xs text-theme-text-muted mb-4 font-medium">
             Detailed breakdown of all 12 custom file types submitted during the
             selected period.
           </p>
@@ -1294,20 +1294,20 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               return (
                 <div
                   key={cat.name}
-                  className="space-y-1.5 p-2 bg-slate-900/10 border border-slate-850/30 rounded-xl hover:bg-slate-900/20 hover:border-slate-850 transition-all duration-200"
+                  className="space-y-1.5 p-2 bg-theme-card-bg/10 border border-theme-border-muted/30 rounded-xl hover:bg-theme-card-bg/20 hover:border-theme-border-muted transition-all duration-200"
                 >
                   <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-slate-350">{cat.name}</span>
-                    <span className="font-extrabold text-white">
+                    <span className="font-bold text-theme-text-secondary">{cat.name}</span>
+                    <span className="font-extrabold text-theme-text-primary">
                       {cat.count}{" "}
-                      <span className="text-[10px] text-slate-500 font-bold">
+                      <span className="text-[10px] text-theme-text-muted font-bold">
                         ({cat.percentage}%)
                       </span>
                     </span>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full h-2 bg-slate-955 rounded-full overflow-hidden border border-slate-850">
+                  <div className="w-full h-2 bg-theme-page-bg rounded-full overflow-hidden border border-theme-border-muted">
                     <div
                       className={`h-full bg-linear-to-r ${bgGradientClass} rounded-full transition-all duration-1000 ease-out`}
                       style={{ width: `${cat.percentage}%` }}
@@ -1320,38 +1320,38 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         </div>
 
         {/* Right 1 column: Operational Insights */}
-        <div className="bg-slate-950/30 border border-slate-800/40 p-5 rounded-2xl shadow-xl flex flex-col justify-between min-h-96">
+        <div className="bg-theme-card-container/30 border border-theme-border-input/40 p-5 rounded-2xl shadow-xl flex flex-col justify-between min-h-96">
           <div>
-            <h4 className="text-sm font-bold text-white mb-5 flex items-center gap-2">
+            <h4 className="text-sm font-bold text-theme-text-primary mb-5 flex items-center gap-2">
               <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
               Operational Insights
             </h4>
 
             <div className="space-y-4">
               {/* Stat item 1 */}
-              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl space-y-1.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              <div className="bg-theme-card-bg/40 border border-theme-border-muted p-4 rounded-xl space-y-1.5">
+                <span className="text-[10px] text-theme-text-muted font-bold uppercase tracking-wider block">
                   Average Submissions / Day
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-extrabold text-white">
+                  <span className="text-2xl font-extrabold text-theme-text-primary">
                     {(
                       systemMetricsFilteredRecords.length / scopedDaysCount
                     ).toFixed(1)}
                   </span>
-                  <span className="text-xs text-slate-400 font-semibold">
+                  <span className="text-xs text-theme-text-muted font-semibold">
                     entries / day
                   </span>
                 </div>
               </div>
 
               {/* Stat item 2 */}
-              <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl space-y-1.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              <div className="bg-theme-card-bg/40 border border-theme-border-muted p-4 rounded-xl space-y-1.5">
+                <span className="text-[10px] text-theme-text-muted font-bold uppercase tracking-wider block">
                   Dominant Submission Type
                 </span>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-extrabold text-white truncate max-w-[65%]">
+                  <span className="text-xs font-extrabold text-theme-text-primary truncate max-w-[65%]">
                     {dominantActivity.name}
                   </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 shrink-0">
@@ -1362,11 +1362,11 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-800/50">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">
+          <div className="mt-6 pt-4 border-t border-theme-border-input/50">
+            <span className="text-[10px] text-theme-text-muted font-bold uppercase tracking-wider block mb-2">
               Automated Executive Summary
             </span>
-            <p className="text-xs text-slate-350 leading-relaxed font-medium">
+            <p className="text-xs text-theme-text-secondary leading-relaxed font-medium">
               {systemMetricsFilteredRecords.length === 0
                 ? "No submission activities recorded for this period. Start logging entries to view insights."
                 : `During this period, a total of ${systemMetricsFilteredRecords.length} records were processed. The system achieved a sales conversion rate of ${stats.conversionRate.toFixed(2)}% (${stats.sales} sales out of ${stats.quotes} quotes). ${

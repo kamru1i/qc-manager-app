@@ -40,10 +40,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
+      <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-sm shadow-2xl relative">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-455 hover:text-white transition-all cursor-pointer animate-pulse-subtle"
+          className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer animate-pulse-subtle"
           aria-label="Close modal"
         >
           <X className="h-5 w-5" />
@@ -56,8 +56,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             </div>
           )}
           <div>
-            <h3 className="text-sm font-bold text-white leading-6">{title}</h3>
-            <div className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            <h3 className="text-sm font-bold text-theme-text-primary leading-6">{title}</h3>
+            <div className="text-xs text-theme-text-muted mt-1.5 leading-relaxed">
               {message}
             </div>
           </div>
@@ -66,7 +66,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="flex gap-2.5 pt-1">
           <button
             onClick={onClose}
-            className="flex-1 py-2 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
             {cancelText}
           </button>

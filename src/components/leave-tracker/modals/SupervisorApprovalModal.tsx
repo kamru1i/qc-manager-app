@@ -75,7 +75,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
           onSwitchToUserPanel ? (
             <button
               onClick={onSwitchToUserPanel}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
             >
               <span>Go to User Panel</span>
               {userNotificationsCount > 0 && (
@@ -108,28 +108,28 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
         glowClass="bg-purple-900/10"
       >
         <div className="space-y-4 font-sans">
-          <p className="text-xs text-slate-400 leading-relaxed font-medium font-sans">
+          <p className="text-xs text-theme-text-muted leading-relaxed font-medium font-sans">
             Please enter the reason or comment for returning this leave request for revision. It will be displayed on the user's revision dashboard:
           </p>
           
           <div>
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5 font-semibold">Revision Comment/Reason (Required)</label>
+            <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1.5 font-semibold">Revision Comment/Reason (Required)</label>
             <textarea
               required
               disabled={submittingRevision}
               placeholder="e.g. Please change the date or select the correct leave type..."
               value={revisionPromptText}
               onChange={(e) => setRevisionPromptText(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 h-24 resize-none font-sans disabled:opacity-50"
+              className="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 h-24 resize-none font-sans disabled:opacity-50"
             />
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-slate-800/80 font-sans">
+          <div className="flex gap-3 pt-4 border-t border-theme-border-input/80 font-sans">
             <button
               type="button"
               disabled={submittingRevision}
               onClick={handleCloseRevision}
-              className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all disabled:opacity-50 font-sans"
+              className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all disabled:opacity-50 font-sans"
             >
               Cancel
             </button>

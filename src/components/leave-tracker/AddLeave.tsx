@@ -856,13 +856,13 @@ export function AddLeave({
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* 2. Main Add Leave entry form grid layout */}
-      <div className="bg-slate-900/40 backdrop-blur-xl shadow-2xl rounded-2xl p-6 flex flex-col gap-6 animate-fade-in border border-slate-850">
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl shadow-2xl rounded-2xl p-6 flex flex-col gap-6 animate-fade-in border border-theme-border-muted">
         <div>
-          <h3 className="text-md font-bold text-white flex items-center gap-2">
+          <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
             <Calendar className="h-4.5 w-4.5 text-blue-400" />
             {editingRecord ? 'Edit Leave Entry' : 'New Leave Entry Form'}
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-theme-text-muted mt-1">
             {editingRecord
               ? 'Update the details of the selected leave entry.'
               : 'Record a new full day leave, short leave, or overtime entry directly into the system.'
@@ -875,9 +875,9 @@ export function AddLeave({
           <div className="p-3 bg-blue-950/40 border border-blue-800/40 text-blue-300 text-xs rounded-lg flex items-start gap-2">
             <User className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold block text-slate-200">Adding leave on behalf of a user</span>
-              <span className="text-[11px] block mt-0.5 text-slate-400">
-                This leave will be submitted for <span className="text-white font-semibold">{targetProfile.full_name || targetProfile.username}</span> ({targetProfile.username?.toUpperCase()}) and sent directly to admin for approval.
+              <span className="font-semibold block text-theme-text-primary">Adding leave on behalf of a user</span>
+              <span className="text-[11px] block mt-0.5 text-theme-text-muted">
+                This leave will be submitted for <span className="text-theme-text-primary font-semibold">{targetProfile.full_name || targetProfile.username}</span> ({targetProfile.username?.toUpperCase()}) and sent directly to admin for approval.
               </span>
             </div>
           </div>
@@ -888,8 +888,8 @@ export function AddLeave({
           <div className="p-3 bg-purple-955/50 border border-purple-900/50 text-purple-300 text-xs rounded-lg flex items-start gap-2 animate-pulse">
             <AlertTriangle className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold block text-slate-200">Leave Quota Limit Exceeded!</span>
-              <span className="text-[11px] block mt-0.5 text-slate-300">
+              <span className="font-semibold block text-theme-text-primary">Leave Quota Limit Exceeded!</span>
+              <span className="text-[11px] block mt-0.5 text-theme-text-secondary">
                 Your annual full leave limit is {targetProfile?.max_full_leaves ?? 15} days, but you have already taken {stats.fullLeaves} days.
               </span>
             </div>
@@ -948,25 +948,25 @@ export function AddLeave({
               />
 
               {needsReapproval && (
-                <div className="space-y-1 pt-2 border-t border-slate-800/50">
-                  <label className="block text-slate-400 font-semibold">Reason for Editing (Required)</label>
+                <div className="space-y-1 pt-2 border-t border-theme-border-input/50">
+                  <label className="block text-theme-text-muted font-semibold">Reason for Editing (Required)</label>
                   <textarea
                     required
                     rows={2}
                     value={editReason}
                     onChange={(e) => setEditReason(e.target.value)}
                     placeholder="Enter why this approved leave is being modified..."
-                    className="w-full p-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white text-xs placeholder-slate-655 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                    className="w-full p-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                   />
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-slate-800">
+              <div className="flex gap-3 pt-4 border-t border-theme-border-input">
                 <button
                   type="submit"
                   disabled={submitting || !!validationError || isDuplicateDate || hasDateError}
-                  className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all gap-1.5"
+                  className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {submitting

@@ -705,10 +705,10 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
   const riskScore = 100 - safetyScore;
 
   return (
-    <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 space-y-6">
+    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-2xl rounded-2xl p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-slate-800 shrink-0">
-        <h3 className="text-md font-bold text-white flex items-center gap-2">
+      <div className="flex justify-between items-center pb-4 border-b border-theme-border-input shrink-0">
+        <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
           <Globe className="w-5 h-5 text-blue-500" />
           IP Address Safety Directory
         </h3>
@@ -721,7 +721,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
             {detectingIP ? (
               <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-blue-500 animate-spin" />
             ) : (
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-theme-text-muted" />
             )}
             <input
               type="text"
@@ -732,16 +732,16 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
               }
               value={ipInput}
               onChange={(e) => setIpInput(e.target.value)}
-              className="w-full pl-9 pr-20 py-2 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-655 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
+              className="w-full pl-9 pr-20 py-2 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/60 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
             />
             <button
               type="button"
               onClick={detectMyIP}
               disabled={loading || detectingIP}
-              className="absolute right-1.5 top-1.5 px-2 py-0.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-[10px] font-semibold rounded-md transition-all cursor-pointer hover:bg-slate-800 flex items-center justify-center min-w-[48px] disabled:opacity-50"
+              className="absolute right-1.5 top-1.5 px-2 py-0.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary text-[10px] font-semibold rounded-md transition-all cursor-pointer hover:bg-theme-border-input flex items-center justify-center min-w-[48px] disabled:opacity-50"
             >
               {detectingIP ? (
-                <Loader2 className="w-3 h-3 animate-spin text-slate-500" />
+                <Loader2 className="w-3 h-3 animate-spin text-theme-text-muted" />
               ) : (
                 "My IP"
               )}
@@ -783,7 +783,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
               <AlertTriangle className="w-10 h-10 text-rose-400 shrink-0 mt-0.5" />
             )}
             <div>
-              <h4 className="font-bold text-base text-white flex flex-wrap items-center gap-2">
+              <h4 className="font-bold text-base text-theme-text-primary flex flex-wrap items-center gap-2">
                 {isAllSafe
                   ? "Safe to Use (Permission Allowed)"
                   : "Unsafe / Location Mismatch (Access Denied)"}
@@ -799,7 +799,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
                   {safetyScore}% Safe / {riskScore}% Risk
                 </span>
               </h4>
-              <p className="text-xs mt-1 text-slate-400 leading-relaxed">
+              <p className="text-xs mt-1 text-theme-text-muted leading-relaxed">
                 Tested across {successfulSources.length}/{totalSources} active
                 databases.
                 {isAllSafe
@@ -840,7 +840,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse">
               ⚠️ VM Verification Required
             </span>
-            <p className="text-xs font-semibold text-slate-200">
+            <p className="text-xs font-semibold text-theme-text-primary">
               Please check your IP inside VM with these two links:
             </p>
           </div>
@@ -851,13 +851,13 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
               return (
                 <div
                   key={url}
-                  className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-blue-500/30 transition-all duration-200 group/link min-w-[210px]"
+                  className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-theme-card-bg/60 border border-theme-border-input/80 hover:border-blue-500/30 transition-all duration-200 group/link min-w-[210px]"
                 >
                   <a
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs font-mono text-slate-355 hover:text-blue-400 transition-colors flex items-center gap-1.5"
+                    className="text-xs font-mono text-theme-text-secondary hover:text-blue-400 transition-colors flex items-center gap-1.5"
                   >
                     <span>{url.replace("https://", "")}</span>
                     <ExternalLink className="h-3 w-3 opacity-40 group-hover/link:opacity-80 transition-opacity" />
@@ -872,7 +872,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
                       setTimeout(() => setCopiedUrl(null), 2000);
                     }}
                     title="Copy URL"
-                    className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-850 border border-slate-850 hover:border-slate-750 text-slate-400 hover:text-white transition-all cursor-pointer"
+                    className="p-1.5 rounded-lg bg-theme-card-container hover:bg-theme-border-muted border border-theme-border-muted hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer"
                   >
                     {isCopied ? (
                       <Check className="h-3.5 w-3.5 text-emerald-400 animate-scale-up" />
@@ -901,9 +901,9 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
             return (
               <div
                 key={sourceName}
-                className={`p-4 rounded-xl border bg-slate-950/20 flex flex-col justify-between ${
+                className={`p-4 rounded-xl border bg-theme-card-container/20 flex flex-col justify-between ${
                   !result.success
-                    ? "border-slate-850 opacity-60"
+                    ? "border-theme-border-muted opacity-60"
                     : isUK && !result.isProxyOrVpn
                       ? "border-emerald-500/15 hover:border-emerald-500/30"
                       : "border-rose-500/15 hover:border-rose-500/30"
@@ -912,7 +912,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
                 <div>
                   {/* Source Title & Header Status */}
                   <div className="flex justify-between items-center mb-3">
-                    <span className="font-bold text-slate-200 text-xs">
+                    <span className="font-bold text-theme-text-primary text-xs">
                       {sourceName}
                     </span>
                     {result.success ? (
@@ -926,7 +926,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
                         {isUK ? "UK" : result.countryCode || "Non-UK"}
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border border-slate-800 bg-slate-900 text-slate-500">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border border-theme-border-input bg-theme-card-bg text-theme-text-muted">
                         Offline
                       </span>
                     )}
@@ -934,17 +934,17 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
 
                   {/* Main Details */}
                   {result.success ? (
-                    <div className="space-y-1.5 text-xs text-slate-400">
+                    <div className="space-y-1.5 text-xs text-theme-text-muted">
                       <p className="flex justify-between">
                         <span>Location:</span>
-                        <strong className="text-slate-300 font-semibold">
+                        <strong className="text-theme-text-secondary font-semibold">
                           {result.countryName || "Unknown"}
                         </strong>
                       </p>
                       <p className="flex justify-between gap-4">
                         <span>ISP/AS:</span>
                         <strong
-                          className="text-slate-300 font-semibold text-right truncate max-w-[200px]"
+                          className="text-theme-text-secondary font-semibold text-right truncate max-w-[200px]"
                           title={result.isp}
                         >
                           {result.isp || "N/A"}
@@ -973,7 +973,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
                       {sourceName === "CriminalIP.io" &&
                         (result.rawData as any)?.normalizedInboundScore !==
                           undefined && (
-                          <p className="flex justify-between border-t border-slate-900/50 pt-1.5 mt-1.5">
+                          <p className="flex justify-between border-t border-theme-card-bg/50 pt-1.5 mt-1.5">
                             <span>API Risk Rating:</span>
                             <strong
                               className={
@@ -995,7 +995,7 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
                       {sourceName === "Scamalytics.com" &&
                         (result.rawData as any)?.scamalytics
                           ?.scamalytics_score !== undefined && (
-                          <p className="flex justify-between border-t border-slate-900/50 pt-1.5 mt-1.5">
+                          <p className="flex justify-between border-t border-theme-card-bg/50 pt-1.5 mt-1.5">
                             <span>Fraud Score:</span>
                             <strong
                               className={
@@ -1046,13 +1046,13 @@ export const IPChecker: React.FC<IPCheckerProps> = ({ showToast }) => {
 
       {/* Initial State / Waiting */}
       {!checkRan && !loading && !detectingIP && (
-        <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-slate-955/15 border border-slate-850 rounded-2xl">
-          <Globe className="w-12 h-12 text-slate-600 animate-pulse" />
+        <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-theme-page-bg/15 border border-theme-border-muted rounded-2xl">
+          <Globe className="w-12 h-12 text-theme-text-muted/80 animate-pulse" />
           <div>
-            <p className="text-slate-300 font-bold text-sm">
+            <p className="text-theme-text-secondary font-bold text-sm">
               Awaiting IP Input
             </p>
-            <p className="text-xs text-slate-550 max-w-sm mt-1 leading-relaxed">
+            <p className="text-xs text-theme-text-muted max-w-sm mt-1 leading-relaxed">
               Enter an IP address above or click "My IP" to query all 7
               diagnostic security databases.
             </p>

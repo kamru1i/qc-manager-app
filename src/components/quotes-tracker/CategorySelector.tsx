@@ -61,7 +61,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
             className={`flex flex-col justify-center px-2 py-2 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all duration-200 cursor-pointer hover:scale-[1.03] active:scale-[0.97] select-none ${
               cat.active
                 ? 'bg-blue-600/15 border-blue-500 text-blue-400 shadow-lg shadow-blue-900/10'
-                : 'bg-slate-955/30 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white'
+                : 'bg-theme-page-bg/30 border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary'
             }`}
           >
             <div className="flex items-center justify-between w-full gap-1">
@@ -72,7 +72,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
               <span className={`h-4.5 w-4.5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                 cat.active
                   ? 'bg-blue-500 border-blue-500 text-white'
-                  : 'border-slate-700 bg-slate-900'
+                  : 'border-theme-border-active bg-theme-card-bg'
               }`}>
                 {cat.active && <Check className="h-3 w-3" />}
               </span>
@@ -88,7 +88,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
                     className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] cursor-pointer border ${
                       selectedType === 'Requote'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-950/10'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                        : 'bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input'
                     }`}
                   >
                     Only Requote
@@ -101,7 +101,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
                     className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] cursor-pointer border ${
                       selectedType === 'Requote Van'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-950/10'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                        : 'bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input'
                     }`}
                   >
                     + Van
@@ -114,7 +114,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
                     className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] cursor-pointer border ${
                       selectedType === 'Requote Bike'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-950/10'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                        : 'bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input'
                     }`}
                   >
                     + Bike

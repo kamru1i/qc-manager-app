@@ -296,7 +296,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-955 relative overflow-hidden">
+    <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-theme-page-bg relative overflow-hidden">
       {/* Background gradients */}
       <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
@@ -305,13 +305,13 @@ export default function LoginPage() {
         <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white bg-clip-text bg-linear-to-r from-blue-400 to-purple-450">
           QC Manager App
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-400 font-medium">
+        <p className="mt-2 text-center text-sm text-theme-text-muted font-medium">
           Sign in to submit quotation files and track leaves
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10 px-4 sm:px-0">
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 py-8 px-4 shadow-2xl rounded-2xl sm:px-10">
+        <div className="bg-theme-card-bg/50 backdrop-blur-xl border border-theme-border-input/80 py-8 px-4 shadow-2xl rounded-2xl sm:px-10">
           <form className="space-y-6" onSubmit={handleLogin}>
             {error && (
               <div className="rounded-lg bg-red-955/50 border border-red-800/50 p-4 flex items-start gap-3">
@@ -323,13 +323,13 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-semibold text-slate-350 uppercase tracking-wider"
+                className="block text-sm font-semibold text-theme-text-secondary uppercase tracking-wider"
               >
                 Codename
               </label>
               <div className="mt-1.5 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-500" aria-hidden="true" />
+                  <Mail className="h-5 w-5 text-theme-text-muted" aria-hidden="true" />
                 </div>
                 <input
                   id="email"
@@ -342,7 +342,7 @@ export default function LoginPage() {
                     const val = e.target.value;
                     setEmail(val.includes("@") ? val : val.toUpperCase());
                   }}
-                  className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
+                  className="block w-full pl-10 pr-3 py-2.5 bg-theme-card-container/80 border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
                 />
               </div>
             </div>
@@ -350,13 +350,13 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-semibold text-slate-350 uppercase tracking-wider"
+                className="block text-sm font-semibold text-theme-text-secondary uppercase tracking-wider"
               >
                 Password
               </label>
               <div className="mt-1.5 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-500" aria-hidden="true" />
+                  <Lock className="h-5 w-5 text-theme-text-muted" aria-hidden="true" />
                 </div>
                 <input
                   id="password"
@@ -366,12 +366,12 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-2.5 bg-slate-955/85 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
+                  className="block w-full pl-10 pr-10 py-2.5 bg-theme-page-bg/85 border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors focus:outline-none"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors focus:outline-none"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" aria-hidden="true" />
@@ -405,7 +405,7 @@ export default function LoginPage() {
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
-                    <Loader className="animate-spin h-5 w-5 text-white" />{" "}
+                    <Loader className="animate-spin h-5 w-5 text-theme-text-primary" />{" "}
                     Loading...
                   </span>
                 ) : (
@@ -419,11 +419,11 @@ export default function LoginPage() {
         {/* Desktop App Download Area */}
         {!isDesktop && (
           <div className="mt-6">
-            <div className="bg-slate-900/30 backdrop-blur-xl border border-slate-800/50 p-6 shadow-xl rounded-2xl text-center">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <div className="bg-theme-card-bg/30 backdrop-blur-xl border border-theme-border-input/50 p-6 shadow-xl rounded-2xl text-center">
+              <p className="text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                 Submit Quotation Files and Leaves Faster with
               </p>
-              <h3 className="text-sm font-bold text-slate-200 mt-1">
+              <h3 className="text-sm font-bold text-theme-text-primary mt-1">
                 QC Desktop Application
               </h3>
               <div className="grid grid-cols-3 gap-2 mt-4">
@@ -431,10 +431,10 @@ export default function LoginPage() {
                   href={links.windows}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-sky-500/30 hover:bg-slate-900/80 transition-all group cursor-pointer"
+                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-theme-card-container/60 border border-theme-border-input hover:border-sky-500/30 hover:bg-theme-card-bg/80 transition-all group cursor-pointer"
                 >
                   <Monitor className="h-5 w-5 text-sky-400 group-hover:scale-110 transition-all duration-200" />
-                  <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-200 mt-1.5">
+                  <span className="text-[10px] font-bold text-theme-text-muted group-hover:text-theme-text-primary mt-1.5">
                     Windows
                   </span>
                 </a>
@@ -442,10 +442,10 @@ export default function LoginPage() {
                   href={links.macSilicon}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-violet-500/30 hover:bg-slate-900/80 transition-all group cursor-pointer"
+                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-theme-card-container/60 border border-theme-border-input hover:border-violet-500/30 hover:bg-theme-card-bg/80 transition-all group cursor-pointer"
                 >
                   <Apple className="h-5 w-5 text-violet-400 group-hover:scale-110 transition-all duration-200" />
-                  <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-200 mt-1.5">
+                  <span className="text-[10px] font-bold text-theme-text-muted group-hover:text-theme-text-primary mt-1.5">
                     Mac (Silicon)
                   </span>
                 </a>
@@ -453,10 +453,10 @@ export default function LoginPage() {
                   href={links.macIntel}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700/50 hover:bg-slate-900/80 transition-all group cursor-pointer"
+                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-theme-card-container/60 border border-theme-border-input hover:border-theme-border-active/50 hover:bg-theme-card-bg/80 transition-all group cursor-pointer"
                 >
-                  <Apple className="h-5 w-5 text-slate-400 group-hover:scale-110 transition-all duration-200" />
-                  <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-200 mt-1.5">
+                  <Apple className="h-5 w-5 text-theme-text-muted group-hover:scale-110 transition-all duration-200" />
+                  <span className="text-[10px] font-bold text-theme-text-muted group-hover:text-theme-text-primary mt-1.5">
                     Mac (Intel)
                   </span>
                 </a>
@@ -492,13 +492,13 @@ export default function LoginPage() {
                   />
                 </svg>
               </div>
-              <h4 className="text-sm font-bold text-white">
+              <h4 className="text-sm font-bold text-theme-text-primary">
                 Reset Request Sent!
               </h4>
-              <p className="text-xs text-slate-405 leading-relaxed">
+              <p className="text-xs text-theme-text-muted leading-relaxed">
                 Your password reset request has been sent to the admin. Once
                 approved, your password will be reset to the default{" "}
-                <strong className="text-white">1234</strong>.
+                <strong className="text-theme-text-primary">1234</strong>.
               </p>
               <button
                 type="button"
@@ -510,7 +510,7 @@ export default function LoginPage() {
             </div>
           ) : (
             <form onSubmit={handleForgotSubmit} className="space-y-4">
-              <p className="text-xs text-slate-400 leading-relaxed mb-2">
+              <p className="text-xs text-theme-text-muted leading-relaxed mb-2">
                 Enter your codename below. A request will be sent to the admin
                 to allow a password reset.
               </p>
@@ -525,7 +525,7 @@ export default function LoginPage() {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-350 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Codename (Username)
                 </label>
                 <input
@@ -536,7 +536,7 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setForgotUsername(e.target.value.toUpperCase())
                   }
-                  className="mt-1.5 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-mono"
+                  className="mt-1.5 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-mono"
                 />
               </div>
 
@@ -544,7 +544,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="flex-1 py-2 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-300 bg-slate-950 hover:bg-slate-900 cursor-pointer transition-all"
+                  className="flex-1 py-2 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-card-container hover:bg-theme-card-bg cursor-pointer transition-all"
                 >
                   Cancel
                 </button>
@@ -554,7 +554,7 @@ export default function LoginPage() {
                   className="flex-1 flex justify-center py-2 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all items-center gap-1.5"
                 >
                   {forgotLoading && (
-                    <Loader className="animate-spin h-3.5 w-3.5 text-white" />
+                    <Loader className="animate-spin h-3.5 w-3.5 text-theme-text-primary" />
                   )}
                   {forgotLoading ? "Submitting..." : "Submit Request"}
                 </button>

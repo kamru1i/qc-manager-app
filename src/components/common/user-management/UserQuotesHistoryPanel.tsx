@@ -362,23 +362,23 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 bg-slate-900/10 border border-slate-850/50 rounded-2xl">
+      <div className="flex flex-col items-center justify-center py-16 bg-theme-card-bg/10 border border-theme-border-muted/50 rounded-2xl">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <p className="mt-2 text-xs text-slate-400 font-medium">Loading quotes history...</p>
+        <p className="mt-2 text-xs text-theme-text-muted font-medium">Loading quotes history...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 space-y-6">
+    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-2xl rounded-2xl p-6 space-y-6">
       {/* Filters bar */}
-      <div className="bg-slate-955/45 p-4 rounded-xl border border-slate-850 flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="bg-theme-page-bg/45 p-4 rounded-xl border border-theme-border-muted flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Month Selector */}
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
+            className="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
           >
             {availableMonths.map(m => (
               <option key={m.value} value={m.value}>{m.name}</option>
@@ -389,7 +389,7 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
+            className="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
           >
             {availableYears.map(yr => (
               <option key={yr} value={yr}>{yr}</option>
@@ -400,7 +400,7 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
           <select
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
+            className="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
           >
             <option value="">All Branches</option>
             {uniqueBranches.map(b => (
@@ -416,7 +416,7 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
             placeholder="Search by file name or codename..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:outline-none text-xs"
+            className="block w-full px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none text-xs"
           />
         </div>
       </div>
@@ -425,7 +425,7 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
       <StatsGrid stats={monthlyStats} isLoading={loading} />
 
       {/* Records Table */}
-      <div className="border border-slate-850 rounded-xl overflow-hidden bg-slate-950/20">
+      <div className="border border-theme-border-muted rounded-xl overflow-hidden bg-theme-card-container/20">
         <RecordsTable
           records={monthlyFilteredRecords}
           emptyMessage="No file records found matching the filters."

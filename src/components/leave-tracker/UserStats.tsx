@@ -88,14 +88,14 @@ const renderTwoLineLeave = (
   const line2 = `${sign}${h}:${padMin} Hrs`;
 
   const colorClass =
-    customColorClass || (isNeg ? "text-rose-400" : "text-slate-200");
+    customColorClass || (isNeg ? "text-rose-400" : "text-theme-text-primary");
 
   return (
     <div className="flex flex-col items-center text-center mt-1">
       <span className={`${colorClass} font-bold font-mono text-[11px] block`}>
         {line1}
       </span>
-      <span className="text-slate-500 font-medium font-mono text-[10px] block mt-0.5">
+      <span className="text-theme-text-muted font-medium font-mono text-[10px] block mt-0.5">
         {line2}
       </span>
     </div>
@@ -246,12 +246,12 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
     return (
       <div className="flex flex-col select-none">
-        <span className="text-2xl font-bold text-white leading-tight">
+        <span className="text-2xl font-bold text-theme-text-primary leading-tight">
           {isNegative ? "-" : ""}
           {dayStr}
         </span>
         {timeParts && (
-          <span className="text-[10px] font-medium text-slate-400 mt-0.5 block tracking-wide">
+          <span className="text-[10px] font-medium text-theme-text-muted mt-0.5 block tracking-wide">
             {timeParts}
           </span>
         )}
@@ -304,7 +304,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowOfficeDetailsModal(true)}
-                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
+                  className="p-1.5 bg-theme-border-input hover:bg-theme-border-active text-blue-400 border border-theme-border-active rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
                   title="Half-Yearly Leave Account"
                 >
                   <Info className="h-3.5 w-3.5" />
@@ -330,7 +330,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowHistoryModal(true)}
-                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-teal-400 border border-slate-700 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
+                  className="p-1.5 bg-theme-border-input hover:bg-theme-border-active text-teal-400 border border-theme-border-active rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
                   title="Govt Holiday Response History"
                 >
                   <History className="h-3.5 w-3.5" />
@@ -432,18 +432,18 @@ export const UserStats: React.FC<UserStatsProps> = ({
       {showHistoryModal &&
         isMounted &&
         createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-955/80 backdrop-blur-md p-4">
-            <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
               <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-teal-900/10 blur-[80px] pointer-events-none" />
 
-              <div className="flex justify-between items-center border-b border-slate-800/80 pb-3 mb-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
+                <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
                   <History className="h-4 w-4 text-teal-400" /> Govt Holiday
                   Response History
                 </h3>
                 <button
                   onClick={() => setShowHistoryModal(false)}
-                  className="text-slate-450 hover:text-white text-sm cursor-pointer"
+                  className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -451,25 +451,25 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               <div className="max-h-[300px] overflow-y-auto pr-1">
                 {respondedHolidays && respondedHolidays.length > 0 ? (
-                  <div className="border border-slate-850 rounded-xl overflow-hidden bg-slate-955/40">
-                    <table className="w-full text-xs text-slate-355">
+                  <div className="border border-theme-border-muted rounded-xl overflow-hidden bg-theme-page-bg/40">
+                    <table className="w-full text-xs text-theme-text-secondary">
                       <thead>
-                        <tr className="bg-slate-900/60 border-b border-slate-850 text-slate-400 font-semibold text-[10px] uppercase tracking-wider">
+                        <tr className="bg-theme-card-bg/60 border-b border-theme-border-muted text-theme-text-muted font-semibold text-[10px] uppercase tracking-wider">
                           <th className="py-2 px-3 text-left">Date</th>
                           <th className="py-2 px-3 text-left">Holiday Name</th>
                           <th className="py-2 px-3 text-right">Response</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-850">
+                      <tbody className="divide-y divide-theme-border-muted">
                         {respondedHolidays.map((h, i) => (
                           <tr
                             key={i}
-                            className="hover:bg-slate-900/20 transition-colors"
+                            className="hover:bg-theme-card-bg/20 transition-colors"
                           >
                             <td className="py-2.5 px-3 font-mono font-bold text-teal-400">
                               {formatDate(h.date)}
                             </td>
-                            <td className="py-2.5 px-3 text-slate-200">
+                            <td className="py-2.5 px-3 text-theme-text-primary">
                               {h.name}
                             </td>
                             <td className="py-2.5 px-3 text-right">
@@ -498,7 +498,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                           h.response,
                                         )
                                       }
-                                      className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition-all cursor-pointer flex items-center justify-center disabled:opacity-50"
+                                      className="p-1 hover:bg-theme-border-input text-theme-text-muted hover:text-theme-text-primary rounded transition-all cursor-pointer flex items-center justify-center disabled:opacity-50"
                                       title="Change Response Preference"
                                     >
                                       {updatingHolidayDate === h.date ? (
@@ -516,17 +516,17 @@ export const UserStats: React.FC<UserStatsProps> = ({
                     </table>
                   </div>
                 ) : (
-                  <p className="text-center py-6 text-xs text-slate-500 font-medium">
+                  <p className="text-center py-6 text-xs text-theme-text-muted font-medium">
                     No govt holiday response records.
                   </p>
                 )}
               </div>
 
-              <div className="mt-5 pt-4 border-t border-slate-800/80 flex justify-end">
+              <div className="mt-5 pt-4 border-t border-theme-border-input/80 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setShowHistoryModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                  className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs font-semibold cursor-pointer transition-all"
                 >
                   Close
                 </button>
@@ -541,18 +541,18 @@ export const UserStats: React.FC<UserStatsProps> = ({
         halfYearlyStats &&
         isMounted &&
         createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-955/80 backdrop-blur-md p-4">
-            <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
               <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
 
-              <div className="flex justify-between items-center border-b border-slate-800/80 pb-3 mb-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
+                <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-blue-400" /> Half-Yearly
                   Office Leave Details
                 </h3>
                 <button
                   onClick={() => setShowOfficeDetailsModal(false)}
-                  className="text-slate-450 hover:text-white text-sm cursor-pointer"
+                  className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -560,15 +560,15 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               <div className="space-y-4">
                 {/* H1 Section */}
-                <div className="bg-slate-955/40 border border-slate-850 p-4 rounded-xl">
-                  <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-slate-800 pb-1.5 uppercase tracking-wider">
+                <div className="bg-theme-page-bg/40 border border-theme-border-muted p-4 rounded-xl">
+                  <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-theme-border-input pb-1.5 uppercase tracking-wider">
                     H1 (January - June)
                   </h4>
                   <div
                     className={`grid ${hasH1Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
                   >
-                    <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                         {hasH1Carryover ? "Base" : "Allocated"}
                       </span>
                       {renderTwoLineLeave(
@@ -579,15 +579,15 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       )}
                     </div>
                     {hasH1Carryover && (
-                      <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                        <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                           Carryover
                         </span>
                         {renderTwoLineLeave(h1Carryover, workingHours, true)}
                       </div>
                     )}
-                    <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                         Taken
                       </span>
                       {renderTwoLineLeave(
@@ -595,8 +595,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         workingHours,
                       )}
                     </div>
-                    <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                         Remaining
                       </span>
                       {renderTwoLineLeave(
@@ -618,15 +618,15 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 </div>
 
                 {/* H2 Section */}
-                <div className="bg-slate-955/40 border border-slate-850 p-4 rounded-xl">
-                  <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-slate-800 pb-1.5 uppercase tracking-wider">
+                <div className="bg-theme-page-bg/40 border border-theme-border-muted p-4 rounded-xl">
+                  <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-theme-border-input pb-1.5 uppercase tracking-wider">
                     H2 (July - December)
                   </h4>
                   <div
                     className={`grid ${hasH2Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
                   >
-                    <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                         {hasH2Carryover ? "Base" : "Allocated"}
                       </span>
                       {renderTwoLineLeave(
@@ -637,8 +637,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       )}
                     </div>
                     {hasH2Carryover && (
-                      <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                        <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                           Carryover
                         </span>
                         {renderTwoLineLeave(
@@ -648,8 +648,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         )}
                       </div>
                     )}
-                    <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                         Taken
                       </span>
                       {renderTwoLineLeave(
@@ -657,8 +657,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         workingHours,
                       )}
                     </div>
-                    <div className="bg-slate-900/40 p-2 rounded-lg border border-slate-850/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-slate-500 block text-[9px] uppercase font-semibold">
+                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                         Remaining
                       </span>
                       {renderTwoLineLeave(
@@ -674,11 +674,11 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 </div>
               </div>
 
-              <div className="mt-5 pt-4 border-t border-slate-800/80 flex justify-end">
+              <div className="mt-5 pt-4 border-t border-theme-border-input/80 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setShowOfficeDetailsModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                  className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs font-semibold cursor-pointer transition-all"
                 >
                   Close
                 </button>
@@ -693,12 +693,12 @@ export const UserStats: React.FC<UserStatsProps> = ({
         editPrefHoliday &&
         isMounted &&
         createPortal(
-          <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-955/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-            <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
               <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-teal-900/10 blur-[80px] pointer-events-none" />
 
-              <div className="flex justify-between items-center border-b border-slate-800/80 pb-3 mb-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
+                <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
                   <Edit className="h-4 w-4 text-teal-400" /> Update Holiday
                   Preference
                 </h3>
@@ -707,7 +707,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                     setShowEditPrefModal(false);
                     setEditPrefHoliday(null);
                   }}
-                  className="text-slate-450 hover:text-white text-sm cursor-pointer"
+                  className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -715,10 +715,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               <div className="space-y-4">
                 {/* Holiday Info */}
-                <div className="bg-slate-955/60 border border-slate-850 p-4 rounded-xl space-y-1.5">
+                <div className="bg-theme-page-bg/60 border border-theme-border-muted p-4 rounded-xl space-y-1.5">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="text-sm font-bold text-white">
+                      <h4 className="text-sm font-bold text-theme-text-primary">
                         {editPrefHoliday.name}
                       </h4>
                       <span className="text-[11px] font-mono text-teal-400 font-bold">
@@ -742,7 +742,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
                 {/* Selection cards */}
                 <div className="space-y-3">
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider">
                     Select New Preference
                   </label>
                   <div className="grid grid-cols-1 gap-2.5">
@@ -753,14 +753,14 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       className={`flex items-start gap-3 p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                         selectedPref === "reserve"
                           ? "bg-teal-955/20 border-teal-500/80 shadow-[0_0_12px_rgba(20,184,166,0.15)]"
-                          : "bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800"
+                          : "bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input"
                       }`}
                     >
                       <div
                         className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                           selectedPref === "reserve"
                             ? "border-teal-400"
-                            : "border-slate-600"
+                            : "border-theme-border-input"
                         }`}
                       >
                         {selectedPref === "reserve" && (
@@ -768,10 +768,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         )}
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white block">
+                        <span className="text-xs font-bold text-theme-text-primary block">
                           Reserve Holiday
                         </span>
-                        <span className="text-[10px] text-slate-400 leading-normal block mt-0.5">
+                        <span className="text-[10px] text-theme-text-muted leading-normal block mt-0.5">
                           Employee can adjust any future leave against this
                           holiday.
                         </span>
@@ -785,14 +785,14 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       className={`flex items-start gap-3 p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                         selectedPref === "paid"
                           ? "bg-emerald-955/20 border-emerald-500/80 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                          : "bg-slate-955/20 border-slate-850 hover:bg-slate-850/40 hover:border-slate-800"
+                          : "bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input"
                       }`}
                     >
                       <div
                         className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                           selectedPref === "paid"
                             ? "border-emerald-400"
-                            : "border-slate-600"
+                            : "border-theme-border-input"
                         }`}
                       >
                         {selectedPref === "paid" && (
@@ -800,10 +800,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         )}
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white block">
+                        <span className="text-xs font-bold text-theme-text-primary block">
                           Get Paid (Payment)
                         </span>
-                        <span className="text-[10px] text-slate-400 leading-normal block mt-0.5">
+                        <span className="text-[10px] text-theme-text-muted leading-normal block mt-0.5">
                           Holiday is paid with salary. The adjustment will be
                           removed and cannot be used for leave.
                         </span>
@@ -830,14 +830,14 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   )}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800/80 flex justify-end gap-2.5">
+              <div className="mt-6 pt-4 border-t border-theme-border-input/80 flex justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
                     setShowEditPrefModal(false);
                     setEditPrefHoliday(null);
                   }}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                  className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs font-semibold cursor-pointer transition-all"
                 >
                   Cancel
                 </button>

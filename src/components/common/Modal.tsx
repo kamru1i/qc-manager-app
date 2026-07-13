@@ -1,5 +1,5 @@
-import React from 'react';
-import { createPortal } from 'react-dom';
+import React from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   isOpen: boolean;
@@ -17,8 +17,8 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   icon,
-  maxWidthClass = 'max-w-md',
-  glowClass = 'bg-blue-900/10',
+  maxWidthClass = "max-w-md",
+  glowClass = "bg-blue-900/10",
   children,
   headerExtra,
 }) => {
@@ -47,49 +47,53 @@ export const Modal: React.FC<ModalProps> = ({
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
     if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener("keydown", handleKeyDown);
     }
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
 
   if (!shouldRender || !mounted) return null;
 
   return createPortal(
-    <div 
-      className={`fixed inset-0 z-[100] overflow-y-auto bg-slate-955/80 backdrop-blur-md transition-opacity duration-200 ease-out ${
-        isAnimated ? 'opacity-100' : 'opacity-0'
+    <div
+      className={`fixed inset-0 z-100 overflow-y-auto bg-theme-page-bg/80 backdrop-blur-md transition-opacity duration-200 ease-out ${
+        isAnimated ? "opacity-100" : "opacity-0"
       }`}
     >
       <div className="flex min-h-full items-center justify-center p-4">
-        <div 
-          className={`bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl w-full ${maxWidthClass} p-6 relative font-sans my-8 transform transition-all duration-200 ease-out ${
-            isAnimated ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
+        <div
+          className={`bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full ${maxWidthClass} p-6 relative font-sans my-8 transform transition-all duration-200 ease-out ${
+            isAnimated
+              ? "scale-100 opacity-100 translate-y-0"
+              : "scale-95 opacity-0 translate-y-4"
           }`}
         >
           {/* Abstract glowing bubble wrapper to prevent clipping of absolute children like select menus */}
           <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-0">
-            <div className={`absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full ${glowClass} blur-[80px]`} />
+            <div
+              className={`absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full ${glowClass} blur-[80px]`}
+            />
           </div>
-          
+
           {/* Header */}
-          <div className="relative z-10 flex justify-between items-center border-b border-slate-800/80 pb-3 mb-5">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <div className="relative z-10 flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-5">
+            <h3 className="text-base font-bold text-theme-text-primary flex items-center gap-2">
               {icon}
               {title}
             </h3>
             <div className="flex items-center gap-3">
               {headerExtra}
-              <button 
+              <button
                 type="button"
                 onClick={onClose}
-                className="text-slate-450 hover:text-white text-sm cursor-pointer focus:outline-none"
+                className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer focus:outline-none"
                 aria-label="Close modal"
               >
                 ✕
@@ -98,12 +102,10 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
 
           {/* Content */}
-          <div className="relative z-10">
-            {children}
-          </div>
+          <div className="relative z-10">{children}</div>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };

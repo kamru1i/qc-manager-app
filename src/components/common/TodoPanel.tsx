@@ -576,23 +576,23 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   return (
     <div className="space-y-6">
       {/* Tab Navigation header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-slate-800 shrink-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-theme-border-input shrink-0">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
             <ListTodo className="w-5 h-5 text-indigo-500" />
             Superadmin Tasks Registry
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">Manage daily assignments, carry-overs, and archive tracking.</p>
+          <p className="text-xs text-theme-text-muted mt-0.5">Manage daily assignments, carry-overs, and archive tracking.</p>
         </div>
 
         {/* Sub-tabs Selector */}
-        <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs">
+        <div className="flex bg-theme-card-container p-1.5 rounded-xl border border-theme-border-input text-xs">
           <button
             onClick={() => setSubTab('daily')}
             className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all cursor-pointer ${
               subTab === 'daily'
                 ? 'bg-blue-600/15 border border-blue-500/20 text-blue-400'
-                : 'text-slate-450 hover:text-white'
+                : 'text-theme-text-muted hover:text-theme-text-primary'
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -603,7 +603,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all cursor-pointer ${
               subTab === 'all'
                 ? 'bg-blue-600/15 border border-blue-500/20 text-blue-400'
-                : 'text-slate-450 hover:text-white'
+                : 'text-theme-text-muted hover:text-theme-text-primary'
             }`}
           >
             <CalendarDays className="w-4 h-4" />
@@ -620,7 +620,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
           ) : (
             <>
           {/* Add task form and copy options */}
-          <div className="flex flex-col md:flex-row items-center gap-4 bg-slate-950/40 p-4 border border-slate-800/60 rounded-xl">
+          <div className="flex flex-col md:flex-row items-center gap-4 bg-theme-card-container/40 p-4 border border-theme-border-input/60 rounded-xl">
             <form onSubmit={handleAddTodo} className="flex-1 w-full flex items-center gap-2.5">
               <input
                 type="text"
@@ -629,9 +629,9 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 value={newTask}
                 onChange={(e) => setNewTask(e.target.value)}
                 disabled={loading}
-                className="flex-1 min-w-0 px-4 py-2.5 bg-slate-900/60 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
+                className="flex-1 min-w-0 px-4 py-2.5 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
               />
-              <label className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-900/40 border border-slate-800/80 rounded-xl cursor-pointer select-none hover:bg-slate-900 transition-colors shrink-0">
+              <label className="flex items-center gap-2 px-3.5 py-2.5 bg-theme-card-bg/40 border border-theme-border-input/80 rounded-xl cursor-pointer select-none hover:bg-theme-card-bg transition-colors shrink-0">
                 <input
                   type="checkbox"
                   checked={isAllTime}
@@ -643,12 +643,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                   className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all ${
                     isAllTime
                       ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400'
-                      : 'border-slate-700 hover:border-slate-500 bg-slate-950/40'
+                      : 'border-theme-border-active hover:border-theme-border-active bg-theme-card-container/40'
                   }`}
                 >
                   {isAllTime && <Check className="w-2.5 h-2.5 stroke-3" />}
                 </div>
-                <span className="text-[11px] text-slate-350 hover:text-white font-bold tracking-wide transition-colors">Permanent</span>
+                <span className="text-[11px] text-theme-text-secondary hover:text-theme-text-primary font-bold tracking-wide transition-colors">Permanent</span>
               </label>
               <button
                 type="submit"
@@ -671,7 +671,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 <button
                   type="button"
                   onClick={() => setTodoToDelete('bulk')}
-                  className="p-2 text-rose-500 hover:text-rose-450 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 rounded-xl cursor-pointer flex items-center justify-center shrink-0 transition-all"
+                  className="p-2 text-rose-500 hover:text-rose-450 hover:bg-theme-card-bg border border-theme-border-muted hover:border-theme-border-input rounded-xl cursor-pointer flex items-center justify-center shrink-0 transition-all"
                   title={`Delete ${selectedTodoIds.length} selected tasks`}
                 >
                   <Trash2 className="h-4 w-4 text-rose-500 stroke-[2.5]" />
@@ -685,7 +685,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                       setSelectedTodoIds(sortedTodos.map((t) => t.id));
                     }
                   }}
-                  className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 shrink-0 ${
+                  className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 shrink-0 ${
                     sortedTodos.length > 0 && sortedTodos.every((t) => selectedTodoIds.includes(t.id))
                       ? 'bg-indigo-500 border-indigo-500'
                       : ''
@@ -696,20 +696,20 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
                   )}
                 </button>
-                <div className="h-5 w-px bg-slate-800 mx-1" />
+                <div className="h-5 w-px bg-theme-border-input mx-1" />
               </div>
 
               <button
                 type="button"
                 onClick={handleCopyTodos}
                 disabled={loading || todos.length === 0}
-                className="p-2.5 bg-slate-900 border border-slate-800 hover:border-slate-750 text-slate-400 hover:text-white rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="p-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 title="Copy formatted checklist to clipboard"
               >
                 {copied ? (
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-slate-450" />
+                  <Copy className="w-3.5 h-3.5 text-theme-text-muted" />
                 )}
               </button>
 
@@ -717,7 +717,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 type="button"
                 onClick={fetchDailyTodos}
                 disabled={loading}
-                className="p-2.5 bg-slate-900 border border-slate-800 hover:border-slate-750 text-slate-400 hover:text-white rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                className="p-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 title="Refresh today's list"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -727,11 +727,11 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
           {/* List display */}
           {todos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-slate-950/15 border border-slate-850 rounded-2xl">
-              <ListTodo className="w-12 h-12 text-slate-600 animate-pulse" />
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-theme-card-container/15 border border-theme-border-muted rounded-2xl">
+              <ListTodo className="w-12 h-12 text-theme-text-muted/80 animate-pulse" />
               <div>
-                <p className="text-slate-300 font-bold text-sm">No tasks listed for today</p>
-                <p className="text-xs text-slate-500 max-w-sm mt-1 leading-relaxed">
+                <p className="text-theme-text-secondary font-bold text-sm">No tasks listed for today</p>
+                <p className="text-xs text-theme-text-muted max-w-sm mt-1 leading-relaxed">
                   Start your day by adding tasks above, or check back later to sync database lists.
                 </p>
               </div>
@@ -750,8 +750,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                         : todo.status === 'Completed'
                         ? 'bg-emerald-950/5 border-emerald-500/10 hover:border-emerald-500/20'
                         : todo.status === 'Working'
-                        ? 'bg-slate-950/25 border-slate-800/70 hover:border-slate-800'
-                        : 'bg-slate-950/5 border-slate-900/50 hover:border-slate-850 opacity-80'
+                        ? 'bg-theme-card-container/25 border-theme-border-input/70 hover:border-theme-border-input'
+                        : 'bg-theme-card-container/5 border-theme-card-bg/50 hover:border-theme-border-muted opacity-80'
                     }`}
                   >
                     {/* Task and Comment Layout */}
@@ -768,7 +768,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                               if (e.key === 'Escape') setEditingTodoId(null);
                             }}
                             autoFocus
-                            className="w-full max-w-lg px-2.5 py-1 bg-slate-900 border border-indigo-500 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="w-full max-w-lg px-2.5 py-1 bg-theme-card-bg border border-indigo-500 rounded-lg text-xs text-theme-text-primary focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           />
                         ) : (
                           <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -780,10 +780,10 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                               }}
                               className={`text-xs font-semibold leading-relaxed cursor-text select-none truncate ${
                                 todo.status === 'Completed'
-                                  ? 'text-slate-550 line-through'
+                                  ? 'text-theme-text-muted line-through'
                                   : todo.status === 'Idle'
-                                  ? 'text-slate-500 italic font-medium'
-                                  : 'text-slate-200'
+                                  ? 'text-theme-text-muted italic font-medium'
+                                  : 'text-theme-text-primary'
                               }`}
                               title="Click twice or double-click to edit name"
                             >
@@ -806,7 +806,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
                         {/* Comment Input Box */}
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-medium shrink-0">Notes:</span>
+                          <span className="text-[10px] text-theme-text-muted uppercase tracking-wider font-medium shrink-0">Notes:</span>
                           <input
                             type="text"
                             placeholder="Need time, will finish tomorrow..."
@@ -818,14 +818,14 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                               );
                             }}
                             onBlur={(e) => handleUpdateComment(todo.id, e.target.value)}
-                            className="w-full max-w-md px-2.5 py-1 bg-slate-900/45 hover:bg-slate-900/80 focus:bg-slate-950 border border-slate-850 hover:border-slate-800 focus:border-indigo-500/50 rounded-lg text-[11px] text-slate-350 focus:outline-none transition-all"
+                            className="w-full max-w-md px-2.5 py-1 bg-theme-card-bg/45 hover:bg-theme-card-bg/80 focus:bg-theme-card-container border border-theme-border-muted hover:border-theme-border-input focus:border-indigo-500/50 rounded-lg text-[11px] text-theme-text-secondary focus:outline-none transition-all"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Meta Indicators and Actions */}
-                    <div className="flex items-center gap-3 shrink-0 justify-end border-t sm:border-0 border-slate-900/50 pt-3 sm:pt-0">
+                    <div className="flex items-center gap-3 shrink-0 justify-end border-t sm:border-0 border-theme-card-bg/50 pt-3 sm:pt-0">
                       <div className="flex items-center gap-2">
                         {/* Interactive checkmark toggle - moved to the RIGHT */}
                         <button
@@ -835,7 +835,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                               ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
                               : todo.status === 'Working'
                               ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
-                              : 'border-slate-700 text-transparent hover:border-slate-500 hover:bg-slate-800/40'
+                              : 'border-theme-border-active text-transparent hover:border-theme-border-active hover:bg-theme-border-input/40'
                           }`}
                           title={`Status: ${todo.status}. Click to cycle status.`}
                         >
@@ -852,7 +852,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                         <button
                           type="button"
                           onClick={() => handleToggleSelect(todo.id)}
-                          className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                          className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
                             isSelected ? 'bg-indigo-500 border-indigo-500' : ''
                           } ${
                             selectedTodoIds.length > 0
@@ -878,15 +878,15 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       {subTab === 'all' && (
         <div className="space-y-6">
           {/* Filters Bar */}
-          <div className="flex flex-wrap items-center gap-4 bg-slate-950/40 p-4 border border-slate-800/60 rounded-xl">
+          <div className="flex flex-wrap items-center gap-4 bg-theme-card-container/40 p-4 border border-theme-border-input/60 rounded-xl">
             {/* Year Selector */}
             <div className="flex flex-col gap-1.5 min-w-[120px]">
-              <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Select Year</span>
+              <span className="text-[10px] text-theme-text-muted uppercase font-semibold tracking-wider">Select Year</span>
               <div className="relative">
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs text-white px-3 py-2 rounded-xl focus:outline-none appearance-none cursor-pointer pr-8"
+                  className="w-full bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-xs text-theme-text-primary px-3 py-2 rounded-xl focus:outline-none appearance-none cursor-pointer pr-8"
                 >
                   {yearsList.map((y) => (
                     <option key={y} value={y}>
@@ -894,18 +894,18 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-2.5 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
+                <ChevronDown className="absolute right-2.5 top-2.5 h-4 w-4 text-theme-text-muted pointer-events-none" />
               </div>
             </div>
 
             {/* Month Selector */}
             <div className="flex flex-col gap-1.5 min-w-[160px]">
-              <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Select Month</span>
+              <span className="text-[10px] text-theme-text-muted uppercase font-semibold tracking-wider">Select Month</span>
               <div className="relative">
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs text-white px-3 py-2 rounded-xl focus:outline-none appearance-none cursor-pointer pr-8"
+                  className="w-full bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-xs text-theme-text-primary px-3 py-2 rounded-xl focus:outline-none appearance-none cursor-pointer pr-8"
                 >
                   {monthsList.map((m) => (
                     <option key={m.val} value={m.val}>
@@ -913,7 +913,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-2.5 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
+                <ChevronDown className="absolute right-2.5 top-2.5 h-4 w-4 text-theme-text-muted pointer-events-none" />
               </div>
             </div>
 
@@ -922,7 +922,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 type="button"
                 onClick={fetchArchiveTodos}
                 disabled={archiveLoading}
-                className="px-4 py-2.5 bg-slate-900 border border-slate-800 hover:border-slate-750 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${archiveLoading ? 'animate-spin' : ''}`} />
                 Reload Archives
@@ -935,17 +935,17 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             <div className="space-y-6">
               {[...Array(2)].map((_, i) => (
                 <div key={i} className="space-y-3">
-                  <div className="w-24 h-4 bg-slate-800 rounded animate-pulse" />
-                  <div className="p-4 bg-slate-950/20 border border-slate-800/60 rounded-xl animate-pulse h-16" />
+                  <div className="w-24 h-4 bg-theme-border-input rounded animate-pulse" />
+                  <div className="p-4 bg-theme-card-container/20 border border-theme-border-input/60 rounded-xl animate-pulse h-16" />
                 </div>
               ))}
             </div>
           ) : Object.keys(groupedArchiveTodos).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-slate-950/15 border border-slate-850 rounded-2xl">
-              <CalendarDays className="w-12 h-12 text-slate-600 animate-pulse" />
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-theme-card-container/15 border border-theme-border-muted rounded-2xl">
+              <CalendarDays className="w-12 h-12 text-theme-text-muted/80 animate-pulse" />
               <div>
-                <p className="text-slate-300 font-bold text-sm">No historical logs found</p>
-                <p className="text-xs text-slate-500 max-w-sm mt-1 leading-relaxed">
+                <p className="text-theme-text-secondary font-bold text-sm">No historical logs found</p>
+                <p className="text-xs text-theme-text-muted max-w-sm mt-1 leading-relaxed">
                   There are no saved todos for the selected timeframe: {monthsList.find(m => m.val === selectedMonth)?.name} {selectedYear}.
                 </p>
               </div>
@@ -956,17 +956,17 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 <div key={date} className="space-y-2.5">
                   <div className="flex justify-between items-center w-full">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 bg-slate-800/80 border border-slate-750 text-slate-300 font-mono text-[10px] font-bold rounded-lg tracking-wider">
+                      <span className="px-2.5 py-1 bg-theme-border-input/80 border border-theme-border-active text-theme-text-secondary font-mono text-[10px] font-bold rounded-lg tracking-wider">
                         {formatDateDisplay(date)}
                       </span>
-                      <span className="text-[10px] text-slate-550 font-medium">({list.length} {list.length === 1 ? 'task' : 'tasks'})</span>
+                      <span className="text-[10px] text-theme-text-muted font-medium">({list.length} {list.length === 1 ? 'task' : 'tasks'})</span>
                     </div>
                     {/* Copy Button */}
                     <button
                       type="button"
                       onClick={() => handleCopyDateTodos(date, list)}
-                      className={`flex items-center gap-1 px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-750 text-[10px] font-bold rounded-lg transition-all active:scale-95 cursor-pointer ${
-                        copiedDates[date] ? 'text-emerald-500 bg-emerald-500/5 border border-emerald-500/10' : 'text-slate-400 hover:text-white'
+                      className={`flex items-center gap-1 px-2.5 py-1 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-[10px] font-bold rounded-lg transition-all active:scale-95 cursor-pointer ${
+                        copiedDates[date] ? 'text-emerald-500 bg-emerald-500/5 border border-emerald-500/10' : 'text-theme-text-muted hover:text-white'
                       }`}
                       title="Copy formatted checklist to clipboard"
                     >
@@ -984,19 +984,19 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     </button>
                   </div>
 
-                  <div className="bg-slate-955 border border-slate-850/60 rounded-xl overflow-hidden shadow-inner">
+                  <div className="bg-theme-page-bg border border-theme-border-muted/60 rounded-xl overflow-hidden shadow-inner">
                     <table className="w-full border-collapse text-left text-xs">
                       <thead>
-                        <tr className="bg-slate-950 border-b border-slate-850/80 text-[10px] text-slate-550 uppercase tracking-wider font-bold">
+                        <tr className="bg-theme-card-container border-b border-theme-border-muted/80 text-[10px] text-theme-text-muted uppercase tracking-wider font-bold">
                           <th className="px-3 py-2 w-[60%]">Task Name</th>
                           <th className="px-3 py-2 w-[15%] text-center">Status</th>
                           <th className="px-3 py-2 w-[25%]">Notes / Comments</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-850/40 text-slate-350">
+                      <tbody className="divide-y divide-theme-border-muted/40 text-theme-text-secondary">
                         {list.map((item) => (
-                          <tr key={item.id} className="hover:bg-slate-900/35 transition-colors">
-                            <td className="px-3 py-1.5 font-medium text-slate-200">
+                          <tr key={item.id} className="hover:bg-theme-card-bg/35 transition-colors">
+                            <td className="px-3 py-1.5 font-medium text-theme-text-primary">
                               <div className="flex items-center gap-2">
                                 {item.status === 'Completed' ? (
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
@@ -1019,8 +1019,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                                 {item.status}
                               </span>
                             </td>
-                            <td className="px-3 py-1.5 text-xs text-slate-450 italic truncate max-w-[200px]" title={item.comment || ''}>
-                              {item.comment || <span className="text-slate-650 select-none">-</span>}
+                            <td className="px-3 py-1.5 text-xs text-theme-text-muted italic truncate max-w-[200px]" title={item.comment || ''}>
+                              {item.comment || <span className="text-theme-text-muted/60 select-none">-</span>}
                             </td>
                           </tr>
                         ))}
@@ -1062,7 +1062,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         createPortal(
           <div
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-            className="fixed z-50 backdrop-blur-lg bg-slate-900/95 border border-slate-800 rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
+            className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
           >
             {selectedTodoIds.includes(contextMenu.todoId) ? (
               <button
@@ -1070,7 +1070,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                   handleToggleSelect(contextMenu.todoId);
                   setContextMenu(null);
                 }}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-350 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
                 Deselect
@@ -1081,7 +1081,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                   handleToggleSelect(contextMenu.todoId);
                   setContextMenu(null);
                 }}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-350 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 <div className="h-2 w-2 rounded-full bg-blue-500" />
                 Select
@@ -1093,9 +1093,9 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 if (todo) handleToggleAllTime(todo);
                 setContextMenu(null);
               }}
-              className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-350 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
-              <CalendarDays className="h-3.5 w-3.5 text-slate-500" />
+              <CalendarDays className="h-3.5 w-3.5 text-theme-text-muted" />
               {todos.find((x) => x.id === contextMenu.todoId)?.is_all_time ? 'Make Regular' : 'Make Permanent'}
             </button>
             <button
@@ -1105,9 +1105,9 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 setEditingTaskText(t ? t.task : '');
                 setContextMenu(null);
               }}
-              className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-350 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
-              <Edit className="h-3.5 w-3.5 text-slate-500" />
+              <Edit className="h-3.5 w-3.5 text-theme-text-muted" />
               Edit
             </button>
             <button

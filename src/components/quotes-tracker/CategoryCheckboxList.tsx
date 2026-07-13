@@ -24,7 +24,7 @@ const ALL_FILE_TYPES: FileType[] = [
 
 const getCategoryCheckboxStyle = (type: FileType, isChecked: boolean) => {
   if (!isChecked) {
-    return 'border-slate-700 bg-slate-900 text-transparent';
+    return 'border-theme-border-active bg-theme-card-bg text-transparent';
   }
   switch (type) {
     case 'Sale':
@@ -38,9 +38,9 @@ const getCategoryCheckboxStyle = (type: FileType, isChecked: boolean) => {
     case 'Requote Bike':
       return 'bg-blue-500 border-blue-400 text-white';
     case 'Review':
-      return 'bg-pink-500 border-pink-400 text-white';
+      return 'bg-pink-500 border-pink-400 text-theme-text-primary';
     case 'Review Van':
-      return 'bg-pink-600 border-pink-500 text-white';
+      return 'bg-pink-600 border-pink-500 text-theme-text-primary';
     case 'Review Bike':
       return 'bg-rose-500 border-rose-400 text-white';
     case 'Individual Review':
@@ -83,9 +83,9 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
   };
 
   return (
-    <div className="space-y-2 border-t border-slate-800/80 pt-3">
+    <div className="space-y-2 border-t border-theme-border-input/80 pt-3">
       <div className="flex items-center justify-between">
-        <label className="block text-[11px] font-semibold text-slate-300">
+        <label className="block text-[11px] font-semibold text-theme-text-secondary">
           {label}
         </label>
         {!disabled && (
@@ -105,10 +105,10 @@ export const CategoryCheckboxList: React.FC<CategoryCheckboxListProps> = ({
             <label
               key={type}
               onClick={() => handleToggleCategory(type)}
-              className={`flex items-center justify-between px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-955/50 text-[10px] font-semibold text-slate-400 select-none transition-all duration-200 ${
+              className={`flex items-center justify-between px-3 py-1.5 rounded-lg border border-theme-border-input bg-theme-page-bg/50 text-[10px] font-semibold text-theme-text-muted select-none transition-all duration-200 ${
                 disabled 
                   ? 'opacity-70 pointer-events-none' 
-                  : 'hover:text-white cursor-pointer hover:scale-[1.02] active:scale-[0.98]'
+                  : 'hover:text-theme-text-primary cursor-pointer hover:scale-[1.02] active:scale-[0.98]'
               }`}
             >
               <span className="truncate mr-1">{type}</span>

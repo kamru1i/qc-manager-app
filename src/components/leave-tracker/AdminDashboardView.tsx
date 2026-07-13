@@ -357,7 +357,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 setActiveTab('add_leave' as any);
               }
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] font-sans"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] font-sans"
             title="Back to Leave Tracker"
           >
             <ArrowLeft className="h-4 w-4 text-blue-400" /> Back
@@ -376,17 +376,17 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           ) : (
             <>
               {/* Individual Profile Top Box */}
-              <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-850 shadow-2xl rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-2xl rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setViewingStaffId(null)}
-                    className="p-2.5 bg-slate-855 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-700 transition-all cursor-pointer"
+                    className="p-2.5 bg-theme-border-muted border border-theme-border-active text-theme-text-secondary rounded-xl hover:bg-theme-border-active transition-all cursor-pointer"
                     title="Go Back"
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </button>
                   <div>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
                       {staffProfile?.full_name || 'Staff User'}{staffProfile?.username ? ` (${staffProfile.username.toUpperCase()})` : ''}
                       <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${staffProfile?.role === 'admin'
                         ? 'bg-blue-955/60 border-blue-800 text-blue-300'
@@ -397,9 +397,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         {staffProfile?.job_role || (staffProfile?.role === 'admin' ? 'Admin' : (staffProfile?.role === 'supervisor' ? 'Supervisor' : 'Staff'))}
                       </span>
                     </h2>
-                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-400">
-                      <div>Working Hours: <strong className="text-white">{formatWorkingHours(staffProfile?.working_hours || 9.5)}</strong></div>
-                      <div>Break Time: <strong className="text-white">{staffProfile?.break_time || 0} mins</strong></div>
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-theme-text-muted">
+                      <div>Working Hours: <strong className="text-theme-text-primary">{formatWorkingHours(staffProfile?.working_hours || 9.5)}</strong></div>
+                      <div>Break Time: <strong className="text-theme-text-primary">{staffProfile?.break_time || 0} mins</strong></div>
                     </div>
                   </div>
                 </div>
@@ -408,7 +408,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   <div className="flex gap-2">
                     <button
                       onClick={() => onChangePasswordClick(staffProfile?.id || '', staffProfile?.username || '')}
-                      className="px-3.5 py-2 bg-slate-855 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
+                      className="px-3.5 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md flex items-center gap-1.5"
                     >
                       <AlertTriangle className="h-3.5 w-3.5 text-purple-500" /> Change Password
                     </button>
@@ -493,14 +493,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         <div className="flex flex-col gap-6">
           {activeTab === 'govt_responses' ? (
             /* ================= GOVT HOLIDAY RESPONSES TABLE REPORT ================= */
-            <div className="bg-slate-900/40 backdrop-blur-xl  shadow-2xl rounded-2xl p-6 flex flex-col gap-4 animate-fade-in">
+            <div className="bg-theme-card-bg/40 backdrop-blur-xl  shadow-2xl rounded-2xl p-6 flex flex-col gap-4 animate-fade-in">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h3 className="text-md font-bold text-white flex items-center gap-2">
+                  <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
                     <Calendar className="h-4.5 w-4.5 text-teal-400" />
                     Govt Holiday Response Report
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-theme-text-muted mt-1">
                     Staff preferences and responses for government holidays (Paid vs Reserve)
                   </p>
                 </div>
@@ -525,21 +525,21 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               </div>
 
               {/* Search Filters */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full bg-slate-905/40 p-3 rounded-xl border border-slate-850">
+              <div className="flex flex-col sm:flex-row gap-3 w-full bg-theme-card-container/40 p-3 rounded-xl border border-theme-border-muted">
                 <div className="flex-1 relative">
-                  <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-1">Search by holiday name or Name (codename)</label>
+                  <label className="text-[10px] uppercase tracking-wider text-theme-text-muted font-bold block mb-1">Search by holiday name or Name (codename)</label>
                   <div className="relative">
                     <input
                       type="text"
                       placeholder="Search name or codename..."
                       value={holidaySearchQuery}
                       onChange={(e) => setHolidaySearchQuery(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-3 pr-10 py-2 text-xs text-white focus:outline-none focus:border-teal-500/50 transition-all placeholder-slate-500"
+                      className="w-full bg-theme-card-bg border border-theme-border-input rounded-lg pl-3 pr-10 py-2 text-xs text-theme-text-primary focus:outline-none focus:border-teal-500/50 transition-all placeholder-theme-text-muted/50"
                     />
                     {holidaySearchQuery && (
                       <button
                         onClick={() => setHolidaySearchQuery('')}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-355 transition-colors cursor-pointer text-sm font-semibold"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer text-sm font-semibold"
                         title="Clear search"
                       >
                         ✕
@@ -548,11 +548,11 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   </div>
                 </div>
                 <div className="w-full sm:w-48">
-                  <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-1">Filter by holiday date</label>
+                  <label className="text-[10px] uppercase tracking-wider text-theme-text-muted font-bold block mb-1">Filter by holiday date</label>
                   <DateInput
                     value={holidaySearchDate}
                     onChange={(val) => setHolidaySearchDate(val)}
-                    className="bg-slate-900 border border-slate-800"
+                    className="bg-theme-card-bg border border-theme-border-input"
                   />
                 </div>
                 <div className="flex items-end">
@@ -561,7 +561,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       setHolidaySearchQuery('');
                       setHolidaySearchDate('');
                     }}
-                    className="flex items-center justify-center h-[32px] w-[32px] bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg cursor-pointer transition-all"
+                    className="flex items-center justify-center h-[32px] w-[32px] bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg cursor-pointer transition-all"
                     title="Reset"
                   >
                     <RotateCcw className="h-4 w-4" />
@@ -573,9 +573,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               {!initialFetchDone ? (
                 <SkeletonLoader variant="responses-table" rows={5} />
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-slate-900 bg-slate-955/20">
-                  <table className="min-w-full divide-y divide-slate-900 text-left text-xs text-slate-300">
-                    <thead className="bg-slate-955/60 text-slate-400 font-semibold uppercase tracking-wider">
+                <div className="overflow-x-auto rounded-xl border border-theme-card-bg bg-theme-page-bg/20">
+                  <table className="min-w-full divide-y divide-theme-border-input text-left text-xs text-theme-text-secondary">
+                    <thead className="bg-theme-page-bg/60 text-theme-text-muted font-semibold uppercase tracking-wider">
                       <tr>
                         <th className="px-4 py-3">Holiday Date</th>
                         <th className="px-4 py-3">Holiday Name</th>
@@ -584,18 +584,18 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         <th className="px-4 py-3 text-right">Response Time</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-900 bg-slate-900/10">
+                    <tbody className="divide-y divide-theme-border-input bg-theme-card-bg/10">
                       {filteredResponses.length > 0 ? (
                         filteredResponses.map((resp) => {
                           const fullName = resp.profiles?.full_name || 'Staff';
                           const codeName = resp.profiles?.username ? resp.profiles.username.toUpperCase() : 'N/A';
 
                           return (
-                            <tr key={resp.id} className="hover:bg-slate-800/40 transition-colors">
-                              <td className="px-4 py-3 font-semibold text-slate-200">
+                            <tr key={resp.id} className="hover:bg-theme-border-input/40 transition-colors">
+                              <td className="px-4 py-3 font-semibold text-theme-text-primary">
                                 {formatDate(resp.holiday_date)}
                               </td>
-                              <td className="px-4 py-3 text-slate-300">
+                              <td className="px-4 py-3 text-theme-text-secondary">
                                 {resp.holiday_name}
                               </td>
                               <td className="px-4 py-3 font-medium text-teal-400">
@@ -609,7 +609,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                                   {resp.response === 'paid' ? 'Get Paid' : 'Reserve'}
                                 </span>
                               </td>
-                              <td className="px-4 py-3 text-right text-slate-500">
+                              <td className="px-4 py-3 text-right text-theme-text-muted">
                                 {resp.created_at ? new Date(resp.created_at).toLocaleString('en-US', { hour12: true }) : '-'}
                               </td>
                             </tr>
@@ -617,7 +617,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         })
                       ) : (
                         <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                          <td colSpan={5} className="px-4 py-8 text-center text-theme-text-muted">
                             No holiday response records found.
                           </td>
                         </tr>

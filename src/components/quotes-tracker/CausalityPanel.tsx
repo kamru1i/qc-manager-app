@@ -17,13 +17,13 @@ export const CausalityPanel: React.FC<CausalityPanelProps> = ({ profile, isOnlin
     <div className="space-y-5">
       {/* Tab switcher — centered at the top */}
       <div className="flex justify-center">
-        <div className="flex bg-slate-955 p-1 rounded-xl border border-slate-850 shadow-inner">
+        <div className="flex bg-theme-page-bg p-1 rounded-xl border border-theme-border-muted shadow-inner">
           <button
             onClick={() => setActiveSubTab("asitis")}
             className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === "asitis"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/30"
-                : "text-slate-400 hover:text-white"
+                : "text-theme-text-muted hover:text-theme-text-primary"
             }`}
           >
             Asitis
@@ -33,7 +33,7 @@ export const CausalityPanel: React.FC<CausalityPanelProps> = ({ profile, isOnlin
             className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === "eui"
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-900/30"
-                : "text-slate-400 hover:text-white"
+                : "text-theme-text-muted hover:text-theme-text-primary"
             }`}
           >
             EUI

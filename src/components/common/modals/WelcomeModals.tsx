@@ -117,12 +117,12 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
             )}
           </div>
 
-          <p className="text-xs text-slate-355 leading-relaxed mb-4">
+          <p className="text-xs text-theme-text-secondary leading-relaxed mb-4">
             {welcomePopupType === 'password_reset'
               ? 'Your password has been successfully updated and secured!'
               : 'Your password change and profile setup have been successfully completed!'}
           </p>
-          <div className="p-3.5 bg-slate-955/60 rounded-xl border border-slate-800/80 text-left text-xs text-slate-400 leading-relaxed space-y-2">
+          <div className="p-3.5 bg-theme-page-bg/60 rounded-xl border border-theme-border-input/80 text-left text-xs text-theme-text-muted leading-relaxed space-y-2">
             {welcomePopupType === 'password_reset' ? (
               <>
                 <p className="font-semibold text-blue-400 font-sans">🔒 Security Confirmation:</p>
@@ -131,7 +131,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
             ) : (
               <>
                 <p className="font-semibold text-blue-400 font-sans">💡 How to update details:</p>
-                <p>If needed in the future, you can update your profile info again by clicking on <span className="font-bold text-white">Profile Settings</span> (user/gear icon) located at the top-left of the dashboard.</p>
+                <p>If needed in the future, you can update your profile info again by clicking on <span className="font-bold text-theme-text-primary">Profile Settings</span> (user/gear icon) located at the top-left of the dashboard.</p>
               </>
             )}
           </div>
@@ -159,7 +159,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
             <div className="inline-flex p-3 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-2xl mb-3">
               <Lock className="h-6 w-6 animate-pulse" />
             </div>
-            <p className="text-xs text-slate-400 mt-1">Changing the security password is required after first login</p>
+            <p className="text-xs text-theme-text-muted mt-1">Changing the security password is required after first login</p>
           </div>
 
           {firstTimePasswordError && (
@@ -170,31 +170,31 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
           )}
 
           <form onSubmit={handleFirstTimeSetupSubmit} className="space-y-4">
-            <div className="p-3 bg-slate-955/60 border border-slate-850 rounded-xl space-y-4">
-              <div className="text-xs font-semibold text-blue-400 border-b border-slate-850 pb-1.5 flex items-center gap-1.5">
+            <div className="p-3 bg-theme-page-bg/60 border border-theme-border-muted rounded-xl space-y-4">
+              <div className="text-xs font-semibold text-blue-400 border-b border-theme-border-muted pb-1.5 flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5" /> Change Password
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-slate-455 uppercase tracking-wider">New Password</label>
+                <label className="block text-[11px] font-medium text-theme-text-muted uppercase tracking-wider">New Password</label>
                 <input
                   type="password"
                   required
                   placeholder="At least 6 characters"
                   value={firstTimePassword}
                   onChange={(e) => setFirstTimePassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-slate-455 uppercase tracking-wider">Confirm Password</label>
+                <label className="block text-[11px] font-medium text-theme-text-muted uppercase tracking-wider">Confirm Password</label>
                 <input
                   type="password"
                   required
                   placeholder="Enter password again"
                   value={firstTimeConfirmPassword}
                   onChange={(e) => setFirstTimeConfirmPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <PasswordMatchIndicator password={firstTimePassword} confirmPassword={firstTimeConfirmPassword} />
               </div>
@@ -204,7 +204,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
               <button
                 type="button"
                 onClick={handleCloseFirstTimePassword}
-                className="flex-1 flex justify-center py-2.5 px-4 border border-slate-800 rounded-lg text-sm font-semibold text-slate-400 hover:text-slate-350 bg-slate-950 hover:bg-slate-900 cursor-pointer transition-all"
+                className="flex-1 flex justify-center py-2.5 px-4 border border-theme-border-input rounded-lg text-sm font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-card-container hover:bg-theme-card-bg cursor-pointer transition-all"
               >
                 Logout
               </button>
@@ -235,7 +235,7 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
             <div className="inline-flex p-3 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-2xl mb-3">
               <User className="h-6 w-6" />
             </div>
-            <p className="text-xs text-slate-400 mt-1">Please set your correct name and details before accessing the dashboard for the first time</p>
+            <p className="text-xs text-theme-text-muted mt-1">Please set your correct name and details before accessing the dashboard for the first time</p>
           </div>
 
           {setupError && (
@@ -247,13 +247,13 @@ export const WelcomeModals: React.FC<WelcomeModalsProps> = ({
 
           <form onSubmit={handleSetupSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Codename</label>
+              <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">Codename</label>
               <input
                 type="text"
                 required
                 disabled
                 value={(setupUsername || '').toUpperCase()}
-                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-850 rounded-lg text-slate-500 text-sm cursor-not-allowed opacity-60 font-mono"
+                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-muted rounded-lg text-theme-text-muted text-sm cursor-not-allowed opacity-60 font-mono"
               />
             </div>
 

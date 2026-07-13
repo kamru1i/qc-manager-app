@@ -226,13 +226,13 @@ export const UserProfileSettingsPanel: React.FC<
         setDelegatedKpiSupervisorId={setEditDelegatedKpiSupervisorId}
       />
 
-      <div className="bg-slate-900/20 border border-slate-850/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
+      <div className="bg-theme-card-bg/20 border border-theme-border-muted/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
         <div className="flex flex-wrap gap-2.5">
           {isAdmin && (
             <button
               type="button"
               onClick={onResetPasswordClick}
-              className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+              className="px-4 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
             >
               <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset
               Password?
@@ -243,7 +243,7 @@ export const UserProfileSettingsPanel: React.FC<
             <button
               type="button"
               onClick={onChangePasswordClick}
-              className="px-4 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+              className="px-4 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
             >
               <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
             </button>

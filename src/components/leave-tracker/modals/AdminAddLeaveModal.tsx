@@ -436,10 +436,10 @@ export function AdminAddLeaveModal({
             <div className="p-3 bg-purple-955/50 border border-purple-900/50 text-purple-300 text-xs rounded-lg mb-4 flex items-start gap-2 animate-pulse">
               <AlertTriangle className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold block text-slate-200">
+                <span className="font-semibold block text-theme-text-primary">
                   Leave Quota Limit Exceeded!
                 </span>
-                <span className="text-[11px] block mt-0.5 text-slate-305">
+                <span className="text-[11px] block mt-0.5 text-theme-text-secondary">
                   Staff's annual full leave limit is{" "}
                   {staffProfile?.max_full_leaves ?? 15} days, but they have
                   already taken {stats.fullLeaves} days.
@@ -451,7 +451,7 @@ export function AdminAddLeaveModal({
           {loadingResponses ? (
             <div className="flex flex-col items-center justify-center py-16">
               <Loader className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="mt-2 text-xs text-slate-400 font-medium font-sans">
+              <p className="mt-2 text-xs text-theme-text-muted font-medium font-sans">
                 Loading leave data and holidays...
               </p>
             </div>
@@ -505,11 +505,11 @@ export function AdminAddLeaveModal({
                 />
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-4 border-t border-slate-800">
+                <div className="flex gap-3 pt-4 border-t border-theme-border-input">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 flex justify-center py-2 px-4 border border-slate-800 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-355 bg-slate-955 hover:bg-slate-900 cursor-pointer transition-all"
+                    className="flex-1 flex justify-center py-2 px-4 border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
                   >
                     Cancel
                   </button>
@@ -518,7 +518,7 @@ export function AdminAddLeaveModal({
                     disabled={
                       submitting || !!validationError || isDuplicateDate
                     }
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {submitting && (
                       <RefreshCw className="h-3.5 w-3.5 animate-spin" />

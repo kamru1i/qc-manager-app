@@ -1154,13 +1154,13 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         }
       `}</style>
       {/* 1. Header controls (Not printed) */}
-      <div className="flex flex-wrap justify-between items-center gap-4 bg-slate-900/35 border border-slate-850 p-4 rounded-2xl shadow-lg print:hidden">
+      <div className="flex flex-wrap justify-between items-center gap-4 bg-theme-card-bg/35 border border-theme-border-muted p-4 rounded-2xl shadow-lg print:hidden">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="px-3.5 py-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-350 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+              className="px-3.5 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
             >
               ← Back
             </button>
@@ -1169,8 +1169,8 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
             <FileText className="h-5 w-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-white">KPI Goal Sheet & Monthly Performance Assessment</h4>
-            <p className="text-[11px] text-slate-400">Evaluate, submit self-scores, and save/lock monthly assessments.</p>
+            <h4 className="text-sm font-bold text-theme-text-primary">KPI Goal Sheet & Monthly Performance Assessment</h4>
+            <p className="text-[11px] text-theme-text-muted">Evaluate, submit self-scores, and save/lock monthly assessments.</p>
           </div>
         </div>
 
@@ -1189,15 +1189,15 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
                   toast.success("Reset view to your own KPI sheet.");
                 }
               }}
-              className="px-3 py-2 bg-transparent hover:bg-slate-900 border border-slate-800 text-slate-450 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors group"
+              className="px-3 py-2 bg-transparent hover:bg-theme-card-bg border border-theme-border-input text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors group"
               title="Evaluate assigned employee sheets (Right click to reset)"
             >
-              <Target className="h-3.5 w-3.5 text-slate-400 group-hover:text-white" />
+              <Target className="h-3.5 w-3.5 text-theme-text-muted group-hover:text-theme-text-primary" />
               <span>View KPI</span>
             </button>
           )}
 
-          <div className="flex bg-slate-950/80 border border-slate-800 rounded-xl p-1 shrink-0 items-center gap-1">
+          <div className="flex bg-theme-card-container/80 border border-theme-border-input rounded-xl p-1 shrink-0 items-center gap-1">
             <select
               value={activePeriodKey || `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`}
               onChange={(e) => {
@@ -1212,10 +1212,10 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
                   setActivePeriodKey(val);
                 }
               }}
-              className="bg-transparent text-xs font-semibold text-slate-300 px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[160px] truncate"
+              className="bg-transparent text-xs font-semibold text-theme-text-secondary px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[160px] truncate"
             >
               {periodOptions.map((opt) => (
-                <option key={opt.key} value={opt.key} className="bg-slate-955 text-slate-355">
+                <option key={opt.key} value={opt.key} className="bg-theme-page-bg text-theme-text-secondary">
                   {opt.label}
                 </option>
               ))}
@@ -1231,7 +1231,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
                   setNewCustomPeriodTo('');
                   setCustomPeriodModalOpen(true);
                 }}
-                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 hover:bg-theme-border-input rounded-lg text-theme-text-muted hover:text-theme-text-primary transition-colors cursor-pointer"
                 title="Create Custom Period"
               >
                 <Calendar className="h-4 w-4" />
@@ -1242,7 +1242,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
           <button
             type="button"
             onClick={handlePrint}
-            className="p-2 bg-slate-850 hover:bg-slate-750 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="p-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             title="Print assessment sheet / Save as PDF"
           >
             <Printer className="h-4 w-4" /> PDF
@@ -1274,7 +1274,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         <div className="bg-blue-950/30 border border-blue-900/60 p-4 rounded-2xl text-xs text-blue-300 font-semibold flex justify-between items-center font-sans print:hidden animate-fade-in">
           <span className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-blue-500 animate-ping" />
-            <span>Currently evaluating Appraisee: <strong className="text-white font-black">{evaluatorModeProfile.full_name} ({evaluatorModeProfile.username})</strong></span>
+            <span>Currently evaluating Appraisee: <strong className="text-theme-text-primary font-black">{evaluatorModeProfile.full_name} ({evaluatorModeProfile.username})</strong></span>
           </span>
           <button
             type="button"
@@ -1298,7 +1298,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               </p>
             </div>
           </div>
-          <pre className="bg-slate-950/90 border border-slate-850 rounded-xl p-3 text-[10px] text-slate-400 font-mono overflow-x-auto select-all max-h-48 whitespace-pre">
+          <pre className="bg-theme-card-container/90 border border-theme-border-muted rounded-xl p-3 text-[10px] text-theme-text-muted font-mono overflow-x-auto select-all max-h-48 whitespace-pre">
 {`CREATE TABLE IF NOT EXISTS public.kpi_assessments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -1336,53 +1336,53 @@ USING (auth.uid() = user_id OR EXISTS (
       {totals.weightage !== 100 && (
         <div className="bg-red-950/20 border border-red-900/40 p-3.5 rounded-xl text-xs text-red-300 font-semibold flex items-center gap-2.5 font-sans print:hidden animate-pulse">
           <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-          <span>Total Weightage must equal exactly 100%. Currently it is set to <strong className="underline text-white font-bold">{totals.weightage}%</strong>. Please adjust weightages below.</span>
+          <span>Total Weightage must equal exactly 100%. Currently it is set to <strong className="underline text-theme-text-primary font-bold">{totals.weightage}%</strong>. Please adjust weightages below.</span>
         </div>
       )}
 
       {/* 2. MAIN SHEET CONTAINER */}
-      <div className="bg-slate-950 border border-slate-850 p-6.5 rounded-2xl shadow-xl space-y-6 font-sans print:bg-white print:border-0 print:shadow-none print:p-0 print:text-black">
+      <div className="bg-theme-card-container border border-theme-border-muted p-6.5 rounded-2xl shadow-xl space-y-6 font-sans print:bg-white print:border-0 print:shadow-none print:p-0 print:text-black">
         
         {/* Banner Title */}
-        <div className="text-center border-b border-slate-800 pb-4 print:border-black">
-          <h2 className="text-lg font-bold text-white tracking-wide uppercase print:text-black print:text-base">Performance Assessment : {selectedYear}</h2>
+        <div className="text-center border-b border-theme-border-input pb-4 print:border-black">
+          <h2 className="text-lg font-bold text-theme-text-primary tracking-wide uppercase print:text-black print:text-base">Performance Assessment : {selectedYear}</h2>
         </div>
 
         {/* 3. Details grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5 text-xs text-slate-350 print:text-black print:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5 text-xs text-theme-text-secondary print:text-black print:grid-cols-2">
           {/* Appraisee Name */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Appraisee Name</span>
-            <span className="font-medium text-white print:text-black">{targetStaff.full_name || targetStaff.username}</span>
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Appraisee Name</span>
+            <span className="font-medium text-theme-text-primary print:text-black">{targetStaff.full_name || targetStaff.username}</span>
           </div>
 
           {/* Department */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200 group">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Department</span>
-            <span className="font-medium text-white print:text-black">
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200 group">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Department</span>
+            <span className="font-medium text-theme-text-primary print:text-black">
               {department}
             </span>
           </div>
 
           {/* Emp ID */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Emp ID</span>
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Emp ID</span>
             {canEditAppraiseeFields ? (
               <input
                 type="text"
                 placeholder="2008"
                 value={empId}
                 onChange={(e) => setEmpId(e.target.value)}
-                className="bg-slate-900/60 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-blue-500 w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
+                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
               />
             ) : (
-              <span className="font-medium text-white print:text-black">{empId || '—'}</span>
+              <span className="font-medium text-theme-text-primary print:text-black">{empId || '—'}</span>
             )}
           </div>
 
           {/* Appraiser's Name */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Appraiser's Name</span>
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Appraiser's Name</span>
             {(!hasSupervisors && currentUser?.role === 'admin') || (currentUser?.role === 'supervisor' && targetStaff.id === currentUser.id) ? (
               <div className="relative">
                 <input
@@ -1396,10 +1396,10 @@ USING (auth.uid() = user_id OR EXISTS (
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-600 focus:outline-hidden focus:border-blue-500 w-52 transition-colors print:hidden"
+                  className="bg-theme-card-bg border border-theme-border-input rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 w-52 transition-colors print:hidden"
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-slate-950 border border-slate-800 rounded-lg shadow-2xl z-50 divide-y divide-slate-900 custom-scrollbar">
+                  <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-theme-card-container border border-theme-border-input rounded-lg shadow-2xl z-50 divide-y divide-theme-border-input custom-scrollbar">
                     <style>{`
                       .custom-scrollbar::-webkit-scrollbar {
                         width: 5px;
@@ -1424,10 +1424,10 @@ USING (auth.uid() = user_id OR EXISTS (
                           setShowSuggestions(false);
                           setIsDirty(true);
                         }}
-                        className="w-full text-left px-3 py-2 text-[11px] hover:bg-blue-600/15 text-slate-355 hover:text-white transition-colors cursor-pointer flex justify-between items-center"
+                        className="w-full text-left px-3 py-2 text-[11px] hover:bg-blue-600/15 text-theme-text-secondary hover:text-white transition-colors cursor-pointer flex justify-between items-center"
                       >
                         <span className="font-semibold">{user.full_name || user.username}</span>
-                        <span className="text-[10px] text-slate-500 font-mono">@{user.username}</span>
+                        <span className="text-[10px] text-theme-text-muted font-mono">@{user.username}</span>
                       </button>
                     ))}
                   </div>
@@ -1436,52 +1436,52 @@ USING (auth.uid() = user_id OR EXISTS (
                 <span className="hidden print:inline font-medium text-black">{appraiserName || '—'}</span>
               </div>
             ) : (
-              <span className="font-medium text-white print:text-black">{appraiserName || '—'}</span>
+              <span className="font-medium text-theme-text-primary print:text-black">{appraiserName || '—'}</span>
             )}
           </div>
 
           {/* Designation */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Designation</span>
-            <span className="font-medium text-white print:text-black">{targetStaff.job_role || 'Executive'}</span>
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Designation</span>
+            <span className="font-medium text-theme-text-primary print:text-black">{targetStaff.job_role || 'Executive'}</span>
           </div>
 
           {/* Reviewer's Name */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Reviewer's Name</span>
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Reviewer's Name</span>
             {isSupervisorOrAdmin || isAppraisee ? (
               <input
                 type="text"
                 placeholder="Manager"
                 value={reviewerName}
                 onChange={(e) => setReviewerName(e.target.value)}
-                className="bg-slate-900/60 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-750 focus:outline-hidden focus:border-blue-500 w-52 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
+                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-52 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
               />
             ) : (
-              <span className="font-medium text-white print:text-black">{reviewerName || '—'}</span>
+              <span className="font-medium text-theme-text-primary print:text-black">{reviewerName || '—'}</span>
             )}
           </div>
 
           {/* Date of Joining */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Date of Joining</span>
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Date of Joining</span>
             {canEditAppraiseeFields ? (
               <input
                 type="text"
                 placeholder="13-Jul-20"
                 value={dateOfJoining}
                 onChange={(e) => setDateOfJoining(e.target.value)}
-                className="bg-slate-900/60 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-blue-500 w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
+                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
               />
             ) : (
-              <span className="font-medium text-white print:text-black">{dateOfJoining || '—'}</span>
+              <span className="font-medium text-theme-text-primary print:text-black">{dateOfJoining || '—'}</span>
             )}
           </div>
 
           {/* Evaluation Period */}
-          <div className="flex items-center border-b border-slate-900 pb-2 print:border-neutral-200 gap-1.5">
-            <span className="w-32 font-semibold text-slate-400 shrink-0 print:text-black">Evaluation Period</span>
-            <span className="font-medium text-white print:text-black">From: {evaluationPeriod.from} To: {evaluationPeriod.to}</span>
+          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200 gap-1.5">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Evaluation Period</span>
+            <span className="font-medium text-theme-text-primary print:text-black">From: {evaluationPeriod.from} To: {evaluationPeriod.to}</span>
             
             {/* Settings/Edit Icon next to dates */}
             {(currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && (
@@ -1503,7 +1503,7 @@ USING (auth.uid() = user_id OR EXISTS (
                   }
                   setCustomPeriodModalOpen(true);
                 }}
-                className="p-1 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-white transition-colors cursor-pointer print:hidden ml-1"
+                className="p-1 hover:bg-theme-border-muted rounded-lg text-theme-text-muted hover:text-theme-text-primary transition-colors cursor-pointer print:hidden ml-1"
                 title="Edit Evaluation Period Settings"
               >
                 <Calendar className="h-3.5 w-3.5" />
@@ -1513,27 +1513,27 @@ USING (auth.uid() = user_id OR EXISTS (
         </div>
 
         {/* GOAL SHEET BANNER */}
-        <div className="bg-slate-900/60 text-center py-2 rounded-xl border border-slate-850 print:bg-neutral-100 print:text-black print:border-black print:border">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-350 print:text-black">GOAL SHEET</span>
+        <div className="bg-theme-card-bg/60 text-center py-2 rounded-xl border border-theme-border-muted print:bg-neutral-100 print:text-black print:border-black print:border">
+          <span className="text-xs font-bold uppercase tracking-wider text-theme-text-secondary print:text-black">GOAL SHEET</span>
         </div>
 
         {/* 4. PERFORMANCE TABLE */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800 shadow-lg print:border-black print:border print:rounded-none">
+        <div className="overflow-x-auto rounded-xl border border-theme-border-input shadow-lg print:border-black print:border print:rounded-none">
           <table className="w-full text-left text-xs border-collapse min-w-[900px] print:text-black print:bg-white">
             <thead>
-              <tr className="bg-slate-900 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 print:bg-neutral-100 print:text-black print:border-black">
-                <th className="py-3 px-3 text-center border-r border-slate-800 w-16 print:border-black">Srl No.</th>
-                <th className="py-3 px-4 border-r border-slate-800 w-36 print:border-black">Key Result Area</th>
-                <th className="py-3 px-4 border-r border-slate-800 w-48 print:border-black">Key Performance Indicator</th>
-                <th className="py-3 px-4 border-r border-slate-800 w-48 print:border-black">Measurable Criteria</th>
-                <th className="py-3 px-3 text-center border-r border-slate-800 w-20 print:border-black">Target</th>
-                <th className="py-3 px-3 text-center border-r border-slate-800 w-24 print:border-black">Weightage</th>
-                <th className="py-3 px-3 text-center border-r border-slate-800 w-20 print:border-black">Self</th>
-                <th className="py-3 px-3 text-center border-r border-slate-800 w-24 print:border-black">Supervisor</th>
+              <tr className="bg-theme-card-bg border-b border-theme-border-input text-[11px] uppercase tracking-wider text-theme-text-muted print:bg-neutral-100 print:text-black print:border-black">
+                <th className="py-3 px-3 text-center border-r border-theme-border-input w-16 print:border-black">Srl No.</th>
+                <th className="py-3 px-4 border-r border-theme-border-input w-36 print:border-black">Key Result Area</th>
+                <th className="py-3 px-4 border-r border-theme-border-input w-48 print:border-black">Key Performance Indicator</th>
+                <th className="py-3 px-4 border-r border-theme-border-input w-48 print:border-black">Measurable Criteria</th>
+                <th className="py-3 px-3 text-center border-r border-theme-border-input w-20 print:border-black">Target</th>
+                <th className="py-3 px-3 text-center border-r border-theme-border-input w-24 print:border-black">Weightage</th>
+                <th className="py-3 px-3 text-center border-r border-theme-border-input w-20 print:border-black">Self</th>
+                <th className="py-3 px-3 text-center border-r border-theme-border-input w-24 print:border-black">Supervisor</th>
                 <th className="py-3 px-4 print:text-black">Comments</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-850 print:divide-black">
+            <tbody className="divide-y divide-theme-border-muted print:divide-black">
               {(() => {
                 let currentSrl = 1;
                 const dataEntrySrl = performsDataEntry ? currentSrl++ : null;
@@ -1552,19 +1552,19 @@ USING (auth.uid() = user_id OR EXISTS (
                           const totalRows = activeFileTypes.length + 1; // including Mistakes row
 
                           return (
-                            <tr key={type.key} className="hover:bg-slate-950/20 transition-colors">
+                            <tr key={type.key} className="hover:bg-theme-card-container/20 transition-colors">
                               {/* Rowspans */}
                               {isFirst && (
                                 <>
                                   <td 
                                     rowSpan={totalRows} 
-                                    className="py-4 px-3 text-center align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                    className="py-4 px-3 text-center align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black"
                                   >
                                     {dataEntrySrl}
                                   </td>
                                   <td 
                                     rowSpan={totalRows} 
-                                    className="py-4 px-4 align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                    className="py-4 px-4 align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black"
                                   >
                                     Data Entry
                                   </td>
@@ -1572,18 +1572,18 @@ USING (auth.uid() = user_id OR EXISTS (
                               )}
 
                               {/* KPI Columns */}
-                              <td className="py-2.5 px-4 border-r border-slate-850 font-medium text-slate-200 print:border-black print:text-black">
+                              <td className="py-2.5 px-4 border-r border-theme-border-muted font-medium text-theme-text-primary print:border-black print:text-black">
                                 {type.label}
                               </td>
-                              <td className="py-2.5 px-4 border-r border-slate-850 text-slate-400 print:border-black print:text-black">
+                              <td className="py-2.5 px-4 border-r border-theme-border-muted text-theme-text-muted print:border-black print:text-black">
                                 Quality, Quantity & Timeliness
                               </td>
-                              <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-400 print:border-black print:text-black">
+                              <td className="py-2.5 px-3 text-center border-r border-theme-border-muted font-semibold text-theme-text-muted print:border-black print:text-black">
                                 100%
                               </td>
 
                               {/* Weightage */}
-                              <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                              <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                                 {isSupervisorOrAdmin ? (
                                   <div className="flex items-center justify-center gap-1.5">
                                     <input
@@ -1592,24 +1592,24 @@ USING (auth.uid() = user_id OR EXISTS (
                                       max="100"
                                       value={weightages[type.key] ?? defaultWeightages[type.key] ?? 0}
                                       onChange={(e) => handleWeightageChange(type.key, Number(e.target.value))}
-                                      className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                      className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                                     />
-                                    <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                    <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                                   </div>
                                 ) : (
-                                  <span className="font-bold text-slate-350 print:text-black">
+                                  <span className="font-bold text-theme-text-secondary print:text-black">
                                     {weightages[type.key] ?? defaultWeightages[type.key] ?? 0}%
                                   </span>
                                 )}
                               </td>
 
                               {/* Self Score */}
-                              <td className="py-2.5 px-3 text-center border-r border-slate-850 font-bold text-blue-400 bg-blue-955/5 print:border-black print:bg-transparent print:text-black">
+                              <td className="py-2.5 px-3 text-center border-r border-theme-border-muted font-bold text-blue-400 bg-blue-955/5 print:border-black print:bg-transparent print:text-black">
                                 {computedSelfScores[type.key] || 0}%
                               </td>
 
                               {/* Supervisor score */}
-                              <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                              <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                                 {isSupervisorOrAdmin ? (
                                   <div className="flex items-center justify-center gap-1.5">
                                     <input
@@ -1618,12 +1618,12 @@ USING (auth.uid() = user_id OR EXISTS (
                                       max="100"
                                       value={supervisorScores[type.key] ?? 0}
                                       onChange={(e) => handleSupervisorScoreChange(type.key, Number(e.target.value))}
-                                      className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                      className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
                                     />
-                                    <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                    <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                                   </div>
                                 ) : (
-                                  <span className="font-bold text-slate-350 print:text-black">
+                                  <span className="font-bold text-theme-text-secondary print:text-black">
                                     {supervisorScores[type.key] !== undefined ? `${supervisorScores[type.key]}%` : '—'}
                                   </span>
                                 )}
@@ -1637,10 +1637,10 @@ USING (auth.uid() = user_id OR EXISTS (
                                     placeholder="Add feedback"
                                     value={comments[type.key] || ''}
                                     onChange={(e) => handleCommentChange(type.key, e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                                    className="w-full bg-theme-card-bg border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-theme-border-active"
                                   />
                                 ) : (
-                                  <span className="text-slate-400 italic text-[11px] print:text-black">
+                                  <span className="text-theme-text-muted italic text-[11px] print:text-black">
                                     {comments[type.key] || '—'}
                                   </span>
                                 )}
@@ -1650,29 +1650,29 @@ USING (auth.uid() = user_id OR EXISTS (
                         })}
 
                         {/* Number of Mistakes Row (Final Row of Serial 1 block) */}
-                        <tr className="hover:bg-slate-950/20 transition-colors">
+                        <tr className="hover:bg-theme-card-container/20 transition-colors">
                           {activeFileTypes.length === 0 && (
                             <>
-                              <td className="py-4 px-3 text-center align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black">
+                              <td className="py-4 px-3 text-center align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black">
                                 {dataEntrySrl}
                               </td>
-                              <td className="py-4 px-4 align-middle font-bold text-slate-350 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black">
+                              <td className="py-4 px-4 align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black">
                                 {department}
                               </td>
                             </>
                           )}
-                          <td className="py-2.5 px-4 border-r border-slate-850 font-bold text-red-400 print:border-black">
+                          <td className="py-2.5 px-4 border-r border-theme-border-muted font-bold text-red-400 print:border-black">
                             Number of Mistakes
                           </td>
-                          <td className="py-2.5 px-4 border-r border-slate-850 text-slate-450 print:border-black">
+                          <td className="py-2.5 px-4 border-r border-theme-border-muted text-theme-text-muted print:border-black">
                             Quality, Quantity & Timeliness
                           </td>
-                          <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-450 print:border-black">
+                          <td className="py-2.5 px-3 text-center border-r border-theme-border-muted font-semibold text-theme-text-muted print:border-black">
                             0%
                           </td>
                           
                           {/* Weightage */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1681,19 +1681,19 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={weightages['mistakes'] ?? 0}
                                   onChange={(e) => handleWeightageChange('mistakes', Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
-                              <span className="font-bold text-slate-350 print:text-black">
+                              <span className="font-bold text-theme-text-secondary print:text-black">
                                 {weightages['mistakes'] ?? 0}%
                               </span>
                             )}
                           </td>
 
                           {/* Self */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isAppraisee || isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1702,19 +1702,19 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={selfScores['mistakes'] ?? 0}
                                   onChange={(e) => handleSelfScoreChange('mistakes', Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
-                              <span className="font-bold text-slate-350 print:text-black">
+                              <span className="font-bold text-theme-text-secondary print:text-black">
                                 {selfScores['mistakes'] ?? 0}%
                               </span>
                             )}
                           </td>
 
                           {/* Supervisor */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1723,12 +1723,12 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={supervisorScores['mistakes'] ?? 0}
                                   onChange={(e) => handleSupervisorScoreChange('mistakes', Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
-                              <span className="font-bold text-slate-350 print:text-black">
+                              <span className="font-bold text-theme-text-secondary print:text-black">
                                 {supervisorScores['mistakes'] !== undefined ? `${supervisorScores['mistakes']}%` : '—'}
                               </span>
                             )}
@@ -1742,10 +1742,10 @@ USING (auth.uid() = user_id OR EXISTS (
                                 placeholder="Add feedback"
                                 value={comments['mistakes'] || ''}
                                 onChange={(e) => handleCommentChange('mistakes', e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                                className="w-full bg-theme-card-bg border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-theme-border-active"
                               />
                             ) : (
-                              <span className="text-slate-400 italic text-[11px] print:text-black">
+                              <span className="text-theme-text-muted italic text-[11px] print:text-black">
                                 {comments['mistakes'] || '—'}
                               </span>
                             )}
@@ -1761,18 +1761,18 @@ USING (auth.uid() = user_id OR EXISTS (
                       const totalRows = kpiDeptIndicators.length;
 
                       return (
-                        <tr key={key} className="hover:bg-slate-950/20 transition-colors">
+                        <tr key={key} className="hover:bg-theme-card-container/20 transition-colors">
                           {isFirst && (
                             <>
                               <td 
                                 rowSpan={totalRows} 
-                                className="py-4 px-3 text-center align-middle font-bold text-slate-355 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                className="py-4 px-3 text-center align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black"
                               >
                                 {deptKpiSrl}
                               </td>
                               <td 
                                 rowSpan={totalRows} 
-                                className="py-4 px-4 align-middle font-bold text-slate-355 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                className="py-4 px-4 align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black"
                               >
                                 {department}
                               </td>
@@ -1780,18 +1780,18 @@ USING (auth.uid() = user_id OR EXISTS (
                           )}
 
                           {/* KPI Columns */}
-                          <td className="py-2.5 px-4 border-r border-slate-850 font-medium text-slate-200 print:border-black print:text-black">
+                          <td className="py-2.5 px-4 border-r border-theme-border-muted font-medium text-theme-text-primary print:border-black print:text-black">
                             {indicator}
                           </td>
-                          <td className="py-2.5 px-4 border-r border-slate-850 text-slate-400 print:border-black print:text-black">
+                          <td className="py-2.5 px-4 border-r border-theme-border-muted text-theme-text-muted print:border-black print:text-black">
                             Quality, Quantity & Timeliness
                           </td>
-                          <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-400 print:border-black print:text-black">
+                          <td className="py-2.5 px-3 text-center border-r border-theme-border-muted font-semibold text-theme-text-muted print:border-black print:text-black">
                             100%
                           </td>
 
                           {/* Weightage */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1800,19 +1800,19 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={weightages[key] ?? defaultWeightages[key] ?? 0}
                                   onChange={(e) => handleWeightageChange(key, Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
-                              <span className="font-bold text-slate-355 print:text-black">
+                              <span className="font-bold text-theme-text-secondary print:text-black">
                                 {weightages[key] ?? defaultWeightages[key] ?? 0}%
                               </span>
                             )}
                           </td>
 
                           {/* Self */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isAppraisee || isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1821,9 +1821,9 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={selfScores[key] ?? 0}
                                   onChange={(e) => handleSelfScoreChange(key, Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
                               <span className="font-bold print:text-black">
@@ -1833,7 +1833,7 @@ USING (auth.uid() = user_id OR EXISTS (
                           </td>
 
                           {/* Supervisor */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1842,9 +1842,9 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={supervisorScores[key] ?? 0}
                                   onChange={(e) => handleSupervisorScoreChange(key, Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
                               <span className="font-bold print:text-black">
@@ -1861,10 +1861,10 @@ USING (auth.uid() = user_id OR EXISTS (
                                 placeholder="Add feedback"
                                 value={comments[key] || ''}
                                 onChange={(e) => handleCommentChange(key, e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-855 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-750"
+                                className="w-full bg-theme-card-bg border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-theme-border-active"
                               />
                             ) : (
-                              <span className="text-slate-400 italic text-[11px] print:text-black">
+                              <span className="text-theme-text-muted italic text-[11px] print:text-black">
                                 {comments[key] || '—'}
                               </span>
                             )}
@@ -1880,18 +1880,18 @@ USING (auth.uid() = user_id OR EXISTS (
                       const totalRows = kpiOtherDeptIndicators.length;
 
                       return (
-                        <tr key={key} className="hover:bg-slate-950/20 transition-colors">
+                        <tr key={key} className="hover:bg-theme-card-container/20 transition-colors">
                           {isFirst && (
                             <>
                               <td 
                                 rowSpan={totalRows} 
-                                className="py-4 px-3 text-center align-middle font-bold text-slate-355 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                className="py-4 px-3 text-center align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black"
                               >
                                 {otherDeptKpiSrl}
                               </td>
                               <td 
                                 rowSpan={totalRows} 
-                                className="py-4 px-4 align-middle font-bold text-slate-355 border-r border-slate-800 bg-slate-955/50 print:border-black print:bg-transparent print:text-black"
+                                className="py-4 px-4 align-middle font-bold text-theme-text-secondary border-r border-theme-border-input bg-theme-page-bg/50 print:border-black print:bg-transparent print:text-black"
                               >
                                 {otherDepartment}
                               </td>
@@ -1899,18 +1899,18 @@ USING (auth.uid() = user_id OR EXISTS (
                           )}
 
                           {/* KPI Columns */}
-                          <td className="py-2.5 px-4 border-r border-slate-850 font-medium text-slate-200 print:border-black print:text-black">
+                          <td className="py-2.5 px-4 border-r border-theme-border-muted font-medium text-theme-text-primary print:border-black print:text-black">
                             {indicator}
                           </td>
-                          <td className="py-2.5 px-4 border-r border-slate-850 text-slate-400 print:border-black print:text-black">
+                          <td className="py-2.5 px-4 border-r border-theme-border-muted text-theme-text-muted print:border-black print:text-black">
                             Quality, Quantity & Timeliness
                           </td>
-                          <td className="py-2.5 px-3 text-center border-r border-slate-850 font-semibold text-slate-400 print:border-black print:text-black">
+                          <td className="py-2.5 px-3 text-center border-r border-theme-border-muted font-semibold text-theme-text-muted print:border-black print:text-black">
                             100%
                           </td>
 
                           {/* Weightage */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1919,19 +1919,19 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={weightages[key] ?? defaultWeightages[key] ?? 0}
                                   onChange={(e) => handleWeightageChange(key, Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
-                              <span className="font-bold text-slate-355 print:text-black">
+                              <span className="font-bold text-theme-text-secondary print:text-black">
                                 {weightages[key] ?? defaultWeightages[key] ?? 0}%
                               </span>
                             )}
                           </td>
 
                           {/* Self */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isAppraisee || isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1940,9 +1940,9 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={selfScores[key] ?? 0}
                                   onChange={(e) => handleSelfScoreChange(key, Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
                               <span className="font-bold print:text-black">
@@ -1952,7 +1952,7 @@ USING (auth.uid() = user_id OR EXISTS (
                           </td>
 
                           {/* Supervisor */}
-                          <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                             {isSupervisorOrAdmin ? (
                               <div className="flex items-center justify-center gap-1.5">
                                 <input
@@ -1961,9 +1961,9 @@ USING (auth.uid() = user_id OR EXISTS (
                                   max="100"
                                   value={supervisorScores[key] ?? 0}
                                   onChange={(e) => handleSupervisorScoreChange(key, Number(e.target.value))}
-                                  className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
                                 />
-                                <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                                <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                               </div>
                             ) : (
                               <span className="font-bold print:text-black">
@@ -1980,10 +1980,10 @@ USING (auth.uid() = user_id OR EXISTS (
                                 placeholder="Add feedback"
                                 value={comments[key] || ''}
                                 onChange={(e) => handleCommentChange(key, e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-855 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-750"
+                                className="w-full bg-theme-card-bg border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-theme-border-active"
                               />
                             ) : (
-                              <span className="text-slate-400 italic text-[11px] print:text-black">
+                              <span className="text-theme-text-muted italic text-[11px] print:text-black">
                                 {comments[key] || '—'}
                               </span>
                             )}
@@ -1994,15 +1994,15 @@ USING (auth.uid() = user_id OR EXISTS (
 
                     {/* SERIAL 3/2: Monthly Data Entry Report */}
                     {reportSrl !== null && (
-                      <tr className="bg-emerald-950/15 border-t border-b border-slate-800 text-emerald-400 hover:bg-emerald-950/20 transition-colors print:bg-neutral-50 print:text-black print:border-black">
-                        <td className="py-3 px-3 text-center align-middle font-bold border-r border-slate-800 print:border-black">{reportSrl}</td>
-                        <td className="py-3 px-4 font-bold border-r border-slate-800 print:border-black">Monthly Data Entry Report</td>
-                        <td className="py-3 px-4 font-medium border-r border-slate-850 print:border-black">Monthly Reports</td>
-                        <td className="py-3 px-4 text-slate-400 border-r border-slate-850 print:border-black print:text-black">Quality, Quantity & Timeliness</td>
-                        <td className="py-3 px-3 text-center font-semibold border-r border-slate-855 print:border-black">100%</td>
+                      <tr className="bg-emerald-950/15 border-t border-b border-theme-border-input text-emerald-400 hover:bg-emerald-950/20 transition-colors print:bg-neutral-50 print:text-black print:border-black">
+                        <td className="py-3 px-3 text-center align-middle font-bold border-r border-theme-border-input print:border-black">{reportSrl}</td>
+                        <td className="py-3 px-4 font-bold border-r border-theme-border-input print:border-black">Monthly Data Entry Report</td>
+                        <td className="py-3 px-4 font-medium border-r border-theme-border-muted print:border-black">Monthly Reports</td>
+                        <td className="py-3 px-4 text-theme-text-muted border-r border-theme-border-muted print:border-black print:text-black">Quality, Quantity & Timeliness</td>
+                        <td className="py-3 px-3 text-center font-semibold border-r border-theme-border-muted print:border-black">100%</td>
                         
                         {/* Weightage */}
-                        <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                        <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                           {isSupervisorOrAdmin ? (
                             <div className="flex items-center justify-center gap-1.5">
                               <input
@@ -2011,9 +2011,9 @@ USING (auth.uid() = user_id OR EXISTS (
                                 max="100"
                                 value={weightages['monthly_reports'] ?? defaultWeightages['monthly_reports'] ?? 5}
                                 onChange={(e) => handleWeightageChange('monthly_reports', Number(e.target.value))}
-                                className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                               />
-                              <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                             </div>
                           ) : (
                             <span className="font-bold print:text-black">
@@ -2023,7 +2023,7 @@ USING (auth.uid() = user_id OR EXISTS (
                         </td>
 
                         {/* Self */}
-                        <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                        <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                           {isAppraisee || isSupervisorOrAdmin ? (
                             <div className="flex items-center justify-center gap-1.5">
                               <input
@@ -2032,9 +2032,9 @@ USING (auth.uid() = user_id OR EXISTS (
                                 max="100"
                                 value={selfScores['monthly_reports'] ?? 0}
                                 onChange={(e) => handleSelfScoreChange('monthly_reports', Number(e.target.value))}
-                                className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                                className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                               />
-                              <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                             </div>
                           ) : (
                             <span className="font-bold print:text-black">
@@ -2044,7 +2044,7 @@ USING (auth.uid() = user_id OR EXISTS (
                         </td>
 
                         {/* Supervisor */}
-                        <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                        <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                           {isSupervisorOrAdmin ? (
                             <div className="flex items-center justify-center gap-1.5">
                               <input
@@ -2053,9 +2053,9 @@ USING (auth.uid() = user_id OR EXISTS (
                                 max="100"
                                 value={supervisorScores['monthly_reports'] ?? 0}
                                 onChange={(e) => handleSupervisorScoreChange('monthly_reports', Number(e.target.value))}
-                                className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                                className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
                               />
-                              <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                              <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                             </div>
                           ) : (
                             <span className="font-bold print:text-black">
@@ -2072,10 +2072,10 @@ USING (auth.uid() = user_id OR EXISTS (
                               placeholder="Add feedback"
                               value={comments['monthly_reports'] || ''}
                               onChange={(e) => handleCommentChange('monthly_reports', e.target.value)}
-                              className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                              className="w-full bg-theme-card-bg border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-theme-border-active"
                             />
                           ) : (
-                            <span className="text-slate-400 italic text-[11px] print:text-black">
+                            <span className="text-theme-text-muted italic text-[11px] print:text-black">
                               {comments['monthly_reports'] || '—'}
                             </span>
                           )}
@@ -2085,16 +2085,16 @@ USING (auth.uid() = user_id OR EXISTS (
 
                     {/* SERIAL 4/3/2/1: Self Development Initiative */}
                     <tr className="bg-emerald-950/15 text-emerald-400 hover:bg-emerald-950/20 transition-colors print:bg-neutral-50 print:text-black">
-                      <td className="py-3 px-3 text-center align-middle font-bold border-r border-slate-800 print:border-black">{selfDevSrl}</td>
-                      <td className="py-3 px-4 font-bold border-r border-slate-800 print:border-black">Self Development Initiative</td>
-                      <td className="py-3 px-4 font-medium border-r border-slate-850 print:border-black truncate max-w-xs" title={kpiSkillsJoined}>
+                      <td className="py-3 px-3 text-center align-middle font-bold border-r border-theme-border-input print:border-black">{selfDevSrl}</td>
+                      <td className="py-3 px-4 font-bold border-r border-theme-border-input print:border-black">Self Development Initiative</td>
+                      <td className="py-3 px-4 font-medium border-r border-theme-border-muted print:border-black truncate max-w-xs" title={kpiSkillsJoined}>
                         {kpiSkillsJoined}
                       </td>
-                      <td className="py-3 px-4 text-slate-400 border-r border-slate-850 print:border-black print:text-black">Quality, Quantity & Timeliness</td>
-                      <td className="py-3 px-3 text-center font-semibold border-r border-slate-850 print:border-black">100%</td>
+                      <td className="py-3 px-4 text-theme-text-muted border-r border-theme-border-muted print:border-black print:text-black">Quality, Quantity & Timeliness</td>
+                      <td className="py-3 px-3 text-center font-semibold border-r border-theme-border-muted print:border-black">100%</td>
                       
                       {/* Weightage */}
-                      <td className="py-2 px-3 text-center border-r border-slate-850 print:border-black">
+                      <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                         {isSupervisorOrAdmin ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <input
@@ -2103,9 +2103,9 @@ USING (auth.uid() = user_id OR EXISTS (
                               max="100"
                               value={weightages['self_development'] ?? defaultWeightages['self_development'] ?? 5}
                               onChange={(e) => handleWeightageChange('self_development', Number(e.target.value))}
-                              className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                              className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                             />
-                            <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                            <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                           </div>
                         ) : (
                           <span className="font-bold print:text-black">
@@ -2115,7 +2115,7 @@ USING (auth.uid() = user_id OR EXISTS (
                       </td>
 
                       {/* Self */}
-                      <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                      <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                         {isAppraisee || isSupervisorOrAdmin ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <input
@@ -2124,9 +2124,9 @@ USING (auth.uid() = user_id OR EXISTS (
                               max="100"
                               value={selfScores['self_development'] ?? 0}
                               onChange={(e) => handleSelfScoreChange('self_development', Number(e.target.value))}
-                              className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-blue-500"
+                              className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-blue-500"
                             />
-                            <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                            <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                           </div>
                         ) : (
                           <span className="font-bold print:text-black">
@@ -2136,7 +2136,7 @@ USING (auth.uid() = user_id OR EXISTS (
                       </td>
 
                       {/* Supervisor */}
-                      <td className="py-2 px-3 text-center border-r border-slate-855 print:border-black">
+                      <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
                         {isSupervisorOrAdmin ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <input
@@ -2145,9 +2145,9 @@ USING (auth.uid() = user_id OR EXISTS (
                               max="100"
                               value={supervisorScores['self_development'] ?? 0}
                               onChange={(e) => handleSupervisorScoreChange('self_development', Number(e.target.value))}
-                              className="w-14 bg-slate-900 border border-slate-800 rounded-lg py-1 text-center font-bold text-white focus:outline-hidden focus:border-emerald-500"
+                              className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
                             />
-                            <span className="text-[10px] text-slate-555 font-semibold">%</span>
+                            <span className="text-[10px] text-theme-text-muted font-semibold">%</span>
                           </div>
                         ) : (
                           <span className="font-bold print:text-black">
@@ -2164,10 +2164,10 @@ USING (auth.uid() = user_id OR EXISTS (
                             placeholder="Add feedback"
                             value={comments['self_development'] || ''}
                             onChange={(e) => handleCommentChange('self_development', e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-850 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-700 focus:outline-hidden focus:border-slate-700"
+                            className="w-full bg-theme-card-bg border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-theme-border-active"
                           />
                         ) : (
-                          <span className="text-slate-400 italic text-[11px] print:text-black">
+                          <span className="text-theme-text-muted italic text-[11px] print:text-black">
                             {comments['self_development'] || '—'}
                           </span>
                         )}
@@ -2176,20 +2176,20 @@ USING (auth.uid() = user_id OR EXISTS (
                   </>
                 );
               })()}
-              <tr className="bg-slate-900/90 font-bold border-t-2 border-slate-800 text-white print:bg-neutral-100 print:text-black print:border-black print:border-t">
-                <td colSpan={5} className="py-3 px-4 text-right border-r border-slate-800 uppercase tracking-wider print:border-black">
+              <tr className="bg-theme-card-bg/90 font-bold border-t-2 border-theme-border-input text-theme-text-primary print:bg-neutral-100 print:text-black print:border-black print:border-t">
+                <td colSpan={5} className="py-3 px-4 text-right border-r border-theme-border-input uppercase tracking-wider print:border-black">
                   Total Weightage (Max 100%)
                 </td>
-                <td className="py-3 px-3 text-center border-r border-slate-850 font-black text-blue-400 print:border-black print:text-black">
+                <td className="py-3 px-3 text-center border-r border-theme-border-muted font-black text-blue-400 print:border-black print:text-black">
                   {totals.weightage.toFixed(1)}%
                 </td>
-                <td className="py-3 px-3 text-center border-r border-slate-850 font-black text-blue-400 print:border-black print:text-black">
+                <td className="py-3 px-3 text-center border-r border-theme-border-muted font-black text-blue-400 print:border-black print:text-black">
                   {totals.self.toFixed(1)}%
                 </td>
-                <td className="py-3 px-3 text-center border-r border-slate-850 font-black text-emerald-400 print:border-black print:text-black">
+                <td className="py-3 px-3 text-center border-r border-theme-border-muted font-black text-emerald-400 print:border-black print:text-black">
                   {totals.supervisor.toFixed(1)}%
                 </td>
-                <td className="py-3 px-4 text-slate-400 font-normal italic text-[11px] print:text-black">
+                <td className="py-3 px-4 text-theme-text-muted font-normal italic text-[11px] print:text-black">
                   —
                 </td>
               </tr>
@@ -2198,13 +2198,13 @@ USING (auth.uid() = user_id OR EXISTS (
         </div>
 
         {/* Footnote notes */}
-        <div className="space-y-1.5 pt-4 text-[11px] text-slate-450 leading-relaxed border-t border-slate-900 print:border-black print:text-black">
-          <p className="font-semibold text-slate-350 print:text-black">My Manager has discussed with me the objective set for my performance evaluation & I agree on the same.</p>
+        <div className="space-y-1.5 pt-4 text-[11px] text-theme-text-muted leading-relaxed border-t border-theme-card-bg print:border-black print:text-black">
+          <p className="font-semibold text-theme-text-secondary print:text-black">My Manager has discussed with me the objective set for my performance evaluation & I agree on the same.</p>
           <p className="italic">Note: Measurable Criteria: Time, Cost, Value, Quality, Quantity</p>
         </div>
 
         {/* 5. SIGNATURES ROW */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-900 print:grid-cols-2 print:border-black">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-theme-card-bg print:grid-cols-2 print:border-black">
           {/* Appraisee Signature */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5 print:hidden">
@@ -2214,18 +2214,18 @@ USING (auth.uid() = user_id OR EXISTS (
                 checked={appraiseeSigned}
                 disabled={!canEditAppraiseeFields}
                 onChange={(e) => handleAppraiseeSignChange(e.target.checked)}
-                className="h-4.5 w-4.5 rounded-lg border-slate-800 bg-slate-950 text-blue-600 focus:ring-blue-500/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-4.5 w-4.5 rounded-lg border-theme-border-input bg-theme-card-container text-blue-600 focus:ring-blue-500/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              <label htmlFor="appraisee-sign-chk" className="text-xs font-semibold text-slate-300 cursor-pointer select-none">
+              <label htmlFor="appraisee-sign-chk" className="text-xs font-semibold text-theme-text-secondary cursor-pointer select-none">
                 Sign Assessment (Appraisee)
               </label>
             </div>
             
-            <div className="border-t border-slate-800/80 pt-2 space-y-1 w-72 print:border-black print:border-t">
-              <div className="text-xs font-mono font-bold text-white uppercase tracking-wide print:text-black min-h-[16px]">
+            <div className="border-t border-theme-border-input/80 pt-2 space-y-1 w-72 print:border-black print:border-t">
+              <div className="text-xs font-mono font-bold text-theme-text-primary uppercase tracking-wide print:text-black min-h-[16px]">
                 {appraiseeSigned ? (targetStaff.full_name || targetStaff.username) : ''}
               </div>
-              <div className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider print:text-black">
+              <div className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider print:text-black">
                 Appraisee Signature {appraiseeSigned && appraiseeSignDate && `| Date: ${appraiseeSignDate}`}
               </div>
             </div>
@@ -2241,18 +2241,18 @@ USING (auth.uid() = user_id OR EXISTS (
                   checked={appraiserSigned}
                   disabled={!isDesignatedAppraiser}
                   onChange={(e) => handleAppraiserSignChange(e.target.checked)}
-                  className="h-4.5 w-4.5 rounded-lg border-slate-800 bg-slate-950 text-emerald-600 focus:ring-emerald-500/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-4.5 w-4.5 rounded-lg border-theme-border-input bg-theme-card-container text-emerald-600 focus:ring-emerald-500/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                <label htmlFor="appraiser-sign-chk" className="text-xs font-semibold text-slate-300 cursor-pointer select-none">
+                <label htmlFor="appraiser-sign-chk" className="text-xs font-semibold text-theme-text-secondary cursor-pointer select-none">
                   Sign Assessment (Appraiser)
                 </label>
               </div>
 
-              <div className="border-t border-slate-800/80 pt-2 space-y-1 w-full print:border-black print:border-t">
-                <div className="text-xs font-mono font-bold text-white uppercase tracking-wide print:text-black min-h-[16px]">
+              <div className="border-t border-theme-border-input/80 pt-2 space-y-1 w-full print:border-black print:border-t">
+                <div className="text-xs font-mono font-bold text-theme-text-primary uppercase tracking-wide print:text-black min-h-[16px]">
                   {appraiserSigned ? appraiserName : ''}
                 </div>
-                <div className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider print:text-black">
+                <div className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider print:text-black">
                   Appraiser Signature {appraiserSigned && appraiserSignDate && `| Date: ${appraiserSignDate}`}
                 </div>
               </div>
@@ -2264,16 +2264,16 @@ USING (auth.uid() = user_id OR EXISTS (
       {/* External Appraiser Portal Modal */}
       {showViewKpiModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-xs p-4 pt-[12vh] overflow-y-auto animate-fade-in print:hidden">
-          <div className="bg-slate-950 border border-slate-850 max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="bg-theme-card-container border border-theme-border-muted max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-start">
               <div>
-                <h4 className="text-sm font-bold text-white">Evaluate Appraisee KPI</h4>
-                <p className="text-[10px] text-slate-500 mt-0.5">Select a user who has designated you as Appraiser, or search by Codename.</p>
+                <h4 className="text-sm font-bold text-theme-text-primary">Evaluate Appraisee KPI</h4>
+                <p className="text-[10px] text-theme-text-muted mt-0.5">Select a user who has designated you as Appraiser, or search by Codename.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowViewKpiModal(false)}
-                className="text-slate-500 hover:text-slate-300 font-bold cursor-pointer"
+                className="text-theme-text-muted hover:text-theme-text-secondary font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -2281,7 +2281,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
             {/* Codename Search */}
             <div className="space-y-1.5 pt-2">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
                 Search Appraisee by Codename
               </label>
               <div className="flex gap-2">
@@ -2290,7 +2290,7 @@ USING (auth.uid() = user_id OR EXISTS (
                   placeholder="e.g. KI1024"
                   value={appraiseeSearchText}
                   onChange={(e) => setAppraiseeSearchText(e.target.value)}
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-700 uppercase focus:outline-hidden focus:border-blue-500"
+                  className="flex-1 bg-theme-card-bg border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/70 uppercase focus:outline-hidden focus:border-blue-500"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleLoadAppraiseeByCodename(appraiseeSearchText);
@@ -2308,17 +2308,17 @@ USING (auth.uid() = user_id OR EXISTS (
             </div>
 
             {/* Assigned list */}
-            <div className="border-t border-slate-900 pt-3 space-y-2">
-              <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Assigned Appraisees ({monthYearKey})</h5>
+            <div className="border-t border-theme-card-bg pt-3 space-y-2">
+              <h5 className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wide">Assigned Appraisees ({monthYearKey})</h5>
               {searchingAppraisee ? (
-                <div className="flex items-center justify-center py-4 text-slate-500 gap-1.5">
+                <div className="flex items-center justify-center py-4 text-theme-text-muted gap-1.5">
                   <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
                   <span className="text-xs">Searching database...</span>
                 </div>
               ) : assignedAppraisees.length === 0 ? (
-                <p className="text-xs text-slate-500 italic py-2">No users have designated you as Appraiser in this month's KPI sheets yet.</p>
+                <p className="text-xs text-theme-text-muted italic py-2">No users have designated you as Appraiser in this month's KPI sheets yet.</p>
               ) : (
-                <div className="max-h-40 overflow-y-auto space-y-1.5 divide-y divide-slate-900/60 pr-1">
+                <div className="max-h-40 overflow-y-auto space-y-1.5 divide-y divide-theme-border-input/60 pr-1">
                   {assignedAppraisees.map((appraisee) => (
                     <button
                       key={appraisee.id}
@@ -2328,17 +2328,17 @@ USING (auth.uid() = user_id OR EXISTS (
                         setShowViewKpiModal(false);
                         toast.success(`Loaded KPI sheet for ${appraisee.full_name || appraisee.username} in Evaluator Mode.`);
                       }}
-                      className="w-full text-left py-2 px-2.5 rounded-lg hover:bg-slate-900/60 hover:text-white text-slate-350 transition-colors flex justify-between items-center text-xs font-medium cursor-pointer"
+                      className="w-full text-left py-2 px-2.5 rounded-lg hover:bg-theme-card-bg/60 hover:text-theme-text-primary text-theme-text-secondary transition-colors flex justify-between items-center text-xs font-medium cursor-pointer"
                     >
                       <span>{appraisee.full_name || appraisee.username}</span>
-                      <span className="text-[10px] font-mono text-slate-500 uppercase">{appraisee.username}</span>
+                      <span className="text-[10px] font-mono text-theme-text-muted uppercase">{appraisee.username}</span>
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-900">
+            <div className="flex justify-end pt-2 border-t border-theme-card-bg">
               <button
                 type="button"
                 onClick={() => {
@@ -2346,7 +2346,7 @@ USING (auth.uid() = user_id OR EXISTS (
                   setShowViewKpiModal(false);
                   toast.success("Reset view to your own KPI sheet.");
                 }}
-                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                className="px-3 py-1.5 bg-theme-card-bg hover:bg-theme-border-input text-theme-text-muted hover:text-theme-text-primary rounded-lg text-xs font-semibold transition-colors cursor-pointer"
               >
                 Reset to Self
               </button>
@@ -2365,7 +2365,7 @@ USING (auth.uid() = user_id OR EXISTS (
       >
         <div className="space-y-4 pt-2 font-sans">
           <div>
-            <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+            <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1.5">
               Period Label / Name
             </label>
             <input
@@ -2374,13 +2374,13 @@ USING (auth.uid() = user_id OR EXISTS (
               placeholder="e.g. Q1 2026, 1st Half 2026"
               value={newCustomPeriodLabel}
               onChange={(e) => setNewCustomPeriodLabel(e.target.value)}
-              className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white placeholder-slate-700 text-xs focus:outline-none focus:border-blue-500/50"
+              className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70 text-xs focus:outline-none focus:border-blue-500/50"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1.5">
                 From Date
               </label>
               <input
@@ -2388,11 +2388,11 @@ USING (auth.uid() = user_id OR EXISTS (
                 required
                 value={newCustomPeriodFrom}
                 onChange={(e) => setNewCustomPeriodFrom(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1.5">
                 To Date
               </label>
               <input
@@ -2400,16 +2400,16 @@ USING (auth.uid() = user_id OR EXISTS (
                 required
                 value={newCustomPeriodTo}
                 onChange={(e) => setNewCustomPeriodTo(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-blue-500/50"
+                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
               />
             </div>
           </div>
 
-          <div className="flex gap-3 pt-3 border-t border-slate-850">
+          <div className="flex gap-3 pt-3 border-t border-theme-border-muted">
             <button
               type="button"
               onClick={() => setCustomPeriodModalOpen(false)}
-              className="flex-1 py-2 px-3 bg-slate-955 border border-slate-800 hover:bg-slate-800/80 text-slate-355 hover:text-white rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200"
+              className="flex-1 py-2 px-3 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200"
             >
               Cancel
             </button>

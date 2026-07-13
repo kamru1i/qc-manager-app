@@ -7,7 +7,6 @@ import { ChutiRecord } from "@/utils/offlineSync";
 import {
   formatDate,
   formatTimeToAMPM,
-  formatDaysAndHours,
   checkIfHolidayOrWeekend,
   getLeaveValidationError,
   isFriday,
@@ -89,8 +88,6 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   govtHolidayRemaining = 0,
   eidFitrRemaining = 0,
   eidAdhaRemaining = 0,
-  eligibleOfficeLeave = false,
-  officeLeaveRemaining = 0,
   workingHours = 9.5,
   isAdmin = false,
   globalSettings,
@@ -287,7 +284,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
       {/* Date & Leave Type side by side */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
             Date
           </label>
           <div className="flex gap-2 items-center mt-1">
@@ -300,7 +297,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               onErrorChange={(hasError) =>
                 onDateErrorChange?.("primary", hasError)
               }
-              className="bg-slate-955 text-xs py-2"
+              className="bg-theme-page-bg text-xs py-2"
             />
             {isFullLeave && (
               <button
@@ -326,7 +323,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
             Leave Type
           </label>
           <CustomSelect
@@ -340,8 +337,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
       {/* Bulk Dates Input List */}
       {isFullLeave && bulkDates.length > 0 && (
-        <div className="space-y-2.5 p-3 bg-slate-955/40 rounded-lg border border-slate-850/80 max-h-48 overflow-y-auto">
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="space-y-2.5 p-3 bg-theme-page-bg/40 rounded-lg border border-theme-border-muted/80 max-h-48 overflow-y-auto">
+          <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
             Additional Leave Dates ({bulkDates.length}{" "}
             {bulkDates.length === 1 ? "day" : "days"})
           </label>
@@ -353,7 +350,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               return (
                 <div key={index} className="flex flex-col gap-1">
                   <div className="flex gap-2 items-center">
-                    <span className="text-[10px] text-slate-500 font-mono w-4">
+                    <span className="text-[10px] text-theme-text-muted font-mono w-4">
                       {index + 2}.
                     </span>
                     <div className="flex-1">
@@ -366,7 +363,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                         onErrorChange={(hasError) =>
                           onDateErrorChange?.(`bulk-${index}`, hasError)
                         }
-                        className="bg-slate-955 py-1.5 text-xs"
+                        className="bg-theme-page-bg py-1.5 text-xs"
                       />
                     </div>
 
@@ -401,15 +398,15 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         {/* Render Adjustment Category Toggles only for Full Leave */}
         {leaveType === "Full Leave" && hasAnyFullLeaveToggle && (
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Leave Adjustment
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* General Adjustment Toggle - Render only if isAdmin === true */}
               {isAdmin && (
-                <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80">
+                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
                   <div>
-                    <span className="block text-xs font-semibold text-slate-200 font-sans">
+                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                       Adjustment (Salary/Other)
                     </span>
                   </div>
@@ -419,7 +416,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                       adjustment && adjustmentCategory === "None"
                         ? "bg-blue-600"
-                        : "bg-slate-800"
+                        : "bg-theme-border-input"
                     }`}
                   >
                     <span
@@ -435,9 +432,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
               {/* Govt Holiday Toggle - Render only if govtHolidayRemaining > 0 */}
               {govtHolidayRemaining > 0 && (
-                <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80">
+                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
                   <div>
-                    <span className="block text-xs font-semibold text-slate-200 font-sans">
+                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                       Govt Holiday
                     </span>
                   </div>
@@ -447,7 +444,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                       adjustmentCategory === "Govt Holiday"
                         ? "bg-teal-600"
-                        : "bg-slate-800"
+                        : "bg-theme-border-input"
                     }`}
                   >
                     <span
@@ -463,9 +460,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
               {/* Eid-ul-Fitr Toggle - Render only if eidFitrRemaining > 0 */}
               {eidFitrRemaining > 0 && (
-                <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80">
+                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
                   <div>
-                    <span className="block text-xs font-semibold text-slate-200 font-sans">
+                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                       Eid-ul-Fitr
                     </span>
                   </div>
@@ -475,7 +472,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                       adjustmentCategory === "Eid-ul-Fitr"
                         ? "bg-purple-600"
-                        : "bg-slate-800"
+                        : "bg-theme-border-input"
                     }`}
                   >
                     <span
@@ -491,9 +488,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
               {/* Eid-ul-Adha Toggle - Render only if eidAdhaRemaining > 0 */}
               {eidAdhaRemaining > 0 && (
-                <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80">
+                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
                   <div>
-                    <span className="block text-xs font-semibold text-slate-200 font-sans">
+                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                       Eid-ul-Adha
                     </span>
                   </div>
@@ -503,7 +500,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                       adjustmentCategory === "Eid-ul-Adha"
                         ? "bg-purple-600"
-                        : "bg-slate-800"
+                        : "bg-theme-border-input"
                     }`}
                   >
                     <span
@@ -522,12 +519,12 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
         {/* Jummah Prayer Adjustment Toggle */}
         {leaveType === "Short Leave" && isFriday(date) && (
-          <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80 mb-3">
+          <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 mb-3">
             <div>
-              <span className="block text-xs font-semibold text-slate-200 font-sans">
+              <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                 Adjust with Jummah Prayer?
               </span>
-              <span className="block text-[10px] text-slate-450 mt-0.5">
+              <span className="block text-[10px] text-theme-text-muted mt-0.5">
                 Deduct 20 minutes from the calculated short leave duration
               </span>
             </div>
@@ -535,7 +532,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               type="button"
               onClick={() => setAdjustJummah && setAdjustJummah(!adjustJummah)}
               className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                adjustJummah ? "bg-indigo-600" : "bg-slate-800"
+                adjustJummah ? "bg-indigo-600" : "bg-theme-border-input"
               }`}
             >
               <span
@@ -552,13 +549,13 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           (govtHolidayRemaining > 0 ||
             eidFitrRemaining > 0 ||
             eidAdhaRemaining > 0) && (
-            <div className="space-y-3 bg-slate-955/40 p-3.5 rounded-xl border border-slate-850">
+            <div className="space-y-3 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="block text-xs font-bold text-slate-200 font-sans">
+                  <span className="block text-xs font-bold text-theme-text-primary font-sans">
                     Adjust with Reserve Holiday?
                   </span>
-                  <span className="block text-[10px] text-slate-450 mt-0.5">
+                  <span className="block text-[10px] text-theme-text-muted mt-0.5">
                     Adjust this short leave from reserve holiday balance instead
                     of office leave
                   </span>
@@ -580,7 +577,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     }
                   }}
                   className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    adjustment ? "bg-blue-600" : "bg-slate-800"
+                    adjustment ? "bg-blue-600" : "bg-theme-border-input"
                   }`}
                 >
                   <span
@@ -592,8 +589,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               </div>
 
               {adjustment && (
-                <div className="space-y-2 pt-2.5 border-t border-slate-850/50">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                <div className="space-y-2 pt-2.5 border-t border-theme-border-muted/50">
+                  <span className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1.5">
                     Select Reserve Category
                   </span>
                   <div className="flex flex-col gap-2">
@@ -604,7 +601,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                         className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
                           adjustmentCategory === "Govt Holiday"
                             ? "bg-teal-950/30 border-teal-500/50 text-teal-400 font-semibold"
-                            : "bg-slate-900/40 border-slate-800 text-slate-350 hover:bg-slate-900"
+                            : "bg-theme-card-bg/40 border-theme-border-input text-theme-text-secondary hover:bg-theme-card-bg"
                         }`}
                       >
                         <span className="text-xs font-sans">Govt Holiday</span>
@@ -620,7 +617,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                         className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
                           adjustmentCategory === "Eid-ul-Fitr"
                             ? "bg-purple-955/30 border-purple-500/50 text-purple-450 font-semibold"
-                            : "bg-slate-900/40 border-slate-800 text-slate-350 hover:bg-slate-900"
+                            : "bg-theme-card-bg/40 border-theme-border-input text-theme-text-secondary hover:bg-theme-card-bg"
                         }`}
                       >
                         <span className="text-xs font-sans">Eid-ul-Fitr</span>
@@ -636,7 +633,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                         className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
                           adjustmentCategory === "Eid-ul-Adha"
                             ? "bg-purple-950/30 border-purple-500/50 text-purple-450 font-semibold"
-                            : "bg-slate-900/40 border-slate-800 text-slate-350 hover:bg-slate-900"
+                            : "bg-theme-card-bg/40 border-theme-border-input text-theme-text-secondary hover:bg-theme-card-bg"
                         }`}
                       >
                         <span className="text-xs font-sans">Eid-ul-Adha</span>
@@ -654,12 +651,12 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         {/* Overtime Adjustment toggle with Short Leave (Conditional) */}
         {leaveType === "Overtime" && availableShortLeaveMins > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between p-3 bg-slate-955/60 rounded-lg border border-slate-800/80">
+            <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
               <div>
-                <span className="block text-xs font-semibold text-slate-200 font-sans">
+                <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                   Adjust with Short Leave?
                 </span>
-                <span className="block text-[10px] text-slate-450">
+                <span className="block text-[10px] text-theme-text-muted">
                   If yes, it will be adjusted from short leave balance
                 </span>
               </div>
@@ -667,7 +664,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 type="button"
                 onClick={() => setAdjustShortLeave(!adjustShortLeave)}
                 className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  adjustShortLeave ? "bg-emerald-600" : "bg-slate-800"
+                  adjustShortLeave ? "bg-emerald-600" : "bg-theme-border-input"
                 }`}
               >
                 <span
@@ -679,7 +676,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
             </div>
             {overtimeAdjMsg && (
               <div
-                className={`text-[11px] font-semibold px-1 font-sans ${adjustShortLeave ? "text-emerald-400" : "text-slate-450"}`}
+                className={`text-[11px] font-semibold px-1 font-sans ${adjustShortLeave ? "text-emerald-400" : "text-theme-text-muted"}`}
               >
                 {overtimeAdjMsg}
               </div>
@@ -694,7 +691,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex justify-between items-center">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                   Sign-in Time
                 </label>
                 {signInTime && (
@@ -708,12 +705,12 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 required
                 value={signInTime}
                 onChange={(e) => setSignInTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
               <div className="flex justify-between items-center">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                   Sign-out Time
                 </label>
                 {signOutTime && (
@@ -727,13 +724,13 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 required
                 value={signOutTime}
                 onChange={(e) => setSignOutTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
               {leaveType === "Overtime"
                 ? "Calculated Overtime Hours"
                 : "Calculated Leave Hours"}
@@ -743,7 +740,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               required
               value={leaveHour}
               onChange={(e) => setLeaveHour(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-blue-400 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-blue-400 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {validationError && (
               <div className="mt-1 text-xs text-rose-500 font-semibold font-sans">
@@ -759,7 +756,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
       {/* Comment Box */}
       <div>
-        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
           Comment
         </label>
         <textarea
@@ -767,7 +764,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           placeholder="Write a brief description..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -780,15 +777,15 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               setPendingCategory("");
             }
           }}
-          className="fixed inset-0 z-100 flex items-center justify-center bg-slate-955/80 backdrop-blur-md p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4"
         >
-          <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl w-full max-w-sm p-6 relative overflow-hidden font-sans">
+          <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-sm p-6 relative overflow-hidden font-sans">
             <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
 
-            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+            <h4 className="text-sm font-bold text-theme-text-primary mb-2 flex items-center gap-2">
               Configure Leave Adjustment
             </h4>
-            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+            <p className="text-xs text-theme-text-muted mb-4 leading-relaxed">
               You are applying for a total of {bulkDates.length + 1} days of
               leave. Out of these, how many days should be adjusted as{" "}
               <strong>
@@ -806,7 +803,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 Adjust all days ({bulkDates.length + 1} days)
               </button>
 
-              <div className="relative flex items-center gap-2 pt-2 border-t border-slate-800/80">
+              <div className="relative flex items-center gap-2 pt-2 border-t border-theme-border-input/80">
                 <input
                   type="number"
                   min={1}
@@ -815,7 +812,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                   placeholder="Enter number of days"
                   value={customDaysInput}
                   onChange={(e) => setCustomDaysInput(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  className="flex-1 px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                 />
                 <button
                   type="button"
@@ -829,21 +826,21 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                       handleConfirmBulkAdj(val);
                     }
                   }}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                  className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active border border-theme-border-active text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all"
                 >
                   Apply
                 </button>
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-850 flex justify-end">
+            <div className="mt-4 pt-4 border-t border-theme-border-muted flex justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setShowBulkAdjPrompt(false);
                   setPendingCategory("");
                 }}
-                className="text-xs text-slate-400 hover:text-white transition-all cursor-pointer"
+                className="text-xs text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer"
               >
                 Cancel
               </button>

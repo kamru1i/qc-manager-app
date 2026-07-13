@@ -504,7 +504,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
             currentPage === i
               ? "bg-linear-to-r from-purple-600 to-indigo-600 border-purple-500 text-white shadow-md shadow-purple-900/30"
-              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-white hover:bg-slate-800"
+              : "border-theme-border-input bg-theme-card-bg/40 text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input"
           }`}
         >
           {i}
@@ -553,9 +553,9 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/20">
-        <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
-          <thead className="bg-slate-900/50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+      <div className="overflow-x-auto rounded-xl border border-theme-border-input bg-theme-card-bg/20">
+        <table className="min-w-full divide-y divide-theme-border-input text-left text-sm">
+          <thead className="bg-theme-card-bg/50 text-[10px] font-bold uppercase tracking-wider text-theme-text-muted">
             <tr>
               <th
                 className={`px-4 py-2 ${showDate ? "w-30 min-w-30" : "w-28 min-w-28"}`}
@@ -581,11 +581,11 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                       <button
                         type="button"
                         onClick={handleBulkSave}
-                        className="p-1.5 hover:bg-slate-800 rounded text-blue-500 hover:text-blue-400 transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0 relative"
+                        className="p-1.5 hover:bg-theme-border-input rounded text-blue-500 hover:text-blue-400 transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0 relative"
                         title={`Save changes for ${modifiedIds.length} records`}
                       >
                         <Save className="h-4 w-4" />
-                        <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-[8px] font-bold text-white h-4 min-w-[16px] px-0.5 rounded-full text-center leading-[14px] border border-slate-900 select-none block">
+                        <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-[8px] font-bold text-white h-4 min-w-[16px] px-0.5 rounded-full text-center leading-[14px] border border-theme-card-bg select-none block">
                           {modifiedIds.length}
                         </span>
                       </button>
@@ -594,7 +594,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                     <>
                       <button
                         onClick={() => onBulkDelete?.(selectedIds)}
-                        className={`p-1 text-red-500 hover:text-red-400 hover:bg-slate-800/80 rounded cursor-pointer flex items-center justify-center shrink-0 transition-all duration-300 transform ${
+                        className={`p-1 text-red-500 hover:text-red-400 hover:bg-theme-border-input/80 rounded cursor-pointer flex items-center justify-center shrink-0 transition-all duration-300 transform ${
                           selectedIds.length > 0
                             ? "scale-100 opacity-100 w-6"
                             : "scale-0 opacity-0 w-0"
@@ -606,7 +606,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                       <button
                         type="button"
                         onClick={handleSelectAllToggle}
-                        className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                        className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
                           deletableDisplayedRecords.length > 0 && deletableDisplayedRecords.every((r) => selectedIds.includes(r.id))
                             ? 'bg-blue-500 border-blue-500'
                             : ''
@@ -626,32 +626,32 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-850 text-slate-300">
+          <tbody className="divide-y divide-theme-border-muted text-theme-text-secondary">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, idx) => (
                 <tr
                   key={idx}
-                  className="hover:bg-slate-900/10 border-b border-slate-850/40"
+                  className="hover:bg-theme-card-bg/10 border-b border-theme-border-muted/40"
                 >
                   <td className="px-4 py-2.5 w-28">
                     <div className="flex flex-col gap-1">
-                      <div className="h-3 w-16 bg-slate-800/40 rounded-lg animate-pulse" />
+                      <div className="h-3 w-16 bg-theme-border-input/40 rounded-lg animate-pulse" />
                       {showDate && (
-                        <div className="h-2 w-10 bg-slate-850/30 rounded-lg animate-pulse" />
+                        <div className="h-2 w-10 bg-theme-border-muted/30 rounded-lg animate-pulse" />
                       )}
                     </div>
                   </td>
                   <td className="px-4 py-2.5">
-                    <div className="h-3 w-40 bg-slate-800/40 rounded-lg animate-pulse" />
+                    <div className="h-3 w-40 bg-theme-border-input/40 rounded-lg animate-pulse" />
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <div className="h-3 w-12 bg-slate-800/40 rounded-lg animate-pulse mx-auto" />
+                    <div className="h-3 w-12 bg-theme-border-input/40 rounded-lg animate-pulse mx-auto" />
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <div className="h-3 w-16 bg-slate-800/40 rounded-lg animate-pulse mx-auto" />
+                    <div className="h-3 w-16 bg-theme-border-input/40 rounded-lg animate-pulse mx-auto" />
                   </td>
                   <td className="px-4 py-2.5 w-32 text-center">
-                    <div className="h-5 w-20 bg-slate-800/30 rounded-full animate-pulse mx-auto" />
+                    <div className="h-5 w-20 bg-theme-border-input/30 rounded-full animate-pulse mx-auto" />
                   </td>
                   <td
                     className="p-0 text-right overflow-hidden border-0"
@@ -661,7 +661,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                       className="flex justify-end items-center overflow-hidden"
                       style={getInnerStyle("16px", "16px")}
                     >
-                      <div className="h-3.5 w-3.5 bg-slate-800/40 rounded-full animate-pulse shrink-0" />
+                      <div className="h-3.5 w-3.5 bg-theme-border-input/40 rounded-full animate-pulse shrink-0" />
                     </div>
                   </td>
                 </tr>
@@ -670,7 +670,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-5 text-center text-xs text-slate-500 font-medium"
+                  className="px-4 py-5 text-center text-xs text-theme-text-muted font-medium"
                 >
                   {emptyMessage}
                 </td>
@@ -681,7 +681,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                   key={r.id}
                   onContextMenu={(e) => handleRowContextMenu(e, r)}
                   onClick={(e) => handleRowClick(e, r)}
-                  className={`hover:bg-slate-900/30 transition-all select-none ${
+                  className={`hover:bg-theme-card-bg/30 transition-all select-none ${
                     isSelectionMode && (isAdmin || r.user_id === currentUserId)
                       ? "cursor-pointer"
                       : ""
@@ -692,22 +692,22 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                   >
                     {showDate ? (
                       <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200 whitespace-nowrap">
+                        <span className="font-semibold text-theme-text-primary whitespace-nowrap">
                           {formatDate(r.submitted_at)}
                         </span>
-                        <span className="text-[10px] text-slate-500 mt-0.5">
+                        <span className="text-[10px] text-theme-text-muted mt-0.5">
                           {formatTimeToAMPM(r.submitted_at)}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-theme-text-muted">
                         {formatTimeToAMPM(r.submitted_at)}
                       </span>
                     )}
                   </td>
 
                   {/* File Name Cell */}
-                  <td className="px-4 py-1.5 font-semibold text-white">
+                  <td className="px-4 py-1.5 font-semibold text-theme-text-primary">
                     {editingCell &&
                     editingCell.id === r.id &&
                     editingCell.field === "file_name" ? (
@@ -731,7 +731,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           }
                         }}
                         autoFocus
-                        className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+                        className="bg-theme-card-container border border-theme-border-active rounded px-2 py-1 text-theme-text-primary text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
                       />
                     ) : (
                       <div
@@ -762,7 +762,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                   </td>
 
                   {/* Branch Name Cell */}
-                  <td className="px-4 py-1.5 text-slate-355 text-center">
+                  <td className="px-4 py-1.5 text-theme-text-secondary text-center">
                     {editingCell &&
                     editingCell.id === r.id &&
                     editingCell.field === "branch_name" ? (
@@ -785,7 +785,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           }
                         }}
                         autoFocus
-                        className="bg-slate-950 border border-slate-700 rounded px-1 py-1 text-white text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                        className="bg-theme-card-container border border-theme-border-active rounded px-1 py-1 text-theme-text-primary text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                       >
                         {[
                           "ADI",
@@ -837,7 +837,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                   </td>
 
                   {/* Codename Cell */}
-                  <td className="px-4 py-1.5 text-slate-355 font-semibold text-center">
+                  <td className="px-4 py-1.5 text-theme-text-secondary font-semibold text-center">
                     {editingCell &&
                     editingCell.id === r.id &&
                     editingCell.field === "codename" ? (
@@ -861,7 +861,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           }
                         }}
                         autoFocus
-                        className="bg-slate-955 border border-slate-700 rounded px-2 py-0.5 text-white text-xs w-20 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold uppercase"
+                        className="bg-theme-page-bg border border-theme-border-active rounded px-2 py-0.5 text-theme-text-primary text-xs w-20 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold uppercase"
                       />
                     ) : (
                       <div
@@ -906,7 +906,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           }
                         }}
                         autoFocus
-                        className="bg-slate-955 border border-slate-700 rounded px-1 py-1 text-white text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                        className="bg-theme-page-bg border border-theme-border-active rounded px-1 py-1 text-theme-text-primary text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                       >
                         {(() => {
                           const baseCategories = allowedCategories || [
@@ -986,7 +986,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                               e.stopPropagation();
                               handleSaveRow(r.id);
                             }}
-                            className="p-1 hover:bg-slate-800 rounded text-blue-500 hover:text-blue-400 transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0"
+                            className="p-1 hover:bg-theme-border-input rounded text-blue-500 hover:text-blue-400 transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0"
                             title="Save changes for this row"
                           >
                             <Save className="h-4 w-4" />
@@ -997,7 +997,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           type="button"
                           disabled={!isAdmin && r.user_id !== currentUserId}
                           onClick={() => handleSelectRow(r.id)}
-                          className={`rounded-full border border-slate-700 bg-slate-955 cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 disabled:opacity-20 disabled:cursor-not-allowed ${
+                          className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 disabled:opacity-20 disabled:cursor-not-allowed ${
                             selectedIds.includes(r.id) ? 'bg-blue-500 border-blue-500' : ''
                           } ${
                             isSelectionMode
@@ -1025,12 +1025,12 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
         createPortal(
           <div
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-            className="fixed z-50 backdrop-blur-lg bg-slate-900/95 border border-slate-800 rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
+            className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
           >
             {selectedIds.includes(contextMenu.record.id) ? (
               <button
                 onClick={() => handleContextDeselect(contextMenu.record)}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-350 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
                 Deselect
@@ -1038,7 +1038,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
             ) : (
               <button
                 onClick={() => handleContextSelect(contextMenu.record)}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-350 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 <div className="h-2 w-2 rounded-full bg-blue-500" />
                 Select
@@ -1046,9 +1046,9 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
             )}
             <button
               onClick={() => handleContextEdit(contextMenu.record)}
-              className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-350 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
-              <Edit className="h-3.5 w-3.5 text-slate-500" />
+              <Edit className="h-3.5 w-3.5 text-theme-text-muted" />
               Edit
             </button>
             <button
@@ -1064,13 +1064,13 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
       {/* Pagination Controls */}
       {records.length > 0 && (
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2 px-3 bg-slate-950/20 border border-slate-800/60 rounded-xl">
-          <div className="text-xs text-slate-400 font-medium">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2 px-3 bg-theme-card-container/20 border border-theme-border-input/60 rounded-xl">
+          <div className="text-xs text-theme-text-muted font-medium">
             Showing{" "}
-            <span className="font-semibold text-slate-200">{startIndex}</span>{" "}
-            to <span className="font-semibold text-slate-200">{endIndex}</span>{" "}
+            <span className="font-semibold text-theme-text-primary">{startIndex}</span>{" "}
+            to <span className="font-semibold text-theme-text-primary">{endIndex}</span>{" "}
             of{" "}
-            <span className="font-semibold text-slate-200">
+            <span className="font-semibold text-theme-text-primary">
               {records.length}
             </span>{" "}
             entries
@@ -1078,7 +1078,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             {/* Show per page selector dropdown */}
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs text-theme-text-muted">
               <span>Show</span>
               <select
                 value={itemsPerPage}
@@ -1086,7 +1086,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="bg-slate-900 border border-slate-800 text-slate-200 rounded-lg py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs cursor-pointer hover:bg-slate-850"
+                className="bg-theme-card-bg border border-theme-border-input text-theme-text-primary rounded-lg py-1 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs cursor-pointer hover:bg-theme-border-muted"
               >
                 <option value={15}>15</option>
                 <option value={30}>30</option>
@@ -1102,7 +1102,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                 <button
                   onClick={() => setCurrentPage(1)}
                   disabled={currentPage === 1}
-                  className="p-2 border border-slate-800 bg-slate-900/40 hover:bg-slate-800 hover:text-white text-slate-400 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-900/40 disabled:hover:text-slate-400 cursor-pointer"
+                  className="p-2 border border-theme-border-input bg-theme-card-bg/40 hover:bg-theme-border-input hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-theme-card-bg/40 disabled:hover:text-theme-text-muted cursor-pointer"
                   title="First Page"
                 >
                   <ChevronsLeft className="h-4 w-4" />
@@ -1112,7 +1112,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                 <button
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className="p-2 border border-slate-800 bg-slate-900/40 hover:bg-slate-800 hover:text-white text-slate-400 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-900/40 disabled:hover:text-slate-400 cursor-pointer"
+                  className="p-2 border border-theme-border-input bg-theme-card-bg/40 hover:bg-theme-border-input hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-theme-card-bg/40 disabled:hover:text-theme-text-muted cursor-pointer"
                   title="Previous Page"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -1126,7 +1126,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="p-2 border border-slate-800 bg-slate-900/40 hover:bg-slate-800 hover:text-white text-slate-400 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-900/40 disabled:hover:text-slate-400 cursor-pointer"
+                  className="p-2 border border-theme-border-input bg-theme-card-bg/40 hover:bg-theme-border-input hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-theme-card-bg/40 disabled:hover:text-theme-text-muted cursor-pointer"
                   title="Next Page"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -1136,7 +1136,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                 <button
                   onClick={() => setCurrentPage(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="p-2 border border-slate-800 bg-slate-900/40 hover:bg-slate-800 hover:text-white text-slate-400 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-900/40 disabled:hover:text-slate-400 cursor-pointer"
+                  className="p-2 border border-theme-border-input bg-theme-card-bg/40 hover:bg-theme-border-input hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-theme-card-bg/40 disabled:hover:text-theme-text-muted cursor-pointer"
                   title="Last Page"
                 >
                   <ChevronsRight className="h-4 w-4" />
