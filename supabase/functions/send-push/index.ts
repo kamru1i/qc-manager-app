@@ -139,9 +139,8 @@ serve(async (req) => {
       tag: tag || 'chuti-alert',
     })
 
-    // 3. Send Web Push notifications
-    let successfulSends = 0
-    for (const sub of subscriptions) {
+    // 3. Send Web Push notifications concurrently
+    const pushPromises = subscriptions.map(async (sub) => {
       const pushSubscription = {
         endpoint: sub.sub_endpoint,
         keys: {
@@ -152,15 +151,23 @@ serve(async (req) => {
 
       try {
         await webpush.sendNotification(pushSubscription, payload)
-        successfulSends++
+        return { success: true }
       } catch (err: any) {
         console.warn(`Failed to send webpush to subscription ID ${sub.sub_id}:`, err.message)
         // Inactive / Expired subscription cleanup (404/410)
         if (err.statusCode === 410 || err.statusCode === 404) {
-          await supabaseServer.rpc('delete_push_subscription', { p_sub_id: sub.sub_id })
+          try {
+            await supabaseServer.rpc('delete_push_subscription', { p_sub_id: sub.sub_id })
+          } catch (delErr) {
+            console.error(`Failed to delete expired subscription ID ${sub.sub_id}:`, delErr)
+          }
         }
+        return { success: false }
       }
-    }
+    })
+
+    const results = await Promise.all(pushPromises)
+    const successfulSends = results.filter(r => r.success).length
 
     return new Response(JSON.stringify({
       success: true,

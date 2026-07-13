@@ -29,7 +29,7 @@ interface DashboardProps {
   activeChutiTab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   /** R2: Callback to share data upward so useGlobalNotifications doesn't duplicate fetches */
-  onDataReady?: (data: { userRecords: any[]; holidayResponses: any[] }) => void;
+  onDataReady?: (data: { userRecords: any[]; holidayResponses: any[]; initialFetchDone?: boolean }) => void;
 }
 
 export default function Dashboard({
@@ -95,10 +95,10 @@ export default function Dashboard({
 
   // R2: Push data upward so useGlobalNotifications can skip its own duplicate fetches.
   useEffect(() => {
-    if (onDataReady && (userRecords.length > 0 || holidayResponses.length > 0)) {
-      onDataReady({ userRecords, holidayResponses });
+    if (onDataReady) {
+      onDataReady({ userRecords, holidayResponses, initialFetchDone });
     }
-  }, [userRecords, holidayResponses, onDataReady]);
+  }, [userRecords, holidayResponses, initialFetchDone, onDataReady]);
 
   // View Filter states
   const [filterType, setFilterType] = useState('all');

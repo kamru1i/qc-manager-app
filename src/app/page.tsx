@@ -15,7 +15,6 @@ import { UserNotificationsModal } from "@/components/common/modals/UserNotificat
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
 import { subscribeUserToPush } from "@/utils/webPushHelper";
-import { useDesktopNotifications } from "@/hooks/common/useDesktopNotifications";
 import { checkInactivity, registerAndCheckSession } from "@/utils/sessionHelper";
 import { RealtimeProvider } from "@/contexts/RealtimeContext";
 
@@ -218,7 +217,13 @@ export default function AppPortal() {
   useEffect(() => {
     if (!sessionUser) return;
 
+    let deferTimer: NodeJS.Timeout | null = null;
+
     const fetchProfiles = async () => {
+      if (deferTimer) {
+        clearTimeout(deferTimer);
+        deferTimer = null;
+      }
       const { data, error } = await supabase.from("profiles").select("*");
       if (data && !error) {
         const mappedData = data.map((p: any) => mapProfilePasswordResetStatus(p));
@@ -226,7 +231,7 @@ export default function AppPortal() {
       }
     };
 
-    const deferTimer = setTimeout(() => {
+    deferTimer = setTimeout(() => {
       fetchProfiles();
     }, 3000);
 
@@ -236,19 +241,23 @@ export default function AppPortal() {
         const { error } = await supabase.rpc("sync_top_performer_badges");
         if (error) {
           console.error("Failed to sync top performer badges from DB:", error.message);
+          fetchProfiles();
         } else {
           // Re-fetch profiles after sync to get the latest updated badge settings
           fetchProfiles();
         }
       } catch (err) {
         console.error("Error triggering top performer badges sync:", err);
+        fetchProfiles();
       }
     };
 
     triggerBadgeSync();
 
     return () => {
-      clearTimeout(deferTimer);
+      if (deferTimer) {
+        clearTimeout(deferTimer);
+      }
     };
   }, [sessionUser]);
 
@@ -269,9 +278,17 @@ export default function AppPortal() {
 
   // R2: Shared data from the always-mounted ChutiDashboard, passed to
   // useGlobalNotifications so it skips its own duplicate fetches.
-  const [sharedChutiData, setSharedChutiData] = useState<{ userRecords: any[]; holidayResponses: any[] }>({ userRecords: [], holidayResponses: [] });
-  const handleChutiDataReady = useCallback((data: { userRecords: any[]; holidayResponses: any[] }) => {
-    setSharedChutiData(data);
+  const [sharedChutiData, setSharedChutiData] = useState<{ userRecords: any[]; holidayResponses: any[]; initialFetchDone: boolean }>({
+    userRecords: [],
+    holidayResponses: [],
+    initialFetchDone: false
+  });
+  const handleChutiDataReady = useCallback((data: { userRecords: any[]; holidayResponses: any[]; initialFetchDone?: boolean }) => {
+    setSharedChutiData({
+      userRecords: data.userRecords,
+      holidayResponses: data.holidayResponses,
+      initialFetchDone: !!data.initialFetchDone
+    });
   }, []);
 
   const {
@@ -283,10 +300,14 @@ export default function AppPortal() {
     handleDismissNotification,
     handleDismissAllNotifications,
     approvalsCount: globalApprovalsCount,
-  } = useGlobalNotifications(sessionUser, profile, profilesList, sharedChutiData.userRecords, sharedChutiData.holidayResponses);
-
-  // Global Tauri Desktop Notification Listener (active on all tabs)
-  useDesktopNotifications(profile?.id);
+  } = useGlobalNotifications(
+    sessionUser,
+    profile,
+    profilesList,
+    sharedChutiData.userRecords,
+    sharedChutiData.holidayResponses,
+    sharedChutiData.initialFetchDone
+  );
 
   // Background Web Push auto-subscription on load for browser users
   useEffect(() => {

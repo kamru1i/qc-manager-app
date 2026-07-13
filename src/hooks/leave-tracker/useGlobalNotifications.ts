@@ -15,7 +15,8 @@ export function useGlobalNotifications(
   profile: Profile | null,
   profilesList: Profile[],
   sharedUserRecords?: ChutiRecord[],
-  sharedHolidayResponses?: GovtHolidayResponse[]
+  sharedHolidayResponses?: GovtHolidayResponse[],
+  initialFetchDone?: boolean
 ) {
   const [userRecords, setUserRecords] = useState<ChutiRecord[]>([]);
   const [holidayResponses, setHolidayResponses] = useState<GovtHolidayResponse[]>([]);
@@ -28,16 +29,32 @@ export function useGlobalNotifications(
   const [syncedApprovalsCount, setSyncedApprovalsCount] = useState<number | null>(null);
   const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [isChutiLoaded, setIsChutiLoaded] = useState(false);
+
+  useEffect(() => {
+    if (initialFetchDone) {
+      setIsChutiLoaded(true);
+    }
+  }, [initialFetchDone]);
+
+  // Fallback trigger after 5 seconds if dashboard fails to report loaded status
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsChutiLoaded(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // R2: When shared data is available from the always-mounted ChutiDashboard,
   // sync it into local state instead of fetching independently.
   useEffect(() => {
-    if (sharedUserRecords && sharedUserRecords.length > 0) {
+    if (sharedUserRecords) {
       setUserRecords(sharedUserRecords);
     }
   }, [sharedUserRecords]);
 
   useEffect(() => {
-    if (sharedHolidayResponses && sharedHolidayResponses.length > 0) {
+    if (sharedHolidayResponses) {
       setHolidayResponses(sharedHolidayResponses);
     }
   }, [sharedHolidayResponses]);
@@ -62,11 +79,11 @@ export function useGlobalNotifications(
 
   // Fetch notifications data. When shared data is available, skip the
   // user-records and holiday-responses queries (R2 data sharing).
-  const hasSharedUserRecords = !!sharedUserRecords && sharedUserRecords.length > 0;
-  const hasSharedHolidayResponses = !!sharedHolidayResponses && sharedHolidayResponses.length > 0;
+  const hasSharedUserRecords = !!sharedUserRecords && (sharedUserRecords.length > 0 || !!initialFetchDone);
+  const hasSharedHolidayResponses = !!sharedHolidayResponses && (sharedHolidayResponses.length > 0 || !!initialFetchDone);
 
   const fetchNotificationsData = useCallback(async () => {
-    if (!sessionUser || !profile) return;
+    if (!sessionUser || !profile || !isChutiLoaded) return;
 
     try {
       // 1. Fetch user's own chuti records — SKIP if shared data from ChutiDashboard is available
@@ -193,7 +210,7 @@ export function useGlobalNotifications(
     } catch (err) {
       console.error('Failed to fetch global notifications data:', err);
     }
-  }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses]);
+  }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses, isChutiLoaded]);
 
   // Register realtime handler to sync dismissals across active sessions in real time
   useRealtimeHandler(
@@ -255,12 +272,12 @@ export function useGlobalNotifications(
     }
   }, []);
 
-  // Run fetch on mount / session change
+  // Run fetch on mount / session change / loading status change
   useEffect(() => {
-    if (sessionUser && profile) {
+    if (sessionUser && profile && isChutiLoaded) {
       fetchNotificationsData();
     }
-  }, [sessionUser, profile, fetchNotificationsData]);
+  }, [sessionUser, profile, isChutiLoaded, fetchNotificationsData]);
 
   // Instead of subscribing to Supabase realtime channels (which duplicates
   // the subscriptions in useDashboardData and useQuotesDashboardData), listen

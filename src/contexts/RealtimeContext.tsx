@@ -76,12 +76,26 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
   );
 
   // Create the single unified channel
+  // Create the single unified channel
   useEffect(() => {
     if (!sessionUser?.id || !profile) return;
 
     const isApprover = profile.role === 'admin' || profile.role === 'supervisor';
 
     let active = true;
+
+    // Check Tauri notification permission on mount
+    const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+    if (isTauri) {
+      import('@tauri-apps/plugin-notification')
+        .then(async ({ isPermissionGranted, requestPermission }) => {
+          let permissionGranted = await isPermissionGranted();
+          if (!permissionGranted) {
+            await requestPermission();
+          }
+        })
+        .catch((e) => console.error('[RealtimeProvider] Tauri notification permission request failed:', e));
+    }
 
     const dispatch = (table: RealtimeTable, payload: RealtimePayload) => {
       handlersRef.current.get(table)?.forEach((handler) => {
@@ -160,6 +174,32 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
           filter: `user_id=eq.${sessionUser.id}`,
         },
         (payload) => dispatch('dismissed_notifications', payload as unknown as RealtimePayload)
+      )
+      // ── Tauri Desktop Notifications Broadcast listener ──
+      .on(
+        'broadcast',
+        { event: 'os-push' },
+        (payload) => {
+          if (!isTauri) return;
+
+          // Check user preference toggle dynamically
+          const pushPref = localStorage.getItem('push_subscribed_pref_' + sessionUser.id);
+          if (pushPref === 'false') return;
+
+          const { targetUserIds, title, body } = payload.payload;
+
+          // Only trigger if this notification was meant for the current user
+          if (targetUserIds && Array.isArray(targetUserIds) && targetUserIds.includes(sessionUser.id)) {
+            import('@tauri-apps/plugin-notification')
+              .then(({ sendNotification }) => {
+                sendNotification({
+                  title: title || 'Chuti Tracker',
+                  body: body || 'You have a new notification',
+                });
+              })
+              .catch((err) => console.error('[RealtimeProvider] failed to send desktop notification:', err));
+          }
+        }
       )
       .subscribe((status, err) => {
         if (!active) return;
