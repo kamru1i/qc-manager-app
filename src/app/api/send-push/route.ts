@@ -39,16 +39,16 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       console.error('[SendPush] Missing Supabase environment variables.');
       return NextResponse.json(
-        { error: 'Server configuration error: missing database credentials' },
+        { error: 'Server configuration error: missing credentials' },
         { status: 500, headers: getCorsHeaders(request) }
       );
     }
 
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
     const supabaseServer = createClient(supabaseUrl, supabaseServiceKey);
 
     // 1. Authenticate the requester using their Supabase JWT

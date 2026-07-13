@@ -2,15 +2,27 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import webpush from "npm:web-push"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const ALLOWED_ORIGINS = [
+  'tauri://localhost',
+  'https://tauri.localhost',
+  'http://tauri.localhost',
+  'http://localhost:3000',
+  'http://localhost:1420',
+]
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') || ''
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  }
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
@@ -24,7 +36,7 @@ serve(async (req) => {
     if (!vapidPublicKey || !vapidPrivateKey) {
       return new Response(JSON.stringify({ error: "Missing VAPID public/private key settings in env variables" }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
       })
     }
 
@@ -46,7 +58,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized user access' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
       })
     }
 
@@ -56,7 +68,7 @@ serve(async (req) => {
     if (!userIds || !title || !body) {
       return new Response(JSON.stringify({ error: 'Missing userIds, title, or body parameter' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
       })
     }
 
@@ -83,7 +95,7 @@ serve(async (req) => {
 
     if (targetUserIds.length === 0) {
       return new Response(JSON.stringify({ success: true, sentCount: 0, message: 'Resolved targets are empty' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
       })
     }
 
@@ -116,7 +128,7 @@ serve(async (req) => {
 
     if (!subscriptions || subscriptions.length === 0) {
       return new Response(JSON.stringify({ success: true, sentCount: 0, message: 'Broadcasted to desktop. No active web push subscriptions found.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
       })
     }
 
@@ -155,13 +167,13 @@ serve(async (req) => {
       sentCount: successfulSends,
       totalCount: subscriptions.length,
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
     })
 
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
     })
   }
 })

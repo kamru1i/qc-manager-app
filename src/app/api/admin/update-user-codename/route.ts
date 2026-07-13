@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getCorsHeaders } from '@/utils/apiHelpers';
+import { getCorsHeaders, CooldownLimiter } from '@/utils/apiHelpers';
+
+// Cooldown limiter: 10 seconds per authenticated user
+const cooldownLimiter = new CooldownLimiter(10000);
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -45,6 +48,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: getCorsHeaders(request) });
     }
 
+    // 2b. Rate limit: prevent rapid-fire codename updates (cascading DB writes)
+    if (cooldownLimiter.isLimited(user.id)) {
+      return NextResponse.json(
+        { error: 'Too Many Requests: Please wait before updating another codename.' },
+        { status: 429, headers: getCorsHeaders(request) }
+      );
+    }
     // 3. Parse arguments
     const body = await request.json().catch(() => ({}));
     const { userId, newUsername, role } = body;

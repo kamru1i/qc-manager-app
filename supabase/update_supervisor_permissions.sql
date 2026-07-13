@@ -152,8 +152,21 @@ BEGIN
       RETURN NEW;
     END IF;
 
-    -- If editing an employee they directly supervise, allow everything
+    -- If editing an employee they directly supervise, enforce key constraints (prevent privilege escalation/sensitive settings modification)
     IF auth.uid() = ANY(NEW.supervisor_ids) OR auth.uid() = ANY(OLD.supervisor_ids) THEN
+      IF OLD.role IS DISTINCT FROM NEW.role OR
+         OLD.has_chuti_access IS DISTINCT FROM NEW.has_chuti_access OR
+         OLD.has_quotes_access IS DISTINCT FROM NEW.has_quotes_access OR
+         OLD.can_manage_rules IS DISTINCT FROM NEW.can_manage_rules OR
+         OLD.supervisor_ids IS DISTINCT FROM NEW.supervisor_ids OR
+         (NEW.global_settings->>'office_leave_default') IS DISTINCT FROM (OLD.global_settings->>'office_leave_default') OR
+         (NEW.global_settings->>'eid_fitr_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_fitr_leave') OR
+         (NEW.global_settings->>'eid_adha_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_adha_leave') OR
+         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays') OR
+         (NEW.global_settings->>'password_reset_status') IS DISTINCT FROM (OLD.global_settings->>'password_reset_status')
+      THEN
+        RAISE EXCEPTION 'Supervisors cannot modify roles, supervisor assignments, access permissions, or sensitive global leave settings for their team members.';
+      END IF;
       RETURN NEW;
     END IF;
 
