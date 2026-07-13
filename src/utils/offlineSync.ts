@@ -40,6 +40,8 @@ const DB_NAME = 'ChutiOfflineDB';
 const DB_VERSION = 3;
 const STORE_NAME = 'pending_chuti';
 
+let isSyncing = false;
+
 // Secure context safe UUID generator helper
 export const generateUUID = (): string => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -234,9 +236,16 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
     return { success: false, syncedCount: 0, conflicts: [], error: 'Device is offline' };
   }
 
+  if (isSyncing) {
+    console.log('syncOfflineData (leave): Sync already in progress, skipping concurrent run.');
+    return { success: true, syncedCount: 0, conflicts: [] };
+  }
+
+  isSyncing = true;
   try {
     const offlineRecords = await getOfflineRecords();
     if (offlineRecords.length === 0) {
+      isSyncing = false;
       return { success: true, syncedCount: 0, conflicts: [] };
     }
 
@@ -385,8 +394,10 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
       onSyncSuccess(syncedCount);
     }
 
+    isSyncing = false;
     return { success: true, syncedCount, conflicts };
   } catch (err) {
+    isSyncing = false;
     console.error('Offline sync failed:', err);
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, syncedCount: 0, conflicts: [], error: message };
