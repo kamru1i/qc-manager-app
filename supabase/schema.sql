@@ -1087,8 +1087,9 @@ CREATE TABLE public.audit_logs (
 -- Enable RLS on audit_logs
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow admins and supervisors to read all audit logs" ON public.audit_logs
-  FOR SELECT TO authenticated USING (public.is_admin_or_supervisor());
+DROP POLICY IF EXISTS "Allow admins and supervisors to read all audit logs" ON public.audit_logs;
+CREATE POLICY "Allow admins to read all audit logs" ON public.audit_logs
+  FOR SELECT TO authenticated USING (public.is_admin());
 
 CREATE POLICY "Allow authenticated users to insert audit logs" ON public.audit_logs
   FOR INSERT TO authenticated WITH CHECK (actor_id = auth.uid());

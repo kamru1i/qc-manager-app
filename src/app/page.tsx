@@ -63,6 +63,7 @@ function getInitialState() {
         !(cachedProfile.role === "admin" || cachedProfile.role === "supervisor")
       )
         lastActive = null;
+      if (lastActive === "audit_logs" && cachedProfile.role !== "admin") lastActive = null;
       if (lastActive === "todo" && !showTodo) lastActive = null;
 
       if (!lastActive) {
@@ -489,6 +490,7 @@ export default function AppPortal() {
         | "user_management"
         | "todo"
         | "kpi"
+        | "audit_logs"
         | null;
       if (lastActive === "chuti" && !hasChuti) lastActive = null;
       if (lastActive === "quotes" && !hasQuotes) lastActive = null;
@@ -497,6 +499,7 @@ export default function AppPortal() {
         !(cachedProfile.role === "admin" || cachedProfile.role === "supervisor")
       )
         lastActive = null;
+      if (lastActive === "audit_logs" && cachedProfile.role !== "admin") lastActive = null;
       if (lastActive === "todo" && !showTodo) lastActive = null;
 
       if (!lastActive) {
@@ -599,6 +602,7 @@ export default function AppPortal() {
         | "user_management"
         | "todo"
         | "kpi"
+        | "audit_logs"
         | null;
       if (lastActive === "chuti" && !hasChuti) lastActive = null;
       if (lastActive === "quotes" && !hasQuotes) lastActive = null;
@@ -607,6 +611,7 @@ export default function AppPortal() {
         !(userProfile.role === "admin" || userProfile.role === "supervisor")
       )
         lastActive = null;
+      if (lastActive === "audit_logs" && userProfile.role !== "admin") lastActive = null;
       if (lastActive === "todo" && !showTodo) lastActive = null;
 
       if (!lastActive) {
@@ -731,7 +736,7 @@ export default function AppPortal() {
           return;
         if (
           targetWorkspace === "audit_logs" &&
-          !(profile.role === "admin" || profile.role === "supervisor")
+          profile.role !== "admin"
         )
           return;
         if (

@@ -519,8 +519,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
           </div>
         )}
 
-        {/* Workspace: Audit Logs (Admin & Supervisor Only) */}
-        {(profile.role === 'admin' || profile.role === 'supervisor') && !hiddenTabs.includes('audit_logs') && (
+        {/* Workspace: Audit Logs (Admin Only) */}
+        {profile.role === 'admin' && !hiddenTabs.includes('audit_logs') && (
           <div className="space-y-1">
             <button
               onClick={handleAuditLogsNav}

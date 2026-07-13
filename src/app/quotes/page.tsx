@@ -143,7 +143,7 @@ export default function Dashboard({
 
   // Fetch audit logs when activeTab becomes 'audit_logs'
   useEffect(() => {
-    if (activeTab === "audit_logs" && (profile?.role === "admin" || profile?.role === "supervisor")) {
+    if (activeTab === "audit_logs" && profile?.role === "admin") {
       fetchAuditLogs();
     }
   }, [activeTab, profile, fetchAuditLogs]);
@@ -1572,7 +1572,7 @@ export default function Dashboard({
           )}
 
           {/* TAB 5: SYSTEM AUDIT LOGS */}
-          {activeTab === "audit_logs" && (profile?.role === "admin" || profile?.role === "supervisor") && (
+          {activeTab === "audit_logs" && profile?.role === "admin" && (
             <Suspense fallback={<SkeletonLoader type="audit-logs" />}>
               <AuditLogsPanel
                 logs={auditLogs}

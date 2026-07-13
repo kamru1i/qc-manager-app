@@ -579,9 +579,9 @@ export const useQuotesDashboardData = () => {
     }
   }, [sessionUser, profile]);
 
-  // Fetch System Audit Logs (Admins & Supervisors)
+  // Fetch System Audit Logs (Admins Only)
   const fetchAuditLogs = useCallback(async () => {
-    if (!sessionUser || !profile || (profile.role !== 'admin' && profile.role !== 'supervisor')) return;
+    if (!sessionUser || !profile || profile.role !== 'admin') return;
     setAuditLogsLoading(true);
     try {
       const { data, error } = await supabase

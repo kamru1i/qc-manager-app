@@ -63,9 +63,10 @@ export function ProfileSettings({
       case 'todo':
         return showTodoTab;
       case 'analytics':
-      case 'audit_logs':
       case 'user_management':
         return profile.role === 'admin' || profile.role === 'supervisor';
+      case 'audit_logs':
+        return profile.role === 'admin';
 
       // Quotes Tracker Subtabs
       case 'copy_helper':
