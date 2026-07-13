@@ -1,10 +1,10 @@
 import React from 'react';
-import { 
-  LogOut, 
-  User, 
-  Wifi, 
-  WifiOff, 
-  Sun, 
+import {
+  LogOut,
+  User,
+  Wifi,
+  WifiOff,
+  Sun,
   Moon,
   Download,
   Monitor,
@@ -140,8 +140,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-3 flex-wrap">
           {/* Online/Offline Badge */}
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${
-            !isOnline 
-              ? 'bg-purple-950/50 border-purple-800/80 text-purple-400' 
+            !isOnline
+              ? 'bg-purple-950/50 border-purple-800/80 text-purple-400'
               : !isRealtimeConnected
                 ? 'bg-amber-950/50 border-amber-800/80 text-amber-400 animate-pulse'
                 : 'bg-emerald-950/50 border-emerald-800/80 text-emerald-400'
@@ -218,8 +218,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {showDownloadDropdown && (
-                <div 
-                  className="absolute right-0 mt-2 w-48 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-2 z-[999] animate-in fade-in slide-in-from-top-2 duration-200"
+                <div
+                  className="absolute right-0 mt-2 w-48 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-2 z-999 animate-in fade-in slide-in-from-top-2 duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="px-2.5 py-1.5 border-b border-slate-900/10 mb-1">

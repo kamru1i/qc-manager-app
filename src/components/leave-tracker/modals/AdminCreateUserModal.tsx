@@ -135,8 +135,8 @@ export function AdminCreateUserModal({
               </div>
               <div className="flex flex-wrap gap-2 pt-1">
                 <label className={`flex items-center gap-2 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[11px] ${
-                  newStaffSupervisorIds.length === 0 
-                    ? 'border-blue-600 bg-blue-955/20 text-blue-400' 
+                  newStaffSupervisorIds.length === 0
+                    ? 'border-blue-600 bg-blue-955/20 text-blue-400'
                     : 'border-slate-850 bg-slate-900/60 text-slate-300'
                 }`}>
                   <input
@@ -147,15 +147,15 @@ export function AdminCreateUserModal({
                   />
                   <span className="font-semibold">All</span>
                 </label>
-                
+
                 {supervisors.map(sup => {
                   const isChecked = newStaffSupervisorIds.includes(sup.id);
                   return (
-                    <label 
-                      key={sup.id} 
+                    <label
+                      key={sup.id}
                       className={`flex items-center gap-2 px-2.5 py-1 rounded-md border cursor-pointer transition-all select-none text-[11px] ${
-                        isChecked 
-                          ? 'border-blue-600 bg-blue-955/20 text-blue-400' 
+                        isChecked
+                          ? 'border-blue-600 bg-blue-955/20 text-blue-400'
                           : 'border-slate-850 bg-slate-900/60 text-slate-300'
                       }`}
                     >
@@ -246,7 +246,7 @@ export function AdminCreateUserModal({
             type="button"
             onClick={handleCreateNewUser}
             disabled={creatingUser || !newStaffUsername}
-            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 cursor-pointer transition-all disabled:opacity-50  items-center gap-1.5"
           >
             {creatingUser && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             {creatingUser ? 'Creating...' : 'Create Staff'}

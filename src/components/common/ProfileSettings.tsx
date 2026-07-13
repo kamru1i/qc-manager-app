@@ -127,10 +127,10 @@ export function ProfileSettings({
     const isHiddenTabsChanged = JSON.stringify([...hiddenTabs].sort()) !== JSON.stringify([...(profile.global_settings?.hidden_tabs || [])].sort());
 
     if (profile.role === 'admin') {
-      return isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+      return isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged ||
              isJobRoleChanged || isSignInChanged || isSignOutChanged || isHiddenTabsChanged;
     } else {
-      return isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged || 
+      return isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged ||
              isJobRoleChanged || isSignInChanged || isSignOutChanged || isHiddenTabsChanged;
     }
   }, [profile, editUsername, editFullName, editWorkingHours, editBreakTime, editJobRole, profileSignInTime, profileSignOutTime, hiddenTabs]);
@@ -290,7 +290,7 @@ export function ProfileSettings({
           toast.success('Your profile settings successfully updated!');
         } else {
           // Check if profile fields (that require approval) changed
-          const hasProfileFieldChanges = 
+          const hasProfileFieldChanges =
             editFullName.trim() !== (profile.full_name || '').trim() ||
             (parseFloat(editWorkingHours) || 9.5) !== (profile.working_hours ?? 9.5) ||
             (parseInt(editBreakTime) || 0) !== (profile.break_time ?? 0) ||
@@ -354,7 +354,7 @@ export function ProfileSettings({
           setProfile({ ...profile, ...updatedProfile });
           localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
           window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
-          
+
           if (hasProfileFieldChanges) {
             toast.success('Profile change request has been sent to the admin.');
           } else {
@@ -402,7 +402,7 @@ export function ProfileSettings({
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Column 1: Settings Form */}
         <div className="lg:col-span-7 bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6 space-y-5">
           <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-800/40">
@@ -463,16 +463,16 @@ export function ProfileSettings({
 
         {/* Column 2: Notifications & Security */}
         <div className="lg:col-span-5 space-y-6">
-          
+
           {/* Notifications Panel */}
           <div className="bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6 space-y-4">
             <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-800/40">
               <Bell className="h-4 w-4 text-blue-400" />
               Notifications
             </h3>
-            
+
             {typeof window !== 'undefined' && (
-              (('serviceWorker' in navigator && 'PushManager' in window) && !(window as any).__TAURI_INTERNALS__) || 
+              (('serviceWorker' in navigator && 'PushManager' in window) && !(window as any).__TAURI_INTERNALS__) ||
               (window as any).__TAURI_INTERNALS__
             ) && (
               <div className="push-notification-banner flex flex-col gap-3 p-4 bg-blue-955/30 rounded-xl border border-blue-900/20">
@@ -504,8 +504,8 @@ export function ProfileSettings({
                       localStorage.setItem('push_subscribed_pref_' + sessionUser.id, willSubscribe ? 'true' : 'false');
 
                       const isTauri = typeof window !== 'undefined' && (
-                        '__TAURI_INTERNALS__' in window || 
-                        (window as any).__TAURI__ !== undefined || 
+                        '__TAURI_INTERNALS__' in window ||
+                        (window as any).__TAURI__ !== undefined ||
                         (window as any).Tauri !== undefined ||
                         window.location.protocol === 'tauri:'
                       );
@@ -542,7 +542,7 @@ export function ProfileSettings({
 
           {/* Change Password Panel */}
           <div className="bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6 space-y-4">
-            <h3 
+            <h3
               onClick={() => setShowPasswordFields(!showPasswordFields)}
               className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center justify-between pb-2 border-b border-slate-800/40 cursor-pointer hover:text-blue-400 transition-colors select-none"
             >
@@ -553,10 +553,10 @@ export function ProfileSettings({
               <span className="text-[10px] text-blue-400 capitalize">{showPasswordFields ? 'Hide' : 'Show'}</span>
             </h3>
 
-            <div 
+            <div
               className={`transition-all duration-300 ease-in-out ${
-                showPasswordFields 
-                  ? 'max-h-[300px] opacity-100 overflow-visible mt-2' 
+                showPasswordFields
+                  ? 'max-h-[300px] opacity-100 overflow-visible mt-2'
                   : 'max-h-0 opacity-0 overflow-hidden pointer-events-none mt-0'
               }`}
             >
@@ -636,7 +636,7 @@ export function ProfileSettings({
 
               return (
                 <div key={category} className="space-y-2.5">
-                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1 border-l-2 border-blue-500/60 pl-2">
+                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1 border-l-2 border-blue-500/60">
                     {category}
                   </span>
                   <div className="flex flex-col gap-2">
