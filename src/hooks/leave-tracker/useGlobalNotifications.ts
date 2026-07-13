@@ -220,7 +220,7 @@ export function useGlobalNotifications(
           }
         }
       },
-      []
+      [setDismissedNotificationIds]
     )
   );
 
@@ -531,7 +531,7 @@ export function useGlobalNotifications(
     } catch (e) {
       console.error('Failed to persist notification dismissal:', e);
     }
-  }, [sessionUser]);
+  }, [sessionUser, setDismissedNotificationIds]);
 
   const handleDismissAllNotifications = useCallback(async () => {
     if (notificationsList.length === 0 || !sessionUser) return;
@@ -569,7 +569,7 @@ export function useGlobalNotifications(
     } catch (e) {
       console.error('Failed to persist dismiss all notifications:', e);
     }
-  }, [notificationsList, dismissedNotificationIds, sessionUser]);
+  }, [notificationsList, dismissedNotificationIds, sessionUser, setDismissedNotificationIds]);
 
   const handleSaveHolidayResponse = useCallback(async (holidayDate: string, holidayName: string, choice: 'paid' | 'reserve') => {
     if (!profile) return false;
