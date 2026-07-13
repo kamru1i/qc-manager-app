@@ -548,6 +548,11 @@ CREATE TRIGGER on_profile_role_update
 CREATE OR REPLACE FUNCTION public.check_profile_updates()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- If the session bypass variable is set, allow the update (system functions/syncs)
+  IF current_setting('app.bypass_profile_security', true) = 'true' THEN
+    RETURN NEW;
+  END IF;
+
   -- If the editor is the service_role (API routes / system), allow everything
   IF auth.role() = 'service_role' THEN
     RETURN NEW;
