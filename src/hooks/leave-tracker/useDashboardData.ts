@@ -215,29 +215,86 @@ export const useDashboardData = () => {
             }
           } else if (error) {
             console.error('Delta fetch failed, falling back to full fetch:', error);
-            const { data: records, error: fullErr } = await supabase
-              .from('chuti')
-              .select(`*, profiles (username, full_name, role, supervisor_ids)`)
-              .is('deleted_at', null)
-              .order('date', { ascending: false });
-            if (!fullErr && records) {
-              setAdminRecords(records);
-              adminRecordsData = records;
+            let allData: ChutiRecordWithProfile[] = [];
+            let page = 0;
+            const pageSize = 1000;
+            let hasMore = true;
+            let syncError = null;
+
+            while (hasMore) {
+              const from = page * pageSize;
+              const to = from + pageSize - 1;
+
+              const { data, error: fullErr } = await supabase
+                .from('chuti')
+                .select(`*, profiles (username, full_name, role, supervisor_ids)`)
+                .is('deleted_at', null)
+                .order('date', { ascending: false })
+                .range(from, to);
+
+              if (fullErr) {
+                syncError = fullErr;
+                break;
+              }
+
+              if (data && data.length > 0) {
+                allData = [...allData, ...data];
+                if (data.length < pageSize) {
+                  hasMore = false;
+                } else {
+                  page++;
+                }
+              } else {
+                hasMore = false;
+              }
+            }
+
+            if (!syncError && allData.length > 0) {
+              setAdminRecords(allData);
+              adminRecordsData = allData;
             }
           }
         } else {
-          const { data: records, error } = await supabase
-            .from('chuti')
-            .select(`
-              *,
-              profiles (username, full_name, role, supervisor_ids)
-            `)
-            .is('deleted_at', null)
-            .order('date', { ascending: false });
+          let allData: ChutiRecordWithProfile[] = [];
+          let page = 0;
+          const pageSize = 1000;
+          let hasMore = true;
+          let syncError = null;
 
-          if (!error && records) {
-            setAdminRecords(records);
-            adminRecordsData = records;
+          while (hasMore) {
+            const from = page * pageSize;
+            const to = from + pageSize - 1;
+
+            const { data, error } = await supabase
+              .from('chuti')
+              .select(`
+                *,
+                profiles (username, full_name, role, supervisor_ids)
+              `)
+              .is('deleted_at', null)
+              .order('date', { ascending: false })
+              .range(from, to);
+
+            if (error) {
+              syncError = error;
+              break;
+            }
+
+            if (data && data.length > 0) {
+              allData = [...allData, ...data];
+              if (data.length < pageSize) {
+                hasMore = false;
+              } else {
+                page++;
+              }
+            } else {
+              hasMore = false;
+            }
+          }
+
+          if (!syncError && allData.length > 0) {
+            setAdminRecords(allData);
+            adminRecordsData = allData;
           }
         }
       } else {

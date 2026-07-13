@@ -651,11 +651,6 @@ export const getOutstandingOfficeLeave = (
  * Checks if today is Friday or if the given date string is a Friday.
  */
 export const isFriday = (dateString?: string): boolean => {
-  // Check if today is Friday
-  const today = new Date();
-  if (today.getDay() === 5) {
-    return true;
-  }
   // Check if the input date is Friday
   if (dateString) {
     const parts = dateString.split('-').map(Number);
@@ -664,7 +659,9 @@ export const isFriday = (dateString?: string): boolean => {
       return dateObj.getDay() === 5;
     }
   }
-  return false;
+  // Fallback: Check if today is Friday
+  const today = new Date();
+  return today.getDay() === 5;
 };
 
 /**

@@ -27,6 +27,7 @@ interface useChutiOperationsParams {
   adminRecords: ChutiRecordWithProfile[];
   setAdminRecords: React.Dispatch<React.SetStateAction<ChutiRecordWithProfile[]>>;
   setMessage: (msg: { type: 'success' | 'error'; text: string } | null) => void;
+  submitting: boolean;
   setSubmitting: (val: boolean) => void;
   profilesList: Profile[];
   approvingIds: Set<string>;
@@ -49,6 +50,7 @@ export const useChutiOperations = ({
   adminRecords,
   setAdminRecords,
   setMessage,
+  submitting,
   setSubmitting,
   profilesList,
   approvingIds,
@@ -203,7 +205,7 @@ export const useChutiOperations = ({
   // Submit Leave Request
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sessionUser) return;
+    if (!sessionUser || submitting) return;
 
     setSubmitting(true);
     setMessage(null);

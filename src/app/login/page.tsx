@@ -129,10 +129,20 @@ export default function LoginPage() {
           const lastAccess = localStorage.getItem(`last_access_time_${userId}`);
 
           if (sessionStart || lastAccess) {
-            const startAge = sessionStart
+            let startAge = sessionStart
               ? now - parseInt(sessionStart, 10)
               : 0;
-            const accessAge = lastAccess ? now - parseInt(lastAccess, 10) : 0;
+            let accessAge = lastAccess ? now - parseInt(lastAccess, 10) : 0;
+
+            // Protection against backwards clock skew (reset startage/accessage instead of logout)
+            if (startAge < 0) {
+              localStorage.setItem(`session_start_time_${userId}`, now.toString());
+              startAge = 0;
+            }
+            if (accessAge < 0) {
+              localStorage.setItem(`last_access_time_${userId}`, now.toString());
+              accessAge = 0;
+            }
 
             if (startAge > oneWeekMs || accessAge > oneWeekMs) {
               localStorage.removeItem(`session_start_time_${userId}`);
