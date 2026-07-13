@@ -581,7 +581,7 @@ export const useAdminStaffOperations = ({
       const derivedEmail = `${newStaffUsername.toLowerCase().trim()}@office.local`;
       const { data: newUserId, error } = await supabase.rpc('create_new_user', {
         p_email: derivedEmail,
-        p_password: newStaffPassword || '123456',
+        p_password: newStaffPassword || '1234',
         p_username: newStaffUsername.toUpperCase(),
         p_role: newStaffRole,
         p_full_name: '', // Blank
@@ -858,10 +858,10 @@ export const useAdminStaffOperations = ({
     }
     try {
       if (approve) {
-        // Reset password to 123456 in auth
+        // Reset password to 1234 in auth
         const { error: rpcError } = await supabase.rpc('admin_update_user_credentials', {
           p_user_id: profileId,
-          p_new_password: '123456'
+          p_new_password: '1234'
         });
         if (rpcError) throw rpcError;
 
@@ -902,7 +902,7 @@ export const useAdminStaffOperations = ({
       sendPushNotification({
         userIds: [profileId],
         title: `Password Reset ${approve ? 'Approved ✅' : 'Denied ❌'}`,
-        body: `Your password reset request has been ${approve ? 'approved. Your temporary password is: 123456' : 'denied by the admin.'}`,
+        body: `Your password reset request has been ${approve ? 'approved. Your temporary password is: 1234' : 'denied by the admin.'}`,
         url: '/'
       }).catch(err => console.error('Error sending password reset push:', err));
 
@@ -948,7 +948,7 @@ export const useAdminStaffOperations = ({
         updateLocalState();
       }
 
-      setMessage({ type: 'success', text: approve ? 'Password reset approved. Temporary password set to 123456.' : 'Password reset request denied.' });
+      setMessage({ type: 'success', text: approve ? 'Password reset approved. Temporary password set to 1234.' : 'Password reset request denied.' });
     } catch (err) {
       if (setApprovingIds) {
         setApprovingIds(prev => { const s = new Set(prev); s.delete(profileId); return s; });

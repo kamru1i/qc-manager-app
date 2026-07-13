@@ -199,7 +199,7 @@ export default function LoginPage() {
         loginEmail = resolvedEmail;
       } else {
         // Fallback list of suffixes (different user roles were created under different local domains)
-        const suffixes = ["@admin.local", "@office.local", "@user.local"];
+        const suffixes = ["@admin.local", "@office.local", "@user.local", "@admin.chuti", "@supervisor.chuti", "@user.chuti"];
         const baseName = loginEmail.toLowerCase().trim();
 
         let authSuccess = false;
@@ -488,7 +488,7 @@ export default function LoginPage() {
               <p className="text-xs text-slate-405 leading-relaxed">
                 Your password reset request has been sent to the admin. Once
                 approved, your password will be reset to the default{" "}
-                <strong className="text-white">123456</strong>.
+                <strong className="text-white">1234</strong>.
               </p>
               <button
                 type="button"

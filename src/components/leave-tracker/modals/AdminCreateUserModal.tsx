@@ -67,8 +67,8 @@ export function AdminCreateUserModal({
   const supervisors = (profilesList || []).filter(p => p.role === 'supervisor');
   const handleClose = () => {
     setShowCreateUserModal(false);
-    setNewStaffPassword('123456');
-    setNewStaffConfirmPassword('123456');
+    setNewStaffPassword('1234');
+    setNewStaffConfirmPassword('1234');
     setNewStaffUsername('');
     setNewStaffRole('user');
     setNewStaffNeedsApproval(false);

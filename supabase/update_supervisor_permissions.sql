@@ -134,6 +134,11 @@ USING (
 CREATE OR REPLACE FUNCTION public.check_profile_updates()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- If the editor is the service_role (API routes / system), allow everything
+  IF auth.role() = 'service_role' THEN
+    RETURN NEW;
+  END IF;
+
   -- If the editor is an admin, allow everything
   IF EXISTS (
     SELECT 1 FROM public.profiles

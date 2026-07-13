@@ -13,15 +13,6 @@ interface UseAdminActionsOptions {
   updateLastActivity: () => void;
 }
 
-const generateTempPassword = (): string => {
-  const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let pass = '';
-  for (let i = 0; i < 8; i++) {
-    pass += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return pass;
-};
-
 export const useAdminActions = ({
   profilesList,
   setProfilesList,
@@ -64,7 +55,7 @@ export const useAdminActions = ({
       showToast('error', 'This action requires an active internet connection.');
       return null;
     }
-    const activePassword = password || generateTempPassword();
+    const activePassword = password || '1234';
     setSubmitting(true);
 
     try {

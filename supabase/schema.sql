@@ -519,11 +519,15 @@ WITH CHECK (public.is_supervisor());
 CREATE POLICY "Allow admins to delete profiles"
 ON public.profiles FOR DELETE
 USING (public.is_admin());
-
 -- Role update protection trigger
 CREATE OR REPLACE FUNCTION public.check_profile_role_change()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- If the editor is the service_role (API routes / system), allow everything
+  IF auth.role() = 'service_role' THEN
+    RETURN NEW;
+  END IF;
+
   IF OLD.role IS DISTINCT FROM NEW.role THEN
     IF NOT EXISTS (
       SELECT 1 FROM public.profiles
@@ -544,6 +548,11 @@ CREATE TRIGGER on_profile_role_update
 CREATE OR REPLACE FUNCTION public.check_profile_updates()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- If the editor is the service_role (API routes / system), allow everything
+  IF auth.role() = 'service_role' THEN
+    RETURN NEW;
+  END IF;
+
   -- If the editor is an admin, allow everything
   IF EXISTS (
     SELECT 1 FROM public.profiles

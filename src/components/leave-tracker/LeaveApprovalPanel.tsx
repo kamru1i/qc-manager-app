@@ -566,7 +566,7 @@ export function LeaveApprovalPanel({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-1 font-sans">Requesting password reset to default: <span className="font-mono text-blue-400 font-bold bg-slate-900 px-1 py-0.2 rounded border border-slate-800">123456</span></p>
+              <p className="text-xs text-slate-400 mt-1 font-sans">Requesting password reset to default: <span className="font-mono text-blue-400 font-bold bg-slate-900 px-1 py-0.2 rounded border border-slate-800">1234</span></p>
             </div>
 
             <div className="flex gap-2 font-sans shrink-0 pl-2">
