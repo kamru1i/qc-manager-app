@@ -402,9 +402,9 @@ export const useDashboardData = () => {
 
         // TTL: Purge chuti records older than 2 years from cache
         try {
-          const purgedCount = await purgeStaleCacheData('chuti_cache', 'date', 730);
+          const purgedCount = await purgeStaleCacheData('chuti_cache', 'date', 90);
           if (purgedCount > 0) {
-            console.log(`TTL: Purged ${purgedCount} stale chuti records (>2 years old) from cache.`);
+            console.log(`TTL: Purged ${purgedCount} stale chuti records (>90 days old) from cache.`);
           }
         } catch (ttlErr) {
           console.error('TTL purge failed (non-critical):', ttlErr);

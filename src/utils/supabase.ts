@@ -13,6 +13,15 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
 
 
 
+const fetchWithTimeout = (url: URL | RequestInfo, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, {
+    ...options,
+    signal: controller.signal
+  }).finally(() => clearTimeout(id));
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     // Use localStorage for session persistence (works in Tauri WebView + browser).
@@ -30,5 +39,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
     // Auto-refresh the JWT token before it expires.
     autoRefreshToken: true,
+  },
+  global: {
+    fetch: (url, options) => fetchWithTimeout(url, options, 15000),
   },
 });

@@ -325,9 +325,9 @@ export const useQuotesDashboardData = () => {
             await setSyncTimestamp('records', new Date().toISOString());
           }
 
-          // Clean up cache older than 2 years
+          // Clean up cache older than 90 days
           try {
-            await purgeStaleCacheData('records_cache', 'submitted_at', 730);
+            await purgeStaleCacheData('records_cache', 'submitted_at', 90);
           } catch (purgeErr) {
             console.error('Failed to purge stale cache:', purgeErr);
           }

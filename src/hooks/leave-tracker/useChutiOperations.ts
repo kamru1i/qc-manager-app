@@ -431,7 +431,37 @@ export const useChutiOperations = ({
       setSelectedSupervisors([]);
       setShowAddLeaveModal(false);
     } catch (err) {
-      setMessage({ type: 'error', text: (err as Error).message || 'An error occurred while submitting the data.' });
+      console.warn('Online submission failed, falling back to offline storage:', err);
+      try {
+        const addedTempRecords: ChutiRecord[] = [];
+        for (const item of datesWithAdjustment) {
+          const rec = getRecordForDate(item.date, item.adjustment);
+          await saveOfflineRecord(rec);
+          addedTempRecords.push({
+            ...rec,
+            id: `temp-${Date.now()}-${item.date}`,
+            localId: `local-${Date.now()}-${item.date}`,
+            synced: false
+          });
+        }
+        setMessage({ 
+          type: 'success', 
+          text: 'Internet connection is unstable. Data has been saved offline and will sync automatically once connection stabilizes.' 
+        });
+        checkOfflineQueue();
+        setUserRecords(prev => [...addedTempRecords, ...prev]);
+
+        setComment('');
+        setAdjustShortLeave(false);
+        setAdjustmentCategory('None');
+        setBulkDates([]);
+        setBulkAdjustments([]);
+        setSelectedSupervisors([]);
+        setShowAddLeaveModal(false);
+      } catch (fallbackErr) {
+        console.error('Offline fallback failed:', fallbackErr);
+        setMessage({ type: 'error', text: 'Failed to submit online and offline storage failed: ' + ((err as Error).message || 'Unknown error') });
+      }
     } finally {
       setSubmitting(false);
     }

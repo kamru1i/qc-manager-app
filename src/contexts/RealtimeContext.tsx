@@ -147,7 +147,16 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
         },
         (payload) => dispatch('govt_holiday_responses', payload as unknown as RealtimePayload)
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (typeof window !== 'undefined') {
+          if (status === 'SUBSCRIBED') {
+            window.dispatchEvent(new CustomEvent('realtime-connection-status', { detail: 'connected' }));
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn(`[RealtimeProvider] unified channel connection status changed: ${status}`, err);
+            window.dispatchEvent(new CustomEvent('realtime-connection-status', { detail: 'disconnected' }));
+          }
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

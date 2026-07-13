@@ -42,6 +42,15 @@ import { LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
 import { sendPushNotification } from '@/utils/webPushHelper';
 
+const generateTempPassword = (): string => {
+  const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let pass = '';
+  for (let i = 0; i < 8; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass;
+};
+
 
 
 interface UserManagementDashboardProps {
@@ -584,7 +593,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const handleResetPasswordDefault = async () => {
     if (!viewingStaff) return;
     setSubmitting(true);
-    const success = await resetUserPassword(viewingStaff.id, '1234');
+    const tempPassword = generateTempPassword();
+    const success = await resetUserPassword(viewingStaff.id, tempPassword);
     if (success) {
       const { error } = await supabase
         .from('profiles')
@@ -594,7 +604,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (error) {
         console.error('Error updating profiles has_changed_password flag:', error);
       } else {
-        toast.success('Password reset to default (1234). User must change it next login.');
+        toast.success(`Password reset successfully. Temp password: ${tempPassword}. User must change it next login.`, { duration: 10000 });
         fetchProfiles();
       }
       setShowResetConfirmModal(false);
