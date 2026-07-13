@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, lazy, Suspense, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { supabase } from "@/utils/supabase";
 import { Profile } from "@/types";
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
@@ -9,14 +9,14 @@ import { Loader2 } from "lucide-react";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/common/UnifiedSidebar";
 import { Navbar } from "@/components/common/Navbar";
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 import { useGlobalNotifications } from "@/hooks/leave-tracker/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/common/modals/UserNotificationsModal";
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
 import { subscribeUserToPush } from "@/utils/webPushHelper";
 import { useDesktopNotifications } from "@/hooks/common/useDesktopNotifications";
-import { checkInactivity, registerAndCheckSession, updateSessionLastActiveInDb } from "@/utils/sessionHelper";
+import { checkInactivity, registerAndCheckSession } from "@/utils/sessionHelper";
 import { RealtimeProvider } from "@/contexts/RealtimeContext";
 
 import { UserKpiPerformancePanel } from "@/components/common/user-management/UserKpiPerformancePanel";
@@ -50,11 +50,6 @@ function getInitialState() {
     const cachedStr = localStorage.getItem(cacheKey);
     if (cachedStr) {
       const cachedProfile = JSON.parse(cachedStr);
-      const hasChuti = !!cachedProfile.has_chuti_access;
-      const hasQuotes = !!cachedProfile.has_quotes_access;
-      const showTodo =
-        cachedProfile.username?.toUpperCase() === "KAMRUL" ||
-        cachedProfile.full_name === "Kamrul Islam";
       
       let lastActive = localStorage.getItem("last_active_dashboard") as any;
       if (lastActive && !canAccessModule(cachedProfile, null, lastActive)) {
@@ -587,9 +582,6 @@ export default function AppPortal() {
       }
 
       // Choose active workspace tab
-      const showTodo =
-        userProfile.username?.toUpperCase() === "KAMRUL" ||
-        userProfile.full_name === "Kamrul Islam";
       let lastActive = localStorage.getItem("last_active_dashboard") as any;
       if (lastActive && !canAccessModule(userProfile, null, lastActive)) {
         lastActive = null;

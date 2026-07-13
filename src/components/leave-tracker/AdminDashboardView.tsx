@@ -14,7 +14,6 @@ import { Profile, ChutiRecordWithProfile, GovtHolidayResponse, LeaveSettlement }
 import { AdminSettlementsPanel } from '@/components/leave-tracker/AdminSettlementsPanel';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeavesRecordsTable } from '@/components/leave-tracker/LeavesRecordsTable';
-import { StaffMasterTable } from '@/components/leave-tracker/StaffMasterTable';
 import {
   formatDate,
   formatTimeToAMPM,
