@@ -182,14 +182,22 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
                       <div
                         key={r.id}
                         onClick={() => setSelectedRecordIdForSave(r.id)}
-                        className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer ${
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedRecordIdForSave(r.id);
+                          }
+                        }}
+                        className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 ${
                           selectedRecordIdForSave === r.id
-                            ? "border-blue-500/40 bg-blue-500/5 text-white"
-                            : "border-transparent bg-theme-page-bg/30 text-theme-text-secondary hover:bg-theme-page-bg/60"
+                            ? "border-blue-500/40 bg-blue-500/10 text-theme-text-primary hover:bg-blue-500/15"
+                            : "border-transparent bg-theme-page-bg/30 text-theme-text-secondary hover:bg-theme-page-bg/60 hover:text-theme-text-primary"
                         }`}
                       >
                         <button
                           type="button"
+                          tabIndex={-1}
                           className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0 ${
                             selectedRecordIdForSave === r.id
                               ? "border-blue-500 bg-blue-500 text-white"
