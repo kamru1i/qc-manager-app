@@ -21,14 +21,12 @@ import {
   Trash2,
   Edit,
   ShieldAlert,
-  AlertTriangle,
   BookOpen,
   AlertCircle,
   ArrowLeft,
   Sparkles,
   Loader2,
   Check,
-  Key,
 } from "lucide-react";
 
 interface QuoteRulesPanelProps {

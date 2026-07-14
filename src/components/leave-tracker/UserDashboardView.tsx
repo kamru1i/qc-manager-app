@@ -15,7 +15,7 @@ import {
   getSettlementLabel
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
-import { Calendar, RotateCcw, RefreshCw, ArrowLeft } from 'lucide-react';
+import {  RotateCcw, ArrowLeft } from 'lucide-react';
 import { UserSettleModal } from '@/components/leave-tracker/modals/UserSettleModal';
 
 interface UserDashboardViewProps {

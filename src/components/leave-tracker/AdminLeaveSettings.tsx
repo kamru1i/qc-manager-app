@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Trash2, RefreshCw, Settings } from 'lucide-react';
+import {  Plus, Trash2, RefreshCw, Settings } from 'lucide-react';
 import { GlobalSettings, formatDate } from '@/utils/dashboardHelpers';
 import { DateInput } from '@/components/common/DateInput';
 import { supabase } from '@/utils/supabase';
@@ -17,7 +17,6 @@ interface AdminLeaveSettingsProps {
 export function AdminLeaveSettings({
   globalSettings,
   onSaveGlobalSettings,
-  initialFetchDone,
 }: AdminLeaveSettingsProps) {
   // 1. Office Leave Settings State
   const [officeLeaveH1, setOfficeLeaveH1] = useState(7);
@@ -308,7 +307,7 @@ export function AdminLeaveSettings({
                 <button
                   type="submit"
                   disabled={submittingEid}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-all items-center gap-1.5 cursor-pointer shadow-md"
                 >
                   {submittingEid && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   Save Eid Leaves

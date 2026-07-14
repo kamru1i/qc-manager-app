@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -139,7 +139,7 @@ export default function Dashboard({
         const now = Date.now();
         const fresh: Record<string, number> = {};
         const freshIds = new Set<string>();
-        
+
         for (const [id, timestamp] of Object.entries(parsed)) {
           if (now - timestamp < 30 * 24 * 60 * 60 * 1000) {
             fresh[id] = timestamp;
@@ -168,7 +168,7 @@ export default function Dashboard({
           setDismissedNotificationIds(prev => {
             const merged = new Set(prev);
             dbIds.forEach(id => merged.add(id));
-            
+
             // Sync merged set back to localStorage
             try {
               const stored = localStorage.getItem('dismissed_notifications');
@@ -187,7 +187,7 @@ export default function Dashboard({
             } catch (e) {
               console.error('Failed to sync DB dismissals to localStorage:', e);
             }
-            
+
             return merged;
           });
         }
@@ -286,19 +286,19 @@ export default function Dashboard({
   const handleDismissNotifications = useCallback(async (type: 'user' | 'admin') => {
     const listToDismiss = type === 'user' ? userNotificationsList : adminHolidayNotifications;
     if (!listToDismiss || listToDismiss.length === 0 || !sessionUser) return;
-    
+
     // 1. Local update
     try {
       const stored = localStorage.getItem('dismissed_notifications');
       const current = stored ? JSON.parse(stored) as Record<string, number> : {};
       const now = Date.now();
-      
+
       const newIds = new Set(dismissedNotificationIds);
       listToDismiss.forEach((n: { id: string }) => {
         current[n.id] = now;
         newIds.add(n.id);
       });
-      
+
       localStorage.setItem('dismissed_notifications', JSON.stringify(current));
       setDismissedNotificationIds(newIds);
     } catch (e) {
@@ -311,11 +311,11 @@ export default function Dashboard({
         user_id: sessionUser.id,
         notification_id: n.id
       }));
-      
+
       const { error } = await supabase
         .from('dismissed_notifications')
         .insert(inserts);
-        
+
       if (error) throw error;
     } catch (e) {
       console.error('Failed to persist dismissed notifications:', e);
@@ -440,8 +440,6 @@ export default function Dashboard({
     handleApprovePasswordResetRequest,
     handleConvertShortLeaveToFullLeave,
     setShowCreateUserModal,
-    hiddenTabs,
-    setHiddenTabs,
   } = adminStaffOps;
 
   // Export operations
@@ -740,10 +738,10 @@ export default function Dashboard({
       return (
         <div className="w-full">
           <SkeletonLoader variant={
-            activeChutiTab === 'add_leave' ? 'chuti-form' : 
-            activeChutiTab === 'govt_responses' ? 'responses-table' : 
-            activeChutiTab === 'settlement' ? 'settlements-table' : 
-            activeChutiTab === 'leave_settings' ? 'leave-settings' : 
+            activeChutiTab === 'add_leave' ? 'chuti-form' :
+            activeChutiTab === 'govt_responses' ? 'responses-table' :
+            activeChutiTab === 'settlement' ? 'settlements-table' :
+            activeChutiTab === 'leave_settings' ? 'leave-settings' :
             activeChutiTab === 'team_leaves' ? 'team-leaves-report' :
             'leaves-table'
           } />
@@ -791,7 +789,7 @@ export default function Dashboard({
           <Loader2 className="h-8 w-8 text-purple-550 animate-spin" />
         </div>
       }>
-        
+
         {/* ================= ADD LEAVE INLINE VIEW ================= */}
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && activeChutiTab === 'add_leave' && (
           <div className="space-y-4">
@@ -880,7 +878,7 @@ export default function Dashboard({
         )}
 
         {/* ================= ADMIN STAFF VIEW (Leave Dashboard) ================= */}
-        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' && 
+        {profile?.has_changed_password !== false && !!profile?.is_setup_completed && profile?.role === 'admin' &&
           (activeChutiTab === 'govt_responses' || activeChutiTab === 'settlement') && (
           <AdminDashboardView
             activeTab={activeChutiTab}

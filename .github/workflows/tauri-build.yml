@@ -62,7 +62,6 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
           NEXT_PUBLIC_IP2LOCATION_KEY: ${{ secrets.NEXT_PUBLIC_IP2LOCATION_KEY }}
           NEXT_PUBLIC_CRIMINALIP_KEY: ${{ secrets.NEXT_PUBLIC_CRIMINALIP_KEY }}
@@ -108,7 +107,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
           NEXT_PUBLIC_IP2LOCATION_KEY: ${{ secrets.NEXT_PUBLIC_IP2LOCATION_KEY }}
           NEXT_PUBLIC_CRIMINALIP_KEY: ${{ secrets.NEXT_PUBLIC_CRIMINALIP_KEY }}
@@ -121,14 +119,13 @@ jobs:
           releaseBody: |
             ### QC App v__VERSION__ 🚀
 
-            **v__VERSION__** delivers the latest 4.5.0 release for deployment, focusing on quote rule management, smoother admin workflows, and improved release readiness.
+            **v__VERSION__** delivers the latest 4.6.0 release for deployment, focusing on the custom Government Holiday confirmation modal and fixing startup race conditions.
 
             #### 🛠 What's New in v__VERSION__:
 
-            - **Quote Rules Edit & Update Support** — Existing compliance rules can now be edited in place, with category/sub-category changes, company name/title updates, tag edits, rule detail updates, and immediate UI refreshes.
-            - **Reusable Rule Management Modal** — Create and edit flows now use the same modal, with prefilled values, updated action buttons, and preserved rule identity on save.
-            - **Audit Logging & Persistence** — Updates keep the original rule ID and creation timestamp while refreshing the modified timestamp and recording meaningful field changes for auditing.
-            - **Permission-Safe Updates** — Rule edits remain restricted to authorized users through the existing quote rules permission model.
+            - **Custom Delete Government Holiday Modal** — Replaced native browser confirm dialogs with a fully custom React modal matching the dark/light design system. Displays affected employee responses and decisions.
+            - **Modal Race Condition Resolution** — Resolved the startup/page reload modal flash issue by enforcing strict loading validation order (`cached profile` -> `background profile query` -> `notifications/responses fetch` -> `validation`).
+            - **Realtime Track Optimization** — Upgraded the postgres changes listener loop for `govt_holiday_responses` to immediately reflect response deletions and updates without waiting for database refetch.
 
             #### 📦 Installation Instructions:
             - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.

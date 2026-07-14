@@ -1,6 +1,6 @@
 # 🌟 QC App — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.5.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 4.6.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v4.5.0 — Minor Release (Current)
+### 🚀 v4.6.0 — Minor Release (Current)
+
+- **Custom Delete Government Holiday Modal**: Replaced the native browser `window.confirm()` dialog with a fully custom, theme-compliant modal showing affected employee responses and decisions.
+- **Race Condition Resolution**: Resolved the modal flash issue on app startup/reload by enforcing a strict initialization order (`cached profile` -> `background profile query` -> `notifications/responses fetch` -> `validation`).
+- **Realtime Track Optimization**: Enhanced postgres changes listeners for `govt_holiday_responses` to immediately reflect response deletions and updates without waiting for database refetch.
+
+### 🚀 v4.5.0 — Minor Release
 
 - **Quote Rules Edit & Update Support**: Added full editing capability for existing compliance rules, including category, sub-category, company name/title, tags, rule details, and permission-aware update flows.
 - **Reusable Rule Modal Experience**: The add-rule flow now supports both create and edit modes through the same modal, with prefilled values, updated button labels, and immediate UI refresh after successful saves.

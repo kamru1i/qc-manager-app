@@ -113,9 +113,9 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
           <p className="text-xs text-theme-text-muted leading-relaxed font-medium font-sans">
             Please enter the reason or comment for returning this leave request for revision. It will be displayed on the user's revision dashboard:
           </p>
-          
+
           <div>
-            <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1.5 font-semibold">Revision Comment/Reason (Required)</label>
+            <label className="block text-xs text-theme-text-muted uppercase tracking-wider mb-1.5 font-semibold">Revision Comment/Reason (Required)</label>
             <textarea
               required
               disabled={submittingRevision}
@@ -139,7 +139,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
               type="button"
               disabled={submittingRevision || !revisionPromptText.trim()}
               onClick={submitRevisionWithReason}
-              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 cursor-pointer transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 cursor-pointer transition-all  items-center  gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
             >
               {submittingRevision && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
               {submittingRevision ? 'Submitting...' : 'Submit'}
