@@ -18,10 +18,7 @@ import {
   Apple,
   RefreshCw,
 } from "lucide-react";
-import {
-  downloadLatestRelease,
-  DownloadPlatform,
-} from "@/utils/downloadHelper";
+import SmartDownloadButton from "@/components/common/SmartDownloadButton";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/common/UnifiedSidebar";
 import { Navbar } from "@/components/common/Navbar";
@@ -565,9 +562,6 @@ function AppPortalInner({
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isTauri, setIsTauri] = useState(false);
-  const [downloadLoading, setDownloadLoading] = useState(false);
-  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
-
   useEffect(() => {
     const isTauriEnv =
       typeof window !== "undefined" &&
@@ -575,27 +569,6 @@ function AppPortalInner({
         (window as any).__TAURI__ !== undefined);
     setIsTauri(isTauriEnv);
   }, []);
-
-  useEffect(() => {
-    if (!showDownloadDropdown) return;
-    const handleOutsideClick = () => setShowDownloadDropdown(false);
-    window.addEventListener("click", handleOutsideClick);
-    return () => window.removeEventListener("click", handleOutsideClick);
-  }, [showDownloadDropdown]);
-
-  const handleDownload = async (
-    platform: DownloadPlatform,
-    e: React.MouseEvent,
-  ) => {
-    e.stopPropagation();
-    setDownloadLoading(true);
-    try {
-      await downloadLatestRelease(platform);
-    } finally {
-      setDownloadLoading(false);
-      setShowDownloadDropdown(false);
-    }
-  };
 
   const formatWorkingHours = (hours: number | string) => {
     const h = parseFloat(String(hours));
@@ -1259,56 +1232,10 @@ function AppPortalInner({
               </button>
             )}
 
-            {/* Download Desktop App Dropdown (Only for Web Browser) */}
+            {/* Download Desktop App (Only for Web Browser) */}
             {!isTauri && (
-              <div className="relative w-full">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDownloadDropdown(!showDownloadDropdown);
-                  }}
-                  disabled={downloadLoading}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-xl cursor-pointer transition-all disabled:opacity-50"
-                >
-                  <span className="text-xs font-semibold">Get Desktop App</span>
-                  <Download
-                    className={`h-4 w-4 ${downloadLoading ? "animate-bounce" : ""}`}
-                  />
-                </button>
-
-                {showDownloadDropdown && (
-                  <div
-                    className="absolute bottom-full left-0 mb-2 w-full bg-theme-card-container border border-theme-border-input rounded-xl shadow-2xl p-2 z-999 animate-in fade-in slide-in-from-bottom-2 duration-200"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="px-2.5 py-1.5 border-b border-theme-card-bg/10 mb-1">
-                      <p className="text-[10px] text-theme-text-muted uppercase tracking-wider font-semibold">
-                        Download Platform
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => handleDownload("windows", e)}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
-                    >
-                      <Monitor className="h-4 w-4 text-blue-400" />
-                      Windows (.exe)
-                    </button>
-                    <button
-                      onClick={(e) => handleDownload("macos-silicon", e)}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
-                    >
-                      <Apple className="h-4 w-4 text-indigo-400" />
-                      macOS (Apple Silicon)
-                    </button>
-                    <button
-                      onClick={(e) => handleDownload("macos-intel", e)}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
-                    >
-                      <Apple className="h-4 w-4 text-theme-text-muted" />
-                      macOS (Intel)
-                    </button>
-                  </div>
-                )}
+              <div className="w-full flex justify-center py-2">
+                <SmartDownloadButton />
               </div>
             )}
 

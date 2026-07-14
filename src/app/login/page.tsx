@@ -16,6 +16,7 @@ import {
 import { getApiUrl, isTauriApp } from "@/utils/apiUrlHelper";
 import { useAppReleaseLinks } from "@/hooks/common/useAppReleaseLinks";
 import { Modal } from "@/components/common/Modal";
+import SmartDownloadButton from "@/components/common/SmartDownloadButton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -419,48 +420,14 @@ export default function LoginPage() {
         {/* Desktop App Download Area */}
         {!isDesktop && (
           <div className="mt-6">
-            <div className="bg-theme-card-bg/30 backdrop-blur-xl border border-theme-border-input/50 p-6 shadow-xl rounded-2xl text-center">
+            <div className="bg-theme-card-bg/30 backdrop-blur-xl border border-theme-border-input/50 p-6 shadow-xl rounded-2xl flex flex-col items-center text-center">
               <p className="text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                 Submit Quotation Files and Leaves Faster with
               </p>
-              <h3 className="text-sm font-bold text-theme-text-primary mt-1">
-                QC Desktop Application
+              <h3 className="text-sm font-bold text-theme-text-primary mt-1 mb-4">
+                QC Manager Native Applications
               </h3>
-              <div className="grid grid-cols-3 gap-2 mt-4">
-                <a
-                  href={links.windows}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-theme-card-container/60 border border-theme-border-input hover:border-sky-500/30 hover:bg-theme-card-bg/80 transition-all group cursor-pointer"
-                >
-                  <Monitor className="h-5 w-5 text-sky-400 group-hover:scale-110 transition-all duration-200" />
-                  <span className="text-[10px] font-bold text-theme-text-muted group-hover:text-theme-text-primary mt-1.5">
-                    Windows
-                  </span>
-                </a>
-                <a
-                  href={links.macSilicon}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-theme-card-container/60 border border-theme-border-input hover:border-violet-500/30 hover:bg-theme-card-bg/80 transition-all group cursor-pointer"
-                >
-                  <Apple className="h-5 w-5 text-violet-400 group-hover:scale-110 transition-all duration-200" />
-                  <span className="text-[10px] font-bold text-theme-text-muted group-hover:text-theme-text-primary mt-1.5">
-                    Mac (Silicon)
-                  </span>
-                </a>
-                <a
-                  href={links.macIntel}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center justify-center p-3 rounded-xl bg-theme-card-container/60 border border-theme-border-input hover:border-theme-border-active/50 hover:bg-theme-card-bg/80 transition-all group cursor-pointer"
-                >
-                  <Apple className="h-5 w-5 text-theme-text-muted group-hover:scale-110 transition-all duration-200" />
-                  <span className="text-[10px] font-bold text-theme-text-muted group-hover:text-theme-text-primary mt-1.5">
-                    Mac (Intel)
-                  </span>
-                </a>
-              </div>
+              <SmartDownloadButton />
             </div>
           </div>
         )}

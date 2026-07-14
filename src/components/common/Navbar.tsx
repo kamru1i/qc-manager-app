@@ -13,10 +13,7 @@ import {
   Menu,
 } from "lucide-react";
 import { Profile } from "@/types";
-import {
-  downloadLatestRelease,
-  DownloadPlatform,
-} from "@/utils/downloadHelper";
+import MoreDownloadsModal from "@/components/common/MoreDownloadsModal";
 
 import { UserDisplayName } from "@/components/common/UserDisplayName";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
@@ -61,8 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const [isTauri, setIsTauri] = React.useState(false);
-  const [downloadLoading, setDownloadLoading] = React.useState(false);
-  const [showDownloadDropdown, setShowDownloadDropdown] = React.useState(false);
+  const [showDownloadModal, setShowDownloadModal] = React.useState(false);
 
   React.useEffect(() => {
     const isTauriEnv =
@@ -71,28 +67,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         (window as any).__TAURI__ !== undefined);
     setIsTauri(isTauriEnv);
   }, []);
-
-  // Close dropdown on click outside
-  React.useEffect(() => {
-    if (!showDownloadDropdown) return;
-    const handleOutsideClick = () => setShowDownloadDropdown(false);
-    window.addEventListener("click", handleOutsideClick);
-    return () => window.removeEventListener("click", handleOutsideClick);
-  }, [showDownloadDropdown]);
-
-  const handleDownload = async (
-    platform: DownloadPlatform,
-    e: React.MouseEvent,
-  ) => {
-    e.stopPropagation(); // Prevent dropdown from closing immediately
-    setDownloadLoading(true);
-    try {
-      await downloadLatestRelease(platform);
-    } finally {
-      setDownloadLoading(false);
-      setShowDownloadDropdown(false);
-    }
-  };
 
   return (
     <header className="bg-theme-card-bg/40 backdrop-blur-md border-b border-theme-border-input/50 px-4 py-4 sm:px-6 lg:px-8 z-30">
@@ -194,57 +168,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Download App Dropdown (Only for Web Browser) */}
+          {/* Download App Trigger (Only for Web Browser) */}
           {!isTauri && (
-            <div className="relative">
+            <>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDownloadDropdown(!showDownloadDropdown);
-                }}
-                disabled={downloadLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-                title="Download Desktop App"
+                onClick={() => setShowDownloadModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all"
+                title="Download App Versions"
               >
-                <Download
-                  className={`h-4 w-4 ${downloadLoading ? "animate-bounce" : ""}`}
-                />
+                <Download className="h-4 w-4" />
               </button>
-
-              {showDownloadDropdown && (
-                <div
-                  className="absolute right-0 mt-2 w-48 bg-theme-card-container border border-theme-border-input rounded-xl shadow-2xl p-2 z-999 animate-in fade-in slide-in-from-top-2 duration-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="px-2.5 py-1.5 border-b border-theme-card-bg/10 mb-1">
-                    <p className="text-[10px] text-theme-text-muted uppercase tracking-wider font-semibold">
-                      Download Platform
-                    </p>
-                  </div>
-                  <button
-                    onClick={(e) => handleDownload("windows", e)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
-                  >
-                    <Monitor className="h-4 w-4 text-blue-400" />
-                    Windows (.exe)
-                  </button>
-                  <button
-                    onClick={(e) => handleDownload("macos-silicon", e)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
-                  >
-                    <Apple className="h-4 w-4 text-indigo-400" />
-                    macOS (Apple Silicon)
-                  </button>
-                  <button
-                    onClick={(e) => handleDownload("macos-intel", e)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
-                  >
-                    <Apple className="h-4 w-4 text-theme-text-muted" />
-                    macOS (Intel)
-                  </button>
-                </div>
-              )}
-            </div>
+              <MoreDownloadsModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} />
+            </>
           )}
 
           <button
