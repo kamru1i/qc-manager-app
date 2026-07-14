@@ -14,7 +14,7 @@ export const MandatoryGovtHolidayModal: React.FC<MandatoryGovtHolidayModalProps>
   holiday,
   onSaveHolidayResponse,
 }) => {
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<'paid' | 'reserve' | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,14 +25,14 @@ export const MandatoryGovtHolidayModal: React.FC<MandatoryGovtHolidayModalProps>
   if (!isOpen || !mounted) return null;
 
   const handleChoice = async (choice: 'paid' | 'reserve') => {
-    if (submitting) return;
-    setSubmitting(true);
+    if (submitting !== null) return;
+    setSubmitting(choice);
     try {
       await onSaveHolidayResponse(holiday.date, holiday.name, choice);
     } catch (err) {
       console.error('Failed to submit holiday preference:', err);
     } finally {
-      setSubmitting(false);
+      setSubmitting(null);
     }
   };
 
@@ -78,19 +78,19 @@ export const MandatoryGovtHolidayModal: React.FC<MandatoryGovtHolidayModalProps>
           <div className="flex gap-3 pt-3 border-t border-theme-border-muted">
             <button
               type="button"
-              disabled={submitting}
+              disabled={submitting !== null}
               onClick={() => handleChoice('paid')}
               className="flex-1 flex justify-center items-center gap-1.5 py-2.5 px-4 border border-emerald-700 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-555 active:scale-95 transition-all cursor-pointer disabled:opacity-50 h-10 shadow-sm"
             >
-              {submitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Get Paid'}
+              {submitting === 'paid' ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Get Paid'}
             </button>
             <button
               type="button"
-              disabled={submitting}
+              disabled={submitting !== null}
               onClick={() => handleChoice('reserve')}
               className="flex-1 flex justify-center items-center gap-1.5 py-2.5 px-4 border border-teal-700 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-555 active:scale-95 transition-all cursor-pointer disabled:opacity-50 h-10 shadow-sm"
             >
-              {submitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Reserve'}
+              {submitting === 'reserve' ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Reserve'}
             </button>
           </div>
         </div>

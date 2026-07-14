@@ -596,18 +596,32 @@ export function useGlobalNotifications(
         .upsert({
           user_id: profile.id,
           holiday_date: holidayDate,
-          response: choice,
-          updated_at: new Date().toISOString()
+          holiday_name: holidayName,
+          response: choice
         }, { onConflict: 'user_id,holiday_date' });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       toast.success(`Choice '${choice === 'paid' ? 'Get Paid' : 'Reserve'}' saved successfully.`);
       await fetchNotificationsData();
       return true;
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      console.error('Failed to save holiday choice:', err);
-      toast.error('Failed to save choice: ' + errMsg);
+      const pgErr = err as { message?: string; code?: string; details?: string; hint?: string; status?: number } | null;
+      const errMsg = pgErr?.message || String(err);
+      const errCode = pgErr?.code || '';
+      const errDetails = pgErr?.details || '';
+      const errHint = pgErr?.hint || '';
+      const errStatus = pgErr?.status ? String(pgErr.status) : '';
+
+      console.error('Failed to save holiday choice detailed error:', {
+        message: errMsg,
+        code: errCode,
+        details: errDetails,
+        hint: errHint,
+        status: errStatus
+      });
+      toast.error(`Failed to save choice: ${errMsg}${errHint ? ` (${errHint})` : ''}`);
       return false;
     }
   }, [profile, fetchNotificationsData]);
