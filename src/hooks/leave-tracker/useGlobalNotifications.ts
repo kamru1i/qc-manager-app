@@ -94,13 +94,20 @@ export function useGlobalNotifications(
       if (!hasSharedUserRecords || force) {
         const { data: chutiData, error: chutiError } = await supabase
           .from('chuti')
-          .select('id, user_id, date, leave_type, leave_hour, status, comment, adjustment, reserve_holiday, reserve_adjustment_status, admin_edit_request, sign_in_time, sign_out_time, synced, created_at, updated_at')
+          .select('id, user_id, date, leave_type, leave_hour, status, comment, adjustment, reserve_holiday, reserve_adjustment_status, admin_edit_request, sign_in_time, sign_out_time, created_at, updated_at')
           .eq('user_id', sessionUser.id)
           .is('deleted_at', null)
           .order('date', { ascending: false });
 
-        if (!chutiError && chutiData) {
-          setUserRecords(chutiData);
+        if (chutiError) {
+          console.error('Failed to fetch user chuti records in useGlobalNotifications:', {
+            code: chutiError.code,
+            message: chutiError.message,
+            details: chutiError.details,
+            hint: chutiError.hint
+          });
+        } else if (chutiData) {
+          setUserRecords(chutiData.map(r => ({ ...r, synced: true })));
         }
       }
 
@@ -112,7 +119,14 @@ export function useGlobalNotifications(
             .select('id, user_id, holiday_date, holiday_name, response, created_at')
             .order('created_at', { ascending: false });
 
-          if (!holidayError && holidayData) {
+          if (holidayError) {
+            console.error('Failed to fetch holiday responses in useGlobalNotifications:', {
+              code: holidayError.code,
+              message: holidayError.message,
+              details: holidayError.details,
+              hint: holidayError.hint
+            });
+          } else if (holidayData) {
             setHolidayResponses(holidayData);
           }
         } else {
@@ -122,7 +136,14 @@ export function useGlobalNotifications(
             .eq('user_id', sessionUser.id)
             .order('created_at', { ascending: false });
 
-          if (!holidayError && holidayData) {
+          if (holidayError) {
+            console.error('Failed to fetch holiday responses in useGlobalNotifications:', {
+              code: holidayError.code,
+              message: holidayError.message,
+              details: holidayError.details,
+              hint: holidayError.hint
+            });
+          } else if (holidayData) {
             setHolidayResponses(holidayData);
           }
         }
@@ -135,7 +156,14 @@ export function useGlobalNotifications(
           .select('id, updated_at, created_at, category, sub_category, content')
           .eq('is_deleted', false);
 
-        if (!rulesError && rulesData) {
+        if (rulesError) {
+          console.error('Failed to fetch compliance rules in useGlobalNotifications:', {
+            code: rulesError.code,
+            message: rulesError.message,
+            details: rulesError.details,
+            hint: rulesError.hint
+          });
+        } else if (rulesData) {
           setRulesRecords(rulesData);
         }
       } else {
@@ -152,7 +180,14 @@ export function useGlobalNotifications(
           .is('deleted_at', null)
           .or('status.eq.approved_by_supervisor,reserve_adjustment_status.eq.pending');
 
-        if (!adminChutiError && adminChutiData) {
+        if (adminChutiError) {
+          console.error('Failed to fetch admin pending chuti records in useGlobalNotifications:', {
+            code: adminChutiError.code,
+            message: adminChutiError.message,
+            details: adminChutiError.details,
+            hint: adminChutiError.hint
+          });
+        } else if (adminChutiData) {
           // Partial row (count-only); cast to the state's record type.
           setAdminPendingRecords(adminChutiData as unknown as Pick<ChutiRecord, 'id' | 'status' | 'leave_type' | 'reserve_adjustment_status'>[]);
         }
@@ -169,7 +204,14 @@ export function useGlobalNotifications(
           .eq('status', 'pending_supervisor')
           .is('deleted_at', null);
 
-        if (!supervisorChutiError && supervisorChutiData) {
+        if (supervisorChutiError) {
+          console.error('Failed to fetch supervisor pending chuti records in useGlobalNotifications:', {
+            code: supervisorChutiError.code,
+            message: supervisorChutiError.message,
+            details: supervisorChutiError.details,
+            hint: supervisorChutiError.hint
+          });
+        } else if (supervisorChutiData) {
           // Partial row + profiles join (count-only); cast to the state's record type.
           setSupervisorPendingRecords(supervisorChutiData as unknown as ChutiRecordWithProfile[]);
         }

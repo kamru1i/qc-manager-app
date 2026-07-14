@@ -318,11 +318,15 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setViewingStaffHolidayResponses(hrRes.data || []);
       // NOTE: admin global_settings are loaded once via a dedicated effect below,
       // not on every staff-data load — they rarely change and this fires on each realtime event.
-    } catch (e: unknown) {
-      console.error('Failed to load staff leave data:', e);
-      const err = e as Error & { status?: number };
-      const errMsg = err.message || '';
-      if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('jwt') || err.status === 401) {
+    } catch (e: any) {
+      console.error('Failed to load staff leave data:', {
+        code: e?.code,
+        message: e?.message,
+        details: e?.details,
+        hint: e?.hint
+      });
+      const errMsg = e?.message || '';
+      if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('jwt') || e?.status === 401) {
         toast.error('Session expired. Logging out...');
         supabase.auth.signOut();
       } else {
