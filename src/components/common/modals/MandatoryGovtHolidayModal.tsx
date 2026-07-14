@@ -37,9 +37,9 @@ export const MandatoryGovtHolidayModal: React.FC<MandatoryGovtHolidayModalProps>
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] overflow-y-auto bg-theme-page-bg/85 backdrop-blur-md flex items-center justify-center p-4 select-none">
+    <div className="fixed inset-0 z-9999 overflow-y-auto bg-theme-page-bg/85 backdrop-blur-md flex items-center justify-center p-4 select-none">
       <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-md p-6 relative font-sans my-8 transform scale-100 opacity-100 translate-y-0 transition-all duration-200">
-        
+
         {/* Glow effect */}
         <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-0">
           <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-purple-900/10 blur-[80px]" />

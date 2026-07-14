@@ -216,17 +216,17 @@ export function AdminLeaveSettings({
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Column: Office Leave & Eid Leave forms */}
         <div className="lg:col-span-1 flex flex-col gap-6">
-          
+
           {/* Card 1: Office Allocated Leave Settings */}
           <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-xl rounded-2xl p-5 flex flex-col gap-4">
             <div>
               <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider">Office Allocated Leaves</h4>
               <p className="text-[10px] text-theme-text-muted mt-0.5">Configure allocated days for H1 and H2 periods</p>
             </div>
-            
+
             <form onSubmit={handleSaveOffice} className="space-y-4 text-xs font-medium">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -261,7 +261,7 @@ export function AdminLeaveSettings({
                 <button
                   type="submit"
                   disabled={submittingOffice}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-all items-center gap-1.5 cursor-pointer shadow-md"
                 >
                   {submittingOffice && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   Save Office Leaves
@@ -276,7 +276,7 @@ export function AdminLeaveSettings({
               <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider">Eid Festival Leaves</h4>
               <p className="text-[10px] text-theme-text-muted mt-0.5">Configure allocated days for Eid-ul-Fitr and Eid-ul-Adha</p>
             </div>
-            
+
             <form onSubmit={handleSaveEid} className="space-y-4 text-xs font-medium">
               <div>
                 <label className="block text-theme-text-muted font-semibold mb-1">Eid-ul-Fitr Leave (Days)</label>
@@ -359,7 +359,7 @@ export function AdminLeaveSettings({
             {/* Holidays List */}
             <div className="flex-1 flex flex-col gap-2 min-h-[220px]">
               <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Holidays List ({govtHolidays.length} {govtHolidays.length === 1 ? 'day' : 'days'})</label>
-              
+
               {govtHolidays.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center py-12 text-center text-theme-text-muted border border-dashed border-theme-border-muted rounded-xl bg-theme-page-bg/20 text-xs">
                   No government holidays have been added for the current year.

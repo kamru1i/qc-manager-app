@@ -16,13 +16,15 @@ export function useGlobalNotifications(
   profilesList: Profile[],
   sharedUserRecords?: ChutiRecord[],
   sharedHolidayResponses?: GovtHolidayResponse[],
-  initialFetchDone?: boolean
+  initialFetchDone?: boolean,
+  isProfileFresh: boolean = true
 ) {
   const [userRecords, setUserRecords] = useState<ChutiRecord[]>([]);
   const [holidayResponses, setHolidayResponses] = useState<GovtHolidayResponse[]>([]);
   const [rulesRecords, setRulesRecords] = useState<Pick<ComplianceRule, 'id' | 'updated_at' | 'created_at' | 'category' | 'sub_category' | 'content'>[]>([]);
   const [adminPendingRecords, setAdminPendingRecords] = useState<Pick<ChutiRecord, 'id' | 'status' | 'leave_type' | 'reserve_adjustment_status'>[]>([]);
   const [supervisorPendingRecords, setSupervisorPendingRecords] = useState<ChutiRecordWithProfile[]>([]);
+  const [isInitialNotifFetchDone, setIsInitialNotifFetchDone] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
@@ -209,8 +211,10 @@ export function useGlobalNotifications(
           return merged;
         });
       }
+      setIsInitialNotifFetchDone(true);
     } catch (err) {
       console.error('Failed to fetch global notifications data:', err);
+      setIsInitialNotifFetchDone(true);
     }
   }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses, isChutiLoaded]);
 
@@ -237,7 +241,30 @@ export function useGlobalNotifications(
 
   // Register realtime handlers for profiles and govt_holiday_responses to update notifications in real time
   useRealtimeHandler('profiles', handleRealtimeDataChanged);
-  useRealtimeHandler('govt_holiday_responses', handleRealtimeDataChanged);
+  useRealtimeHandler(
+    'govt_holiday_responses',
+    useCallback(
+      (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newResp = payload.new as unknown as GovtHolidayResponse;
+          setHolidayResponses((prev) => {
+            if (prev.some((r) => r.id === newResp.id)) return prev;
+            return [newResp, ...prev];
+          });
+        } else if (payload.eventType === 'UPDATE') {
+          const updatedResp = payload.new as unknown as GovtHolidayResponse;
+          setHolidayResponses((prev) =>
+            prev.map((r) => (r.id === updatedResp.id ? updatedResp : r))
+          );
+        } else if (payload.eventType === 'DELETE') {
+          const oldRespId = payload.old.id as string;
+          setHolidayResponses((prev) => prev.filter((r) => r.id !== oldRespId));
+        }
+        handleRealtimeDataChanged();
+      },
+      [setHolidayResponses, handleRealtimeDataChanged]
+    )
+  );
 
   // Register realtime handler to sync dismissals across active sessions in real time
   useRealtimeHandler(
@@ -324,7 +351,7 @@ export function useGlobalNotifications(
 
   // Derive notifications list (standard user notifications)
   const notificationsList = useMemo(() => {
-    if (!sessionUser || !profile) return [];
+    if (!sessionUser || !profile || !isProfileFresh || !isInitialNotifFetchDone) return [];
     const list: NotificationItem[] = [];
 
     // 1. Govt Holiday Notifications
@@ -430,7 +457,9 @@ export function useGlobalNotifications(
     rulesRecords, 
     globalSettings.govt_holidays, 
     currentSessionTime, 
-    dismissedNotificationIds
+    dismissedNotificationIds,
+    isProfileFresh,
+    isInitialNotifFetchDone
   ]);
 
   const approvalsCount = useMemo(() => {
@@ -636,14 +665,14 @@ export function useGlobalNotifications(
 
   // Identify government holidays that the user has not responded to yet
   const pendingHolidays = useMemo(() => {
-    if (!profile) return [];
+    if (!profile || !isProfileFresh || !isInitialNotifFetchDone) return [];
     return (globalSettings.govt_holidays || [])
       .map((h: unknown) => parseHolidayItem(h))
       .filter((h: { date: string; name: string }) => {
         const responded = holidayResponses.some(r => r.user_id === profile.id && r.holiday_date === h.date);
         return !responded;
       });
-  }, [globalSettings.govt_holidays, holidayResponses, profile]);
+  }, [globalSettings.govt_holidays, holidayResponses, profile, isProfileFresh, isInitialNotifFetchDone]);
 
   return {
     unreadCount,
@@ -655,6 +684,7 @@ export function useGlobalNotifications(
     handleDismissAllNotifications,
     fetchNotificationsData,
     approvalsCount,
-    pendingHolidays
+    pendingHolidays,
+    isInitialNotifFetchDone
   };
 }

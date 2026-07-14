@@ -75,6 +75,7 @@ export default function AppPortal() {
   const [profile, setProfile] = useState<Profile | null>(() => _cachedInitialState?.profile ?? null);
   const [loading, setLoading] = useState(() => !_cachedInitialState?.sessionUser || !_cachedInitialState?.profile);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isProfileFresh, setIsProfileFresh] = useState(false);
   const fetchingRef = useRef<string | null>(null);
   const sessionUserRef = useRef<any>(null);
 
@@ -204,6 +205,7 @@ export default function AppPortal() {
         setLoading(false);
       }
     } finally {
+      setIsProfileFresh(true);
       if (fetchingRef.current === userId) {
         fetchingRef.current = null;
       }
@@ -255,6 +257,7 @@ export default function AppPortal() {
         setSessionUser(null);
         sessionUserRef.current = null;
         setProfile(null);
+        setIsProfileFresh(false);
         setLoading(false);
       } else {
         addLog(`onAuthStateChange transient event ${event} without session, skipping unmount`);
@@ -360,6 +363,7 @@ export default function AppPortal() {
         profile={profile}
         setProfile={setProfile}
         handleLogout={handleLogout}
+        isProfileFresh={isProfileFresh}
       />
     </RealtimeProvider>
   );
@@ -371,11 +375,13 @@ function AppPortalInner({
   profile,
   setProfile,
   handleLogout,
+  isProfileFresh,
 }: {
   sessionUser: any;
   profile: Profile;
   setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
   handleLogout: () => Promise<void>;
+  isProfileFresh: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<
     | "chuti"
@@ -582,13 +588,15 @@ function AppPortalInner({
     handleDismissAllNotifications,
     approvalsCount: globalApprovalsCount,
     pendingHolidays,
+    isInitialNotifFetchDone,
   } = useGlobalNotifications(
     sessionUser,
     profile,
     profilesList,
     sharedChutiData.userRecords,
     sharedChutiData.holidayResponses,
-    sharedChutiData.initialFetchDone
+    sharedChutiData.initialFetchDone,
+    isProfileFresh
   );
 
   useEffect(() => {
@@ -1022,7 +1030,7 @@ function AppPortalInner({
           </Suspense>
         </section>
       </main>
-      {sessionUser && profile && profile.eligible_govt_holiday !== false && profile.allow_reserve !== false && pendingHolidays && pendingHolidays.length > 0 && (
+      {sessionUser && profile && isProfileFresh && isInitialNotifFetchDone && profile.eligible_govt_holiday !== false && profile.allow_reserve !== false && pendingHolidays && pendingHolidays.length > 0 && (
         <MandatoryGovtHolidayModal
           isOpen={true}
           holiday={pendingHolidays[0]}
