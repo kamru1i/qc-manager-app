@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
+import { getApiUrl } from '@/utils/apiUrlHelper';
 
 interface UseAdminActionsOptions {
   profilesList: Profile[];
@@ -267,7 +268,7 @@ export const useAdminActions = ({
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData?.session?.access_token;
 
-        const res = await fetch('/api/admin/update-user-codename', {
+        const res = await fetch(getApiUrl('/api/admin/update-user-codename'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

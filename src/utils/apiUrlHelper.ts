@@ -11,18 +11,29 @@ export function isTauriApp(): boolean {
 }
 
 /**
+ * Detects if the app is running inside a Capacitor Mobile App.
+ */
+export function isMobileApp(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.location.protocol === 'capacitor:' || 
+    (window as any).Capacitor !== undefined
+  );
+}
+
+/**
  * Resolves the correct API URL depending on whether the app is running
- * inside a Web Browser (Next.js server context) or inside a Tauri Desktop App.
+ * inside a Web Browser, Tauri Desktop App, or Capacitor Mobile App.
  */
 export function getApiUrl(path: string): string {
   if (typeof window === 'undefined') return path;
   
   const isTauri = isTauriApp();
+  const isMobile = isMobileApp();
 
-  if (isTauri) {
-    // If the Tauri webview itself is running on localhost/127.0.0.1 in DEV mode (http:),
+  if (isTauri || isMobile) {
+    // If the Tauri/Capacitor client webview is running on localhost in DEV mode,
     // route API requests directly to the local Next.js server on port 3000.
-    // In production, the protocol is 'tauri:' (macOS) or 'https:' (Windows/Linux).
     const isLocalDev = 
       window.location.protocol === 'http:' && 
       (window.location.hostname === 'localhost' || 
