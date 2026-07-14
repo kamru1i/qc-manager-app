@@ -7,9 +7,10 @@ import { DOWNLOADS, DownloadInfo } from "@/config/downloads";
 interface MoreDownloadsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  downloads: typeof DOWNLOADS;
 }
 
-export default function MoreDownloadsModal({ isOpen, onClose }: MoreDownloadsModalProps) {
+export default function MoreDownloadsModal({ isOpen, onClose, downloads }: MoreDownloadsModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Handle ESC key press
@@ -172,9 +173,9 @@ export default function MoreDownloadsModal({ isOpen, onClose }: MoreDownloadsMod
               Windows Installer
             </h3>
             <div className="flex flex-col gap-3">
-              {renderBuildRow(DOWNLOADS.windows.x64, "64-bit (x64) Recommended")}
-              {renderBuildRow(DOWNLOADS.windows.x86, "32-bit (x86)")}
-              {renderBuildRow(DOWNLOADS.windows.arm64, "ARM64 Setup")}
+              {renderBuildRow(downloads.windows.x64, "64-bit (x64) Recommended")}
+              {renderBuildRow(downloads.windows.x86, "32-bit (x86)")}
+              {renderBuildRow(downloads.windows.arm64, "ARM64 Setup")}
             </div>
           </div>
 
@@ -184,8 +185,8 @@ export default function MoreDownloadsModal({ isOpen, onClose }: MoreDownloadsMod
               macOS Installer
             </h3>
             <div className="flex flex-col gap-3">
-              {renderBuildRow(DOWNLOADS.macos.appleSilicon, "Apple Silicon (M1/M2/M3/M4)")}
-              {renderBuildRow(DOWNLOADS.macos.intel, "Intel Processor Mac")}
+              {renderBuildRow(downloads.macos.appleSilicon, "Apple Silicon (M1/M2/M3/M4)")}
+              {renderBuildRow(downloads.macos.intel, "Intel Processor Mac")}
             </div>
           </div>
 
@@ -195,7 +196,9 @@ export default function MoreDownloadsModal({ isOpen, onClose }: MoreDownloadsMod
               Linux Installer
             </h3>
             <div className="flex flex-col gap-3">
-              {renderBuildRow(DOWNLOADS.linux.x64, "Debian Package (.deb)")}
+              {renderBuildRow(downloads.linux.deb, "Debian Package (.deb)")}
+              {renderBuildRow(downloads.linux.appimage, "AppImage Executable (.AppImage)")}
+              {renderBuildRow(downloads.linux.rpm, "RPM Package (.rpm)")}
             </div>
           </div>
 
@@ -205,8 +208,8 @@ export default function MoreDownloadsModal({ isOpen, onClose }: MoreDownloadsMod
               Mobile Releases (Internal Testing)
             </h3>
             <div className="flex flex-col gap-3">
-              {renderBuildRow(DOWNLOADS.android.apk, "Android APK Installer")}
-              {renderBuildRow(DOWNLOADS.ios.internal, "iOS Deployment Guide")}
+              {renderBuildRow(downloads.android.apk, "Android APK Installer")}
+              {renderBuildRow(downloads.ios.internal, "iOS Deployment Guide")}
             </div>
           </div>
         </div>

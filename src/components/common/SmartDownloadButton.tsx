@@ -10,7 +10,7 @@ interface SmartDownloadButtonProps {
 }
 
 export default function SmartDownloadButton({ className = "" }: SmartDownloadButtonProps) {
-  const { deviceInfo, recommendation, loading } = useDeviceInfo();
+  const { deviceInfo, recommendation, loading, downloads } = useDeviceInfo();
   const [modalOpen, setModalOpen] = useState(false);
 
   const getButtonIcon = () => {
@@ -93,7 +93,7 @@ export default function SmartDownloadButton({ className = "" }: SmartDownloadBut
       </button>
 
       {/* Complete Downloads Modal */}
-      <MoreDownloadsModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <MoreDownloadsModal isOpen={modalOpen} onClose={() => setModalOpen(false)} downloads={downloads} />
     </div>
   );
 }

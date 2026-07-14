@@ -1,6 +1,7 @@
 export type DeviceOS = 'Windows' | 'macOS' | 'Linux' | 'Android' | 'iOS' | 'Unknown';
 export type DeviceArch = 'x64' | 'x86' | 'ARM64' | 'Apple Silicon' | 'Unknown';
 export type DeviceType = 'Mobile' | 'Tablet' | 'Desktop';
+export type LinuxDistro = 'Ubuntu' | 'Debian' | 'Fedora' | 'openSUSE' | 'RedHat' | 'Unknown';
 
 export interface DeviceInfo {
   os: DeviceOS;
@@ -8,6 +9,7 @@ export interface DeviceInfo {
   deviceType: DeviceType;
   touchCapable: boolean;
   browser: string;
+  linuxDistro?: LinuxDistro;
 }
 
 /**
@@ -121,12 +123,26 @@ export function detectDevice(): DeviceInfo {
     }
   }
 
+  let linuxDistro: LinuxDistro | undefined = undefined;
+  if (os === 'Linux') {
+    if (/ubuntu/i.test(ua)) linuxDistro = 'Ubuntu';
+    else if (/debian/i.test(ua)) linuxDistro = 'Debian';
+    else if (/mint/i.test(ua)) linuxDistro = 'Debian'; // Linux Mint is debian-based
+    else if (/pop!_os|pop_os/i.test(ua)) linuxDistro = 'Debian'; // Pop!_OS is debian-based
+    else if (/kali/i.test(ua)) linuxDistro = 'Debian'; // Kali is debian-based
+    else if (/fedora/i.test(ua)) linuxDistro = 'Fedora';
+    else if (/rhel|red hat|centos|rocky|alma/i.test(ua)) linuxDistro = 'RedHat';
+    else if (/suse/i.test(ua)) linuxDistro = 'openSUSE';
+    else linuxDistro = 'Unknown';
+  }
+
   return {
     os,
     architecture,
     deviceType,
     touchCapable,
     browser,
+    linuxDistro,
   };
 }
 

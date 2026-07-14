@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Profile } from "@/types";
 import MoreDownloadsModal from "@/components/common/MoreDownloadsModal";
+import { useDeviceInfo } from "@/hooks/common/useDeviceInfo";
 
 import { UserDisplayName } from "@/components/common/UserDisplayName";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
@@ -59,6 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const [isTauri, setIsTauri] = React.useState(false);
   const [showDownloadModal, setShowDownloadModal] = React.useState(false);
+  const { downloads } = useDeviceInfo();
 
   React.useEffect(() => {
     const isTauriEnv =
@@ -178,7 +180,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Download className="h-4 w-4" />
               </button>
-              <MoreDownloadsModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} />
+              <MoreDownloadsModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} downloads={downloads} />
             </>
           )}
 

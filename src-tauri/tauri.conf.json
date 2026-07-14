@@ -27,8 +27,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi", "dmg", "app"],
+    "targets": ["nsis", "msi", "dmg", "app", "deb", "appimage", "rpm"],
     "createUpdaterArtifacts": true,
+    "category": "Office",
     "publisher": "Kamrul Islam, IT Officer, B&F Corporate",
     "copyright": "Developed by Kamrul Islam, IT Officer, B&F Corporate",
     "icon": [

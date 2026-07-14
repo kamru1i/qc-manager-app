@@ -1,4 +1,4 @@
-name: "Build & Release Tauri Desktop App"
+name: "Build & Release System"
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   # ──────────────────────────────────────────────────
-  # Stage 1: Build binaries for each platform in parallel
+  # Job 1: Build Tauri Desktop binaries (Windows/macOS/Linux)
   # ──────────────────────────────────────────────────
   build-tauri:
     permissions:
@@ -32,6 +32,9 @@ jobs:
           - platform: "macos-latest"
             target: "aarch64-apple-darwin"
             label: "macos-arm"
+          - platform: "ubuntu-latest"
+            target: "x86_64-unknown-linux-gnu"
+            label: "linux-x64"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -53,6 +56,12 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "src-tauri"
+
+      - name: Install Linux dependencies (Ubuntu only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf rpm
 
       - name: Install dependencies
         run: npm ci
@@ -83,11 +92,9 @@ jobs:
           RAW_PASS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: python verify_key.py
 
-      - name: Verify signing key and password work
+      - name: Verify signing key works
         shell: bash
         run: |
-          echo "=== ENV VARIABLES ==="
-          env | grep TAURI || true
           echo "Test content" > mock.txt
           npx tauri signer sign -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" mock.txt
           rm mock.txt
@@ -108,38 +115,108 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-          NEXT_PUBLIC_IP2LOCATION_KEY: ${{ secrets.NEXT_PUBLIC_IP2LOCATION_KEY }}
-          NEXT_PUBLIC_CRIMINALIP_KEY: ${{ secrets.NEXT_PUBLIC_CRIMINALIP_KEY }}
-          NEXT_PUBLIC_IPINFO_TOKEN: ${{ secrets.NEXT_PUBLIC_IPINFO_TOKEN }}
-          NEXT_PUBLIC_SCAMALYTICS_CLIENT: ${{ secrets.NEXT_PUBLIC_SCAMALYTICS_CLIENT }}
-          NEXT_PUBLIC_SCAMALYTICS_KEY: ${{ secrets.NEXT_PUBLIC_SCAMALYTICS_KEY }}
         with:
           tagName: v__VERSION__
           releaseName: "QC Manager v__VERSION__"
           releaseBody: |
-            ### QC Manager v__VERSION__ 🚀
-
-            **v__VERSION__** delivers the latest 4.6.0 release for deployment, focusing on the custom Government Holiday confirmation modal and fixing startup race conditions.
-
-            #### 🛠 What's New in v__VERSION__:
-
-            - **Custom Delete Government Holiday Modal** — Replaced native browser confirm dialogs with a fully custom React modal matching the dark/light design system. Displays affected employee responses and decisions.
-            - **Modal Race Condition Resolution** — Resolved the startup/page reload modal flash issue by enforcing strict loading validation order (`cached profile` -> `background profile query` -> `notifications/responses fetch` -> `validation`).
-            - **Realtime Track Optimization** — Upgraded the postgres changes listener loop for `govt_holiday_responses` to immediately reflect response deletions and updates without waiting for database refetch.
-
-            #### 📦 Installation Instructions:
-            - **Windows (64-bit)**: Download the `x86_64` `.exe` or `.msi` installer.
-            - **Windows (32-bit)**: Download the `i686` `.exe` or `.msi` installer.
-            - **macOS (Intel)**: Download the `x86_64` `.dmg` and drag to Applications.
-            - **macOS (Apple Silicon)**: Download the `aarch64` `.dmg` (M1/M2/M3/M4/M5) and drag to Applications.
-
-            *Developed by Kamrul Islam, IT Officer, B&F Corporate.*
+            QC Manager release updates.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
 
+  # ──────────────────────────────────────────────────
+  # Job 2: Build Android APK
+  # ──────────────────────────────────────────────────
+  build-android:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "zulu"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js static files
+        run: IS_CAPACITOR_BUILD=true npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build Android Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Rename APK file
+        run: |
+          mv android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/QC-Manager-Android.apk
+
+      - name: Get package version
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: android/app/build/outputs/apk/release/QC-Manager-Android.apk
+          tag_name: v${{ steps.get_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ──────────────────────────────────────────────────
+  # Job 3: Build iOS Project (Validation check only)
+  # ──────────────────────────────────────────────────
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js static files
+        run: IS_CAPACITOR_BUILD=true npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+  # ──────────────────────────────────────────────────
+  # Job 4: Combine releases, zip OTA assets, calculate SHA256, publish to Supabase
+  # ──────────────────────────────────────────────────
   combine-release-json:
-    needs: build-tauri
+    needs: [build-tauri, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -152,7 +229,19 @@ jobs:
         with:
           node-version: 20
 
-      - name: Run updater JSON combination script
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js static files
+        run: IS_CAPACITOR_BUILD=true npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+
+      - name: Run release manifests, checksums, and OTA publisher script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/combine-latest-json.js
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/generate-release-manifests.js

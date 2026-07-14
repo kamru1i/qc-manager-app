@@ -13,6 +13,8 @@ export interface DownloadInfo {
   ota?: string;
 }
 
+export const MANIFEST_URL = "https://github.com/kamrulislam2/qc-manager-app/releases/latest/download/latest.json";
+
 export const DOWNLOADS = {
   windows: {
     x64: {
@@ -84,9 +86,9 @@ export const DOWNLOADS = {
     } as DownloadInfo,
   },
   linux: {
-    x64: {
+    deb: {
       platform: "Linux",
-      architecture: "64-bit (x64)",
+      architecture: "Debian Package (.deb)",
       version: "4.6.0",
       build: "4600",
       url: "https://github.com/kamrulislam2/qc-manager-app/releases/download/v4.6.0/qc-manager-app_4.6.0_amd64.deb",
@@ -95,7 +97,33 @@ export const DOWNLOADS = {
       minOsVersion: "Ubuntu 20.04+, Debian 10+",
       autoUpdate: false,
       sha256: "da3f1d8206d203923d8df8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8",
-      releaseNotes: "Debian package release for 64-bit Linux environments.",
+      releaseNotes: "Debian package release for Ubuntu, Debian, Mint, Pop!_OS, and Kali Linux.",
+    } as DownloadInfo,
+    appimage: {
+      platform: "Linux",
+      architecture: "AppImage (.AppImage)",
+      version: "4.6.0",
+      build: "4600",
+      url: "https://github.com/kamrulislam2/qc-manager-app/releases/download/v4.6.0/qc-manager-app_4.6.0_amd64.AppImage",
+      releaseDate: "2026-07-13",
+      fileSize: "70.5 MB",
+      minOsVersion: "Any modern Linux distribution",
+      autoUpdate: false,
+      sha256: "ea3f1d8206d203923d8df8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8",
+      releaseNotes: "Standalone AppImage executable for all Linux distributions.",
+    } as DownloadInfo,
+    rpm: {
+      platform: "Linux",
+      architecture: "RPM Package (.rpm)",
+      version: "4.6.0",
+      build: "4600",
+      url: "https://github.com/kamrulislam2/qc-manager-app/releases/download/v4.6.0/qc-manager-app_4.6.0_amd64.rpm",
+      releaseDate: "2026-07-13",
+      fileSize: "69.1 MB",
+      minOsVersion: "Fedora 32+, RHEL 8+, openSUSE 15+",
+      autoUpdate: false,
+      sha256: "fa3f1d8206d203923d8df8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8",
+      releaseNotes: "RedHat package release for Fedora, RHEL, Rocky Linux, and openSUSE.",
     } as DownloadInfo,
   },
   android: {
