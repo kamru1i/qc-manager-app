@@ -692,7 +692,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
             <div>
               <div className="flex justify-between items-center">
                 <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
-                  Sign-in Time
+                  Sign-in
                 </label>
                 {signInTime && (
                   <span className="text-[10px] font-bold text-blue-450 tracking-wider">
@@ -711,7 +711,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
             <div>
               <div className="flex justify-between items-center">
                 <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
-                  Sign-out Time
+                  Sign-out
                 </label>
                 {signOutTime && (
                   <span className="text-[10px] font-bold text-blue-450 tracking-wider">

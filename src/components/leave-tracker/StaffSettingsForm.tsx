@@ -322,7 +322,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
-                Sign-In Time
+                Sign-In
               </label>
               {signInTime && (
                 <span className="text-[10px] font-bold text-blue-450 tracking-wider">
@@ -957,7 +957,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       disabled={!isAdmin && !isSupervisor}
                       onChange={(e) => {
                         const checked = e.target.checked;
-                        
+
                         // If unchecking, and they had Data Entry enabled, ask for confirmation
                         if (!checked && department !== "Data Entry" && otherDepartment === "Data Entry") {
                           const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
@@ -965,7 +965,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         }
 
                         if (setPerformsOtherDeptTasks) setPerformsOtherDeptTasks(checked);
-                        
+
                         if (checked) {
                           const defaultOther = otherDeptOptions[0];
                           if (setOtherDepartment) setOtherDepartment(defaultOther);
@@ -1035,7 +1035,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         disabled={!isAdmin && !isSupervisor}
                         onChange={(e) => {
                           const dept = e.target.value;
-                          
+
                           if (department !== "Data Entry" && otherDepartment === "Data Entry" && dept !== "Data Entry") {
                             const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
                             if (!confirmHide) return;
@@ -1249,7 +1249,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     Review or re-evaluate previously completed performance reports for this employee.
                   </p>
                 </div>
-                
+
                 <div className="overflow-x-auto rounded-xl border border-theme-border-input/80 shadow-md">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
@@ -1265,7 +1265,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       {previousEvaluations.map((evalItem) => {
                         const isCustom = !/^\d{4}-\d{2}$/.test(evalItem.month_year);
                         const label = evalItem.kpis?.customPeriodLabel || evalItem.month_year;
-                        
+
                         let dateRange = '—';
                         if (isCustom && evalItem.kpis?.customPeriodFrom && evalItem.kpis?.customPeriodTo) {
                           dateRange = `${formatDateToDMY(evalItem.kpis.customPeriodFrom)} to ${formatDateToDMY(evalItem.kpis.customPeriodTo)}`;
@@ -1280,9 +1280,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           const lastDay = new Date(Number(y), m + 1, 0).getDate();
                           dateRange = `01-${String(m + 1).padStart(2, '0')}-${y} to ${String(lastDay).padStart(2, '0')}-${String(m + 1).padStart(2, '0')}-${y}`;
                         }
-                        
+
                         const isCompleted = evalItem.appraiser_signed || evalItem.appraisee_signed;
-                        
+
                         return (
                           <tr key={evalItem.id} className="border-b border-theme-border-muted hover:bg-theme-card-bg/20 text-theme-text-secondary">
                             <td className="py-2 px-3 font-semibold text-theme-text-primary">{label}</td>
