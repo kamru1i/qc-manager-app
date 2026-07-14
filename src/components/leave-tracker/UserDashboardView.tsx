@@ -285,7 +285,6 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
     }
   };
 
-  const [submittingDates, setSubmittingDates] = React.useState<string[]>([]);
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
@@ -349,70 +348,6 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
           >
             {initiatedSettlements.length > 0 ? 'Select Preferences' : respondedSettlements.length > 0 ? 'Edit Preferences' : 'Select Preferences'}
           </button>
-        </div>
-      )}
-
-      {/* Pending Govt Holiday Response Alert Banner */}
-      {initialFetchDone && profile && profile.eligible_govt_holiday !== false && profile.allow_reserve !== false && pendingHolidays.length > 0 && (
-        <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-purple-900/40 p-4 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 bg-purple-600/10 border border-purple-500/20 text-purple-400 rounded-xl shrink-0 mt-0.5">
-              <Calendar className="h-5 w-5 text-purple-500" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-theme-text-primary">Government Holiday Preferences Pending 🔔</h4>
-              <p className="text-xs text-theme-text-muted mt-1 leading-relaxed">
-                Please select what you would like to do for the following government holidays. You can either get paid or reserve the leave:
-              </p>
-              <div className="flex flex-wrap gap-2 mt-2.5">
-                {pendingHolidays.map((holiday, idx) => (
-                  <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-theme-card-container border border-theme-border-input rounded-lg text-xs font-semibold text-theme-text-secondary gap-1.5 font-sans">
-                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-                    {holiday.name} ({formatDate(holiday.date)})
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 w-full md:w-auto shrink-0 border-t border-theme-border-muted/80 md:border-t-0 pt-3 md:pt-0">
-            {pendingHolidays.map((holiday) => {
-              const isSubmitting = submittingDates.includes(holiday.date);
-              return (
-                <div key={holiday.date} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-theme-page-bg/60 border border-theme-border-muted rounded-xl md:w-80 font-sans">
-                  <div className="text-[11px] font-semibold text-theme-text-secondary">
-                    {holiday.name}
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={async () => {
-                        setSubmittingDates(prev => [...prev, holiday.date]);
-                        await onSaveHolidayResponse(holiday.date, holiday.name, 'paid');
-                        setSubmittingDates(prev => prev.filter(d => d !== holiday.date));
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-600 hover:bg-emerald-555 text-white border border-emerald-700 shadow-sm transition-all cursor-pointer disabled:opacity-50 font-sans flex items-center justify-center min-w-[65px] h-7"
-                    >
-                      {isSubmitting ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Get Paid'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={async () => {
-                        setSubmittingDates(prev => [...prev, holiday.date]);
-                        await onSaveHolidayResponse(holiday.date, holiday.name, 'reserve');
-                        setSubmittingDates(prev => prev.filter(d => d !== holiday.date));
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-teal-600 hover:bg-teal-555 text-white border border-teal-700 shadow-sm transition-all cursor-pointer disabled:opacity-50 font-sans flex items-center justify-center min-w-[65px] h-7"
-                    >
-                      {isSubmitting ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Reserve'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       )}
 

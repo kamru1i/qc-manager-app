@@ -28,6 +28,8 @@ export function useGlobalNotifications(
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
   const [syncedApprovalsCount, setSyncedApprovalsCount] = useState<number | null>(null);
   const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastNotifFetchRef = useRef<number>(0);
+  const NOTIF_THROTTLE_MS = 5000; // Minimum 5s between notification refetches
 
   const [isChutiLoaded, setIsChutiLoaded] = useState(false);
 
@@ -37,11 +39,11 @@ export function useGlobalNotifications(
     }
   }, [initialFetchDone]);
 
-  // Fallback trigger after 5 seconds if dashboard fails to report loaded status
+  // Fallback trigger after 1 second if dashboard fails to report loaded status
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsChutiLoaded(true);
-    }, 5000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -212,6 +214,31 @@ export function useGlobalNotifications(
     }
   }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses, isChutiLoaded]);
 
+  const handleRealtimeDataChanged = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNotifFetchRef.current < NOTIF_THROTTLE_MS) return; // Throttle
+
+    if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+    realtimeDebounceRef.current = setTimeout(() => {
+      lastNotifFetchRef.current = Date.now();
+      fetchNotificationsData();
+    }, 2000);
+  }, [fetchNotificationsData]);
+
+  // Sync with standard custom DOM event
+  useEffect(() => {
+    if (!sessionUser) return;
+    window.addEventListener('realtime-data-changed', handleRealtimeDataChanged);
+    return () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+      window.removeEventListener('realtime-data-changed', handleRealtimeDataChanged);
+    };
+  }, [sessionUser, handleRealtimeDataChanged]);
+
+  // Register realtime handlers for profiles and govt_holiday_responses to update notifications in real time
+  useRealtimeHandler('profiles', handleRealtimeDataChanged);
+  useRealtimeHandler('govt_holiday_responses', handleRealtimeDataChanged);
+
   // Register realtime handler to sync dismissals across active sessions in real time
   useRealtimeHandler(
     'dismissed_notifications',
@@ -279,35 +306,7 @@ export function useGlobalNotifications(
     }
   }, [sessionUser, profile, isChutiLoaded, fetchNotificationsData]);
 
-  // Instead of subscribing to Supabase realtime channels (which duplicates
-  // the subscriptions in useDashboardData and useQuotesDashboardData), listen
-  // for a lightweight custom DOM event that those hooks dispatch whenever
-  // they receive a realtime change. This eliminates 2-3 duplicate Supabase
-  // channels and prevents cascading full-refetches.
-  const lastNotifFetchRef = useRef<number>(0);
-  const NOTIF_THROTTLE_MS = 5000; // Minimum 5s between notification refetches
-
-  useEffect(() => {
-    if (!sessionUser) return;
-
-    const handleRealtimeDataChanged = () => {
-      const now = Date.now();
-      if (now - lastNotifFetchRef.current < NOTIF_THROTTLE_MS) return; // Throttle
-
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      realtimeDebounceRef.current = setTimeout(() => {
-        lastNotifFetchRef.current = Date.now();
-        fetchNotificationsData();
-      }, 2000);
-    };
-
-    window.addEventListener('realtime-data-changed', handleRealtimeDataChanged);
-
-    return () => {
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      window.removeEventListener('realtime-data-changed', handleRealtimeDataChanged);
-    };
-  }, [sessionUser, fetchNotificationsData]);
+  // Event listeners and refetches are configured at the top hook level.
 
   // Compute global settings (needed for govt holidays list)
   const globalSettings = useMemo(() => {
@@ -621,6 +620,17 @@ export function useGlobalNotifications(
     }
   }, [handleOpenNotifications, handleCloseNotifications]);
 
+  // Identify government holidays that the user has not responded to yet
+  const pendingHolidays = useMemo(() => {
+    if (!profile) return [];
+    return (globalSettings.govt_holidays || [])
+      .map((h: unknown) => parseHolidayItem(h))
+      .filter((h: { date: string; name: string }) => {
+        const responded = holidayResponses.some(r => r.user_id === profile.id && r.holiday_date === h.date);
+        return !responded;
+      });
+  }, [globalSettings.govt_holidays, holidayResponses, profile]);
+
   return {
     unreadCount,
     notificationsList,
@@ -630,6 +640,7 @@ export function useGlobalNotifications(
     handleDismissNotification,
     handleDismissAllNotifications,
     fetchNotificationsData,
-    approvalsCount
+    approvalsCount,
+    pendingHolidays
   };
 }

@@ -12,6 +12,7 @@ import { Navbar } from "@/components/common/Navbar";
 import { Toaster } from 'react-hot-toast';
 import { useGlobalNotifications } from "@/hooks/leave-tracker/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/common/modals/UserNotificationsModal";
+import { MandatoryGovtHolidayModal } from "@/components/common/modals/MandatoryGovtHolidayModal";
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
 import { checkInactivity, registerAndCheckSession } from "@/utils/sessionHelper";
@@ -299,6 +300,7 @@ export default function AppPortal() {
     handleDismissNotification,
     handleDismissAllNotifications,
     approvalsCount: globalApprovalsCount,
+    pendingHolidays,
   } = useGlobalNotifications(
     sessionUser,
     profile,
@@ -1059,6 +1061,13 @@ export default function AppPortal() {
           </Suspense>
         </section>
       </main>
+      {sessionUser && profile && profile.eligible_govt_holiday !== false && profile.allow_reserve !== false && pendingHolidays && pendingHolidays.length > 0 && (
+        <MandatoryGovtHolidayModal
+          isOpen={true}
+          holiday={pendingHolidays[0]}
+          onSaveHolidayResponse={handleSaveHolidayResponse}
+        />
+      )}
     </div>
     </RealtimeProvider>
   );
