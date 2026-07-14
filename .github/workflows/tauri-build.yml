@@ -179,10 +179,11 @@ jobs:
 
       - name: Rename APK file
         run: |
+          VERSION=$(node -p "require('./package.json').version")
           if [ -f android/app/build/outputs/apk/release/app-release-unsigned.apk ]; then
-            mv android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/QC-Manager-Android.apk
+            mv android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
           elif [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
-            mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/QC-Manager-Android.apk
+            mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
           else
             echo "Error: Release APK not found!"
             exit 1
@@ -192,7 +193,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: android/app/build/outputs/apk/release/QC-Manager-Android.apk
+          path: android/app/build/outputs/apk/release/QC.Manager_*.apk
           if-no-files-found: error
 
   # ──────────────────────────────────────────────────

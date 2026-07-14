@@ -124,7 +124,7 @@ export const DOWNLOADS = {
       architecture: "Universal APK",
       version: VERSION,
       build: VERSION.replace(/\./g, "") + "0",
-      url: getReleaseUrl(`QC-Manager-Android.apk`),
+      url: getReleaseUrl(`QC.Manager_${VERSION}.apk`),
       releaseDate: "",
       fileSize: "",
       minOsVersion: "Android 8.0 Oreo (API 26)+",
