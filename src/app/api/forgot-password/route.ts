@@ -1,22 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import webpush from 'web-push';
 import { getCorsHeaders, RateLimiter } from '@/utils/apiHelpers';
 
 // Rate limiter: 5 requests per minute per IP (unauthenticated endpoint)
 const rateLimiter = new RateLimiter(60000, 5);
-
-// Initialize web-push
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    'mailto:admin@office.local',
-    vapidPublicKey,
-    vapidPrivateKey
-  );
-}
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -124,77 +111,6 @@ export async function POST(request: NextRequest) {
     const displayName = profile.full_name || profile.username;
     const title = 'Password Reset Request';
     const notificationBody = `${displayName} has requested a password reset.`;
-
-    if (adminIds.length > 0) {
-      // 4. Send Web Push notifications to admins if key details are configured
-      if (vapidPublicKey && vapidPrivateKey) {
-        try {
-          const { data: subscriptions } = await supabaseServer
-            .rpc('get_push_subscriptions_for_users', { p_user_ids: adminIds });
-
-          if (subscriptions && subscriptions.length > 0) {
-            const payload = JSON.stringify({
-              title,
-              body: notificationBody,
-              url: '/',
-              tag: 'password-reset-request',
-            });
-
-            const sendPromises = subscriptions.map(async (sub: any) => {
-              const pushSubscription = {
-                endpoint: sub.sub_endpoint,
-                keys: {
-                  p256dh: sub.sub_p256dh,
-                  auth: sub.sub_auth,
-                },
-              };
-              try {
-                await webpush.sendNotification(pushSubscription, payload);
-              } catch (err: any) {
-                if (err.statusCode === 410 || err.statusCode === 404) {
-                  await supabaseServer.rpc('delete_push_subscription', { p_sub_id: sub.sub_id });
-                }
-              }
-            });
-            await Promise.all(sendPromises);
-          }
-        } catch (pushErr) {
-          console.warn('[ForgotPassword] Failed to send push notifications:', pushErr);
-        }
-      }
-
-      // 5. Broadcast to active desktop clients (Tauri) using per-user channels
-      // Each Tauri client subscribes to `desktop-notifications-${profileId}`,
-      // so we must broadcast to each admin's individual channel.
-      try {
-        const broadcastResults = await Promise.all(
-          adminIds.map(async (uid: string) => {
-            const response = await fetch(`${supabaseUrl}/realtime/v1/broadcast`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': supabaseServiceKey,
-                'Authorization': `Bearer ${supabaseServiceKey}`,
-              },
-              body: JSON.stringify({
-                channel: `desktop-notifications-${uid}`,
-                event: 'os-push',
-                payload: {
-                  targetUserIds: [uid],
-                  title,
-                  body: notificationBody,
-                }
-              }),
-            });
-            return response.ok;
-          })
-        );
-        const okCount = broadcastResults.filter(Boolean).length;
-        console.log(`[ForgotPassword] Broadcasted notification to ${okCount}/${adminIds.length} desktop client channels via REST API.`);
-      } catch (broadcastErr) {
-        console.warn('[ForgotPassword] Failed to broadcast to desktop clients:', broadcastErr);
-      }
-    }
 
     return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (err) {

@@ -188,7 +188,6 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
           return Math.abs(remaining) > 0.01 && !isProcessed;
         });
 
-        }
       }
     }
   };

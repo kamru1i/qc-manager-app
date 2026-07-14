@@ -541,8 +541,7 @@ export const useDashboardData = () => {
                 console.error('Error auto-saving paid responses for holiday:', h.name, upsertError);
               }
             });
-
-
+        }
       });
     }
 
@@ -805,7 +804,6 @@ export const useDashboardData = () => {
           return `${s.leave_category}: ${actionText} (${s.remaining_days} days)`;
         }).join(', ');
 
-        }
       }
 
       const isInitiated = formatted.every(s => s.status === 'initiated');

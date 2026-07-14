@@ -466,7 +466,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
           .eq('id', record.id);
         if (error) throw error;
         toast.success('Adjustment toggled. Pending admin approval.');
-        }
         if (viewingStaff) debouncedFetchStaffLeaveData(viewingStaff.id, true);
       } catch (err: unknown) {
         console.error(err);

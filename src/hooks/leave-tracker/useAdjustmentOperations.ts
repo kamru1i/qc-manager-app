@@ -117,8 +117,6 @@ export const useAdjustmentOperations = ({
           .eq('id', record.id || '');
 
         if (error) throw error;
-
-        }
       }
       fetchRecords();
       setMessage({ 
@@ -229,7 +227,6 @@ export const useAdjustmentOperations = ({
       }
       fetchRecords();
 
-      }
 
       setMessage({ 
         type: 'success', 

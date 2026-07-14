@@ -685,9 +685,6 @@ export const useChutiOperations = ({
 
       if (error) throw error;
 
-
-      }
-
       fetchRecords();
       setShowAdminEditModal(false);
       setMessage({ 

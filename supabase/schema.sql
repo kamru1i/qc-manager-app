@@ -9,7 +9,6 @@
 -- Drop tables first (with CASCADE) to automatically drop dependent policies and avoid dependency conflicts
 DROP TABLE IF EXISTS public.chuti CASCADE;
 DROP TABLE IF EXISTS public.govt_holiday_responses CASCADE;
-DROP TABLE IF EXISTS public.push_subscriptions CASCADE;
 DROP TABLE IF EXISTS public.leave_settlements CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
 
@@ -35,10 +34,6 @@ DROP FUNCTION IF EXISTS public.create_new_user(TEXT, TEXT, TEXT, TEXT, TEXT, BOO
 DROP FUNCTION IF EXISTS public.delete_user_by_id(UUID) CASCADE;
 DROP FUNCTION IF EXISTS public.admin_update_user_credentials(UUID, TEXT, TEXT) CASCADE;
 DROP FUNCTION IF EXISTS public.admin_insert_chuti_records_bulk(UUID, DATE[], TEXT, BOOLEAN[], BOOLEAN, TIME, TIME, INTERVAL, TEXT, TEXT, UUID) CASCADE;
-DROP FUNCTION IF EXISTS public.get_user_ids_by_roles(TEXT[]) CASCADE;
-DROP FUNCTION IF EXISTS public.get_push_subscriptions_for_users(UUID[]) CASCADE;
-DROP FUNCTION IF EXISTS public.delete_push_subscription(UUID) CASCADE;
-DROP FUNCTION IF EXISTS public.register_push_subscription(UUID, TEXT, TEXT, TEXT) CASCADE;
 DROP FUNCTION IF EXISTS public.update_chuti_updated_at() CASCADE;
 
 -- ==========================================
@@ -805,126 +800,7 @@ CREATE POLICY "Admins can update/delete responses"
 COMMENT ON TABLE public.govt_holiday_responses IS 'Stores user choices (Get Paid vs Reserve) for each government holiday';
 
 
--- ==========================================
--- 7. Push Subscriptions Table & Policies for Web Push Notifications
--- ==========================================
-CREATE TABLE public.push_subscriptions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  endpoint TEXT NOT NULL UNIQUE,
-  p256dh TEXT NOT NULL,
-  auth TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
 
--- Enable Row Level Security (RLS)
-ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
-
--- Create Policies for push_subscriptions
-CREATE POLICY "push_sub_insert_own" 
-  ON public.push_subscriptions FOR INSERT 
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "push_sub_select_own" 
-  ON public.push_subscriptions FOR SELECT 
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "push_sub_delete_own" 
-  ON public.push_subscriptions FOR DELETE 
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "push_sub_update_own"
-  ON public.push_subscriptions FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- SECURITY DEFINER RPC Functions for Push Notifications
-CREATE OR REPLACE FUNCTION public.get_user_ids_by_roles(p_roles TEXT[])
-RETURNS TABLE(user_id UUID) AS $$
-BEGIN
-  RETURN QUERY
-    SELECT p.id
-    FROM public.profiles p
-    WHERE p.role = ANY(p_roles);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Restrict to service_role only (called from API routes, not client-side)
-REVOKE EXECUTE ON FUNCTION public.get_user_ids_by_roles(TEXT[]) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.get_user_ids_by_roles(TEXT[]) FROM authenticated;
-REVOKE EXECUTE ON FUNCTION public.get_user_ids_by_roles(TEXT[]) FROM anon;
-GRANT EXECUTE ON FUNCTION public.get_user_ids_by_roles(TEXT[]) TO service_role;
-
-CREATE OR REPLACE FUNCTION public.get_push_subscriptions_for_users(p_user_ids UUID[])
-RETURNS TABLE(
-  sub_id UUID,
-  sub_user_id UUID,
-  sub_endpoint TEXT,
-  sub_p256dh TEXT,
-  sub_auth TEXT
-) AS $$
-BEGIN
-  RETURN QUERY
-    SELECT ps.id, ps.user_id, ps.endpoint, ps.p256dh, ps.auth
-    FROM public.push_subscriptions ps
-    WHERE ps.user_id = ANY(p_user_ids);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Restrict to service_role only (called from API routes, not client-side)
-REVOKE EXECUTE ON FUNCTION public.get_push_subscriptions_for_users(UUID[]) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.get_push_subscriptions_for_users(UUID[]) FROM authenticated;
-REVOKE EXECUTE ON FUNCTION public.get_push_subscriptions_for_users(UUID[]) FROM anon;
-GRANT EXECUTE ON FUNCTION public.get_push_subscriptions_for_users(UUID[]) TO service_role;
-
-CREATE OR REPLACE FUNCTION public.delete_push_subscription(p_sub_id UUID)
-RETURNS VOID AS $$
-BEGIN
-  -- Security check: only allow if user owns the sub, or is admin, or is service_role
-  IF NOT EXISTS (
-    SELECT 1 FROM public.push_subscriptions 
-    WHERE id = p_sub_id 
-      AND (
-        user_id = auth.uid() 
-        OR public.is_admin() 
-        OR auth.role() = 'service_role'
-      )
-  ) THEN
-    RAISE EXCEPTION 'Unauthorized: subscription not found or permission denied';
-  END IF;
-
-  DELETE FROM public.push_subscriptions WHERE id = p_sub_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Restrict: block anon, allow authenticated (has internal auth check) and service_role
-REVOKE EXECUTE ON FUNCTION public.delete_push_subscription(UUID) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.delete_push_subscription(UUID) FROM anon;
-GRANT EXECUTE ON FUNCTION public.delete_push_subscription(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.delete_push_subscription(UUID) TO service_role;
-
-CREATE OR REPLACE FUNCTION public.register_push_subscription(
-  p_user_id UUID,
-  p_endpoint TEXT,
-  p_p256dh TEXT,
-  p_auth TEXT
-)
-RETURNS VOID AS $$
-BEGIN
-  -- Security check: user must match auth.uid() unless executing as service_role
-  IF auth.uid() <> p_user_id AND auth.role() <> 'service_role' THEN
-    RAISE EXCEPTION 'Unauthorized: cannot register push subscription for another user';
-  END IF;
-
-  INSERT INTO public.push_subscriptions (user_id, endpoint, p256dh, auth)
-  VALUES (p_user_id, p_endpoint, p_p256dh, p_auth)
-  ON CONFLICT (endpoint) 
-  DO UPDATE SET 
-    user_id = EXCLUDED.user_id,
-    p256dh = EXCLUDED.p256dh,
-    auth = EXCLUDED.auth;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ==========================================
 -- 8. Leave Settlements Table
@@ -974,9 +850,8 @@ CREATE POLICY "Admins/supervisors can manage settlements"
   USING (public.is_admin() OR public.is_supervisor())
   WITH CHECK (public.is_admin() OR public.is_supervisor());
 
--- Create indexes for performance optimization
-CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON public.push_subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS idx_chuti_bulk_id ON public.chuti(bulk_id) WHERE bulk_id IS NOT NULL;
+  -- Create indexes for performance optimization
+  CREATE INDEX IF NOT EXISTS idx_chuti_bulk_id ON public.chuti(bulk_id) WHERE bulk_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_leave_settlements_user_year ON public.leave_settlements(user_id, year);
 CREATE INDEX IF NOT EXISTS idx_chuti_updated_at ON public.chuti(updated_at);
 CREATE INDEX IF NOT EXISTS idx_chuti_deleted_at ON public.chuti(deleted_at);

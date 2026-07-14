@@ -282,13 +282,6 @@ export function ProfileSettings({
                 target_id: sessionUser.id,
                 details: `User submitted a profile change request. Requested Name: "${editFullName}", Job Role: "${editJobRole}", Working Hours: ${editWorkingHours}, Break: ${editBreakTime}m, Sign In: ${profileSignInTime}, Sign Out: ${profileSignOutTime}`
               });
-
-              sendPushNotification({
-                userIds: ['admins'],
-                title: 'Profile Change Request 👤',
-                body: `${profile.full_name || profile.username || 'Staff'} has requested a profile information change.`,
-                url: '/'
-              }).catch(err => console.error('Error triggering push notification:', err));
             } else {
               await supabase.from('audit_logs').insert({
                 actor_id: sessionUser.id,
