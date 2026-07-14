@@ -34,6 +34,8 @@ interface UnifiedSidebarProps {
   onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
+  hideCollapseButton?: boolean;
+  onNavItemClick?: () => void;
 }
 
 export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
@@ -45,6 +47,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   onChutiTabChange,
   isSidebarCollapsed,
   onSidebarToggle,
+  hideCollapseButton = false,
+  onNavItemClick,
 }) => {
   const router = useRouter();
 
@@ -63,10 +67,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   if (!profile) return null;
 
-  const hasChutiAccess = !!profile.has_chuti_access;
-  const hasQuotesAccess = !!profile.has_quotes_access;
   const isSuperAdmin = profile.codename?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
-  const showTodoTab = profile.username?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
   const hiddenTabs = profile.global_settings?.hidden_tabs || [];
 
   // Navigation handlers
@@ -74,6 +75,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     localStorage.setItem('last_active_dashboard', 'chuti');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'chuti' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   const handleChutiClick = () => {
@@ -88,6 +90,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     localStorage.setItem('last_active_dashboard', 'quotes');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'quotes' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   const handleQuotesClick = () => {
@@ -102,36 +105,42 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     localStorage.setItem('last_active_dashboard', 'kpi');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'kpi' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   const handleUserManagementNav = () => {
     localStorage.setItem('last_active_dashboard', 'user_management');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'user_management' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   const handleTodoNav = () => {
     localStorage.setItem('last_active_dashboard', 'todo');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'todo' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   const handleAnalyticsNav = () => {
     localStorage.setItem('last_active_dashboard', 'analytics');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'analytics' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   const handleAuditLogsNav = () => {
     localStorage.setItem('last_active_dashboard', 'audit_logs');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'audit_logs' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   const handleProfileSettingsNav = () => {
     localStorage.setItem('last_active_dashboard', 'profile_settings');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'profile_settings' }));
     router.push('/');
+    onNavItemClick?.();
   };
 
   return (
@@ -147,14 +156,16 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             Workspaces
           </span>
         )}
-        <button
-          type="button"
-          onClick={onSidebarToggle}
-          title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-theme-border-input bg-theme-page-bg/60 text-theme-text-secondary hover:text-theme-text-inverse hover:bg-theme-border-active transition-all cursor-pointer hover:scale-105 active:scale-95"
-        >
-          {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-        </button>
+        {!hideCollapseButton && (
+          <button
+            type="button"
+            onClick={onSidebarToggle}
+            title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-theme-border-input bg-theme-page-bg/60 text-theme-text-secondary hover:text-theme-text-inverse hover:bg-theme-border-active transition-all cursor-pointer hover:scale-105 active:scale-95"
+          >
+            {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
+        )}
       </div>
 
       {/* Main Workspace Tabs */}
@@ -182,7 +193,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-theme-border-input/80 ml-6'}`}>
                 {/* 1. Add Leave */}
                 <button
-                  onClick={() => onChutiTabChange('add_leave')}
+                  onClick={() => { onChutiTabChange('add_leave'); onNavItemClick?.(); }}
                   title={isSidebarCollapsed ? 'Add Leave' : undefined}
                   className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                     isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -200,7 +211,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 3. Leave History (All Users) */}
                 {!hiddenTabs.includes('leave_history') && (
                   <button
-                    onClick={() => onChutiTabChange('leave_history')}
+                    onClick={() => { onChutiTabChange('leave_history'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Leave History' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -218,7 +229,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* Team Leave Records (Admin and Supervisor Only) */}
                 {(profile?.role === 'admin' || profile?.role === 'supervisor') && !hiddenTabs.includes('team_leaves') && (
                   <button
-                    onClick={() => onChutiTabChange('team_leaves')}
+                    onClick={() => { onChutiTabChange('team_leaves'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Team Leave Records' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -236,7 +247,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 3. Govt Holiday Response (Admin Only) */}
                 {profile?.role === 'admin' && !hiddenTabs.includes('govt_responses') && (
                   <button
-                    onClick={() => onChutiTabChange('govt_responses')}
+                    onClick={() => { onChutiTabChange('govt_responses'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Govt Holiday Response' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -254,7 +265,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 4. Review & Settlements (Admin Only) */}
                 {profile?.role === 'admin' && !hiddenTabs.includes('settlement') && (
                   <button
-                    onClick={() => onChutiTabChange('settlement')}
+                    onClick={() => { onChutiTabChange('settlement'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Review & Settlements' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -272,7 +283,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 5. Leave Settings (Admin Only) */}
                 {profile?.role === 'admin' && !hiddenTabs.includes('leave_settings') && (
                   <button
-                    onClick={() => onChutiTabChange('leave_settings')}
+                    onClick={() => { onChutiTabChange('leave_settings'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Leave Settings' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -314,7 +325,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-theme-border-input/80 ml-6'}`}>
                 {/* 1. Daily Entry */}
                 <button
-                  onClick={() => onQuotesTabChange('entry')}
+                  onClick={() => { onQuotesTabChange('entry'); onNavItemClick?.(); }}
                   title={isSidebarCollapsed ? 'Daily Entry' : undefined}
                   className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                     isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -331,7 +342,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* Copy Helper (Superadmin only) */}
                 {isSuperAdmin && !hiddenTabs.includes('copy_helper') && (
                   <button
-                    onClick={() => onQuotesTabChange?.('copy_helper')}
+                    onClick={() => { onQuotesTabChange?.('copy_helper'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Copy Helper' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -349,7 +360,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* Save File (Superadmin only) */}
                 {isSuperAdmin && !hiddenTabs.includes('save_file') && (
                   <button
-                    onClick={() => onQuotesTabChange?.('save_file')}
+                    onClick={() => { onQuotesTabChange?.('save_file'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Save File' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -367,7 +378,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 2. Monthly List */}
                 {!hiddenTabs.includes('monthly') && (
                   <button
-                    onClick={() => onQuotesTabChange('monthly')}
+                    onClick={() => { onQuotesTabChange('monthly'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Monthly List' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -387,7 +398,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 4. Quote Rules */}
                 {!hiddenTabs.includes('rules') && (
                   <button
-                    onClick={() => onQuotesTabChange('rules')}
+                    onClick={() => { onQuotesTabChange('rules'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Quote Rules' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -405,7 +416,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 5. IP Checker */}
                 {!hiddenTabs.includes('ip_checker') && (
                   <button
-                    onClick={() => onQuotesTabChange('ip_checker')}
+                    onClick={() => { onQuotesTabChange('ip_checker'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'IP Checker' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -423,7 +434,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 6. Login Codes */}
                 {!hiddenTabs.includes('login_codes') && (
                   <button
-                    onClick={() => onQuotesTabChange('login_codes')}
+                    onClick={() => { onQuotesTabChange('login_codes'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Login Codes' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
@@ -441,7 +452,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 {/* 7. Causality (Asitis + EUI) */}
                 {!hiddenTabs.includes('causality') && (
                   <button
-                    onClick={() => onQuotesTabChange('causality')}
+                    onClick={() => { onQuotesTabChange('causality'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Causality' : undefined}
                     className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                       isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'

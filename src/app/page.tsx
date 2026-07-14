@@ -476,22 +476,25 @@ function AppPortalInner({
 
   const [isUserManagementFullView, setIsUserManagementFullView] = useState(false);
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const handleReloadShortcut = (e: KeyboardEvent) => {
+      const handleKeyDown = (e: KeyboardEvent) => {
         if (
           (e.key === "r" && (e.metaKey || e.ctrlKey)) ||
           e.key === "F5"
         ) {
           e.preventDefault();
           window.location.reload();
+        } else if (e.key === "Escape") {
+          setIsMobileDrawerOpen(false);
         }
       };
-      window.addEventListener("keydown", handleReloadShortcut);
+      window.addEventListener("keydown", handleKeyDown);
 
       return () => {
-        window.removeEventListener("keydown", handleReloadShortcut);
+        window.removeEventListener("keydown", handleKeyDown);
       };
     }
   }, []);
@@ -768,6 +771,26 @@ function AppPortalInner({
     )
   );
 
+  const sidebarActiveSection =
+    (typeof window !== "undefined" &&
+    sessionStorage.getItem("viewingStaffFromUserManagement") === "true")
+      ? "user_management"
+      : activeTab === "user_management"
+        ? "user_management"
+        : activeTab === "todo"
+          ? "todo"
+          : activeTab === "analytics"
+            ? "analytics"
+            : activeTab === "audit_logs"
+              ? "audit_logs"
+              : activeTab === "quotes"
+                ? "quotes"
+                : activeTab === "kpi"
+                  ? "kpi"
+                  : activeTab === "profile_settings"
+                    ? "profile_settings"
+                    : "chuti";
+
   return (
     <div className="flex-1 min-h-screen flex flex-col bg-theme-page-bg relative overflow-hidden pb-12 text-white selection:bg-purple-650 selection:text-white">
       <Toaster
@@ -804,6 +827,7 @@ function AppPortalInner({
         onThemeToggle={handleThemeToggle}
         onLogout={handleLogout}
         badges={topPerformerBadges}
+        onMenuToggle={() => setIsMobileDrawerOpen(true)}
         onNotificationClick={() => {
           if (profile?.role === 'admin') {
             const mode = sessionStorage.getItem('adminNotificationMode') || 'user';
@@ -875,38 +899,63 @@ function AppPortalInner({
         />
       )}
 
+      {/* Mobile Sidebar Navigation Drawer Backdrop */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+          isMobileDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMobileDrawerOpen(false)}
+      />
+
+      {/* Mobile Sidebar Navigation Drawer Container */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation Menu"
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-theme-page-bg border-r border-theme-border-input/50 p-4 shadow-2xl transition-transform duration-300 ease-out flex flex-col md:hidden ${
+          isMobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex justify-between items-center mb-4 pb-2 border-b border-theme-border-input/30 shrink-0">
+          <span className="text-sm font-bold tracking-wider text-theme-text-primary">QC Navigation</span>
+          <button
+            type="button"
+            onClick={() => setIsMobileDrawerOpen(false)}
+            aria-label="Close menu"
+            className="p-1.5 rounded-lg border border-theme-border-input/80 bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-active transition-all cursor-pointer"
+          >
+            <span className="text-lg font-bold leading-none">&times;</span>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+          <UnifiedSidebar
+            activeSection={sidebarActiveSection}
+            profile={profile}
+            activeQuotesTab={activeQuotesTab}
+            onQuotesTabChange={handleQuotesTabChange}
+            activeChutiTab={activeChutiTab}
+            onChutiTabChange={handleChutiTabChange}
+            isSidebarCollapsed={false}
+            onSidebarToggle={() => {}}
+            hideCollapseButton={true}
+            onNavItemClick={() => setIsMobileDrawerOpen(false)}
+          />
+        </div>
+      </div>
+
       {/* Main container with Sidebar and Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row items-start">
         <div
-          className={`shrink-0 ${
+          className={`shrink-0 hidden md:block ${
             (activeTab === "user_management" && isUserManagementFullView) || 
             (activeTab === "chuti" && (activeChutiTab === "leave_history" || activeChutiTab === "govt_responses" || activeChutiTab === "settlement" || activeChutiTab === "team_leaves")) ||
             (activeTab === "kpi")
-              ? "w-0 h-0 opacity-0 pointer-events-none overflow-hidden mb-0 md:mb-0 md:mr-0"
-              : "w-full md:w-auto opacity-100 mb-6 md:mb-0 md:mr-6"
+              ? "md:w-0 md:h-0 md:opacity-0 md:pointer-events-none md:overflow-hidden md:mb-0 md:mr-0"
+              : "md:w-auto md:opacity-100 md:mb-0 md:mr-6"
           }`}
         >
           <UnifiedSidebar
-            activeSection={
-              (typeof window !== "undefined" &&
-              sessionStorage.getItem("viewingStaffFromUserManagement") === "true")
-                ? "user_management"
-                : activeTab === "user_management"
-                  ? "user_management"
-                  : activeTab === "todo"
-                    ? "todo"
-                    : activeTab === "analytics"
-                      ? "analytics"
-                      : activeTab === "audit_logs"
-                        ? "audit_logs"
-                        : activeTab === "quotes"
-                          ? "quotes"
-                          : activeTab === "kpi"
-                            ? "kpi"
-                            : activeTab === "profile_settings"
-                              ? "profile_settings"
-                              : "chuti"
-            }
+            activeSection={sidebarActiveSection}
             profile={profile}
             activeQuotesTab={activeQuotesTab}
             onQuotesTabChange={handleQuotesTabChange}

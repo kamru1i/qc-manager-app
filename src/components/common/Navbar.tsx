@@ -9,7 +9,8 @@ import {
   Clock,
   Coffee,
   Bell,
-  RefreshCw
+  RefreshCw,
+  Menu
 } from 'lucide-react';
 import { Profile } from '@/types';
 import { downloadLatestRelease, DownloadPlatform } from '@/utils/downloadHelper';
@@ -27,6 +28,7 @@ interface NavbarProps {
   notificationCount?: number;
   offlineCount?: number;
   onManualSync?: () => void;
+  onMenuToggle?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -39,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   notificationCount = 0,
   offlineCount = 0,
   onManualSync,
+  onMenuToggle,
 }) => {
   const formatWorkingHours = (hours: number | string) => {
     const h = parseFloat(String(hours));
@@ -87,6 +90,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="bg-theme-card-bg/40 backdrop-blur-md border-b border-theme-border-input/50 px-4 py-4 sm:px-6 lg:px-8 z-30">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
+          {onMenuToggle && (
+            <button
+              type="button"
+              onClick={onMenuToggle}
+              aria-label="Open navigation menu"
+              className="md:hidden p-2 rounded-lg border border-theme-border-input/80 bg-theme-page-bg/40 text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-active transition-all cursor-pointer mr-1"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
           <div>
             <h1 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
               <span className="flex items-center">
