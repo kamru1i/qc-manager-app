@@ -159,9 +159,11 @@ export async function getAsyncArchitecture(currentInfo: DeviceInfo): Promise<Dev
     try {
       const entropy = await nav.userAgentData.getHighEntropyValues(['architecture']);
       if (entropy.architecture === 'arm') {
+        if (currentInfo.os === 'macOS') {
+          return 'Apple Silicon';
+        }
         return 'ARM64';
       } else if (entropy.architecture === 'x86') {
-        // Double check x86_64 vs 32-bit x86
         if (currentInfo.architecture === 'x64') {
           return 'x64';
         }

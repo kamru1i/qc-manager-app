@@ -155,7 +155,7 @@ function getRecommendation(info: DeviceInfo, currentDownloads: typeof DOWNLOADS)
       return currentDownloads.windows.x64; // Default recommended Windows build
       
     case 'macOS':
-      if (info.architecture === 'Apple Silicon') {
+      if (info.architecture === 'Apple Silicon' || info.architecture === 'ARM64') {
         return currentDownloads.macos.appleSilicon;
       }
       if (info.architecture === 'x64') {
