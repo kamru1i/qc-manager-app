@@ -46,6 +46,7 @@ export function useDeviceInfo(): UseDeviceInfoResult {
               arm64: { ...DOWNLOADS.windows.arm64, ...data.downloads.windows.arm64, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.windows.arm64.releaseDate }
             },
             macos: {
+              universal: { ...DOWNLOADS.macos.universal, ...data.downloads.macos.universal, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.macos.universal.releaseDate },
               appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...data.downloads.macos.appleSilicon, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.macos.appleSilicon.releaseDate },
               intel: { ...DOWNLOADS.macos.intel, ...data.downloads.macos.intel, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.macos.intel.releaseDate }
             },
@@ -105,7 +106,10 @@ function getRecommendation(info: DeviceInfo, currentDownloads: typeof DOWNLOADS)
       if (info.architecture === 'Apple Silicon') {
         return currentDownloads.macos.appleSilicon;
       }
-      return currentDownloads.macos.intel;
+      if (info.architecture === 'x64') {
+        return currentDownloads.macos.intel;
+      }
+      return currentDownloads.macos.universal;
       
     case 'Linux':
       // Recommend deb for Ubuntu/Debian/Mint/Pop!_OS/Kali

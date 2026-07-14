@@ -186,6 +186,7 @@ export default function MoreDownloadsModal({ isOpen, onClose, downloads }: MoreD
             <div className="flex flex-col gap-3">
               {renderBuildRow(downloads.macos.appleSilicon, "Apple Silicon (M1/M2/M3/M4)")}
               {renderBuildRow(downloads.macos.intel, "Intel Processor Mac")}
+              {renderBuildRow(downloads.macos.universal, "Universal Binary (Intel & Apple Silicon)")}
             </div>
           </div>
 

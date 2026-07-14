@@ -168,6 +168,8 @@ async function main() {
         platformKey = 'windows-i686';
       } else if (targetName.includes('arm64-setup.exe') || targetName.includes('aarch64-setup.exe') || targetName.includes('arm64_setup.exe')) {
         platformKey = 'windows-aarch64';
+      } else if (targetName.includes('universal.app.tar.gz')) {
+        platformKey = 'darwin-universal';
       } else if (targetName.includes('x64.app.tar.gz') || targetName.includes('x86_64.app.tar.gz')) {
         platformKey = 'darwin-x86_64';
       } else if (targetName.includes('aarch64.app.tar.gz') || targetName.includes('arm64.app.tar.gz')) {
@@ -179,6 +181,7 @@ async function main() {
       if (platformKey) {
         const sigRes = await fetch(asset.browser_download_url);
         const signature = (await sigRes.text()).trim();
+        
         platforms[platformKey] = { signature, url };
 
         // Support nsis variants for windows
@@ -216,15 +219,20 @@ async function main() {
         }
       },
       macos: {
+        universal: {
+          url: assets.find(a => a.name.endsWith('.dmg') && a.name.includes('universal'))?.browser_download_url || '',
+          fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && a.name.includes('universal'))?.name] || '',
+          sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && a.name.includes('universal'))?.name] || ''
+        },
         appleSilicon: {
           url: assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('aarch64') || a.name.includes('arm64')))?.browser_download_url || '',
           fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('aarch64') || a.name.includes('arm64')))?.name] || '',
           sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('aarch64') || a.name.includes('arm64')))?.name] || ''
         },
         intel: {
-          url: assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64'))?.name] || ''
+          url: assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.browser_download_url || '',
+          fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.name] || '',
+          sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.name] || ''
         }
       },
       linux: {

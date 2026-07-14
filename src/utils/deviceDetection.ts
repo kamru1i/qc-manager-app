@@ -100,8 +100,10 @@ export function detectDevice(): DeviceInfo {
     // Apple Silicon GPU names contain 'Apple' and typically 'M1', 'M2', 'M3', 'M4' or 'Apple GPU'
     if (/apple/i.test(gpu)) {
       architecture = 'Apple Silicon';
-    } else {
+    } else if (/intel|amd|nvidia/i.test(gpu)) {
       architecture = 'x64';
+    } else {
+      architecture = 'Unknown';
     }
   } else if (os === 'Windows') {
     // Windows fallback detection via user-agent

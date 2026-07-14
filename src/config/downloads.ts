@@ -46,6 +46,19 @@ export const DOWNLOADS = {
     } as DownloadInfo,
   },
   macos: {
+    universal: {
+      platform: "macOS",
+      architecture: "Universal Binary (Intel & Apple Silicon)",
+      version: "4.6.0",
+      build: "4600",
+      url: "https://github.com/kamrulislam2/qc-manager-app/releases/download/v4.6.0/QC-Manager-App_4.6.0_universal.dmg",
+      releaseDate: "2026-07-13",
+      fileSize: "95.4 MB",
+      minOsVersion: "macOS 10.15 Catalina+",
+      autoUpdate: true,
+      sha256: "ca3f1d8206d203923d8df8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d9",
+      releaseNotes: "Universal binary installer supporting both Intel and Apple Silicon Mac architectures natively.",
+    } as DownloadInfo,
     appleSilicon: {
       platform: "macOS",
       architecture: "Apple Silicon (M1/M2/M3/M4)",
