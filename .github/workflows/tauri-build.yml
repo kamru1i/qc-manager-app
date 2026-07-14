@@ -109,7 +109,7 @@ jobs:
           chmod +x src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/bundle_dmg.sh 2>/dev/null || true
           chmod +x src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/bundle_dmg.sh 2>/dev/null || true
 
-      - name: Build and upload desktop artifacts
+      - name: Build desktop binaries
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -119,22 +119,22 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
         with:
-          tagName: v__VERSION__
-          releaseName: "QC Manager v__VERSION__"
-          releaseBody: |
-            # QC Manager v5.0.0 (Major Release)
-
-            Welcome to the new major release of **QC Manager**! This version introduces major release engineering changes, multi-architecture compilation, and cross-platform alignment.
-
-            ## Key Updates in this Release
-            - **macOS Apple Silicon & Intel Native Builds:** Users can now install architecture-optimized builds for maximum performance.
-            - **macOS Universal Fallback:** A universal package is provided to guarantee compatibility when chipsets cannot be confidently determined.
-            - **Android APK Installer:** Updated Capacitor native wrappers and synced public assets.
-            - **Decommissioned iOS support:** The iOS build pipeline has been deprecated and completely removed.
-            - **Web & Desktop Optimization:** Redundant download promotions are hidden when running inside native app environments.
-          releaseDraft: false
-          prerelease: false
           args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
+
+      - name: Upload compiled bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-bundles-${{ matrix.label }}
+          path: |
+            src-tauri/target/**/release/bundle/**/*.exe
+            src-tauri/target/**/release/bundle/**/*.msi
+            src-tauri/target/**/release/bundle/**/*.dmg
+            src-tauri/target/**/release/bundle/**/*.tar.gz
+            src-tauri/target/**/release/bundle/**/*.sig
+            src-tauri/target/**/release/bundle/**/*.deb
+            src-tauri/target/**/release/bundle/**/*.rpm
+            src-tauri/target/**/release/bundle/**/*.AppImage
+          if-no-files-found: error
 
   # ──────────────────────────────────────────────────
   # Job 2: Build Android APK
@@ -188,20 +188,12 @@ jobs:
             exit 1
           fi
 
-      - name: Get package version
-        id: get_version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Upload APK to GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
         with:
-          files: android/app/build/outputs/apk/release/QC-Manager-Android.apk
-          tag_name: v${{ steps.get_version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: android-apk
+          path: android/app/build/outputs/apk/release/QC-Manager-Android.apk
+          if-no-files-found: error
 
   # ──────────────────────────────────────────────────
   # Job 3: Combine releases, zip OTA assets, calculate SHA256, publish to Supabase
@@ -219,6 +211,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: temp_artifacts
 
       - name: Install dependencies
         run: npm ci

@@ -44,17 +44,43 @@ async function main() {
     'User-Agent': 'release-manifest-generator'
   };
 
-  // 1. Fetch release details
+  // 1. Fetch release details (create release tag if it doesn't exist)
   const releaseUrl = `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
-  const releaseRes = await fetch(releaseUrl, { headers });
-  if (!releaseRes.ok) {
+  let releaseRes = await fetch(releaseUrl, { headers });
+  let release;
+  
+  if (releaseRes.status === 404) {
+    console.log(`Release tag ${tag} not found. Creating a new release...`);
+    const createUrl = `https://api.github.com/repos/${repo}/releases`;
+    const createRes = await fetch(createUrl, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tag_name: tag,
+        name: `QC Manager v${version}`,
+        body: `### QC Manager v${version} (Major Release)\n\nWelcome to the new major release of **QC Manager**!\n\n- **macOS Apple Silicon & Intel Native Builds:** Optimized builds for maximum performance.\n- **macOS Universal Fallback:** Universal package to guarantee chipset compatibility.\n- **Android APK Installer:** Synced native wrappers.\n- **Decommissioned iOS support:** The iOS build pipeline has been completely removed.\n- **Web & Desktop Optimization:** Cleaned up downloads promo on native app wrappers.`,
+        draft: false,
+        prerelease: false
+      })
+    });
+    if (!createRes.ok) {
+      console.error(`Failed to create release: ${createRes.statusText}`);
+      process.exit(1);
+    }
+    release = await createRes.json();
+  } else if (!releaseRes.ok) {
     console.error(`Failed to fetch release info: ${releaseRes.statusText}`);
     process.exit(1);
+  } else {
+    release = await releaseRes.json();
   }
-  const release = await releaseRes.json();
+
   let assets = release.assets || [];
 
-  // Helper to delete an asset from release
+  // Helper to delete an asset from release and poll to confirm deletion propagation
   async function deleteAssetIfExists(assetName) {
     const existing = assets.find(a => a.name === assetName);
     if (existing) {
@@ -66,6 +92,28 @@ async function main() {
       if (!delRes.ok) {
         console.warn(`Failed to delete ${assetName}: ${delRes.statusText}`);
       }
+
+      // Poll until confirmed deleted to handle eventual consistency
+      console.log(`Waiting for deletion of ${assetName} to propagate...`);
+      const checkUrl = `https://api.github.com/repos/${repo}/releases/assets/${existing.id}`;
+      let deleted = false;
+      for (let attempt = 1; attempt <= 15; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const checkRes = await fetch(checkUrl, { headers });
+        if (checkRes.status === 404) {
+          deleted = true;
+          break;
+        }
+        console.log(`Attempt ${attempt}: Asset ${assetName} still exists in GitHub API...`);
+      }
+
+      if (deleted) {
+        console.log(`Confirmed deletion of ${assetName}.`);
+      } else {
+        console.warn(`Warning: Deletion of ${assetName} did not propagate. Proceeding anyway...`);
+      }
+      // Small delay for safety
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 
@@ -95,7 +143,45 @@ async function main() {
     console.log(`Successfully uploaded ${assetName}!`);
   }
 
-  // 2. Zip Next.js out folder as OTA bundle and upload it
+  // 2. Discover and upload all artifacts built in matrix/android jobs
+  const tempArtifactsDir = path.join(process.cwd(), 'temp_artifacts');
+  const filesToUpload = [];
+
+  function findFiles(dir) {
+    if (!fs.existsSync(dir)) return;
+    const list = fs.readdirSync(dir);
+    for (const file of list) {
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+      if (stat.isDirectory()) {
+        findFiles(fullPath);
+      } else {
+        const ext = path.extname(file).toLowerCase();
+        if (
+          ext === '.exe' ||
+          ext === '.msi' ||
+          ext === '.dmg' ||
+          ext === '.deb' ||
+          ext === '.rpm' ||
+          ext === '.appimage' ||
+          ext === '.apk' ||
+          file.endsWith('.tar.gz') ||
+          file.endsWith('.sig')
+        ) {
+          filesToUpload.push({ filePath: fullPath, name: file });
+        }
+      }
+    }
+  }
+
+  findFiles(tempArtifactsDir);
+  console.log(`Found ${filesToUpload.length} artifacts to upload.`);
+
+  for (const file of filesToUpload) {
+    await uploadAsset(file.filePath, file.name);
+  }
+
+  // 3. Zip Next.js out folder as OTA bundle and upload it
   const webAssetsZip = path.join(process.cwd(), 'QC-Manager-Web-Assets.zip');
   console.log('Zipping out/ folder for OTA updates...');
   if (!fs.existsSync(path.join(process.cwd(), 'out'))) {
@@ -103,36 +189,51 @@ async function main() {
     process.exit(1);
   }
   
-  // Use native zip command on runner for simplicity and speed
   execSync(`zip -r "${webAssetsZip}" out/*`);
   await uploadAsset(webAssetsZip, 'QC-Manager-Web-Assets.zip');
 
-  // Refetch assets to include the newly uploaded zip
+  // Refetch assets list from GitHub API to include all uploaded files
   const refetchRes = await fetch(releaseUrl, { headers });
+  if (!refetchRes.ok) {
+    console.error(`Failed to refetch assets list: ${refetchRes.statusText}`);
+    process.exit(1);
+  }
   assets = (await refetchRes.json()).assets || [];
 
-  // 3. Download release files to calculate SHA256 and sizes
+  // 4. Calculate SHA256 and sizes using local artifacts where possible
   const tempDir = path.join(process.cwd(), 'temp_release_assets');
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+  // Copy local artifact files to tempDir to avoid downloading them
+  for (const file of filesToUpload) {
+    const dest = path.join(tempDir, file.name);
+    fs.copyFileSync(file.filePath, dest);
+  }
+  if (fs.existsSync(webAssetsZip)) {
+    fs.copyFileSync(webAssetsZip, path.join(tempDir, 'QC-Manager-Web-Assets.zip'));
+  }
 
   const checksums = {};
   const fileSizes = {};
 
   for (const asset of assets) {
     const name = asset.name;
-    // Skip checksum files and Tauri signatures
     if (name === 'SHA256SUMS' || name === 'latest.json' || name.endsWith('.sig')) continue;
 
-    console.log(`Downloading and processing hash for: ${name}...`);
     const destPath = path.join(tempDir, name);
     
-    const assetRes = await fetch(asset.browser_download_url);
-    if (!assetRes.ok) {
-      console.error(`Failed to download asset ${name}: ${assetRes.statusText}`);
-      continue;
+    if (!fs.existsSync(destPath)) {
+      console.log(`Downloading and processing hash for: ${name}...`);
+      const assetRes = await fetch(asset.browser_download_url);
+      if (!assetRes.ok) {
+        console.error(`Failed to download asset ${name}: ${assetRes.statusText}`);
+        continue;
+      }
+      const buffer = await assetRes.arrayBuffer();
+      fs.writeFileSync(destPath, Buffer.from(buffer));
+    } else {
+      console.log(`Using local cached file for hash: ${name}`);
     }
-    const buffer = await assetRes.arrayBuffer();
-    fs.writeFileSync(destPath, Buffer.from(buffer));
 
     const sha = computeSha256(destPath);
     checksums[name] = sha;
