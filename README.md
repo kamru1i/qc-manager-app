@@ -53,8 +53,7 @@ A master control panel allows Administrators and Supervisors to oversee company-
 - **PWA Service Worker (`sw.js`)**: Caches static assets for lightning-fast loading and offline availability. Restricts caching to GET requests to protect against cache poisoning.
 - **IndexedDB Sync Storage (`offlineSync.ts`)**: Locally queues signs, sign-outs, and leaves when offline, syncing automatically once connection is restored.
 - **Supabase Realtime Listeners**: Replication broadcasts instantly update metrics, list views, and tables on database changes without requiring manual refresh.
-- **Concurrent Push Notifications**: Integrates Web Push API using VAPID keys, with rate-limiting (maximum 1 request per 5 seconds per staff to prevent network spam). Admins and supervisors bypass rate limits to handle bulk approval actions.
-- **Tray Persistence (Tauri Desktop App)**: Minimizing or closing the app window hides it to the system tray, keeping it active in the background to deliver desktop notifications.
+- **Tray Persistence (Tauri Desktop App)**: Minimizing or closing the app window hides it to the system tray, keeping it active in the background.
 
 ---
 
@@ -65,7 +64,6 @@ A master control panel allows Administrators and Supervisors to oversee company-
 | **Frontend**            | React 19, Next.js 16 (App Router), TypeScript, Tailwind CSS v4, Lucide Icons                |
 | **Database & Realtime** | Supabase (PostgreSQL), Postgres Row-Level Security (RLS), Triggers, Cascades, RPC Functions |
 | **Desktop Wrapper**     | Tauri v2, Rust Core                                                                         |
-| **Push Notifications**  | Web Push API, `web-push` Node Library, VAPID Keys                                           |
 
 ---
 
@@ -92,13 +90,7 @@ Create a `.env.local` file in the project root:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_public_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-# Web Push Credentials
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
-VAPID_PRIVATE_KEY=your_vapid_private_key
 ```
-
-_Tip: You can generate VAPID keys using `npx web-push generate-vapid-keys`._
 
 ### 4. Build & Run Commands
 
