@@ -13,10 +13,11 @@ import {
   Monitor,
   Apple,
 } from "lucide-react";
-import { getApiUrl, isTauriApp } from "@/utils/apiUrlHelper";
+import { getApiUrl } from "@/utils/apiUrlHelper";
 import { useAppReleaseLinks } from "@/hooks/common/useAppReleaseLinks";
 import { Modal } from "@/components/common/Modal";
 import SmartDownloadButton from "@/components/common/SmartDownloadButton";
+import { isNativeApp } from "@/utils/envHelper";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,8 +27,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const router = useRouter();
   const pathname = usePathname();
-  const links = useAppReleaseLinks();
-  const isDesktop = isTauriApp();
+  const [isNative, setIsNative] = useState(false);
+  useEffect(() => {
+    setIsNative(isNativeApp());
+  }, []);
 
   // Forgot password states
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -418,7 +421,7 @@ export default function LoginPage() {
         </div>
 
         {/* Desktop App Download Area */}
-        {!isDesktop && (
+        {!isNative && (
           <div className="mt-6">
             <div className="bg-theme-card-bg/30 backdrop-blur-xl border border-theme-border-input/50 p-6 shadow-xl rounded-2xl flex flex-col items-center text-center">
               <p className="text-xs font-semibold text-theme-text-muted uppercase tracking-wider">

@@ -13,8 +13,8 @@ import {
   Menu,
 } from "lucide-react";
 import { Profile } from "@/types";
-import MoreDownloadsModal from "@/components/common/MoreDownloadsModal";
-import { useDeviceInfo } from "@/hooks/common/useDeviceInfo";
+import { useRouter } from "next/navigation";
+import { isNativeApp } from "@/utils/envHelper";
 
 import { UserDisplayName } from "@/components/common/UserDisplayName";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
@@ -58,16 +58,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     return `${h} hours`;
   };
 
-  const [isTauri, setIsTauri] = React.useState(false);
-  const [showDownloadModal, setShowDownloadModal] = React.useState(false);
-  const { downloads } = useDeviceInfo();
+  const router = useRouter();
+  const [isNative, setIsNative] = React.useState(false);
 
   React.useEffect(() => {
-    const isTauriEnv =
-      typeof window !== "undefined" &&
-      ("__TAURI_INTERNALS__" in window ||
-        (window as any).__TAURI__ !== undefined);
-    setIsTauri(isTauriEnv);
+    setIsNative(isNativeApp());
   }, []);
 
   return (
@@ -171,17 +166,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {/* Download App Trigger (Only for Web Browser) */}
-          {!isTauri && (
-            <>
-              <button
-                onClick={() => setShowDownloadModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all"
-                title="Download App Versions"
-              >
-                <Download className="h-4 w-4" />
-              </button>
-              <MoreDownloadsModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} downloads={downloads} />
-            </>
+          {!isNative && (
+            <button
+              onClick={() => router.push("/downloads")}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all"
+              title="Download App Versions"
+            >
+              <Download className="h-4 w-4" />
+            </button>
           )}
 
           <button

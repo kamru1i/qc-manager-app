@@ -19,6 +19,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import SmartDownloadButton from "@/components/common/SmartDownloadButton";
+import { isNativeApp } from "@/utils/envHelper";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/common/UnifiedSidebar";
 import { Navbar } from "@/components/common/Navbar";
@@ -561,13 +562,9 @@ function AppPortalInner({
     useState(false);
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const [isTauri, setIsTauri] = useState(false);
+  const [isNative, setIsNative] = useState(false);
   useEffect(() => {
-    const isTauriEnv =
-      typeof window !== "undefined" &&
-      ("__TAURI_INTERNALS__" in window ||
-        (window as any).__TAURI__ !== undefined);
-    setIsTauri(isTauriEnv);
+    setIsNative(isNativeApp());
   }, []);
 
   const formatWorkingHours = (hours: number | string) => {
@@ -1233,7 +1230,7 @@ function AppPortalInner({
             )}
 
             {/* Download Desktop App (Only for Web Browser) */}
-            {!isTauri && (
+            {!isNative && (
               <div className="w-full flex justify-center py-2">
                 <SmartDownloadButton />
               </div>
