@@ -16,7 +16,7 @@ async function main() {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   const version = packageJson.version;
 
-  const zipUrl = `https://github.com/${repo || 'kamrulislam2/qc-manager-app'}/releases/download/v${version}/QC-Manager-Web-Assets.zip`;
+  const zipUrl = `https://github.com/${repo || 'kamru1i/qc-manager-app'}/releases/download/v${version}/QC-Manager-Web-Assets.zip`;
 
   console.log(`Publishing Capacitor OTA version v${version} to Supabase...`);
   console.log(`Zip URL target: ${zipUrl}`);

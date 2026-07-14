@@ -1,10 +1,7 @@
-/**
- * Shared utility for downloading the latest desktop app installer from GitHub Releases.
- * Used in both Navbar.tsx and login/page.tsx to eliminate code duplication.
- */
+import { REPO } from "@/config/downloads";
 
-const GITHUB_RELEASES_URL = "https://api.github.com/repos/kamrulislam2/qc-manager-app/releases/latest";
-const GITHUB_RELEASES_FALLBACK = "https://github.com/kamrulislam2/qc-manager-app/releases/latest";
+const GITHUB_RELEASES_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
+const GITHUB_RELEASES_FALLBACK = `https://github.com/${REPO}/releases/latest`;
 
 interface ReleaseAsset {
   name: string;

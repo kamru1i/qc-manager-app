@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { REPO } from "@/config/downloads";
 
 export interface ReleaseLinks {
   windows: string;
@@ -8,7 +9,6 @@ export interface ReleaseLinks {
   version: string;
 }
 
-const REPO = "kamrulislam2/qc-manager-app";
 const DEFAULT_VERSION = "1.0.0";
 
 export function useAppReleaseLinks(): ReleaseLinks {

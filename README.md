@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 4.6.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 5.0.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v4.6.0 — Minor Release (Current)
+### 🚀 v5.0.0 — Major Release (Current)
+
+- **macOS Triple Target Build System:** Implemented a new parallel compilation matrix in GHA generating three separate macOS desktop installers (macOS Apple Silicon, macOS Intel, and macOS Universal).
+- **Intelligent Download Routing:** Configured client-side device GPU and browser detection to recommend the specific CPU build, falling back safely to the macOS Universal binary only when architecture cannot be confidently determined.
+- **Decommissioned iOS Pipeline:** Completely removed iOS build jobs, Xcode projects, Apple developer code-signing provisioning profiles, and IPA packaging configurations to focus release bandwidth entirely on Android, Tauri Desktop, and Web.
+- **Standalone Downloads Portal:** Refactored the "More Downloads" modal container into a standalone client-rendered `/downloads` page, supporting global `Backspace` keypress history navigation and top-left back controls.
+- **Native Environment UI Hiding:** Integrated checks to automatically detect native wrappers (Tauri & Capacitor) and suppress redundant download promotion panels inside native client applications.
+
+### 🚀 v4.6.0 — Minor Release
 
 - **Custom Delete Government Holiday Modal**: Replaced the native browser `window.confirm()` dialog with a fully custom, theme-compliant modal showing affected employee responses and decisions.
 - **Race Condition Resolution**: Resolved the modal flash issue on app startup/reload by enforcing a strict initialization order (`cached profile` -> `background profile query` -> `notifications/responses fetch` -> `validation`).

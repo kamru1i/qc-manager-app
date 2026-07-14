@@ -122,7 +122,16 @@ jobs:
           tagName: v__VERSION__
           releaseName: "QC Manager v__VERSION__"
           releaseBody: |
-            QC Manager release updates.
+            # QC Manager v5.0.0 (Major Release)
+
+            Welcome to the new major release of **QC Manager**! This version introduces major release engineering changes, multi-architecture compilation, and cross-platform alignment.
+
+            ## Key Updates in this Release
+            - **macOS Apple Silicon & Intel Native Builds:** Users can now install architecture-optimized builds for maximum performance.
+            - **macOS Universal Fallback:** A universal package is provided to guarantee compatibility when chipsets cannot be confidently determined.
+            - **Android APK Installer:** Updated Capacitor native wrappers and synced public assets.
+            - **Decommissioned iOS support:** The iOS build pipeline has been deprecated and completely removed.
+            - **Web & Desktop Optimization:** Redundant download promotions are hidden when running inside native app environments.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
