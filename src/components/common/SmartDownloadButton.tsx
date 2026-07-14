@@ -16,7 +16,7 @@ export default function SmartDownloadButton({ className = "" }: SmartDownloadBut
   const getButtonIcon = () => {
     if (loading) return <Download className="w-4 h-4 animate-bounce" />;
     
-    if (deviceInfo.os === "Android" || deviceInfo.os === "iOS") {
+    if (deviceInfo.os === "Android") {
       return <Smartphone className="w-4 h-4 shrink-0 text-blue-400 group-hover:scale-110 transition-transform" />;
     }
     return <Monitor className="w-4 h-4 shrink-0 text-blue-400 group-hover:scale-110 transition-transform" />;
@@ -27,13 +27,10 @@ export default function SmartDownloadButton({ className = "" }: SmartDownloadBut
     if (!recommendation) return "Download for Your Device";
 
     const osLabel = recommendation.platform;
-    const archLabel = recommendation.architecture.includes("iPhone") || recommendation.architecture.includes("Universal")
+    const archLabel = recommendation.architecture.includes("Universal")
       ? "" 
       : ` (${recommendation.architecture})`;
 
-    if (osLabel === "iOS") {
-      return "Open iOS Installation Guide";
-    }
     if (osLabel === "Android") {
       return "Download Android APK";
     }

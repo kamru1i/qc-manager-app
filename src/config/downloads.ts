@@ -141,18 +141,4 @@ export const DOWNLOADS = {
       releaseNotes: "Internal release featuring full offline sync mechanics, in-app Bell notifications, and Capgo self-hosted OTA auto update check.",
     } as DownloadInfo,
   },
-  ios: {
-    internal: {
-      platform: "iOS",
-      architecture: "iPhone / iPad Internal Build",
-      version: "4.6.0",
-      build: "4600",
-      url: "https://qc-manager-y4bzh900h-kamrul-projects.vercel.app/ios-instructions",
-      releaseDate: "2026-07-14",
-      fileSize: "28.1 MB",
-      minOsVersion: "iOS 15.0+",
-      ota: "Capgo",
-      releaseNotes: "Internal IPA release supporting native iOS safe area layout borders and Capgo self-hosted updates.",
-    } as DownloadInfo,
-  },
 };

@@ -209,7 +209,6 @@ export default function MoreDownloadsModal({ isOpen, onClose, downloads }: MoreD
             </h3>
             <div className="flex flex-col gap-3">
               {renderBuildRow(downloads.android.apk, "Android APK Installer")}
-              {renderBuildRow(downloads.ios.internal, "iOS Deployment Guide")}
             </div>
           </div>
         </div>

@@ -258,13 +258,6 @@ async function main() {
           fileSize: fileSizes[assets.find(a => a.name.endsWith('.apk'))?.name] || '',
           sha256: checksums[assets.find(a => a.name.endsWith('.apk'))?.name] || ''
         }
-      },
-      ios: {
-        internal: {
-          url: `https://${repo.split('/')[0]}.github.io/${repo.split('/')[1]}/ios-instructions`,
-          fileSize: '28.1 MB',
-          sha256: ''
-        }
       }
     }
   };

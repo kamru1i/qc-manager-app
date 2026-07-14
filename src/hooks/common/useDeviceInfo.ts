@@ -57,9 +57,6 @@ export function useDeviceInfo(): UseDeviceInfoResult {
             },
             android: {
               apk: { ...DOWNLOADS.android.apk, ...data.downloads.android.apk, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.android.apk.releaseDate }
-            },
-            ios: {
-              internal: { ...DOWNLOADS.ios.internal, ...data.downloads.ios.internal, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.ios.internal.releaseDate }
             }
           };
           setDownloads(mergedDownloads);
@@ -125,9 +122,6 @@ function getRecommendation(info: DeviceInfo, currentDownloads: typeof DOWNLOADS)
       
     case 'Android':
       return currentDownloads.android.apk;
-      
-    case 'iOS':
-      return currentDownloads.ios.internal;
       
     default:
       return null; // Fallback handled by parent UI
