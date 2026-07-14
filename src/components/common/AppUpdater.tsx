@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { ArrowUpCircle, RefreshCw, X } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { supabase } from "@/utils/supabase";
 
 /**
- * Modern, Production-Grade Auto Updater for Tauri v2 (macOS & Windows)
+ * Modern, Production-Grade Auto Updater for Tauri v2 & Capacitor Mobile OTA (self-hosted updates)
  *
  * Key features:
  * 1. Uses downloadAndInstall() for atomic binary package extraction & update on macOS & Windows.
@@ -22,6 +24,7 @@ export default function AppUpdater() {
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const isCheckingRef = useRef(false);
+  const downloadedUpdateRef = useRef<any>(null);
 
   useEffect(() => {
     const isTauri =
@@ -29,88 +32,159 @@ export default function AppUpdater() {
       ((window as any).__TAURI_INTERNALS__ !== undefined ||
         window.location.protocol === "tauri:");
 
-    if (!isTauri || process.env.NODE_ENV === "development") return;
+    const isMobile =
+      typeof window !== "undefined" &&
+      ((window as any).Capacitor !== undefined ||
+        window.location.protocol === "capacitor:");
 
-    const checkForUpdates = async () => {
-      if (isCheckingRef.current) return;
-      isCheckingRef.current = true;
+    if (isTauri) {
+      if (process.env.NODE_ENV === "development") return;
 
-      try {
-        const { check } = await import("@tauri-apps/plugin-updater");
-        const update = await check({
-          headers: {
-            "cache-control": "no-cache",
-            pragma: "no-cache",
-            expires: "0",
-          },
-        });
+      const checkForUpdates = async () => {
+        if (isCheckingRef.current) return;
+        isCheckingRef.current = true;
 
-        if (update && update.available) {
-          setNewVersion(update.version);
-          setUpdateAvailable(true);
-          setDownloading(true);
-          setDownloadProgress(0);
-          setError(null);
-
-          let downloaded = 0;
-          let contentLength = 0;
-
-          // downloadAndInstall downloads and extracts update package on macOS & Windows
-          await update.downloadAndInstall((event) => {
-            switch (event.event) {
-              case "Started":
-                contentLength = event.data.contentLength ?? 0;
-                downloaded = 0;
-                setDownloadProgress(0);
-                break;
-              case "Progress":
-                downloaded += event.data.chunkLength;
-                if (contentLength > 0) {
-                  const pct = Math.min(
-                    99,
-                    Math.round((downloaded / contentLength) * 100),
-                  );
-                  setDownloadProgress(pct);
-                } else {
-                  setDownloadProgress(50);
-                }
-                break;
-              case "Finished":
-                setDownloadProgress(100);
-                break;
-            }
+        try {
+          const { check } = await import("@tauri-apps/plugin-updater");
+          const update = await check({
+            headers: {
+              "cache-control": "no-cache",
+              pragma: "no-cache",
+              expires: "0",
+            },
           });
 
-          setDownloading(false);
-          setReadyToRestart(true);
+          if (update && update.available) {
+            setNewVersion(update.version);
+            setUpdateAvailable(true);
+            setDownloading(true);
+            setDownloadProgress(0);
+            setError(null);
 
-          // Automatically trigger relaunch after installation
-          try {
-            const { relaunch } = await import("@tauri-apps/plugin-process");
-            await relaunch();
-          } catch (relaunchErr) {
-            console.error("[AppUpdater] Auto relaunch failed:", relaunchErr);
+            let downloaded = 0;
+            let contentLength = 0;
+
+            await update.downloadAndInstall((event) => {
+              switch (event.event) {
+                case "Started":
+                  contentLength = event.data.contentLength ?? 0;
+                  downloaded = 0;
+                  setDownloadProgress(0);
+                  break;
+                case "Progress":
+                  downloaded += event.data.chunkLength;
+                  if (contentLength > 0) {
+                    const pct = Math.min(
+                      99,
+                      Math.round((downloaded / contentLength) * 100),
+                    );
+                    setDownloadProgress(pct);
+                  } else {
+                    setDownloadProgress(50);
+                  }
+                  break;
+                case "Finished":
+                  setDownloadProgress(100);
+                  break;
+              }
+            });
+
+            setDownloading(false);
+            setReadyToRestart(true);
+
+            try {
+              const { relaunch } = await import("@tauri-apps/plugin-process");
+              await relaunch();
+            } catch (relaunchErr) {
+              console.error("[AppUpdater] Auto relaunch failed:", relaunchErr);
+            }
           }
+        } catch (err: any) {
+          console.warn("[AppUpdater] Update check failed:", err);
+          setDownloading(false);
+        } finally {
+          isCheckingRef.current = false;
         }
-      } catch (err: any) {
-        console.warn("[AppUpdater] Update check failed:", err);
-        setDownloading(false);
-      } finally {
-        isCheckingRef.current = false;
-      }
-    };
+      };
 
-    const initialTimer = setTimeout(() => checkForUpdates(), 3000);
-    const intervalTimer = setInterval(() => checkForUpdates(), 15 * 60 * 1000);
+      const initialTimer = setTimeout(() => checkForUpdates(), 3000);
+      const intervalTimer = setInterval(() => checkForUpdates(), 15 * 60 * 1000);
 
-    return () => {
-      clearTimeout(initialTimer);
-      clearInterval(intervalTimer);
-    };
+      return () => {
+        clearTimeout(initialTimer);
+        clearInterval(intervalTimer);
+      };
+    }
+
+    if (isMobile) {
+      const checkMobileUpdates = async () => {
+        if (isCheckingRef.current) return;
+        isCheckingRef.current = true;
+
+        try {
+          const { data, error: queryError } = await supabase
+            .from("mobile_app_versions")
+            .select("version, zip_url, required")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (queryError) throw queryError;
+
+          if (data && data.version) {
+            const currentAppVersion = "4.6.0"; // Current local package.json version
+            if (data.version !== currentAppVersion) {
+              setNewVersion(data.version);
+              setUpdateAvailable(true);
+              setDownloading(true);
+              setDownloadProgress(30); // Initial download mock progress
+              setError(null);
+
+              const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
+
+              // Download the update zip bundle
+              const update = await CapacitorUpdater.download({
+                url: data.zip_url,
+                version: data.version,
+              });
+
+              downloadedUpdateRef.current = update;
+              setDownloadProgress(100);
+              setDownloading(false);
+              setReadyToRestart(true);
+            }
+          }
+        } catch (err: any) {
+          console.warn("[AppUpdater] Mobile check failed:", err);
+          setDownloading(false);
+        } finally {
+          isCheckingRef.current = false;
+        }
+      };
+
+      const initialTimer = setTimeout(() => checkMobileUpdates(), 5000);
+      const intervalTimer = setInterval(() => checkMobileUpdates(), 15 * 60 * 1000);
+
+      return () => {
+        clearTimeout(initialTimer);
+        clearInterval(intervalTimer);
+      };
+    }
   }, []);
 
   const handleRestartNow = async () => {
     try {
+      if (Capacitor.isNativePlatform() || (window as any).Capacitor !== undefined) {
+        const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
+        if (downloadedUpdateRef.current) {
+          await CapacitorUpdater.set(downloadedUpdateRef.current);
+        } else {
+          // Fallback trigger
+          await CapacitorUpdater.set({ id: newVersion });
+        }
+        return;
+      }
+
       const { relaunch } = await import("@tauri-apps/plugin-process");
       await relaunch();
     } catch (err: any) {
