@@ -1154,8 +1154,8 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
         }
       `}</style>
       {/* 1. Header controls (Not printed) */}
-      <div className="flex flex-wrap justify-between items-center gap-4 bg-theme-card-bg/35 border border-theme-border-muted p-4 rounded-2xl shadow-lg print:hidden">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 bg-theme-card-bg/35 border border-theme-border-muted p-4 rounded-2xl shadow-lg print:hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
           {onBack && (
             <button
               type="button"
@@ -1165,17 +1165,19 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
               ← Back
             </button>
           )}
-          <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl">
-            <FileText className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-theme-text-primary">KPI Goal Sheet & Monthly Performance Assessment</h4>
-            <p className="text-[11px] text-theme-text-muted">Evaluate, submit self-scores, and save/lock monthly assessments.</p>
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl shrink-0">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-theme-text-primary">KPI Goal Sheet & Monthly Performance Assessment</h4>
+              <p className="text-[11px] text-theme-text-muted">Evaluate, submit self-scores, and save/lock monthly assessments.</p>
+            </div>
           </div>
         </div>
 
         {/* Date Month Selector */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
           {hasAssignedAppraisees && (
             <button
               type="button"
@@ -1334,14 +1336,14 @@ USING (auth.uid() = user_id OR EXISTS (
 
       {/* Weightage Warning (Not printed) */}
       {totals.weightage !== 100 && (
-        <div className="bg-red-950/20 border border-red-900/40 p-3.5 rounded-xl text-xs text-red-300 font-semibold flex items-center gap-2.5 font-sans print:hidden animate-pulse">
+        <div className="bg-red-950/20 border border-red-900/40 p-3.5 rounded-xl text-xs text-red-300 font-semibold flex flex-col sm:flex-row items-start sm:items-center gap-2.5 font-sans print:hidden animate-pulse">
           <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
           <span>Total Weightage must equal exactly 100%. Currently it is set to <strong className="underline text-theme-text-primary font-bold">{totals.weightage}%</strong>. Please adjust weightages below.</span>
         </div>
       )}
 
       {/* 2. MAIN SHEET CONTAINER */}
-      <div className="bg-theme-card-container border border-theme-border-muted p-6.5 rounded-2xl shadow-xl space-y-6 font-sans print:bg-white print:border-0 print:shadow-none print:p-0 print:text-black">
+      <div className="bg-theme-card-container border border-theme-border-muted p-4 sm:p-6.5 rounded-2xl shadow-xl space-y-6 font-sans print:bg-white print:border-0 print:shadow-none print:p-0 print:text-black">
         
         {/* Banner Title */}
         <div className="text-center border-b border-theme-border-input pb-4 print:border-black">
@@ -1351,29 +1353,29 @@ USING (auth.uid() = user_id OR EXISTS (
         {/* 3. Details grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5 text-xs text-theme-text-secondary print:text-black print:grid-cols-2">
           {/* Appraisee Name */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Appraisee Name</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Appraisee Name</span>
             <span className="font-medium text-theme-text-primary print:text-black">{targetStaff.full_name || targetStaff.username}</span>
           </div>
 
           {/* Department */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200 group">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Department</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200 group">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Department</span>
             <span className="font-medium text-theme-text-primary print:text-black">
               {department}
             </span>
           </div>
 
           {/* Emp ID */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Emp ID</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Emp ID</span>
             {canEditAppraiseeFields ? (
               <input
                 type="text"
                 placeholder="2008"
                 value={empId}
                 onChange={(e) => setEmpId(e.target.value)}
-                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
+                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-full sm:w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
               />
             ) : (
               <span className="font-medium text-theme-text-primary print:text-black">{empId || '—'}</span>
@@ -1381,10 +1383,10 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
 
           {/* Appraiser's Name */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Appraiser's Name</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Appraiser's Name</span>
             {(!hasSupervisors && currentUser?.role === 'admin') || (currentUser?.role === 'supervisor' && targetStaff.id === currentUser.id) ? (
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <input
                   type="text"
                   placeholder="Type to search Appraiser..."
@@ -1396,7 +1398,7 @@ USING (auth.uid() = user_id OR EXISTS (
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="bg-theme-card-bg border border-theme-border-input rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 w-52 transition-colors print:hidden"
+                  className="bg-theme-card-bg border border-theme-border-input rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 w-full sm:w-52 transition-colors print:hidden"
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (
                   <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-theme-card-container border border-theme-border-input rounded-lg shadow-2xl z-50 divide-y divide-theme-border-input custom-scrollbar">
@@ -1441,21 +1443,21 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
 
           {/* Designation */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Designation</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Designation</span>
             <span className="font-medium text-theme-text-primary print:text-black">{targetStaff.job_role || 'Executive'}</span>
           </div>
 
           {/* Reviewer's Name */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Reviewer's Name</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Reviewer's Name</span>
             {isSupervisorOrAdmin || isAppraisee ? (
               <input
                 type="text"
                 placeholder="Manager"
                 value={reviewerName}
                 onChange={(e) => setReviewerName(e.target.value)}
-                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-52 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
+                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-full sm:w-52 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
               />
             ) : (
               <span className="font-medium text-theme-text-primary print:text-black">{reviewerName || '—'}</span>
@@ -1463,15 +1465,15 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
 
           {/* Date of Joining */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Date of Joining</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Date of Joining</span>
             {canEditAppraiseeFields ? (
               <input
                 type="text"
                 placeholder="13-Jul-20"
                 value={dateOfJoining}
                 onChange={(e) => setDateOfJoining(e.target.value)}
-                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
+                className="bg-theme-card-bg/60 border border-theme-border-muted rounded-lg px-2.5 py-1 text-xs text-theme-text-primary placeholder-theme-text-muted/70 focus:outline-hidden focus:border-blue-500 w-full sm:w-36 transition-colors print:bg-transparent print:border-0 print:p-0 print:text-black"
               />
             ) : (
               <span className="font-medium text-theme-text-primary print:text-black">{dateOfJoining || '—'}</span>
@@ -1479,8 +1481,8 @@ USING (auth.uid() = user_id OR EXISTS (
           </div>
 
           {/* Evaluation Period */}
-          <div className="flex items-center border-b border-theme-card-bg pb-2 print:border-neutral-200 gap-1.5">
-            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black">Evaluation Period</span>
+          <div className="flex flex-col sm:flex-row sm:items-center border-b border-theme-card-bg pb-2 print:border-neutral-200 gap-1.5">
+            <span className="w-32 font-semibold text-theme-text-muted shrink-0 print:text-black mb-1 sm:mb-0">Evaluation Period</span>
             <span className="font-medium text-theme-text-primary print:text-black">From: {evaluationPeriod.from} To: {evaluationPeriod.to}</span>
             
             {/* Settings/Edit Icon next to dates */}
@@ -2221,7 +2223,7 @@ USING (auth.uid() = user_id OR EXISTS (
               </label>
             </div>
             
-            <div className="border-t border-theme-border-input/80 pt-2 space-y-1 w-72 print:border-black print:border-t">
+            <div className="border-t border-theme-border-input/80 pt-2 space-y-1 w-full sm:w-72 print:border-black print:border-t">
               <div className="text-xs font-mono font-bold text-theme-text-primary uppercase tracking-wide print:text-black min-h-[16px]">
                 {appraiseeSigned ? (targetStaff.full_name || targetStaff.username) : ''}
               </div>
@@ -2233,7 +2235,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
           {/* Appraiser Signature */}
           <div className="space-y-4 flex flex-col md:items-end print:items-end">
-            <div className="w-72 space-y-4">
+            <div className="w-full sm:w-72 space-y-4">
               <div className="flex items-center gap-2.5 print:hidden">
                 <input
                   type="checkbox"
