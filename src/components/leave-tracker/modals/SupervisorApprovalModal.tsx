@@ -77,7 +77,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
               onClick={onSwitchToUserPanel}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
             >
-              <span>Go to User Panel</span>
+              <span>User Panel</span>
               {userNotificationsCount > 0 && (
                 <span className="flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-red-500 animate-pulse">
                   <span className="text-[9px] font-sans font-bold text-white leading-none">

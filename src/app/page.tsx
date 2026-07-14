@@ -5,7 +5,23 @@ import { supabase } from "@/utils/supabase";
 import { Profile } from "@/types";
 import { mapProfilePasswordResetStatus } from "@/utils/profileHelpers";
 import { canAccessModule } from "@/utils/permissionService";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  Clock,
+  Coffee,
+  Sun,
+  Moon,
+  Bell,
+  Download,
+  LogOut,
+  Monitor,
+  Apple,
+  RefreshCw
+} from "lucide-react";
+import {
+  downloadLatestRelease,
+  DownloadPlatform,
+} from "@/utils/downloadHelper";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/common/UnifiedSidebar";
 import { Navbar } from "@/components/common/Navbar";
@@ -548,6 +564,49 @@ function AppPortalInner({
     useState(false);
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isTauri, setIsTauri] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+
+  useEffect(() => {
+    const isTauriEnv =
+      typeof window !== "undefined" &&
+      ("__TAURI_INTERNALS__" in window ||
+        (window as any).__TAURI__ !== undefined);
+    setIsTauri(isTauriEnv);
+  }, []);
+
+  useEffect(() => {
+    if (!showDownloadDropdown) return;
+    const handleOutsideClick = () => setShowDownloadDropdown(false);
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, [showDownloadDropdown]);
+
+  const handleDownload = async (
+    platform: DownloadPlatform,
+    e: React.MouseEvent,
+  ) => {
+    e.stopPropagation();
+    setDownloadLoading(true);
+    try {
+      await downloadLatestRelease(platform);
+    } finally {
+      setDownloadLoading(false);
+      setShowDownloadDropdown(false);
+    }
+  };
+
+  const formatWorkingHours = (hours: number | string) => {
+    const h = parseFloat(String(hours));
+    if (isNaN(h)) return "9 hours 30 mins";
+    const wholeHours = Math.floor(h);
+    const fraction = h - wholeHours;
+    if (fraction === 0.5) {
+      return `${wholeHours} hours 30 mins`;
+    }
+    return `${wholeHours} hours`;
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1065,9 +1124,65 @@ function AppPortalInner({
         }`}
       >
         <div className="flex justify-between items-center mb-4 pb-2 border-b border-theme-border-input/30 shrink-0">
-          <span className="text-sm font-bold tracking-wider text-theme-text-primary">
-            QC App
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold tracking-wider text-theme-text-primary">
+              QC App
+            </span>
+            {/* Quick Toggle Actions next to Title */}
+            <div className="flex items-center gap-1.5">
+              {/* Theme Toggle Icon Only */}
+              <button
+                onClick={handleThemeToggle}
+                type="button"
+                className="p-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4 text-purple-500" />
+                ) : (
+                  <Moon className="h-4 w-4 text-indigo-400" />
+                )}
+              </button>
+
+              {/* Notification Bell Icon Only */}
+              {profile && (
+                <button
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    if (profile.role === "admin") {
+                      const mode = sessionStorage.getItem("adminNotificationMode") || "user";
+                      if (mode === "admin") {
+                        window.dispatchEvent(new CustomEvent("open-admin-approvals-modal"));
+                      } else {
+                        setShowNotificationsModal(true);
+                      }
+                    } else if (profile.role === "supervisor") {
+                      const mode = sessionStorage.getItem("supervisorNotificationMode") || "user";
+                      if (mode === "supervisor") {
+                        window.dispatchEvent(new CustomEvent("open-supervisor-approvals-modal"));
+                      } else {
+                        setShowNotificationsModal(true);
+                      }
+                    } else {
+                      setShowNotificationsModal(true);
+                    }
+                  }}
+                  type="button"
+                  className="relative p-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                  title="Notifications"
+                >
+                  <Bell className="h-4 w-4 text-theme-text-secondary" />
+                  {globalUnreadCount > 0 && (
+                    <span className="absolute top-[-3px] right-[-3px] flex h-3.5 min-w-[14px] px-0.5 items-center justify-center rounded-full bg-red-500 animate-pulse">
+                      <span className="text-[8px] font-sans font-bold text-white leading-none">
+                        {globalUnreadCount}
+                      </span>
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setIsMobileDrawerOpen(false)}
@@ -1077,19 +1192,124 @@ function AppPortalInner({
             <span className="text-lg font-bold leading-none">&times;</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
-          <UnifiedSidebar
-            activeSection={sidebarActiveSection}
-            profile={profile}
-            activeQuotesTab={activeQuotesTab}
-            onQuotesTabChange={handleQuotesTabChange}
-            activeChutiTab={activeChutiTab}
-            onChutiTabChange={handleChutiTabChange}
-            isSidebarCollapsed={false}
-            onSidebarToggle={() => {}}
-            hideCollapseButton={true}
-            onNavItemClick={() => setIsMobileDrawerOpen(false)}
-          />
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 flex flex-col justify-between">
+          <div className="flex-1">
+            <UnifiedSidebar
+              activeSection={sidebarActiveSection}
+              profile={profile}
+              activeQuotesTab={activeQuotesTab}
+              onQuotesTabChange={handleQuotesTabChange}
+              activeChutiTab={activeChutiTab}
+              onChutiTabChange={handleChutiTabChange}
+              isSidebarCollapsed={false}
+              onSidebarToggle={() => {}}
+              hideCollapseButton={true}
+              onNavItemClick={() => setIsMobileDrawerOpen(false)}
+            />
+          </div>
+
+          {/* Quick Actions & Settings Section */}
+          <div className="border-t border-theme-border-input/30 pt-4 mt-6 flex flex-col gap-3.5 shrink-0">
+            {profile && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-theme-card-bg/60 border border-theme-border-input/80 rounded-xl p-2.5 text-left shadow-sm flex flex-col gap-1">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-theme-text-muted flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-blue-400" /> Hours
+                  </span>
+                  <strong className="text-xs text-theme-text-primary">
+                    {formatWorkingHours(profile.working_hours || 9.5)}
+                  </strong>
+                </div>
+                <div className="bg-theme-card-bg/60 border border-theme-border-input/80 rounded-xl p-2.5 text-left shadow-sm flex flex-col gap-1">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-theme-text-muted flex items-center gap-1">
+                    <Coffee className="h-3 w-3 text-purple-400" /> Break
+                  </span>
+                  <strong className="text-xs text-theme-text-primary">
+                    {profile.break_time || 0} Mins
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {/* Offline Sync Option inside Drawer */}
+            {chutiOfflineCount > 0 && (
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("trigger-manual-sync"));
+                }}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl cursor-pointer transition-all shadow-lg shadow-purple-900/20 border border-purple-700"
+              >
+                <span className="text-xs font-semibold">Offline Items</span>
+                <div className="flex items-center gap-1.5">
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  <span className="text-xs font-bold">{chutiOfflineCount}</span>
+                </div>
+              </button>
+            )}
+
+            {/* Download Desktop App Dropdown (Only for Web Browser) */}
+            {!isTauri && (
+              <div className="relative w-full">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDownloadDropdown(!showDownloadDropdown);
+                  }}
+                  disabled={downloadLoading}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-xl cursor-pointer transition-all disabled:opacity-50"
+                >
+                  <span className="text-xs font-semibold">Get Desktop App</span>
+                  <Download className={`h-4 w-4 ${downloadLoading ? "animate-bounce" : ""}`} />
+                </button>
+
+                {showDownloadDropdown && (
+                  <div
+                    className="absolute bottom-full left-0 mb-2 w-full bg-theme-card-container border border-theme-border-input rounded-xl shadow-2xl p-2 z-999 animate-in fade-in slide-in-from-bottom-2 duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="px-2.5 py-1.5 border-b border-theme-card-bg/10 mb-1">
+                      <p className="text-[10px] text-theme-text-muted uppercase tracking-wider font-semibold">
+                        Download Platform
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => handleDownload("windows", e)}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
+                    >
+                      <Monitor className="h-4 w-4 text-blue-400" />
+                      Windows (.exe)
+                    </button>
+                    <button
+                      onClick={(e) => handleDownload("macos-silicon", e)}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
+                    >
+                      <Apple className="h-4 w-4 text-indigo-400" />
+                      macOS (Apple Silicon)
+                    </button>
+                    <button
+                      onClick={(e) => handleDownload("macos-intel", e)}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 hover:bg-theme-card-bg text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-medium text-left transition-colors cursor-pointer"
+                    >
+                      <Apple className="h-4 w-4 text-theme-text-muted" />
+                      macOS (Intel)
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Logout button */}
+            <button
+              onClick={() => {
+                setIsMobileDrawerOpen(false);
+                handleLogout();
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 bg-red-950/20 border border-red-900/50 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-xl cursor-pointer transition-all"
+            >
+              <span className="text-xs font-semibold">Logout</span>
+              <LogOut className="h-4.5 w-4.5" />
+            </button>
+          </div>
         </div>
       </div>
 

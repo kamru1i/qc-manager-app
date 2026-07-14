@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Bell } from 'lucide-react';
-import { Profile, ChutiRecordWithProfile, BulkRepresentative } from '@/types';
-import { Modal } from '@/components/common/Modal';
-import { LeaveApprovalPanel } from '@/components/leave-tracker/LeaveApprovalPanel';
+import React from "react";
+import { Bell } from "lucide-react";
+import { Profile, ChutiRecordWithProfile, BulkRepresentative } from "@/types";
+import { Modal } from "@/components/common/Modal";
+import { LeaveApprovalPanel } from "@/components/leave-tracker/LeaveApprovalPanel";
 
 interface AdminLeaveApprovalModalProps {
   showLeaveApprovalModal: boolean;
@@ -17,7 +17,10 @@ interface AdminLeaveApprovalModalProps {
   approvingIds: Set<string>;
   handleApproveChutiRequest: (id: string, approve: boolean) => void;
   pendingReserveRequests: ChutiRecordWithProfile[];
-  handleApproveReserveAdjustment: (record: ChutiRecordWithProfile, approve: boolean) => void;
+  handleApproveReserveAdjustment: (
+    record: ChutiRecordWithProfile,
+    approve: boolean,
+  ) => void;
   pendingProfileRequests: Profile[];
   handleApproveProfileChangeRequest: (id: string, approve: boolean) => void;
   adminHolidayNotifications?: any[];
@@ -47,7 +50,7 @@ export function AdminLeaveApprovalModal({
   onSwitchToUserPanel,
   userNotificationsCount = 0,
 }: AdminLeaveApprovalModalProps) {
-  if (profile?.role !== 'admin') return null;
+  if (profile?.role !== "admin") return null;
 
   const handleClose = () => setShowLeaveApprovalModal(false);
 
@@ -55,7 +58,7 @@ export function AdminLeaveApprovalModal({
     <Modal
       isOpen={showLeaveApprovalModal}
       onClose={handleClose}
-      title="Notification Panel (Admin)"
+      title="Notification (Admin)"
       icon={<Bell className="h-5 w-5 text-purple-400 font-semibold" />}
       maxWidthClass="max-w-3xl"
       glowClass="bg-purple-900/10"
@@ -65,7 +68,7 @@ export function AdminLeaveApprovalModal({
             onClick={onSwitchToUserPanel}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all font-sans"
           >
-            <span>Go to User Panel</span>
+            <span>User Panel</span>
             {userNotificationsCount > 0 && (
               <span className="flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-red-500 animate-pulse">
                 <span className="text-[9px] font-sans font-bold text-white leading-none">

@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="bg-theme-card-bg/40 backdrop-blur-md border-b border-theme-border-input/50 px-4 py-4 sm:px-6 lg:px-8 z-30">
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="max-w-7xl mx-auto flex justify-between items-center w-full">
         <div className="flex items-center gap-3">
           {onMenuToggle && (
             <button
@@ -125,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               Quotes, Sales & Chuti Management Dashboard
             </p>
             {profile && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="hidden md:flex flex-wrap gap-2 mt-2">
                 <div className="bg-theme-card-bg/60 border border-theme-border-input/80 rounded-lg px-2.5 py-1 text-[11px] text-theme-text-secondary flex items-center gap-1.5 shadow-sm">
                   <Clock className="h-3.5 w-3.5 text-blue-400" />
                   <span>
@@ -149,7 +149,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="hidden md:flex items-center gap-3 flex-wrap">
           {/* Offline Sync Area */}
           {offlineCount > 0 && onManualSync && (
             <button
