@@ -23,13 +23,7 @@ async function main() {
     process.exit(1);
   }
 
-  const ref = process.env.GITHUB_REF || '';
-  const isTag = ref.startsWith('refs/tags/v');
 
-  if (!isTag) {
-    console.log('Not running on a release tag. Skipping release manifest generation and OTA database update.');
-    process.exit(0);
-  }
 
   const packageJsonPath = path.join(process.cwd(), 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
