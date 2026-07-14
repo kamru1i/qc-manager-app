@@ -24,8 +24,8 @@ jobs:
             target: "x86_64-pc-windows-msvc"
             label: "windows-x64"
           - platform: "windows-latest"
-            target: "i686-pc-windows-msvc"
-            label: "windows-x86"
+            target: "aarch64-pc-windows-msvc"
+            label: "windows-arm"
           - platform: "macos-latest"
             target: "x86_64-apple-darwin"
             label: "macos-intel"
@@ -167,7 +167,14 @@ jobs:
 
       - name: Rename APK file
         run: |
-          mv android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/QC-Manager-Android.apk
+          if [ -f android/app/build/outputs/apk/release/app-release-unsigned.apk ]; then
+            mv android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/QC-Manager-Android.apk
+          elif [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/QC-Manager-Android.apk
+          else
+            echo "Error: Release APK not found!"
+            exit 1
+          fi
 
       - name: Get package version
         id: get_version

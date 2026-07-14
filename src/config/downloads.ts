@@ -30,19 +30,7 @@ export const DOWNLOADS = {
       sha256: "ea3f1d8206d203923d8df8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8",
       releaseNotes: "Initial migration release with Capacitor safe area layout updates, performance optimization, and auto update plugin integration.",
     } as DownloadInfo,
-    x86: {
-      platform: "Windows",
-      architecture: "32-bit (x86)",
-      version: "4.6.0",
-      build: "4600",
-      url: "https://github.com/kamrulislam2/qc-manager-app/releases/download/v4.6.0/QC-Manager-App_4.6.0_x86-setup.exe",
-      releaseDate: "2026-07-13",
-      fileSize: "74.1 MB",
-      minOsVersion: "Windows 10+",
-      autoUpdate: true,
-      sha256: "ea3f1d8206d203923d8df8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d8e3d8f8d9",
-      releaseNotes: "Initial migration release.",
-    } as DownloadInfo,
+
     arm64: {
       platform: "Windows",
       architecture: "ARM64",

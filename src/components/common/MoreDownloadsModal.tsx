@@ -174,7 +174,6 @@ export default function MoreDownloadsModal({ isOpen, onClose, downloads }: MoreD
             </h3>
             <div className="flex flex-col gap-3">
               {renderBuildRow(downloads.windows.x64, "64-bit (x64) Recommended")}
-              {renderBuildRow(downloads.windows.x86, "32-bit (x86)")}
               {renderBuildRow(downloads.windows.arm64, "ARM64 Setup")}
             </div>
           </div>

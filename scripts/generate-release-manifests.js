@@ -23,6 +23,14 @@ async function main() {
     process.exit(1);
   }
 
+  const ref = process.env.GITHUB_REF || '';
+  const isTag = ref.startsWith('refs/tags/v');
+
+  if (!isTag) {
+    console.log('Not running on a release tag. Skipping release manifest generation and OTA database update.');
+    process.exit(0);
+  }
+
   const packageJsonPath = path.join(process.cwd(), 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   const version = packageJson.version;
@@ -118,7 +126,7 @@ async function main() {
     console.log(`Downloading and processing hash for: ${name}...`);
     const destPath = path.join(tempDir, name);
     
-    const assetRes = await fetch(asset.browser_download_url, { headers });
+    const assetRes = await fetch(asset.browser_download_url);
     if (!assetRes.ok) {
       console.error(`Failed to download asset ${name}: ${assetRes.statusText}`);
       continue;
@@ -158,14 +166,18 @@ async function main() {
         platformKey = 'windows-x86_64';
       } else if (targetName.includes('x86-setup.exe') || targetName.includes('i686-setup.exe') || targetName.includes('x86_setup.exe')) {
         platformKey = 'windows-i686';
+      } else if (targetName.includes('arm64-setup.exe') || targetName.includes('aarch64-setup.exe') || targetName.includes('arm64_setup.exe')) {
+        platformKey = 'windows-aarch64';
       } else if (targetName.includes('x64.app.tar.gz') || targetName.includes('x86_64.app.tar.gz')) {
         platformKey = 'darwin-x86_64';
       } else if (targetName.includes('aarch64.app.tar.gz') || targetName.includes('arm64.app.tar.gz')) {
         platformKey = 'darwin-aarch64';
+      } else if (targetName.endsWith('.AppImage')) {
+        platformKey = 'linux-x86_64';
       }
 
       if (platformKey) {
-        const sigRes = await fetch(asset.browser_download_url, { headers });
+        const sigRes = await fetch(asset.browser_download_url);
         const signature = (await sigRes.text()).trim();
         platforms[platformKey] = { signature, url };
 
@@ -174,6 +186,8 @@ async function main() {
           platforms['windows-x86_64-nsis'] = { signature, url };
         } else if (platformKey === 'windows-i686') {
           platforms['windows-i686-nsis'] = { signature, url };
+        } else if (platformKey === 'windows-aarch64') {
+          platforms['windows-aarch64-nsis'] = { signature, url };
         }
       }
     }
@@ -194,11 +208,6 @@ async function main() {
           url: assets.find(a => a.name.includes('x64-setup.exe') || a.name.includes('x64_setup.exe'))?.browser_download_url || '',
           fileSize: fileSizes[assets.find(a => a.name.includes('x64-setup.exe') || a.name.includes('x64_setup.exe'))?.name] || '',
           sha256: checksums[assets.find(a => a.name.includes('x64-setup.exe') || a.name.includes('x64_setup.exe'))?.name] || ''
-        },
-        x86: {
-          url: assets.find(a => a.name.includes('x86-setup.exe') || a.name.includes('i686-setup.exe'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.includes('x86-setup.exe') || a.name.includes('i686-setup.exe'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.includes('x86-setup.exe') || a.name.includes('i686-setup.exe'))?.name] || ''
         },
         arm64: {
           url: assets.find(a => a.name.includes('arm64-setup.exe') || a.name.includes('arm64_setup.exe'))?.browser_download_url || '',

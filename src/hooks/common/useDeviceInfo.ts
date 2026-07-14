@@ -43,7 +43,6 @@ export function useDeviceInfo(): UseDeviceInfoResult {
           const mergedDownloads = {
             windows: {
               x64: { ...DOWNLOADS.windows.x64, ...data.downloads.windows.x64, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.windows.x64.releaseDate },
-              x86: { ...DOWNLOADS.windows.x86, ...data.downloads.windows.x86, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.windows.x86.releaseDate },
               arm64: { ...DOWNLOADS.windows.arm64, ...data.downloads.windows.arm64, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.windows.arm64.releaseDate }
             },
             macos: {
@@ -99,8 +98,6 @@ function getRecommendation(info: DeviceInfo, currentDownloads: typeof DOWNLOADS)
     case 'Windows':
       if (info.architecture === 'ARM64') {
         return currentDownloads.windows.arm64;
-      } else if (info.architecture === 'x86') {
-        return currentDownloads.windows.x86;
       }
       return currentDownloads.windows.x64; // Default recommended Windows build
       
