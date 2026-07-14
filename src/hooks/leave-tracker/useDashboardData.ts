@@ -8,7 +8,7 @@ import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse }
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 
-import { getGlobalSettingsFromProfile, defaultGlobalSettings, GlobalSettings, formatDate, parseHolidayItem } from '@/utils/dashboardHelpers';
+import { getGlobalSettingsFromProfile, defaultGlobalSettings, GlobalSettings, parseHolidayItem } from '@/utils/dashboardHelpers';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 
 export const useDashboardData = () => {
@@ -513,15 +513,11 @@ export const useDashboardData = () => {
     setLoading(false);
     fetchRecords();
 
-    // Send push notifications for newly added holidays
+    // Auto-respond 'paid' for eligible reserve-disabled users for newly added holidays
     if (addedHolidays.length > 0) {
       addedHolidays.forEach((h) => {
         const reserveFalseIds = profilesList
           .filter(p => p.eligible_govt_holiday !== false && p.allow_reserve === false)
-          .map(p => p.id);
-
-        const reserveTrueIds = profilesList
-          .filter(p => p.eligible_govt_holiday !== false && p.allow_reserve !== false)
           .map(p => p.id);
 
         if (reserveFalseIds.length > 0) {
@@ -569,22 +565,11 @@ export const useDashboardData = () => {
       setLoading(false);
       return false;
     }
-
-    // Trigger push notification to admins
-    const staffName = profile?.full_name || 'Staff';
-    const staffCode = profile?.username ? profile.username.toUpperCase() : 'N/A';
-    const titleText = 'Govt Holiday Response Report 🔔';
-    const bodyText = response === 'reserve'
-      ? `${staffName} (${staffCode}) has requested to reserve the leave for ${holidayName} (${formatDate(holidayDate)}).`
-      : `${staffName} (${staffCode}) has requested to get paid for ${holidayName} (${formatDate(holidayDate)}).`;
-
-
-
     setMessage({ type: 'success', text: 'Your preference has been successfully saved!' });
     setLoading(false);
     fetchRecords();
     return true;
-  }, [sessionUser, profile, fetchRecords, setMessage]);
+  }, [sessionUser, fetchRecords, setMessage]);
 
   const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
     if (!profile || profile.role !== 'admin') return false;
@@ -766,45 +751,7 @@ export const useDashboardData = () => {
       if (error) throw error;
 
       // Trigger push notifications conditionally based on status
-      const uniqueUserIds = Array.from(new Set(formatted.map(s => s.user_id)));
-      for (const targetUserId of uniqueUserIds) {
-        const userSettlements = formatted.filter(s => s.user_id === targetUserId);
-        const firstSettle = userSettlements[0];
-        if (!firstSettle) continue;
 
-        const staff = profilesList.find(p => p.id === targetUserId);
-        const staffName = staff?.full_name || staff?.username || 'Staff';
-        const periodLabel = firstSettle.period === 'H1' ? 'January-June (H1)' : firstSettle.period === 'H2' ? 'July-December (H2)' : 'Instant';
-
-        const details = userSettlements.map(s => {
-          let actionText = '';
-          const cf = s.carry_forward_days ?? 0;
-          const pay = s.payment_days ?? 0;
-          const adj = s.adjust_leave_days ?? 0;
-
-          if (s.remaining_days < 0) {
-            if (s.action_type === 'payment') {
-              actionText = 'Salary Deduction';
-            } else if (s.action_type === 'carry_forward') {
-              actionText = s.period === 'H1' ? 'Adjust with H2 Office Leave' : "Adjust with Next Year's H1";
-            } else if (s.action_type === 'adjust_leave') {
-              actionText = 'Adjust with Holiday/Eid Reserve';
-            }
-          } else {
-            if (s.action_type === 'split') {
-              const parts: string[] = [];
-              if (cf > 0) parts.push(`${cf}d Carry Forward`);
-              if (pay > 0) parts.push(`${pay}d Payout`);
-              if (adj > 0) parts.push(`${adj}d Adjusted`);
-              actionText = `Split (${parts.join(', ')})`;
-            } else {
-              actionText = s.action_type === 'carry_forward' ? 'Carry Forward' : s.action_type === 'payment' ? 'Payment' : 'Adjust Leaves';
-            }
-          }
-          return `${s.leave_category}: ${actionText} (${s.remaining_days} days)`;
-        }).join(', ');
-
-      }
 
       const isInitiated = formatted.every(s => s.status === 'initiated');
       const isResponded = formatted.every(s => s.status === 'responded');
@@ -826,7 +773,7 @@ export const useDashboardData = () => {
       setLoading(false);
       return false;
     }
-  }, [fetchRecords, setMessage, profilesList]);
+  }, [fetchRecords, setMessage]);
 
   const handleDeleteLeaveSettlement = useCallback(async (id: string) => {
     try {
