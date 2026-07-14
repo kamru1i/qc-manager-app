@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { detectDevice, getAsyncArchitecture, DeviceInfo } from '@/utils/deviceDetection';
 import { DOWNLOADS, DownloadInfo, MANIFEST_URL } from '@/config/downloads';
 
@@ -18,17 +18,17 @@ export function useDeviceInfo(): UseDeviceInfoResult {
     browser: 'Unknown',
   });
   const [downloads, setDownloads] = useState<typeof DOWNLOADS>(DOWNLOADS);
-  const [recommendation, setRecommendation] = useState<DownloadInfo | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Compute recommendation dynamically from state
+  const recommendation = useMemo(() => {
+    return getRecommendation(deviceInfo, downloads);
+  }, [deviceInfo, downloads]);
 
   useEffect(() => {
     // 1. Detect core device properties synchronously
     const info = detectDevice();
     setDeviceInfo(info);
-    
-    // Resolve initial recommendation using hardcoded fallback config
-    let currentDownloads = DOWNLOADS;
-    setRecommendation(getRecommendation(info, currentDownloads));
     setLoading(false);
 
     // 2. Fetch latest release manifest asynchronously to override URLs, sizes, and hashes
@@ -39,29 +39,86 @@ export function useDeviceInfo(): UseDeviceInfoResult {
         const data = await res.json();
 
         if (data && data.version && data.downloads) {
+          const notesText = data.notes || data.body || "";
+          const dateStr = data.releaseDate || data.pub_date 
+            ? new Date(data.releaseDate || data.pub_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) 
+            : DOWNLOADS.windows.x64.releaseDate;
+
           // Merge remote values with local fallback descriptors
           const mergedDownloads = {
             windows: {
-              x64: { ...DOWNLOADS.windows.x64, ...data.downloads.windows.x64, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.windows.x64.releaseDate },
-              arm64: { ...DOWNLOADS.windows.arm64, ...data.downloads.windows.arm64, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.windows.arm64.releaseDate }
+              x64: { 
+                ...DOWNLOADS.windows.x64, 
+                ...data.downloads.windows?.x64, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              },
+              arm64: { 
+                ...DOWNLOADS.windows.arm64, 
+                ...data.downloads.windows?.arm64, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              }
             },
             macos: {
-              universal: { ...DOWNLOADS.macos.universal, ...data.downloads.macos.universal, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.macos.universal.releaseDate },
-              appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...data.downloads.macos.appleSilicon, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.macos.appleSilicon.releaseDate },
-              intel: { ...DOWNLOADS.macos.intel, ...data.downloads.macos.intel, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.macos.intel.releaseDate }
+              universal: { 
+                ...DOWNLOADS.macos.universal, 
+                ...data.downloads.macos?.universal, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              },
+              appleSilicon: { 
+                ...DOWNLOADS.macos.appleSilicon, 
+                ...data.downloads.macos?.appleSilicon, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              },
+              intel: { 
+                ...DOWNLOADS.macos.intel, 
+                ...data.downloads.macos?.intel, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              }
             },
             linux: {
-              deb: { ...DOWNLOADS.linux.deb, ...data.downloads.linux.deb, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.linux.deb.releaseDate },
-              appimage: { ...DOWNLOADS.linux.appimage, ...data.downloads.linux.appimage, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.linux.appimage.releaseDate },
-              rpm: { ...DOWNLOADS.linux.rpm, ...data.downloads.linux.rpm, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.linux.rpm.releaseDate }
+              deb: { 
+                ...DOWNLOADS.linux.deb, 
+                ...data.downloads.linux?.deb, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              },
+              appimage: { 
+                ...DOWNLOADS.linux.appimage, 
+                ...data.downloads.linux?.appimage, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              },
+              rpm: { 
+                ...DOWNLOADS.linux.rpm, 
+                ...data.downloads.linux?.rpm, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              }
             },
             android: {
-              apk: { ...DOWNLOADS.android.apk, ...data.downloads.android.apk, version: data.version, releaseDate: data.releaseDate || DOWNLOADS.android.apk.releaseDate }
+              apk: { 
+                ...DOWNLOADS.android.apk, 
+                ...data.downloads.android?.apk, 
+                version: data.version, 
+                releaseDate: dateStr,
+                releaseNotes: notesText
+              }
             }
           };
           setDownloads(mergedDownloads);
-          currentDownloads = mergedDownloads;
-          setRecommendation(getRecommendation(deviceInfo, mergedDownloads));
         }
       } catch (err) {
         console.warn('[useDeviceInfo] Failed to fetch latest.json, using local fallback downloads config:', err);
@@ -73,9 +130,7 @@ export function useDeviceInfo(): UseDeviceInfoResult {
     // 3. Query async high entropy values (for Windows/Chromium architecture refinements)
     getAsyncArchitecture(info).then((refinedArch) => {
       if (refinedArch !== info.architecture) {
-        const refinedInfo = { ...info, architecture: refinedArch };
-        setDeviceInfo(refinedInfo);
-        setRecommendation(getRecommendation(refinedInfo, currentDownloads));
+        setDeviceInfo(prev => ({ ...prev, architecture: refinedArch }));
       }
     });
   }, []);
