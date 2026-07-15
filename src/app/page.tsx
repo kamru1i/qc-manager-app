@@ -566,6 +566,95 @@ function AppPortalInner({
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isNative, setIsNative] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+
+  // Swipe to Refresh gesture for native app
+  useEffect(() => {
+    if (!isNativeApp()) return;
+
+    let startY = 0;
+    let isPulling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0 && !isRefreshing) {
+        startY = e.touches[0].pageY;
+        isPulling = true;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling) return;
+      const currentY = e.touches[0].pageY;
+      const diff = currentY - startY;
+
+      if (diff > 0) {
+        // Apply resistance
+        const dist = Math.min(100, diff * 0.4);
+        setPullDistance(dist);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (!isPulling) return;
+      isPulling = false;
+
+      if (pullDistance >= 60) {
+        setIsRefreshing(true);
+        setPullDistance(50);
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+      } else {
+        setPullDistance(0);
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [pullDistance, isRefreshing]);
+
+  // Capacitor Back Button exit app confirmation dialog
+  useEffect(() => {
+    if (!isNativeApp()) return;
+
+    let backListenerPromise: any = null;
+
+    import("@capacitor/app").then(({ App }) => {
+      backListenerPromise = App.addListener("backButton", () => {
+        if (isMobileDrawerOpen) {
+          setIsMobileDrawerOpen(false);
+        } else {
+          setIsExitModalOpen(true);
+        }
+      });
+    });
+
+    return () => {
+      if (backListenerPromise) {
+        backListenerPromise.then((l: any) => l.remove());
+      }
+    };
+  }, [isMobileDrawerOpen]);
+
+  const handleExitApp = async () => {
+    try {
+      const { App } = await import("@capacitor/app");
+      await App.exitApp();
+    } catch (e) {
+      console.error("Failed to exit app:", e);
+      setIsExitModalOpen(false);
+    }
+  };
+
   useEffect(() => {
     setIsNative(isNativeApp());
   }, []);
@@ -1102,7 +1191,7 @@ function AppPortalInner({
         role="dialog"
         aria-modal="true"
         aria-label="Navigation Menu"
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-theme-page-bg border-r border-theme-border-input/50 p-4 shadow-2xl transition-transform duration-300 ease-out flex flex-col md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-theme-page-bg border-r border-theme-border-input/50 px-4 pb-4 pt-0 shadow-2xl transition-transform duration-300 ease-out flex flex-col md:hidden ${
           isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -1434,6 +1523,44 @@ function AppPortalInner({
             onSaveHolidayResponse={handleSaveHolidayResponse}
           />
         )}
+
+      {/* Pull to Refresh Spinner Overlay */}
+      {pullDistance > 0 && (
+        <div
+          className="fixed top-0 left-0 right-0 z-9999 flex justify-center pointer-events-none transition-all duration-75"
+          style={{ transform: `translateY(${pullDistance}px)` }}
+        >
+          <div className="bg-theme-card-bg border border-theme-border-input p-2.5 rounded-full shadow-2xl flex items-center justify-center">
+            <RefreshCw className={`w-4 h-4 text-blue-500 ${isRefreshing ? "animate-spin" : ""}`} />
+          </div>
+        </div>
+      )}
+
+      {/* Exit App Confirmation Modal */}
+      {isExitModalOpen && (
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-theme-card-bg border border-theme-border-input/70 rounded-2xl max-w-sm w-full mx-4 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-base font-bold text-theme-text-primary">Exit Application</h3>
+            <p className="text-xs text-theme-text-muted mt-2 leading-relaxed">
+              Are you sure you want to exit the QC Manager application?
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setIsExitModalOpen(false)}
+                className="flex-1 py-2.5 px-4 bg-theme-border-input hover:bg-theme-border-active text-theme-text-primary text-xs font-semibold rounded-xl transition-all cursor-pointer border border-theme-border-input"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExitApp}
+                className="flex-1 py-2.5 px-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-lg shadow-orange-500/20"
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

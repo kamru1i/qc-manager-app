@@ -138,17 +138,25 @@ export default function AppUpdater() {
             const currentAppVersion = VERSION;
 
             if (data.version !== currentAppVersion) {
-              console.log(`[AppUpdater] New mobile OTA version ${data.version} available (current: ${currentAppVersion}). Downloading silently...`);
+              console.log(`[AppUpdater] New mobile OTA version ${data.version} available (current: ${currentAppVersion}). Downloading...`);
+              setNewVersion(data.version);
+              setUpdateAvailable(true);
+              setDownloading(true);
+              setDownloadProgress(35);
+
               const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
 
-              // Download the update zip bundle silently in the background
+              // Download the update zip bundle
               const update = await CapacitorUpdater.download({
                 url: data.zip_url,
                 version: data.version,
               });
 
-              // Apply the update silently (it will load seamlessly on next app startup or reload)
-              console.log(`[AppUpdater] Applying mobile OTA update ${data.version} silently...`);
+              setDownloadProgress(85);
+              setReadyToRestart(true);
+
+              // Apply the update (reloads the webview instantly)
+              console.log(`[AppUpdater] Applying mobile OTA update ${data.version}...`);
               await CapacitorUpdater.set(update);
               console.log(`[AppUpdater] Mobile OTA update ${data.version} applied successfully!`);
             }
@@ -196,7 +204,7 @@ export default function AppUpdater() {
   if (!updateAvailable || error) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-9999 max-w-sm w-full bg-theme-card-bg/95 backdrop-blur-xl border border-theme-border-input rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-theme-text-primary font-sans animate-fade-in">
+    <div className="fixed bottom-5 left-4 right-4 sm:left-auto sm:right-5 sm:w-80 z-9999 bg-theme-card-bg/95 backdrop-blur-xl border border-theme-border-input rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-theme-text-primary font-sans animate-fade-in">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl shrink-0 border border-blue-500/20">

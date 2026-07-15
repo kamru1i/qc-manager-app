@@ -873,3 +873,7 @@ textarea::-moz-selection {
   margin-bottom: var(--safe-area-inset-bottom);
 }
 
+.pt-safe-navbar {
+  padding-top: calc(12px + var(--safe-area-inset-top));
+}
+

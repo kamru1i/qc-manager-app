@@ -11,7 +11,7 @@ export const SafeAreaTop: React.FC = () => {
   return (
     <div
       style={{ height: `${top}px` }}
-      className="w-full bg-theme-page-bg shrink-0 transition-all duration-300"
+      className="w-full shrink-0 transition-all duration-300"
       aria-hidden="true"
     />
   );
