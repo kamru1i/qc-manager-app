@@ -551,9 +551,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-row flex-nowrap items-center gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 w-full lg:w-auto custom-scrollbar">
+        <div className="flex flex-col items-center sm:flex-row sm:items-center gap-3 w-full lg:w-auto shrink-0">
           {/* Time Scope Toggle: Yearly vs Monthly */}
-          <div className="flex items-center bg-theme-card-container/40 border border-theme-border-muted p-1 rounded-xl">
+          <div className="flex items-center bg-theme-card-container/40 border border-theme-border-muted p-1 rounded-xl w-fit">
             <button
               onClick={() => setMetricsTimeScope("yearly")}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
@@ -576,44 +576,47 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </button>
           </div>
 
-          {/* Month Selector (Always visible to everyone) */}
-          <div className="flex items-center gap-2 bg-theme-card-container/40 border border-theme-border-muted px-3 py-1.5 rounded-xl">
-            <Calendar className="h-4 w-4 text-theme-text-muted" />
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-xs text-theme-text-secondary outline-none border-none cursor-pointer focus:text-theme-text-primary font-semibold"
-            >
-              {monthsList.map((m) => (
-                <option
-                  key={m.value}
-                  value={m.value}
-                  className="bg-theme-card-container text-theme-text-secondary"
-                >
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Month & Year Selectors Container (stacked under toggle on mobile, inline on tablet+) */}
+          <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+            {/* Month Selector */}
+            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-theme-card-container/40 border border-theme-border-muted px-3 py-1.5 rounded-xl">
+              <Calendar className="h-4 w-4 text-theme-text-muted shrink-0" />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-transparent text-xs text-theme-text-secondary outline-none border-none cursor-pointer focus:text-theme-text-primary font-semibold w-full"
+              >
+                {monthsList.map((m) => (
+                  <option
+                    key={m.value}
+                    value={m.value}
+                    className="bg-theme-card-container text-theme-text-secondary"
+                  >
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Year Selector */}
-          <div className="flex items-center gap-2 bg-theme-card-container/40 border border-theme-border-muted px-3 py-1.5 rounded-xl">
-            <Calendar className="h-4 w-4 text-theme-text-muted" />
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-transparent text-xs text-theme-text-secondary outline-none border-none cursor-pointer focus:text-theme-text-primary font-semibold"
-            >
-              {availableYears.map((year) => (
-                <option
-                  key={year}
-                  value={year}
-                  className="bg-theme-card-container text-theme-text-secondary"
-                >
-                  Year {year}
-                </option>
-              ))}
-            </select>
+            {/* Year Selector */}
+            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-theme-card-container/40 border border-theme-border-muted px-3 py-1.5 rounded-xl">
+              <Calendar className="h-4 w-4 text-theme-text-muted shrink-0" />
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="bg-transparent text-xs text-theme-text-secondary outline-none border-none cursor-pointer focus:text-theme-text-primary font-semibold w-full"
+              >
+                {availableYears.map((year) => (
+                  <option
+                    key={year}
+                    value={year}
+                    className="bg-theme-card-container text-theme-text-secondary"
+                  >
+                    Year {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
