@@ -177,15 +177,95 @@ jobs:
           cd android
           ./gradlew assembleRelease
 
+      - name: Sign & Verify Android Release APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # 1. Verify secrets are configured
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Error: ANDROID_KEYSTORE_BASE64 secret is not configured!"
+            exit 1
+          fi
+          if [ -z "$ANDROID_KEY_ALIAS" ]; then
+            echo "Error: ANDROID_KEY_ALIAS secret is not configured!"
+            exit 1
+          fi
+          if [ -z "$ANDROID_KEYSTORE_PASSWORD" ]; then
+            echo "Error: ANDROID_KEYSTORE_PASSWORD secret is not configured!"
+            exit 1
+          fi
+          if [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "Error: ANDROID_KEY_PASSWORD secret is not configured!"
+            exit 1
+          fi
+
+          # 2. Decode the keystore file from base64
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > release.keystore
+          if [ ! -s release.keystore ]; then
+            echo "Error: Decoded keystore file is empty!"
+            exit 1
+          fi
+
+          # 3. Discover Android build-tools version
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
+          if [ -z "$BUILD_TOOLS_DIR" ]; then
+            echo "Error: Android build-tools not found!"
+            exit 1
+          fi
+          echo "Using Android Build Tools from: $BUILD_TOOLS_DIR"
+
+          # 4. Zipalign the unsigned release APK
+          echo "Running zipalign..."
+          $BUILD_TOOLS_DIR/zipalign -v -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/app-release-aligned.apk
+          if [ ! -f android/app/build/outputs/apk/release/app-release-aligned.apk ]; then
+            echo "Error: Zipalign failed to output aligned APK!"
+            exit 1
+          fi
+
+          # 5. Sign the aligned APK using apksigner
+          echo "Running apksigner..."
+          $BUILD_TOOLS_DIR/apksigner sign \
+            --ks release.keystore \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" \
+            --ks-pass pass:"$ANDROID_KEYSTORE_PASSWORD" \
+            --key-pass pass:"$ANDROID_KEY_PASSWORD" \
+            --out android/app/build/outputs/apk/release/app-release-signed.apk \
+            android/app/build/outputs/apk/release/app-release-aligned.apk
+
+          if [ ! -f android/app/build/outputs/apk/release/app-release-signed.apk ]; then
+            echo "Error: apksigner failed to output signed APK!"
+            exit 1
+          fi
+
+          # 6. Run apksigner verify verbose
+          echo "Verifying APK signature..."
+          $BUILD_TOOLS_DIR/apksigner verify --verbose android/app/build/outputs/apk/release/app-release-signed.apk
+
+          # 7. Run aapt dump badging to validate package metadata
+          echo "Validating package badging metadata..."
+          $BUILD_TOOLS_DIR/aapt dump badging android/app/build/outputs/apk/release/app-release-signed.apk
+
+          # 8. Check file size
+          APK_SIZE=$(stat -c%s android/app/build/outputs/apk/release/app-release-signed.apk)
+          echo "Verified signed APK size: $APK_SIZE bytes"
+          if [ "$APK_SIZE" -lt 1048576 ]; then
+            echo "Error: APK size is suspiciously small ($APK_SIZE bytes)!"
+            exit 1
+          fi
+
+          # Clean up local keystore
+          rm -f release.keystore
+
       - name: Rename APK file
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          if [ -f android/app/build/outputs/apk/release/app-release-unsigned.apk ]; then
-            mv android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
-          elif [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
-            mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
+          if [ -f android/app/build/outputs/apk/release/app-release-signed.apk ]; then
+            mv android/app/build/outputs/apk/release/app-release-signed.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
           else
-            echo "Error: Release APK not found!"
+            echo "Error: Signed APK not found! Check signing step."
             exit 1
           fi
 
