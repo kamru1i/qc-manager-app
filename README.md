@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 5.0.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 5.0.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v5.0.1 — Patch Release (Current)
+### 🚀 v5.0.2 — Patch Release (Current)
+
+- **Resilient Overwrite & Retry Pipeline:** Added space-insensitive matching and space-to-dot filename normalization to eliminate GitHub release asset upload collisions, plus a 3-attempt retry loop with 5-second backoff and asset refetching.
+- **Secure Android Signing & Verification:** Configured automated zipalign, apksigner v1/v2/v3/v4 verification, metadata check using aapt badging, and minimum file size threshold checks.
+- **Tauri & Android App Icons Refresh:** Refreshed and optimized launcher assets across both Tauri desktop (icns/ico) and Capacitor Android (mipmap layers).
+- **Log Spam & Egress Fixes:** Resolved overnight localhost log warning spam and Supabase mobile updater network polling egress leaks in development.
+
+### 🚀 v5.0.1 — Patch Release
 
 - **Smart Download File Names Alignment:** Decoupled config metadata and aligned all fallback URLs with Tauri release filenames (`QC.Manager_${VERSION}_*`) to eliminate 404 download errors.
 - **macOS Apple Silicon M4 Detection:** Refined device detector to correctly map Chromium 'arm' architecture reports to 'Apple Silicon' recommendation targets.
