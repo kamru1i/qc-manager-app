@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 5.0.11** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 5.0.12** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,8 +115,12 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
+### 🚀 v5.0.12 — Patch Release (Current)
 
-### 🚀 v5.0.11 — Patch Release (Current)
+- **CORS Configuration Fix:** Allowed dynamic CORS origin mapping on backend routes to fully resolve forgotten password failures across all client environments (localhost, web views, and custom domains).
+- **Tauri v2 Auto-Updater Fixes:** Added support for discovering and matching `.nsis.zip` and `.msi.zip` packages in release manifest generator. Fixed target URL mappings in generated `latest.json` file.
+
+### 🚀 v5.0.11 — Patch Release
 
 - **Clean Recommended Installer Button Labels:** Standardized the download button text to clean, minimal OS and Distro names (e.g., "Download for macOS", "Download for Windows", "Download for Android", "Download for Ubuntu", "Download for Fedora"), removing cluttered hardware and architecture info (like Apple Silicon/Intel/64-bit) from the main button.
 - **Dynamic GitHub Asset Size Resolution:** Implemented real-time release size and download URL fetching from the GitHub Releases API (falling back to the latest public release if the current tag isn't yet published), guaranteeing that sizes are accurately populated.

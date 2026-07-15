@@ -372,20 +372,22 @@ async function main() {
       if (platformKey) {
         const sigRes = await fetch(asset.browser_download_url);
         const signature = (await sigRes.text()).trim();
+        const targetUrl = targetAsset.browser_download_url;
         
-        platforms[platformKey] = { signature, url };
+        platforms[platformKey] = { signature, url: targetUrl };
 
         // Support nsis variants for windows
         if (platformKey === 'windows-x86_64') {
-          platforms['windows-x86_64-nsis'] = { signature, url };
+          platforms['windows-x86_64-nsis'] = { signature, url: targetUrl };
         } else if (platformKey === 'windows-i686') {
-          platforms['windows-i686-nsis'] = { signature, url };
+          platforms['windows-i686-nsis'] = { signature, url: targetUrl };
         } else if (platformKey === 'windows-aarch64') {
-          platforms['windows-aarch64-nsis'] = { signature, url };
+          platforms['windows-aarch64-nsis'] = { signature, url: targetUrl };
         }
       }
     }
   }
+
 
   // 5. Construct latest.json mapping
   const latestJson = {
