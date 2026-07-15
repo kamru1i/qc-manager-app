@@ -23,6 +23,7 @@ export default function AppUpdater() {
   const [newVersion, setNewVersion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const isCheckingRef = useRef(false);
   const downloadedUpdateRef = useRef<any>(null);
 
@@ -36,6 +37,8 @@ export default function AppUpdater() {
       typeof window !== "undefined" &&
       ((window as any).Capacitor !== undefined ||
         window.location.protocol === "capacitor:");
+
+    setIsMobile(isMobile);
 
     if (isTauri) {
       if (process.env.NODE_ENV === "development") return;
@@ -138,27 +141,56 @@ export default function AppUpdater() {
             const currentAppVersion = VERSION;
 
             if (data.version !== currentAppVersion) {
-              console.log(`[AppUpdater] New mobile OTA version ${data.version} available (current: ${currentAppVersion}). Downloading...`);
+              const apkUrl = `https://github.com/kamru1i/qc-manager-app/releases/download/v${data.version}/QC.Manager_${data.version}.apk`;
+              console.log(`[AppUpdater] New mobile APK version ${data.version} available (current: ${currentAppVersion}). Downloading from ${apkUrl}...`);
+              
               setNewVersion(data.version);
               setUpdateAvailable(true);
               setDownloading(true);
-              setDownloadProgress(35);
+              setDownloadProgress(5);
 
-              const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
+              const { Filesystem, Directory } = await import("@capacitor/filesystem");
+              const { FileOpener } = await import("@capacitor-community/file-opener");
 
-              // Download the update zip bundle
-              const update = await CapacitorUpdater.download({
-                url: data.zip_url,
-                version: data.version,
+              // Listen to download progress
+              const progressListener = await Filesystem.addListener("progress", (progress) => {
+                if (progress.contentLength > 0) {
+                  const pct = Math.min(
+                    99,
+                    Math.round((progress.bytes / progress.contentLength) * 100),
+                  );
+                  setDownloadProgress(pct);
+                }
               });
 
-              setDownloadProgress(85);
-              setReadyToRestart(true);
+              try {
+                // Download the APK file to cache directory
+                const downloadResult = await Filesystem.downloadFile({
+                  url: apkUrl,
+                  path: `QC.Manager_${data.version}.apk`,
+                  directory: Directory.Cache,
+                  progress: true,
+                });
 
-              // Apply the update (reloads the webview instantly)
-              console.log(`[AppUpdater] Applying mobile OTA update ${data.version}...`);
-              await CapacitorUpdater.set(update);
-              console.log(`[AppUpdater] Mobile OTA update ${data.version} applied successfully!`);
+                progressListener.remove();
+                setDownloadProgress(100);
+                setReadyToRestart(true);
+
+                const nativeUri = downloadResult.path;
+                if (!nativeUri) {
+                  throw new Error("Download path is undefined");
+                }
+                console.log(`[AppUpdater] APK download completed: ${nativeUri}. Invoking FileOpener...`);
+
+                // Open the package installer
+                await FileOpener.open({
+                  filePath: nativeUri,
+                  contentType: "application/vnd.android.package-archive",
+                });
+              } catch (downloadErr) {
+                progressListener.remove();
+                throw downloadErr;
+              }
             }
           }
         } catch (err: any) {
@@ -218,7 +250,9 @@ export default function AppUpdater() {
               {downloading &&
                 `Downloading & installing v${newVersion}... (${downloadProgress}%)`}
               {readyToRestart &&
-                `v${newVersion} installed! Restarting application...`}
+                (isMobile
+                  ? `v${newVersion} downloaded! Launching system installer...`
+                  : `v${newVersion} installed! Restarting application...`)}
             </p>
           </div>
         </div>
