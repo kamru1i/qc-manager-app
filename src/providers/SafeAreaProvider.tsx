@@ -29,10 +29,12 @@ export const SafeAreaProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const checkNative = isNativeApp();
 
-    const measureInsets = () => {
+    const measureInsets = async () => {
       if (typeof window === "undefined") return;
 
-      // Create a temporary hidden DOM element to measure env() values
+      let overlaps = true;
+
+      // 1. Create a temporary hidden DOM element to measure env() values
       const div = document.createElement("div");
       div.style.position = "fixed";
       div.style.top = "0";
@@ -44,16 +46,27 @@ export const SafeAreaProvider: React.FC<{ children: React.ReactNode }> = ({
       document.body.appendChild(div);
 
       const computedStyle = window.getComputedStyle(div);
-      const top = parseInt(computedStyle.height) || 0;
+      const measuredTop = parseInt(computedStyle.height) || 0;
 
       div.style.height = "env(safe-area-inset-bottom, 0px)";
-      const bottom = parseInt(computedStyle.height) || 0;
+      const measuredBottom = parseInt(computedStyle.height) || 0;
 
       document.body.removeChild(div);
 
+      // 2. If running natively, inspect if the status bar actually overlaps the webview viewport
+      if (checkNative) {
+        try {
+          const { StatusBar } = await import("@capacitor/status-bar");
+          const info = await StatusBar.getInfo();
+          overlaps = info.overlays;
+        } catch (e) {
+          console.warn("[SafeAreaProvider] Failed to read StatusBar overlay status:", e);
+        }
+      }
+
       setInsets({
-        top,
-        bottom,
+        top: overlaps ? measuredTop : 0,
+        bottom: measuredBottom,
         isNative: checkNative,
       });
     };

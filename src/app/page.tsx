@@ -1195,7 +1195,7 @@ function AppPortalInner({
         role="dialog"
         aria-modal="true"
         aria-label="Navigation Menu"
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-theme-page-bg border-r border-theme-border-input/50 px-4 pb-4 pt-0 shadow-2xl transition-transform duration-300 ease-out flex flex-col md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-theme-page-bg border-r border-theme-border-input/50 px-4 pb-4 pt-3 shadow-2xl transition-transform duration-300 ease-out flex flex-col md:hidden ${
           isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
