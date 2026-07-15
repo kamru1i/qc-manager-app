@@ -55,3 +55,8 @@ CLAUDE.md
 # db migrations & backups
 /migration_output*.sql
 /supabase data/
+
+# android keystore
+android/*.jks
+android/keystore-base64.txt
+android/android-release-credentials.txt
