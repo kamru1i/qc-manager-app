@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { detectDevice, getAsyncArchitecture, DeviceInfo } from '@/utils/deviceDetection';
 import { DOWNLOADS, DownloadInfo, MANIFEST_URL, REPO } from '@/config/downloads';
+import { isNativeApp } from '@/utils/envHelper';
 
 let hasLoggedFallbackWarning = false;
 
@@ -38,19 +39,7 @@ export function useDeviceInfo(): UseDeviceInfoResult {
 
     // 2. Fetch latest release manifest asynchronously to override URLs, sizes, and hashes
     const fetchManifest = async () => {
-      const isTauri =
-        typeof window !== 'undefined' &&
-        ((window as any).__TAURI_INTERNALS__ !== undefined ||
-          window.location.protocol === 'tauri:');
-
-      const isMobileDevice =
-        typeof window !== 'undefined' &&
-        ((window as any).Capacitor !== undefined ||
-          window.location.protocol === 'capacitor:');
-
-      const isNative = isTauri || isMobileDevice;
-
-      if (isNative) {
+      if (isNativeApp()) {
         try {
           // Try fetching latest.json first
           const res = await fetch(MANIFEST_URL, { 
