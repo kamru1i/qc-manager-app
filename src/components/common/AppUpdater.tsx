@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { ArrowUpCircle } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/utils/supabase";
 
@@ -192,5 +193,37 @@ export default function AppUpdater() {
     }
   };
 
-  return null;
+  if (!updateAvailable || error) return null;
+
+  return (
+    <div className="fixed bottom-5 right-5 z-9999 max-w-sm w-full bg-theme-card-bg/95 backdrop-blur-xl border border-theme-border-input rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-theme-text-primary font-sans animate-fade-in">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl shrink-0 border border-blue-500/20">
+            <ArrowUpCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-theme-text-primary uppercase tracking-wider">
+              System Update
+            </h4>
+            <p className="text-xs text-theme-text-muted mt-0.5 leading-snug font-medium">
+              {downloading &&
+                `Downloading & installing v${newVersion}... (${downloadProgress}%)`}
+              {readyToRestart &&
+                `v${newVersion} installed! Restarting application...`}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {downloading && (
+        <div className="w-full bg-theme-border-input/80 h-2 rounded-full overflow-hidden p-0.5 border border-theme-border-active/50">
+          <div
+            className="bg-linear-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-300 shadow-sm"
+            style={{ width: `${downloadProgress}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
