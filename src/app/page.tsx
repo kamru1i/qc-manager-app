@@ -1359,7 +1359,7 @@ function AppPortalInner({
       </div>
 
       {/* Main container with Sidebar and Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full z-10 flex-1 flex flex-col md:flex-row items-start">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12 md:pb-16 w-full z-10 flex-1 flex flex-col md:flex-row items-start">
         <div
           className={`shrink-0 hidden md:block ${
             (activeTab === "user_management" && isUserManagementFullView) ||
