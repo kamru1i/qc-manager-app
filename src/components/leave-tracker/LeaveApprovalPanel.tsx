@@ -4,10 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   RefreshCw,
-  AlertTriangle,
   CheckCircle,
-  Bell,
-  User,
 } from "lucide-react";
 import { Profile, ChutiRecordWithProfile, BulkRepresentative } from "@/types";
 import { formatDate, formatTimeToAMPM } from "@/utils/dashboardHelpers";
@@ -551,7 +548,7 @@ export function LeaveApprovalPanel({
                         hrs)
                       </span>
                     ) : r.admin_edit_request.adjustment === false ? (
-                      <span className="font-semibold text-rose-400 font-bold">
+                      <span className="text-rose-400 font-bold">
                         Cancel Adjustment
                       </span>
                     ) : (
@@ -680,7 +677,7 @@ export function LeaveApprovalPanel({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] pl-2 font-sans">
               <div className="bg-theme-card-bg/40 p-2.5 rounded-lg border border-theme-border-muted">
-                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1 font-semibold">
+                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1">
                   Current Information
                 </span>
                 <div className="space-y-1 text-theme-text-secondary font-medium">
@@ -724,7 +721,7 @@ export function LeaveApprovalPanel({
               </div>
 
               <div className="bg-blue-955/20 p-2.5 rounded-lg border border-blue-900/30">
-                <span className="block font-bold text-blue-400 mb-1.5 border-b border-blue-900/30 pb-1 font-semibold">
+                <span className="block font-bold text-blue-400 mb-1.5 border-b border-blue-900/30 pb-1">
                   Requested New Information
                 </span>
                 <div className="space-y-1 text-theme-text-primary font-medium">
@@ -921,7 +918,7 @@ export function LeaveApprovalPanel({
     <div className="space-y-6 pr-1 font-sans">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-theme-page-bg/20 border border-theme-border-input/60 relative">
         <div className="relative">
-          <label className="block text-xs font-semibold text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">
+          <label className="block text-xs text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">
             SEARCH STAFF (NAME OR CODENAME)
           </label>
           <div className="relative">
@@ -949,7 +946,7 @@ export function LeaveApprovalPanel({
 
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="block text-xs font-semibold text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">
+            <label className="block text-xs text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">
               {role === "supervisor"
                 ? "Filter Category"
                 : "Filter Notification Type"}
