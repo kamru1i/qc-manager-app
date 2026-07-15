@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 5.0.8** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 5.0.9** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v5.0.8 — Patch Release (Current)
+### 🚀 v5.0.9 — Patch Release (Current)
+
+- **Centered Responsive Filters on Mobile:** Repositioned and centered the Month and Year selector inputs directly underneath the Yearly/Monthly toggle switcher on mobile viewports for full layout alignment.
+- **Supervisor Read-Only Profile Permissions:** Supervisors can now read the leave tracker workspace settings of all team members while keeping it secure and read-only.
+- **Improved Navbar Padding:** Removed extra safe-area status bar spacing for native app headers.
+- **Button Styling Alignment:** Updated exit app modals and connection error overlays to align with the premium blue/indigo gradient styling.
+
+### 🚀 v5.0.8 — Patch Release
 
 - **In-App APK Installer for Android:** Implemented native APK download and automated in-app installation flow using `@capacitor/filesystem` and `@capacitor-community/file-opener`.
 - **Dynamic Safe-Area Spacing Fix:** Resolved double-spacing margins and padding-top overlap bugs by querying status bar overlay state (`StatusBar.getInfo().overlays`) and dynamically adjusting components.
