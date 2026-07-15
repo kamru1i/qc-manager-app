@@ -18,6 +18,7 @@ import { isNativeApp } from "@/utils/envHelper";
 
 import { UserDisplayName } from "@/components/common/UserDisplayName";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
+import { SafeAreaTop } from "@/components/common/SafeAreaTop";
 
 interface NavbarProps {
   profile: Profile | null;
@@ -66,7 +67,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header className="bg-theme-card-bg/40 backdrop-blur-md border-b border-theme-border-input/50 px-4 py-4 sm:px-6 lg:px-8 z-30 pt-safe">
+    <header className="bg-theme-card-bg/40 backdrop-blur-md border-b border-theme-border-input/50 px-4 py-4 sm:px-6 lg:px-8 z-30">
+      <SafeAreaTop />
       <div className="max-w-7xl mx-auto flex justify-between items-center w-full">
         <div className="flex items-center gap-3">
           {onMenuToggle && (
