@@ -217,6 +217,7 @@ async function main() {
         findFiles(fullPath);
       } else {
         const ext = path.extname(file).toLowerCase();
+
         if (
           ext === '.exe' ||
           ext === '.msi' ||
@@ -226,7 +227,9 @@ async function main() {
           ext === '.appimage' ||
           ext === '.apk' ||
           file.endsWith('.tar.gz') ||
-          file.endsWith('.sig')
+          file.endsWith('.sig') ||
+          file.endsWith('.nsis.zip') ||
+          file.endsWith('.msi.zip')
         ) {
           // Normalize filename immediately on discovery to replace spaces with dots
           const normalizedName = file.replace(/\s+/g, '.');
@@ -329,12 +332,32 @@ async function main() {
       const targetAsset = assets.find(a => a.name === targetName);
       if (!targetAsset) continue;
 
+
+
       let platformKey = null;
-      if (targetName.includes('x64-setup.exe') || targetName.includes('x86_64-setup.exe') || targetName.includes('x64_setup.exe')) {
+      if (
+        targetName.includes('x64-setup.nsis.zip') ||
+        targetName.includes('x86_64-setup.nsis.zip') ||
+        targetName.includes('x64-setup.exe') ||
+        targetName.includes('x86_64-setup.exe') ||
+        targetName.includes('x64_setup.exe')
+      ) {
         platformKey = 'windows-x86_64';
-      } else if (targetName.includes('x86-setup.exe') || targetName.includes('i686-setup.exe') || targetName.includes('x86_setup.exe')) {
+      } else if (
+        targetName.includes('x86-setup.nsis.zip') ||
+        targetName.includes('i686-setup.nsis.zip') ||
+        targetName.includes('x86-setup.exe') ||
+        targetName.includes('i686-setup.exe') ||
+        targetName.includes('x86_setup.exe')
+      ) {
         platformKey = 'windows-i686';
-      } else if (targetName.includes('arm64-setup.exe') || targetName.includes('aarch64-setup.exe') || targetName.includes('arm64_setup.exe')) {
+      } else if (
+        targetName.includes('arm64-setup.nsis.zip') ||
+        targetName.includes('aarch64-setup.nsis.zip') ||
+        targetName.includes('arm64-setup.exe') ||
+        targetName.includes('aarch64-setup.exe') ||
+        targetName.includes('arm64_setup.exe')
+      ) {
         platformKey = 'windows-aarch64';
       } else if (targetName.includes('universal.app.tar.gz')) {
         platformKey = 'darwin-universal';

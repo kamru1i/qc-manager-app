@@ -12,6 +12,8 @@ const ALLOWED_ORIGINS = [
   'http://tauri.localhost',
   'http://localhost:3000',
   'http://localhost:1420',
+  'http://localhost',
+  'capacitor://localhost',
 ];
 
 /**
@@ -21,7 +23,20 @@ const ALLOWED_ORIGINS = [
  */
 export function getCorsHeaders(request: NextRequest): Record<string, string> {
   const origin = request.headers.get('origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  
+  let isAllowed = false;
+  if (!origin) {
+    isAllowed = true;
+  } else {
+    const isLocalhost = /^https?:\/\/localhost(:\d+)?$/.test(origin);
+    const isTauri = /^tauri:\/\//.test(origin) || /^https?:\/\/tauri\.localhost$/.test(origin);
+    const isCapacitor = /^capacitor:\/\//.test(origin);
+    const isVercel = /\.vercel\.app$/.test(origin);
+    
+    isAllowed = isLocalhost || isTauri || isCapacitor || isVercel || ALLOWED_ORIGINS.includes(origin);
+  }
+
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
