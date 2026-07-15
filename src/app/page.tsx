@@ -923,8 +923,12 @@ function AppPortalInner({
       if (isNativeApp()) {
         try {
           StatusBar.setOverlaysWebView({ overlay: false });
-          StatusBar.setBackgroundColor({ color: theme === "dark" ? "#0f172a" : "#ffffff" });
-          StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light });
+          StatusBar.setBackgroundColor({
+            color: theme === "dark" ? "#0f172a" : "#ffffff",
+          });
+          StatusBar.setStyle({
+            style: theme === "dark" ? Style.Dark : Style.Light,
+          });
         } catch (e) {
           console.error("Capacitor StatusBar dynamic theme sync failed:", e);
         }
@@ -1531,7 +1535,9 @@ function AppPortalInner({
           style={{ transform: `translateY(${pullDistance}px)` }}
         >
           <div className="bg-theme-card-bg border border-theme-border-input p-2.5 rounded-full shadow-2xl flex items-center justify-center">
-            <RefreshCw className={`w-4 h-4 text-blue-500 ${isRefreshing ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 text-blue-500 ${isRefreshing ? "animate-spin" : ""}`}
+            />
           </div>
         </div>
       )}
@@ -1540,7 +1546,9 @@ function AppPortalInner({
       {isExitModalOpen && (
         <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-theme-card-bg border border-theme-border-input/70 rounded-2xl max-w-sm w-full mx-4 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="text-base font-bold text-theme-text-primary">Exit Application</h3>
+            <h3 className="text-base font-bold text-theme-text-primary">
+              Exit Application
+            </h3>
             <p className="text-xs text-theme-text-muted mt-2 leading-relaxed">
               Are you sure you want to exit the QC Manager application?
             </p>
@@ -1553,7 +1561,7 @@ function AppPortalInner({
               </button>
               <button
                 onClick={handleExitApp}
-                className="flex-1 py-2.5 px-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-lg shadow-orange-500/20"
+                className="flex-1 py-2.5 px-4 bg-linear-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-lg shadow-orange-500/20"
               >
                 Exit
               </button>
