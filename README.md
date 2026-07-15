@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 5.0.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 5.0.3** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v5.0.2 — Patch Release (Current)
+### 🚀 v5.0.3 — Patch Release (Current)
+
+- **Platform-Aware Auto-Updater UI & Silent Background Updates:** Restricted the visible update notification card and "Restart Application" button exclusively to native desktop apps (Tauri). Mobile applications (Capacitor/APK) now fetch, download, and apply OTA updates silently in the background.
+- **GitHub Actions Debug APK Build Fallback:** Configured GHA workflow to automatically compile and verify a debug APK if release signing keystore secrets are missing from repository variables, preventing build failures.
+- **Log Spam & Egress Fixes:** Resolved overnight localhost log warning spam and Supabase mobile updater network polling egress leaks in development.
+
+### 🚀 v5.0.2 — Patch Release
 
 - **Resilient Overwrite & Retry Pipeline:** Added space-insensitive matching and space-to-dot filename normalization to eliminate GitHub release asset upload collisions, plus a 3-attempt retry loop with 5-second backoff and asset refetching.
 - **Secure Android Signing & Verification:** Configured automated zipalign, apksigner v1/v2/v3/v4 verification, metadata check using aapt badging, and minimum file size threshold checks.
