@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 5.0.12** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 5.0.13** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,13 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v5.0.12 — Patch Release (Current)
+### 🚀 v5.0.13 — Patch Release (Current)
+
+- **Open Submission Leaderboard & Role Restricting:** Opened the Performance Analytics leaderboard (A-Z rank list of everyone's submissions) to all logged-in roles. Restricted key charts, branch metrics, and summary conversion insights to Admins and Supervisors only.
+- **Dynamic Username Ranks (#XX):** Implemented all-time running submission ranking next to user display names (e.g. `Name #01`). Ranks dynamically re-calculate in real-time as users submit files.
+- **AppUpdater Native Restrictions:** Restricted client-side update alerts exclusively to native Tauri and Capacitor apps, preventing updates from checking on web browser views.
+
+### 🚀 v5.0.12 — Patch Release
 
 - **CORS Configuration Fix:** Allowed dynamic CORS origin mapping on backend routes to fully resolve forgotten password failures across all client environments (localhost, web views, and custom domains).
 - **Tauri v2 Auto-Updater Fixes:** Added support for discovering and matching `.nsis.zip` and `.msi.zip` packages in release manifest generator. Fixed target URL mappings in generated `latest.json` file.

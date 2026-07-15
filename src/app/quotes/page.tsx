@@ -1560,8 +1560,7 @@ export default function Dashboard({
             </div>
           )}
 
-          {/* TAB 4: PERFORMANCE ANALYTICS */}
-          {activeTab === "analytics" && (profile?.role === "admin" || profile?.role === "supervisor") && (
+          {activeTab === "analytics" && (
             <Suspense fallback={<SkeletonLoader type="analytics" />}>
               <AnalyticsPanel
                 records={records}

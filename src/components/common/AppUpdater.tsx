@@ -24,6 +24,7 @@ export default function AppUpdater() {
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isNativeApp, setIsNativeApp] = useState(false);
   const isCheckingRef = useRef(false);
   const downloadedUpdateRef = useRef<any>(null);
 
@@ -33,12 +34,20 @@ export default function AppUpdater() {
       ((window as any).__TAURI_INTERNALS__ !== undefined ||
         window.location.protocol === "tauri:");
 
-    const isMobile =
+    const isMobileDevice =
       typeof window !== "undefined" &&
-      ((window as any).Capacitor !== undefined ||
+      (Capacitor.isNativePlatform() ||
+        (window as any).Capacitor !== undefined ||
         window.location.protocol === "capacitor:");
 
-    setIsMobile(isMobile);
+    setIsMobile(isMobileDevice);
+
+    if (!isTauri && !isMobileDevice) {
+      // Return early and do not run any check timers on web browser
+      return;
+    }
+
+    setIsNativeApp(true);
 
     if (isTauri) {
       if (process.env.NODE_ENV === "development") return;
@@ -232,8 +241,7 @@ export default function AppUpdater() {
       );
     }
   };
-
-  if (!updateAvailable || error) return null;
+  if (!isNativeApp || !updateAvailable || error) return null;
 
   return (
     <div className="fixed bottom-5 left-4 right-4 sm:left-auto sm:right-5 sm:w-80 z-9999 bg-theme-card-bg/95 backdrop-blur-xl border border-theme-border-input rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-theme-text-primary font-sans animate-fade-in">

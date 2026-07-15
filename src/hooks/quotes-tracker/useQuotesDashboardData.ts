@@ -34,6 +34,8 @@ const sanitizeProfile = (p: Profile | null): Profile | null => {
   return p;
 };
 
+const CACHE_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes cache
+
 const sanitizeProfilesList = (list: Profile[]): Profile[] => {
   if (!list) return [];
   return list.map(p => sanitizeProfile(p) as Profile);
@@ -108,7 +110,6 @@ export const useQuotesDashboardData = () => {
   const fetchingRef = useRef(false);
   const lastFetchedKeyRef = useRef<string>('');
   const lastFetchedTimeRef = useRef<Map<string, number>>(new Map());
-  const CACHE_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes cache
 
   // Fetch all records for the selected Month & Year
   const fetchRecords = useCallback(async (isSilent: boolean = false, force: boolean = false) => {
@@ -179,7 +180,7 @@ export const useQuotesDashboardData = () => {
               const from = mPage * mPageSize;
               const to = from + mPageSize - 1;
 
-              let query = supabase
+              const query = supabase
                 .from('records')
                 .select(`
                   *,
@@ -189,10 +190,6 @@ export const useQuotesDashboardData = () => {
                 .lte('submitted_at', endDate)
                 .order('submitted_at', { ascending: false })
                 .range(from, to);
-
-              if (profile.role !== 'admin' && profile.role !== 'supervisor') {
-                query = query.eq('user_id', sessionUser.id);
-              }
 
               const { data, error } = await query;
               if (error) throw error;
@@ -258,7 +255,7 @@ export const useQuotesDashboardData = () => {
                 const from = deltaPage * deltaPageSize;
                 const to = from + deltaPageSize - 1;
 
-                let query = supabase
+                const query = supabase
                   .from('records')
                   .select(`
                     *,
@@ -266,10 +263,6 @@ export const useQuotesDashboardData = () => {
                   `)
                   .gte('updated_at', bufferedSyncTimestamp)
                   .range(from, to);
-
-                if (profile.role !== 'admin' && profile.role !== 'supervisor') {
-                  query = query.eq('user_id', sessionUser.id);
-                }
 
                 const { data: pageData, error: pageError } = await query;
                 if (pageError) throw pageError;
@@ -303,7 +296,7 @@ export const useQuotesDashboardData = () => {
                 const from = page * pageSize;
                 const to = from + pageSize - 1;
 
-                let query = supabase
+                const query = supabase
                   .from('records')
                   .select(`
                     *,
@@ -312,11 +305,6 @@ export const useQuotesDashboardData = () => {
                   .gte('submitted_at', '2026-05-01T00:00:00.000Z')
                   .order('submitted_at', { ascending: false })
                   .range(from, to);
-
-                // If user is a normal user, only fetch their own records
-                if (profile.role !== 'admin' && profile.role !== 'supervisor') {
-                  query = query.eq('user_id', sessionUser.id);
-                }
 
                 const { data, error } = await query;
                 if (error) throw error;

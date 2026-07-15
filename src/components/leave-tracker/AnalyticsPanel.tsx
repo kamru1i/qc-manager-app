@@ -80,6 +80,7 @@ const monthsList = [
 export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   records,
   profilesList,
+  profile,
   recordsLoading = false,
 }) => {
   // Load all records from IndexedDB cache asynchronously to get complete annual stats
@@ -487,7 +488,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
     return formatted.slice(0, 5);
   }, [systemMetricsFilteredRecords]);
 
-  // Leaderboard data (Show top 5 only)
+  // Leaderboard data (Show all users)
   const leaderboardData = useMemo(() => {
     const usersCount: Record<
       string,
@@ -511,14 +512,14 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       }
     });
 
-    const activeUsers = Object.values(usersCount).filter((u) => u.count > 0);
+    const allUsers = Object.values(usersCount);
 
     // Sort descending by count, then alphabetically by codename
-    const sortedLeaderboard = activeUsers.sort(
+    const sortedLeaderboard = allUsers.sort(
       (a, b) => b.count - a.count || a.codename.localeCompare(b.codename),
     );
 
-    return sortedLeaderboard.slice(0, 5);
+    return sortedLeaderboard;
   }, [systemMetricsFilteredRecords, profilesList]);
 
   // Read top performer badges directly from profiles list database values
@@ -622,7 +623,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       </div>
 
       {/* Grid: Key Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {(profile?.role === "admin" || profile?.role === "supervisor") && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Card 1: Total Quotes */}
         <div className="relative overflow-hidden bg-theme-card-container/30 border border-theme-border-input/40 hover:border-[#3b82f6]/30 p-5 rounded-2xl shadow-xl transition-all duration-300 group hover:shadow-[#3b82f6]/5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#3b82f6]/5 rounded-full blur-2xl group-hover:bg-[#3b82f6]/10 transition-all duration-300"></div>
@@ -791,10 +793,12 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           </p>
         </div>
         */}
-      </div>
+        </div>
+      )}
 
       {/* Grid: Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {(profile?.role === "admin" || profile?.role === "supervisor") && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Monthly submissions grouped bar chart (Occupies 2 columns on desktop) */}
         <div className="lg:col-span-2 bg-theme-card-container/30 border border-theme-border-input/40 p-5 rounded-2xl shadow-xl relative min-h-96">
           <h4 className="text-sm font-bold text-theme-text-primary mb-6 flex items-center gap-2">
@@ -1155,6 +1159,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
           )}
         </div>
       </div>
+      )}
 
       {/* Segment 3: Bottom Section (Leaderboard) */}
       <div className="bg-theme-card-container/30 border border-theme-border-input/40 p-5 rounded-2xl shadow-xl min-h-80">

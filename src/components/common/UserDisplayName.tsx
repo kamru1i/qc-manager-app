@@ -1,7 +1,40 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Profile } from "@/types";
+import { Profile, RecordItem } from "@/types";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
+
+// Global cache for all-time ranks mapping: profileId -> rank number
+let rankCache: Record<string, number> = {};
+const rankCacheListeners = new Set<() => void>();
+
+export const updateGlobalRankCache = (records: RecordItem[], profiles: Profile[]) => {
+  const counts: Record<string, number> = {};
+  profiles.forEach((p) => {
+    counts[p.id] = 0;
+  });
+  records.forEach((r) => {
+    if (r.user_id && counts[r.user_id] !== undefined) {
+      counts[r.user_id]++;
+    }
+  });
+
+  // Sort descending by count, then alphabetically by username
+  const sorted = [...profiles]
+    .map((p) => ({
+      id: p.id,
+      count: counts[p.id] || 0,
+      username: p.username.toUpperCase(),
+    }))
+    .sort((a, b) => b.count - a.count || a.username.localeCompare(b.username));
+
+  const newCache: Record<string, number> = {};
+  sorted.forEach((item, index) => {
+    newCache[item.id] = index + 1;
+  });
+
+  rankCache = newCache;
+  rankCacheListeners.forEach((listener) => listener());
+};
 
 interface UserDisplayNameProps {
   profile: Profile;
@@ -19,6 +52,7 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
   showBadge = true,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [rank, setRank] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
@@ -36,12 +70,18 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
   };
 
   useEffect(() => {
+    const handleUpdate = () => {
+      setRank(rankCache[profile.id] || null);
+    };
+    handleUpdate();
+    rankCacheListeners.add(handleUpdate);
     return () => {
+      rankCacheListeners.delete(handleUpdate);
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
     };
-  }, []);
+  }, [profile.id]);
 
   return (
     <span className="inline-flex items-center align-middle">
@@ -79,6 +119,13 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
       {/* Verified Badge next to the name with exact space styling */}
       {showBadge && badge && (
         <VerifiedBadge badge={badge} position={tooltipPosition} />
+      )}
+
+      {/* Dynamic rank label rendered after badge */}
+      {rank !== null && (
+        <span className="text-[10px] text-theme-text-muted font-extrabold ml-1.5 select-none align-middle">
+          #{String(rank).padStart(2, '0')}
+        </span>
       )}
     </span>
   );
