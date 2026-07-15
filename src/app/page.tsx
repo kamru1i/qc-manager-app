@@ -23,6 +23,9 @@ import { isNativeApp } from "@/utils/envHelper";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/common/UnifiedSidebar";
 import { Navbar } from "@/components/common/Navbar";
+import { AppLayout } from "@/components/common/AppLayout";
+import { SafeAreaTop } from "@/components/common/SafeAreaTop";
+import { StatusBar, Style } from "@capacitor/status-bar";
 import { Toaster } from "react-hot-toast";
 import { useGlobalNotifications } from "@/hooks/leave-tracker/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/common/modals/UserNotificationsModal";
@@ -827,6 +830,16 @@ function AppPortalInner({
         document.documentElement.classList.add("dark");
       }
       window.dispatchEvent(new CustomEvent("theme-change", { detail: theme }));
+
+      if (isNativeApp()) {
+        try {
+          StatusBar.setOverlaysWebView({ overlay: false });
+          StatusBar.setBackgroundColor({ color: theme === "dark" ? "#0f172a" : "#ffffff" });
+          StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light });
+        } catch (e) {
+          console.error("Capacitor StatusBar dynamic theme sync failed:", e);
+        }
+      }
     }
   }, [theme]);
 
@@ -936,7 +949,7 @@ function AppPortalInner({
                     : "chuti";
 
   return (
-    <div className="flex-1 min-h-screen flex flex-col bg-theme-page-bg relative overflow-hidden pb-12 text-white selection:bg-purple-650 selection:text-white">
+    <AppLayout>
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -1093,6 +1106,7 @@ function AppPortalInner({
           isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
+        <SafeAreaTop />
         <div className="flex justify-between items-center mb-4 pb-2 border-b border-theme-border-input/30 shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-sm font-bold tracking-wider text-theme-text-primary">
@@ -1420,6 +1434,6 @@ function AppPortalInner({
             onSaveHolidayResponse={handleSaveHolidayResponse}
           />
         )}
-    </div>
+    </AppLayout>
   );
 }
