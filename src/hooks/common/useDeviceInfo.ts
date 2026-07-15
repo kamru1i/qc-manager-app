@@ -75,7 +75,8 @@ export function useDeviceInfo(): UseDeviceInfoResult {
             return;
           }
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
         console.warn('[useDeviceInfo] Failed to fetch latest.json, trying GitHub API fallback:', err);
       }
 
