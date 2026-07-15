@@ -74,67 +74,133 @@ async function main() {
 
   let assets = release.assets || [];
 
+  // Print all existing release assets for auditing
+  console.log(`=== Existing Release Assets for Tag ${tag} ===`);
+  if (assets.length === 0) {
+    console.log('No existing assets found.');
+  } else {
+    assets.forEach(asset => {
+      console.log(`- Asset ID: ${asset.id} | Name: "${asset.name}"`);
+    });
+  }
+  console.log(`===============================================`);
+
+  // Helper to normalize spaces/dots/dashes/underscores for space/dot-insensitive matching
+  function getNormalizedMatchKey(name) {
+    return name.toLowerCase().replace(/[\s_.-]+/g, '');
+  }
+
   // Helper to delete an asset from release and poll to confirm deletion propagation
   async function deleteAssetIfExists(assetName) {
-    const existing = assets.find(a => a.name === assetName);
-    if (existing) {
-      console.log(`Deleting existing asset ${assetName} (ID: ${existing.id})...`);
-      const delRes = await fetch(`https://api.github.com/repos/${repo}/releases/assets/${existing.id}`, {
-        method: 'DELETE',
-        headers
-      });
-      if (!delRes.ok) {
-        console.warn(`Failed to delete ${assetName}: ${delRes.statusText}`);
-      }
+    const searchKey = getNormalizedMatchKey(assetName);
+    const toDelete = assets.filter(a => a.name === assetName || getNormalizedMatchKey(a.name) === searchKey);
 
-      // Poll until confirmed deleted to handle eventual consistency
-      console.log(`Waiting for deletion of ${assetName} to propagate...`);
-      const checkUrl = `https://api.github.com/repos/${repo}/releases/assets/${existing.id}`;
-      let deleted = false;
-      for (let attempt = 1; attempt <= 15; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const checkRes = await fetch(checkUrl, { headers });
-        if (checkRes.status === 404) {
-          deleted = true;
-          break;
+    if (toDelete.length > 0) {
+      for (const existing of toDelete) {
+        console.log(`Deleting existing asset "${existing.name}" (ID: ${existing.id}) matching search "${assetName}"...`);
+        const delRes = await fetch(`https://api.github.com/repos/${repo}/releases/assets/${existing.id}`, {
+          method: 'DELETE',
+          headers
+        });
+        if (!delRes.ok) {
+          console.warn(`Failed to delete ${existing.name}: ${delRes.statusText}`);
         }
-        console.log(`Attempt ${attempt}: Asset ${assetName} still exists in GitHub API...`);
+
+        // Poll until confirmed deleted to handle eventual consistency
+        console.log(`Waiting for deletion of ${existing.name} to propagate...`);
+        const checkUrl = `https://api.github.com/repos/${repo}/releases/assets/${existing.id}`;
+        let deleted = false;
+        for (let attempt = 1; attempt <= 15; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          const checkRes = await fetch(checkUrl, { headers });
+          if (checkRes.status === 404) {
+            deleted = true;
+            break;
+          }
+          console.log(`Attempt ${attempt}: Asset ${existing.name} still exists in GitHub API...`);
+        }
+
+        if (deleted) {
+          console.log(`Confirmed deletion of ${existing.name}.`);
+        } else {
+          console.warn(`Warning: Deletion of ${existing.name} did not propagate. Proceeding anyway...`);
+        }
+        // Small delay for safety
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
-      if (deleted) {
-        console.log(`Confirmed deletion of ${assetName}.`);
-      } else {
-        console.warn(`Warning: Deletion of ${assetName} did not propagate. Proceeding anyway...`);
-      }
-      // Small delay for safety
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Sync local assets list
+      assets = assets.filter(a => !toDelete.some(d => d.id === a.id));
     }
   }
 
-  // Helper to upload an asset to release
-  async function uploadAsset(filePath, assetName) {
-    await deleteAssetIfExists(assetName);
+  // Helper to upload an asset to release with retry logic
+  async function uploadAsset(filePath, assetName, attempt = 1) {
+    // Standardize local names to replace spaces with dots to align with GitHub's backend normalization
+    const normalizedName = assetName.replace(/\s+/g, '.');
+    await deleteAssetIfExists(normalizedName);
 
-    console.log(`Uploading ${assetName} to release...`);
-    const uploadUrl = release.upload_url.replace('{?name,label}', `?name=${assetName}`);
+    console.log(`Uploading "${normalizedName}" to release (Attempt ${attempt}/3)...`);
+    const uploadUrl = release.upload_url.replace('{?name,label}', `?name=${encodeURIComponent(normalizedName)}`);
     const uploadHeaders = {
       ...headers,
       'Content-Type': 'application/octet-stream',
       'Content-Length': fs.statSync(filePath).size
     };
 
-    const uploadRes = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: uploadHeaders,
-      body: fs.readFileSync(filePath)
-    });
+    try {
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: uploadHeaders,
+        body: fs.readFileSync(filePath)
+      });
 
-    if (!uploadRes.ok) {
-      const errText = await uploadRes.text();
-      console.error(`Failed to upload ${assetName}: ${uploadRes.statusText}`, errText);
-      process.exit(1);
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text();
+        console.error(`Upload request failed for ${normalizedName} (HTTP ${uploadRes.status}): ${uploadRes.statusText}`, errText);
+
+        if (errText.includes('already_exists') || uploadRes.status === 422) {
+          if (attempt < 3) {
+            console.log(`Collision detected (already_exists) for "${normalizedName}". Retrying in 5 seconds...`);
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // Re-fetch current assets list from GitHub to get fresh IDs
+            console.log('Refetching release assets from GitHub...');
+            const refetchRes = await fetch(releaseUrl, { headers });
+            if (refetchRes.ok) {
+              const freshData = await refetchRes.json();
+              assets = freshData.assets || [];
+              console.log(`Refetched ${assets.length} assets.`);
+            }
+
+            return await uploadAsset(filePath, assetName, attempt + 1);
+          } else {
+            console.error(`Fatal: Already exists error persisted for ${normalizedName} after 3 attempts.`);
+            process.exit(1);
+          }
+        }
+
+        if (attempt < 3) {
+          console.log(`Retrying upload of ${normalizedName} in 3 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          return await uploadAsset(filePath, assetName, attempt + 1);
+        } else {
+          console.error(`Fatal: Failed to upload ${normalizedName} after 3 attempts.`);
+          process.exit(1);
+        }
+      }
+
+      console.log(`Successfully uploaded ${normalizedName}!`);
+    } catch (error) {
+      console.error(`Network or system error uploading ${normalizedName}:`, error.message || error);
+      if (attempt < 3) {
+        console.log(`Retrying upload of ${normalizedName} in 5 seconds due to error...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return await uploadAsset(filePath, assetName, attempt + 1);
+      } else {
+        process.exit(1);
+      }
     }
-    console.log(`Successfully uploaded ${assetName}!`);
   }
 
   // 2. Discover and upload all artifacts built in matrix/android jobs
@@ -162,13 +228,20 @@ async function main() {
           file.endsWith('.tar.gz') ||
           file.endsWith('.sig')
         ) {
-          filesToUpload.push({ filePath: fullPath, name: file });
+          // Normalize filename immediately on discovery to replace spaces with dots
+          const normalizedName = file.replace(/\s+/g, '.');
+          filesToUpload.push({ filePath: fullPath, name: normalizedName });
         }
       }
     }
   }
 
   findFiles(tempArtifactsDir);
+  console.log(`=== Discovered Local Artifacts to Upload ===`);
+  filesToUpload.forEach(f => {
+    console.log(`- Path: "${f.filePath}" -> Upload Name: "${f.name}"`);
+  });
+  console.log(`============================================`);
   console.log(`Found ${filesToUpload.length} artifacts to upload.`);
 
   for (const file of filesToUpload) {
