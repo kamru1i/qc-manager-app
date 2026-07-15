@@ -281,8 +281,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Date & Leave Type side by side */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Date & Leave Type stacked vertically (each occupying a single line) */}
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
             Date
