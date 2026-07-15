@@ -1381,7 +1381,7 @@ export default function Dashboard({
                     className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg shadow-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>Custom Entry</span>
+                    <span>Entry</span>
                   </button>
                   {(profile?.role === "admin" || profile?.role === "supervisor") && (
                     <AdminViewToggle
