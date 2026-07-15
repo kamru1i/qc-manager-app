@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 5.0.7** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 5.0.8** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -116,7 +116,12 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v5.0.7 — Patch Release (Current)
+### 🚀 v5.0.8 — Patch Release (Current)
+
+- **In-App APK Installer for Android:** Implemented native APK download and automated in-app installation flow using `@capacitor/filesystem` and `@capacitor-community/file-opener`.
+- **Dynamic Safe-Area Spacing Fix:** Resolved double-spacing margins and padding-top overlap bugs by querying status bar overlay state (`StatusBar.getInfo().overlays`) and dynamically adjusting components.
+
+### 🚀 v5.0.7 — Patch Release
 
 - **Context Menu Viewport Bounding:** Implemented dynamic window viewport collision detection for the leave tracker table's context menu, positioning it upwards/leftwards when long-pressed on trailing or bottom rows to prevent overflow cropping.
 

@@ -1561,7 +1561,7 @@ function AppPortalInner({
               </button>
               <button
                 onClick={handleExitApp}
-                className="flex-1 py-2.5 px-4 bg-linear-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-lg shadow-orange-500/20"
+                className="flex-1 py-2.5 px-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-lg shadow-blue-500/20"
               >
                 Exit
               </button>
