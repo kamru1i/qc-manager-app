@@ -11,9 +11,9 @@ export const NoInternetOverlay: React.FC<NoInternetOverlayProps> = ({
   onRetry,
 }) => {
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 backdrop-blur-md transition-opacity duration-300">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/65 backdrop-blur-md transition-opacity duration-300">
       <div className="bg-theme-card-bg border border-theme-border-input/60 rounded-2xl max-w-md w-full mx-4 p-8 text-center shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300">
-        
+
         {/* Glow decoration */}
         <div className="absolute -top-16 -left-16 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -42,7 +42,7 @@ export const NoInternetOverlay: React.FC<NoInternetOverlayProps> = ({
         <button
           onClick={onRetry}
           disabled={isChecking}
-          className="w-full flex items-center justify-center gap-2 py-3 px-5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-3 px-5 bg-linear-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${isChecking ? "animate-spin" : ""}`} />
           {isChecking ? "Checking Connection..." : "Retry Now"}
