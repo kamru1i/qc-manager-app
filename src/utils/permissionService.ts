@@ -127,7 +127,7 @@ export const canAccessProfileSection = (
       case 'quotes_settings':
         return true; // supervisors can edit basic details and quotes settings of all users
       case 'leave_settings':
-        return isSupervisedTeam(currentUser, targetUser, profilesList);
+        return true; // supervisors can read leave settings of all users (write is blocked via disabled={!isAdmin} in form)
       case 'kpi_settings':
         return isDirectlySupervised(currentUser, targetUser);
       default:
