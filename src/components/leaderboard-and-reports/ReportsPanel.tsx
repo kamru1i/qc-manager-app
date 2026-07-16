@@ -87,7 +87,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              My Data
+              My Report
             </button>
             <button
               onClick={() => setActiveReportTab('all')}
@@ -97,7 +97,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              All Data
+              All Report
             </button>
           </div>
         )}
