@@ -80,8 +80,8 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header and Controls Card */}
-      <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 backdrop-blur-md shadow-lg">
+      {/* Header and Controls Card (Remove backdrop-blur-md to fix Safari native select dropdown popup glitch) */}
+      <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 shadow-lg">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           {/* Left: Title & Subtitle */}
           <div className="space-y-1">
@@ -114,11 +114,11 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
 
           {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-            {/* Month Dropdown (Always visible, fixed width of w-28 to prevent snap resizing) */}
+            {/* Month Dropdown (Always visible, fixed width of w-28 to prevent snap resizing. Uses text-base on mobile to prevent iOS zoom) */}
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-28 bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 text-white text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-28 bg-slate-950/85 border border-slate-800/80 hover:border-slate-700 text-white text-base md:text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all"
             >
               {availableMonthsForSelectedYear.map((m) => (
                 <option key={m.value} value={m.value}>

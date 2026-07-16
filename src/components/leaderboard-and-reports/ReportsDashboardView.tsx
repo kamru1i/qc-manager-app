@@ -237,8 +237,8 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Filter Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/40 p-4 border border-slate-800/60 rounded-2xl backdrop-blur-md">
+      {/* Filter Header (Remove backdrop-blur-md to fix Safari native select dropdown popup glitch) */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/80 p-4 border border-slate-800/60 rounded-2xl">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-500" />
@@ -275,7 +275,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-transparent text-xs text-slate-300 outline-none border-none cursor-pointer focus:text-white font-semibold w-full"
+                className="bg-transparent text-base md:text-xs text-slate-300 outline-none border-none cursor-pointer focus:text-white font-semibold w-full"
               >
                 {availableMonthsForSelectedYear.map((m) => (
                   <option key={m.value} value={m.value} className="bg-slate-950 text-slate-300">{m.name}</option>
@@ -287,7 +287,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="bg-transparent text-xs text-slate-300 outline-none border-none cursor-pointer focus:text-white font-semibold w-full"
+                className="bg-transparent text-base md:text-xs text-slate-300 outline-none border-none cursor-pointer focus:text-white font-semibold w-full"
               >
                 {availableYears.map((year) => (
                   <option key={year} value={year} className="bg-slate-950 text-slate-300">Year {year}</option>
