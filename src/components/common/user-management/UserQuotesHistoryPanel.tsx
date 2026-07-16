@@ -9,6 +9,7 @@ import { StatsGrid } from '@/components/common/StatsGrid';
 import { RecordsTable } from '@/components/quotes-tracker/RecordsTable';
 import { calculateSummaryStats } from '@/utils/quotesDashboardHelpers';
 import { EditRecordModal } from '@/components/quotes-tracker/modals/EditRecordModal';
+import { CustomSelect } from '@/components/common/CustomSelect';
 
 interface UserQuotesHistoryPanelProps {
   viewingStaff: Profile;
@@ -127,6 +128,38 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
     });
     return Array.from(years).sort().reverse();
   }, [records]);
+
+  // Available months containing submissions for the selected year
+  const availableMonthsForSelectedYear = useMemo(() => {
+    const monthsSet = new Set<string>();
+    records.forEach((r) => {
+      if (r.submitted_at) {
+        const d = new Date(r.submitted_at);
+        const y = d.getFullYear().toString();
+        if (y === selectedYear) {
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          monthsSet.add(m);
+        }
+      }
+    });
+
+    // Always include current calendar month if it's the current year
+    const now = new Date();
+    if (selectedYear === now.getFullYear().toString()) {
+      monthsSet.add(String(now.getMonth() + 1).padStart(2, '0'));
+    }
+
+    const filteredList = availableMonths.filter((m) => monthsSet.has(m.value));
+    return filteredList.length > 0 ? filteredList : availableMonths;
+  }, [records, selectedYear]);
+
+  // Sync selectedMonth if availableMonthsForSelectedYear updates
+  useEffect(() => {
+    const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
+    if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
+      setSelectedMonth(monthValues[0]);
+    }
+  }, [availableMonthsForSelectedYear, selectedMonth]);
 
   // Filtered records for selected Month and Year
   const monthlyFilteredRecords = useMemo(() => {
@@ -375,38 +408,40 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
       <div className="bg-theme-page-bg/45 p-4 rounded-xl border border-theme-border-muted flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Month Selector */}
-          <select
+          <CustomSelect
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
-          >
-            {availableMonths.map(m => (
-              <option key={m.value} value={m.value}>{m.name}</option>
-            ))}
-          </select>
+            onChange={setSelectedMonth}
+            options={availableMonthsForSelectedYear.map((m) => ({
+              value: m.value,
+              label: m.name,
+            }))}
+            buttonClassName="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer flex items-center justify-between gap-2 text-left font-bold select-none h-[32px] w-28"
+            className="w-28"
+          />
 
           {/* Year Selector */}
-          <select
+          <CustomSelect
             value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
-          >
-            {availableYears.map(yr => (
-              <option key={yr} value={yr}>{yr}</option>
-            ))}
-          </select>
+            onChange={setSelectedYear}
+            options={availableYears.map((yr) => ({
+              value: yr,
+              label: yr,
+            }))}
+            buttonClassName="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer flex items-center justify-between gap-2 text-left font-bold select-none h-[32px] w-24"
+            className="w-24"
+          />
 
           {/* Branch Filter */}
-          <select
+          <CustomSelect
             value={selectedBranch}
-            onChange={(e) => setSelectedBranch(e.target.value)}
-            className="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer"
-          >
-            <option value="">All Branches</option>
-            {uniqueBranches.map(b => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
+            onChange={setSelectedBranch}
+            options={[
+              { value: "", label: "All Branches" },
+              ...uniqueBranches.map((b) => ({ value: b, label: b })),
+            ]}
+            buttonClassName="bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs px-2.5 py-1.5 focus:outline-none cursor-pointer flex items-center justify-between gap-2 text-left font-bold select-none h-[32px] w-32"
+            className="w-32"
+          />
         </div>
 
         {/* Search */}
