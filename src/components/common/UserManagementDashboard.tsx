@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
@@ -124,6 +124,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   }, []);
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi'>('leave');
+  const prevViewingStaffRef = useRef<Profile | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('user_management_active_subtab');
@@ -308,11 +309,14 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   // Reset subtab selection to 'leave' when viewingStaff is closed
   useEffect(() => {
-    if (!viewingStaff) {
+    if (prevViewingStaffRef.current !== null && viewingStaff === null) {
       handleSetActiveSubTab('leave');
+    }
+    if (!viewingStaff) {
       setShowAddLeaveForStaff(false);
       setEditingLeaveRecord(null);
     }
+    prevViewingStaffRef.current = viewingStaff;
   }, [viewingStaff]);
 
   // Reset add-leave view when subtab changes away from leave
