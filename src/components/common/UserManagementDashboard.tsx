@@ -1021,7 +1021,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer"
                       >
                         <ArrowLeft className="h-3.5 w-3.5" />
-                        Back to Leave History
                       </button>
                       <div>
                         <p className="text-xs text-theme-text-muted">

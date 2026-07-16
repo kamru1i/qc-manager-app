@@ -293,7 +293,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
           onClick={onBackClick}
           className="flex items-center gap-2 text-xs font-semibold text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer w-fit p-2 bg-theme-card-container/60 hover:bg-theme-card-bg border border-theme-border-input rounded-xl shadow-md"
         >
-          <ArrowLeft className="h-4 w-4 text-blue-400" /> Back to Add Leave
+          <ArrowLeft className="h-4 w-4 text-blue-400" />
         </button>
       )}
       {/* Staff Leave Leave Settlement Alert Banner */}

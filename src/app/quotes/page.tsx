@@ -206,6 +206,41 @@ export default function Dashboard({
     }
   }, [activeTab]);
 
+  // Backspace key navigation for Leaderboard and Reports dashboard views
+  useEffect(() => {
+    if (activeTab !== "leaderboard" && activeTab !== "reports") return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        const tag = activeEl.tagName.toUpperCase();
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          activeEl.hasAttribute("contenteditable")
+        ) {
+          return;
+        }
+      }
+
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        if (activeTab === "leaderboard" && viewingReports) {
+          updateViewingReports(false);
+        } else {
+          // Go back to the last quotes tab where the sidebar was visible (defaulting to 'entry')
+          const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
+          onTabChange(lastQuotesTab as any);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [activeTab, viewingReports, onTabChange]);
+
 
 
 
@@ -1593,6 +1628,10 @@ export default function Dashboard({
               <LeaderboardTable
                 profile={profile}
                 onViewFullReport={() => updateViewingReports(true)}
+                onBack={() => {
+                  const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
+                  onTabChange(lastQuotesTab as any);
+                }}
               />
             </Suspense>
           )}

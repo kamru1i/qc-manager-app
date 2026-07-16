@@ -360,7 +360,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2.5 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] font-sans"
             title="Back to Leave Tracker"
           >
-            <ArrowLeft className="h-4 w-4 text-blue-400" /> Back
+            <ArrowLeft className="h-4 w-4 text-blue-400" />
           </button>
         </div>
       )}

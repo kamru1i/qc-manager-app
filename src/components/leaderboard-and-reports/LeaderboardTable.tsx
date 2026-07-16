@@ -5,6 +5,7 @@ import {
   AlertCircle,
   FileSpreadsheet,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import { Profile } from "@/types";
 import { useLeaderboardData } from "@/hooks/quotes-tracker/useLeaderboardData";
@@ -16,11 +17,13 @@ import { CustomSelect } from "@/components/common/CustomSelect";
 interface LeaderboardTableProps {
   profile: Profile | null;
   onViewFullReport?: () => void;
+  onBack?: () => void;
 }
 
 export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   profile,
   onViewFullReport,
+  onBack,
 }) => {
   const {
     leaderboardData,
@@ -85,16 +88,27 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 shadow-lg">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           {/* Left: Title & Subtitle */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Award className="h-6 w-6 text-yellow-500" />
-              <h2 className="text-xl font-bold text-white tracking-wide">
-                Performance Leaderboard
-              </h2>
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-2 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-900 text-slate-400 hover:text-white cursor-pointer transition-all shrink-0"
+                title="Go Back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Award className="h-6 w-6 text-yellow-500" />
+                <h2 className="text-xl font-bold text-white tracking-wide">
+                  Performance Leaderboard
+                </h2>
+              </div>
+              <p className="text-slate-400 text-xs">
+                Live ranks and submission statistics, updated in real-time.
+              </p>
             </div>
-            <p className="text-slate-400 text-xs">
-              Live ranks and submission statistics, updated in real-time.
-            </p>
           </div>
 
           {/* Center: Search input (fitted in the middle of the header) */}

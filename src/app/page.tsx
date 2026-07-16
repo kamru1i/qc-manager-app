@@ -869,7 +869,13 @@ function AppPortalInner({
   }, [activeTab, activeChutiTab]);
 
   useEffect(() => {
-    if (activeTab && activeTab !== "kpi" && activeTab !== "profile_settings") {
+    if (
+      activeTab &&
+      activeTab !== "kpi" &&
+      activeTab !== "profile_settings" &&
+      activeTab !== "leaderboard" &&
+      activeTab !== "reports"
+    ) {
       setPreviousTab(activeTab);
       prevTabRef.current = activeTab;
     }
@@ -1417,7 +1423,9 @@ function AppPortalInner({
                 activeChutiTab === "govt_responses" ||
                 activeChutiTab === "settlement" ||
                 activeChutiTab === "team_leaves")) ||
-            activeTab === "kpi"
+            activeTab === "kpi" ||
+            activeTab === "leaderboard" ||
+            activeTab === "reports"
               ? "md:w-0 md:h-0 md:opacity-0 md:pointer-events-none md:overflow-hidden md:mb-0 md:mr-0"
               : "md:w-auto md:opacity-100 md:mb-0 md:mr-6"
           }`}
