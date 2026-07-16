@@ -10,8 +10,9 @@ export const LeaderboardSkeleton: React.FC<LeaderboardSkeletonProps> = ({ classN
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header: Title + Month Filter + View Report Button */}
+      {/* Header: Title + Search Skeleton + Month Filter + View Report Button */}
       <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${card} p-5`}>
+        {/* Left: Title Skeleton */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <div className={`w-6 h-6 rounded ${bar}`} />
@@ -19,17 +20,19 @@ export const LeaderboardSkeleton: React.FC<LeaderboardSkeletonProps> = ({ classN
           </div>
           <div className={`h-3.5 w-72 bg-slate-800/30 rounded-lg`} />
         </div>
+
+        {/* Center: Search input skeleton */}
+        <div className="w-full lg:w-64 xl:w-80">
+          <div className={`h-9 w-full bg-slate-950/40 border border-slate-800/40 rounded-xl`} />
+        </div>
+
+        {/* Right: Controls Skeleton */}
         <div className="flex items-center gap-3 flex-wrap w-full lg:w-auto justify-end">
-          {/* Month selector skeleton */}
-          <div className={`h-9 w-24 bg-slate-850/60 border border-slate-800/40 rounded-xl`} />
+          {/* Month selector skeleton (fixed width w-28) */}
+          <div className={`h-9 w-28 bg-slate-850/60 border border-slate-800/40 rounded-xl`} />
           {/* View Report button skeleton */}
           <div className="h-9 w-28 bg-blue-600/25 rounded-xl border border-blue-600/10" />
         </div>
-      </div>
-
-      {/* Filter Row - Search Input Skeleton Only */}
-      <div className="max-w-md">
-        <div className={`h-10 w-full ${bar} rounded-xl`} />
       </div>
 
       {/* Table Skeleton */}

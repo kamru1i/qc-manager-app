@@ -83,6 +83,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       {/* Header and Controls Card */}
       <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 backdrop-blur-md shadow-lg">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          {/* Left: Title & Subtitle */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Award className="h-6 w-6 text-yellow-500" />
@@ -95,12 +96,29 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             </p>
           </div>
 
+          {/* Center: Search input (fitted in the middle of the header) */}
+          <div className="w-full lg:w-64 xl:w-80">
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-555 text-slate-500" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search by name or codename..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-950/40 hover:bg-slate-950/60 border border-slate-800/60 hover:border-slate-700/60 text-white placeholder-slate-500 text-xs rounded-xl pl-9 pr-4 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-            {/* Month Dropdown (Always visible, filtered by months containing submissions) */}
+            {/* Month Dropdown (Always visible, fixed width of w-28 to prevent snap resizing) */}
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 text-white text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-28 bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 text-white text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all"
             >
               {availableMonthsForSelectedYear.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -120,22 +138,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               </button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Filter Row - Search Input Only */}
-      <div className="max-w-md">
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-500" />
-          </span>
-          <input
-            type="text"
-            placeholder="Search by name or codename..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900/30 hover:bg-slate-900/50 border border-slate-800/80 hover:border-slate-700/80 text-white placeholder-slate-500 text-xs rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-          />
         </div>
       </div>
 
