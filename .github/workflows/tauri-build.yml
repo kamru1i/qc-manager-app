@@ -146,6 +146,8 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    env:
+      SHOULD_SIGN_RELEASE: ""
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
