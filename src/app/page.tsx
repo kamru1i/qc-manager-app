@@ -40,7 +40,7 @@ import {
   RealtimeProvider,
   useRealtimeHandler,
 } from "@/contexts/RealtimeContext";
-
+import { updateGlobalRankCacheDirect } from "@/components/common/UserDisplayName";
 import { UserKpiPerformancePanel } from "@/components/common/user-management/UserKpiPerformancePanel";
 import ChutiDashboard from "@/app/chuti/page";
 import QuotesDashboard from "@/app/quotes/page";
@@ -996,6 +996,47 @@ function AppPortalInner({
       window.removeEventListener("profile-updated", handleProfileUpdated);
   }, [setProfile]);
 
+  const fetchAndCacheGlobalRankings = useCallback(async () => {
+    try {
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const currentYear = new Date().getFullYear().toString();
+      const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+
+      const { data, error } = await supabase.rpc('get_leaderboard_data', {
+        p_year: currentYear,
+        p_month: currentMonth,
+        p_period: 'monthly',
+        p_today: todayStr,
+        p_tz: timeZone,
+      });
+
+      if (error) throw error;
+
+      const newRanks: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        newRanks[row.user_id] = row.rank;
+      });
+
+      updateGlobalRankCacheDirect(newRanks);
+    } catch (err) {
+      console.error('Error fetching global rankings for navbar:', err);
+    }
+  }, []);
+
+  // Fetch rankings on mount
+  useEffect(() => {
+    fetchAndCacheGlobalRankings();
+  }, [fetchAndCacheGlobalRankings]);
+
+  // Register realtime handler for records to update rankings live
+  useRealtimeHandler(
+    "records",
+    useCallback(() => {
+      fetchAndCacheGlobalRankings();
+    }, [fetchAndCacheGlobalRankings])
+  );
+
   // Register realtime handler inside AppPortalInner under RealtimeProvider
   useRealtimeHandler(
     "profiles",
@@ -1021,9 +1062,11 @@ function AppPortalInner({
                 : p,
             ),
           );
+          // Update ranks on profile change
+          fetchAndCacheGlobalRankings();
         }
       },
-      [sessionUser.id, setProfile, setProfilesList],
+      [sessionUser.id, setProfile, setProfilesList, fetchAndCacheGlobalRankings],
     ),
   );
 

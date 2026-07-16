@@ -36,6 +36,11 @@ export const updateGlobalRankCache = (records: RecordItem[], profiles: Profile[]
   rankCacheListeners.forEach((listener) => listener());
 };
 
+export const updateGlobalRankCacheDirect = (ranks: Record<string, number>) => {
+  rankCache = ranks;
+  rankCacheListeners.forEach((listener) => listener());
+};
+
 interface UserDisplayNameProps {
   profile: Profile;
   badge?: BadgeInfo | null;
