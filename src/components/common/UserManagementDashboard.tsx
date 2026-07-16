@@ -132,6 +132,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, []);
 
+  // Restore viewingStaff on page reload/mount when profiles list is loaded
+  useEffect(() => {
+    if (profiles.length > 0 && !viewingStaff) {
+      const savedStaffId = localStorage.getItem('user_management_viewing_staff_id');
+      if (savedStaffId) {
+        const found = profiles.find(p => p.id === savedStaffId);
+        if (found) {
+          setViewingStaff(found);
+        }
+      }
+    }
+  }, [profiles, viewingStaff]);
+
   const handleSetActiveSubTab = (tab: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi') => {
     setActiveSubTab(tab);
     localStorage.setItem('user_management_active_subtab', tab);
