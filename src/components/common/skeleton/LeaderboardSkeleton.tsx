@@ -10,69 +10,74 @@ export const LeaderboardSkeleton: React.FC<LeaderboardSkeletonProps> = ({ classN
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header: Title + Switch + Filters */}
-      <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${card} p-4`}>
+      {/* Header: Title + Month Filter + View Report Button */}
+      <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${card} p-5`}>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className={`w-5 h-5 rounded ${bar}`} />
-            <div className={`h-5 w-56 ${bar}`} />
+            <div className={`w-6 h-6 rounded ${bar}`} />
+            <div className={`h-6 w-56 ${bar}`} />
           </div>
-          <div className={`h-3 w-72 bg-slate-800/30 rounded`} />
+          <div className={`h-3.5 w-72 bg-slate-800/30 rounded-lg`} />
         </div>
-        <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto justify-end">
-          {/* Yearly/Monthly toggle */}
-          <div className="flex items-center bg-slate-950/40 border border-slate-850 p-1 rounded-xl gap-1">
-            <div className={`h-7 w-16 ${bar} rounded-lg`} />
-            <div className="h-7 w-20 bg-blue-600/20 rounded-lg" />
-          </div>
-          {/* Month selector */}
-          <div className={`h-9 w-28 ${bar} rounded-xl`} />
-          {/* Year selector */}
-          <div className={`h-9 w-28 ${bar} rounded-xl`} />
+        <div className="flex items-center gap-3 flex-wrap w-full lg:w-auto justify-end">
+          {/* Month selector skeleton */}
+          <div className={`h-9 w-24 bg-slate-850/60 border border-slate-800/40 rounded-xl`} />
+          {/* View Report button skeleton */}
+          <div className="h-9 w-28 bg-blue-600/25 rounded-xl border border-blue-600/10" />
         </div>
       </div>
 
-      {/* Filter inputs row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className={`h-11 w-full ${bar} rounded-xl`} />
-        <div className={`h-11 w-full ${bar} rounded-xl`} />
-        <div className={`h-11 w-full ${bar} rounded-xl`} />
+      {/* Filter Row - Search Input Skeleton Only */}
+      <div className="max-w-md">
+        <div className={`h-10 w-full ${bar} rounded-xl`} />
       </div>
 
       {/* Table Skeleton */}
-      <div className="bg-slate-955 border border-slate-850/40 rounded-2xl overflow-hidden animate-pulse">
-        <div className="p-5 border-b border-slate-850/30 flex justify-between items-center">
-          <div className="h-4 w-48 bg-slate-800 rounded-md" />
-          <div className="h-8 w-24 bg-slate-800/60 rounded-lg" />
+      <div className="bg-slate-950/40 border border-slate-850/60 rounded-2xl overflow-hidden animate-pulse shadow-xl">
+        <div className="p-5 border-b border-slate-850/30 flex justify-between items-center bg-slate-900/20">
+          <div className="h-4.5 w-48 bg-slate-800 rounded-md" />
+          <div className="flex gap-2">
+            <div className="h-7 w-24 bg-slate-800/60 rounded-lg" />
+            <div className="h-7 w-28 bg-emerald-600/10 border border-emerald-500/10 rounded-lg" />
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-850/30 bg-slate-900/10">
-                <th className="p-4"><div className="h-3 w-10 bg-slate-800 rounded" /></th>
-                <th className="p-4"><div className="h-3 w-32 bg-slate-800 rounded" /></th>
-                <th className="p-4"><div className="h-3 w-16 bg-slate-800 rounded" /></th>
-                <th className="p-4"><div className="h-3 w-20 bg-slate-800 rounded" /></th>
-                <th className="p-4"><div className="h-3 w-24 bg-slate-800 rounded" /></th>
-                <th className="p-4"><div className="h-3 w-16 bg-slate-800 rounded" /></th>
-                <th className="p-4"><div className="h-3 w-20 bg-slate-800 rounded" /></th>
+                <th className="p-4 pl-6 w-[36%]"><div className="h-3 w-28 bg-slate-800 rounded-md" /></th>
+                <th className="p-4 w-[16%] text-center"><div className="h-3 w-20 bg-slate-850 mx-auto rounded-md" /></th>
+                <th className="p-4 w-[16%] text-center"><div className="h-3 w-12 bg-slate-850 mx-auto rounded-md" /></th>
+                <th className="p-4 w-[16%] text-center"><div className="h-3 w-14 bg-slate-850 mx-auto rounded-md" /></th>
+                <th className="p-4 w-[16%] text-center pr-6"><div className="h-3 w-12 bg-slate-850 mx-auto rounded-md" /></th>
               </tr>
             </thead>
             <tbody>
               {Array.from({ length: 8 }).map((_, idx) => (
                 <tr key={idx} className="border-b border-slate-850/20">
-                  <td className="p-4"><div className="h-4 w-6 bg-slate-800/60 rounded" /></td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-800" />
-                      <div className="h-4 w-28 bg-slate-800/80 rounded" />
+                  {/* Name column skeleton */}
+                  <td className="p-4 pl-6">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="h-4.5 w-32 bg-slate-800/80 rounded-md" />
+                      <div className="h-3 w-12 bg-slate-850 rounded-md" />
                     </div>
                   </td>
-                  <td className="p-4"><div className="h-4 w-12 bg-slate-800/50 rounded" /></td>
-                  <td className="p-4"><div className="h-4 w-8 bg-slate-800/50 rounded" /></td>
-                  <td className="p-4"><div className="h-4 w-10 bg-slate-800/50 rounded" /></td>
-                  <td className="p-4"><div className="h-4 w-16 bg-slate-800/50 rounded" /></td>
-                  <td className="p-4"><div className="h-4 w-20 bg-slate-800/50 rounded" /></td>
+                  {/* Rank column skeleton */}
+                  <td className="p-4 text-center">
+                    <div className="h-7 w-20 bg-slate-800/40 border border-slate-800/25 rounded-xl mx-auto" />
+                  </td>
+                  {/* Today column skeleton */}
+                  <td className="p-4 text-center">
+                    <div className="h-4.5 w-8 bg-slate-850 mx-auto rounded-md" />
+                  </td>
+                  {/* Monthly column skeleton */}
+                  <td className="p-4 text-center">
+                    <div className="h-4.5 w-10 bg-slate-850 mx-auto rounded-md" />
+                  </td>
+                  {/* Yearly column skeleton */}
+                  <td className="p-4 text-center pr-6">
+                    <div className="h-4.5 w-10 bg-slate-850 mx-auto rounded-md" />
+                  </td>
                 </tr>
               ))}
             </tbody>
