@@ -26,14 +26,11 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
     loading,
     error,
     leaderboardPeriod,
-    setLeaderboardPeriod,
     selectedYear,
-    setSelectedYear,
     selectedMonth,
     setSelectedMonth,
     searchQuery,
     setSearchQuery,
-    availableYears,
     availableMonthsForSelectedYear,
   } = useLeaderboardData(profile);
 
@@ -99,30 +96,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-            {/* Period Switcher */}
-            <div className="flex items-center bg-slate-950/60 border border-slate-800 p-1 rounded-xl gap-1">
-              <button
-                onClick={() => setLeaderboardPeriod("monthly")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                  leaderboardPeriod === "monthly"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setLeaderboardPeriod("yearly")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                  leaderboardPeriod === "yearly"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Yearly
-              </button>
-            </div>
-
             {/* Month Dropdown (Always visible, filtered by months containing submissions) */}
             <select
               value={selectedMonth}
@@ -132,19 +105,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               {availableMonthsForSelectedYear.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Year Dropdown */}
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 text-white text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
                 </option>
               ))}
             </select>
