@@ -9,6 +9,7 @@ import {
 import { Profile, ChutiRecordWithProfile, BulkRepresentative } from "@/types";
 import { formatDate, formatTimeToAMPM } from "@/utils/dashboardHelpers";
 import { CustomSelect } from "@/components/common/CustomSelect";
+import { supabase } from "@/utils/supabase";
 
 interface LeaveApprovalPanelProps {
   role: "admin" | "supervisor";
@@ -52,6 +53,44 @@ export function LeaveApprovalPanel({
 }: LeaveApprovalPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationTypeFilter, setNotificationTypeFilter] = useState("all");
+  const [localApprovingIds, setLocalApprovingIds] = useState<Set<string>>(new Set());
+
+  const handleApproveResponse = async (nId: string, itemType: string) => {
+    setLocalApprovingIds(prev => {
+      const next = new Set(prev);
+      next.add(nId);
+      return next;
+    });
+    try {
+      if (itemType === 'admin_holiday_response') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error } = await supabase
+            .from('dismissed_notifications')
+            .insert({
+              user_id: user.id,
+              notification_id: nId
+            });
+          if (error && error.code !== '23505') throw error;
+        }
+      } else if (itemType === 'admin_settlement_response') {
+        const settlementId = nId.replace('admin-settlement-resp-', '');
+        const { error } = await supabase
+          .from('leave_settlements')
+          .update({ status: 'processed' })
+          .eq('id', settlementId);
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error('Failed to approve response:', err);
+    } finally {
+      setLocalApprovingIds(prev => {
+        const next = new Set(prev);
+        next.delete(nId);
+        return next;
+      });
+    }
+  };
 
   const notificationTypeOptions = useMemo(() => {
     if (role === "supervisor") {
@@ -428,19 +467,25 @@ export function LeaveApprovalPanel({
       }
       case "holiday_response": {
         const n = item.data;
+        const isSettlement = n.type === 'admin_settlement_response';
+        const isApproving = localApprovingIds.has(n.id);
         return (
           <div
             key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4 relative overflow-hidden"
+            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-teal-500" />
-            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans">
+            <div className={`absolute top-0 left-0 w-1.5 h-full ${isSettlement ? 'bg-indigo-500' : 'bg-teal-500'}`} />
+            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans flex-1">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="font-bold text-theme-text-primary text-[13px]">
                   {n.title}
                 </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-900/60 text-teal-400 font-bold tracking-wide uppercase">
-                  Holiday Response
+                <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wide uppercase ${
+                  isSettlement 
+                    ? 'bg-indigo-950/60 border-indigo-900/60 text-indigo-400' 
+                    : 'bg-teal-950/60 border-teal-900/60 text-teal-400'
+                }`}>
+                  {isSettlement ? 'Settlement Response' : 'Holiday Response'}
                 </span>
                 {n.timestamp && (
                   <span className="text-[9px] text-theme-text-muted font-mono">
@@ -453,6 +498,15 @@ export function LeaveApprovalPanel({
               <p className="text-theme-text-secondary font-normal leading-relaxed">
                 {n.body}
               </p>
+            </div>
+            <div className="flex items-center shrink-0 pl-2 self-end sm:self-center">
+              <button
+                disabled={isApproving}
+                onClick={() => handleApproveResponse(n.id, n.type)}
+                className="px-3.5 py-1.5 bg-theme-border-muted border border-theme-border-active hover:bg-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 shrink-0 font-sans"
+              >
+                {isApproving ? 'Approving...' : 'Approve'}
+              </button>
             </div>
           </div>
         );

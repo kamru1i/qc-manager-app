@@ -17,6 +17,7 @@ export interface NotificationItem {
   text?: string;
   holidayDate?: string;
   holidayName?: string;
+  data?: any;
 }
 
 interface UseDerivedStateParams {
@@ -354,13 +355,15 @@ export function useDerivedState({
       groupedSupervisorRequests
   ]);
 
-  // --- Admin/Supervisor Holiday Notifications ---
+  // --- Admin/Supervisor Holiday & Settlement Notifications ---
   const adminHolidayNotifications = useMemo(() => {
     if (!initialFetchDone || !sessionUser || !profile || profile.role !== 'admin') {
       return [];
     }
 
     const list: NotificationItem[] = [];
+
+    // 1. Govt Holiday Responses
     holidayResponses.forEach((r: any) => {
       // Find the staff profile to check if they have allow_reserve enabled
       const staff = profilesList.find(p => p.id === r.user_id);
@@ -385,9 +388,46 @@ export function useDerivedState({
       }
     });
 
+    // 2. Leave Settlement Responses
+    leaveSettlements.forEach((s: any) => {
+      if (s.status === 'responded') {
+        const staff = profilesList.find(p => p.id === s.user_id);
+        const staffName = staff?.full_name || 'Staff';
+        const staffCode = staff?.username?.toUpperCase() || 'N/A';
+        const periodLabel = `${s.year} ${s.period}`;
+        
+        let choiceText = '';
+        if (s.action_type === 'split') {
+          const parts: string[] = [];
+          if (s.carry_forward_days && s.carry_forward_days > 0) parts.push(`${s.carry_forward_days} days CF`);
+          if (s.payment_days && s.payment_days > 0) parts.push(`${s.payment_days} payout`);
+          if (s.adjust_leave_days && s.adjust_leave_days > 0) parts.push(`${s.adjust_leave_days} adjust`);
+          choiceText = parts.join(', ');
+        } else if (s.action_type === 'carry_forward') {
+          choiceText = `${s.remaining_days} days CF`;
+        } else if (s.action_type === 'payment') {
+          choiceText = `${s.remaining_days} days payout`;
+        } else if (s.action_type === 'adjust_leave') {
+          choiceText = `${s.remaining_days} days adjust`;
+        }
+
+        const title = 'Leave Settlement Response 🔔';
+        const body = `${staffName} (${staffCode}) submitted preference for ${s.leave_category} (${periodLabel}): ${choiceText}`;
+        
+        list.push({
+          id: `admin-settlement-resp-${s.id}`,
+          type: 'admin_settlement_response',
+          timestamp: s.updated_at || s.created_at || currentSessionTime,
+          title,
+          body,
+          data: s
+        });
+      }
+    });
+
     const filtered = list.filter(n => !dismissedNotificationIds?.has(n.id));
     return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [initialFetchDone, sessionUser, profile, holidayResponses, profilesList, dismissedNotificationIds, currentSessionTime]);
+  }, [initialFetchDone, sessionUser, profile, holidayResponses, leaveSettlements, profilesList, dismissedNotificationIds, currentSessionTime]);
 
   const unreadUserNotificationsCount = useMemo(() => 
     userNotificationsList.filter(
