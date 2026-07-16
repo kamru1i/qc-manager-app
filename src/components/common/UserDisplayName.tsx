@@ -99,49 +99,47 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
   const displayRank = rankProp !== undefined ? rankProp : (rank !== null ? rank : (badge ? badge.rank : null));
 
   return (
-    <span className="inline-flex items-center align-middle flex-wrap gap-y-1">
-      <span
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className={`relative group inline-flex items-center select-none cursor-help pb-0.5 ${nameClassName}`}
-      >
-        <span>{profile.full_name || 'User'}</span>
-
-        {/* Custom Hover Tooltip for Codename & Role Info */}
-        {showTooltip && (
-          <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-44 p-2.5 text-[11px] leading-relaxed text-theme-text-secondary bg-theme-page-bg/95 border border-theme-border-input rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto normal-case font-normal text-left">
-            <div className="font-semibold text-theme-text-primary flex items-center flex-wrap gap-1">
-              <span>Codename:</span>
-              <span className="text-blue-400 font-mono select-all">{profile.username ? profile.username.toUpperCase() : ''}</span>
-              {profile.role && (
-                <span className="text-[10px] text-theme-text-muted font-normal">
-                  ({profile.role === 'admin' ? 'Admin' : profile.role === 'supervisor' ? 'Supervisor' : 'Staff'})
-                </span>
-              )}
-            </div>
-            {profile.job_role && (
-              <>
-                <div className="border-t border-theme-border-muted my-0.5"></div>
-                <div className="text-theme-text-muted">
-                  Job Role: <span className="text-theme-text-primary font-semibold ml-1">{profile.job_role}</span>
-                </div>
-              </>
-            )}
-          </span>
-        )}
-      </span>
+    <span
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`relative group inline-block align-middle select-none cursor-help pb-0.5 whitespace-normal ${nameClassName}`}
+    >
+      <span className="align-middle">{profile.full_name || 'User'}</span>
 
       {/* Verified Badge next to the name with tight spacing */}
       {showBadge && badge && (
-        <span className="ml-1 inline-flex items-center align-middle">
+        <span className="ml-1 inline-block align-middle shrink-0">
           <VerifiedBadge badge={badge} position={tooltipPosition} />
         </span>
       )}
 
       {/* Dynamic rank label rendered immediately after name/badge */}
       {showRank && displayRank !== null && (
-        <span className="text-[10px] text-theme-text-muted font-extrabold ml-1 select-none align-middle">
+        <span className="text-[10px] text-theme-text-muted font-extrabold ml-1 inline-block align-middle shrink-0 select-none">
           #{String(displayRank).padStart(2, '0')}
+        </span>
+      )}
+
+      {/* Custom Hover Tooltip for Codename & Role Info */}
+      {showTooltip && (
+        <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 flex flex-col gap-1 z-50 w-44 p-2.5 text-[11px] leading-relaxed text-theme-text-secondary bg-theme-page-bg/95 border border-theme-border-input rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto normal-case font-normal text-left">
+          <div className="font-semibold text-theme-text-primary flex items-center flex-wrap gap-1">
+            <span>Codename:</span>
+            <span className="text-blue-400 font-mono select-all">{profile.username ? profile.username.toUpperCase() : ''}</span>
+            {profile.role && (
+              <span className="text-[10px] text-theme-text-muted font-normal">
+                ({profile.role === 'admin' ? 'Admin' : profile.role === 'supervisor' ? 'Supervisor' : 'Staff'})
+              </span>
+            )}
+          </div>
+          {profile.job_role && (
+            <>
+              <div className="border-t border-theme-border-muted my-0.5"></div>
+              <div className="text-theme-text-muted">
+                Job Role: <span className="text-theme-text-primary font-semibold ml-1">{profile.job_role}</span>
+              </div>
+            </>
+          )}
         </span>
       )}
     </span>
