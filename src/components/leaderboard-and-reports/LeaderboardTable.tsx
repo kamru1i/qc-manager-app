@@ -215,14 +215,14 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-850/30 bg-slate-900/10 text-xs font-semibold text-slate-400">
-                <th className="p-4 pl-6 text-left">Employee Name</th>
-                <th className="p-4 text-center w-28">Current Rank</th>
-                <th className="p-4 text-center w-28">Today</th>
-                <th className="p-4 text-center w-28">Monthly</th>
-                <th className="p-4 text-center w-28 pr-6">Yearly</th>
+                <th className="p-4 pl-6 text-left w-[36%]">Employee Name</th>
+                <th className="p-4 text-center w-[16%]">Current Rank</th>
+                <th className="p-4 text-center w-[16%]">Today</th>
+                <th className="p-4 text-center w-[16%]">Monthly</th>
+                <th className="p-4 text-center w-[16%] pr-6">Yearly</th>
               </tr>
             </thead>
             <tbody>
