@@ -25,9 +25,11 @@ import {
   Settings,
   Calendar,
   BarChart2,
-  FileText
+  FileText,
+  TrendingUp
 } from 'lucide-react';
 import { UserDisplayName } from '@/components/common/UserDisplayName';
+import { UserAnalyticsPanel } from '@/components/common/user-management/UserAnalyticsPanel';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 
 // Extracted Subtabs Panels
@@ -121,16 +123,16 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, []);
 
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>('leave');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi'>('leave');
 
   useEffect(() => {
     const saved = localStorage.getItem('user_management_active_subtab');
-    if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'kpi') {
-      setActiveSubTab(saved as 'profile' | 'leave' | 'quotes' | 'kpi');
+    if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'analytics' || saved === 'kpi') {
+      setActiveSubTab(saved as any);
     }
   }, []);
 
-  const handleSetActiveSubTab = (tab: 'profile' | 'leave' | 'quotes' | 'kpi') => {
+  const handleSetActiveSubTab = (tab: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi') => {
     setActiveSubTab(tab);
     localStorage.setItem('user_management_active_subtab', tab);
   };
@@ -284,6 +286,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       } else if (activeSubTab === 'kpi' && !isKpiAllowed) {
         handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isQuotesAllowed ? 'quotes' : 'profile');
       } else if (activeSubTab === 'quotes' && !isQuotesAllowed) {
+        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isKpiAllowed ? 'kpi' : 'profile');
+      } else if (activeSubTab === 'analytics' && !isQuotesAllowed) {
         handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isKpiAllowed ? 'kpi' : 'profile');
       }
     }
@@ -888,6 +892,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <FileText className="h-3.5 w-3.5 text-purple-400" /> Quotes History
                   </button>
                 )}
+                {viewingStaff.has_quotes_access && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
+                  <button
+                    type="button"
+                    onClick={() => handleSetActiveSubTab('analytics')}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeSubTab === 'analytics'
+                        ? 'border-blue-500 text-blue-400 font-bold'
+                        : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
+                    }`}
+                  >
+                    <TrendingUp className="h-3.5 w-3.5 text-indigo-400" /> Analytics
+                  </button>
+                )}
                 {canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
                   <button
                     type="button"
@@ -1102,6 +1119,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
               {activeSubTab === 'quotes' && viewingStaff && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
                 <UserQuotesHistoryPanel viewingStaff={viewingStaff} />
+              )}
+
+              {activeSubTab === 'analytics' && viewingStaff && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
+                <UserAnalyticsPanel viewingStaff={viewingStaff} profilesList={profiles} />
               )}
 
               {activeSubTab === 'kpi' && viewingStaff && canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
