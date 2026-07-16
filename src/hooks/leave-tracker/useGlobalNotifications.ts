@@ -8,7 +8,7 @@ import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
 import { toast } from 'react-hot-toast';
 import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { useRealtimeHandler } from '@/contexts/RealtimeContext';
+import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 
 export function useGlobalNotifications(
   sessionUser: SupabaseUser | null,
@@ -280,8 +280,29 @@ export function useGlobalNotifications(
     };
   }, [sessionUser, handleRealtimeDataChanged]);
 
+  const handleProfileRealtimeChange = useCallback((payload: RealtimePayload) => {
+    if (payload.eventType === 'UPDATE') {
+      const oldRow = payload.old as Partial<Profile>;
+      const newRow = payload.new as Partial<Profile>;
+      
+      const criticalFields: (keyof Profile)[] = [
+        'username_request_status',
+        'profile_change_status',
+        'password_reset_status',
+        'role',
+        'supervisor_ids',
+        'has_quotes_access',
+        'has_chuti_access'
+      ];
+      
+      const hasCriticalChange = criticalFields.some(field => oldRow[field] !== newRow[field]);
+      if (!hasCriticalChange) return;
+    }
+    handleRealtimeDataChanged();
+  }, [handleRealtimeDataChanged]);
+
   // Register realtime handlers for profiles and govt_holiday_responses to update notifications in real time
-  useRealtimeHandler('profiles', handleRealtimeDataChanged);
+  useRealtimeHandler('profiles', handleProfileRealtimeChange);
   useRealtimeHandler(
     'govt_holiday_responses',
     useCallback(

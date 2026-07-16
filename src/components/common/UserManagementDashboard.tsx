@@ -569,13 +569,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         details,
       });
 
-      // Auto cleanup logs older than 90 days
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      await supabase
-        .from('audit_logs')
-        .delete()
-        .lt('created_at', ninetyDaysAgo.toISOString());
+
     } catch (e) {
       console.error('Audit logging failed:', e);
     }

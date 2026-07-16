@@ -607,13 +607,7 @@ export const useQuotesDashboardData = () => {
         details: details
       });
 
-      // Auto cleanup logs older than 90 days
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      await supabase
-        .from('audit_logs')
-        .delete()
-        .lt('created_at', ninetyDaysAgo.toISOString());
+
 
       // Automatically refresh logs if active
       if (navigator.onLine && (profile.role === 'admin' || profile.role === 'supervisor')) {

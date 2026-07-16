@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
-import { useRealtimeHandler } from '@/contexts/RealtimeContext';
+import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { Profile } from '@/types';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 
@@ -188,8 +188,20 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
     };
   }, []);
 
+  const handleProfileRealtimeUpdate = useCallback((payload: RealtimePayload) => {
+    if (payload.eventType === 'UPDATE') {
+      const oldRow = payload.old as Partial<Profile>;
+      const newRow = payload.new as Partial<Profile>;
+      
+      const criticalFields: (keyof Profile)[] = ['username', 'full_name', 'role', 'has_quotes_access'];
+      const hasCriticalChange = criticalFields.some(field => oldRow[field] !== newRow[field]);
+      if (!hasCriticalChange) return;
+    }
+    handleRealtimeUpdate();
+  }, [handleRealtimeUpdate]);
+
   useRealtimeHandler('records', handleRealtimeUpdate);
-  useRealtimeHandler('profiles', handleRealtimeUpdate);
+  useRealtimeHandler('profiles', handleProfileRealtimeUpdate);
 
   // Derived filter options based on availableDates
   const availableYears = useMemo(() => {
