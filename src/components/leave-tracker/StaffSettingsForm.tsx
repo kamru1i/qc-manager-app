@@ -150,9 +150,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   delegatedKpiSupervisorId,
   setDelegatedKpiSupervisorId,
 }) => {
-  const showLeaveSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'leave_settings', supervisors);
-  const showQuotesSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'quotes_settings', supervisors);
-  const showKpiSettings = isNewUser ? (isAdmin || isSupervisor) : (canAccessProfileSection(currentUser || null, viewingStaff, 'kpi_settings', supervisors) && !!setKpiSkills);
+  const showLeaveSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'leave_settings');
+  const showQuotesSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'quotes_settings');
+  const showKpiSettings = isNewUser ? (isAdmin || isSupervisor) : (canAccessProfileSection(currentUser || null, viewingStaff, 'kpi_settings') && !!setKpiSkills);
   const [newSkillText, setNewSkillText] = React.useState("");
   const [newDeptIndicatorText, setNewDeptIndicatorText] = React.useState("");
   const [newOtherDeptIndicatorText, setNewOtherDeptIndicatorText] = React.useState("");

@@ -87,10 +87,12 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Periodic check every 12 seconds
+    // Periodic check every 45 seconds — the online/offline listeners above catch
+    // most transitions instantly; this interval is just a safety net, and on Tauri
+    // each tick is a network HEAD ping (egress), so keep it infrequent.
     const intervalId = setInterval(() => {
       checkConnectivity();
-    }, 12000);
+    }, 45000);
 
     return () => {
       window.removeEventListener("online", handleOnline);

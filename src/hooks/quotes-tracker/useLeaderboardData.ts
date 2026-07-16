@@ -3,6 +3,7 @@ import { supabase } from '@/utils/supabase';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { Profile } from '@/types';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
+import { fetchSubmittedAtRange, buildAvailableDates } from '@/utils/availableDatesHelper';
 
 export interface LeaderboardUser {
   user_id: string;
@@ -115,37 +116,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // Fetch unique month/year dates that contain submitted records
   const fetchAvailableDates = useCallback(async () => {
     try {
-      const [earliestResult, latestResult] = await Promise.all([
-        supabase.from('records').select('submitted_at').order('submitted_at', { ascending: true }).limit(1),
-        supabase.from('records').select('submitted_at').order('submitted_at', { ascending: false }).limit(1),
-      ]);
-
-      const earliestDate = earliestResult.data?.[0]?.submitted_at ? new Date(earliestResult.data[0].submitted_at) : null;
-      const latestDate = latestResult.data?.[0]?.submitted_at ? new Date(latestResult.data[0].submitted_at) : null;
-
-      const datesSet = new Set<string>();
-
-      // Always include current month/year
-      const now = new Date();
-      const currentYearStr = now.getFullYear().toString();
-      const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
-      datesSet.add(`${currentYearStr}-${currentMonthStr}`);
-      datesSet.add('2026-06'); // backfill month
-
-      if (earliestDate && latestDate) {
-        const cursor = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1);
-        const end = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
-        while (cursor <= end) {
-          datesSet.add(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
-          cursor.setMonth(cursor.getMonth() + 1);
-        }
-      }
-
-      const parsedDates = Array.from(datesSet).map(s => {
-        const [year, month] = s.split('-');
-        return { year, month };
-      });
-      setAvailableDates(parsedDates);
+      const { earliestDate, latestDate } = await fetchSubmittedAtRange();
+      setAvailableDates(buildAvailableDates(earliestDate, latestDate));
     } catch (err) {
       console.error('Error fetching available dates for leaderboard:', err);
     }

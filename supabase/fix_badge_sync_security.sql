@@ -122,9 +122,12 @@ BEGIN
   LIMIT 5;
 
   -- খ. যারা আগের মাসের টপ ৫-এ নেই, তাদের প্রোফাইলের ব্যাজ মুছে ফেলা
+  -- Only touch rows that actually carry the badge — otherwise every profile row
+  -- gets a new version on each run and realtime emits an UPDATE per profile.
   UPDATE public.profiles
   SET global_settings = COALESCE(global_settings, '{}'::JSONB) - 'top_performer_badge'
-  WHERE id NOT IN (SELECT user_id FROM temp_top_5);
+  WHERE id NOT IN (SELECT user_id FROM temp_top_5)
+    AND global_settings ? 'top_performer_badge';
 
   -- গ. টপ ৫ পারফর্মারদের লুপ চালিয়ে ধারাবাহিকতা (streaks) ও বার্ষিক উইন ক্যালকুলেট করে আপডেট করা
   FOR r_user IN (SELECT * FROM temp_top_5) LOOP

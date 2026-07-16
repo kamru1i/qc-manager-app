@@ -140,8 +140,7 @@ const escapeHtml = (unsafeStr: unknown): string => {
 const buildTeamWiseTablesHtml = (
   recordsToExport: ChutiRecord[],
   profilesList: Profile[],
-  profile: Profile | null,
-  _isExcel: boolean
+  profile: Profile | null
 ): string => {
   const headersHtml = `
     <tr>
@@ -1096,7 +1095,7 @@ export const exportHelper = {
       return;
     }
 
-    const tablesHtml = buildTeamWiseTablesHtml(recordsToExport, profilesList, profile, true);
+    const tablesHtml = buildTeamWiseTablesHtml(recordsToExport, profilesList, profile);
 
     const html = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -1144,7 +1143,7 @@ export const exportHelper = {
       return;
     }
 
-    const tablesHtml = buildTeamWiseTablesHtml(recordsToExport, profilesList, profile, false);
+    const tablesHtml = buildTeamWiseTablesHtml(recordsToExport, profilesList, profile);
 
     const supervisorName = profile?.full_name || profile?.username || 'Supervisor';
     const documentTitle = `${selectedDate}-${supervisorName}'s Team Leave record`;

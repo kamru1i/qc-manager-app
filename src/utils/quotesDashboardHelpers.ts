@@ -1,14 +1,6 @@
 import { RecordItem } from '@/types';
 import { toast } from 'react-hot-toast';
 
-interface TauriWindow extends Window {
-  __TAURI__?: {
-    core: {
-      invoke: (cmd: string, args?: Record<string, unknown>) => Promise<string>;
-    };
-  };
-}
-
 // Helper function to format date from ISO string (or YYYY-MM-DD) to DD-MM-YYYY format
 export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';

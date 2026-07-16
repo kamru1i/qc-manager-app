@@ -115,8 +115,7 @@ export const canAccessModule = (
 export const canAccessProfileSection = (
   currentUser: Profile | null,
   targetUser: Profile | null,
-  section: 'leave_settings' | 'kpi_settings' | 'quotes_settings' | 'basic_details',
-  _profilesList: Profile[] = []
+  section: 'leave_settings' | 'kpi_settings' | 'quotes_settings' | 'basic_details'
 ): boolean => {
   if (!currentUser || !targetUser) return false;
   if (currentUser.role === 'admin') return true;

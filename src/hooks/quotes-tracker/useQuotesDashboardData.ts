@@ -10,6 +10,7 @@ import { useRecordActions } from '@/hooks/leave-tracker/useRecordActions';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
 import { toast } from 'react-hot-toast';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
+import { fetchSubmittedAtRange, buildAvailableDates } from '@/utils/availableDatesHelper';
 import {
   syncOfflineData,
   setCacheData,
@@ -483,30 +484,9 @@ export const useQuotesDashboardData = () => {
         try {
           // Optimized: fetch only the earliest and latest submitted_at to determine
           // the range of year-month pairs, instead of paginating through ALL records.
-          let earliestQuery = supabase
-            .from('records')
-            .select('submitted_at')
-            .order('submitted_at', { ascending: true })
-            .limit(1);
-
-          let latestQuery = supabase
-            .from('records')
-            .select('submitted_at')
-            .order('submitted_at', { ascending: false })
-            .limit(1);
-
-          if (profile.role !== 'admin' && profile.role !== 'supervisor') {
-            earliestQuery = earliestQuery.eq('user_id', sessionUser.id);
-            latestQuery = latestQuery.eq('user_id', sessionUser.id);
-          }
-
-          const [earliestResult, latestResult] = await Promise.all([earliestQuery, latestQuery]);
-
-          if (earliestResult.error) throw earliestResult.error;
-          if (latestResult.error) throw latestResult.error;
-
-          earliestDate = earliestResult.data?.[0]?.submitted_at ? new Date(earliestResult.data[0].submitted_at) : null;
-          latestDate = latestResult.data?.[0]?.submitted_at ? new Date(latestResult.data[0].submitted_at) : null;
+          const scopeUserId =
+            profile.role !== 'admin' && profile.role !== 'supervisor' ? sessionUser.id : undefined;
+          ({ earliestDate, latestDate } = await fetchSubmittedAtRange(scopeUserId));
         } catch (netError: unknown) {
           const errMsg = netError instanceof Error ? netError.message : String(netError);
           console.error('Failed to fetch available dates online, falling back to cache:', errMsg, netError);
@@ -538,35 +518,8 @@ export const useQuotesDashboardData = () => {
         }
       }
 
-      const datesSet = new Set<string>();
-
-      // Always include current year-month
-      const now = new Date();
-      const currentYearStr = now.getFullYear().toString();
-      const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
-      datesSet.add(`${currentYearStr}-${currentMonthStr}`);
-      // Ensure June 2026 is always available since it has been restored/backfilled
-      datesSet.add('2026-06');
-
-      if (earliestDate && !isNaN(earliestDate.getTime()) && latestDate && !isNaN(latestDate.getTime())) {
-        // Generate all year-month pairs in the range [earliest, latest]
-        const cursor = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1);
-        const end = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
-
-        while (cursor <= end) {
-          const y = cursor.getFullYear().toString();
-          const m = String(cursor.getMonth() + 1).padStart(2, '0');
-          datesSet.add(`${y}-${m}`);
-          cursor.setMonth(cursor.getMonth() + 1);
-        }
-      }
-
-      const parsedDates = Array.from(datesSet).map(s => {
-        const [year, month] = s.split('-');
-        return { year, month };
-      });
-
-      setAvailableDates(parsedDates);
+      // Shared logic: current month + backfill month + full [earliest, latest] range
+      setAvailableDates(buildAvailableDates(earliestDate, latestDate));
     } catch (err) {
       console.error('Error fetching available dates:', err);
     }

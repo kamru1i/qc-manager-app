@@ -37,7 +37,9 @@ export const UserAnalyticsPanel: React.FC<UserAnalyticsPanelProps> = ({
       try {
         const { data, error } = await supabase
           .from('records')
-          .select('*')
+          // Column-limited to the RecordItem fields the analytics view consumes
+          // (avoids shipping the user's full row payloads on every profile view)
+          .select('id, user_id, file_name, branch_name, codename, file_type, submitted_at, created_at')
           .eq('user_id', viewingStaff.id);
 
         if (error) throw error;
