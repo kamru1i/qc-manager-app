@@ -718,6 +718,20 @@ function AppPortalInner({
     }, 3000);
 
     const triggerBadgeSync = async () => {
+      // Once-daily guard: badges are computed from the PREVIOUS month's records,
+      // so re-running the RPC on every mount only rewrites identical rows and
+      // floods realtime with profile UPDATE events. One run per device per day
+      // is more than enough to keep badges current.
+      const BADGE_SYNC_KEY = "badge_sync_last_run";
+      const todayStr = new Date().toLocaleDateString("en-CA");
+      try {
+        if (localStorage.getItem(BADGE_SYNC_KEY) === todayStr) {
+          return; // deferTimer above still fetches profiles at 3s
+        }
+      } catch {
+        // localStorage unavailable — fall through and sync anyway
+      }
+
       try {
         const { error } = await supabase.rpc("sync_top_performer_badges");
         if (error) {
@@ -727,6 +741,11 @@ function AppPortalInner({
           );
           fetchProfiles();
         } else {
+          try {
+            localStorage.setItem(BADGE_SYNC_KEY, todayStr);
+          } catch {
+            // ignore storage failures
+          }
           fetchProfiles();
         }
       } catch (err) {
@@ -1030,17 +1049,48 @@ function AppPortalInner({
     }
   }, []);
 
-  // Fetch rankings on mount
-  useEffect(() => {
+  // Throttle rank-cache RPC calls — realtime records/profiles events can burst,
+  // and each unthrottled event previously fired a full get_leaderboard_data RPC
+  // on every connected client. Trailing timeout keeps ranks eventually fresh.
+  const RANKINGS_THROTTLE_MS = 30000;
+  const lastRankingsFetchRef = useRef<number>(0);
+  const pendingRankingsFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const throttledFetchGlobalRankings = useCallback(() => {
+    const now = Date.now();
+    const elapsed = now - lastRankingsFetchRef.current;
+    if (elapsed < RANKINGS_THROTTLE_MS) {
+      if (!pendingRankingsFetchRef.current) {
+        pendingRankingsFetchRef.current = setTimeout(() => {
+          pendingRankingsFetchRef.current = null;
+          lastRankingsFetchRef.current = Date.now();
+          fetchAndCacheGlobalRankings();
+        }, RANKINGS_THROTTLE_MS - elapsed);
+      }
+      return;
+    }
+    lastRankingsFetchRef.current = now;
     fetchAndCacheGlobalRankings();
   }, [fetchAndCacheGlobalRankings]);
+
+  // Cleanup pending rankings refetch on unmount
+  useEffect(() => {
+    return () => {
+      if (pendingRankingsFetchRef.current) clearTimeout(pendingRankingsFetchRef.current);
+    };
+  }, []);
+
+  // Fetch rankings on mount (first call passes through the throttle and stamps it)
+  useEffect(() => {
+    throttledFetchGlobalRankings();
+  }, [throttledFetchGlobalRankings]);
 
   // Register realtime handler for records to update rankings live
   useRealtimeHandler(
     "records",
     useCallback(() => {
-      fetchAndCacheGlobalRankings();
-    }, [fetchAndCacheGlobalRankings])
+      throttledFetchGlobalRankings();
+    }, [throttledFetchGlobalRankings])
   );
 
   // Register realtime handler inside AppPortalInner under RealtimeProvider
@@ -1068,11 +1118,26 @@ function AppPortalInner({
                 : p,
             ),
           );
-          // Update ranks on profile change
-          fetchAndCacheGlobalRankings();
+          // Update ranks only when a rank-relevant field actually changed.
+          // Skips noise like global_settings session heartbeats, which previously
+          // fired a full leaderboard RPC on every profile update.
+          const oldRow = payload.old as Partial<Profile>;
+          const newRow = payload.new as Partial<Profile>;
+          const rankFields: (keyof Profile)[] = [
+            "username",
+            "full_name",
+            "role",
+            "has_quotes_access",
+          ];
+          const hasRankChange = rankFields.some(
+            (field) => oldRow[field] !== newRow[field],
+          );
+          if (hasRankChange) {
+            throttledFetchGlobalRankings();
+          }
         }
       },
-      [sessionUser.id, setProfile, setProfilesList, fetchAndCacheGlobalRankings],
+      [sessionUser.id, setProfile, setProfilesList, throttledFetchGlobalRankings],
     ),
   );
 

@@ -60,3 +60,5 @@ CLAUDE.md
 android/*.jks
 android/keystore-base64.txt
 android/android-release-credentials.txt
+
+opus-4.8-report.md
