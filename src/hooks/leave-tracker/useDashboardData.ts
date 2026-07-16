@@ -106,7 +106,6 @@ export const useDashboardData = () => {
     // Check if offline
     if (typeof window !== 'undefined' && !navigator.onLine) {
       try {
-        console.log('App is offline, loading cached data...');
         // Load profiles cache
         const cachedProfiles = await getCacheData('profiles_cache');
         if (cachedProfiles.length > 0) {
@@ -469,19 +468,13 @@ export const useDashboardData = () => {
 
         // TTL: Purge chuti records older than 2 years from cache
         try {
-          const purgedCount = await purgeStaleCacheData('chuti_cache', 'date', 90);
-          if (purgedCount > 0) {
-            console.log(`TTL: Purged ${purgedCount} stale chuti records (>90 days old) from cache.`);
-          }
+          await purgeStaleCacheData('chuti_cache', 'date', 90);
         } catch (ttlErr) {
-          console.error('TTL purge failed (non-critical):', ttlErr);
         }
       } catch (cacheErr) {
-        console.error('Failed to update IndexedDB cache:', cacheErr);
       }
 
     } catch (err) {
-      console.error('Error fetching online records:', err);
     } finally {
       fetchingRef.current = false;
       setInitialFetchDone(true);
@@ -511,7 +504,6 @@ export const useDashboardData = () => {
       .neq('role', 'none');
 
     if (error) {
-      console.error('Error saving global settings:', error);
       setMessage({ type: 'error', text: 'Failed to save settings: ' + error.message });
       setLoading(false);
       return false;
@@ -544,9 +536,6 @@ export const useDashboardData = () => {
             .from('govt_holiday_responses')
             .upsert(autoResponses, { onConflict: 'user_id,holiday_date' })
             .then(({ error: upsertError }) => {
-              if (upsertError) {
-                console.error('Error auto-saving paid responses for holiday:', h.name, upsertError);
-              }
             });
         }
       });
@@ -571,7 +560,6 @@ export const useDashboardData = () => {
       });
 
     if (error) {
-      console.error('Error saving holiday response:', error);
       setMessage({ type: 'error', text: 'Failed to save response: ' + error.message });
       setLoading(false);
       return false;
@@ -613,7 +601,6 @@ export const useDashboardData = () => {
       });
 
     if (error) {
-      console.error('Error admin-saving holiday response:', error);
       setMessage({ type: 'error', text: 'Failed to update response: ' + error.message });
       setLoading(false);
       return false;
@@ -673,7 +660,6 @@ export const useDashboardData = () => {
           }
         }
       } catch (unadjustErr) {
-        console.error('Error auto-unadjusting leaves:', unadjustErr);
       }
     }
 
@@ -773,7 +759,6 @@ export const useDashboardData = () => {
       setLoading(false);
       return true;
     } catch (err) {
-      console.error('Error bulk saving leave settlements:', err);
       setMessage({ type: 'error', text: 'Failed to process settlements: ' + (err as Error).message });
       setLoading(false);
       return false;
@@ -795,7 +780,6 @@ export const useDashboardData = () => {
       setLoading(false);
       return true;
     } catch (err) {
-      console.error('Error deleting leave settlement:', err);
       setMessage({ type: 'error', text: 'Failed to delete settlement: ' + (err as Error).message });
       setLoading(false);
       return false;
@@ -964,7 +948,6 @@ export const useDashboardData = () => {
 
   // ── chuti handler ──
   const handleChutiRealtime = useCallback((payload: RealtimePayload) => {
-    console.log('Realtime chuti change received:', payload);
     // Forward so UserManagementDashboard can react without its own chuti subscription
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'chuti', payload } }));
@@ -975,7 +958,6 @@ export const useDashboardData = () => {
   // ── profiles handler ──
   const handleProfilesRealtime = useCallback((payload: RealtimePayload) => {
     if (!sessionUser) return;
-    console.log('Realtime profile change received:', payload);
     const newRow = payload.new as Partial<Profile>;
     const oldRow = payload.old as Partial<Profile>;
     // Forward for quotes workspace
@@ -983,12 +965,10 @@ export const useDashboardData = () => {
       window.dispatchEvent(new CustomEvent('realtime-profile-payload', { detail: payload }));
     }
     if (payload.eventType === 'DELETE' && oldRow?.id === sessionUser.id) {
-      console.log('Your profile has been deleted by admin. Logging out...');
       const handleForceLogout = async () => {
         try {
           await supabase.auth.signOut();
         } catch (e) {
-          console.error(e);
         }
         localStorage.removeItem(`session_start_time_${sessionUser.id}`);
         localStorage.removeItem(`last_access_time_${sessionUser.id}`);
@@ -1042,7 +1022,6 @@ export const useDashboardData = () => {
 
   // ── leave_settlements handler ──
   const handleSettlementsRealtime = useCallback((payload: RealtimePayload) => {
-    console.log('Realtime settlement change received:', payload);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'leave_settlements', payload } }));
     }
@@ -1089,7 +1068,6 @@ export const useDashboardData = () => {
 
             // If offline, try to continue with cached profile instead of redirecting to login
             if (typeof window !== 'undefined' && !navigator.onLine) {
-              console.log('Session error while offline, attempting cached profile recovery...');
               try {
                 const cachedProfiles = await getCacheData('profiles_cache');
                 // Find any cached profile to use as the session user
@@ -1208,7 +1186,6 @@ export const useDashboardData = () => {
             const cachedProfiles = await getCacheData('profiles_cache');
             userProfile = cachedProfiles.find(p => p.id === session.user.id) || null;
             if (userProfile) {
-              console.log('Successfully loaded profile from local cache offline:', userProfile);
               profileError = null; // Clear error since we got it from cache
             }
           } catch (cacheErr) {
@@ -1244,7 +1221,6 @@ export const useDashboardData = () => {
             const cachedProfiles = await getCacheData('profiles_cache');
             if (cachedProfiles.length > 0) {
               const cachedProfile = cachedProfiles[0];
-              console.log('Recovered from cache after session timeout (offline):', cachedProfile.username);
               setSessionUser({ id: cachedProfile.id } as unknown as SupabaseUser);
               setProfile(cachedProfile);
               setLoading(false);
@@ -1265,11 +1241,9 @@ export const useDashboardData = () => {
 
     // Subscribe to auth state changes to detect login/logout in real-time
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Real-time auth state changed:', event, session?.user?.id);
       if (event === 'SIGNED_IN') {
         const currentUserId = sessionUserRef.current?.id;
         if (currentUserId === session?.user?.id) {
-          console.log('useDashboardData: Same user session already active. Skipping profile fetch.');
           if (session) {
             setSessionUser(session.user);
             sessionUserRef.current = session.user;

@@ -120,8 +120,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
         supabase.from('records').select('submitted_at').order('submitted_at', { ascending: false }).limit(1),
       ]);
 
-      let earliestDate = earliestResult.data?.[0]?.submitted_at ? new Date(earliestResult.data[0].submitted_at) : null;
-      let latestDate = latestResult.data?.[0]?.submitted_at ? new Date(latestResult.data[0].submitted_at) : null;
+      const earliestDate = earliestResult.data?.[0]?.submitted_at ? new Date(earliestResult.data[0].submitted_at) : null;
+      const latestDate = latestResult.data?.[0]?.submitted_at ? new Date(latestResult.data[0].submitted_at) : null;
 
       const datesSet = new Set<string>();
 

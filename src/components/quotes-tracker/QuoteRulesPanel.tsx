@@ -246,9 +246,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
             .in("id", duplicateIdsToDelete)
             .then(({ error: deleteError }) => {
               if (!deleteError) {
-                console.log(
-                  `Deduplication: Cleaned up ${duplicateIdsToDelete.length} duplicate rules from database.`,
-                );
+                // Deduplication succeeded silently
               } else {
                 console.error(
                   "Deduplication: Failed to delete duplicate database rules:",

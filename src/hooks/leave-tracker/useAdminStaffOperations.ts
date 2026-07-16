@@ -188,7 +188,6 @@ export const useAdminStaffOperations = ({
     const checkAndLogout = async () => {
       const elapsed = Date.now() - startTime;
       if (elapsed >= TEN_MINUTES_MS) {
-        console.log('10 minutes expired without password change. Logging out user...');
         try {
           localStorage.removeItem(`session_start_time_${sessionUser.id}`);
           localStorage.removeItem(`last_access_time_${sessionUser.id}`);

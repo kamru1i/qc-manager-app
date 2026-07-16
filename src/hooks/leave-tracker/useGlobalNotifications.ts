@@ -68,7 +68,6 @@ export function useGlobalNotifications(
     const handleSync = (e: Event) => {
       const customEvent = e as CustomEvent<number>;
       if (typeof customEvent.detail === 'number') {
-        console.log('useGlobalNotifications received synced count:', customEvent.detail);
         setSyncedApprovalsCount(customEvent.detail);
       }
     };

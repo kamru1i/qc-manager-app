@@ -124,7 +124,7 @@ export default function AppPortal() {
   }, []);
 
   const addLog = (msg: string) => {
-    console.log(`[AppPortal] ${msg}`);
+    // Silent in production
   };
 
   const loadUserProfile = useCallback(async (userId: string) => {

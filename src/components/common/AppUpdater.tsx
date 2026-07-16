@@ -151,7 +151,6 @@ export default function AppUpdater() {
 
             if (data.version !== currentAppVersion) {
               const apkUrl = `https://github.com/kamru1i/qc-manager-app/releases/download/v${data.version}/QC.Manager_${data.version}.apk`;
-              console.log(`[AppUpdater] New mobile APK version ${data.version} available (current: ${currentAppVersion}). Downloading from ${apkUrl}...`);
               
               setNewVersion(data.version);
               setUpdateAvailable(true);
@@ -189,7 +188,6 @@ export default function AppUpdater() {
                 if (!nativeUri) {
                   throw new Error("Download path is undefined");
                 }
-                console.log(`[AppUpdater] APK download completed: ${nativeUri}. Invoking FileOpener...`);
 
                 // Open the package installer
                 await FileOpener.open({

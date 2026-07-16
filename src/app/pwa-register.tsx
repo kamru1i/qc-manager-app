@@ -17,7 +17,6 @@ export default function PWARegister() {
           navigator.serviceWorker.getRegistrations().then((registrations) => {
             for (const registration of registrations) {
               registration.unregister();
-              console.log('[Tauri] Unregistered active service worker to prevent loading hangs:', registration.scope);
             }
           }).catch((err) => {
             console.error('[Tauri] Error unregistering service workers:', err);
@@ -32,7 +31,7 @@ export default function PWARegister() {
           navigator.serviceWorker
             .register('/sw.js')
             .then((registration) => {
-              console.log('Service Worker registered with scope:', registration.scope);
+              // Registration succeeded silently
             })
             .catch((error) => {
               console.error('Service Worker registration failed:', error);

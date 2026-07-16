@@ -105,7 +105,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // Explicitly tell Supabase to reconnect its realtime channels
       const channels = supabase.getChannels();
       if (channels.length > 0) {
-        console.log(`[NetworkManager] Re-connecting ${channels.length} Supabase realtime channels...`);
         supabase.realtime.connect();
       }
     }

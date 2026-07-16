@@ -641,13 +641,6 @@ export default function Dashboard({
         count = groupedSupervisorRequests.length;
       }
     }
-    console.log('Chuti page dispatching approvals count:', count, {
-      groupedChutiRequests: groupedChutiRequests.length,
-      pendingReserveRequests: pendingReserveRequests.length,
-      pendingProfileRequests: pendingProfileRequests.length,
-      pendingPasswordResetRequests: pendingPasswordResetRequests.length,
-      adminHolidayNotifications: adminHolidayNotifications.length
-    });
     window.dispatchEvent(new CustomEvent('chuti-approvals-count-sync', { detail: count }));
   }, [
     profile,

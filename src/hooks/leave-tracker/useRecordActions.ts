@@ -51,7 +51,6 @@ export const useRecordActions = ({
   ) => {
     if (!sessionUser) return false;
     if (isAddingRef.current) {
-      console.log('Record insertion already in progress, skipping duplicate call.');
       return false;
     }
     isAddingRef.current = true;

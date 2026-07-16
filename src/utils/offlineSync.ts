@@ -237,7 +237,6 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
   }
 
   if (isSyncing) {
-    console.log('syncOfflineData (leave): Sync already in progress, skipping concurrent run.');
     return { success: true, syncedCount: 0, conflicts: [] };
   }
 

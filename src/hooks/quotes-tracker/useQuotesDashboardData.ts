@@ -123,12 +123,10 @@ export const useQuotesDashboardData = () => {
     const canSkipRemote = (now - lastFetched < CACHE_THROTTLE_MS) && !force && !isSilent;
 
     if (lastFetchedKeyRef.current === fetchKey && !force && !isSilent && canSkipRemote) {
-      console.log('fetchRecords: Same inputs already fetched and cache is fresh. Skipping duplicate call.');
       return;
     }
 
     if (fetchingRef.current) {
-      console.log('fetchRecords is already in progress. Skipping concurrent run.');
       return;
     }
     fetchingRef.current = true;
@@ -142,7 +140,6 @@ export const useQuotesDashboardData = () => {
           const localCachedItems = await getCacheData<RecordItem>('records_cache');
           
           if (cachedUserId !== sessionUser.id || localCachedItems.length === 0) {
-            console.log('User session changed or cache empty. Clearing client cache for a fresh full sync...');
             await clearAllCache();
             await setSyncTimestamp('active_user_id', sessionUser.id);
           }
@@ -151,7 +148,6 @@ export const useQuotesDashboardData = () => {
           try {
             const syncRes = await syncOfflineData();
             if (syncRes.success && syncRes.syncedCount > 0) {
-              console.log(`Synced ${syncRes.syncedCount} offline record actions.`);
               showToast('success', `Synced ${syncRes.syncedCount} offline actions to the server.`);
             }
             if (syncRes.conflicts && syncRes.conflicts.length > 0) {
@@ -400,7 +396,6 @@ export const useQuotesDashboardData = () => {
                 console.error('RECOVERY: Failed to set DB restore lock — skipping restore to avoid duplication:', lockErr.message);
               } else {
                 setProfile(prev => prev ? ({ ...prev, global_settings: restoreLockSettings } as Profile) : prev);
-                console.log(`RECOVERY: Server records count is 0. Starting automated restoration of ${cachedRecords.length} records...`);
                 showToast('success', `Restoring ${cachedRecords.length} records from local cache. Please do not close the app...`);
 
                 // Upload in batches of 100
@@ -422,13 +417,10 @@ export const useQuotesDashboardData = () => {
                     console.error(`RECOVERY: Error restoring batch ${i}:`, insertError.message, insertError.details, insertError.hint, insertError.code);
                   } else {
                     successCount += batch.length;
-                    console.log(`RECOVERY: Restored batch ${i} to ${i + batch.length}`);
                   }
                 }
                 showToast('success', `Database successfully restored! ${successCount} records uploaded.`);
               }
-            } else {
-              console.log('RECOVERY: Double-check count was non-zero or errored — skipping restore to avoid false trigger.');
             }
           }
         } catch (restoreErr) {
@@ -809,7 +801,6 @@ export const useQuotesDashboardData = () => {
           if (cachedProfileStr) {
             try {
               userProfile = JSON.parse(cachedProfileStr);
-              console.log('Successfully loaded profile from local cache (offline mode)');
             } catch (jsonErr) {
               console.error('Failed to parse cached profile:', jsonErr);
             }
@@ -929,7 +920,6 @@ export const useQuotesDashboardData = () => {
       if (!payload) return;
 
       if (payload.eventType === 'DELETE' && payload.old && payload.old.id === sessionUser.id) {
-        console.log('User profile deleted. Force logging out...');
         if (typeof window !== 'undefined') {
           localStorage.removeItem('quotes_sales_profile');
         }

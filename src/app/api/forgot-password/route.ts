@@ -70,7 +70,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!profile) {
-      console.log(`[ForgotPassword] Username not found: ${cleanUsername}`);
       return NextResponse.json(
         { error: 'Codename not found.' },
         { status: 404, headers: getCorsHeaders(request) }

@@ -190,7 +190,7 @@ export const DateInput: React.FC<DateInputProps> = ({
               try {
                 (e.target as HTMLInputElement).showPicker?.();
               } catch (err) {
-                console.log('Native picker failed:', err);
+                // Ignore silent picker failures
               }
             }}
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 disabled:cursor-not-allowed"
@@ -202,7 +202,7 @@ export const DateInput: React.FC<DateInputProps> = ({
               try {
                 datePickerRef.current?.showPicker?.();
               } catch (err) {
-                console.log('Button click picker failed:', err);
+                // Ignore silent picker failures
               }
             }}
             className="p-2 bg-theme-card-bg hover:bg-theme-border-input text-theme-text-secondary border border-theme-border-active rounded-lg cursor-pointer transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
