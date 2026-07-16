@@ -182,13 +182,26 @@ export default function Dashboard({
     localStorage.setItem("quotes_sales_admin_view_mode", mode);
   };
 
-  // Viewing Reports state: toggled from Leaderboard's "View Full Report" button
+  // Viewing Reports state: toggled from Leaderboard's "View Report" button
   const [viewingReports, setViewingReports] = useState(false);
+
+  const updateViewingReports = (val: boolean) => {
+    setViewingReports(val);
+    localStorage.setItem("quotes_viewing_reports", String(val));
+  };
+
+  // Load saved viewingReports on client mount to prevent Next.js hydration mismatch
+  useEffect(() => {
+    const saved = localStorage.getItem("quotes_viewing_reports") === "true";
+    if (saved) {
+      setViewingReports(true);
+    }
+  }, []);
 
   // Reset viewingReports when tab changes away from leaderboard
   useEffect(() => {
     if (activeTab !== "leaderboard") {
-      setViewingReports(false);
+      updateViewingReports(false);
     }
   }, [activeTab]);
 
@@ -1584,7 +1597,7 @@ export default function Dashboard({
             <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
               <LeaderboardTable
                 profile={profile}
-                onViewFullReport={() => setViewingReports(true)}
+                onViewFullReport={() => updateViewingReports(true)}
               />
             </Suspense>
           )}
@@ -1595,7 +1608,7 @@ export default function Dashboard({
                 records={records}
                 profilesList={profilesList}
                 profile={profile}
-                onBack={() => setViewingReports(false)}
+                onBack={() => updateViewingReports(false)}
               />
             </Suspense>
           )}

@@ -111,15 +111,29 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
 
   // Double-click viewing state (Employee 360 Hub)
   const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('user_management_active_subtab');
-      if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'kpi') {
-        return saved as 'profile' | 'leave' | 'quotes' | 'kpi';
-      }
+
+  const updateViewingStaff = useCallback((staff: Profile | null) => {
+    setViewingStaff(staff);
+    if (staff) {
+      localStorage.setItem('user_management_viewing_staff_id', staff.id);
+    } else {
+      localStorage.removeItem('user_management_viewing_staff_id');
     }
-    return 'leave';
-  });
+  }, []);
+
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'kpi'>('leave');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('user_management_active_subtab');
+    if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'kpi') {
+      setActiveSubTab(saved as 'profile' | 'leave' | 'quotes' | 'kpi');
+    }
+  }, []);
+
+  const handleSetActiveSubTab = (tab: 'profile' | 'leave' | 'quotes' | 'kpi') => {
+    setActiveSubTab(tab);
+    localStorage.setItem('user_management_active_subtab', tab);
+  };
   const [preSelectedKpiPeriodKey, setPreSelectedKpiPeriodKey] = useState<string>('');
   const [viewingStaffRecords, setViewingStaffRecords] = useState<ChutiRecord[]>([]);
   const [viewingStaffSettlements, setViewingStaffSettlements] = useState<LeaveSettlement[]>([]);
@@ -197,17 +211,30 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, [viewingStaff]);
 
+  // Load saved viewingStaff on mount or when profiles finish loading
+  useEffect(() => {
+    if (profiles.length > 0) {
+      const savedStaffId = localStorage.getItem('user_management_viewing_staff_id');
+      if (savedStaffId) {
+        const staff = profiles.find(p => p.id === savedStaffId);
+        if (staff && hasStaffAccess(staff)) {
+          setViewingStaff(staff);
+        }
+      }
+    }
+  }, [profiles, hasStaffAccess]);
+
   // Synchronize viewingStaff with latest data from profiles list
   useEffect(() => {
     if (viewingStaff) {
       const updated = profiles.find(p => p.id === viewingStaff.id);
       if (updated) {
-        setViewingStaff(updated);
+        updateViewingStaff(updated);
       } else {
-        setViewingStaff(null); // User was deleted
+        updateViewingStaff(null); // User was deleted
       }
     }
-  }, [profiles, viewingStaff]);
+  }, [profiles, viewingStaff, updateViewingStaff]);
 
   // Pre-select staff member from sessionStorage when redirected from other pages
   useEffect(() => {
@@ -216,13 +243,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (savedStaffId) {
         const staff = profiles.find(p => p.id === savedStaffId);
         if (staff) {
-          setViewingStaff(staff);
-          setActiveSubTab('profile');
+          updateViewingStaff(staff);
+          handleSetActiveSubTab('profile');
           sessionStorage.removeItem("viewingStaffId");
         }
       }
     }
-  }, [profiles]);
+  }, [profiles, updateViewingStaff]);
 
   // Backspace to go back from details view
   useEffect(() => {
@@ -237,13 +264,13 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       }
       if (e.key === 'Backspace') {
         e.preventDefault();
-        setViewingStaff(null);
+        updateViewingStaff(null);
         setIsCreatingNewUser(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [viewingStaff, isCreatingNewUser]);
+  }, [viewingStaff, isCreatingNewUser, updateViewingStaff]);
 
   // Redirect to an authorized subtab if the current subtab is restricted
   useEffect(() => {
@@ -253,11 +280,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       const isQuotesAllowed = viewingStaff.has_quotes_access && canAccessModule(profile, viewingStaff, 'quotes', profiles);
       
       if (activeSubTab === 'leave' && !isLeaveAllowed) {
-        setActiveSubTab(isKpiAllowed ? 'kpi' : isQuotesAllowed ? 'quotes' : 'profile');
+        handleSetActiveSubTab(isKpiAllowed ? 'kpi' : isQuotesAllowed ? 'quotes' : 'profile');
       } else if (activeSubTab === 'kpi' && !isKpiAllowed) {
-        setActiveSubTab(isLeaveAllowed ? 'leave' : isQuotesAllowed ? 'quotes' : 'profile');
+        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isQuotesAllowed ? 'quotes' : 'profile');
       } else if (activeSubTab === 'quotes' && !isQuotesAllowed) {
-        setActiveSubTab(isLeaveAllowed ? 'leave' : isKpiAllowed ? 'kpi' : 'profile');
+        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isKpiAllowed ? 'kpi' : 'profile');
       }
     }
   }, [viewingStaff, activeSubTab, profile, profiles]);
@@ -265,7 +292,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Reset subtab selection to 'leave' when viewingStaff is closed
   useEffect(() => {
     if (!viewingStaff) {
-      setActiveSubTab('leave');
+      handleSetActiveSubTab('leave');
       setShowAddLeaveForStaff(false);
       setEditingLeaveRecord(null);
     }
@@ -744,7 +771,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         setProfiles(mapped);
         const updated = mapped.find(p => p.id === viewingStaff.id);
         if (updated) {
-          setViewingStaff(updated);
+          updateViewingStaff(updated);
           if (updated.id === profile?.id) {
             localStorage.setItem(`cached_profile_${profile.id}`, JSON.stringify(updated));
             window.dispatchEvent(new CustomEvent("profile-updated", { detail: updated }));
@@ -800,7 +827,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 <button
                   id="user-manage-detail-back"
                   onClick={() => {
-                    setViewingStaff(null);
+                    updateViewingStaff(null);
                     setIsCreatingNewUser(false);
                   }}
                   className="p-2.5 bg-theme-border-muted border border-theme-border-active text-theme-text-secondary rounded-xl hover:bg-theme-border-active transition-all cursor-pointer"
@@ -838,10 +865,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 {canAccessModule(profile, viewingStaff, 'leave', profiles) && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveSubTab('leave');
-                      localStorage.setItem('user_management_active_subtab', 'leave');
-                    }}
+                    onClick={() => handleSetActiveSubTab('leave')}
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'leave'
                         ? 'border-blue-500 text-blue-400 font-bold'
@@ -854,10 +878,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 {viewingStaff.has_quotes_access && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveSubTab('quotes');
-                      localStorage.setItem('user_management_active_subtab', 'quotes');
-                    }}
+                    onClick={() => handleSetActiveSubTab('quotes')}
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'quotes'
                         ? 'border-blue-500 text-blue-400 font-bold'
@@ -870,10 +891,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 {canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveSubTab('kpi');
-                      localStorage.setItem('user_management_active_subtab', 'kpi');
-                    }}
+                    onClick={() => handleSetActiveSubTab('kpi')}
                     className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                       activeSubTab === 'kpi'
                         ? 'border-blue-500 text-blue-400 font-bold'
@@ -885,10 +903,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                 )}
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveSubTab('profile');
-                    localStorage.setItem('user_management_active_subtab', 'profile');
-                  }}
+                  onClick={() => handleSetActiveSubTab('profile')}
                   className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeSubTab === 'profile'
                       ? 'border-blue-500 text-blue-400 font-bold'
@@ -1183,11 +1198,11 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                         onDoubleClick={() => {
                           const isSupervisedByMe = hasStaffAccess(u);
                           if (isSupervisedByMe) {
-                            setActiveSubTab('leave');
+                            handleSetActiveSubTab('leave');
                           } else {
-                            setActiveSubTab(u.has_quotes_access ? 'quotes' : 'profile');
+                            handleSetActiveSubTab(u.has_quotes_access ? 'quotes' : 'profile');
                           }
-                          setViewingStaff(u);
+                          updateViewingStaff(u);
                         }}
                         className="hover:bg-theme-card-bg/25 transition-colors cursor-pointer select-none"
                         title="Double-click to view details"
