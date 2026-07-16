@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 5.0.13** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.0.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,14 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v5.0.13 — Patch Release (Current)
+### 🚀 v6.0.0 — Major Performance Release (Current)
+
+- **Supabase Optimization:** Implemented strict PostgreSQL query filtering inside profile handlers. Prevents cascade fetches on user session ticks and heartbeats, reducing bandwidth and server overhead.
+- **Client-Side Query Cleanup:** Removed client-side log deletion queries on activity writes, migrating old-log cleanups to database-side scheduled events.
+- **Supabase Performance Tuning:** Deployed database composite indexes for `records`, `chuti`, and `audit_logs` tables to maximize lookup speeds.
+- **Automated Database Cleanups:** Scheduled a daily background cron job inside Supabase to automatically purge audit history older than 90 days.
+
+### 🚀 v5.0.13 — Patch Release
 
 - **Open Submission Leaderboard & Role Restricting:** Opened the Performance Analytics leaderboard (A-Z rank list of everyone's submissions) to all logged-in roles. Restricted key charts, branch metrics, and summary conversion insights to Admins and Supervisors only.
 - **Dynamic Username Ranks (#XX):** Implemented all-time running submission ranking next to user display names (e.g. `Name #01`). Ranks dynamically re-calculate in real-time as users submit files.
