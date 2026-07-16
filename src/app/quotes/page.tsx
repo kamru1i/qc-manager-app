@@ -68,11 +68,13 @@ const ALL_10_FILE_TYPES = [
 interface DashboardProps {
   activeTab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file";
   onTabChange: (tab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file") => void;
+  onBackToSidebarTab?: () => void;
 }
 
 export default function Dashboard({
   activeTab,
   onTabChange,
+  onBackToSidebarTab,
 }: DashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -228,9 +230,13 @@ export default function Dashboard({
         if (activeTab === "leaderboard" && viewingReports) {
           updateViewingReports(false);
         } else {
-          // Go back to the last quotes tab where the sidebar was visible (defaulting to 'entry')
-          const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
-          onTabChange(lastQuotesTab as any);
+          // Go back to the last active tab where the sidebar was visible
+          if (onBackToSidebarTab) {
+            onBackToSidebarTab();
+          } else {
+            const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
+            onTabChange(lastQuotesTab as any);
+          }
         }
       }
     };
@@ -239,7 +245,7 @@ export default function Dashboard({
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [activeTab, viewingReports, onTabChange]);
+  }, [activeTab, viewingReports, onTabChange, onBackToSidebarTab]);
 
 
 
@@ -1629,8 +1635,12 @@ export default function Dashboard({
                 profile={profile}
                 onViewFullReport={() => updateViewingReports(true)}
                 onBack={() => {
-                  const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
-                  onTabChange(lastQuotesTab as any);
+                  if (onBackToSidebarTab) {
+                    onBackToSidebarTab();
+                  } else {
+                    const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
+                    onTabChange(lastQuotesTab as any);
+                  }
                 }}
               />
             </Suspense>
@@ -1654,7 +1664,11 @@ export default function Dashboard({
                 profilesList={profilesList}
                 profile={profile}
                 onBack={() => {
-                  onTabChange("leaderboard");
+                  if (onBackToSidebarTab) {
+                    onBackToSidebarTab();
+                  } else {
+                    onTabChange("leaderboard");
+                  }
                 }}
               />
             </Suspense>

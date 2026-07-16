@@ -1524,6 +1524,10 @@ function AppPortalInner({
                   activeTab === "quotes" ? activeQuotesTab : (activeTab as any)
                 }
                 onTabChange={handleQuotesTabChange}
+                onBackToSidebarTab={() => {
+                  setActiveTab(previousTab as any);
+                  localStorage.setItem("last_active_dashboard", previousTab);
+                }}
               />
             </div>
             {/* ChutiDashboard: always mounted to keep global event listeners (like open-profile-settings) and approval modals active on all tabs */}
