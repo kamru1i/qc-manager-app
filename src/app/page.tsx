@@ -47,7 +47,7 @@ import QuotesDashboard from "@/app/quotes/page";
 import { UserManagementDashboard } from "@/components/common/UserManagementDashboard";
 import { TodoPanel } from "@/components/common/TodoPanel";
 import { ProfilesProvider, useProfiles } from "@/contexts/ProfilesContext";
-import { PROFILE_COLUMNS } from "@/utils/dbColumns";
+import { fetchOwnProfileRow } from "@/utils/profileFetcher";
 import { ProfileSettings } from "@/components/common/ProfileSettings";
 
 function getInitialState() {
@@ -161,11 +161,9 @@ export default function AppPortal() {
     // Fetch fresh profile in the background
     fetchingRef.current = userId;
     try {
-      const fetchPromise = supabase
-        .from("profiles")
-        .select(PROFILE_COLUMNS)
-        .eq("id", userId)
-        .single();
+      // Deduped with useDashboardData's SIGNED_IN fetch — both listeners share
+      // one in-flight single-row query per login instead of two identical ones.
+      const fetchPromise = fetchOwnProfileRow(userId);
 
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Database query timed out")), 5000),

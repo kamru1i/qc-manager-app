@@ -15,6 +15,22 @@ import { supabase } from "@/utils/supabase";
  * 4. Non-intrusive UI widget in bottom-right with dismiss controls.
  * 5. Periodic update check (startup + every 15 minutes).
  */
+/**
+ * Returns true when `candidate` is a strictly newer semver than `current`.
+ * Prevents accidental downgrades if an older version row ends up newest in
+ * mobile_app_versions (previously a plain !== check would "update" to it).
+ */
+function isNewerVersion(candidate: string, current: string): boolean {
+  const a = candidate.split(".").map((n) => parseInt(n, 10) || 0);
+  const b = current.split(".").map((n) => parseInt(n, 10) || 0);
+  const len = Math.max(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0);
+    if (diff !== 0) return diff > 0;
+  }
+  return false;
+}
+
 export default function AppUpdater() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -22,11 +38,9 @@ export default function AppUpdater() {
   const [readyToRestart, setReadyToRestart] = useState(false);
   const [newVersion, setNewVersion] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [dismissed, setDismissed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isNativeApp, setIsNativeApp] = useState(false);
   const isCheckingRef = useRef(false);
-  const downloadedUpdateRef = useRef<any>(null);
 
   useEffect(() => {
     const isTauri =
@@ -149,7 +163,7 @@ export default function AppUpdater() {
             const { VERSION } = await import("@/config/downloads");
             const currentAppVersion = VERSION;
 
-            if (data.version !== currentAppVersion) {
+            if (isNewerVersion(data.version, currentAppVersion)) {
               const apkUrl = `https://github.com/kamru1i/qc-manager-app/releases/download/v${data.version}/QC.Manager_${data.version}.apk`;
               
               setNewVersion(data.version);
@@ -217,28 +231,6 @@ export default function AppUpdater() {
     }
   }, []);
 
-  const handleRestartNow = async () => {
-    try {
-      if (Capacitor.isNativePlatform() || (window as any).Capacitor !== undefined) {
-        const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
-        if (downloadedUpdateRef.current) {
-          await CapacitorUpdater.set(downloadedUpdateRef.current);
-        } else {
-          // Fallback trigger
-          await CapacitorUpdater.set({ id: newVersion });
-        }
-        return;
-      }
-
-      const { relaunch } = await import("@tauri-apps/plugin-process");
-      await relaunch();
-    } catch (err: any) {
-      console.error("[AppUpdater] Relaunch failed:", err);
-      setError(
-        "Failed to restart automatically. Please close and reopen the app.",
-      );
-    }
-  };
   if (!isNativeApp || !updateAvailable || error) return null;
 
   return (

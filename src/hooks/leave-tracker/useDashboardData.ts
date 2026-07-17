@@ -11,7 +11,8 @@ import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCache
 import { getGlobalSettingsFromProfile, defaultGlobalSettings, GlobalSettings, parseHolidayItem } from '@/utils/dashboardHelpers';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
-import { PROFILE_COLUMNS, CHUTI_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS, LEAVE_SETTLEMENT_COLUMNS } from '@/utils/dbColumns';
+import { CHUTI_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS, LEAVE_SETTLEMENT_COLUMNS } from '@/utils/dbColumns';
+import { fetchOwnProfileRow } from '@/utils/profileFetcher';
 
 export const useDashboardData = () => {
 
@@ -1129,11 +1130,9 @@ export const useDashboardData = () => {
 
         if (typeof window !== 'undefined' && navigator.onLine) {
           try {
-            const { data, error } = await supabase
-              .from('profiles')
-              .select(PROFILE_COLUMNS)
-              .eq('id', session.user.id)
-              .maybeSingle();
+            // Deduped with AppPortal's SIGNED_IN fetch (page.tsx) — both auth
+            // listeners share one in-flight single-row query per login.
+            const { data, error } = await fetchOwnProfileRow(session.user.id);
             userProfile = data;
             profileError = error;
 
