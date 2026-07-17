@@ -575,6 +575,13 @@ function AppPortalInner({
     useState(false);
   // R1/R2: single shared profiles list from ProfilesContext (was local state)
   const { profilesList, refreshProfiles } = useProfiles();
+  // Realtime UPDATE payloads only carry the primary key in `old` (tables use
+  // default REPLICA IDENTITY), so field-change checks must compare against the
+  // locally cached previous row instead of payload.old.
+  const profilesListRef = useRef<Profile[]>([]);
+  useEffect(() => {
+    profilesListRef.current = profilesList;
+  }, [profilesList]);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isNative, setIsNative] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -1094,17 +1101,21 @@ function AppPortalInner({
           // Update ranks only when a rank-relevant field actually changed.
           // Skips noise like global_settings session heartbeats, which previously
           // fired a full leaderboard RPC on every profile update.
-          const oldRow = payload.old as Partial<Profile>;
+          // NOTE: payload.old only contains the primary key (default REPLICA
+          // IDENTITY), so compare against the cached previous row instead.
           const newRow = payload.new as Partial<Profile>;
+          const prevRow = profilesListRef.current.find(
+            (p) => p.id === newRow.id,
+          );
           const rankFields: (keyof Profile)[] = [
             "username",
             "full_name",
             "role",
             "has_quotes_access",
           ];
-          const hasRankChange = rankFields.some(
-            (field) => oldRow[field] !== newRow[field],
-          );
+          const hasRankChange =
+            !prevRow ||
+            rankFields.some((field) => prevRow[field] !== newRow[field]);
           if (hasRankChange) {
             throttledFetchGlobalRankings();
           }

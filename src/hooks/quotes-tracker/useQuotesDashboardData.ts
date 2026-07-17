@@ -145,6 +145,18 @@ export const useQuotesDashboardData = () => {
             await setSyncTimestamp('active_user_id', sessionUser.id);
           }
 
+          // Egress: normal users only ever see their own records (display,
+          // "My Report") — leaderboard data comes from the RPC. So scope all
+          // record sync queries to the logged-in user unless admin/supervisor.
+          // If the scope changes (e.g. role promotion), force a full resync.
+          const isApproverScope = profile.role === 'admin' || profile.role === 'supervisor';
+          const recordsScope = isApproverScope ? 'all' : 'self';
+          const prevRecordsScope = await getSyncTimestamp('records_scope');
+          if (prevRecordsScope && prevRecordsScope !== recordsScope) {
+            await setSyncTimestamp('records', '');
+          }
+          await setSyncTimestamp('records_scope', recordsScope);
+
           // 1. Sync pending offline mutations first
           try {
             const syncRes = await syncOfflineData();
@@ -177,13 +189,14 @@ export const useQuotesDashboardData = () => {
               const from = mPage * mPageSize;
               const to = from + mPageSize - 1;
 
-              const query = supabase
+              let query = supabase
                 .from('records')
                 .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
                 .gte('submitted_at', startDate)
                 .lte('submitted_at', endDate)
                 .order('submitted_at', { ascending: false })
                 .range(from, to);
+              if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
 
               const { data, error } = await query;
               if (error) throw error;
@@ -249,11 +262,12 @@ export const useQuotesDashboardData = () => {
                 const from = deltaPage * deltaPageSize;
                 const to = from + deltaPageSize - 1;
 
-                const query = supabase
+                let query = supabase
                   .from('records')
                   .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
                   .gte('updated_at', bufferedSyncTimestamp)
                   .range(from, to);
+                if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
 
                 const { data: pageData, error: pageError } = await query;
                 if (pageError) throw pageError;
@@ -287,12 +301,13 @@ export const useQuotesDashboardData = () => {
                 const from = page * pageSize;
                 const to = from + pageSize - 1;
 
-                const query = supabase
+                let query = supabase
                   .from('records')
                   .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
                   .gte('submitted_at', '2026-05-01T00:00:00.000Z')
                   .order('submitted_at', { ascending: false })
                   .range(from, to);
+                if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
 
                 const { data, error } = await query;
                 if (error) throw error;

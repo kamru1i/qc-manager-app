@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
+import { useProfiles } from '@/contexts/ProfilesContext';
 import { Profile } from '@/types';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { fetchSubmittedAtRange, buildAvailableDates } from '@/utils/availableDatesHelper';
@@ -60,6 +61,16 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   const [availableDates, setAvailableDates] = useState<{ year: string; month: string }[]>([]);
 
   const isFetchingRef = useRef(false);
+
+  // Shared profiles list — used to detect which fields actually changed on
+  // realtime profile UPDATEs (payload.old only carries the primary key under
+  // default REPLICA IDENTITY). Falls back to an empty list on standalone
+  // routes without a ProfilesProvider (treated as "changed" — fail open).
+  const { profilesList } = useProfiles();
+  const profilesListRef = useRef<Profile[]>([]);
+  useEffect(() => {
+    profilesListRef.current = profilesList;
+  }, [profilesList]);
 
   const fetchLeaderboard = useCallback(async (isSilent = false) => {
     if (!currentProfile) return;
@@ -162,11 +173,14 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
 
   const handleProfileRealtimeUpdate = useCallback((payload: RealtimePayload) => {
     if (payload.eventType === 'UPDATE') {
-      const oldRow = payload.old as Partial<Profile>;
+      // payload.old only contains the primary key (default REPLICA IDENTITY) —
+      // compare against the cached previous row from the shared profiles list.
       const newRow = payload.new as Partial<Profile>;
-      
+      const prevRow = profilesListRef.current.find(p => p.id === newRow.id);
+
       const criticalFields: (keyof Profile)[] = ['username', 'full_name', 'role', 'has_quotes_access'];
-      const hasCriticalChange = criticalFields.some(field => oldRow[field] !== newRow[field]);
+      const hasCriticalChange = !prevRow ||
+        criticalFields.some(field => prevRow[field] !== newRow[field]);
       if (!hasCriticalChange) return;
     }
     handleRealtimeUpdate();

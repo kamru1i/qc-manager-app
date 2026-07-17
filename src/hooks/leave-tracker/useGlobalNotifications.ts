@@ -7,6 +7,7 @@ import { ChutiRecord } from '@/utils/offlineSync';
 import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
 import { toast } from 'react-hot-toast';
 import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
+import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 
@@ -79,6 +80,14 @@ export function useGlobalNotifications(
 
   // Get stable session time for notification timestamp fallback
   const currentSessionTime = useMemo(() => new Date().toISOString(), []);
+
+  // Realtime UPDATE payloads only carry the primary key in `old` (default
+  // REPLICA IDENTITY), so change detection must compare against the locally
+  // cached previous row from the shared profiles list.
+  const profilesListRef = useRef<Profile[]>([]);
+  useEffect(() => {
+    profilesListRef.current = profilesList;
+  }, [profilesList]);
 
   // Fetch notifications data. When shared data is available, skip the
   // user-records and holiday-responses queries (R2 data sharing).
@@ -282,9 +291,14 @@ export function useGlobalNotifications(
 
   const handleProfileRealtimeChange = useCallback((payload: RealtimePayload) => {
     if (payload.eventType === 'UPDATE') {
-      const oldRow = payload.old as Partial<Profile>;
-      const newRow = payload.new as Partial<Profile>;
-      
+      // payload.old only contains the primary key (default REPLICA IDENTITY) —
+      // compare against the cached previous row instead. password_reset_status
+      // is virtual (derived from global_settings), so map the raw row first.
+      const newRow = mapProfilePasswordResetStatus(
+        payload.new as unknown as Profile,
+      ) as Partial<Profile>;
+      const prevRow = profilesListRef.current.find(p => p.id === newRow.id);
+
       const criticalFields: (keyof Profile)[] = [
         'username_request_status',
         'profile_change_status',
@@ -294,8 +308,16 @@ export function useGlobalNotifications(
         'has_quotes_access',
         'has_chuti_access'
       ];
-      
-      const hasCriticalChange = criticalFields.some(field => oldRow[field] !== newRow[field]);
+
+      const hasCriticalChange = !prevRow || criticalFields.some(field => {
+        const prevVal = prevRow[field];
+        const newVal = newRow[field];
+        // supervisor_ids is an array — compare by value, not reference
+        if (Array.isArray(prevVal) || Array.isArray(newVal)) {
+          return JSON.stringify(prevVal ?? null) !== JSON.stringify(newVal ?? null);
+        }
+        return prevVal !== newVal;
+      });
       if (!hasCriticalChange) return;
     }
     handleRealtimeDataChanged();
