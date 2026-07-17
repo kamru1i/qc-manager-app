@@ -10,6 +10,7 @@ import { UserRevisionModal } from '@/components/leave-tracker/modals/UserRevisio
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
 import { AdjustmentModal } from '@/components/leave-tracker/modals/AdjustmentModal';
 import { SupervisorApprovalModal } from '@/components/leave-tracker/modals/SupervisorApprovalModal';
+import { RevisionPromptModal } from '@/components/leave-tracker/modals/RevisionPromptModal';
 import { AdminLeaveApprovalModal } from '@/components/leave-tracker/modals/AdminLeaveApprovalModal';
 import { AdminEditRecordModal } from '@/components/leave-tracker/modals/AdminEditRecordModal';
 import { AdminCancelAdjustmentModal } from '@/components/leave-tracker/modals/AdminCancelAdjustmentModal';
@@ -351,6 +352,12 @@ export const DashboardModals = () => {
           }, 50);
         }}
         userNotificationsCount={unreadUserNotificationsCount}
+      />
+
+      {/* Shared "Reason for Revision" prompt — used by BOTH admin and supervisor
+          approval panels (admins were locked out when it lived inside the
+          supervisor-gated modal) */}
+      <RevisionPromptModal
         showRevisionPromptModal={showRevisionPromptModal}
         setShowRevisionPromptModal={setShowRevisionPromptModal}
         submittingRevision={submittingRevision}

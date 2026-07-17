@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3gjLxmeZZdGPVJgPeVP4MCOmk85vypO6UfLdqBHURzU4pnWVUmVTGGX5shLkUvq
+\restrict wKdNyAKj2JqtWVLPiz82crXBLbyqbZd2n3OMhJtyyWTzMSRwO8hGgLhHCkrHoPU
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.4
@@ -39,6 +39,7 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 CREATE FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone DEFAULT NULL::time without time zone, p_sign_out_time time without time zone DEFAULT NULL::time without time zone, p_leave_hour interval DEFAULT NULL::interval, p_reserve_holiday text DEFAULT NULL::text, p_comment text DEFAULT NULL::text, p_bulk_id uuid DEFAULT NULL::uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
   v_date DATE;
@@ -93,6 +94,7 @@ $$;
 
 CREATE FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text DEFAULT NULL::text, p_new_password text DEFAULT NULL::text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
   IF NOT public.is_admin() THEN
@@ -121,6 +123,7 @@ $$;
 
 CREATE FUNCTION public.check_profile_role_change() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   -- If the editor is the service_role (API routes / system), allow everything
@@ -147,6 +150,7 @@ $$;
 
 CREATE FUNCTION public.check_profile_updates() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   -- If the session bypass variable is set, allow the update (system functions/syncs)
@@ -232,10 +236,53 @@ $$;
 
 CREATE FUNCTION public.cleanup_old_audit_logs() RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   DELETE FROM public.audit_logs
   WHERE created_at < NOW() - INTERVAL '90 days';
+END;
+$$;
+
+
+--
+-- Name: complete_profile_setup(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.complete_profile_setup(p_username text, p_full_name text) RETURNS jsonb
+    LANGUAGE plpgsql
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Not authenticated.');
+  END IF;
+
+  IF p_username IS NULL OR length(trim(p_username)) = 0 THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Username is required.');
+  END IF;
+
+  IF p_full_name IS NULL OR length(trim(p_full_name)) = 0 THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Full name is required.');
+  END IF;
+
+  BEGIN
+    UPDATE public.profiles
+    SET username = upper(trim(p_username)),
+        full_name = trim(p_full_name),
+        has_changed_password = true
+    WHERE id = v_uid;
+  EXCEPTION WHEN unique_violation THEN
+    RETURN jsonb_build_object('success', false, 'message', 'This username is already taken. Please choose another.');
+  END;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Profile not found.');
+  END IF;
+
+  RETURN jsonb_build_object('success', true);
 END;
 $$;
 
@@ -246,6 +293,7 @@ $$;
 
 CREATE FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean DEFAULT false, p_allow_reserve boolean DEFAULT false, p_allow_overtime boolean DEFAULT false, p_supervisor_ids uuid[] DEFAULT NULL::uuid[]) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'extensions', 'pg_temp'
     AS $_$
 DECLARE
   v_user_id UUID;
@@ -362,6 +410,7 @@ $_$;
 
 CREATE FUNCTION public.delete_user_by_id(p_user_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   IF NOT public.is_admin() THEN
@@ -480,6 +529,7 @@ $$;
 
 CREATE FUNCTION public.get_user_email_by_username(p_username text) RETURNS text
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
   v_email TEXT;
@@ -500,6 +550,7 @@ $$;
 
 CREATE FUNCTION public.handle_new_user() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
   base_username TEXT;
@@ -576,6 +627,7 @@ $$;
 
 CREATE FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   RETURN EXISTS (
@@ -598,6 +650,7 @@ $$;
 
 CREATE FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   RETURN EXISTS (
@@ -626,6 +679,7 @@ $$;
 
 CREATE FUNCTION public.is_admin() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
@@ -640,6 +694,7 @@ $$;
 
 CREATE FUNCTION public.is_admin_or_supervisor() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
@@ -654,6 +709,7 @@ $$;
 
 CREATE FUNCTION public.is_supervisor() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
@@ -668,6 +724,7 @@ $$;
 
 CREATE FUNCTION public.is_supervisor_of(supervisor_id uuid, employee_id uuid) RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   RETURN EXISTS (
@@ -690,6 +747,7 @@ $$;
 
 CREATE FUNCTION public.is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer) RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
   v_rank INT;
@@ -727,6 +785,7 @@ $$;
 
 CREATE FUNCTION public.sync_top_performer_badges() RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
   v_today DATE := CURRENT_DATE;
@@ -837,6 +896,7 @@ $$;
 
 CREATE FUNCTION public.update_compliance_rules_updated_at() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   NEW.updated_at := now();
@@ -852,6 +912,7 @@ $$;
 
 CREATE FUNCTION public.update_records_updated_at() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   NEW.updated_at = NOW();
@@ -2012,5 +2073,5 @@ ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3gjLxmeZZdGPVJgPeVP4MCOmk85vypO6UfLdqBHURzU4pnWVUmVTGGX5shLkUvq
+\unrestrict wKdNyAKj2JqtWVLPiz82crXBLbyqbZd2n3OMhJtyyWTzMSRwO8hGgLhHCkrHoPU
 
