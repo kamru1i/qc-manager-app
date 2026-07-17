@@ -12,10 +12,7 @@ import {
   Sun,
   Moon,
   Bell,
-  Download,
   LogOut,
-  Monitor,
-  Apple,
   RefreshCw,
 } from "lucide-react";
 import SmartDownloadButton from "@/components/common/SmartDownloadButton";
@@ -125,7 +122,7 @@ export default function AppPortal() {
     setMounted(true);
   }, []);
 
-  const addLog = (msg: string) => {
+  const addLog = (_msg: string) => {
     // Silent in production
   };
 

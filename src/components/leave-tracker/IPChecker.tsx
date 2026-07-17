@@ -80,17 +80,6 @@ interface IP2LocationResponse {
   is_proxy?: boolean;
 }
 
-interface CriminalIPResponse {
-  error?: string;
-  country_code?: string;
-  country?: string;
-  region?: string;
-  city?: string;
-  isp?: string;
-  org_name?: string;
-  score?: { inbound?: number; outbound?: number };
-}
-
 interface ScamalyticsResponse {
   error?: string;
   scamalytics?: {

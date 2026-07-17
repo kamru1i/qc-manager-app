@@ -11,7 +11,6 @@ interface BranchSelectorProps {
 export const BranchSelector: React.FC<BranchSelectorProps> = ({
   value,
   onChange,
-  required = true,
   size = 'md'
 }) => {
   // The select element value is 'PRIDE' for 'PRIDE COMPARE' and 'EAZY' for 'EAZY COMPARE' to keep the option select consistent

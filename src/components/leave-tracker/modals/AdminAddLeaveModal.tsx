@@ -7,7 +7,6 @@ import { AddLeaveFormFields } from "@/components/leave-tracker/AddLeaveFormField
 import { supabase } from "@/utils/supabase";
 import {
   calculateLeaveOrOvertime,
-  formatDate,
   calculateStats,
   GlobalSettings,
   calculateHalfYearlyOfficeLeave,

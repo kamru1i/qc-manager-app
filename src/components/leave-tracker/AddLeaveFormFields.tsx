@@ -82,7 +82,6 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   allowOvertime,
   children,
   adjustment = false,
-  availableOvertimeMins = 0,
   availableShortLeaveMins = 0,
   records = [],
   govtHolidayRemaining = 0,
@@ -242,21 +241,6 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   };
 
   const leaveMins = parseHHMMToMins(leaveHour);
-
-  // Short Leave Adjustment details helper message
-  let shortLeaveAdjMsg = "";
-  if (leaveType === "Short Leave" && availableOvertimeMins > 0) {
-    const adjustedMins = Math.min(leaveMins, availableOvertimeMins);
-    const adjustedStr = formatMinsToHHMM(adjustedMins);
-    const remainingMins = Math.max(0, leaveMins - availableOvertimeMins);
-    const remainingStr = formatMinsToHHMM(remainingMins);
-
-    if (adjustment) {
-      shortLeaveAdjMsg = `✅ ${adjustedStr} hour adjusted, ${remainingStr} hour will be counted as short leave.`;
-    } else {
-      shortLeaveAdjMsg = `ℹ️ adjust with ${adjustedStr} hours`;
-    }
-  }
 
   // Overtime Adjustment details helper message
   let overtimeAdjMsg = "";

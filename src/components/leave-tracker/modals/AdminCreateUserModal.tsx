@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { Modal } from '@/components/common/Modal';
 import { CustomSelect } from '@/components/common/CustomSelect';

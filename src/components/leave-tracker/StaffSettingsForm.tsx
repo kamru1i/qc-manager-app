@@ -133,7 +133,6 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setKpiSkills,
   kpiDeptIndicators = [],
   setKpiDeptIndicators,
-  performsDataEntry = true,
   setPerformsDataEntry,
   department = "Data Entry",
   setDepartment,
@@ -164,7 +163,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
     if (!viewingStaff) return;
     const fetchPrevious = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('kpi_assessments')
           .select(KPI_ASSESSMENT_COLUMNS)
           .eq('user_id', viewingStaff.id)
@@ -1274,10 +1273,6 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           const parts = evalItem.month_year.split('-');
                           const y = parts[0];
                           const m = parseInt(parts[1]) - 1;
-                          const monthsNames = [
-                            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-                          ];
                           const lastDay = new Date(Number(y), m + 1, 0).getDate();
                           dateRange = `01-${String(m + 1).padStart(2, '0')}-${y} to ${String(lastDay).padStart(2, '0')}-${String(m + 1).padStart(2, '0')}-${y}`;
                         }

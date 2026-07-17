@@ -8,14 +8,9 @@ import { Loader2 } from 'lucide-react';
 import {
   calculateStats,
   GlobalSettings,
-  getSettlementSplits,
   formatDuration,
-  parseIntervalToMinutes,
-  formatDate,
-  formatTimeToAMPM,
-  getCleanComment
+  parseIntervalToMinutes
 } from '@/utils/dashboardHelpers';
-import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 
 interface UserLeaveHistoryPanelProps {
   viewingStaff: Profile;
@@ -70,7 +65,6 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   onDeleteRecord,
   onAddLeaveClick,
   onEditClick,
-  isSupervisor = false,
   hideDelete = false,
   showAddLeave = true,
 }) => {
@@ -88,75 +82,6 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
       fullLeaves: displayFullLeaves
     };
   }, [viewingStaff, viewingStaffRecords, selectedYear]);
-
-  // Hook-based Government Holiday stats for staff
-  const isOfficeLeaveEligible = viewingStaff.eligible_office_leave !== false;
-  const isGovtHolidayEligible = viewingStaff.eligible_govt_holiday !== false;
-
-  const prevYear = (Number(selectedYear) - 1).toString();
-  const carriedOffice = viewingStaffSettlements
-    .filter((s) => s.year === prevYear && s.leave_category === 'Office Leave')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
-  const carriedFitr = viewingStaffSettlements
-    .filter((s) => s.year === prevYear && s.leave_category === 'Eid-ul-Fitr')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
-  const carriedAdha = viewingStaffSettlements
-    .filter((s) => s.year === prevYear && s.leave_category === 'Eid-ul-Adha')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
-
-  const officeLeaveTotalBase = isOfficeLeaveEligible ? ((globalSettings?.office_leave_h1 ?? 7) + (globalSettings?.office_leave_h2 ?? 7)) : 0;
-  const officeLeaveTotal = isOfficeLeaveEligible
-    ? officeLeaveTotalBase + carriedOffice + (globalSettings?.eid_fitr_leave ?? 3) + carriedFitr + (globalSettings?.eid_adha_leave ?? 3) + carriedAdha
-    : (globalSettings?.eid_fitr_leave ?? 3) + carriedFitr + (globalSettings?.eid_adha_leave ?? 3) + carriedAdha;
-
-  const officeLeaveStatsObj = {
-    total: officeLeaveTotal,
-    taken: staffStatsData ? staffStatsData.fullLeaves : 0,
-    remaining: officeLeaveTotal - (staffStatsData ? staffStatsData.fullLeaves : 0)
-  };
-
-  const { respondedHolidays, govtHolidayStats } = useGovtHolidayStats(
-    viewingStaff.id,
-    viewingStaffHolidayResponses,
-    globalSettings || ({ govt_holidays: [], office_leave_h1: 7, office_leave_h2: 7, eid_fitr_leave: 3, eid_adha_leave: 3 } as GlobalSettings),
-    isGovtHolidayEligible,
-    staffStatsData?.govtHolidaysTaken || 0
-  );
-
-  const activeGovtSettled = viewingStaffSettlements
-    .filter(s => s.year === selectedYear && s.leave_category === 'Govt Holiday' && (s.status === 'processed' || s.status === 'responded'))
-    .reduce((acc, s) => acc + s.remaining_days, 0);
-  const carriedGovt = viewingStaffSettlements
-    .filter((s) => s.year === prevYear && s.leave_category === 'Govt Holiday')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
-
-  const adjustedGovtHolidayStats = {
-    ...govtHolidayStats,
-    total: govtHolidayStats.total + carriedGovt,
-    remaining: Math.max(0, govtHolidayStats.reserved + carriedGovt - govtHolidayStats.taken - activeGovtSettled)
-  };
-
-  const { halfYearlyStats } = useHalfYearlyStats(
-    viewingStaffRecords,
-    isOfficeLeaveEligible ? (globalSettings?.office_leave_h1 ?? 7) : 0,
-    isOfficeLeaveEligible ? (globalSettings?.office_leave_h2 ?? 7) : 0,
-    selectedYear,
-    viewingStaffSettlements,
-    viewingStaff.id,
-    viewingStaff.working_hours || 9.5
-  );
-
-  const activeEidFitrSettled = viewingStaffSettlements
-    .filter(s => s.year === selectedYear && s.leave_category === 'Eid-ul-Fitr' && (s.status === 'processed' || s.status === 'responded'))
-    .reduce((acc, s) => acc + s.remaining_days, 0);
-  const eidFitrTotal = (globalSettings?.eid_fitr_leave ?? 3) + carriedFitr;
-  const eidFitrRemaining = Math.max(0, eidFitrTotal - (staffStatsData?.eidFitrTaken ?? 0) - activeEidFitrSettled);
-
-  const activeEidAdhaSettled = viewingStaffSettlements
-    .filter(s => s.year === selectedYear && s.leave_category === 'Eid-ul-Adha' && (s.status === 'processed' || s.status === 'responded'))
-    .reduce((acc, s) => acc + s.remaining_days, 0);
-  const eidAdhaTotal = (globalSettings?.eid_adha_leave ?? 3) + carriedAdha;
-  const eidAdhaRemaining = Math.max(0, eidAdhaTotal - (staffStatsData?.eidAdhaTaken ?? 0) - activeEidAdhaSettled);
 
   // Filtered records for Leave History list
   const filteredStaffRecords = React.useMemo(() => {

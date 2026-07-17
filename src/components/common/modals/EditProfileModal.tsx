@@ -9,8 +9,6 @@ interface EditProfileModalProps {
   setFullName: (val: string) => void;
   role: "admin" | "user" | "supervisor";
   setRole: (val: "admin" | "user" | "supervisor") => void;
-  hasChutiAccess: boolean;
-  setHasChutiAccess: (val: boolean) => void;
   hasQuotesAccess: boolean;
   setHasQuotesAccess: (val: boolean) => void;
   allowedTypes: string[];
@@ -44,8 +42,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   setFullName,
   role,
   setRole,
-  hasChutiAccess,
-  setHasChutiAccess,
   hasQuotesAccess,
   setHasQuotesAccess,
   allowedTypes,

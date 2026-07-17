@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Bell, Edit, RefreshCw, CheckCircle, XCircle } from "lucide-react";
 import { Profile, ChutiRecordWithProfile } from "@/types";
 import { ChutiRecord } from "@/utils/offlineSync";

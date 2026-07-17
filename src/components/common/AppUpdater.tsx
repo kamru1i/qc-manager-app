@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowUpCircle } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/utils/supabase";

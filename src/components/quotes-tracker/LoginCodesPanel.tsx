@@ -16,7 +16,6 @@ import {
   Key,
   User,
   AlertCircle,
-  Loader2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -98,7 +97,6 @@ interface LoginCodesPanelProps {
 
 export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   canEdit,
-  isOnline,
   showToast,
 }) => {
   const [loginCodes, setLoginCodes] = useState<LoginCode[]>([]);

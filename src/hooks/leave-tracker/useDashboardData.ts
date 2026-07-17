@@ -511,7 +511,7 @@ export const useDashboardData = () => {
           supabase
             .from('govt_holiday_responses')
             .upsert(autoResponses, { onConflict: 'user_id,holiday_date' })
-            .then(({ error: upsertError }) => {
+            .then(() => {
             });
         }
       });

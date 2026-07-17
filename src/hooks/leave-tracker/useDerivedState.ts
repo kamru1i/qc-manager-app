@@ -57,7 +57,6 @@ export function useDerivedState({
   globalSettings,
   loading: _loading,
   initialFetchDone,
-  adminActiveTab,
   dismissedNotificationIds,
   leaveSettlements,
 }: UseDerivedStateParams) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { calculateStats, GlobalSettings } from '@/utils/dashboardHelpers';

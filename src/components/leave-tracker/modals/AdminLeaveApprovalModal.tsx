@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Bell } from "lucide-react";
 import { Profile, ChutiRecordWithProfile, BulkRepresentative } from "@/types";
 import { Modal } from "@/components/common/Modal";

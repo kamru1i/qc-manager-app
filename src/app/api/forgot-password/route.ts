@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       );
     }
     // 3. Find admins to notify
-    const { data: admins, error: adminsError } = await supabaseServer
+    const { error: adminsError } = await supabaseServer
       .from('profiles')
       .select('id')
       .eq('role', 'admin');
@@ -111,11 +111,6 @@ export async function POST(request: NextRequest) {
     if (adminsError) {
       console.error('[ForgotPassword] Error getting admins:', adminsError.message);
     }
-
-    const adminIds = admins?.map(a => a.id) || [];
-    const displayName = profile.full_name || profile.username;
-    const title = 'Password Reset Request';
-    const notificationBody = `${displayName} has requested a password reset.`;
 
     return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (err) {

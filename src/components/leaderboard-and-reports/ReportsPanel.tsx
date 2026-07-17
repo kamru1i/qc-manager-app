@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RecordItem, Profile } from '@/types';
 import { LeaderboardSkeleton } from '@/components/common/skeleton/LeaderboardSkeleton';
 import { ReportsDashboardView } from './ReportsDashboardView';
@@ -9,7 +9,6 @@ interface ReportsPanelProps {
   records: RecordItem[];
   profilesList: Profile[];
   profile: Profile | null;
-  recordsLoading?: boolean;
   onBack?: () => void;
 }
 
@@ -17,7 +16,6 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({
   records,
   profilesList,
   profile,
-  recordsLoading = false,
   onBack,
 }) => {
   const isAdmin = profile?.role === 'admin' || profile?.role === 'supervisor';

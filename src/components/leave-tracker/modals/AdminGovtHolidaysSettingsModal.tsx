@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { GlobalSettings, formatDate } from '@/utils/dashboardHelpers';
 import { DateInput } from '@/components/common/DateInput';

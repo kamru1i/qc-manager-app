@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Profile } from '@/types';
 import { Modal } from '@/components/common/Modal';

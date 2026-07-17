@@ -45,7 +45,6 @@ interface AddLeaveProps {
 
 export function AddLeave({
   profile,
-  profilesList = [],
   records = [],
   globalSettings,
   leaveSettlements = [],
@@ -90,7 +89,6 @@ export function AddLeave({
 
   const isSupervisorRole = profile?.role === 'supervisor';
   const isUserRole = profile?.role === 'user';
-  const isAdminRole = profile?.role === 'admin';
   // Admin direct edit: no re-approval needed. Supervisor/User edits on approved records: re-approval required.
   const needsReapproval = !adminDirectEdit && (isSupervisorRole || isUserRole) && !!editingRecord && (editingRecord.status === 'approved' || editingRecord.status === 'settled');
 
@@ -149,7 +147,6 @@ export function AddLeave({
   const selectedYear = date ? date.substring(0, 4) : new Date().getFullYear().toString();
   const approvedRecords = staffRecords.filter(r => r.status === 'approved' && r.date && r.date.substring(0, 4) === selectedYear);
   const stats = calculateStats(approvedRecords, targetProfile?.working_hours || 9.5);
-  const supervisors = (profilesList || []).filter(p => p.role === 'supervisor');
 
   const parseHHMMToMinutes = (str: string) => {
     if (!str) return 0;

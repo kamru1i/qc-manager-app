@@ -4,18 +4,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { canAccessModule } from '@/utils/permissionService';
-import { 
-  FileText, 
-  Check, 
-  Loader2, 
-  AlertTriangle, 
-  Printer, 
-  Save, 
-  Database, 
+import {
+  FileText,
+  Loader2,
+  AlertTriangle,
+  Printer,
+  Save,
   Calendar,
-  Edit2,
-  Trash2,
-  Info,
   FileSpreadsheet,
   Target
 } from 'lucide-react';
@@ -86,7 +81,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   useEffect(() => {
     const fetchSavedPeriods = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('kpi_assessments')
           .select('month_year, kpis, appraiser_signed, appraisee_signed')
           .eq('user_id', targetStaff.id);
@@ -173,7 +168,7 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dbState, setDbState] = useState<'synced' | 'local' | 'checking'>('checking');
-  const [isDirty, setIsDirty] = useState(false);
+  const [, setIsDirty] = useState(false);
 
   // Autocomplete suggestions for Appraiser
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -187,7 +182,6 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const years = [2024, 2025, 2026, 2027];
 
   // Shared profiles list (ProfilesProvider) — replaces this panel's former
   // own-profile fetch and full-table appraiser-autocomplete fetch on mount.
@@ -314,8 +308,6 @@ export const UserKpiPerformancePanel: React.FC<UserKpiPerformancePanelProps> = (
 
   const allowedTypesStr = JSON.stringify(targetStaff.allowed_types || []);
   const supervisorIdsStr = JSON.stringify(targetStaff.supervisor_ids || []);
-  const staffGlobalEmpId = targetStaff.global_settings?.emp_id || '';
-  const staffGlobalDoj = targetStaff.global_settings?.date_of_joining || '';
 
   // Filter allowed file types for this user
   const activeFileTypes = useMemo(() => {

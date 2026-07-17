@@ -264,7 +264,6 @@ export const useChutiOperations = ({
     const approvedRecords = userRecords.filter(r => r.status === 'approved' && r.date && r.date.substring(0, 4) === selectedYear);
     const stats = calculateStats(approvedRecords);
     
-    const availableOvertimeMins = parseIntervalToMinutes(stats.overtimeHours);
     const availableShortLeaveMins = parseIntervalToMinutes(stats.shortHours);
     const leaveMins = parseIntervalToMinutes(`${leaveHour}:00`);
 
@@ -406,13 +405,6 @@ export const useChutiOperations = ({
       const recordsToInsert = datesWithAdjustment.map(item => getRecordForDate(item.date, item.adjustment));
       const { error: insertError } = await supabase.from('chuti').insert(recordsToInsert);
       if (insertError) throw insertError;
-
-      const targetRoles = bypassSupervisor 
-        ? ['admins'] 
-        : (profile?.supervisor_ids && profile.supervisor_ids.length > 0
-            ? [...profile.supervisor_ids, 'admins'] 
-            : ['supervisors', 'admins']);
-      const formattedDates = allDates.map(d => formatDate(d)).join(', ');
 
 
 
@@ -602,12 +594,6 @@ export const useChutiOperations = ({
 
       if (error) throw error;
 
-      const targetRoles = bypassSupervisor 
-        ? ['admins'] 
-        : (profile?.supervisor_ids && profile.supervisor_ids.length > 0
-            ? [...profile.supervisor_ids, 'admins'] 
-            : ['supervisors', 'admins']);
-
 
       fetchRecords();
       setShowUserRevisionModal(false);
@@ -724,10 +710,6 @@ export const useChutiOperations = ({
       }
 
       if (targets.length === 0) throw new Error('Record not found.');
-
-      const user_id = targets[0].user_id;
-      const leave_type = targets[0].leave_type;
-      const formattedDates = targets.map(t => formatDate(t.date)).join(', ');
 
       if (revisionPromptIsSupervisor) {
         const updatedCommentPrefix = `${profile?.username || 'Supervisor'} Revision: ${reasonText}`;
@@ -877,12 +859,7 @@ export const useChutiOperations = ({
 
       if (targets.length === 0) throw new Error('Record not found.');
 
-      const supervisorName = profile?.full_name ? `Supervisor ${profile.full_name}` : 'Supervisor';
       const supervisorUsername = profile?.username || 'Supervisor';
-      const leave_type = targets[0].leave_type;
-      const formattedDates = targets.map(t => formatDate(t.date)).join(', ');
-
-      const user_id = targets[0].user_id;
 
       await Promise.all(targets.map(async (t) => {
         const updatedCommentPrefix = `${supervisorUsername} Approved`;
@@ -998,9 +975,6 @@ export const useChutiOperations = ({
       if (targets.length === 0) throw new Error('Record not found.');
 
       const adminUsername = profile?.username || 'Admin';
-      const user_id = targets[0].user_id;
-      const leave_type = targets[0].leave_type;
-      const formattedDates = targets.map(t => formatDate(t.date)).join(', ');
 
       await Promise.all(targets.map(async (t) => {
         const updatedCommentPrefix = `${adminUsername} Approved`;

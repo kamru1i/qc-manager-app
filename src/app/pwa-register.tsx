@@ -30,7 +30,7 @@ export default function PWARegister() {
         const registerSW = () => {
           navigator.serviceWorker
             .register('/sw.js')
-            .then((registration) => {
+            .then(() => {
               // Registration succeeded silently
             })
             .catch((error) => {

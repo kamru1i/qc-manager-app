@@ -721,64 +721,6 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
     }
   };
 
-  // Delete rule confirm
-  const handleDeleteRule = async () => {
-    if (!ruleToDelete || !isOnline) return;
-    try {
-      setSubmitting(true);
-      const { error } = await supabase
-        .from("compliance_rules")
-        .update({ is_deleted: true, updated_by: sessionUser?.id })
-        .eq("id", ruleToDelete.id);
-
-      if (error) throw error;
-
-      // Log activity
-      const deletedDetails = [
-        `Category: ${ruleToDelete.category}`,
-        `Sub-Category: ${ruleToDelete.sub_category}`,
-        ruleToDelete.title ? `Title: ${ruleToDelete.title}` : "",
-        ruleToDelete.company_name
-          ? `Company Name: ${ruleToDelete.company_name}`
-          : "",
-        ruleToDelete.company_tags && ruleToDelete.company_tags.length > 0
-          ? `Company Tags: ${ruleToDelete.company_tags.join(", ")}`
-          : "",
-        ruleToDelete.content ? `Content: ${ruleToDelete.content}` : "",
-        ruleToDelete.extra_info ? `Extra Info: ${ruleToDelete.extra_info}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n- ");
-
-      await supabase.from("audit_logs").insert({
-        actor_id: sessionUser?.id,
-        actor_codename: profile?.username || "SYSTEM",
-        action_type: "DELETE_RULE",
-        target_id: ruleToDelete.id,
-        details: `Deleted compliance rule.
-
-Rule Details:
-- ${deletedDetails}
-
-Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`,
-      });
-
-      showToast("success", "Rule deleted successfully!");
-      setRuleToDelete(null);
-      await fetchRules(true);
-    } catch (err: any) {
-      console.error(
-        "Failed to delete rule:",
-        err?.message || err,
-        err?.details,
-        err?.hint,
-      );
-      showToast("error", "Error deleting rule.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const resetForm = () => {
     setFormCategory("company");
     setFormSubCategory("common_rules");

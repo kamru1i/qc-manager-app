@@ -28,13 +28,10 @@ interface LeaveUsageSummaryProps {
 export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
   selectedYear,
   officeLeaveRemaining,
-  officeLeaveTotal,
   govtHolidayRemaining,
   govtHolidayTotal,
   eidFitrRemaining,
-  eidFitrTotal,
   eidAdhaRemaining,
-  eidAdhaTotal,
   fullLeaves,
   shortHours,
   overtimeHours,
@@ -47,17 +44,13 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
   workingHours = 9.5,
 }) => {
   let officeRemainingVal = officeLeaveRemaining;
-  let officeTotalDisplay = formatDaysAndHours(officeLeaveTotal, workingHours);
   let officeSubtext = '';
 
   if (halfYearlyStats) {
     const isH1 = halfYearlyStats.currentHalf === 1;
-    officeRemainingVal = isH1 
-      ? halfYearlyStats.h1Remaining 
+    officeRemainingVal = isH1
+      ? halfYearlyStats.h1Remaining
       : halfYearlyStats.h2Remaining;
-    officeTotalDisplay = isH1 
-      ? formatDaysAndHours(halfYearlyStats.h1Total, workingHours) 
-      : formatDaysAndHours(halfYearlyStats.h2Total, workingHours);
     const h1Carryover = halfYearlyStats.h1Total - halfYearlyStats.h1Base;
     const hasH1Carryover = h1Carryover > 0;
     const hasH2Carryover = halfYearlyStats.carryForward > 0;

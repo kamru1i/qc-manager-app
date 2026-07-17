@@ -1,11 +1,13 @@
 # QC Manager v6.0.0 — FINAL VERIFICATION & PRODUCTION READINESS REPORT
 
-Date: 2026-07-17 · Branch: `main` @ `be443ef` (clean tree, 6 commits ahead of origin)
+Date: 2026-07-17 · Branch: `main` @ `0f448cd`
+
+**Status legend used in section titles:** ✅ DONE = verified complete, nothing left. 🔧 FIX NEEDED = open items remain in that section (each marked inline).
 Scope: final verification pass — verified prior fixes, ran fresh scans, reviewed Desktop/Android/CI-CD, dead code + duplication. Companion detail file: `dead-code-duplication-audit.md`. Prior findings baseline: `opus-4.8-report.md`.
 
 ---
 
-## 1. Verification Report
+## 1. Verification Report — ✅ DONE
 
 ### 1.1 Previously required changes (§11 of prior report) — ALL VERIFIED FIXED
 
@@ -24,13 +26,13 @@ Scope: final verification pass — verified prior fixes, ran fresh scans, review
 
 **None found.** All C1–C6/H2 era fixes remain intact (single `.channel()` call in `RealtimeContext.tsx`, DOM-event fan-out, throttles). `next build` passes clean (10 routes, 0 errors). `tsc --noEmit` clean.
 
-### 1.3 Remaining (new) findings — none critical
+### 1.3 Remaining (new) findings — ✅ ALL FIXED
 
 - 🟡 **Mobile update check uses `!==` not semver-greater** (`AppUpdater.tsx:152`): if a row for an _older_ version were made newest in `mobile_app_versions`, clients would "update" (downgrade) to it. Low likelihood (CI inserts monotonically), zero egress impact. Optional hardening. — **Fixed** (`isNewerVersion()` semver comparison, tsc clean)
 - 🟡 **`handleRestartNow` + `@capgo/capacitor-updater` path is dead code** (`AppUpdater.tsx:220-241` — flagged by tsc): the mobile flow launches the system APK installer directly and never calls it. The `dismissed` state pair is likewise unused. Safe cleanup. — **Fixed** (removed `handleRestartNow`, `dismissed`/`setDismissed`, `downloadedUpdateRef`; uninstalled `@capgo/capacitor-updater` and re-ran `cap sync android` — unused native plugin no longer ships in the APK; tsc + build clean)
 - 🟡 Two `onAuthStateChange` listeners (page.tsx + useDashboardData) — pre-existing, cleaned up correctly, moderate duplicate-fetch on SIGNED_IN only. Unchanged from prior report; acceptable. — **Fixed** (new `src/utils/profileFetcher.ts` shares one in-flight own-profile SELECT per login; both listeners now call `fetchOwnProfileRow()` — 2 identical single-row queries per SIGNED_IN → 1; tsc clean)
 
-## 2. Supabase Report
+## 2. Supabase Report — ✅ DONE
 
 - **Egress**: the two confirmed amplifiers are closed (§1.1). Full-table profile fetch count per session: 3 → **1** (context-owned, IndexedDB-cache-first). All hot-path selects column-limited. Compliance rules now date-filtered (`be443ef`). Records scoped to current user for non-admins (`06bcc04`). — **Fixed** (audit of this claim found 4 leftover full-table/duplicate profile selects outside the context, all now consolidated: `useAdminActions.ts` createUser + adminUpdateUserProfile post-mutation refreshes → shared `refreshProfiles()`; `UserManagementDashboard.tsx` post-edit refresh → single-row select of the edited user (list already refreshed by the hook); `UserKpiPerformancePanel.tsx` mount-path own-profile + full-table appraiser-autocomplete fetches → derived from shared `profilesList`. KPI-tab open now issues 0 profile queries, was 2; admin edit/create round-trip issues 1 full-table fetch, was 2–3; tsc + build clean)
 - **Realtime**: still exactly ONE channel (`RealtimeContext.tsx:99`, cleanup verified). Badge-sync no longer fans out N profile-UPDATE events per mount — with the SQL no-op fix, a repeat daily run emits **zero** events. Profile UPDATEs are inline-patched; INSERT/DELETE triggers a single shared refetch.
@@ -38,46 +40,46 @@ Scope: final verification pass — verified prior fixes, ran fresh scans, review
 - **Polling inventory** (all cleanup verified): NetworkProvider 45s HEAD ping; AppUpdater 15-min (GitHub manifest on desktop / single-row Supabase query on mobile); localStorage-only 5s poll while password modal open. All acceptable.
 - **Expected outcome**: the mounts × profiles × clients realtime amplification and the per-event leaderboard RPC storm are eliminated — the two paths that explained 196→212% egress and 70→80% realtime. Usage should trend down; monitor the Supabase dashboard over the next billing window to confirm.
 
-## 3. React Report
+## 3. React Report — ✅ DONE
 
 - Hooks/cleanup: all timers, listeners, debounce refs cleaned up (incl. the new rankings throttle cleanup `page.tsx:1064-1068`). No rules-of-hooks violations (lint: 0 errors). No infinite loops; guard refs used consistently. Strict-Mode-safe channel lifecycle.
 - Rerenders: ProfilesContext consolidation removes 2 redundant state copies and their update cascades. `DashboardModals.tsx` still takes 44 unused props (see dead-code report) — pruning is the one remaining measurable rerender win. — **Fixed** (pruned all 42 lint-flagged unused destructured values from the `dashboardData`/`adminStaffOps` context pulls — push-subscription pair, tab/staff setters, and the entire unused profile-settings-modal block; eslint on the file now 0 warnings; tsc + `next build` clean)
-- 157 unused locals/imports remain (tsc-verified, list in `dead-code-duplication-audit.md`) — cosmetic, no runtime cost except a few dead computed values per render (`UserLeaveHistoryPanel`, `UserKpiPerformancePanel`).
+- ~112 unused locals/imports remained (re-verified via `tsc --noUnusedLocals --noUnusedParameters`; down from 157 after the DashboardModals prune). List in `dead-code-duplication-audit.md`. Cosmetic, no runtime cost except a few dead computed values per render (`UserLeaveHistoryPanel`, `UserKpiPerformancePanel`). — **Fixed** (all 112 removed across 42 files: unused import specifiers dropped; dead pure-computed consts deleted — incl. the entire dead stats block + two orphaned pure-`useMemo` hook calls in `UserLeaveHistoryPanel` and the `handleDeleteRule` dead function in `QuoteRulesPanel`; unused destructured props/bindings removed from patterns (interfaces kept where call sites still pass them); unused `error` bindings dropped with their awaits preserved; two positional params that can't be deleted without breaking arity renamed to `_allowedTypes`/`_shiftEnd`. `tsc --noUnusedLocals --noUnusedParameters` now reports **0** unused symbols; plain tsc, eslint (0 errors), and `next build` (10 routes) all clean)
 
-## 4. Database Report
+## 4. Database Report — 🔧 FIX NEEDED (hygiene)
 
-- Indexes: delta-sync single-column indexes present in repo SQL. v6.0.0's composite-index/pg_cron claims remain unverifiable from the repo (schema.sql stale) — regenerate `schema.sql` from live DB to close this.
+- 🔧 **FIX NEEDED**: regenerate `supabase/schema.sql` from live DB (still stale — last touched `3aaaa02`, 2026-07-14). v6.0.0's composite-index/pg_cron claims remain unverifiable from the repo until then.
 - Triggers: `check_profile_updates` sound (bypass flag + role checks, no recursion). Badge-sync trigger interplay verified with the new no-op SQL.
 - RLS: `USING (true)` on profiles/records = deliberate open-leaderboard tradeoff (unchanged).
-- Hygiene (unchanged, non-blocking): most SECURITY DEFINER functions in repo SQL don't pin `search_path` (only `add_leaderboard_rpc.sql` does); `complete_profile_setup` RPC has no repo definition.
+- 🔧 **FIX NEEDED** (non-blocking): most SECURITY DEFINER functions in repo SQL don't pin `search_path` (only `add_leaderboard_rpc.sql` does); `complete_profile_setup` RPC has no repo definition.
 
-## 5. Refactor Report (measurable only — none blocking)
+## 5. Refactor Report — 🔧 FIX NEEDED (duplication + dead code, none blocking)
 
-Detail + full clone map in `dead-code-duplication-audit.md`. jscpd: 130 clones, 4.13% duplication. Top ROI:
+Detail + full clone map in `dead-code-duplication-audit.md`. jscpd: 130 clones, 4.13% duplication. Top ROI (all still open):
 
-1. `offlineSync.ts` ↔ `quotesOfflineSync.ts` (~360 dup lines) → one IndexedDB store factory
-2. `AsitisCausalityPanel` ↔ `EUICausalityPanel` (~250) → one parameterized panel
-3. `useChutiOperations` notification-payload builder repeated 4× (~180)
-4. Dead code: 3 dead files + 2 orphaned `leaderboardHelper` functions (~230 lines, zero-risk delete)
+1. 🔧 `offlineSync.ts` ↔ `quotesOfflineSync.ts` (~360 dup lines) → one IndexedDB store factory
+2. 🔧 `AsitisCausalityPanel` ↔ `EUICausalityPanel` (~250) → one parameterized panel
+3. 🔧 `useChutiOperations` notification-payload builder repeated 4× (~180)
+4. 🔧 Dead code: 3 dead files (`EmployeeRankBadge.tsx`, `RankingChip.tsx`, `downloadHelper.ts` — verified still present today) + 2 orphaned `leaderboardHelper` functions (~230 lines, zero-risk delete)
 
-## 6. Desktop (Tauri) Report
+## 6. Desktop (Tauri) Report — 🔧 FIX NEEDED (hardening)
 
 - **Updater flow ✅ end-to-end coherent**: `latest.json` endpoint (tauri.conf.json) ← generated by CI with per-platform signatures parsed from `.sig` assets; minisign pubkey pinned; `downloadAndInstall` with progress → auto `relaunch()`. 15-min check + 3s startup check, guarded by `isCheckingRef`, timers cleaned up, dev-mode disabled.
 - Tray/window lifecycle correct (close-to-tray, macOS activation policy + Reopen handling, Windows double-click restore). `createUpdaterArtifacts: true` matches the updater. Version aligned across `tauri.conf.json`/`Cargo.toml`/`package.json` (6.0.0).
-- 🟡 Hardening (non-blocking): `"csp": null` in tauri.conf.json — a strict CSP is recommended for a webview app; `fs:scope allow **` + `fs:read-all/write-all` is maximally broad — scope to the directories the export/save features actually use. `tauri-private.key` sits in the repo directory (gitignored + untracked, verified) — move outside the repo.
+- 🔧 **FIX NEEDED** (non-blocking hardening, re-verified still present today): `"csp": null` in `tauri.conf.json:25` — set a strict CSP for a webview app; `capabilities/default.json:15-21` still grants `fs:read-all`/`fs:write-all` + scope `**` — scope to the directories the export/save features actually use; `tauri-private.key` still sits in the repo root (gitignored + untracked, verified) — move outside the repo.
 
-## 7. Android (Capacitor) Report
+## 7. Android (Capacitor) Report — ✅ DONE (notes only)
 
 - Config sane: appId matches Tauri identifier, `webDir: out`, https scheme. Manifest minimal-permission (**INTERNET + REQUEST_INSTALL_PACKAGES only**), FileProvider correctly configured for APK self-update, `launchMode="singleTask"`. minSdk 24 / targetSdk 36, versionCode 19 / versionName 6.0.0.
 - Update flow: single-row version query → GitHub APK download with progress → system installer via FileOpener. Valid design for a sideloaded internal app.
 - 🟡 Notes: release build has `minifyEnabled false` (larger APK, acceptable for internal distribution); no `signingConfig` in gradle — signing is done post-build in CI via zipalign+apksigner, which is correct and verified (`apksigner verify` + badging + size checks in the workflow). Remember to bump `versionCode` with each release (manual today).
 
-## 8. CI/CD (GitHub Actions) Report
+## 8. CI/CD (GitHub Actions) Report — 🔧 FIX NEEDED (trigger review)
 
 - Single well-structured workflow: 6-target Tauri matrix (fail-fast off) → Android APK (signed release with verified fallback to debug) → combine job that uploads assets, generates SHA256SUMS + `latest.json`, and registers the OTA bundle in `mobile_app_versions` with the service key.
 - **Duplicate-asset handling ✅**: `deleteAssetIfExists` with deletion-propagation polling before every upload + retry-on-422 — re-runs won't produce duplicate assets.
 - Robustness: upload retries (3×), sig→platform mapping covers all shipped targets incl. nsis variants, checksums computed locally where possible (avoids re-download).
-- 🟡 Notes (non-blocking): workflow triggers on every push to main (not just tags) — every push rebuilds 6 desktop targets + APK and republishes; if that's not intended, gate release jobs on `startsWith(github.ref, 'refs/tags/')`. OTA registration failure is caught-and-logged, not failed — deliberate but means a partial release is possible; the log makes it visible.
+- 🔧 **FIX NEEDED** (non-blocking, re-verified today — workflow still triggers on push to `main`/`master`): every push rebuilds 6 desktop targets + APK and republishes; if that's not intended, gate release jobs on `startsWith(github.ref, 'refs/tags/')`. Also: OTA registration failure is caught-and-logged, not failed — deliberate but means a partial release is possible; the log makes it visible.
 
 ## 9. Production Scores
 
@@ -92,13 +94,27 @@ Detail + full clone map in `dead-code-duplication-audit.md`. jscpd: 130 clones, 
 | Desktop (Tauri)                  | 8.5/10     | Solid updater + lifecycle; docked for null CSP + `**` fs scope                                  |
 | Android (Capacitor)              | 8.5/10     | Minimal permissions, verified signing; manual versionCode, no minify                            |
 | CI/CD                            | 9/10       | Idempotent, verified, complete; push-to-main trigger worth reviewing                            |
-| Maintainability                  | 7.5/10     | 4.13% duplication + 157 unused locals; roadmap in audit file                                    |
+| Maintainability                  | 8.5/10     | 4.13% duplication remains (roadmap in audit file); unused locals now **0**                      |
 | **Overall Production Readiness** | **8.8/10** | Up from 7.5 — both required changes landed and verified                                         |
 
-## 10. Final Sign-Off
+## 10. Final Sign-Off — ✅ APPROVED (with open hygiene backlog)
 
-Both required changes from the prior audit (throttled/field-filtered leaderboard RPC; gated + no-op-free badge sync) are implemented and verified at the file/line and SQL level, along with every optional improvement (ProfilesContext, column constants, shared date-range util, 45s ping, generated DB types). Build, types, and lint are clean; no regressions; desktop, Android, and CI/CD flows are coherent end-to-end. Remaining items are hygiene (dead code, duplication refactors, CSP/fs-scope tightening, schema.sql regeneration) — none affects correctness, cost, or stability.
+Both required changes from the prior audit (throttled/field-filtered leaderboard RPC; gated + no-op-free badge sync) are implemented and verified at the file/line and SQL level, along with every optional improvement (ProfilesContext, column constants, shared date-range util, 45s ping, generated DB types) **and all three §1.3 findings** (semver update check, dead updater path removed, shared own-profile fetcher). Build, types, and lint are clean; no regressions; desktop, Android, and CI/CD flows are coherent end-to-end.
+
+**Open FIX NEEDED items (all non-blocking hygiene — see 🔧 markers in section titles above):**
+
+| #   | Section     | Item                                                                                                  |
+| --- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| ~~1~~ | ~~§3 React~~ | ~~Unused locals/imports~~ — **Fixed** (all 112 removed, tsc unused-check now 0)                       |
+| 2   | §4 Database | Regenerate stale `supabase/schema.sql` from live DB                                                   |
+| 3   | §4 Database | Pin `search_path` in SECURITY DEFINER functions; add `complete_profile_setup` definition to repo      |
+| 4   | §5 Refactor | Dedupe `offlineSync`/`quotesOfflineSync`, causality panels, notification-payload builder              |
+| 5   | §5 Refactor | Delete 3 dead files + 2 orphaned `leaderboardHelper` functions                                        |
+| 6   | §6 Tauri    | Set strict CSP (`csp: null` today); narrow `fs` scope from `**`; move `tauri-private.key` out of repo |
+| 7   | §8 CI/CD    | Gate release jobs on tags instead of every push to main (if intended)                                 |
+
+None affects correctness, cost, or stability.
 
 # ✅ APPROVED
 
-(Ship it. Monitor Supabase egress/realtime over the next billing window to confirm the downward trend; the hygiene backlog is documented in `dead-code-duplication-audit.md` §6.)
+(Ship it. Monitor Supabase egress/realtime over the next billing window to confirm the downward trend; the hygiene backlog above is detailed in `dead-code-duplication-audit.md` §6.)

@@ -172,23 +172,6 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
           ? `Settlement broadcast deactivated for ${selectedYear}!`
           : `Settlement broadcast activated: ${selectedCategory} (${periodLabel}) for ${selectedYear}! Relevant staff will see notification banners.`
       );
-
-      if (!isBroadcastActive) {
-        // Send Web Push notification to all eligible staff (non-zero balance and not processed yet)
-        const targetStaff = staffProfiles.filter((staff) => {
-          const remaining = getRemainingDaysForCategoryPeriod(staff, selectedPeriod, selectedCategory);
-          const settlement = leaveSettlements.find(
-            (s) =>
-              s.user_id === staff.id &&
-              s.year === selectedYear &&
-              s.period === selectedPeriod &&
-              s.leave_category === selectedCategory
-          );
-          const isProcessed = settlement?.status === 'processed';
-          return Math.abs(remaining) > 0.01 && !isProcessed;
-        });
-
-      }
     }
   };
 

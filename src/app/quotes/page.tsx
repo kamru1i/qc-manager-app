@@ -1,6 +1,6 @@
 "use client";
  
-import { useState, useMemo, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, usePathname } from "next/navigation";
 import { useQuotesDashboardData } from "@/hooks/quotes-tracker/useQuotesDashboardData";
@@ -48,8 +48,6 @@ import {
   RefreshCw,
   Search,
   FileSpreadsheet,
-  ScrollText,
-  Save,
 } from "lucide-react";
 
 const ALL_10_FILE_TYPES = [
@@ -348,7 +346,7 @@ export default function Dashboard({
     useState(false);
 
   // Copy Helper States
-  const [showReportHelper, setShowReportHelper] = useState<boolean>(() => {
+  const [showReportHelper] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("quotes_sales_show_report_helper") === "true";
     }
@@ -356,7 +354,7 @@ export default function Dashboard({
   });
 
   // Save File States
-  const [showSaveFileHelper, setShowSaveFileHelper] = useState<boolean>(() => {
+  const [showSaveFileHelper] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("quotes_sales_show_save_file_helper") === "true";
     }

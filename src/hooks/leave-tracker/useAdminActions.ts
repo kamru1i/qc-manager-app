@@ -32,8 +32,8 @@ export const useAdminActions = ({
   const createUser = useCallback(async (
     username: string, 
     role: 'admin' | 'supervisor' | 'user', 
-    fullName: string, 
-    allowedTypes: string[], 
+    fullName: string,
+    _allowedTypes: string[],
     canManageRules: boolean,
     hasChutiAccess: boolean,
     hasQuotesAccess: boolean,
@@ -66,7 +66,7 @@ export const useAdminActions = ({
 
     try {
       const derivedEmail = `${username.toLowerCase().trim()}@office.local`;
-      const { data, error } = await supabase.rpc('create_new_user', {
+      const { error } = await supabase.rpc('create_new_user', {
         p_email: derivedEmail,
         p_password: activePassword,
         p_username: username.toUpperCase().trim(),
@@ -79,8 +79,6 @@ export const useAdminActions = ({
       });
 
       if (error) throw error;
-
-      const newUserId = data;
 
       // Update the newly created user profile with permissions and access flags
       const { data: newProfile } = await supabase

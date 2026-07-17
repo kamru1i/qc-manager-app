@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { RecordItem, Profile } from '@/types';
 import { ReportSummaryCards } from './ReportSummaryCards';
 import { SubmissionVolumeChart } from './SubmissionVolumeChart';
@@ -22,8 +22,6 @@ interface ReportsDashboardViewProps {
 
 export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
   records,
-  profilesList,
-  profile,
 }) => {
   // Available years from records
   const availableYears = useMemo(() => {

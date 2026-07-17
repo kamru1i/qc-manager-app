@@ -802,7 +802,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   };
 
   const visibleProfiles = profiles
-    .filter((u) => {
+    .filter(() => {
       // Supervisors and Admins can see all users in the list
       return true;
     })

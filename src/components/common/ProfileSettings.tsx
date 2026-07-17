@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { User, AlertTriangle, RefreshCw, Lock, Settings, Bell, Key, Layout } from 'lucide-react';
+import { User, AlertTriangle, RefreshCw, Settings, Key, Layout } from 'lucide-react';
 import { Profile } from '@/types';
 import { ProfileFields } from '@/components/leave-tracker/ProfileFields';
 import { supabase } from '@/utils/supabase';
@@ -18,7 +18,6 @@ export function ProfileSettings({
   profile,
   setProfile,
   sessionUser,
-  onBack,
 }: ProfileSettingsProps) {
   // Input fields state
   const [editUsername, setEditUsername] = useState('');

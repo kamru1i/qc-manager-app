@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Trash2, RefreshCw } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
 

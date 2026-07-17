@@ -1,12 +1,10 @@
 import React from 'react';
 import {
-  User,
   Calendar,
   ArrowLeft,
   AlertTriangle,
   Edit,
   Trash2,
-  Settings,
   RotateCcw,
   Download
 } from 'lucide-react';
@@ -26,10 +24,6 @@ import {
   getSettlementSplits
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
-import { AdminOfficeLeaveSettingsModal } from '@/components/leave-tracker/modals/AdminOfficeLeaveSettingsModal';
-import { AdminEidLeaveSettingsModal } from '@/components/leave-tracker/modals/AdminEidLeaveSettingsModal';
-import { AdminGovtHolidaysSettingsModal } from '@/components/leave-tracker/modals/AdminGovtHolidaysSettingsModal';
-import { StatCard } from '@/components/common/StatCard';
 import { UserStats } from '@/components/leave-tracker/UserStats';
 import { DateInput } from '@/components/common/DateInput';
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
@@ -119,15 +113,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   selectedYear,
   setSelectedYear,
   availableYears,
-  searchQuery,
-  setSearchQuery,
-  getUserSummaryStats,
   onChangePasswordClick,
   onEditProfileClick,
   onDeleteUserClick,
-  onAddStaffClick,
-  onExportSummaryExcel,
-  onExportSummaryPDF,
   onAddLeaveClick,
   globalSettings,
   onSaveGlobalSettings,
@@ -208,7 +196,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [holidaySearchDate, setHolidaySearchDate] = React.useState('');
 
   // Eligibility & Deduction for viewed staff
-  const viewingProfile = profilesList.find((p) => p.id === viewingStaffId);
   const isOfficeLeaveEligible = staffProfile?.eligible_office_leave !== false;
   const isGovtHolidayEligible = staffProfile?.eligible_govt_holiday !== false;
 

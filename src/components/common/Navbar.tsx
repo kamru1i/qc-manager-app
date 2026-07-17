@@ -4,8 +4,6 @@ import {
   Sun,
   Moon,
   Download,
-  Monitor,
-  Apple,
   Clock,
   Coffee,
   Bell,
@@ -18,8 +16,6 @@ import { isNativeApp } from "@/utils/envHelper";
 
 import { UserDisplayName } from "@/components/common/UserDisplayName";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
-import { SafeAreaTop } from "@/components/common/SafeAreaTop";
-import { useSafeArea } from "@/hooks/common/useSafeArea";
 
 interface NavbarProps {
   profile: Profile | null;
@@ -62,7 +58,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const router = useRouter();
   const [isNative, setIsNative] = React.useState(false);
-  const { top } = useSafeArea();
 
   React.useEffect(() => {
     setIsNative(isNativeApp());

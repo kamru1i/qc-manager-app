@@ -10,11 +10,8 @@ import {
   Loader,
   Eye,
   EyeOff,
-  Monitor,
-  Apple,
 } from "lucide-react";
 import { getApiUrl } from "@/utils/apiUrlHelper";
-import { useAppReleaseLinks } from "@/hooks/common/useAppReleaseLinks";
 import { Modal } from "@/components/common/Modal";
 import SmartDownloadButton from "@/components/common/SmartDownloadButton";
 import { isNativeApp } from "@/utils/envHelper";

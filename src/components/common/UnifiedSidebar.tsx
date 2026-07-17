@@ -11,7 +11,6 @@ import {
   FileText,
   Clock,
   BookOpen,
-  TrendingUp,
   Award,
   Users,
   ScrollText,

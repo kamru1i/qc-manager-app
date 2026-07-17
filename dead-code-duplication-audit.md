@@ -7,13 +7,14 @@ Method: `tsc --noUnusedLocals --noUnusedParameters` (re-run and diffed — ident
 
 ## 1. Dead files (entire file unreferenced — safe to delete)
 
-| File | Lines | Evidence |
-|---|---|---|
-| `src/components/leaderboard-and-reports/EmployeeRankBadge.tsx` | 20 | No import anywhere (static or dynamic) |
-| `src/components/leaderboard-and-reports/RankingChip.tsx` | 43 | No import anywhere |
-| `src/utils/downloadHelper.ts` | 46 | No import anywhere (`DownloadPlatform`, `downloadLatestRelease` both unused) |
+| File                                                           | Lines | Evidence                                                                     |
+| -------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| `src/components/leaderboard-and-reports/EmployeeRankBadge.tsx` | 20    | No import anywhere (static or dynamic)                                       |
+| `src/components/leaderboard-and-reports/RankingChip.tsx`       | 43    | No import anywhere                                                           |
+| `src/utils/downloadHelper.ts`                                  | 46    | No import anywhere (`DownloadPlatform`, `downloadLatestRelease` both unused) |
 
 **Not dead — do not delete:**
+
 - `src/types/database.types.ts` — zero imports today, but it was added intentionally in commit `05c169a` ("initial TypeScript database type definitions") and is presumably about to be wired into `src/utils/supabase.ts` (`createClient<Database>`). Flagging as **dormant, keep**. If you don't plan to wire it in, delete it — right now it contributes nothing.
 - `src/hooks/common/useAppReleaseLinks.ts` — imported by `login/page.tsx` but the import is unused there (see §2). If that import is removed the hook becomes dead → candidate for deletion in the same pass.
 

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Edit, RefreshCw } from 'lucide-react';
 import { PasswordMatchIndicator } from '@/components/common/PasswordMatchIndicator';
 import { Profile } from '@/types';

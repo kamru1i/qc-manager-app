@@ -314,7 +314,7 @@ export const calculateLeaveOrOvertime = (
   actualStart: string,
   actualEnd: string,
   shiftStart: string,
-  shiftEnd: string,
+  _shiftEnd: string,
   workingHours: number = 9.5,
   isHoliday: boolean = false
 ) => {
