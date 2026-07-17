@@ -9,22 +9,24 @@ Scope: final verification pass — verified prior fixes, ran fresh scans, review
 
 ### 1.1 Previously required changes (§11 of prior report) — ALL VERIFIED FIXED
 
-| Prior issue | Status | Evidence |
-|---|---|---|
-| 🔴 C-NEW-1 — unthrottled leaderboard RPC on every records/profiles event | ✅ **Fixed** (`03eed62`) | `page.tsx:1042-1073` — 30s throttle with trailing timeout + unmount cleanup; records handler uses `throttledFetchGlobalRankings` (`:1076-1081`) |
-| 🔴 C-NEW-1b — profiles handler fired RPC on heartbeat writes | ✅ **Fixed** (`06bcc04`) | `page.tsx:1101-1121` — rank-field diffing (`username, full_name, role, has_quotes_access`) against cached previous row (correctly handles default REPLICA IDENTITY where `payload.old` only has the PK) |
-| 🔴 C-NEW-2 — `sync_top_performer_badges` rewrote ALL profile rows on every mount | ✅ **Fixed** (both halves) | Client: once-daily localStorage guard `page.tsx:714-750`. SQL: `supabase/fix_badge_sync_noop_updates.sql` — badge-removal filtered to rows that HAVE a badge, assignment uses `IS DISTINCT FROM` → repeat runs are zero-rewrite, zero-realtime no-ops |
-| ⚠️ R1/R2 — triple profiles state (3 full-table fetches) | ✅ **Fixed** (`d9a9a31`) | `ProfilesContext.tsx` mounted at `page.tsx:417`; all three holders (`page.tsx:577`, `useDashboardData.ts:48`, `UserManagementDashboard.tsx:71`) and the quotes hook (`useQuotesDashboardData.ts:84`) proxy the context. **Zero** leftover `useState<Profile[]>` copies (grep-verified) |
-| ⚠️ C4 — 26 `select('*')` calls | ✅ **Fixed** (`d9a9a31`) | `src/utils/dbColumns.ts` — centralized column constants sourced from generated `database.types.ts`. Remaining `select("*")` count: **2**, both `{ count: 'exact', head: true }` (QuoteRulesPanel:303,433) — head requests, zero row egress. Per-staff panels now column-limited (`UserAnalyticsPanel.tsx:42`, `UserQuotesHistoryPanel.tsx:78`) |
-| Optional — duplicate `fetchAvailableDates` | ✅ **Fixed** (`0e795e3`) | Extracted to `src/utils/availableDatesHelper.ts`, consumed by both hooks |
-| Optional — Tauri connectivity ping 12s | ✅ **Fixed** | `NetworkProvider.tsx:93-95` — now 45s with explanatory comment (~1,900 pings/day/client, down from 7,200) |
-| Optional — schema drift | ✅ **Addressed** (`05c169a`) | `src/types/database.types.ts` generated from live DB via `supabase gen types --linked`; `dbColumns.ts` documents it as source of truth. `schema.sql` remains stale (known, memoized) — regeneration still recommended but no longer blocks anything |
+| Prior issue                                                                      | Status                       | Evidence                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 C-NEW-1 — unthrottled leaderboard RPC on every records/profiles event         | ✅ **Fixed** (`03eed62`)     | `page.tsx:1042-1073` — 30s throttle with trailing timeout + unmount cleanup; records handler uses `throttledFetchGlobalRankings` (`:1076-1081`)                                                                                                                                                                                                |
+| 🔴 C-NEW-1b — profiles handler fired RPC on heartbeat writes                     | ✅ **Fixed** (`06bcc04`)     | `page.tsx:1101-1121` — rank-field diffing (`username, full_name, role, has_quotes_access`) against cached previous row (correctly handles default REPLICA IDENTITY where `payload.old` only has the PK)                                                                                                                                        |
+| 🔴 C-NEW-2 — `sync_top_performer_badges` rewrote ALL profile rows on every mount | ✅ **Fixed** (both halves)   | Client: once-daily localStorage guard `page.tsx:714-750`. SQL: `supabase/fix_badge_sync_noop_updates.sql` — badge-removal filtered to rows that HAVE a badge, assignment uses `IS DISTINCT FROM` → repeat runs are zero-rewrite, zero-realtime no-ops                                                                                          |
+| ⚠️ R1/R2 — triple profiles state (3 full-table fetches)                          | ✅ **Fixed** (`d9a9a31`)     | `ProfilesContext.tsx` mounted at `page.tsx:417`; all three holders (`page.tsx:577`, `useDashboardData.ts:48`, `UserManagementDashboard.tsx:71`) and the quotes hook (`useQuotesDashboardData.ts:84`) proxy the context. **Zero** leftover `useState<Profile[]>` copies (grep-verified)                                                         |
+| ⚠️ C4 — 26 `select('*')` calls                                                   | ✅ **Fixed** (`d9a9a31`)     | `src/utils/dbColumns.ts` — centralized column constants sourced from generated `database.types.ts`. Remaining `select("*")` count: **2**, both `{ count: 'exact', head: true }` (QuoteRulesPanel:303,433) — head requests, zero row egress. Per-staff panels now column-limited (`UserAnalyticsPanel.tsx:42`, `UserQuotesHistoryPanel.tsx:78`) |
+| Optional — duplicate `fetchAvailableDates`                                       | ✅ **Fixed** (`0e795e3`)     | Extracted to `src/utils/availableDatesHelper.ts`, consumed by both hooks                                                                                                                                                                                                                                                                       |
+| Optional — Tauri connectivity ping 12s                                           | ✅ **Fixed**                 | `NetworkProvider.tsx:93-95` — now 45s with explanatory comment (~1,900 pings/day/client, down from 7,200)                                                                                                                                                                                                                                      |
+| Optional — schema drift                                                          | ✅ **Addressed** (`05c169a`) | `src/types/database.types.ts` generated from live DB via `supabase gen types --linked`; `dbColumns.ts` documents it as source of truth. `schema.sql` remains stale (known, memoized) — regeneration still recommended but no longer blocks anything                                                                                            |
 
 ### 1.2 Regressions
+
 **None found.** All C1–C6/H2 era fixes remain intact (single `.channel()` call in `RealtimeContext.tsx`, DOM-event fan-out, throttles). `next build` passes clean (10 routes, 0 errors). `tsc --noEmit` clean.
 
 ### 1.3 Remaining (new) findings — none critical
-- 🟡 **Mobile update check uses `!==` not semver-greater** (`AppUpdater.tsx:152`): if a row for an *older* version were made newest in `mobile_app_versions`, clients would "update" (downgrade) to it. Low likelihood (CI inserts monotonically), zero egress impact. Optional hardening. — **Fixed** (`isNewerVersion()` semver comparison, tsc clean)
+
+- 🟡 **Mobile update check uses `!==` not semver-greater** (`AppUpdater.tsx:152`): if a row for an _older_ version were made newest in `mobile_app_versions`, clients would "update" (downgrade) to it. Low likelihood (CI inserts monotonically), zero egress impact. Optional hardening. — **Fixed** (`isNewerVersion()` semver comparison, tsc clean)
 - 🟡 **`handleRestartNow` + `@capgo/capacitor-updater` path is dead code** (`AppUpdater.tsx:220-241` — flagged by tsc): the mobile flow launches the system APK installer directly and never calls it. The `dismissed` state pair is likewise unused. Safe cleanup. — **Fixed** (removed `handleRestartNow`, `dismissed`/`setDismissed`, `downloadedUpdateRef`; uninstalled `@capgo/capacitor-updater` and re-ran `cap sync android` — unused native plugin no longer ships in the APK; tsc + build clean)
 - 🟡 Two `onAuthStateChange` listeners (page.tsx + useDashboardData) — pre-existing, cleaned up correctly, moderate duplicate-fetch on SIGNED_IN only. Unchanged from prior report; acceptable. — **Fixed** (new `src/utils/profileFetcher.ts` shares one in-flight own-profile SELECT per login; both listeners now call `fetchOwnProfileRow()` — 2 identical single-row queries per SIGNED_IN → 1; tsc clean)
 
@@ -39,7 +41,7 @@ Scope: final verification pass — verified prior fixes, ran fresh scans, review
 ## 3. React Report
 
 - Hooks/cleanup: all timers, listeners, debounce refs cleaned up (incl. the new rankings throttle cleanup `page.tsx:1064-1068`). No rules-of-hooks violations (lint: 0 errors). No infinite loops; guard refs used consistently. Strict-Mode-safe channel lifecycle.
-- Rerenders: ProfilesContext consolidation removes 2 redundant state copies and their update cascades. `DashboardModals.tsx` still takes 44 unused props (see dead-code report) — pruning is the one remaining measurable rerender win.
+- Rerenders: ProfilesContext consolidation removes 2 redundant state copies and their update cascades. `DashboardModals.tsx` still takes 44 unused props (see dead-code report) — pruning is the one remaining measurable rerender win. — **Fixed** (pruned all 42 lint-flagged unused destructured values from the `dashboardData`/`adminStaffOps` context pulls — push-subscription pair, tab/staff setters, and the entire unused profile-settings-modal block; eslint on the file now 0 warnings; tsc + `next build` clean)
 - 157 unused locals/imports remain (tsc-verified, list in `dead-code-duplication-audit.md`) — cosmetic, no runtime cost except a few dead computed values per render (`UserLeaveHistoryPanel`, `UserKpiPerformancePanel`).
 
 ## 4. Database Report
@@ -52,6 +54,7 @@ Scope: final verification pass — verified prior fixes, ran fresh scans, review
 ## 5. Refactor Report (measurable only — none blocking)
 
 Detail + full clone map in `dead-code-duplication-audit.md`. jscpd: 130 clones, 4.13% duplication. Top ROI:
+
 1. `offlineSync.ts` ↔ `quotesOfflineSync.ts` (~360 dup lines) → one IndexedDB store factory
 2. `AsitisCausalityPanel` ↔ `EUICausalityPanel` (~250) → one parameterized panel
 3. `useChutiOperations` notification-payload builder repeated 4× (~180)
@@ -78,19 +81,19 @@ Detail + full clone map in `dead-code-duplication-audit.md`. jscpd: 130 clones, 
 
 ## 9. Production Scores
 
-| Area | Score | Notes |
-|---|---|---|
-| Build / type safety | 10/10 | Clean build, tsc clean, generated DB types wired as column source-of-truth |
-| React architecture | 9/10 | Consolidated state/realtime; residual unused-prop noise only |
-| Supabase efficiency | 9/10 | Both amplifiers closed; 1 profiles fetch; column-limited selects; all triggers throttled/diffed |
-| Realtime architecture | 9.5/10 | One channel, no-op-free badge sync, field-filtered handlers |
-| Database design | 7.5/10 | Sound; docked for stale schema.sql + unpinned search_path (unverifiable live-DB claims) |
-| Error handling | 9/10 | Boundary present, races guarded, offline paths cached |
-| Desktop (Tauri) | 8.5/10 | Solid updater + lifecycle; docked for null CSP + `**` fs scope |
-| Android (Capacitor) | 8.5/10 | Minimal permissions, verified signing; manual versionCode, no minify |
-| CI/CD | 9/10 | Idempotent, verified, complete; push-to-main trigger worth reviewing |
-| Maintainability | 7.5/10 | 4.13% duplication + 157 unused locals; roadmap in audit file |
-| **Overall Production Readiness** | **8.8/10** | Up from 7.5 — both required changes landed and verified |
+| Area                             | Score      | Notes                                                                                           |
+| -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------- |
+| Build / type safety              | 10/10      | Clean build, tsc clean, generated DB types wired as column source-of-truth                      |
+| React architecture               | 9/10       | Consolidated state/realtime; residual unused-prop noise only                                    |
+| Supabase efficiency              | 9/10       | Both amplifiers closed; 1 profiles fetch; column-limited selects; all triggers throttled/diffed |
+| Realtime architecture            | 9.5/10     | One channel, no-op-free badge sync, field-filtered handlers                                     |
+| Database design                  | 7.5/10     | Sound; docked for stale schema.sql + unpinned search_path (unverifiable live-DB claims)         |
+| Error handling                   | 9/10       | Boundary present, races guarded, offline paths cached                                           |
+| Desktop (Tauri)                  | 8.5/10     | Solid updater + lifecycle; docked for null CSP + `**` fs scope                                  |
+| Android (Capacitor)              | 8.5/10     | Minimal permissions, verified signing; manual versionCode, no minify                            |
+| CI/CD                            | 9/10       | Idempotent, verified, complete; push-to-main trigger worth reviewing                            |
+| Maintainability                  | 7.5/10     | 4.13% duplication + 157 unused locals; roadmap in audit file                                    |
+| **Overall Production Readiness** | **8.8/10** | Up from 7.5 — both required changes landed and verified                                         |
 
 ## 10. Final Sign-Off
 
