@@ -157,12 +157,17 @@ export function useGlobalNotifications(
         }
       }
 
-      // 3. Fetch active compliance rules (only if user has quotes workspace access)
+      // 3. Fetch active compliance rules (only if user has quotes workspace access).
+      // Rule notifications are non-actionable and filtered out after 7 days
+      // client-side, so only pull rules touched within the last 7 days —
+      // avoids re-downloading every rule's full content on each refetch.
       if (profile?.has_quotes_access) {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const { data: rulesData, error: rulesError } = await supabase
           .from('compliance_rules')
           .select('id, updated_at, created_at, category, sub_category, content')
-          .eq('is_deleted', false);
+          .eq('is_deleted', false)
+          .or(`updated_at.gte.${sevenDaysAgo},created_at.gte.${sevenDaysAgo}`);
 
         if (rulesError) {
           console.error('Failed to fetch compliance rules in useGlobalNotifications:', {
@@ -712,11 +717,13 @@ export function useGlobalNotifications(
       console.error('Failed to persist notification dismissal:', e);
     }
 
-    // 4. DB persistence (clean record's admin_edit_request.notifications array)
+    // 4. DB persistence (clean chuti record's admin_edit_request.notifications array)
+    // NOTE: admin_edit_request lives on the `chuti` table (the quotes `records`
+    // table has no such column — querying it 400s silently).
     if (targetNotif && targetNotif.chutiId) {
       try {
         const { data: record } = await supabase
-          .from('records')
+          .from('chuti')
           .select('admin_edit_request')
           .eq('id', targetNotif.chutiId)
           .single();
@@ -726,7 +733,7 @@ export function useGlobalNotifications(
           if (editRequest && Array.isArray(editRequest.notifications)) {
             const updatedNotifs = editRequest.notifications.filter((n: any) => n.id !== id);
             await supabase
-              .from('records')
+              .from('chuti')
               .update({
                 admin_edit_request: {
                   ...editRequest,
@@ -779,7 +786,8 @@ export function useGlobalNotifications(
       console.error('Failed to persist dismiss all notifications:', e);
     }
 
-    // 3. DB persistence (clean all matching record's admin_edit_request.notifications in parallel)
+    // 3. DB persistence (clean all matching chuti records' admin_edit_request.notifications in parallel)
+    // NOTE: admin_edit_request lives on the `chuti` table, not `records`.
     const chutiNotifs = notificationsList.filter(n => n.chutiId);
     if (chutiNotifs.length > 0) {
       const groupedByChuti: Record<string, string[]> = {};
@@ -794,7 +802,7 @@ export function useGlobalNotifications(
         Object.entries(groupedByChuti).map(async ([chutiId, notifIds]) => {
           try {
             const { data: record } = await supabase
-              .from('records')
+              .from('chuti')
               .select('admin_edit_request')
               .eq('id', chutiId)
               .single();
@@ -804,7 +812,7 @@ export function useGlobalNotifications(
               if (editRequest && Array.isArray(editRequest.notifications)) {
                 const updatedNotifs = editRequest.notifications.filter((n: any) => !notifIds.includes(n.id));
                 await supabase
-                  .from('records')
+                  .from('chuti')
                   .update({
                     admin_edit_request: {
                       ...editRequest,
