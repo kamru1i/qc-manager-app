@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.0.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.1.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,17 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.0.0 — Major Performance Release (Current)
+### 🚀 v6.1.0 — Stability & Hardening Release (Current)
+
+- **Leaderboard Data Accuracy:** Removed 4,200 duplicate records caused by a faulty cache auto-restore, added a database unique index on `records (user_id, file_name, submitted_at)` so duplicate uploads are rejected at the database level, and removed the auto-restore code entirely. Monthly, yearly, and today leaderboard columns now reflect exact submission counts, fully decoupled from each other.
+- **Expanded Working Hours (4h–10h):** Working Hours options now span 4 Hours to 10 Hours in 30-minute increments, generated from a single shared source of truth (`src/utils/workingHours.ts`) consumed by Profile Setup, Profile Settings, and Admin/Supervisor user management. Short Leave and Overtime calculations verified across the full range.
+- **Save File Helper — Once-Per-Day Directory:** Fixed the duplicate folder prompt: manual folder selection and "Save As" now share one persisted daily directory, so users are asked at most once per day (resets the next day).
+- **Realtime Resilience:** Server-closed realtime channels now automatically resubscribe with exponential backoff (previously the app silently lost live updates until reload), and misleading `CLOSED undefined` console noise was eliminated.
+- **Desktop (Tauri) Hardening:** Strict Content-Security-Policy (was `null`), filesystem permissions narrowed to write-only via save dialogs (removed `fs:read-all`/`fs:write-all`), and the update-signing key relocated outside the repository.
+- **Android Improvements:** R8 code shrinking + resource shrinking enabled (APK 4.67 MB → 2.59 MB, −45%) with verified Capacitor plugin keep-rules; `versionCode` now derives automatically from the app version (no more manual bumps).
+- **CI/CD Safety:** Release workflow now triggers only on `v*` tags (plus manual dispatch) instead of every push to main; OTA registration failures and missing OTA bundles now fail the release loudly instead of passing silently.
+
+### 🚀 v6.0.0 — Major Performance Release
 
 - **Supabase Optimization:** Implemented strict PostgreSQL query filtering inside profile handlers. Prevents cascade fetches on user session ticks and heartbeats, reducing bandwidth and server overhead.
 - **Client-Side Query Cleanup:** Removed client-side log deletion queries on activity writes, migrating old-log cleanups to database-side scheduled events.
