@@ -211,10 +211,18 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
         });
 
         if (insertError) {
-          console.error('Error syncing offline record:', insertError);
-          continue;
+          // 23505 = unique_violation on uq_records_user_file_submitted: this exact
+          // record already exists on the server (e.g. the outbox entry survived a
+          // successful earlier sync). Treat as synced so it isn't retried forever.
+          if (insertError.code === '23505') {
+            isSyncedSuccessfully = true;
+          } else {
+            console.error('Error syncing offline record:', insertError);
+            continue;
+          }
+        } else {
+          isSyncedSuccessfully = true;
         }
-        isSyncedSuccessfully = true;
       }
 
       if (isSyncedSuccessfully && record.localId) {

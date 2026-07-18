@@ -353,84 +353,13 @@ export const useQuotesDashboardData = () => {
       // 3. Load aggregated records from local IndexedDB cache (works both Online and Offline)
       const cachedRecords = await getCacheData<RecordItem>('records_cache');
 
-      // DANGER RECOVERY AUTO-RESTORE TRIGGER
-      // Only trigger if: admin/supervisor, has 100+ cached records, AND the server count is
-      // explicitly 0 (not null/undefined which can happen during auth token refresh after password change).
-      // Guard against re-triggering the restore. sessionStorage alone is per-tab, so a fresh tab
-      // would have no guard and could re-upload everything (duplication). Also check a DB-level flag
-      // in the admin's profile.global_settings, which persists across tabs AND devices.
-      const existingSettings = (profile?.global_settings && typeof profile.global_settings === 'object')
-        ? (profile.global_settings as Record<string, unknown>)
-        : {};
-      const restoreDoneInDb = !!existingSettings.records_restored_at;
-      const hasAttemptedRestore = restoreDoneInDb ||
-        (typeof window !== 'undefined' && sessionStorage.getItem('has_attempted_restore') === 'true');
-      if (profile && (profile.role === 'admin' || profile.role === 'supervisor') && cachedRecords.length > 100 && !hasAttemptedRestore) {
-        try {
-          const { count, error: countErr } = await supabase
-            .from('records')
-            .select('id', { count: 'exact', head: true });
-          
-          // count must be a real number (not null/undefined) and must be exactly 0.
-          // A null count typically means an RLS/auth error (e.g. during session refresh after password change).
-          if (!countErr && count !== null && count !== undefined && count === 0) {
-            // Double-confirm after a short delay to rule out transient auth token refresh states
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            const { count: count2, error: countErr2 } = await supabase
-              .from('records')
-              .select('id', { count: 'exact', head: true });
+      // The automatic cache-to-server restore that used to live here was removed
+      // on 2026-07-18: a transiently-empty server count triggered it against a
+      // non-empty database and duplicated 4,200 records (cleaned up; backup in
+      // supabase/backups/). Recovery from real data loss must be a deliberate,
+      // manual operation. The records_cache in IndexedDB is still retained for
+      // 90 days and can be exported for that purpose.
 
-            if (!countErr2 && count2 !== null && count2 !== undefined && count2 === 0) {
-              if (typeof window !== 'undefined') {
-                sessionStorage.setItem('has_attempted_restore', 'true');
-              }
-
-              // Persist a DB-level lock BEFORE uploading so other tabs/devices that also see an
-              // empty server won't independently trigger a restore and duplicate everything.
-              // If the lock write fails, skip the restore entirely — better to require a manual
-              // recovery than to risk duplicating the whole dataset.
-              const restoreLockSettings = { ...existingSettings, records_restored_at: new Date().toISOString() };
-              const { error: lockErr } = await supabase
-                .from('profiles')
-                .update({ global_settings: restoreLockSettings })
-                .eq('id', profile.id);
-
-              if (lockErr) {
-                console.error('RECOVERY: Failed to set DB restore lock — skipping restore to avoid duplication:', lockErr.message);
-              } else {
-                setProfile(prev => prev ? ({ ...prev, global_settings: restoreLockSettings } as Profile) : prev);
-                showToast('success', `Restoring ${cachedRecords.length} records from local cache. Please do not close the app...`);
-
-                // Upload in batches of 100
-                const batchSize = 100;
-                let successCount = 0;
-                for (let i = 0; i < cachedRecords.length; i += batchSize) {
-                  const batch = cachedRecords.slice(i, i + batchSize).map(r => ({
-                    user_id: r.user_id,
-                    file_name: r.file_name,
-                    branch_name: r.branch_name,
-                    codename: r.codename,
-                    file_type: r.file_type,
-                    submitted_at: r.submitted_at,
-                    created_at: r.created_at
-                  }));
-
-                  const { error: insertError } = await supabase.from('records').insert(batch);
-                  if (insertError) {
-                    console.error(`RECOVERY: Error restoring batch ${i}:`, insertError.message, insertError.details, insertError.hint, insertError.code);
-                  } else {
-                    successCount += batch.length;
-                  }
-                }
-                showToast('success', `Database successfully restored! ${successCount} records uploaded.`);
-              }
-            }
-          }
-        } catch (restoreErr) {
-          console.error('RECOVERY: Automatic database restore failed:', restoreErr);
-        }
-      }
-      
       // Filter the cached records in-memory based on selectedMonth/selectedYear and user permissions
       const filtered = cachedRecords.filter(r => {
         if (!r.submitted_at) return false;
@@ -464,7 +393,7 @@ export const useQuotesDashboardData = () => {
       setInitialFetchDone(true);
       fetchingRef.current = false;
     }
-  }, [sessionUser, profile, selectedYear, selectedMonth, showToast, setProfile]);
+  }, [sessionUser, profile, selectedYear, selectedMonth, showToast]);
 
   // Fetch unique month/year dates that contain submitted records for the logged-in user (or anyone if admin)
   const fetchAvailableDates = useCallback(async () => {
