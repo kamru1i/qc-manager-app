@@ -470,7 +470,10 @@ async function main() {
       const otaZipUrl = assets.find(a => a.name === 'QC-Manager-Web-Assets.zip')?.browser_download_url || '';
       
       if (!otaZipUrl) {
-        console.warn('Warning: QC-Manager-Web-Assets.zip asset URL not found in release.');
+        // Same partial-release rule as the catch below: the zip is always
+        // produced by the build job, so its absence means a broken release.
+        console.error('Error: QC-Manager-Web-Assets.zip asset URL not found in release.');
+        process.exit(1);
       } else {
         const { data: existing, error: checkError } = await supabase
           .from('mobile_app_versions')
@@ -497,7 +500,13 @@ async function main() {
         console.log('Supabase OTA release registration complete!');
       }
     } catch (err) {
+      // Fail the job: assets are already uploaded at this point, so swallowing
+      // this error would leave a partial release (binaries published, mobile
+      // OTA never registered) behind a green checkmark. The script is
+      // idempotent — re-running the workflow re-uploads assets (duplicate-safe)
+      // and retries this registration.
       console.error('Error during Supabase OTA registration:', err.message || err);
+      process.exit(1);
     }
   } else {
     console.log('Supabase credentials missing. Skipping automated OTA database registration.');

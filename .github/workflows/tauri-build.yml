@@ -1,10 +1,11 @@
 name: "Build & Release System"
 
+# Releases are gated on version tags (v6.0.0, v6.1.0, ...) so ordinary pushes
+# to main no longer rebuild 6 desktop targets + the APK and republish assets.
+# workflow_dispatch is kept as a manual escape hatch (runs against the chosen
+# branch/tag from the Actions UI).
 on:
   push:
-    branches:
-      - main
-      - master
     tags:
       - "v*"
   workflow_dispatch:

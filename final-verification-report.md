@@ -78,12 +78,15 @@ Detail + full clone map in `dead-code-duplication-audit.md`. jscpd baseline: 130
 - Update flow: single-row version query → GitHub APK download with progress → system installer via FileOpener. Valid design for a sideloaded internal app.
 - 🟡 Notes: release build has `minifyEnabled false` (larger APK, acceptable for internal distribution); no `signingConfig` in gradle — signing is done post-build in CI via zipalign+apksigner, which is correct and verified (`apksigner verify` + badging + size checks in the workflow). Remember to bump `versionCode` with each release (manual today).
 
-## 8. CI/CD (GitHub Actions) Report — 🔧 FIX NEEDED (trigger review)
+## 8. CI/CD (GitHub Actions) Report — ✅ DONE
 
 - Single well-structured workflow: 6-target Tauri matrix (fail-fast off) → Android APK (signed release with verified fallback to debug) → combine job that uploads assets, generates SHA256SUMS + `latest.json`, and registers the OTA bundle in `mobile_app_versions` with the service key.
 - **Duplicate-asset handling ✅**: `deleteAssetIfExists` with deletion-propagation polling before every upload + retry-on-422 — re-runs won't produce duplicate assets.
 - Robustness: upload retries (3×), sig→platform mapping covers all shipped targets incl. nsis variants, checksums computed locally where possible (avoids re-download).
-- 🔧 **FIX NEEDED** (non-blocking, re-verified today — workflow still triggers on push to `main`/`master`): every push rebuilds 6 desktop targets + APK and republishes; if that's not intended, gate release jobs on `startsWith(github.ref, 'refs/tags/')`. Also: OTA registration failure is caught-and-logged, not failed — deliberate but means a partial release is possible; the log makes it visible.
+- 🔧 ~~**FIX NEEDED** (non-blocking, re-verified today — workflow still triggers on push to `main`/`master`): every push rebuilds 6 desktop targets + APK and republishes; if that's not intended, gate release jobs on `startsWith(github.ref, 'refs/tags/')`. Also: OTA registration failure is caught-and-logged, not failed — deliberate but means a partial release is possible; the log makes it visible.~~ — **Fixed** (2026-07-18, both parts):
+  1. **Release gated on tags** (`tauri-build.yml`): `on.push.branches` (main/master) removed — the workflow now runs only on `v*` tags, plus `workflow_dispatch` kept as the manual escape hatch. Ordinary pushes to main no longer rebuild 6 desktop targets + APK or touch the release. Release procedure is unchanged in substance (the publisher script already derives the `v<version>` tag from `package.json` and creates the GitHub release if missing): bump versions → push the `v*` tag (or trigger manually from the Actions UI).
+  2. **Partial releases now fail loudly** (`generate-release-manifests.js`): the OTA-registration `catch` now `process.exit(1)` instead of log-and-continue, and a missing `QC-Manager-Web-Assets.zip` asset URL (always produced/uploaded by the same script, so absence = broken release) is an error instead of a warning. Since asset uploads are duplicate-safe (delete-then-upload + 422 retry), a failed run can simply be re-run and will re-register OTA idempotently (existing `mobile_app_versions` row is updated, not duplicated).
+  - Verified: workflow YAML parses (`on: {push: {tags: [v*]}, workflow_dispatch}`, 3 jobs intact); `node --check` passes on the publisher script; grep-confirmed the zip is created and uploaded unconditionally earlier in the same script, so the new fatal path can't false-positive.
 
 ## 9. Production Scores
 
@@ -97,15 +100,15 @@ Detail + full clone map in `dead-code-duplication-audit.md`. jscpd baseline: 130
 | Error handling                   | 9/10       | Boundary present, races guarded, offline paths cached                                           |
 | Desktop (Tauri)                  | 9.5/10     | Solid updater + lifecycle; strict CSP set, fs write-only + narrowed, signing key out of repo    |
 | Android (Capacitor)              | 8.5/10     | Minimal permissions, verified signing; manual versionCode, no minify                            |
-| CI/CD                            | 9/10       | Idempotent, verified, complete; push-to-main trigger worth reviewing                            |
+| CI/CD                            | 9.5/10     | Idempotent, verified, complete; releases tag-gated, OTA registration fails loudly               |
 | Maintainability                  | 9.5/10     | Top-ROI duplication + dead code eliminated (§5 all fixed); unused locals 0                      |
 | **Overall Production Readiness** | **8.8/10** | Up from 7.5 — both required changes landed and verified                                         |
 
-## 10. Final Sign-Off — ✅ APPROVED (with open hygiene backlog)
+## 10. Final Sign-Off — ✅ APPROVED (hygiene backlog cleared 2026-07-18)
 
 Both required changes from the prior audit (throttled/field-filtered leaderboard RPC; gated + no-op-free badge sync) are implemented and verified at the file/line and SQL level, along with every optional improvement (ProfilesContext, column constants, shared date-range util, 45s ping, generated DB types) **and all three §1.3 findings** (semver update check, dead updater path removed, shared own-profile fetcher). Build, types, and lint are clean; no regressions; desktop, Android, and CI/CD flows are coherent end-to-end.
 
-**Open FIX NEEDED items (all non-blocking hygiene — see 🔧 markers in section titles above):**
+**Open FIX NEEDED items — all resolved as of 2026-07-18 (history below):**
 
 | #   | Section     | Item                                                                                                  |
 | --- | ----------- | ----------------------------------------------------------------------------------------------------- |
@@ -115,7 +118,7 @@ Both required changes from the prior audit (throttled/field-filtered leaderboard
 | ~~4~~ | ~~§5 Refactor~~ | ~~Dedupe `offlineSync`/`quotesOfflineSync`, causality panels, notification-payload builder~~ — **Fixed** (idbStoreFactory, CausalityTemplatePanel, buildStatusUpdatePayload/pruneMissingRecord) |
 | ~~5~~ | ~~§5 Refactor~~ | ~~Delete 3 dead files + 2 orphaned `leaderboardHelper` functions~~ — **Fixed** (all deleted; BadgeInfo interface kept) |
 | ~~6~~ | ~~§6 Tauri~~ | ~~Set strict CSP (`csp: null` today); narrow `fs` scope from `**`; move `tauri-private.key` out of repo~~ — **Fixed** (strict CSP set; `fs:read-all`/`write-all` → write-file+mkdir only; key pair moved to `~/.tauri-keys/qc-manager-app/`; cargo check clean) |
-| 7   | §8 CI/CD    | Gate release jobs on tags instead of every push to main (if intended)                                 |
+| ~~7~~ | ~~§8 CI/CD~~ | ~~Gate release jobs on tags instead of every push to main (if intended)~~ — **Fixed** (workflow now triggers on `v*` tags + manual dispatch only; OTA registration failure and missing OTA zip now fail the job instead of logging) |
 
 None affects correctness, cost, or stability.
 
