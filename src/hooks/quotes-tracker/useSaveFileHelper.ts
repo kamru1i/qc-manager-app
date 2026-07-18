@@ -10,6 +10,36 @@ interface UseSaveFileHelperOptions {
   showToast: (type: 'success' | 'error', text: string) => void;
 }
 
+// ── Once-per-day save directory persistence ─────────────────────────
+// Single source of truth for "today's save directory", shared by BOTH the
+// manual "Choose Folder" flow and the "Save As" flow. Reading localStorage at
+// call time (instead of React state captured in a closure) is what guarantees
+// a directory picked moments ago is visible to the code that runs next —
+// React state reads inside stale closures caused the old double-prompt bug.
+const DIR_KEY = 'quotes_sales_base_save_dir';
+const DIR_DATE_KEY = 'quotes_sales_base_save_dir_date';
+
+const clearExpiredDirectory = () => {
+  if (typeof window === 'undefined') return;
+  const savedDate = localStorage.getItem(DIR_DATE_KEY);
+  if (savedDate && savedDate !== new Date().toDateString()) {
+    localStorage.removeItem(DIR_KEY);
+    localStorage.removeItem(DIR_DATE_KEY);
+  }
+};
+
+const getTodayDirectory = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  clearExpiredDirectory();
+  return localStorage.getItem(DIR_KEY) || null;
+};
+
+const setTodayDirectory = (path: string) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(DIR_KEY, path);
+  localStorage.setItem(DIR_DATE_KEY, new Date().toDateString());
+};
+
 export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
   // ── State ──────────────────────────────────────────────────────────
   const [savedRecordIds, setSavedRecordIds] = useState<string[]>(() => {
@@ -45,16 +75,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileHandlesRef = useRef<Record<string, any>>({});
   const baseDirectoryHandleRef = useRef<any>(null);
-  const [baseDirectory, setBaseDirectory] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      const savedDate = localStorage.getItem("quotes_sales_base_save_dir_date");
-      const todayDate = new Date().toDateString();
-      if (savedDate === todayDate) {
-        return localStorage.getItem("quotes_sales_base_save_dir") || null;
-      }
-    }
-    return null;
-  });
+  const [baseDirectory, setBaseDirectory] = useState<string | null>(() => getTodayDirectory());
 
   const [permissionModal, setPermissionModal] = useState<{
     isOpen: boolean;
@@ -120,7 +141,6 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       }
 
       const isTauri = isTauriApp();
-      const todayDate = new Date().toDateString();
 
       if (isTauri) {
         const { open } = await import('@tauri-apps/plugin-dialog');
@@ -135,19 +155,17 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
         }
 
         setBaseDirectory(selectedDir);
-        localStorage.setItem("quotes_sales_base_save_dir", selectedDir);
-        localStorage.setItem("quotes_sales_base_save_dir_date", todayDate);
+        setTodayDirectory(selectedDir);
         showToast("success", `Save directory set to: ${selectedDir}`);
         return selectedDir;
       } else {
         if (typeof window !== "undefined" && "showDirectoryPicker" in window) {
           const handle = await (window as any).showDirectoryPicker();
           baseDirectoryHandleRef.current = handle;
-          
+
           const label = `Local_Directory/${handle.name}`;
           setBaseDirectory(label);
-          localStorage.setItem("quotes_sales_base_save_dir", label);
-          localStorage.setItem("quotes_sales_base_save_dir_date", todayDate);
+          setTodayDirectory(label);
           showToast("success", `Save directory set to: ${handle.name}`);
           return label;
         } else {
@@ -181,10 +199,12 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       return;
     }
 
-    // 1. Get or choose base directory
-    let currentBaseDir = baseDirectory;
+    // 1. Get or choose base directory — read from today's persisted value at
+    // call time (NOT the baseDirectory state, which can be a stale closure
+    // when this runs from the permission modal's onConfirm).
+    let currentBaseDir = getTodayDirectory();
     const isTauri = isTauriApp();
-    
+
     if (isTauri) {
       if (!currentBaseDir) {
         currentBaseDir = await handleChooseDirectory();
@@ -501,9 +521,12 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     }
 
     const isTauri = isTauriApp();
-    
-    // Check if we need to select folder first (only required for Tauri native saving)
-    const needsFolderSelection = isTauri ? !baseDirectory : false;
+
+    // Check if we need to select folder first (only required for Tauri native
+    // saving). Read the persisted once-per-day value, not React state: state
+    // can lag right after a manual folder pick, which caused a redundant
+    // second prompt on the same day.
+    const needsFolderSelection = isTauri ? !getTodayDirectory() : false;
 
     if (needsFolderSelection) {
       setPermissionModal({
