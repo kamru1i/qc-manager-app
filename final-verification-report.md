@@ -53,14 +53,14 @@ Scope: final verification pass — verified prior fixes, ran fresh scans, review
 - RLS: ✅ **prior claim outdated — live DB is stricter.** The fresh dump shows **no `USING (true)` policy on profiles or records**. Live: profiles SELECT = own row / admin / supervisor / authenticated-can-read-supervisor-rows only (schema.sql:1590-1873); records all-ops = `auth.uid() = user_id OR is_admin() OR is_supervisor()` (schema.sql:1775-1852). The leaderboard instead works via SECURITY DEFINER `get_leaderboard_data` (schema.sql:381) — the open-RLS tradeoff has been closed. Remaining `USING (true)`: `mobile_app_versions` public read (correct — updater needs pre-auth access) and `login_codes` readable by all authenticated users (schema.sql:1698) — **confirmed correct by design** (user, 2026-07-17): codes are internal shared codes intended for everyone with app access, not credentials, and app access is admin-gated with no self-signup, so "all authenticated" is exactly the intended audience.
 - 🔧 **FIX NEEDED** (non-blocking): most SECURITY DEFINER functions in repo SQL don't pin `search_path` (only `add_leaderboard_rpc.sql` does); `complete_profile_setup` RPC has no repo definition. — **Fixed** (2026-07-17, `supabase/fix_search_path_and_profile_setup.sql`, applied to live in a single transaction): all 19 unpinned SECURITY DEFINER functions now pin `search_path` via `ALTER FUNCTION ... SET` (`public, pg_temp`; plus `extensions` for `create_new_user`/`admin_update_user_credentials` which call `crypt`/`gen_salt`) — live unpinned count verified 19 → **0**. Investigation also revealed `complete_profile_setup` was missing from the **live DB entirely** (not just the repo — presumably lost in the earlier restore), leaving the quotes first-time-setup flow broken for the 4 users with `has_changed_password = false`; recreated as SECURITY INVOKER (own-row RLS + trigger self-edit path already authorize it), pinned, duplicate-username-safe, EXECUTE granted to `authenticated` only. `schema.sql` re-dumped post-migration (2077 lines, 21 `SET search_path` pins, RPC at :252, still zero DROP/TRUNCATE); data verified untouched (records 9,657 · chuti 188 · profiles 39)
 
-## 5. Refactor Report — 🔧 FIX NEEDED (duplication + dead code, none blocking)
+## 5. Refactor Report — ✅ DONE
 
-Detail + full clone map in `dead-code-duplication-audit.md`. jscpd: 130 clones, 4.13% duplication. Top ROI (all still open):
+Detail + full clone map in `dead-code-duplication-audit.md`. jscpd baseline: 130 clones, 4.13% duplication. All four top-ROI items fixed 2026-07-18 (details inline below):
 
-1. 🔧 `offlineSync.ts` ↔ `quotesOfflineSync.ts` (~360 dup lines) → one IndexedDB store factory
-2. 🔧 `AsitisCausalityPanel` ↔ `EUICausalityPanel` (~250) → one parameterized panel
-3. 🔧 `useChutiOperations` notification-payload builder repeated 4× (~180)
-4. 🔧 Dead code: 3 dead files (`EmployeeRankBadge.tsx`, `RankingChip.tsx`, `downloadHelper.ts` — verified still present today) + 2 orphaned `leaderboardHelper` functions (~230 lines, zero-risk delete)
+1. 🔧 `offlineSync.ts` ↔ `quotesOfflineSync.ts` (~360 dup lines) → one IndexedDB store factory — **Fixed** (new `src/utils/idbStoreFactory.ts` — shared `createIdbStore()` handles openDB/upgrade, add/get/put/delete, setCacheData/mergeCacheData/removeCacheItems, TTL purge, sync-timestamp helpers, clearStores; both files now configure their own DB (names/versions/stores unchanged, so existing client IndexedDB data is untouched) and keep only their domain record shapes + `syncOfflineData` business logic; public APIs unchanged — zero call-site edits; jscpd: no clones left between the two files; tsc + build clean)
+2. 🔧 `AsitisCausalityPanel` ↔ `EUICausalityPanel` (~250) → one parameterized panel — **Fixed** (new `CausalityTemplatePanel.tsx` — one component driven by a `CausalityTemplateConfig` (panel title, login_codes template row id/name, draft localStorage key, legacy-key cleanup, default titles, driver-title factory, optional `unnumberedIds` for EUI's sequential numbering); `AsitisCausalityPanel`/`EUICausalityPanel` are now thin config wrappers, so DB rows, draft keys, and rendered output are byte-identical to before; jscpd: no clones left; tsc + eslint + build clean)
+3. 🔧 `useChutiOperations` notification-payload builder repeated 4× (~180) — **Fixed** (extracted `buildStatusUpdatePayload()` (status + prefixed comment + appended user notification into `admin_edit_request.notifications`) and `pruneMissingRecord()` (0-row update → IndexedDB/state cleanup + error) — now used by all 4 sites: supervisor revision, admin revision (keeps its extra `reserve_adjustment_status: 'none'` reset), supervisor approve, admin approve (each incl. its duplicated `updateLocalState` copy); the two near-identical revision branches collapsed into one parameterized path; file 1215 → 1065 lines; tsc + build clean)
+4. 🔧 Dead code: 3 dead files (`EmployeeRankBadge.tsx`, `RankingChip.tsx`, `downloadHelper.ts` — verified still present today) + 2 orphaned `leaderboardHelper` functions (~230 lines, zero-risk delete) — **Fixed** (grep-verified zero imports, then deleted all 3 files; `leaderboardHelper.ts` reduced to just the still-used `BadgeInfo` interface (6 importers) — orphaned `getLeaderboardForMonth`/`calculateTopPerformerBadges` removed (badge computation lives server-side in `sync_top_performer_badges` SQL); `tsc --noUnusedLocals --noUnusedParameters` still 0; build clean, 10 routes)
 
 ## 6. Desktop (Tauri) Report — 🔧 FIX NEEDED (hardening)
 
@@ -94,7 +94,7 @@ Detail + full clone map in `dead-code-duplication-audit.md`. jscpd: 130 clones, 
 | Desktop (Tauri)                  | 8.5/10     | Solid updater + lifecycle; docked for null CSP + `**` fs scope                                  |
 | Android (Capacitor)              | 8.5/10     | Minimal permissions, verified signing; manual versionCode, no minify                            |
 | CI/CD                            | 9/10       | Idempotent, verified, complete; push-to-main trigger worth reviewing                            |
-| Maintainability                  | 8.5/10     | 4.13% duplication remains (roadmap in audit file); unused locals now **0**                      |
+| Maintainability                  | 9.5/10     | Top-ROI duplication + dead code eliminated (§5 all fixed); unused locals 0                      |
 | **Overall Production Readiness** | **8.8/10** | Up from 7.5 — both required changes landed and verified                                         |
 
 ## 10. Final Sign-Off — ✅ APPROVED (with open hygiene backlog)
@@ -108,8 +108,8 @@ Both required changes from the prior audit (throttled/field-filtered leaderboard
 | ~~1~~ | ~~§3 React~~ | ~~Unused locals/imports~~ — **Fixed** (all 112 removed, tsc unused-check now 0)                       |
 | ~~2~~ | ~~§4 Database~~ | ~~Regenerate stale `supabase/schema.sql` from live DB~~ — **Fixed** (regenerated 2026-07-17 via read-only pg_dump; index/pg_cron claims verified; data untouched) |
 | ~~3~~ | ~~§4 Database~~ | ~~Pin `search_path` in SECURITY DEFINER functions; add `complete_profile_setup` definition to repo~~ — **Fixed** (all 19 pinned live, 19→0; missing RPC recreated live + in repo; data untouched) |
-| 4   | §5 Refactor | Dedupe `offlineSync`/`quotesOfflineSync`, causality panels, notification-payload builder              |
-| 5   | §5 Refactor | Delete 3 dead files + 2 orphaned `leaderboardHelper` functions                                        |
+| ~~4~~ | ~~§5 Refactor~~ | ~~Dedupe `offlineSync`/`quotesOfflineSync`, causality panels, notification-payload builder~~ — **Fixed** (idbStoreFactory, CausalityTemplatePanel, buildStatusUpdatePayload/pruneMissingRecord) |
+| ~~5~~ | ~~§5 Refactor~~ | ~~Delete 3 dead files + 2 orphaned `leaderboardHelper` functions~~ — **Fixed** (all deleted; BadgeInfo interface kept) |
 | 6   | §6 Tauri    | Set strict CSP (`csp: null` today); narrow `fs` scope from `**`; move `tauri-private.key` out of repo |
 | 7   | §8 CI/CD    | Gate release jobs on tags instead of every push to main (if intended)                                 |
 
