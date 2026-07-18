@@ -1,4 +1,7 @@
 import { supabase } from './supabase';
+import { createIdbStore, generateUUID } from './idbStoreFactory';
+
+export { generateUUID };
 
 export interface AdminEditRequest {
   adjusted_hour?: string | null;
@@ -36,113 +39,58 @@ export interface ChutiRecord {
   data?: Partial<Omit<ChutiRecord, 'localId' | 'synced'>>;
 }
 
-const DB_NAME = 'ChutiOfflineDB';
-const DB_VERSION = 3;
 const STORE_NAME = 'pending_chuti';
+
+const idb = createIdbStore({
+  dbName: 'ChutiOfflineDB',
+  dbVersion: 3,
+  stores: {
+    [STORE_NAME]: 'localId',
+    profiles_cache: 'id',
+    chuti_cache: 'id',
+    holiday_responses_cache: 'id',
+    settlements_cache: 'id',
+    global_settings_cache: 'key',
+    sync_metadata: 'table_name',
+  },
+});
 
 let isSyncing = false;
 
-// Secure context safe UUID generator helper
-export const generateUUID = (): string => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
-
-// Helper to open IndexedDB
-const openDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'localId' });
-      }
-      if (!db.objectStoreNames.contains('profiles_cache')) {
-        db.createObjectStore('profiles_cache', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('chuti_cache')) {
-        db.createObjectStore('chuti_cache', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('holiday_responses_cache')) {
-        db.createObjectStore('holiday_responses_cache', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('settlements_cache')) {
-        db.createObjectStore('settlements_cache', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('global_settings_cache')) {
-        db.createObjectStore('global_settings_cache', { keyPath: 'key' });
-      }
-      if (!db.objectStoreNames.contains('sync_metadata')) {
-        db.createObjectStore('sync_metadata', { keyPath: 'table_name' });
-      }
-    };
-  });
-};
-
 // Save a record to IndexedDB
 export const saveOfflineRecord = async (record: Omit<ChutiRecord, 'localId' | 'synced'>): Promise<string> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(STORE_NAME);
-    const localId = generateUUID();
-    const newRecord: ChutiRecord = {
-      ...record,
-      localId,
-      synced: false,
-      action: 'insert',
-    };
-
-    const request = store.add(newRecord);
-    request.onsuccess = () => resolve(localId);
-    request.onerror = () => reject(request.error);
-  });
+  const localId = generateUUID();
+  const newRecord: ChutiRecord = {
+    ...record,
+    localId,
+    synced: false,
+    action: 'insert',
+  };
+  await idb.addItem(STORE_NAME, newRecord);
+  return localId;
 };
 
 // Save an update record to IndexedDB
 export const saveOfflineUpdate = async (id: string, updates: Partial<Omit<ChutiRecord, 'localId' | 'synced'>>): Promise<string> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(STORE_NAME);
-    const localId = generateUUID();
-    const newRecord: ChutiRecord = {
-      localId,
-      id,
-      user_id: '', // Dummy values to satisfy required fields
-      date: '',
-      leave_type: '',
-      adjustment: false,
-      sign_in_time: null,
-      sign_out_time: null,
-      leave_hour: null,
-      reserve_holiday: null,
-      comment: null,
-      synced: false,
-      action: 'update',
-      data: updates,
-    };
-
-    const request = store.add(newRecord);
-    request.onsuccess = () => resolve(localId);
-    request.onerror = () => reject(request.error);
-  });
+  const localId = generateUUID();
+  const newRecord: ChutiRecord = {
+    localId,
+    id,
+    user_id: '', // Dummy values to satisfy required fields
+    date: '',
+    leave_type: '',
+    adjustment: false,
+    sign_in_time: null,
+    sign_out_time: null,
+    leave_hour: null,
+    reserve_holiday: null,
+    comment: null,
+    synced: false,
+    action: 'update',
+    data: updates,
+  };
+  await idb.addItem(STORE_NAME, newRecord);
+  return localId;
 };
 
 // Save a delete action to IndexedDB (and clean up any pending updates for this ID)
@@ -160,66 +108,34 @@ export const saveOfflineDelete = async (id: string): Promise<string> => {
     console.error('Failed to clean up pending updates before offline delete:', err);
   }
 
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(STORE_NAME);
-    const localId = generateUUID();
-    const newRecord: ChutiRecord = {
-      localId,
-      id,
-      user_id: '', // Dummy values to satisfy required fields
-      date: '',
-      leave_type: '',
-      adjustment: false,
-      sign_in_time: null,
-      sign_out_time: null,
-      leave_hour: null,
-      reserve_holiday: null,
-      comment: null,
-      synced: false,
-      action: 'delete',
-    };
-
-    const request = store.add(newRecord);
-    request.onsuccess = () => resolve(localId);
-    request.onerror = () => reject(request.error);
-  });
+  const localId = generateUUID();
+  const newRecord: ChutiRecord = {
+    localId,
+    id,
+    user_id: '', // Dummy values to satisfy required fields
+    date: '',
+    leave_type: '',
+    adjustment: false,
+    sign_in_time: null,
+    sign_out_time: null,
+    leave_hour: null,
+    reserve_holiday: null,
+    comment: null,
+    synced: false,
+    action: 'delete',
+  };
+  await idb.addItem(STORE_NAME, newRecord);
+  return localId;
 };
 
 // Retrieve all unsynced local records
 export const getOfflineRecords = async (): Promise<ChutiRecord[]> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readonly');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.getAll();
-
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-  });
+  return idb.getAllItems<ChutiRecord>(STORE_NAME);
 };
 
 // Delete a single record from IndexedDB
 export const deleteOfflineRecord = async (localId: string): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(localId);
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  return idb.deleteItem(STORE_NAME, localId);
 };
 
 // Conflict info returned to the caller for UI notification
@@ -405,247 +321,50 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
 
 // Clear and save list to cache
 export const setCacheData = async (storeName: string, data: any[]): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-
-    // Clear existing cache items
-    const clearRequest = store.clear();
-    clearRequest.onsuccess = () => {
-      // If no data to add, resolve immediately
-      if (!data || data.length === 0) {
-        resolve();
-        return;
-      }
-
-      let errorOccurred = false;
-      let pendingCount = data.length;
-
-      data.forEach(item => {
-        if (!item) {
-          pendingCount--;
-          if (pendingCount === 0 && !errorOccurred) {
-            resolve();
-          }
-          return;
-        }
-        const request = store.put(item);
-        request.onsuccess = () => {
-          pendingCount--;
-          if (pendingCount === 0 && !errorOccurred) {
-            resolve();
-          }
-        };
-        request.onerror = () => {
-          errorOccurred = true;
-          reject(request.error);
-        };
-      });
-    };
-    clearRequest.onerror = () => reject(clearRequest.error);
-  });
+  return idb.setCacheData(storeName, data);
 };
 
 // Retrieve list from cache
 export const getCacheData = async (storeName: string): Promise<any[]> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readonly');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-  });
+  return idb.getAllItems(storeName);
 };
 
 // Upsert a single item into a cache store without clearing existing data
 export const upsertCacheItem = async (storeName: string, item: any): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    const request = store.put(item); // put = upsert (insert or update by keyPath)
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  return idb.putItem(storeName, item);
 };
 
 // Merge new data into cache without clearing — upserts each item individually
 export const mergeCacheData = async (storeName: string, data: any[]): Promise<void> => {
-  if (!data || data.length === 0) return;
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    let errorOccurred = false;
-    let pendingCount = data.length;
-
-    data.forEach(item => {
-      if (!item) {
-        pendingCount--;
-        if (pendingCount === 0 && !errorOccurred) resolve();
-        return;
-      }
-      const request = store.put(item);
-      request.onsuccess = () => {
-        pendingCount--;
-        if (pendingCount === 0 && !errorOccurred) resolve();
-      };
-      request.onerror = () => {
-        errorOccurred = true;
-        reject(request.error);
-      };
-    });
-  });
+  return idb.mergeCacheData(storeName, data);
 };
 
 // Remove a set of items (by key) from a cache store. Used to purge rows that
 // were soft-deleted on the server (deleted_at is set) from the local cache.
 export const removeCacheItems = async (storeName: string, keys: string[]): Promise<void> => {
-  if (!keys || keys.length === 0) return;
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    let errorOccurred = false;
-    let pendingCount = keys.length;
-
-    keys.forEach(key => {
-      if (key === undefined || key === null) {
-        pendingCount--;
-        if (pendingCount === 0 && !errorOccurred) resolve();
-        return;
-      }
-      const request = store.delete(key);
-      request.onsuccess = () => {
-        pendingCount--;
-        if (pendingCount === 0 && !errorOccurred) resolve();
-      };
-      request.onerror = () => {
-        errorOccurred = true;
-        reject(request.error);
-      };
-    });
-  });
+  return idb.removeCacheItems(storeName, keys);
 };
 
 // Delta Sync metadata helpers
 export const getSyncTimestamp = async (tableName: string): Promise<string | null> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('sync_metadata', 'readonly');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore('sync_metadata');
-    const request = store.get(tableName);
-    request.onsuccess = () => resolve(request.result ? request.result.last_synced_at : null);
-    request.onerror = () => reject(request.error);
-  });
+  return idb.getSyncTimestamp(tableName);
 };
 
 export const setSyncTimestamp = async (tableName: string, timestamp: string): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('sync_metadata', 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore('sync_metadata');
-    const request = store.put({ table_name: tableName, last_synced_at: timestamp });
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  return idb.setSyncTimestamp(tableName, timestamp);
 };
 
 // TTL Cache Purge — remove records older than maxAgeDays from a cache store
 export const purgeStaleCacheData = async (storeName: string, dateField: string, maxAgeDays: number = 730): Promise<number> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
-    const cutoffStr = cutoffDate.toISOString();
-
-    const getAllReq = store.getAll();
-    getAllReq.onsuccess = () => {
-      const all = getAllReq.result || [];
-      let purgedCount = 0;
-      let pendingDeletes = 0;
-      const staleItems = all.filter(item => {
-        const dateVal = item[dateField];
-        return dateVal && dateVal < cutoffStr;
-      });
-
-      if (staleItems.length === 0) {
-        resolve(0);
-        return;
-      }
-
-      pendingDeletes = staleItems.length;
-      staleItems.forEach(item => {
-        const keyPath = store.keyPath as string;
-        const deleteReq = store.delete(item[keyPath]);
-        deleteReq.onsuccess = () => {
-          purgedCount++;
-          pendingDeletes--;
-          if (pendingDeletes === 0) resolve(purgedCount);
-        };
-        deleteReq.onerror = () => {
-          pendingDeletes--;
-          if (pendingDeletes === 0) resolve(purgedCount);
-        };
-      });
-    };
-    getAllReq.onerror = () => reject(getAllReq.error);
-  });
+  return idb.purgeStaleCacheData(storeName, dateField, maxAgeDays);
 };
 
 // Global Settings cache helpers
 export const setGlobalSettingsCache = async (settings: any): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('global_settings_cache', 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore('global_settings_cache');
-    const request = store.put({ key: 'settings', value: settings });
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  return idb.putItem('global_settings_cache', { key: 'settings', value: settings });
 };
 
 export const getGlobalSettingsCache = async (): Promise<any | null> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('global_settings_cache', 'readonly');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore('global_settings_cache');
-    const request = store.get('settings');
-    request.onsuccess = () => resolve(request.result ? request.result.value : null);
-    request.onerror = () => reject(request.error);
-  });
+  const result = await idb.getItem<{ value: any }>('global_settings_cache', 'settings');
+  return result ? result.value : null;
 };

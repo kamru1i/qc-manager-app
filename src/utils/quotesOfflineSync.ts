@@ -1,5 +1,8 @@
 import { supabase } from './supabase';
 import { RecordItem, FileType } from '@/types';
+import { createIdbStore, generateUUID } from './idbStoreFactory';
+
+export { generateUUID };
 
 export interface PendingRecordAction {
   localId?: string; // local temporary UUID key
@@ -15,102 +18,51 @@ export interface PendingRecordAction {
   synced: boolean;
 }
 
-const DB_NAME = 'QuotesOfflineDB';
-const DB_VERSION = 1;
 const STORE_NAME = 'pending_records';
 
-// Secure context safe UUID generator helper
-export const generateUUID = (): string => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
-
-// Helper to open IndexedDB
-const openDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'localId' });
-      }
-      if (!db.objectStoreNames.contains('records_cache')) {
-        db.createObjectStore('records_cache', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('profiles_cache')) {
-        db.createObjectStore('profiles_cache', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('user_profile_cache')) {
-        db.createObjectStore('user_profile_cache', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('sync_metadata')) {
-        db.createObjectStore('sync_metadata', { keyPath: 'table_name' });
-      }
-    };
-  });
-};
+const idb = createIdbStore({
+  dbName: 'QuotesOfflineDB',
+  dbVersion: 1,
+  stores: {
+    [STORE_NAME]: 'localId',
+    records_cache: 'id',
+    profiles_cache: 'id',
+    user_profile_cache: 'id',
+    sync_metadata: 'table_name',
+  },
+});
 
 // Save a record creation to IndexedDB
 export const saveOfflineRecord = async (record: Omit<PendingRecordAction, 'localId' | 'synced' | 'action'>): Promise<string> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-    
-    const store = transaction.objectStore(STORE_NAME);
-    const localId = generateUUID();
-    const newRecord: PendingRecordAction = {
-      ...record,
-      localId,
-      synced: false,
-      action: 'insert',
-    };
-
-    const request = store.add(newRecord);
-    request.onsuccess = () => resolve(localId);
-    request.onerror = () => reject(request.error);
-  });
+  const localId = generateUUID();
+  const newRecord: PendingRecordAction = {
+    ...record,
+    localId,
+    synced: false,
+    action: 'insert',
+  };
+  await idb.addItem(STORE_NAME, newRecord);
+  return localId;
 };
 
 // Save a record update to IndexedDB
 export const saveOfflineUpdate = async (id: string, userId: string, updates: Partial<Omit<RecordItem, 'id' | 'profiles'>>): Promise<string> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-    
-    const store = transaction.objectStore(STORE_NAME);
-    const localId = generateUUID();
-    const newRecord: PendingRecordAction = {
-      localId,
-      id,
-      user_id: userId,
-      file_name: updates.file_name || '',
-      branch_name: updates.branch_name || '',
-      codename: updates.codename || '',
-      file_type: updates.file_type || 'Quote',
-      submitted_at: updates.submitted_at || new Date().toISOString(),
-      synced: false,
-      action: 'update',
-      data: updates,
-    };
-
-    const request = store.add(newRecord);
-    request.onsuccess = () => resolve(localId);
-    request.onerror = () => reject(request.error);
-  });
+  const localId = generateUUID();
+  const newRecord: PendingRecordAction = {
+    localId,
+    id,
+    user_id: userId,
+    file_name: updates.file_name || '',
+    branch_name: updates.branch_name || '',
+    codename: updates.codename || '',
+    file_type: updates.file_type || 'Quote',
+    submitted_at: updates.submitted_at || new Date().toISOString(),
+    synced: false,
+    action: 'update',
+    data: updates,
+  };
+  await idb.addItem(STORE_NAME, newRecord);
+  return localId;
 };
 
 // Save a delete action to IndexedDB (and clean up pending updates)
@@ -127,78 +79,36 @@ export const saveOfflineDelete = async (id: string, userId: string): Promise<str
     console.error('Failed to clean up pending updates before offline delete:', err);
   }
 
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-    
-    const store = transaction.objectStore(STORE_NAME);
-    const localId = generateUUID();
-    const newRecord: PendingRecordAction = {
-      localId,
-      id,
-      user_id: userId,
-      file_name: '',
-      branch_name: '',
-      codename: '',
-      file_type: 'Quote',
-      submitted_at: new Date().toISOString(),
-      synced: false,
-      action: 'delete',
-    };
-
-    const request = store.add(newRecord);
-    request.onsuccess = () => resolve(localId);
-    request.onerror = () => reject(request.error);
-  });
+  const localId = generateUUID();
+  const newRecord: PendingRecordAction = {
+    localId,
+    id,
+    user_id: userId,
+    file_name: '',
+    branch_name: '',
+    codename: '',
+    file_type: 'Quote',
+    submitted_at: new Date().toISOString(),
+    synced: false,
+    action: 'delete',
+  };
+  await idb.addItem(STORE_NAME, newRecord);
+  return localId;
 };
 
 // Retrieve all unsynced local records
 export const getOfflineRecords = async (): Promise<PendingRecordAction[]> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readonly');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-    
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.getAll();
-
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-  });
+  return idb.getAllItems<PendingRecordAction>(STORE_NAME);
 };
 
 // Delete a single record from the pending outbox database
 export const deleteOfflineRecord = async (localId: string): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-    
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(localId);
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  return idb.deleteItem(STORE_NAME, localId);
 };
 
 // Delete a single key from a specific cache store
 export const deleteCacheItem = async (storeName: string, id: string): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-    
-    const store = transaction.objectStore(storeName);
-    const request = store.delete(id);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  return idb.deleteItem(storeName, id);
 };
 
 export interface SyncConflict {
@@ -332,217 +242,47 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
 
 // Clear and save list to cache store
 export const setCacheData = async <T>(storeName: string, data: T[]): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    const clearRequest = store.clear();
-    clearRequest.onsuccess = () => {
-      if (!data || data.length === 0) {
-        resolve();
-        return;
-      }
-      
-      let errorOccurred = false;
-      let pendingCount = data.length;
-      
-      data.forEach(item => {
-        if (!item) {
-          pendingCount--;
-          if (pendingCount === 0 && !errorOccurred) resolve();
-          return;
-        }
-        const request = store.put(item);
-        request.onsuccess = () => {
-          pendingCount--;
-          if (pendingCount === 0 && !errorOccurred) resolve();
-        };
-        request.onerror = () => {
-          errorOccurred = true;
-          reject(request.error);
-        };
-      });
-    };
-    clearRequest.onerror = () => reject(clearRequest.error);
-  });
+  return idb.setCacheData(storeName, data);
 };
 
 // Retrieve cached data list
 export const getCacheData = async <T>(storeName: string): Promise<T[]> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readonly');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-  });
+  return idb.getAllItems<T>(storeName);
 };
 
 // Merge delta values into the cache
 export const mergeCacheData = async <T>(storeName: string, data: T[]): Promise<void> => {
-  if (!data || data.length === 0) return;
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    let errorOccurred = false;
-    let pendingCount = data.length;
-
-    data.forEach(item => {
-      if (!item) {
-        pendingCount--;
-        if (pendingCount === 0 && !errorOccurred) resolve();
-        return;
-      }
-      const request = store.put(item);
-      request.onsuccess = () => {
-        pendingCount--;
-        if (pendingCount === 0 && !errorOccurred) resolve();
-      };
-      request.onerror = () => {
-        errorOccurred = true;
-        reject(request.error);
-      };
-    });
-  });
+  return idb.mergeCacheData(storeName, data);
 };
 
 // Sync metadata timestamp helpers
 export const getSyncTimestamp = async (tableName: string): Promise<string | null> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('sync_metadata', 'readonly');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore('sync_metadata');
-    const request = store.get(tableName);
-    request.onsuccess = () => resolve(request.result ? request.result.last_synced_at : null);
-    request.onerror = () => reject(request.error);
-  });
+  return idb.getSyncTimestamp(tableName);
 };
 
 export const setSyncTimestamp = async (tableName: string, timestamp: string): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('sync_metadata', 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore('sync_metadata');
-    const request = store.put({ table_name: tableName, last_synced_at: timestamp });
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  return idb.setSyncTimestamp(tableName, timestamp);
 };
 
 // Update an offline pending action in-place
 export const updateOfflineRecordAction = async (localId: string, updates: Partial<Omit<PendingRecordAction, 'localId'>>): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-    const store = transaction.objectStore(STORE_NAME);
-    const getRequest = store.get(localId);
-    getRequest.onsuccess = () => {
-      const item = getRequest.result;
-      if (item) {
-        const updatedItem = { ...item, ...updates };
-        // Merge updates data if it's an update action
-        if (item.action === 'update' && item.data && updates.data) {
-          updatedItem.data = { ...item.data, ...updates.data };
-        }
-        const putRequest = store.put(updatedItem);
-        putRequest.onsuccess = () => resolve();
-        putRequest.onerror = () => reject(putRequest.error);
-      } else {
-        resolve();
-      }
-    };
-    getRequest.onerror = () => reject(getRequest.error);
-  });
+  const item = await idb.getItem<PendingRecordAction>(STORE_NAME, localId);
+  if (!item) return;
+
+  const updatedItem = { ...item, ...updates };
+  // Merge updates data if it's an update action
+  if (item.action === 'update' && item.data && updates.data) {
+    updatedItem.data = { ...item.data, ...updates.data };
+  }
+  await idb.putItem(STORE_NAME, updatedItem);
 };
 
 // TTL Cache Purging
 export const purgeStaleCacheData = async (storeName: string, dateField: string, maxAgeDays: number = 730): Promise<number> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    const store = transaction.objectStore(storeName);
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
-    const cutoffStr = cutoffDate.toISOString();
-
-    const getAllReq = store.getAll();
-    getAllReq.onsuccess = () => {
-      const all = getAllReq.result || [];
-      let purgedCount = 0;
-      const staleItems = all.filter(item => {
-        const dateVal = item[dateField];
-        return dateVal && dateVal < cutoffStr;
-      });
-
-      if (staleItems.length === 0) {
-        resolve(0);
-        return;
-      }
-
-      let pendingDeletes = staleItems.length;
-      staleItems.forEach(item => {
-        const keyPath = store.keyPath as string;
-        const deleteReq = store.delete(item[keyPath]);
-        deleteReq.onsuccess = () => {
-          purgedCount++;
-          pendingDeletes--;
-          if (pendingDeletes === 0) resolve(purgedCount);
-        };
-        deleteReq.onerror = () => {
-          pendingDeletes--;
-          if (pendingDeletes === 0) resolve(purgedCount);
-        };
-      });
-    };
-    getAllReq.onerror = () => reject(getAllReq.error);
-  });
+  return idb.purgeStaleCacheData(storeName, dateField, maxAgeDays);
 };
 
 // Clear all data from all cache stores and metadata
 export const clearAllCache = async (): Promise<void> => {
-  const db = await openDB();
-  const stores = ['records_cache', 'profiles_cache', 'user_profile_cache', 'sync_metadata', 'pending_records'];
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(stores, 'readwrite');
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-
-    let errorOccurred = false;
-    let pendingCount = stores.length;
-
-    stores.forEach(storeName => {
-      const store = transaction.objectStore(storeName);
-      const request = store.clear();
-      request.onsuccess = () => {
-        pendingCount--;
-        if (pendingCount === 0 && !errorOccurred) resolve();
-      };
-      request.onerror = () => {
-        errorOccurred = true;
-        reject(request.error);
-      };
-    });
-  });
+  return idb.clearStores(['records_cache', 'profiles_cache', 'user_profile_cache', 'sync_metadata', 'pending_records']);
 };
