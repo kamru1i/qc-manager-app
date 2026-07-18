@@ -72,11 +72,13 @@ Detail + full clone map in `dead-code-duplication-audit.md`. jscpd baseline: 130
   3. **`tauri-private.key` moved out of the repo** → `~/.tauri-keys/qc-manager-app/` (dir `700`, key `600`), together with `tauri-private.key.pub` after byte-verifying the pub file matches the pinned updater `pubkey`. Repo root now clean; `.gitignore` entry retained as a safety net. CI is unaffected (signs via `TAURI_SIGNING_PRIVATE_KEY` secret). Local signing (rare) now uses `npx tauri signer sign -k ~/.tauri-keys/qc-manager-app/tauri-private.key`.
   - Verified: `cargo check` clean (capabilities + config compile), pubkey byte-match confirmed, no `plugin-fs` read APIs anywhere in `src/`.
 
-## 7. Android (Capacitor) Report — ✅ DONE (notes only)
+## 7. Android (Capacitor) Report — ✅ DONE
 
 - Config sane: appId matches Tauri identifier, `webDir: out`, https scheme. Manifest minimal-permission (**INTERNET + REQUEST_INSTALL_PACKAGES only**), FileProvider correctly configured for APK self-update, `launchMode="singleTask"`. minSdk 24 / targetSdk 36, versionCode 19 / versionName 6.0.0.
 - Update flow: single-row version query → GitHub APK download with progress → system installer via FileOpener. Valid design for a sideloaded internal app.
-- 🟡 Notes: release build has `minifyEnabled false` (larger APK, acceptable for internal distribution); no `signingConfig` in gradle — signing is done post-build in CI via zipalign+apksigner, which is correct and verified (`apksigner verify` + badging + size checks in the workflow). Remember to bump `versionCode` with each release (manual today).
+- 🟡 ~~Notes: release build has `minifyEnabled false` (larger APK, acceptable for internal distribution); no `signingConfig` in gradle — signing is done post-build in CI via zipalign+apksigner, which is correct and verified (`apksigner verify` + badging + size checks in the workflow). Remember to bump `versionCode` with each release (manual today).~~ — **Fixed** (2026-07-18, both actionable notes; the no-`signingConfig` point was already assessed correct-as-is and is unchanged):
+  1. **R8 minification enabled** (`android/app/build.gradle`): `minifyEnabled true` + `shrinkResources true` with `proguard-android-optimize.txt`. Safe because Capacitor core ships `consumerProguardFiles` keeping every `@CapacitorPlugin`/`Plugin` subclass, and the web app lives in `assets/` (untouched by shrinking); app-side rules added in `proguard-rules.pro` (readable stack traces via SourceFile/LineNumberTable, Cordova-layer keeps, annotation attributes). **Verified by building the release APK locally** (JDK 21 + SDK 36, same as CI): BUILD SUCCESSFUL incl. `lintVitalRelease`; every classpath in `assets/capacitor.plugins.json` (FileOpener, App, Filesystem, Keyboard, Share, StatusBar — the reflectively-loaded set) confirmed present in the shrunk `classes.dex`; APK **4.67 MB → 2.59 MB (−45%)**.
+  2. **`versionCode` no longer manual** (`android/app/build.gradle`): derived at build time from root `package.json` — `versionName` mirrors it and `versionCode = major*10000 + minor*100 + patch` (6.0.0 → 60000, strictly increasing for any semver bump, far above the old manual 19; prerelease suffixes stripped). package.json was already the version source CI uses for tagging/naming, so Android can now never lag a release. Verified via Gradle: resolved `versionName=6.0.0 versionCode=60000`, and `aapt dump badging` on the built APK shows the same. The mobile OTA check compares `versionName` semver (`isNewerVersion()`), so the derivation change is invisible to the update flow.
 
 ## 8. CI/CD (GitHub Actions) Report — ✅ DONE
 
@@ -99,7 +101,7 @@ Detail + full clone map in `dead-code-duplication-audit.md`. jscpd baseline: 130
 | Database design                  | 9.5/10     | schema.sql live-accurate; all SECURITY DEFINER pinned; missing setup RPC restored; RLS stricter than previously believed |
 | Error handling                   | 9/10       | Boundary present, races guarded, offline paths cached                                           |
 | Desktop (Tauri)                  | 9.5/10     | Solid updater + lifecycle; strict CSP set, fs write-only + narrowed, signing key out of repo    |
-| Android (Capacitor)              | 8.5/10     | Minimal permissions, verified signing; manual versionCode, no minify                            |
+| Android (Capacitor)              | 9.5/10     | Minimal permissions, verified signing; R8 minified (−45% APK), versionCode auto-derived         |
 | CI/CD                            | 9.5/10     | Idempotent, verified, complete; releases tag-gated, OTA registration fails loudly               |
 | Maintainability                  | 9.5/10     | Top-ROI duplication + dead code eliminated (§5 all fixed); unused locals 0                      |
 | **Overall Production Readiness** | **8.8/10** | Up from 7.5 — both required changes landed and verified                                         |

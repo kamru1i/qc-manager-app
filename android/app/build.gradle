@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+// Single source of truth for the app version: package.json at the repo root.
+// versionName mirrors it; versionCode is derived as major*10000 + minor*100 + patch
+// (6.0.0 -> 60000), which is strictly increasing for any semver bump and far above
+// the last manually-set code (19) — no manual versionCode bumps needed anymore.
+def packageJson = new groovy.json.JsonSlurper().parseText(rootProject.file('../package.json').text)
+def appVersionName = packageJson.version
+// Strip any prerelease/build suffix ("6.1.0-beta" -> "6.1.0") before deriving the code.
+def (vMajor, vMinor, vPatch) = appVersionName.split('[-+]')[0].tokenize('.').collect { it.toInteger() }
+def appVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
+
 android {
     namespace = "com.qc.manager"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +17,8 @@ android {
         applicationId "com.qc.manager"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 19
-        versionName "6.0.0"
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,8 +28,13 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8 shrinking is safe here: Capacitor core ships consumerProguardFiles
+            // that keep every @CapacitorPlugin / Plugin subclass, and the web app
+            // itself lives in assets/ (untouched by shrinking). App-side keeps in
+            // proguard-rules.pro.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
