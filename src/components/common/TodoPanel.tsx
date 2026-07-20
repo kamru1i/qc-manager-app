@@ -468,7 +468,11 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       setTodos((prev) =>
         prev.map((t) =>
           t.id === id
-            ? { ...t, comment: commentVal, last_activity_at: new Date().toISOString() }
+            ? {
+                ...t,
+                comment: commentVal,
+                last_activity_at: new Date().toISOString(),
+              }
             : t,
         ),
       );
@@ -1346,8 +1350,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             >
               <CalendarDays className="h-3.5 w-3.5 text-theme-text-muted" />
               {todos.find((x) => x.id === contextMenu.todoId)?.is_all_time
-                ? "Make Regular"
-                : "Make Permanent"}
+                ? "Regular"
+                : "Permanent"}
             </button>
             <button
               onClick={() => {
