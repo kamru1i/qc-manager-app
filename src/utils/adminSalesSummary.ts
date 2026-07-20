@@ -24,8 +24,6 @@ export interface AdminSalesSummary {
   totalSold: number;
   totalUnsold: number;
   totalAttempts: number;
-  soldPercentage: number;
-  unsoldPercentage: number;
 }
 
 const SOLD_SUFFIX_RE = / \[(SOLD|UNSOLD)\]$/;
@@ -70,16 +68,11 @@ export const calculateAdminSalesSummary = (saleRecords: RecordItem[]): AdminSale
     // Latest entry unsold → the file's final attempt is still open → 1 Unsold
     if (!isSoldRecord(entries[entries.length - 1])) totalUnsold += 1;
   });
-  return withPercentages(totalSold, totalUnsold);
+  return buildSummary(totalSold, totalUnsold);
 };
 
-export const withPercentages = (totalSold: number, totalUnsold: number): AdminSalesSummary => {
-  const totalAttempts = totalSold + totalUnsold;
-  return {
-    totalSold,
-    totalUnsold,
-    totalAttempts,
-    soldPercentage: totalAttempts > 0 ? Math.round((totalSold / totalAttempts) * 1000) / 10 : 0,
-    unsoldPercentage: totalAttempts > 0 ? Math.round((totalUnsold / totalAttempts) * 1000) / 10 : 0,
-  };
-};
+export const buildSummary = (totalSold: number, totalUnsold: number): AdminSalesSummary => ({
+  totalSold,
+  totalUnsold,
+  totalAttempts: totalSold + totalUnsold,
+});

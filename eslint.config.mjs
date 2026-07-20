@@ -16,6 +16,9 @@ const eslintConfig = defineConfig([
     "src/js/**",
     "src-tauri/**",
     "scripts/**",
+    // Capacitor build output — copied web bundles + generated native-bridge,
+    // not source code (was producing thousands of false lint findings).
+    "android/**",
   ]),
   {
     rules: {

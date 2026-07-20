@@ -7,7 +7,7 @@ import {
   AdminSalesSummary,
   getTodaySalesRecords,
   calculateAdminSalesSummary,
-  withPercentages,
+  buildSummary,
 } from '@/utils/adminSalesSummary';
 
 interface UseAdminSalesSummaryOptions {
@@ -51,7 +51,7 @@ export const useAdminSalesSummary = ({ enabled, records }: UseAdminSalesSummaryO
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
       if (row) {
-        setServerSummary(withPercentages(row.total_sold ?? 0, row.total_unsold ?? 0));
+        setServerSummary(buildSummary(row.total_sold ?? 0, row.total_unsold ?? 0));
       }
     } catch (err) {
       // Keep local fallback; RPC may not be deployed yet or device is offline
