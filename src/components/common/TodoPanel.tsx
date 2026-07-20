@@ -14,7 +14,8 @@ import {
   Clock,
   CheckCircle2,
   ChevronDown,
-  Edit,
+  StickyNote,
+  X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
@@ -68,6 +69,10 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     x: number;
     y: number;
     todoId: string;
+  } | null>(null);
+  const [notesModal, setNotesModal] = useState<{
+    todoId: string;
+    draft: string;
   } | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -447,8 +452,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     }
   };
 
-  // Update Task Comment Inline
+  // Update Task Comment from the Notes modal
   const handleUpdateComment = async (id: string, commentVal: string) => {
+    // Skip no-op saves — an UPDATE would bump last_activity_at (reordering
+    // the task) and emit a realtime message for nothing.
+    const current = todos.find((t) => t.id === id);
+    if (current && (current.comment || "") === commentVal) return;
     try {
       const { error } = await supabase
         .from("todos")
@@ -925,34 +934,24 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                                     Permanent
                                   </span>
                                 )}
+                                {todo.comment && todo.comment.trim() !== "" && (
+                                  <span
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setNotesModal({
+                                        todoId: todo.id,
+                                        draft: todo.comment || "",
+                                      });
+                                    }}
+                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[7.5px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 tracking-wider shrink-0 select-none uppercase cursor-pointer hover:bg-amber-500/20 hover:scale-95 transition-all"
+                                    title={`Note: ${todo.comment}`}
+                                  >
+                                    <StickyNote className="w-2.5 h-2.5" />
+                                    Note
+                                  </span>
+                                )}
                               </div>
                             )}
-
-                            {/* Comment Input Box */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-theme-text-muted uppercase tracking-wider font-medium shrink-0">
-                                Notes:
-                              </span>
-                              <input
-                                type="text"
-                                placeholder="Need time, will finish tomorrow..."
-                                value={todo.comment || ""}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setTodos((prev) =>
-                                    prev.map((t) =>
-                                      t.id === todo.id
-                                        ? { ...t, comment: val }
-                                        : t,
-                                    ),
-                                  );
-                                }}
-                                onBlur={(e) =>
-                                  handleUpdateComment(todo.id, e.target.value)
-                                }
-                                className="w-full max-w-md px-2.5 py-1 bg-theme-card-bg/45 hover:bg-theme-card-bg/80 focus:bg-theme-card-container border border-theme-border-muted hover:border-theme-border-input focus:border-indigo-500/50 rounded-lg text-[11px] text-theme-text-secondary focus:outline-none transition-all"
-                              />
-                            </div>
                           </div>
                         </div>
 
@@ -1225,6 +1224,87 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         isDanger={true}
       />
 
+      {/* Notes Modal (opened via right-click > Notes or the Note badge) */}
+      {notesModal &&
+        isMounted &&
+        createPortal(
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in"
+            onClick={() => setNotesModal(null)}
+          >
+            <div
+              className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-md shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setNotesModal(null)}
+                className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer"
+                aria-label="Close notes modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-start gap-3.5 mb-4 mt-2">
+                <div className="bg-amber-500/10 border border-amber-500/20 p-2 rounded-xl text-amber-400 shrink-0">
+                  <StickyNote className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-theme-text-primary leading-6">
+                    Task Notes
+                  </h3>
+                  <p
+                    className="text-xs text-theme-text-muted mt-0.5 truncate max-w-[280px]"
+                    title={
+                      todos.find((t) => t.id === notesModal.todoId)?.task || ""
+                    }
+                  >
+                    {todos.find((t) => t.id === notesModal.todoId)?.task || ""}
+                  </p>
+                </div>
+              </div>
+
+              <textarea
+                autoFocus
+                rows={4}
+                placeholder="Need time, will finish tomorrow..."
+                value={notesModal.draft}
+                onChange={(e) =>
+                  setNotesModal((prev) =>
+                    prev ? { ...prev, draft: e.target.value } : prev,
+                  )
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setNotesModal(null);
+                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    handleUpdateComment(notesModal.todoId, notesModal.draft);
+                    setNotesModal(null);
+                  }
+                }}
+                className="w-full px-3 py-2.5 bg-theme-page-bg/60 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-none custom-scrollbar"
+              />
+
+              <div className="flex gap-2.5 pt-4">
+                <button
+                  onClick={() => setNotesModal(null)}
+                  className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    handleUpdateComment(notesModal.todoId, notesModal.draft);
+                    setNotesModal(null);
+                  }}
+                  className="flex-1 py-2 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] bg-linear-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 shadow-md shadow-blue-950/20"
+                >
+                  Save Note
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
       {/* Premium Glassmorphic Context Menu */}
       {contextMenu &&
         isMounted &&
@@ -1271,15 +1351,16 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             </button>
             <button
               onClick={() => {
-                setEditingTodoId(contextMenu.todoId);
                 const t = todos.find((x) => x.id === contextMenu.todoId);
-                setEditingTaskText(t ? t.task : "");
+                if (t) {
+                  setNotesModal({ todoId: t.id, draft: t.comment || "" });
+                }
                 setContextMenu(null);
               }}
               className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
-              <Edit className="h-3.5 w-3.5 text-theme-text-muted" />
-              Edit
+              <StickyNote className="h-3.5 w-3.5 text-amber-400" />
+              Notes
             </button>
             <button
               onClick={() => {
