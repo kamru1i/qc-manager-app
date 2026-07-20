@@ -116,6 +116,18 @@ export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameIn
     }
   }, [soldDate, totalAttempt, soldCount, unsoldCount, setCopied, showToast]);
 
+  // Same summary content as copyBox2 — the admin box reuses the report,
+  // only the copied-state key differs so each box shows its own feedback.
+  const copyAdminSummary = useCallback(async () => {
+    const text = `*Sales Report | Date: ${soldDate}*\n*Total Attempt:* ${totalAttempt} Sale\n*Sold:* ${soldCount} Sale\n*Unsold:* ${unsoldCount} Sale`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied("boxAdmin");
+    } catch {
+      showToast("error", "Failed to copy.");
+    }
+  }, [soldDate, totalAttempt, soldCount, unsoldCount, setCopied, showToast]);
+
   const copyBox4 = useCallback(async () => {
     const title = allSales && hasSubmissions
       ? `*Sales Report | Date: ${soldDate}*`
@@ -190,6 +202,7 @@ export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameIn
     copyBox1,
     copyBox2,
     copyBox4,
+    copyAdminSummary,
     copyText1,
     copyText2,
     copyNotes,

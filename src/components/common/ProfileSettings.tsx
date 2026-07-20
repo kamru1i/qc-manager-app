@@ -66,6 +66,7 @@ export function ProfileSettings({
 
       // Quotes Tracker Subtabs
       case 'copy_helper':
+        return hasQuotesAccess; // available to all authenticated quotes users
       case 'save_file':
         return hasQuotesAccess && isSuperAdmin;
       case 'monthly':

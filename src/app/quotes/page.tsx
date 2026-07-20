@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useQuotesDashboardData } from "@/hooks/quotes-tracker/useQuotesDashboardData";
 import { useSaveFileHelper } from "@/hooks/quotes-tracker/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/quotes-tracker/useCopyHelper";
+import { useCopyHelperPermissions } from "@/hooks/quotes-tracker/useCopyHelperPermissions";
  
 import { StatsGrid } from "@/components/common/StatsGrid";
 import { RecordsTable } from "@/components/quotes-tracker/RecordsTable";
@@ -432,10 +433,14 @@ export default function Dashboard({
     copyBox1,
     copyBox2,
     copyBox4,
+    copyAdminSummary,
     copyText1,
     copyText2,
     copyNotes,
   } = useCopyHelper({ showToast, todayUserRecords, profile, codenameInput });
+
+  // Copy Helper box visibility is driven by the "Sale" file type permission
+  const { hasSalePermission } = useCopyHelperPermissions(profile);
 
 
 
@@ -1717,11 +1722,13 @@ export default function Dashboard({
             />
           )}
 
-          {/* TAB 11: COPY HELPER (Superadmin only) */}
-          {activeTab === "copy_helper" && isSuperAdmin && (
+          {/* TAB 11: COPY HELPER (all authenticated users; box visibility
+              is driven by the "Sale" file type permission) */}
+          {activeTab === "copy_helper" && (
             <Suspense fallback={<SkeletonLoader type="copy-helper" />}>
               <CopyHelperPanel
                 profile={profile}
+                hasSalePermission={hasSalePermission}
                 codenameInput={codenameInput}
                 spokeTo={spokeTo}
                 setSpokeTo={setSpokeTo}
@@ -1740,6 +1747,7 @@ export default function Dashboard({
                 copyBox1={copyBox1}
                 copyBox2={copyBox2}
                 copyBox4={copyBox4}
+                copyAdminSummary={copyAdminSummary}
                 copyText1={copyText1}
                 copyText2={copyText2}
                 copyNotes={copyNotes}

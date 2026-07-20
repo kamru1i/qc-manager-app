@@ -339,8 +339,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   {!isSidebarCollapsed && <span className="whitespace-nowrap">Daily Entry</span>}
                 </button>
 
-                {/* Copy Helper (Superadmin only) */}
-                {isSuperAdmin && !hiddenTabs.includes('copy_helper') && (
+                {/* Copy Helper (all authenticated users) */}
+                {!hiddenTabs.includes('copy_helper') && (
                   <button
                     onClick={() => { onQuotesTabChange?.('copy_helper'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Copy Helper' : undefined}
