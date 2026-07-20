@@ -7,6 +7,7 @@ import { useQuotesDashboardData } from "@/hooks/quotes-tracker/useQuotesDashboar
 import { useSaveFileHelper } from "@/hooks/quotes-tracker/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/quotes-tracker/useCopyHelper";
 import { useCopyHelperPermissions } from "@/hooks/quotes-tracker/useCopyHelperPermissions";
+import { useAdminSalesSummary } from "@/hooks/quotes-tracker/useAdminSalesSummary";
  
 import { StatsGrid } from "@/components/common/StatsGrid";
 import { RecordsTable } from "@/components/quotes-tracker/RecordsTable";
@@ -415,6 +416,16 @@ export default function Dashboard({
   const handleSaveAsWord = () => handleSaveAsWordRaw(todayUserRecords);
 
   // ── Copy Helper Hook ───────────────────────────────────────────────
+  // Box visibility is driven by the "Sale" file type permission
+  const { hasSalePermission } = useCopyHelperPermissions(profile);
+
+  // Today's overall deduplicated sales report (all users) — only fetched
+  // while the admin summary box can actually be shown
+  const adminSalesSummary = useAdminSalesSummary({
+    enabled: activeTab === "copy_helper" && hasSalePermission,
+    records,
+  });
+
   const {
     spokeTo,
     setSpokeTo,
@@ -437,10 +448,7 @@ export default function Dashboard({
     copyText1,
     copyText2,
     copyNotes,
-  } = useCopyHelper({ showToast, todayUserRecords, profile, codenameInput });
-
-  // Copy Helper box visibility is driven by the "Sale" file type permission
-  const { hasSalePermission } = useCopyHelperPermissions(profile);
+  } = useCopyHelper({ showToast, todayUserRecords, profile, codenameInput, adminSalesSummary });
 
 
 
@@ -1744,6 +1752,7 @@ export default function Dashboard({
                 allSales={allSales}
                 hasSubmissions={hasSubmissions}
                 todayUserRecords={todayUserRecords}
+                adminSalesSummary={adminSalesSummary}
                 copyBox1={copyBox1}
                 copyBox2={copyBox2}
                 copyBox4={copyBox4}

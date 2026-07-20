@@ -2,18 +2,21 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { RecordItem, Profile } from '@/types';
+import { AdminSalesSummary } from '@/utils/adminSalesSummary';
 
 interface UseCopyHelperOptions {
   showToast: (type: 'success' | 'error', text: string) => void;
   todayUserRecords: RecordItem[];
   profile: Profile | null;
   codenameInput: string;
+  /** Deduplicated all-users report for today — source for the admin summary box. */
+  adminSalesSummary: AdminSalesSummary;
 }
 
-export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameInput }: UseCopyHelperOptions) => {
+export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameInput, adminSalesSummary }: UseCopyHelperOptions) => {
   // ── State ──────────────────────────────────────────────────────────
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
-  
+
   const setCopied = useCallback((key: string) => {
     setCopiedStates(prev => ({ ...prev, [key]: true }));
     setTimeout(() => {
@@ -116,17 +119,18 @@ export const useCopyHelper = ({ showToast, todayUserRecords, profile, codenameIn
     }
   }, [soldDate, totalAttempt, soldCount, unsoldCount, setCopied, showToast]);
 
-  // Same summary content as copyBox2 — the admin box reuses the report,
-  // only the copied-state key differs so each box shows its own feedback.
+  // Admin variant: today's overall episode-deduplicated report (all users;
+  // every Sold counts, a trailing unsold run per file counts once)
   const copyAdminSummary = useCallback(async () => {
-    const text = `*Sales Report | Date: ${soldDate}*\n*Total Attempt:* ${totalAttempt} Sale\n*Sold:* ${soldCount} Sale\n*Unsold:* ${unsoldCount} Sale`;
+    const { totalSold, totalUnsold, totalAttempts } = adminSalesSummary;
+    const text = `*Sales Report | Date: ${soldDate}*\n*Total Sale Attempt:* ${totalAttempts} Sale\n*Sold:* ${totalSold} Sale\n*Unsold:* ${totalUnsold} Sale`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied("boxAdmin");
     } catch {
       showToast("error", "Failed to copy.");
     }
-  }, [soldDate, totalAttempt, soldCount, unsoldCount, setCopied, showToast]);
+  }, [soldDate, adminSalesSummary, setCopied, showToast]);
 
   const copyBox4 = useCallback(async () => {
     const title = allSales && hasSubmissions

@@ -3,6 +3,7 @@
 import React from "react";
 import { ScrollText, ArrowLeft, Copy, Check } from "lucide-react";
 import { RecordItem, Profile } from "@/types";
+import { AdminSalesSummary } from "@/utils/adminSalesSummary";
 
 // ─── Reusable card chrome ────────────────────────────────────────────
 
@@ -58,9 +59,14 @@ const CopyHelperCard: React.FC<CopyHelperCardProps> = ({
 
 interface SalesSummaryBodyProps {
   soldDate: string;
-  totalAttempt: number;
+  /** Total row value; shown above Sold/Unsold when provided. */
+  totalAttempt?: number;
   soldCount: number;
   unsoldCount: number;
+  /** Header label; defaults to the user report title. */
+  reportLabel?: string;
+  /** Label for the total row (user: "Total Attempt", admin: "Total Sale Attempt"). */
+  totalLabel?: string;
 }
 
 /** Stats rows shared by the user and admin Sales Summary boxes. */
@@ -69,15 +75,19 @@ const SalesSummaryBody: React.FC<SalesSummaryBodyProps> = ({
   totalAttempt,
   soldCount,
   unsoldCount,
+  reportLabel = "Sales Report",
+  totalLabel = "Total Attempt",
 }) => (
   <div className="space-y-2.5 text-xs">
     <div className="flex items-center justify-between border-b border-theme-border-muted pb-2">
-      <span className="text-theme-text-primary font-bold">Sales Report | Date: {soldDate}</span>
+      <span className="text-theme-text-primary font-bold">{reportLabel} | Date: {soldDate}</span>
     </div>
-    <div className="flex items-center justify-between">
-      <span className="text-theme-text-muted font-medium">Total Attempt:</span>
-      <span className="text-theme-text-primary font-semibold">{totalAttempt} Sale</span>
-    </div>
+    {totalAttempt !== undefined && (
+      <div className="flex items-center justify-between">
+        <span className="text-theme-text-muted font-medium">{totalLabel}:</span>
+        <span className="text-theme-text-primary font-semibold">{totalAttempt} Sale</span>
+      </div>
+    )}
     <div className="flex items-center justify-between">
       <span className="text-emerald-400 font-medium">Sold:</span>
       <span className="text-emerald-300 font-semibold">{soldCount} Sale</span>
@@ -110,6 +120,8 @@ interface CopyHelperPanelProps {
   allSales: boolean;
   hasSubmissions: boolean;
   todayUserRecords: RecordItem[];
+  /** Deduplicated all-users report for today (Box 5). */
+  adminSalesSummary: AdminSalesSummary;
   copyBox1: () => void;
   copyBox2: () => void;
   copyBox4: () => void;
@@ -139,6 +151,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
   allSales,
   hasSubmissions,
   todayUserRecords,
+  adminSalesSummary,
   copyBox1,
   copyBox2,
   copyBox4,
@@ -307,9 +320,10 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
       render: () => (
         <SalesSummaryBody
           soldDate={soldDate}
-          totalAttempt={totalAttempt}
-          soldCount={soldCount}
-          unsoldCount={unsoldCount}
+          totalLabel="Total Sale Attempt"
+          totalAttempt={adminSalesSummary.totalAttempts}
+          soldCount={adminSalesSummary.totalSold}
+          unsoldCount={adminSalesSummary.totalUnsold}
         />
       ),
     },
