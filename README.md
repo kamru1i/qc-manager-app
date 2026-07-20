@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.1.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.2.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,16 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.1.0 — Stability & Hardening Release (Current)
+### 🚀 v6.2.0 — Multi-Device & Copy Helper Release (Current)
+
+- **Multi-Device Login:** A user can now stay logged in simultaneously on Web, Desktop, and Android (up to 10 devices/browsers). Every per-device logout path (manual logout, inactivity expiry, stale-session cleanup, session eviction) now uses `signOut({ scope: 'local' })` — previously the global default revoked every device's refresh token, forcing all other devices out. Account deletion and the first-time-password timeout intentionally remain global sign-outs.
+- **Copy Helper for All Users:** The Copy Helper dashboard is now available to every authenticated user (previously hardcoded to the superadmin). Box visibility is driven by the **Sale** file-type permission (User Management → Profile Settings → File Type Permissions) with fully dynamic box numbering: with Sale permission users see Session Info, Sales Summary, Quick Copy Actions, Detailed Report, and the new Admin Sales Summary; without it, only the Detailed Report (as Box 1). Save File remains superadmin-only.
+- **Admin Sales Summary (New):** "Sales Report for Admin" box showing today's overall deduplicated sales across all users, computed server-side via a new `get_admin_sales_summary` RPC (SECURITY DEFINER, aggregate-only, partial-indexed). Episode-based dedup: duplicate submissions of a file count once, a Sold submission absorbs prior Unsold attempts, and re-processing a sold file counts as a new attempt — so two Sold entries for the same file name are two sales.
+- **Navbar Rank Accuracy:** The rank badge next to the user's name now always matches the Leaderboard page. Removed the stale top-performer-badge rank fallback (which briefly showed last month's "#1") and a client-side rank recomputation that raced the leaderboard RPC — the RPC-fed cache is now the single source of truth; the label stays hidden until the real rank arrives.
+- **Bundle Optimization:** The Word-document converter (`html-docx-ts` + JSZip) now lazy-loads on first save instead of shipping in the initial /quotes bundle (largest initial chunk 556 KB → 384 KB); `apple-touch-icon.png` right-sized 392 KB → 6 KB. Faster startup on Web, Desktop, and Android.
+- **Lint Hygiene:** Excluded Capacitor build output from ESLint (eliminated ~12,000 false findings) and configured the unused-vars rule to honor the `_`-prefix convention — lint is now 0 errors with a clean, meaningful warning set.
+
+### 🚀 v6.1.0 — Stability & Hardening Release
 
 - **Leaderboard Data Accuracy:** Removed 4,200 duplicate records caused by a faulty cache auto-restore, added a database unique index on `records (user_id, file_name, submitted_at)` so duplicate uploads are rejected at the database level, and removed the auto-restore code entirely. Monthly, yearly, and today leaderboard columns now reflect exact submission counts, fully decoupled from each other.
 - **Expanded Working Hours (4h–10h):** Working Hours options now span 4 Hours to 10 Hours in 30-minute increments, generated from a single shared source of truth (`src/utils/workingHours.ts`) consumed by Profile Setup, Profile Settings, and Admin/Supervisor user management. Short Leave and Overtime calculations verified across the full range.

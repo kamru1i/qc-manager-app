@@ -1,6 +1,6 @@
 {
   "name": "qc-manager",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -37,14 +37,14 @@
   "devDependencies": {
     "@capacitor/android": "^8.4.1",
     "@capacitor/cli": "^8.4.1",
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.3.3",
     "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
   },
   "optionalDependencies": {

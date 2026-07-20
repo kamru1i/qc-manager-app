@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { RecordItem, SavedDocument } from '@/types';
 import { isTauriApp } from '@/utils/apiUrlHelper';
-import { asBlob } from 'html-docx-ts';
 import { Capacitor } from '@capacitor/core';
 
 interface UseSaveFileHelperOptions {
@@ -236,6 +235,10 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
 
     try {
       const wrappedHtml = wrapHtmlForDocx(editorHtml);
+      // Lazy-load the docx converter — only needed when actually saving,
+      // keeps it out of the initial /quotes bundle (same pattern as the
+      // Capacitor plugins below).
+      const { asBlob } = await import('html-docx-ts');
       const docxBlob = (await asBlob(wrappedHtml)) as Blob;
       let savedPath = "";
 
@@ -361,6 +364,8 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     try {
       const isTauri = isTauriApp();
       const wrappedHtml = wrapHtmlForDocx(editorHtml);
+      // Lazy-load the docx converter (see note in the other save path)
+      const { asBlob } = await import('html-docx-ts');
       const docxBlob = (await asBlob(wrappedHtml)) as Blob;
 
       if (Capacitor.isNativePlatform()) {
