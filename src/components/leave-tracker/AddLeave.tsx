@@ -81,7 +81,7 @@ export function AddLeave({
     if (editingRecord) {
       return !!editingRecord.comment?.includes('20 Min Adjusted with Jummah Prayer');
     }
-    return new Date().getDay() === 5;
+    return false;
   });
   // Break time (Short Leave only). On edit, restore from the stored comment marker.
   const [breakEnabled, setBreakEnabled] = useState(
@@ -130,12 +130,13 @@ export function AddLeave({
     }
   }, [targetProfileId, defaultSignIn, defaultSignOut, editingRecord]);
 
-  // Sync adjustJummah with date changes
+  // Jummah is opt-in (never auto-enabled). Only clear a stale ON state when the
+  // date is no longer a Friday or the type is no longer Short Leave.
   useEffect(() => {
-    if (leaveType === 'Short Leave' && date) {
-      setAdjustJummah(isFriday(date));
+    if (adjustJummah && (leaveType !== 'Short Leave' || !isFriday(date))) {
+      setAdjustJummah(false);
     }
-  }, [date, leaveType]);
+  }, [date, leaveType, adjustJummah]);
 
   // Reset the break toggle when it stops being applicable (type change / no
   // longer late enough) so a stale break can't be silently folded in on submit.

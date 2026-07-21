@@ -54,7 +54,7 @@ export function AdminAddLeaveModal({
   const [signOutTime, setSignOutTime] = useState("22:30");
   const [leaveHour, setLeaveHour] = useState("00:00");
   const [comment, setComment] = useState("");
-  const [adjustJummah, setAdjustJummah] = useState(() => new Date().getDay() === 5);
+  const [adjustJummah, setAdjustJummah] = useState(false);
   const [breakEnabled, setBreakEnabled] = useState(false);
   const [breakMinutes, setBreakMinutes] = useState(20);
   const [bulkDates, setBulkDates] = useState<string[]>([]);
@@ -112,15 +112,17 @@ export function AdminAddLeaveModal({
       setBulkAdjustments([]);
       setBreakEnabled(false);
       setBreakMinutes(20);
+      setAdjustJummah(false);
     }
   }, [showModal, staffProfile]);
 
-  // Sync adjustJummah with date changes
+  // Jummah is opt-in (never auto-enabled). Only clear a stale ON state when the
+  // date is no longer a Friday or the type is no longer Short Leave.
   useEffect(() => {
-    if (leaveType === 'Short Leave' && date) {
-      setAdjustJummah(isFriday(date));
+    if (adjustJummah && (leaveType !== 'Short Leave' || !isFriday(date))) {
+      setAdjustJummah(false);
     }
-  }, [date, leaveType]);
+  }, [date, leaveType, adjustJummah]);
 
   // Recalculate leave hour when inputs change
   useEffect(() => {

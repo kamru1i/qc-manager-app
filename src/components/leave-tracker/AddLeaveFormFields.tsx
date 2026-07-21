@@ -511,33 +511,6 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           </div>
         )}
 
-        {/* Jummah Prayer Adjustment Toggle */}
-        {leaveType === "Short Leave" && isFriday(date) && (
-          <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 mb-3">
-            <div>
-              <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                Adjust with Jummah Prayer?
-              </span>
-              <span className="block text-[10px] text-theme-text-muted mt-0.5">
-                Deduct 20 minutes from the calculated short leave duration
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAdjustJummah && setAdjustJummah(!adjustJummah)}
-              className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                adjustJummah ? "bg-indigo-600" : "bg-theme-border-input"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  adjustJummah ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
-        )}
-
         {/* Short Leave Adjustment toggles */}
         {leaveType === "Short Leave" &&
           (govtHolidayRemaining > 0 ||
@@ -722,6 +695,33 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               />
             </div>
           </div>
+
+          {/* Jummah Prayer Adjustment Toggle (Short Leave, Fridays only) */}
+          {leaveType === "Short Leave" && isFriday(date) && (
+            <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+              <div>
+                <span className="block text-xs font-semibold text-theme-text-primary font-sans">
+                  Adjust with Jummah Prayer?
+                </span>
+                <span className="block text-[10px] text-theme-text-muted mt-0.5">
+                  Deduct 20 minutes from the calculated short leave duration
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAdjustJummah && setAdjustJummah(!adjustJummah)}
+                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  adjustJummah ? "bg-indigo-600" : "bg-theme-border-input"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    adjustJummah ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
 
           {/* Break Time (Short Leave only, when signed in more than 1 hour late).
               Break counts as short leave, so it is added to the calculated hours. */}
