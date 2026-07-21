@@ -377,11 +377,7 @@ export const getLeaveValidationError = (
   const workedMins = endMins - startMins;
   const regularMins = workingHours * 60;
 
-  if (type === 'Short Leave') {
-    if (workedMins >= regularMins) {
-      return 'Short leave must be less than working time';
-    }
-  } else if (type === 'Overtime') {
+  if (type === 'Overtime') {
     if (!isHoliday && workedMins <= regularMins) {
       return 'Overtime must be extra from working hour';
     }
@@ -389,7 +385,7 @@ export const getLeaveValidationError = (
       return 'Overtime must be extra from working hour';
     }
   }
-  
+
   return null;
 };
 
