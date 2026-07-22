@@ -23,9 +23,9 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
 }) => {
   const [newCodename, setNewCodename] = useState("");
   const [newFullName, setNewFullName] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "supervisor" | "user">(
-    "user",
-  );
+  const [newRole, setNewRole] = useState<
+    "admin" | "supervisor" | "user" | "superadmin"
+  >("user");
   const [hasChutiAccess, setHasChutiAccess] = useState(true);
   const [hasQuotesAccess, setHasQuotesAccess] = useState(false);
   const [allowedTypes, setAllowedTypes] = useState<string[]>([]);

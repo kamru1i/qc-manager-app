@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { User, AlertTriangle, RefreshCw, Settings, Key, Layout } from 'lucide-react';
 import { Profile } from '@/types';
+import { isSuperadmin, isAdminRole } from '@/utils/permissionService';
 import { ProfileFields } from '@/components/leave-tracker/ProfileFields';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
@@ -39,13 +40,18 @@ export function ProfileSettings({
   // Hidden tabs (for admin menu visibility)
   const [hiddenTabs, setHiddenTabs] = useState<string[]>([]);
 
+  // Sanitizer words (superadmin-only filename cleaner config)
+  const [sanitizerWords, setSanitizerWords] = useState<string[]>([]);
+  const [sanitizerInput, setSanitizerInput] = useState('');
+  const [sanitizerSubmitting, setSanitizerSubmitting] = useState(false);
+
   // Setup submissions state
   const [submitting, setSubmitting] = useState(false);
   const [isCodenameEditable, setIsCodenameEditable] = useState(false);
 
   // Unified menu authorization rules (synchronized with UnifiedSidebar.tsx)
-  const isSuperAdmin = profile?.codename?.toUpperCase() === 'KAMRUL' || profile?.full_name === 'Kamrul Islam';
-  const showTodoTab = profile?.username?.toUpperCase() === 'KAMRUL' || profile?.full_name === 'Kamrul Islam';
+  const isSuperAdmin = isSuperadmin(profile);
+  const showTodoTab = isSuperadmin(profile);
   const hasChutiAccess = !!profile?.has_chuti_access;
   const hasQuotesAccess = !!profile?.has_quotes_access;
 
@@ -60,9 +66,9 @@ export function ProfileSettings({
       case 'leaderboard':
         return true;
       case 'user_management':
-        return profile.role === 'admin' || profile.role === 'supervisor';
+        return isAdminRole(profile) || profile.role === 'supervisor';
       case 'audit_logs':
-        return profile.role === 'admin';
+        return isAdminRole(profile);
 
       // Quotes Tracker Subtabs
       case 'copy_helper':
@@ -80,11 +86,11 @@ export function ProfileSettings({
       case 'leave_history':
         return hasChutiAccess;
       case 'team_leaves':
-        return hasChutiAccess && (profile.role === 'admin' || profile.role === 'supervisor');
+        return hasChutiAccess && (isAdminRole(profile) || profile.role === 'supervisor');
       case 'govt_responses':
       case 'settlement':
       case 'leave_settings':
-        return hasChutiAccess && profile.role === 'admin';
+        return hasChutiAccess && isAdminRole(profile);
 
       default:
         return false;
@@ -102,6 +108,11 @@ export function ProfileSettings({
       setProfileSignInTime(profile.default_sign_in || '');
       setProfileSignOutTime(profile.default_sign_out || '');
       setHiddenTabs(profile.global_settings?.hidden_tabs || []);
+      setSanitizerWords(
+        Array.isArray(profile.global_settings?.sanitizer_words)
+          ? profile.global_settings.sanitizer_words
+          : []
+      );
     }
   }, [profile, sessionUser]);
 
@@ -118,7 +129,7 @@ export function ProfileSettings({
 
     const isHiddenTabsChanged = JSON.stringify([...hiddenTabs].sort()) !== JSON.stringify([...(profile.global_settings?.hidden_tabs || [])].sort());
 
-    if (profile.role === 'admin') {
+    if (isAdminRole(profile)) {
       return isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged ||
              isJobRoleChanged || isSignInChanged || isSignOutChanged || isHiddenTabsChanged;
     } else {
@@ -168,7 +179,7 @@ export function ProfileSettings({
     setSubmitting(true);
 
     try {
-      if (profile.role === 'admin') {
+      if (isAdminRole(profile)) {
         const updates = {
           username: editUsername.toUpperCase().trim(),
           full_name: editFullName,
@@ -318,6 +329,47 @@ export function ProfileSettings({
     }
   };
 
+  const handleSaveSanitizerWords = async (nextWords: string[]) => {
+    if (!profile || !isSuperadmin(profile)) return;
+    setSanitizerSubmitting(true);
+    try {
+      // RPC updates only the sanitizer_words key across all profiles,
+      // preserving every other per-user global_settings value.
+      const { error } = await supabase.rpc('set_sanitizer_words', { p_words: nextWords });
+      if (error) throw error;
+
+      setSanitizerWords(nextWords);
+      // Reflect locally so the current session's cleaner picks it up immediately.
+      const updatedProfile = {
+        ...profile,
+        global_settings: { ...(profile.global_settings || {}), sanitizer_words: nextWords },
+      };
+      setProfile(updatedProfile);
+      localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      toast.success('Sanitizer word list updated.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update sanitizer words.');
+    } finally {
+      setSanitizerSubmitting(false);
+    }
+  };
+
+  const handleAddSanitizerWord = () => {
+    const word = sanitizerInput.trim();
+    if (!word) return;
+    if (sanitizerWords.some((w) => w.toLowerCase() === word.toLowerCase())) {
+      toast.error('That word is already in the list.');
+      return;
+    }
+    setSanitizerInput('');
+    handleSaveSanitizerWords([...sanitizerWords, word]);
+  };
+
+  const handleRemoveSanitizerWord = (word: string) => {
+    handleSaveSanitizerWords(sanitizerWords.filter((w) => w !== word));
+  };
+
   return (
     <div className="w-full space-y-6 font-sans">
       {/* Decorative background blobs */}
@@ -329,7 +381,7 @@ export function ProfileSettings({
         <div>
           <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2.5">
             <Settings className="h-5.5 w-5.5 text-blue-500" />
-            Profile Settings
+            Settings
           </h2>
           <p className="text-xs text-theme-text-muted mt-1">Manage your shift hours, default shift times, password settings, and custom preferences.</p>
         </div>
@@ -359,7 +411,7 @@ export function ProfileSettings({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">Codename</label>
-                {profile?.role === 'admin' && (
+                {isAdminRole(profile) && (
                   <button
                     type="button"
                     onClick={() => setIsCodenameEditable(!isCodenameEditable)}
@@ -545,6 +597,74 @@ export function ProfileSettings({
         </div>
       )}
 
+      {/* Filename Sanitizer Word List (Superadmin only) */}
+      {isSuperAdmin && (
+        <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4 max-w-4xl">
+          <div>
+            <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
+              <Settings className="h-4 w-4 text-blue-400" />
+              Filename Sanitizer Words
+            </h3>
+            <p className="text-[11px] text-theme-text-muted mt-2">
+              Extra words stripped from quote file names on entry (in addition to
+              the built-in branch names, file types, and comment phrases). Applies
+              to all users. Changes save immediately.
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={sanitizerInput}
+              onChange={(e) => setSanitizerInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddSanitizerWord();
+                }
+              }}
+              placeholder="e.g. prioritize, othersite, test"
+              disabled={sanitizerSubmitting}
+              className="flex-1 px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={handleAddSanitizerWord}
+              disabled={sanitizerSubmitting || !sanitizerInput.trim()}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Add
+            </button>
+          </div>
+
+          {sanitizerWords.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {sanitizerWords.map((word) => (
+                <span
+                  key={word}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-955/30 border border-blue-500/20 text-theme-text-secondary text-[11px] font-medium"
+                >
+                  {word}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSanitizerWord(word)}
+                    disabled={sanitizerSubmitting}
+                    className="text-theme-text-muted hover:text-rose-400 cursor-pointer disabled:opacity-50"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-theme-text-muted/70 italic">
+              No custom words yet. Built-in sanitization still applies.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Bottom Save Changes Bar */}
       {profile?.profile_change_status !== 'pending' && (
         <div className="flex justify-end pt-4 border-t border-theme-border-input/60 max-w-4xl">
@@ -561,7 +681,7 @@ export function ProfileSettings({
             {submitting && <RefreshCw className="h-4 w-4 animate-spin" />}
             {submitting
               ? 'Updating...'
-              : (profile?.role === 'admin' || !profile?.has_edited_profile
+              : (isAdminRole(profile) || !profile?.has_edited_profile
                   ? 'Save Changes'
                   : 'Submit Request for Approval')}
           </button>

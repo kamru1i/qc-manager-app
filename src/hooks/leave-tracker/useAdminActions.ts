@@ -31,7 +31,7 @@ export const useAdminActions = ({
   // Admin: Create a new user account
   const createUser = useCallback(async (
     username: string, 
-    role: 'admin' | 'supervisor' | 'user', 
+    role: 'admin' | 'supervisor' | 'user' | 'superadmin',
     fullName: string,
     _allowedTypes: string[],
     canManageRules: boolean,
@@ -224,7 +224,7 @@ export const useAdminActions = ({
   const adminUpdateUserProfile = useCallback(async (
     userId: string, 
     fullName: string, 
-    role: 'admin' | 'user' | 'supervisor', 
+    role: 'admin' | 'user' | 'supervisor' | 'superadmin', 
     allowedTypes: string[], 
     canManageRules: boolean,
     hasChutiAccess: boolean,

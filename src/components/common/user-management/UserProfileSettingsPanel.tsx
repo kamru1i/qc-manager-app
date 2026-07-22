@@ -21,8 +21,8 @@ interface UserProfileSettingsPanelProps {
   setEditUserCodename: (val: string) => void;
   editUserFullName: string;
   setEditUserFullName: (val: string) => void;
-  editUserRole: "admin" | "supervisor" | "user";
-  setEditUserRole: (val: "admin" | "supervisor" | "user") => void;
+  editUserRole: "admin" | "supervisor" | "user" | "superadmin";
+  setEditUserRole: (val: "admin" | "supervisor" | "user" | "superadmin") => void;
   editHasChutiAccess: boolean;
   setEditHasChutiAccess: (val: boolean) => void;
   editNeedsApproval: boolean;

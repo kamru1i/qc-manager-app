@@ -21,6 +21,8 @@ import { SkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader
 import { LeaderboardTable } from "@/components/leaderboard-and-reports/LeaderboardTable";
 import { ReportsPanel } from "@/components/leaderboard-and-reports/ReportsPanel";
 import { AuditLogsPanel } from "@/components/common/AuditLogsPanel";
+import { isSuperadmin } from "@/utils/permissionService";
+import { getGlobalSettingsFromProfile } from "@/utils/dashboardHelpers";
 import { QuoteRulesPanel } from "@/components/quotes-tracker/QuoteRulesPanel";
 import { CopyHelperPanel } from "@/components/quotes-tracker/CopyHelperPanel";
 import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperPanel";
@@ -33,7 +35,7 @@ import {
   calculateSummaryStats,
   formatDate,
   exportToCSV,
-  cleanFileName,
+  buildCleanFileName,
 } from "@/utils/quotesDashboardHelpers";
 import { FileType, RecordItem } from "@/types";
 import {
@@ -142,7 +144,14 @@ export default function Dashboard({
     logActivity,
   } = dashboardData;
 
-  const isSuperAdmin = profile?.codename?.toUpperCase() === 'KAMRUL' || profile?.full_name === 'Kamrul Islam';
+  const isSuperAdmin = isSuperadmin(profile);
+
+  // Filename cleaner configured with the superadmin-managed extra word list
+  // (from global settings). Falls back to default behavior when unset.
+  const cleanFileName = useMemo(() => {
+    const gs = getGlobalSettingsFromProfile(profile);
+    return buildCleanFileName({ extraWords: gs.sanitizer_words });
+  }, [profile]);
 
 
 
@@ -1317,6 +1326,7 @@ export default function Dashboard({
                   submitting={submitting}
                   onSubmit={handleAddEntry}
                   isAdmin={false}
+                  cleanFileName={cleanFileName}
                 />
               </Suspense>
 

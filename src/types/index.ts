@@ -3,7 +3,7 @@ import { ChutiRecord } from '@/utils/offlineSync';
 export interface Profile {
   id: string;
   username: string;
-  role: 'admin' | 'supervisor' | 'user';
+  role: 'admin' | 'supervisor' | 'user' | 'superadmin';
   username_changes?: number;
   username_request_status?: 'none' | 'pending' | 'approved';
   full_name?: string | null;

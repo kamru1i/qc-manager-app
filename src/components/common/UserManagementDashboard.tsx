@@ -84,7 +84,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Edit User State
   const [editUserCodename, setEditUserCodename] = useState('');
   const [editUserFullName, setEditUserFullName] = useState('');
-  const [editUserRole, setEditUserRole] = useState<'admin' | 'supervisor' | 'user'>('user');
+  const [editUserRole, setEditUserRole] = useState<'admin' | 'supervisor' | 'user' | 'superadmin'>('user');
   const [editHasChutiAccess, setEditHasChutiAccess] = useState(false);
   const [editHasQuotesAccess, setEditHasQuotesAccess] = useState(false);
   const [editUserAllowedTypes, setEditUserAllowedTypes] = useState<string[]>([]);
@@ -659,10 +659,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, [profilesLoaded]);
 
-  const handleCreateUserWrapper = async (params: { 
-    codename: string; 
-    role: 'admin' | 'supervisor' | 'user'; 
-    fullName: string; 
+  const handleCreateUserWrapper = async (params: {
+    codename: string;
+    role: 'admin' | 'supervisor' | 'user' | 'superadmin';
+    fullName: string;
     initialChutiCount: number; 
     initialPassword?: string; 
     quoteTypes: string[]; 

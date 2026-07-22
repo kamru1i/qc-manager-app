@@ -5,7 +5,7 @@ import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckb
 import { Profile } from "@/types";
 import { formatTimeToAMPM } from "@/utils/dashboardHelpers";
 import { supabase } from "@/utils/supabase";
-import { canAccessProfileSection } from "@/utils/permissionService";
+import { canAccessProfileSection, isSuperadmin } from "@/utils/permissionService";
 import { KPI_ASSESSMENT_COLUMNS } from "@/utils/dbColumns";
 import { WORKING_HOURS_OPTIONS } from "@/utils/workingHours";
 
@@ -17,8 +17,8 @@ interface StaffSettingsFormProps {
   fullName: string;
   setFullName: (val: string) => void;
 
-  role: "admin" | "supervisor" | "user";
-  setRole: (val: "admin" | "supervisor" | "user") => void;
+  role: "admin" | "supervisor" | "user" | "superadmin";
+  setRole: (val: "admin" | "supervisor" | "user" | "superadmin") => void;
 
   hasChutiAccess: boolean;
   setHasChutiAccess: (val: boolean) => void;
@@ -239,9 +239,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               <select
                 value={role}
                 onChange={(e) => {
-                  const val = e.target.value as "admin" | "user" | "supervisor";
+                  const val = e.target.value as
+                    | "admin"
+                    | "user"
+                    | "supervisor"
+                    | "superadmin";
                   setRole(val);
-                  if (val === "admin") {
+                  if (val === "admin" || val === "superadmin") {
                     setCanManageRules(true);
                   }
                 }}
@@ -249,7 +253,22 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               >
                 <option value="user">User</option>
                 <option value="supervisor">Supervisor</option>
-                <option value="admin">Admin</option>
+                {/* Admin/Superadmin can only be assigned by a superadmin. The
+                    Superadmin option is NEVER shown to non-superadmins. */}
+                {isSuperadmin(currentUser || null) && (
+                  <>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Superadmin</option>
+                  </>
+                )}
+                {/* Preserve the current value as a visible option when the
+                    viewer can't reassign it (e.g. admin editing an admin). */}
+                {!isSuperadmin(currentUser || null) &&
+                  (role === "admin" || role === "superadmin") && (
+                    <option value={role} className="capitalize">
+                      {role === "superadmin" ? "Superadmin" : "Admin"}
+                    </option>
+                  )}
               </select>
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold capitalize">

@@ -3,7 +3,7 @@ import { FileText, MapPin, UserCheck, Plus, Loader2, X } from "lucide-react";
 import { FileType } from "@/types";
 import { CategorySelector } from "@/components/quotes-tracker/CategorySelector";
 import { BranchSelector } from "@/components/common/BranchSelector";
-import { cleanFileName } from "@/utils/quotesDashboardHelpers";
+import { cleanFileName as defaultCleanFileName } from "@/utils/quotesDashboardHelpers";
 
 interface DailyEntryFormProps {
   fileName: string;
@@ -18,6 +18,8 @@ interface DailyEntryFormProps {
   submitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
   isAdmin?: boolean;
+  /** Optional configured sanitizer; falls back to the default word list. */
+  cleanFileName?: (name: string) => string;
 }
 
 export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
@@ -33,6 +35,7 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
   submitting,
   onSubmit,
   isAdmin = false,
+  cleanFileName = defaultCleanFileName,
 }) => {
   // Reused CategorySelector component handles isRequoteActive, handleRequoteClick, handleReviewClick, etc.
 

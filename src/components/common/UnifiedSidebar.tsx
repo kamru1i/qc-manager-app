@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Profile } from '@/types';
-import { canAccessModule } from '@/utils/permissionService';
+import { canAccessModule, isSuperadmin } from '@/utils/permissionService';
 import {
   PanelLeftOpen,
   PanelLeftClose,
@@ -67,7 +67,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   if (!profile) return null;
 
-  const isSuperAdmin = profile.codename?.toUpperCase() === 'KAMRUL' || profile.full_name === 'Kamrul Islam';
+  const isSuperAdmin = isSuperadmin(profile);
   const hiddenTabs = profile.global_settings?.hidden_tabs || [];
 
   // Navigation handlers
@@ -566,7 +566,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               }`}
             >
               <Settings className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">Profile Settings</span>}
+              {!isSidebarCollapsed && <span className="whitespace-nowrap">Settings</span>}
             </button>
           </div>
         )}

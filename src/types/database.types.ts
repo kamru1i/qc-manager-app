@@ -855,6 +855,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_admin_or_supervisor: { Args: never; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
       is_supervisor: { Args: never; Returns: boolean }
       is_supervisor_of: {
         Args: { employee_id: string; supervisor_id: string }
@@ -864,6 +865,7 @@ export type Database = {
         Args: { p_month: number; p_user_id: string; p_year: number }
         Returns: boolean
       }
+      set_sanitizer_words: { Args: { p_words: string[] }; Returns: undefined }
       sync_top_performer_badges: { Args: never; Returns: undefined }
     }
     Enums: {

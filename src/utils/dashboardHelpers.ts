@@ -12,6 +12,8 @@ export interface GlobalSettings {
   settlement_active_year?: string | null;
   settlement_active_period?: 'H1' | 'H2' | 'Instant' | null;
   settlement_active_category?: 'Office Leave' | 'Govt Holiday' | 'Eid-ul-Fitr' | 'Eid-ul-Adha' | null;
+  /** Superadmin-managed extra terms stripped by the filename sanitizer. */
+  sanitizer_words?: string[];
 }
 
 export const defaultGlobalSettings: GlobalSettings = {
@@ -57,7 +59,8 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           govt_holidays: Array.isArray(gs.govt_holidays) ? gs.govt_holidays : [],
           settlement_active_year: gs.settlement_active_year || null,
           settlement_active_period: gs.settlement_active_period || null,
-          settlement_active_category: gs.settlement_active_category || null
+          settlement_active_category: gs.settlement_active_category || null,
+          sanitizer_words: Array.isArray(gs.sanitizer_words) ? gs.sanitizer_words : []
         };
       }
     } catch (e) {
@@ -79,7 +82,8 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           govt_holidays: Array.isArray(gs.govt_holidays) ? gs.govt_holidays : [],
           settlement_active_year: gs.settlement_active_year || null,
           settlement_active_period: gs.settlement_active_period || null,
-          settlement_active_category: gs.settlement_active_category || null
+          settlement_active_category: gs.settlement_active_category || null,
+          sanitizer_words: Array.isArray(gs.sanitizer_words) ? gs.sanitizer_words : []
         };
       }
     } catch (e) {

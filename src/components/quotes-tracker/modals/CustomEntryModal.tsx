@@ -15,7 +15,8 @@ import {
   MapPin,
 } from "lucide-react";
 import { FileType, Profile } from "@/types";
-import { formatDate, cleanFileName } from "@/utils/quotesDashboardHelpers";
+import { formatDate, buildCleanFileName } from "@/utils/quotesDashboardHelpers";
+import { getGlobalSettingsFromProfile } from "@/utils/dashboardHelpers";
 import { CategorySelector } from "@/components/quotes-tracker/CategorySelector";
 import { BranchSelector } from "@/components/common/BranchSelector";
 
@@ -46,6 +47,11 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
 }) => {
   const customDateRef = useRef<HTMLInputElement>(null);
   const [customUserId, setCustomUserId] = useState("");
+  // Filename cleaner configured with the superadmin-managed extra word list.
+  const cleanFileName = useMemo(() => {
+    const gs = getGlobalSettingsFromProfile(currentUserProfile);
+    return buildCleanFileName({ extraWords: gs.sanitizer_words });
+  }, [currentUserProfile]);
 
   const handleOpenCustomDatePicker = () => {
     if (customDateRef.current) {

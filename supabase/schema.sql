@@ -132,11 +132,20 @@ BEGIN
   END IF;
 
   IF OLD.role IS DISTINCT FROM NEW.role THEN
+    -- Must be admin OR superadmin to change any role at all.
     IF NOT EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
     ) THEN
       RAISE EXCEPTION 'You are not allowed to change your role.';
+    END IF;
+
+    -- Granting admin or superadmin requires superadmin.
+    IF NEW.role IN ('admin', 'superadmin') AND NOT EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'superadmin'
+    ) THEN
+      RAISE EXCEPTION 'Only a superadmin can assign the admin or superadmin role.';
     END IF;
   END IF;
   RETURN NEW;
@@ -414,6 +423,14 @@ DECLARE
 BEGIN
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'Only admins can create users';
+  END IF;
+
+  -- Whitelist the role and enforce the creation hierarchy.
+  IF p_role NOT IN ('user', 'supervisor', 'admin', 'superadmin') THEN
+    RAISE EXCEPTION 'Invalid role: %', p_role;
+  END IF;
+  IF p_role IN ('admin', 'superadmin') AND NOT public.is_superadmin() THEN
+    RAISE EXCEPTION 'Only a superadmin can create admin or superadmin accounts.';
   END IF;
 
   -- Create user in auth.users
@@ -795,7 +812,22 @@ CREATE FUNCTION public.is_admin() RETURNS boolean
     AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
+    WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+  );
+$$;
+
+
+--
+-- Name: is_superadmin(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_superadmin() RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'superadmin'
   );
 $$;
 
@@ -810,8 +842,32 @@ CREATE FUNCTION public.is_admin_or_supervisor() RETURNS boolean
     AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND (role = 'admin' OR role = 'supervisor')
+    WHERE id = auth.uid() AND (role = 'admin' OR role = 'supervisor' OR role = 'superadmin')
   );
+$$;
+
+
+--
+-- Name: set_sanitizer_words(text[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_sanitizer_words(p_words text[]) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.is_superadmin() THEN
+    RAISE EXCEPTION 'Only a superadmin can configure the filename sanitizer.';
+  END IF;
+
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(
+        COALESCE(global_settings, '{}'::jsonb),
+        '{sanitizer_words}',
+        COALESCE(to_jsonb(p_words), '[]'::jsonb),
+        true
+      );
+END;
 $$;
 
 
@@ -1322,7 +1378,7 @@ CREATE TABLE public.profiles (
     delegated_kpi_supervisor_id uuid,
     CONSTRAINT profiles_profile_change_status_check CHECK ((profile_change_status = ANY (ARRAY['none'::text, 'pending'::text, 'approved'::text, 'rejected'::text]))),
     CONSTRAINT profiles_quotes_role_check CHECK ((quotes_role = ANY (ARRAY['admin'::text, 'user'::text]))),
-    CONSTRAINT profiles_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'user'::text, 'supervisor'::text]))),
+    CONSTRAINT profiles_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'user'::text, 'supervisor'::text, 'superadmin'::text]))),
     CONSTRAINT profiles_username_request_status_check CHECK ((username_request_status = ANY (ARRAY['none'::text, 'pending'::text, 'approved'::text])))
 );
 

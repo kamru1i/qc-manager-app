@@ -1,6 +1,20 @@
 import { Profile } from "@/types";
 
 /**
+ * True only for the superadmin role. Use for superadmin-exclusive capabilities
+ * (Todos, Save File helper, sanitizer config, creating admins/superadmins).
+ */
+export const isSuperadmin = (user: Profile | null): boolean =>
+  user?.role === 'superadmin';
+
+/**
+ * True for admin OR superadmin. Superadmin is a strict superset of admin, so
+ * every admin-level capability check should use this to let superadmin inherit.
+ */
+export const isAdminRole = (user: Profile | null): boolean =>
+  user?.role === 'admin' || user?.role === 'superadmin';
+
+/**
  * Checks if targetUser is in the supervisor's team (either direct or delegated team-level supervision).
  */
 export const isSupervisedTeam = (
@@ -51,18 +65,19 @@ export const canAccessModule = (
 ): boolean => {
   if (!currentUser) return false;
   
-  // Admin / Super Admin (highest permission priority)
-  if (currentUser.role === 'admin') {
+  // Admin / Superadmin (highest permission priority). Superadmin inherits all
+  // admin capabilities; Todos is superadmin-only.
+  if (isAdminRole(currentUser)) {
     if (module === 'todo') {
-      return currentUser.username?.toUpperCase() === 'KAMRUL' || currentUser.full_name === 'Kamrul Islam';
+      return isSuperadmin(currentUser);
     }
     return true;
   }
-  
+
   // Regular User permissions
   if (currentUser.role === 'user') {
     if (module === 'todo') {
-      return currentUser.username?.toUpperCase() === 'KAMRUL' || currentUser.full_name === 'Kamrul Islam';
+      return isSuperadmin(currentUser);
     }
     if (module === 'kpi') return targetUser ? targetUser.id === currentUser.id : true;
     if (module === 'leave') return targetUser ? targetUser.id === currentUser.id : true;
@@ -76,7 +91,7 @@ export const canAccessModule = (
   if (currentUser.role === 'supervisor') {
     if (module === 'audit_logs') return false; // explicitly revoked for supervisors
     if (module === 'todo') {
-      return currentUser.username?.toUpperCase() === 'KAMRUL' || currentUser.full_name === 'Kamrul Islam';
+      return isSuperadmin(currentUser);
     }
     if (module === 'user_management') return true;
     if (module === 'quotes') return !!currentUser.has_quotes_access;
@@ -118,7 +133,7 @@ export const canAccessProfileSection = (
   section: 'leave_settings' | 'kpi_settings' | 'quotes_settings' | 'basic_details'
 ): boolean => {
   if (!currentUser || !targetUser) return false;
-  if (currentUser.role === 'admin') return true;
+  if (isAdminRole(currentUser)) return true;
   if (targetUser.id === currentUser.id) return true;
   
   if (currentUser.role === 'supervisor') {
