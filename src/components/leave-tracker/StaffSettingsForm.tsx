@@ -1,5 +1,5 @@
 import React from "react";
-import { Check } from "lucide-react";
+import { Check, Settings } from "lucide-react";
 import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
 import { Profile } from "@/types";
@@ -14,6 +14,7 @@ import {
 } from "@/utils/permissionService";
 import { KPI_ASSESSMENT_COLUMNS } from "@/utils/dbColumns";
 import { WORKING_HOURS_OPTIONS } from "@/utils/workingHours";
+import { FEATURE_FLAGS } from "@/utils/featureFlagsRegistry";
 
 interface StaffSettingsFormProps {
   isNewUser: boolean;
@@ -93,6 +94,8 @@ interface StaffSettingsFormProps {
   setDelegatedLeaveSupervisorId?: (val: string | null) => void;
   delegatedKpiSupervisorId?: string | null;
   setDelegatedKpiSupervisorId?: (val: string | null) => void;
+  userFeatureFlags?: Record<string, boolean>;
+  setUserFeatureFlags?: (val: Record<string, boolean>) => void;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -156,6 +159,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setDelegatedLeaveSupervisorId,
   delegatedKpiSupervisorId,
   setDelegatedKpiSupervisorId,
+  userFeatureFlags = {},
+  setUserFeatureFlags,
 }) => {
   const showLeaveSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'leave_settings');
   const showQuotesSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'quotes_settings');
@@ -806,6 +811,89 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
           </div>
         )}
       </div>
+
+      {/* Superadmin-Only Per-User Feature Flags Overrides */}
+      {currentUser && isSuperadmin(currentUser) && setUserFeatureFlags && (
+        <div className="bg-theme-card-bg/40 border border-theme-border-input/60 p-5 rounded-2xl shadow-xl space-y-4 font-sans">
+          <div className="border-b border-theme-border-input/60 pb-3">
+            <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
+              <Settings className="h-4 w-4 text-purple-400" />
+              Individual Feature Flags Overrides (Superadmin Only)
+            </h3>
+            <p className="text-[11px] text-theme-text-muted mt-1">
+              Override global feature flags specifically for <strong>{fullName || codename || 'this user'}</strong>.
+              Select <strong>Inherit</strong> to follow global app settings, or force <strong>Always ON</strong> / <strong>Always OFF</strong> for this profile.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {FEATURE_FLAGS.map((flag) => {
+              const currentOverride = userFeatureFlags[flag.key];
+              return (
+                <div
+                  key={flag.key}
+                  className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-theme-border-input/60 bg-theme-page-bg/40"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="block text-xs font-semibold text-theme-text-primary">
+                      {flag.label}
+                    </span>
+                    <span className="block text-[10px] text-theme-text-muted mt-0.5">
+                      {flag.description}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-theme-card-bg/60 p-1 rounded-xl border border-theme-border-muted/40 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = { ...userFeatureFlags };
+                        delete next[flag.key];
+                        setUserFeatureFlags(next);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        currentOverride === undefined
+                          ? 'bg-blue-600/25 text-blue-400 border border-blue-500/40 shadow-xs'
+                          : 'text-theme-text-muted hover:text-theme-text-secondary'
+                      }`}
+                    >
+                      Inherit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserFeatureFlags({ ...userFeatureFlags, [flag.key]: true });
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        currentOverride === true
+                          ? 'bg-emerald-955/40 text-emerald-400 border border-emerald-500/40 shadow-xs'
+                          : 'text-theme-text-muted hover:text-theme-text-secondary'
+                      }`}
+                    >
+                      Always ON
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserFeatureFlags({ ...userFeatureFlags, [flag.key]: false });
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        currentOverride === false
+                          ? 'bg-rose-955/40 text-rose-400 border border-rose-500/40 shadow-xs'
+                          : 'text-theme-text-muted hover:text-theme-text-secondary'
+                      }`}
+                    >
+                      Always OFF
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* KPI Settings Panel */}
       {showKpiSettings && (

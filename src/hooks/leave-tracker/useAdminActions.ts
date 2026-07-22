@@ -250,7 +250,8 @@ export const useAdminActions = ({
     otherDepartment?: string,
     kpiOtherDeptIndicators?: string[],
     delegatedLeaveSupervisorId?: string | null,
-    delegatedKpiSupervisorId?: string | null
+    delegatedKpiSupervisorId?: string | null,
+    userFeatureFlags?: Record<string, boolean>
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -297,7 +298,8 @@ export const useAdminActions = ({
         performs_data_entry: performsDataEntry !== undefined ? performsDataEntry : true,
         department: department || 'Data Entry',
         performs_other_dept_tasks: performsOtherDeptTasks !== undefined ? performsOtherDeptTasks : false,
-        other_department: otherDepartment || 'IT'
+        other_department: otherDepartment || 'IT',
+        user_feature_flags: userFeatureFlags !== undefined ? userFeatureFlags : existingSettings.user_feature_flags || {}
       };
 
       const updatePayload: any = {

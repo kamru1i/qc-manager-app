@@ -109,6 +109,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const [editUserOtherDepartment, setEditUserOtherDepartment] = useState('IT');
   const [editDelegatedLeaveSupervisorId, setEditDelegatedLeaveSupervisorId] = useState<string | null>(null);
   const [editDelegatedKpiSupervisorId, setEditDelegatedKpiSupervisorId] = useState<string | null>(null);
+  const [editUserFeatureFlags, setEditUserFeatureFlags] = useState<Record<string, boolean>>({});
 
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
@@ -227,6 +228,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditUserOtherDepartment(viewingStaff.global_settings?.other_department || 'IT');
       setEditDelegatedLeaveSupervisorId(viewingStaff.delegated_leave_supervisor_id || null);
       setEditDelegatedKpiSupervisorId(viewingStaff.delegated_kpi_supervisor_id || null);
+      setEditUserFeatureFlags(viewingStaff.global_settings?.user_feature_flags || {});
     }
   }, [viewingStaff]);
 
@@ -769,7 +771,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       editUserOtherDepartment,
       editUserKpiOtherDeptIndicators,
       editDelegatedLeaveSupervisorId,
-      editDelegatedKpiSupervisorId
+      editDelegatedKpiSupervisorId,
+      editUserFeatureFlags
     );
 
     setSubmitting(false);
@@ -1028,6 +1031,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setEditDelegatedLeaveSupervisorId={setEditDelegatedLeaveSupervisorId}
                   editDelegatedKpiSupervisorId={editDelegatedKpiSupervisorId}
                   setEditDelegatedKpiSupervisorId={setEditDelegatedKpiSupervisorId}
+                  editUserFeatureFlags={editUserFeatureFlags}
+                  setEditUserFeatureFlags={setEditUserFeatureFlags}
                   onViewKpiReport={(periodKey) => {
                     setPreSelectedKpiPeriodKey(periodKey);
                     setActiveSubTab('kpi');

@@ -27,11 +27,12 @@ export interface GlobalSettings {
    * when explicitly set to false; absent = visible (default allow).
    */
   role_visibility?: Record<string, Record<string, boolean>>;
-  /**
-   * Superadmin feature flags. flagKey -> enabled. Absent or true = ON
+  /** Superadmin feature flags. flagKey -> enabled. Absent or true = ON
    * (default), only explicit false disables. Gates functionality, not nav.
    */
   feature_flags?: Record<string, boolean>;
+  /** Superadmin per-user feature flag overrides stored on user's profile. */
+  user_feature_flags?: Record<string, boolean>;
   /** Superadmin time-boxed per-role tab overrides (auto-expire client-side). */
   temp_access?: TempAccessEntry[];
 }

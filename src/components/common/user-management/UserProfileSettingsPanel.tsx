@@ -79,6 +79,8 @@ interface UserProfileSettingsPanelProps {
   setEditDelegatedLeaveSupervisorId: (val: string | null) => void;
   editDelegatedKpiSupervisorId: string | null;
   setEditDelegatedKpiSupervisorId: (val: string | null) => void;
+  editUserFeatureFlags?: Record<string, boolean>;
+  setEditUserFeatureFlags?: (val: Record<string, boolean>) => void;
 }
 
 export const UserProfileSettingsPanel: React.FC<
@@ -148,6 +150,8 @@ export const UserProfileSettingsPanel: React.FC<
   setEditDelegatedLeaveSupervisorId,
   editDelegatedKpiSupervisorId,
   setEditDelegatedKpiSupervisorId,
+  editUserFeatureFlags,
+  setEditUserFeatureFlags,
 }) => {
   const isSupervisor = currentUser?.role === "supervisor";
   const isTargetAdmin = viewingStaff.role === "admin" || viewingStaff.role === "superadmin";
@@ -156,7 +160,7 @@ export const UserProfileSettingsPanel: React.FC<
   return (
     <div className="space-y-6">
       {showSupervisorWarning && (
-        <div className="bg-amber-950/20 border border-amber-900/40 p-4 rounded-xl text-xs text-amber-300 font-semibold flex items-center gap-2 font-sans">
+        <div className="bg-amber-955/20 border border-amber-900/40 p-4 rounded-xl text-xs text-amber-300 font-semibold flex items-center gap-2 font-sans">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
           Supervisors cannot modify Admin profiles. All settings are read-only.
         </div>
@@ -224,6 +228,8 @@ export const UserProfileSettingsPanel: React.FC<
         setDelegatedLeaveSupervisorId={setEditDelegatedLeaveSupervisorId}
         delegatedKpiSupervisorId={editDelegatedKpiSupervisorId}
         setDelegatedKpiSupervisorId={setEditDelegatedKpiSupervisorId}
+        userFeatureFlags={editUserFeatureFlags}
+        setUserFeatureFlags={setEditUserFeatureFlags}
       />
 
       <div className="bg-theme-card-bg/20 border border-theme-border-muted/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">

@@ -41,6 +41,13 @@ export const isFeatureEnabled = (
   user?: Profile | null
 ): boolean => {
   if (user && isSuperadmin(user)) return true;
+
+  // Check per-user feature flag override (if explicitly configured by Superadmin)
+  const userOverride = user?.global_settings?.user_feature_flags?.[flagKey];
+  if (typeof userOverride === 'boolean') {
+    return userOverride;
+  }
+
   return globalSettings?.feature_flags?.[flagKey] !== false;
 };
 
