@@ -14,6 +14,7 @@ import {
 
 interface UserProfileSettingsPanelProps {
   isAdmin: boolean;
+  currentUser?: Profile | null;
   submitting: boolean;
   profiles: Profile[];
   viewingStaff: Profile;
@@ -74,7 +75,6 @@ interface UserProfileSettingsPanelProps {
   editUserOtherDepartment?: string;
   setEditUserOtherDepartment?: (val: string) => void;
   onViewKpiReport?: (periodKey: string) => void;
-  currentUser?: Profile | null;
   editDelegatedLeaveSupervisorId: string | null;
   setEditDelegatedLeaveSupervisorId: (val: string | null) => void;
   editDelegatedKpiSupervisorId: string | null;
@@ -85,6 +85,7 @@ export const UserProfileSettingsPanel: React.FC<
   UserProfileSettingsPanelProps
 > = ({
   isAdmin,
+  currentUser,
   submitting,
   profiles,
   viewingStaff,
@@ -118,7 +119,6 @@ export const UserProfileSettingsPanel: React.FC<
   onChangePasswordClick,
   onDeleteAccountClick,
   onSaveProfileClick,
-  isSupervisor = false,
   editUserJobRole,
   setEditUserJobRole,
   editUserWorkingHours,
@@ -144,13 +144,13 @@ export const UserProfileSettingsPanel: React.FC<
   editUserOtherDepartment,
   setEditUserOtherDepartment,
   onViewKpiReport,
-  currentUser,
   editDelegatedLeaveSupervisorId,
   setEditDelegatedLeaveSupervisorId,
   editDelegatedKpiSupervisorId,
   setEditDelegatedKpiSupervisorId,
 }) => {
-  const isTargetAdmin = viewingStaff.role === "admin";
+  const isSupervisor = currentUser?.role === "supervisor";
+  const isTargetAdmin = viewingStaff.role === "admin" || viewingStaff.role === "superadmin";
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
 
   return (
@@ -164,6 +164,7 @@ export const UserProfileSettingsPanel: React.FC<
 
       <StaffSettingsForm
         isNewUser={false}
+        currentUser={currentUser}
         codename={editUserCodename}
         setCodename={setEditUserCodename}
         fullName={editUserFullName}
@@ -219,7 +220,6 @@ export const UserProfileSettingsPanel: React.FC<
         setOtherDepartment={setEditUserOtherDepartment}
         viewingStaff={viewingStaff}
         onViewKpiReport={onViewKpiReport}
-        currentUser={currentUser}
         delegatedLeaveSupervisorId={editDelegatedLeaveSupervisorId}
         setDelegatedLeaveSupervisorId={setEditDelegatedLeaveSupervisorId}
         delegatedKpiSupervisorId={editDelegatedKpiSupervisorId}

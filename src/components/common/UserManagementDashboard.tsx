@@ -946,6 +946,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
           {isCreatingNewUser ? (
             <CreateUserPanel
               isAdmin={isAdmin}
+              currentUser={profile}
               profiles={profiles}
               submitting={submitting}
               onCancel={() => setIsCreatingNewUser(false)}
@@ -960,6 +961,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               {activeSubTab === 'profile' && viewingStaff && (
                 <UserProfileSettingsPanel
                   isAdmin={isAdmin}
+                  currentUser={profile}
                   submitting={submitting}
                   profiles={profiles}
                   viewingStaff={viewingStaff}
@@ -1022,7 +1024,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setEditUserPerformsOtherDeptTasks={setEditUserPerformsOtherDeptTasks}
                   editUserOtherDepartment={editUserOtherDepartment}
                   setEditUserOtherDepartment={setEditUserOtherDepartment}
-                  currentUser={profile}
                   editDelegatedLeaveSupervisorId={editDelegatedLeaveSupervisorId}
                   setEditDelegatedLeaveSupervisorId={setEditDelegatedLeaveSupervisorId}
                   editDelegatedKpiSupervisorId={editDelegatedKpiSupervisorId}

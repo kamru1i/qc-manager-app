@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 
 interface CreateUserPanelProps {
   isAdmin: boolean;
+  currentUser?: Profile | null;
   profiles: Profile[];
   submitting: boolean;
   onCancel: () => void;
@@ -15,6 +16,7 @@ interface CreateUserPanelProps {
 
 export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
   isAdmin,
+  currentUser,
   profiles,
   submitting,
   onCancel,
@@ -110,6 +112,7 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
     <>
       <StaffSettingsForm
         isNewUser={true}
+        currentUser={currentUser}
         codename={newCodename}
         setCodename={setNewCodename}
         fullName={newFullName}

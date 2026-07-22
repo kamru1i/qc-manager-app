@@ -5,7 +5,13 @@ import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckb
 import { Profile } from "@/types";
 import { formatTimeToAMPM } from "@/utils/dashboardHelpers";
 import { supabase } from "@/utils/supabase";
-import { canAccessProfileSection, isSuperadmin } from "@/utils/permissionService";
+import {
+  canAccessProfileSection,
+  isSuperadmin,
+  getAllowedRoleOptions,
+  getRoleLabel,
+  canManageUserRole,
+} from "@/utils/permissionService";
 import { KPI_ASSESSMENT_COLUMNS } from "@/utils/dbColumns";
 import { WORKING_HOURS_OPTIONS } from "@/utils/workingHours";
 
@@ -235,7 +241,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Account Role
             </label>
-            {isAdmin ? (
+            {isAdmin && canManageUserRole(currentUser || null, viewingStaff || null) ? (
               <select
                 value={role}
                 onChange={(e) => {
@@ -251,28 +257,15 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 }}
                 className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer"
               >
-                <option value="user">User</option>
-                <option value="supervisor">Supervisor</option>
-                {/* Admin/Superadmin can only be assigned by a superadmin. The
-                    Superadmin option is NEVER shown to non-superadmins. */}
-                {isSuperadmin(currentUser || null) && (
-                  <>
-                    <option value="admin">Admin</option>
-                    <option value="superadmin">Superadmin</option>
-                  </>
-                )}
-                {/* Preserve the current value as a visible option when the
-                    viewer can't reassign it (e.g. admin editing an admin). */}
-                {!isSuperadmin(currentUser || null) &&
-                  (role === "admin" || role === "superadmin") && (
-                    <option value={role} className="capitalize">
-                      {role === "superadmin" ? "Superadmin" : "Admin"}
-                    </option>
-                  )}
+                {getAllowedRoleOptions(currentUser || null).map((opt) => (
+                  <option key={opt} value={opt}>
+                    {getRoleLabel(opt, currentUser || null)}
+                  </option>
+                ))}
               </select>
             ) : (
               <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold capitalize">
-                {role || "—"}
+                {getRoleLabel(role, currentUser || null)}
               </div>
             )}
           </div>

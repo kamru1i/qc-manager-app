@@ -14,6 +14,73 @@ export const isSuperadmin = (user: Profile | null): boolean =>
 export const isAdminRole = (user: Profile | null): boolean =>
   user?.role === 'admin' || user?.role === 'superadmin';
 
+/** Alias for clarity — Superadmin inherits all Admin capabilities. */
+export const hasAdminAccess = isAdminRole;
+
+/**
+ * Returns the role string to display based on viewer permissions.
+ * For non-superadmins, superadmin target roles are masked as 'user' to hide special status.
+ */
+export const getDisplayRole = (
+  targetRole: 'admin' | 'supervisor' | 'user' | 'superadmin' | string | undefined,
+  viewer: Profile | null
+): 'admin' | 'supervisor' | 'user' | 'superadmin' | string => {
+  if (targetRole === 'superadmin') {
+    return isSuperadmin(viewer) ? 'superadmin' : 'user';
+  }
+  return targetRole || 'user';
+};
+
+/**
+ * Returns a user-friendly role label (e.g. 'Admin', 'Supervisor', 'User', 'Superadmin').
+ * Masked as 'User' for non-superadmin viewers when viewing a superadmin profile.
+ */
+export const getRoleLabel = (
+  targetRole: 'admin' | 'supervisor' | 'user' | 'superadmin' | string | undefined,
+  viewer: Profile | null
+): string => {
+  const role = getDisplayRole(targetRole, viewer);
+  if (role === 'superadmin') return 'Superadmin';
+  if (role === 'admin') return 'Admin';
+  if (role === 'supervisor') return 'Supervisor';
+  return 'User';
+};
+
+/**
+ * Determines if currentUser has permission to manage/edit targetProfile's role & settings.
+ * Superadmin can manage everyone; Admin can manage ONLY User and Supervisor accounts.
+ */
+export const canManageUserRole = (
+  currentUser: Profile | null,
+  targetProfile: Profile | null
+): boolean => {
+  if (!currentUser) return false;
+  if (isSuperadmin(currentUser)) return true;
+  if (isAdminRole(currentUser)) {
+    if (!targetProfile) return true; // new user creation
+    // Admin cannot edit Admin or Superadmin accounts
+    return targetProfile.role !== 'admin' && targetProfile.role !== 'superadmin';
+  }
+  return false;
+};
+
+/**
+ * Returns the list of role options available to currentUser when creating or updating users.
+ * Superadmin can assign: superadmin, admin, supervisor, user.
+ * Admin can assign ONLY: supervisor, user.
+ */
+export const getAllowedRoleOptions = (
+  currentUser: Profile | null
+): Array<'user' | 'supervisor' | 'admin' | 'superadmin'> => {
+  if (isSuperadmin(currentUser)) {
+    return ['user', 'supervisor', 'admin', 'superadmin'];
+  }
+  if (isAdminRole(currentUser)) {
+    return ['user', 'supervisor'];
+  }
+  return [];
+};
+
 /**
  * Checks if targetUser is in the supervisor's team (either direct or delegated team-level supervision).
  */
