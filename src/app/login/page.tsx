@@ -95,13 +95,19 @@ export default function LoginPage() {
       return;
     }
 
+    // Prevent duplicate submissions from rapid taps
+    if (forgotLoading) return;
+
     setForgotLoading(true);
     setForgotError("");
     setForgotSuccess(false);
 
     const endpoint = getApiUrl("/api/forgot-password");
+    // Native apps (Capacitor/Tauri) need longer timeout due to cross-origin
+    // fetch overhead. 15s for native, 10s for web.
+    const timeoutMs = isNative ? 15000 : 10000;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const res = await fetch(endpoint, {
@@ -138,7 +144,10 @@ export default function LoginPage() {
     } catch (error: any) {
       clearTimeout(timeoutId);
       const isTimeout = error.name === "AbortError";
-      const message = isTimeout ? "Network timeout" : "Network error submitting request";
+      // Improved message: warn user the request may have been submitted
+      const message = isTimeout
+        ? "Request timed out — it may have been submitted. Please check before trying again."
+        : "Network error — request may have been submitted. Please check before trying again.";
       
       console.error("[ForgotPassword] Unexpected exception:", {
         endpoint,

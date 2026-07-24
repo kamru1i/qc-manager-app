@@ -98,15 +98,24 @@ export async function POST(request: NextRequest) {
         { status: 500, headers: getCorsHeaders(request) }
       );
     }
-    // 3. Find admins to notify
-    const { error: adminsError } = await supabaseServer
-      .from('profiles')
-      .select('id')
-      .eq('role', 'admin');
 
-    if (adminsError) {
-      console.error('[ForgotPassword] Error getting admins:', adminsError.message);
-    }
+    // 3. Find admins to notify (fire-and-forget — don't block the response).
+    // Previously this ran synchronously before the response, causing
+    // desktop/mobile apps to hit AbortController timeouts and show
+    // "network error" even though the password reset was already saved.
+    Promise.resolve(
+      supabaseServer
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+    ).then(({ error: adminsError }) => {
+        if (adminsError) {
+          console.error('[ForgotPassword] Error getting admins:', adminsError.message);
+        }
+      })
+      .catch((err: unknown) => {
+        console.error('[ForgotPassword] Admin notification failed:', err);
+      });
 
     return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (err) {
