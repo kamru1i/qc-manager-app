@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
 import { TempAccessEntry } from '@/utils/dashboardHelpers';
 import { MENU_TABS, CONFIGURABLE_ROLES, getDefaultRoleVisibility } from '@/utils/menuTabsRegistry';
-import { FEATURE_FLAGS, getDefaultFeatureFlagState } from '@/utils/featureFlagsRegistry';
+import { FEATURE_FLAGS, getDefaultFeatureFlagState, FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
 
 interface ProfileSettingsProps {
   profile: Profile | null;
@@ -461,19 +461,43 @@ export function ProfileSettings({
     }
   };
 
-  // Toggle a feature flag (superadmin). Sets explicit boolean (true/false).
+  // Toggle a feature flag (superadmin). Syncs with per-role Tab Access if mapped to a tab.
   const handleToggleFeatureFlag = async (flagKey: string, nextEnabled: boolean) => {
     if (!profile || !isSuperadmin(profile) || activeFlagKey === flagKey) return;
-    const next = { ...featureFlags, [flagKey]: nextEnabled };
+    
+    const nextFlags = { ...featureFlags, [flagKey]: nextEnabled };
+    const tabKey = FLAG_TO_TAB_KEY[flagKey];
+
+    let nextRoleVis = { ...roleVisibility };
+    if (tabKey) {
+      const updatedRoles: Record<string, Record<string, boolean>> = { ...nextRoleVis };
+      CONFIGURABLE_ROLES.forEach((role) => {
+        const roleMap = { ...(updatedRoles[role] || {}), [tabKey]: nextEnabled };
+        updatedRoles[role] = roleMap;
+      });
+      nextRoleVis = updatedRoles;
+    }
 
     setActiveFlagKey(flagKey);
     try {
-      const { error } = await supabase.rpc('set_feature_flags', { p_flags: next });
-      if (error) throw error;
-      setFeatureFlags(next);
+      const { error: flagErr } = await supabase.rpc('set_feature_flags', { p_flags: nextFlags });
+      if (flagErr) throw flagErr;
+
+      if (tabKey) {
+        const { error: visErr } = await supabase.rpc('set_role_visibility', { p_visibility: nextRoleVis });
+        if (visErr) console.error('Failed to sync role visibility:', visErr);
+      }
+
+      setFeatureFlags(nextFlags);
+      if (tabKey) setRoleVisibility(nextRoleVis);
+
       const updatedProfile = {
         ...profile,
-        global_settings: { ...(profile.global_settings || {}), feature_flags: next },
+        global_settings: {
+          ...(profile.global_settings || {}),
+          feature_flags: nextFlags,
+          ...(tabKey ? { role_visibility: nextRoleVis } : {}),
+        },
       };
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
@@ -1107,19 +1131,45 @@ export function ProfileSettings({
             <div className="flex flex-col gap-2">
               {FEATURE_FLAGS.map((flag) => {
                 const configured = featureFlags[flag.key];
-                const enabled = typeof configured === 'boolean'
+                const isGlobalEnabled = typeof configured === 'boolean'
                   ? configured
                   : getDefaultFeatureFlagState(flag.key);
+
+                const tabKey = FLAG_TO_TAB_KEY[flag.key];
+                let rolesOnCount = 3;
+                let hasRoleMapping = false;
+
+                if (tabKey) {
+                  hasRoleMapping = true;
+                  const activeRoles = CONFIGURABLE_ROLES.filter((role) => {
+                    const cfg = roleVisibility[role]?.[tabKey];
+                    return typeof cfg === 'boolean' ? cfg : getDefaultRoleVisibility(role, tabKey);
+                  });
+                  rolesOnCount = activeRoles.length;
+                }
+
+                const isFullyOn = isGlobalEnabled && (!hasRoleMapping || rolesOnCount === 3);
+                const isPartialOn = isGlobalEnabled && hasRoleMapping && rolesOnCount > 0 && rolesOnCount < 3;
+                const isFullyOff = !isGlobalEnabled || (hasRoleMapping && rolesOnCount === 0);
+
                 const isPending = activeFlagKey === flag.key;
+
                 return (
                   <div
                     key={flag.key}
-                    className="flex items-center justify-between gap-4 p-3 rounded-xl border border-theme-border-input/60 bg-theme-page-bg/40"
+                    className="flex items-center justify-between gap-4 p-3.5 rounded-xl border border-theme-border-input/60 bg-theme-page-bg/40 hover:bg-theme-page-bg/60 transition-all"
                   >
                     <div className="min-w-0">
-                      <span className="block text-xs font-semibold text-theme-text-primary">
-                        {flag.label}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="block text-xs font-semibold text-theme-text-primary">
+                          {flag.label}
+                        </span>
+                        {isPartialOn && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                            Partial ({rolesOnCount}/3 Roles)
+                          </span>
+                        )}
+                      </div>
                       <span className="block text-[10px] text-theme-text-muted mt-0.5">
                         {flag.description}
                       </span>
@@ -1127,15 +1177,23 @@ export function ProfileSettings({
                     <button
                       type="button"
                       disabled={isPending}
-                      onClick={() => handleToggleFeatureFlag(flag.key, !enabled)}
-                      title={enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}
-                      className={`shrink-0 w-16 h-6 rounded-lg border text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-colors ${
-                        enabled
-                          ? 'bg-emerald-955/30 border-emerald-500/30 text-emerald-400 hover:bg-emerald-955/50'
-                          : 'bg-rose-955/30 border-rose-500/30 text-rose-400 hover:bg-rose-955/50'
+                      onClick={() => handleToggleFeatureFlag(flag.key, !isFullyOn)}
+                      title={
+                        isFullyOn
+                          ? 'Fully Enabled — Click to disable globally for all roles'
+                          : isPartialOn
+                          ? `Partially Enabled (${rolesOnCount}/3 roles) — Click to disable globally`
+                          : 'Disabled — Click to enable for all roles'
+                      }
+                      className={`shrink-0 min-w-[75px] px-2.5 h-7 rounded-lg border text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1 ${
+                        isFullyOn
+                          ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
+                          : isPartialOn
+                          ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30'
+                          : 'bg-rose-500/20 border-rose-500/40 text-rose-400 hover:bg-rose-500/30'
                       } ${isPending ? 'animate-pulse opacity-50 cursor-wait' : ''}`}
                     >
-                      {enabled ? 'On' : 'Off'}
+                      {isFullyOn ? 'On' : isPartialOn ? 'Partial On' : 'Off'}
                     </button>
                   </div>
                 );

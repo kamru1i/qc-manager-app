@@ -103,3 +103,12 @@ export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
       return true;
   }
 };
+
+/** Mapping between feature flags and corresponding Tab Access keys. */
+export const FLAG_TO_TAB_KEY: Record<string, string> = {
+  todo_management: 'todo',
+  audit_logs_inspection: 'audit_logs',
+  copy_helper_save_file: 'save_file',
+  causality_generator: 'causality',
+  yearly_leaderboard: 'leaderboard',
+};
