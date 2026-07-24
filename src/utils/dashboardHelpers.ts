@@ -37,7 +37,24 @@ export interface GlobalSettings {
   admin_delegated_flags?: Record<string, boolean>;
   /** Superadmin time-boxed per-role tab overrides (auto-expire client-side). */
   temp_access?: TempAccessEntry[];
+  /** Managed VPN list for Quotes Copy Helper dashboard. */
+  vpn_list?: string[];
 }
+
+export const DEFAULT_VPN_LIST: string[] = [
+  'ExpressVPN',
+  'NordVPN',
+  'Surfshark',
+  'CyberGhost',
+  'ProtonVPN',
+  'Mullvad',
+  'PureVPN',
+  'PIA',
+  'Windscribe',
+  'VyprVPN',
+  'TunnelBear',
+  'PrivateVPN',
+];
 
 /** A time-boxed grant/revoke of a tab for a role. Ignored past expires_at. */
 export interface TempAccessEntry {
@@ -96,7 +113,8 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           role_visibility: (gs.role_visibility && typeof gs.role_visibility === "object") ? gs.role_visibility : undefined,
           feature_flags: (gs.feature_flags && typeof gs.feature_flags === "object") ? gs.feature_flags : undefined,
           admin_delegated_flags: (gs.admin_delegated_flags && typeof gs.admin_delegated_flags === "object") ? gs.admin_delegated_flags : undefined,
-          temp_access: Array.isArray(gs.temp_access) ? gs.temp_access : undefined
+          temp_access: Array.isArray(gs.temp_access) ? gs.temp_access : undefined,
+          vpn_list: Array.isArray(gs.vpn_list) && gs.vpn_list.length > 0 ? gs.vpn_list : DEFAULT_VPN_LIST
         };
       }
     } catch (e) {
@@ -124,7 +142,8 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           role_visibility: (gs.role_visibility && typeof gs.role_visibility === "object") ? gs.role_visibility : undefined,
           feature_flags: (gs.feature_flags && typeof gs.feature_flags === "object") ? gs.feature_flags : undefined,
           admin_delegated_flags: (gs.admin_delegated_flags && typeof gs.admin_delegated_flags === "object") ? gs.admin_delegated_flags : undefined,
-          temp_access: Array.isArray(gs.temp_access) ? gs.temp_access : undefined
+          temp_access: Array.isArray(gs.temp_access) ? gs.temp_access : undefined,
+          vpn_list: Array.isArray(gs.vpn_list) && gs.vpn_list.length > 0 ? gs.vpn_list : DEFAULT_VPN_LIST
         };
       }
     } catch (e) {

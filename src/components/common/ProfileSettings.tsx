@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText } from 'lucide-react';
+import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2 } from 'lucide-react';
 import { Profile } from '@/types';
 import { isSuperadmin, isAdminRole, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
 import { ProfileFields } from '@/components/leave-tracker/ProfileFields';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
-import { TempAccessEntry } from '@/utils/dashboardHelpers';
+import { TempAccessEntry, DEFAULT_VPN_LIST } from '@/utils/dashboardHelpers';
 import { MENU_TABS, CONFIGURABLE_ROLES, getDefaultRoleVisibility } from '@/utils/menuTabsRegistry';
 import { FEATURE_FLAGS, getDefaultFeatureFlagState, FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
 import { useProfiles } from '@/contexts/ProfilesContext';
@@ -83,18 +83,23 @@ export function ProfileSettings({
   const [submitting, setSubmitting] = useState(false);
   const [isCodenameEditable, setIsCodenameEditable] = useState(false);
 
-  // Subtabs state (Profile / Menu Visibility / superadmin-only Sanitizer, Access Controls & Feature Flags)
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags'>(() => {
+  // VPN List state (managed for Quotes Copy Helper)
+  const [vpnList, setVpnList] = useState<string[]>(() => profile?.global_settings?.vpn_list || DEFAULT_VPN_LIST);
+  const [newVpnInput, setNewVpnInput] = useState('');
+  const [vpnSubmitting, setVpnSubmitting] = useState(false);
+
+  // Subtabs state (Profile / Menu Visibility / superadmin-only Sanitizer, Access Controls, Feature Flags & VPN List)
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list'>(() => {
     try {
       const saved = localStorage.getItem('settings_active_subtab');
-      if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags') {
+      if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'vpn_list') {
         return saved as any;
       }
     } catch {}
     return 'profile';
   });
 
-  // Fallback check: if user is not superadmin/admin and saved subtab is restricted, revert to profile
+  // Fallback check: if user is not superadmin/admin/supervisor and saved subtab is restricted, revert to profile
   useEffect(() => {
     if (!profile) return;
     if ((activeSubTab === 'sanitizer' || activeSubTab === 'access_controls') && !isSuperadmin(profile)) {
@@ -103,12 +108,59 @@ export function ProfileSettings({
     } else if (activeSubTab === 'feature_flags' && !isAdminRole(profile)) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
+    } else if (activeSubTab === 'vpn_list' && (!isAdminRole(profile) && profile.role !== 'supervisor')) {
+      setActiveSubTab('profile');
+      localStorage.setItem('settings_active_subtab', 'profile');
     }
   }, [profile, activeSubTab]);
 
-  const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags') => {
+  const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
     setActiveSubTab(tab);
     localStorage.setItem('settings_active_subtab', tab);
+  };
+
+  const handleSaveVpnList = async (nextVpnList: string[]) => {
+    if (!profile) return;
+    setVpnSubmitting(true);
+    try {
+      const updatedGs = {
+        ...(profile.global_settings || {}),
+        vpn_list: nextVpnList,
+      };
+      const { error } = await supabase
+        .from('profiles')
+        .update({ global_settings: updatedGs })
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+
+      setVpnList(nextVpnList);
+      const updatedProfile = { ...profile, global_settings: updatedGs };
+      setProfile(updatedProfile);
+      localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      toast.success('VPN List updated successfully!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update VPN List');
+    } finally {
+      setVpnSubmitting(false);
+    }
+  };
+
+  const handleAddVpnName = () => {
+    const val = newVpnInput.trim();
+    if (!val) return;
+    if (vpnList.some(v => v.toLowerCase() === val.toLowerCase())) {
+      toast.error('VPN name already exists in list');
+      return;
+    }
+    const nextList = [...vpnList, val];
+    setNewVpnInput('');
+    handleSaveVpnList(nextList);
+  };
+
+  const handleRemoveVpnName = (nameToRemove: string) => {
+    const nextList = vpnList.filter(v => v !== nameToRemove);
+    handleSaveVpnList(nextList);
   };
 
   // Unified menu authorization rules (synchronized with UnifiedSidebar.tsx)
@@ -723,6 +775,21 @@ export function ProfileSettings({
             <span>Feature Flags</span>
           </button>
         )}
+
+        {(isSuperAdmin || isAdminRole(profile) || profile?.role === 'supervisor') && (
+          <button
+            type="button"
+            onClick={() => handleSubTabChange('vpn_list')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubTab === 'vpn_list'
+                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
+            }`}
+          >
+            <Globe className="h-4 w-4" />
+            <span>VPN List</span>
+          </button>
+        )}
       </div>
 
       {profile?.profile_change_status === 'pending' && (
@@ -1309,8 +1376,66 @@ export function ProfileSettings({
         </div>
       )}
 
+      {/* VPN List Subtab */}
+      {activeSubTab === 'vpn_list' && (isSuperAdmin || isAdminRole(profile) || profile?.role === 'supervisor') && (
+        <div className="space-y-6 w-full font-sans">
+          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
+                <Globe className="h-4 w-4 text-blue-400" />
+                VPN List Management
+              </h3>
+              <p className="text-[11px] text-theme-text-muted mt-2">
+                Manage available VPN names for Quotes Copy Helper dashboard. Superadmins, Admins, and Supervisors can add, edit, or remove VPN names from this list.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newVpnInput}
+                onChange={(e) => setNewVpnInput(e.target.value)}
+                placeholder="e.g. ExpressVPN, NordVPN, Surfshark"
+                className="flex-1 bg-theme-page-bg/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500 font-sans"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddVpnName();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                disabled={vpnSubmitting || !newVpnInput.trim()}
+                onClick={handleAddVpnName}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer font-sans"
+              >
+                Add VPN
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {vpnList.map((vpnName, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-theme-page-bg/40 border border-theme-border-input/60">
+                  <span className="text-xs font-medium text-theme-text-primary font-sans">{vpnName}</span>
+                  <button
+                    type="button"
+                    disabled={vpnSubmitting}
+                    onClick={() => handleRemoveVpnName(vpnName)}
+                    className="p-1 text-red-400 hover:text-red-300 rounded hover:bg-red-955/30 transition-all cursor-pointer"
+                    title="Remove VPN"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Save Changes Bar (Profile & Menu Visibility subtabs) */}
-      {activeSubTab !== 'sanitizer' && activeSubTab !== 'access_controls' && activeSubTab !== 'feature_flags' && profile?.profile_change_status !== 'pending' && (
+      {activeSubTab !== 'sanitizer' && activeSubTab !== 'access_controls' && activeSubTab !== 'feature_flags' && activeSubTab !== 'vpn_list' && profile?.profile_change_status !== 'pending' && (
         <div className="flex justify-end pt-4 border-t border-theme-border-input/60 w-full">
           <button
             type={activeSubTab === 'profile' ? 'submit' : 'button'}
