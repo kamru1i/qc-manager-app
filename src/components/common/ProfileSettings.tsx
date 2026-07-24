@@ -73,6 +73,23 @@ export function ProfileSettings({
   // Subtabs state (Profile / Menu Visibility / superadmin-only Sanitizer & Access Controls)
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls'>('profile');
 
+  // Restore saved subtab on mount/profile load
+  useEffect(() => {
+    const saved = localStorage.getItem('settings_active_subtab');
+    if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls') {
+      if ((saved === 'sanitizer' || saved === 'access_controls') && !isSuperadmin(profile)) {
+        setActiveSubTab('profile');
+      } else {
+        setActiveSubTab(saved as any);
+      }
+    }
+  }, [profile]);
+
+  const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls') => {
+    setActiveSubTab(tab);
+    localStorage.setItem('settings_active_subtab', tab);
+  };
+
   // Unified menu authorization rules (synchronized with UnifiedSidebar.tsx)
   const isSuperAdmin = isSuperadmin(profile);
   const showTodoTab = isSuperadmin(profile);
@@ -597,7 +614,7 @@ export function ProfileSettings({
       <div className="flex items-center gap-2 border-b border-theme-border-input/60 pb-3">
         <button
           type="button"
-          onClick={() => setActiveSubTab('profile')}
+          onClick={() => handleSubTabChange('profile')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeSubTab === 'profile'
               ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
@@ -610,7 +627,7 @@ export function ProfileSettings({
 
         <button
           type="button"
-          onClick={() => setActiveSubTab('menu_visibility')}
+          onClick={() => handleSubTabChange('menu_visibility')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeSubTab === 'menu_visibility'
               ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
@@ -625,7 +642,7 @@ export function ProfileSettings({
           <>
             <button
               type="button"
-              onClick={() => setActiveSubTab('sanitizer')}
+              onClick={() => handleSubTabChange('sanitizer')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeSubTab === 'sanitizer'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
@@ -638,7 +655,7 @@ export function ProfileSettings({
 
             <button
               type="button"
-              onClick={() => setActiveSubTab('access_controls')}
+              onClick={() => handleSubTabChange('access_controls')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeSubTab === 'access_controls'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
