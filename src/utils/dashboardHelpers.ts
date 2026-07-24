@@ -33,6 +33,8 @@ export interface GlobalSettings {
   feature_flags?: Record<string, boolean>;
   /** Superadmin per-user feature flag overrides stored on user's profile. */
   user_feature_flags?: Record<string, boolean>;
+  /** Superadmin-configured flags that Admins are allowed to manage globally and per-user. */
+  admin_delegated_flags?: Record<string, boolean>;
   /** Superadmin time-boxed per-role tab overrides (auto-expire client-side). */
   temp_access?: TempAccessEntry[];
 }
@@ -93,6 +95,7 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           sanitizer_rules: Array.isArray(gs.sanitizer_rules) ? gs.sanitizer_rules : undefined,
           role_visibility: (gs.role_visibility && typeof gs.role_visibility === "object") ? gs.role_visibility : undefined,
           feature_flags: (gs.feature_flags && typeof gs.feature_flags === "object") ? gs.feature_flags : undefined,
+          admin_delegated_flags: (gs.admin_delegated_flags && typeof gs.admin_delegated_flags === "object") ? gs.admin_delegated_flags : undefined,
           temp_access: Array.isArray(gs.temp_access) ? gs.temp_access : undefined
         };
       }
@@ -120,6 +123,7 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           sanitizer_rules: Array.isArray(gs.sanitizer_rules) ? gs.sanitizer_rules : undefined,
           role_visibility: (gs.role_visibility && typeof gs.role_visibility === "object") ? gs.role_visibility : undefined,
           feature_flags: (gs.feature_flags && typeof gs.feature_flags === "object") ? gs.feature_flags : undefined,
+          admin_delegated_flags: (gs.admin_delegated_flags && typeof gs.admin_delegated_flags === "object") ? gs.admin_delegated_flags : undefined,
           temp_access: Array.isArray(gs.temp_access) ? gs.temp_access : undefined
         };
       }

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText } from 'lucide-react';
 import { Profile } from '@/types';
-import { isSuperadmin, isAdminRole } from '@/utils/permissionService';
+import { isSuperadmin, isAdminRole, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
 import { ProfileFields } from '@/components/leave-tracker/ProfileFields';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
@@ -55,9 +55,10 @@ export function ProfileSettings({
   // Shape: { [role]: { [tabKey]: boolean } } — false = hidden for that role.
   const [roleVisibility, setRoleVisibility] = useState<Record<string, Record<string, boolean>>>({});
   const [activeRoleVisKey, setActiveRoleVisKey] = useState<string | null>(null);
-
-  // Feature flags (superadmin-only). flagKey -> enabled. Absent = ON.
+  
+  // Feature flags (superadmin-only by default, delegated operational flags available to admins).
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
+  const [adminDelegatedFlags, setAdminDelegatedFlags] = useState<Record<string, boolean>>({});
   const [activeFlagKey, setActiveFlagKey] = useState<string | null>(null);
 
   // Temporary access controls (superadmin-only, time-boxed per-role overrides).
@@ -73,7 +74,6 @@ export function ProfileSettings({
 
   // Subtabs state (Profile / Menu Visibility / superadmin-only Sanitizer, Access Controls & Feature Flags)
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags'>(() => {
-    if (typeof window === 'undefined') return 'profile';
     try {
       const saved = localStorage.getItem('settings_active_subtab');
       if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags') {
@@ -83,9 +83,13 @@ export function ProfileSettings({
     return 'profile';
   });
 
-  // Fallback check: if user is not superadmin and saved subtab is superadmin-only, revert to profile
+  // Fallback check: if user is not superadmin/admin and saved subtab is restricted, revert to profile
   useEffect(() => {
-    if (profile && (activeSubTab === 'sanitizer' || activeSubTab === 'access_controls' || activeSubTab === 'feature_flags') && !isSuperadmin(profile)) {
+    if (!profile) return;
+    if ((activeSubTab === 'sanitizer' || activeSubTab === 'access_controls') && !isSuperadmin(profile)) {
+      setActiveSubTab('profile');
+      localStorage.setItem('settings_active_subtab', 'profile');
+    } else if (activeSubTab === 'feature_flags' && !isAdminRole(profile)) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
     }
@@ -172,6 +176,12 @@ export function ProfileSettings({
         (profile.global_settings?.feature_flags &&
           typeof profile.global_settings.feature_flags === 'object')
           ? profile.global_settings.feature_flags
+          : {}
+      );
+      setAdminDelegatedFlags(
+        (profile.global_settings?.admin_delegated_flags &&
+          typeof profile.global_settings.admin_delegated_flags === 'object')
+          ? profile.global_settings.admin_delegated_flags
           : {}
       );
       setTempAccess(
@@ -461,9 +471,13 @@ export function ProfileSettings({
     }
   };
 
-  // Toggle a feature flag (superadmin). Syncs with per-role Tab Access if mapped to a tab.
+  // Toggle a feature flag (superadmin or admin with delegated permission). Syncs with per-role Tab Access if mapped to a tab.
   const handleToggleFeatureFlag = async (flagKey: string, nextEnabled: boolean) => {
-    if (!profile || !isSuperadmin(profile) || activeFlagKey === flagKey) return;
+    if (!profile || activeFlagKey === flagKey) return;
+    if (!isSuperadmin(profile) && !canAdminManageFeatureFlag(profile, flagKey, profile.global_settings)) {
+      toast.error('You do not have permission to manage this feature flag.');
+      return;
+    }
     
     const nextFlags = { ...featureFlags, [flagKey]: nextEnabled };
     const tabKey = FLAG_TO_TAB_KEY[flagKey];
@@ -504,6 +518,33 @@ export function ProfileSettings({
       window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
     } catch (err: any) {
       toast.error(err.message || 'Failed to update feature flag.');
+    } finally {
+      setActiveFlagKey(null);
+    }
+  };
+
+  // Toggle admin delegation for a feature flag (superadmin only)
+  const handleToggleAdminDelegation = async (flagKey: string, nextDelegated: boolean) => {
+    if (!profile || !isSuperadmin(profile) || activeFlagKey === `delegate:${flagKey}`) return;
+    
+    const nextDelegatedFlags = { ...adminDelegatedFlags, [flagKey]: nextDelegated };
+    setActiveFlagKey(`delegate:${flagKey}`);
+    try {
+      const updatedGs = {
+        ...(profile.global_settings || {}),
+        admin_delegated_flags: nextDelegatedFlags
+      };
+      const { error } = await supabase.from('profiles').update({ global_settings: updatedGs }).eq('id', profile.id);
+      if (error) throw error;
+
+      setAdminDelegatedFlags(nextDelegatedFlags);
+      const updatedProfile = { ...profile, global_settings: updatedGs };
+      setProfile(updatedProfile);
+      localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      toast.success(nextDelegated ? `Admin allowed to manage ${flagKey}` : `Admin access revoked for ${flagKey}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update admin delegation.');
     } finally {
       setActiveFlagKey(null);
     }
@@ -638,20 +679,22 @@ export function ProfileSettings({
               <Shield className="h-4 w-4" />
               <span>Access Controls</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => handleSubTabChange('feature_flags')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeSubTab === 'feature_flags'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
-                  : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
-              }`}
-            >
-              <Settings className="h-4 w-4" />
-              <span>Feature Flags</span>
-            </button>
           </>
+        )}
+
+        {isAdminRole(profile) && (
+          <button
+            type="button"
+            onClick={() => handleSubTabChange('feature_flags')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubTab === 'feature_flags'
+                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Feature Flags</span>
+          </button>
         )}
       </div>
 
@@ -1114,8 +1157,8 @@ export function ProfileSettings({
         </div>
       )}
 
-      {/* Feature Flags Subtab (Superadmin only) */}
-      {activeSubTab === 'feature_flags' && isSuperAdmin && (
+      {/* Feature Flags Subtab (Superadmin & Delegated Admin) */}
+      {activeSubTab === 'feature_flags' && isAdminRole(profile) && (
         <div className="space-y-6 w-full">
           <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
             <div>
@@ -1124,12 +1167,13 @@ export function ProfileSettings({
                 Global Feature Flags
               </h3>
               <p className="text-[11px] text-theme-text-muted mt-2">
-                Turn app features on or off globally. All default ON — disabling
-                one hides that functionality for users, supervisors, and admins. Superadmins retain full access. Changes save immediately.
+                {isSuperAdmin
+                  ? 'Turn app features on or off globally. You can also grant Admins permission to manage specific operational flags.'
+                  : 'Turn operational features on or off globally for all users. Superadmin has granted you access to manage these flags.'}
               </p>
             </div>
             <div className="flex flex-col gap-2">
-              {FEATURE_FLAGS.map((flag) => {
+              {FEATURE_FLAGS.filter((flag) => isSuperAdmin || adminDelegatedFlags[flag.key] === true).map((flag) => {
                 const configured = featureFlags[flag.key];
                 const isGlobalEnabled = typeof configured === 'boolean'
                   ? configured
@@ -1153,6 +1197,8 @@ export function ProfileSettings({
                 const isFullyOff = !isGlobalEnabled || (hasRoleMapping && rolesOnCount === 0);
 
                 const isPending = activeFlagKey === flag.key;
+                const isDelegated = !!adminDelegatedFlags[flag.key];
+                const isDelegatePending = activeFlagKey === `delegate:${flag.key}`;
 
                 return (
                   <div
@@ -1169,35 +1215,68 @@ export function ProfileSettings({
                             Partial ({rolesOnCount}/3 Roles)
                           </span>
                         )}
+                        {isSuperAdmin && isDelegated && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            Admin Allowed
+                          </span>
+                        )}
                       </div>
                       <span className="block text-[10px] text-theme-text-muted mt-0.5">
                         {flag.description}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => handleToggleFeatureFlag(flag.key, !isFullyOn)}
-                      title={
-                        isFullyOn
-                          ? 'Fully Enabled — Click to disable globally for all roles'
-                          : isPartialOn
-                          ? `Partially Enabled (${rolesOnCount}/3 roles) — Click to disable globally`
-                          : 'Disabled — Click to enable for all roles'
-                      }
-                      className={`shrink-0 min-w-[75px] px-2.5 h-7 rounded-lg border text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1 ${
-                        isFullyOn
-                          ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
-                          : isPartialOn
-                          ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30'
-                          : 'bg-rose-500/20 border-rose-500/40 text-rose-400 hover:bg-rose-500/30'
-                      } ${isPending ? 'animate-pulse opacity-50 cursor-wait' : ''}`}
-                    >
-                      {isFullyOn ? 'On' : isPartialOn ? 'Partial On' : 'Off'}
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isSuperAdmin && (
+                        <button
+                          type="button"
+                          disabled={isDelegatePending}
+                          onClick={() => handleToggleAdminDelegation(flag.key, !isDelegated)}
+                          title={
+                            isDelegated
+                              ? 'Delegated to Admins — Click to restrict to Superadmin only'
+                              : 'Superadmin Only — Click to allow Admins to manage this feature flag'
+                          }
+                          className={`px-2.5 h-7 rounded-lg border text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center ${
+                            isDelegated
+                              ? 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:bg-purple-500/30'
+                              : 'bg-theme-border-muted/50 border-theme-border-active/60 text-theme-text-muted hover:bg-theme-border-active/80'
+                          } ${isDelegatePending ? 'animate-pulse opacity-50 cursor-wait' : ''}`}
+                        >
+                          {isDelegated ? 'Admin Allowed' : 'Superadmin Only'}
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => handleToggleFeatureFlag(flag.key, !isFullyOn)}
+                        title={
+                          isFullyOn
+                            ? 'Fully Enabled — Click to disable globally for all roles'
+                            : isPartialOn
+                            ? `Partially Enabled (${rolesOnCount}/3 roles) — Click to disable globally`
+                            : 'Disabled — Click to enable for all roles'
+                        }
+                        className={`min-w-[75px] px-2.5 h-7 rounded-lg border text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1 ${
+                          isFullyOn
+                            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
+                            : isPartialOn
+                            ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30'
+                            : 'bg-rose-500/20 border-rose-500/40 text-rose-400 hover:bg-rose-500/30'
+                        } ${isPending ? 'animate-pulse opacity-50 cursor-wait' : ''}`}
+                      >
+                        {isFullyOn ? 'On' : isPartialOn ? 'Partial On' : 'Off'}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
+
+              {!isSuperAdmin && FEATURE_FLAGS.filter((flag) => adminDelegatedFlags[flag.key] === true).length === 0 && (
+                <div className="p-6 text-center text-xs text-theme-text-muted italic bg-theme-page-bg/30 rounded-xl border border-theme-border-input/40">
+                  No operational feature flags have been delegated to Admins by Superadmin yet.
+                </div>
+              )}
             </div>
           </div>
         </div>

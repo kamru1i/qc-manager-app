@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { X, Loader2, KeyRound, Check } from "lucide-react";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
 import { Profile } from "@/types";
+import { FEATURE_FLAGS } from "@/utils/featureFlagsRegistry";
 
 interface EditProfileModalProps {
   username: string;
@@ -34,6 +35,12 @@ interface EditProfileModalProps {
   setAllowOvertime: (val: boolean) => void;
   allowReserve: boolean;
   setAllowReserve: (val: boolean) => void;
+
+  // Feature flag overrides
+  userFeatureFlags?: Record<string, boolean>;
+  setUserFeatureFlags?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  adminDelegatedFlags?: Record<string, boolean>;
+  isSuperAdmin?: boolean;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -66,6 +73,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   setAllowOvertime,
   allowReserve,
   setAllowReserve,
+  userFeatureFlags,
+  setUserFeatureFlags,
+  adminDelegatedFlags,
+  isSuperAdmin,
 }) => {
   const [resetPassword, setResetPassword] = useState(false);
 
@@ -435,6 +446,47 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     </span>
                   </div>
                 </label>
+              </div>
+            </div>
+          )}
+
+          {/* User Feature Flags Overrides */}
+          {setUserFeatureFlags && (isSuperAdmin || Object.values(adminDelegatedFlags || {}).some(Boolean)) && (
+            <div className="border-t border-theme-border-input/80 pt-3 space-y-2">
+              <label className="block text-[11px] font-semibold text-theme-text-secondary">
+                Per-User Feature Flag Overrides
+              </label>
+              <p className="text-[10px] text-theme-text-muted">
+                Override operational feature flags specifically for this user.
+              </p>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {FEATURE_FLAGS.filter(f => isSuperAdmin || adminDelegatedFlags?.[f.key] === true).map(flag => {
+                  const val = userFeatureFlags?.[flag.key];
+                  return (
+                    <div key={flag.key} className="flex items-center justify-between p-2 rounded-lg bg-theme-page-bg/40 border border-theme-border-input/60 gap-2">
+                      <span className="text-xs font-medium text-theme-text-secondary truncate" title={flag.description}>
+                        {flag.label}
+                      </span>
+                      <select
+                        value={typeof val === 'boolean' ? (val ? 'on' : 'off') : 'default'}
+                        onChange={(e) => {
+                          const nxt = { ...(userFeatureFlags || {}) };
+                          if (e.target.value === 'default') {
+                            delete nxt[flag.key];
+                          } else {
+                            nxt[flag.key] = e.target.value === 'on';
+                          }
+                          setUserFeatureFlags(nxt);
+                        }}
+                        className="text-[10px] font-semibold rounded bg-theme-card-bg border border-theme-border-input px-2 py-1 text-theme-text-primary shrink-0"
+                      >
+                        <option value="default">Default</option>
+                        <option value="on">Enable (ON)</option>
+                        <option value="off">Disable (OFF)</option>
+                      </select>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

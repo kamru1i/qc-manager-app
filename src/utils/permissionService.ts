@@ -57,6 +57,32 @@ export const isFeatureEnabled = (
   return getDefaultFeatureFlagState(flagKey);
 };
 
+/**
+ * Checks if Superadmin has delegated control of a specific feature flag to Admins.
+ */
+export const isAdminDelegatedFeature = (
+  flagKey: string,
+  globalSettings?: { admin_delegated_flags?: Record<string, boolean> } | null
+): boolean => {
+  return !!globalSettings?.admin_delegated_flags?.[flagKey];
+};
+
+/**
+ * True if currentUser is a Superadmin OR (isAdminRole AND the feature flag is delegated to Admins by Superadmin).
+ */
+export const canAdminManageFeatureFlag = (
+  currentUser: Profile | null,
+  flagKey: string,
+  globalSettings?: { admin_delegated_flags?: Record<string, boolean> } | null
+): boolean => {
+  if (!currentUser) return false;
+  if (isSuperadmin(currentUser)) return true;
+  if (isAdminRole(currentUser)) {
+    return isAdminDelegatedFeature(flagKey, globalSettings);
+  }
+  return false;
+};
+
 interface VisibilitySettings {
   role_visibility?: Record<string, Record<string, boolean>>;
   temp_access?: Array<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string }>;
