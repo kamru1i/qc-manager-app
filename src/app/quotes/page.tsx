@@ -393,6 +393,14 @@ export default function Dashboard({
     codename: string;
     fileType: FileType;
   } | null>(null);
+  const [customSaleDetails, setCustomSaleDetails] = useState<{
+    fileName: string;
+    branchName: string;
+    codename: string;
+    fileType: FileType;
+    userId: string;
+    submittedAtDate: string;
+  } | null>(null);
 
 
 
@@ -825,6 +833,20 @@ export default function Dashboard({
       return false;
     }
 
+    // If File Type is "Sale", ask for Sold / Unsold confirmation via SaleStatusModal like Daily Entry
+    if (fileType === "Sale") {
+      setCustomSaleDetails({
+        fileName,
+        branchName,
+        codename: targetProfile.username,
+        fileType,
+        userId,
+        submittedAtDate,
+      });
+      setShowSaleModal(true);
+      return true;
+    }
+
     const now = new Date();
     const timePart = now.toTimeString().split(" ")[0]; // HH:MM:SS
     const customSubmittedAt = new Date(
@@ -869,16 +891,41 @@ export default function Dashboard({
   };
 
   const handleConfirmSaleStatus = async (status: "SOLD" | "UNSOLD") => {
-    if (!saleFormDetails || submitting) return;
-    const finalFileName = `${saleFormDetails.fileName} [${status}]`;
-    setShowSaleModal(false);
-    await submitNewEntry(
-      finalFileName,
-      saleFormDetails.branchName,
-      saleFormDetails.codename,
-      saleFormDetails.fileType,
-    );
-    setSaleFormDetails(null);
+    if (submitting) return;
+
+    if (customSaleDetails) {
+      const finalFileName = `${customSaleDetails.fileName} [${status}]`;
+      setShowSaleModal(false);
+
+      const now = new Date();
+      const timePart = now.toTimeString().split(" ")[0]; // HH:MM:SS
+      const customSubmittedAt = new Date(
+        `${customSaleDetails.submittedAtDate}T${timePart}`,
+      ).toISOString();
+
+      await addRecord(
+        finalFileName,
+        customSaleDetails.branchName,
+        customSaleDetails.codename,
+        customSaleDetails.fileType,
+        customSaleDetails.userId,
+        customSubmittedAt,
+      );
+      setCustomSaleDetails(null);
+      return;
+    }
+
+    if (saleFormDetails) {
+      const finalFileName = `${saleFormDetails.fileName} [${status}]`;
+      setShowSaleModal(false);
+      await submitNewEntry(
+        finalFileName,
+        saleFormDetails.branchName,
+        saleFormDetails.codename,
+        saleFormDetails.fileType,
+      );
+      setSaleFormDetails(null);
+    }
   };
 
   // Submit Daily Entry
@@ -1815,9 +1862,13 @@ export default function Dashboard({
             {/* MODAL 0: SOLD/UNSOLD CHOICE */}
             <SaleStatusModal
               isOpen={showSaleModal}
-              fileName={saleFormDetails?.fileName || ""}
+              fileName={customSaleDetails?.fileName || saleFormDetails?.fileName || ""}
               onConfirm={handleConfirmSaleStatus}
-              onClose={() => setShowSaleModal(false)}
+              onClose={() => {
+                setShowSaleModal(false);
+                setSaleFormDetails(null);
+                setCustomSaleDetails(null);
+              }}
             />
 
             {/* MODAL 1: EDIT RECORD */}

@@ -14,6 +14,7 @@ interface CustomSelectProps {
   className?: string;
   disabled?: boolean;
   buttonClassName?: string;
+  dropUp?: boolean;
 }
 
 export const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -23,8 +24,10 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   className = '',
   disabled = false,
   buttonClassName,
+  dropUp,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -42,13 +45,33 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     };
   }, [isOpen]);
 
-  // Synchronize highlighted index when the dropdown is opened
+  // Synchronize highlighted index & detect vertical placement when the dropdown is opened
   useEffect(() => {
     if (isOpen) {
       const activeIdx = options.findIndex((o) => o.value === value);
       setHighlightedIndex(activeIdx >= 0 ? activeIdx : 0);
+
+      if (dropUp) {
+        setOpenUpward(true);
+        return;
+      }
+
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const spaceBelowViewport = window.innerHeight - rect.bottom;
+        
+        let spaceBelowContainer = spaceBelowViewport;
+        const scrollParent = containerRef.current.closest('.overflow-y-auto, .overflow-auto, .overflow-hidden');
+        if (scrollParent) {
+          const parentRect = scrollParent.getBoundingClientRect();
+          spaceBelowContainer = parentRect.bottom - rect.bottom;
+        }
+
+        const effectiveSpaceBelow = Math.min(spaceBelowViewport, spaceBelowContainer);
+        setOpenUpward(effectiveSpaceBelow < 220);
+      }
     }
-  }, [isOpen, options, value]);
+  }, [isOpen, options, value, dropUp]);
 
   const activeOption = options.find((o) => o.value === value) || options[0];
 
@@ -112,10 +135,14 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
- 
+
       {isOpen && (
         <div 
-          className="absolute left-0 mt-1 w-full min-w-[150px] bg-theme-page-bg border border-theme-border-input rounded-lg shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 max-h-64 overflow-y-auto custom-scrollbar"
+          className={`absolute left-0 w-full min-w-[150px] bg-theme-page-bg border border-theme-border-input rounded-lg shadow-2xl z-[100] py-1 max-h-64 overflow-y-auto custom-scrollbar ${
+            openUpward
+              ? 'bottom-full mb-1 animate-in fade-in slide-in-from-bottom-1 duration-150'
+              : 'top-full mt-1 animate-in fade-in slide-in-from-top-1 duration-150'
+          }`}
           style={{ overscrollBehavior: 'contain' }}
         >
           {options.map((option, idx) => {

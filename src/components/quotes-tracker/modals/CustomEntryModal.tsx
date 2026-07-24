@@ -236,7 +236,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in">
-      <div className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-theme-card-bg border border-theme-border-input p-6 pb-14 rounded-2xl w-full max-w-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer"
@@ -349,6 +349,7 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
               <BranchSelector
                 value={customBranchName}
                 onChange={setCustomBranchName}
+                dropUp={true}
               />
             </div>
           </div>

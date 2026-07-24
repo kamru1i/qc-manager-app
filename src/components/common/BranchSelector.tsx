@@ -6,12 +6,14 @@ interface BranchSelectorProps {
   onChange: (val: string) => void;
   required?: boolean;
   size?: 'sm' | 'md';
+  dropUp?: boolean;
 }
 
 export const BranchSelector: React.FC<BranchSelectorProps> = ({
   value,
   onChange,
-  size = 'md'
+  size = 'md',
+  dropUp,
 }) => {
   // The select element value is 'PRIDE' for 'PRIDE COMPARE' and 'EAZY' for 'EAZY COMPARE' to keep the option select consistent
   const selectValue = value === 'PRIDE COMPARE' ? 'PRIDE' : (value === 'EAZY COMPARE' ? 'EAZY' : value);
@@ -53,6 +55,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
         options={branchOptions}
         buttonClassName={selectClass}
         className="w-full"
+        dropUp={dropUp}
       />
 
       {/* Suboptions for PRIDE */}
