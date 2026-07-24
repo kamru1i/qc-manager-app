@@ -430,7 +430,7 @@ export function ProfileSettings({
     handleSaveSanitizerRules(sanitizerRules.filter((r) => r.word !== word));
   };
 
-  // Toggle per-role tab visibility (superadmin). `visible=false` hides it.
+  // Toggle per-role tab visibility (superadmin). Sets explicit boolean (true/false).
   const handleToggleRoleVisibility = async (
     role: string,
     tabKey: string,
@@ -438,15 +438,9 @@ export function ProfileSettings({
   ) => {
     const itemKey = `${role}:${tabKey}`;
     if (!profile || !isSuperadmin(profile) || activeRoleVisKey === itemKey) return;
-    // Build next map: omit the key when visible (default), set false when hidden.
-    const roleMap = { ...(roleVisibility[role] || {}) };
-    if (nextVisible) {
-      delete roleMap[tabKey];
-    } else {
-      roleMap[tabKey] = false;
-    }
+    
+    const roleMap = { ...(roleVisibility[role] || {}), [tabKey]: nextVisible };
     const next: Record<string, Record<string, boolean>> = { ...roleVisibility, [role]: roleMap };
-    if (Object.keys(roleMap).length === 0) delete next[role];
 
     setActiveRoleVisKey(itemKey);
     try {
@@ -467,16 +461,11 @@ export function ProfileSettings({
     }
   };
 
-  // Toggle a feature flag (superadmin). Stores explicit false to disable; omits
-  // the key to re-enable (default ON), keeping the stored object minimal.
+  // Toggle a feature flag (superadmin). Sets explicit boolean (true/false).
   const handleToggleFeatureFlag = async (flagKey: string, nextEnabled: boolean) => {
     if (!profile || !isSuperadmin(profile) || activeFlagKey === flagKey) return;
-    const next = { ...featureFlags };
-    if (nextEnabled) {
-      delete next[flagKey];
-    } else {
-      next[flagKey] = false;
-    }
+    const next = { ...featureFlags, [flagKey]: nextEnabled };
+
     setActiveFlagKey(flagKey);
     try {
       const { error } = await supabase.rpc('set_feature_flags', { p_flags: next });
