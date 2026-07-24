@@ -25,11 +25,17 @@ export const DEFAULT_SANITIZER_WORDS: string[] = [
   "dot",
   // File types
   "Individual Review",
+  "IndividualReview",
   "Other Site",
+  "OtherSite",
   "Requote Van",
+  "RequoteVan",
   "Requote Bike",
+  "RequoteBike",
   "Review Van",
+  "ReviewVan",
   "Review Bike",
+  "ReviewBike",
   "Requote",
   "Review",
   "Quote",
@@ -38,10 +44,15 @@ export const DEFAULT_SANITIZER_WORDS: string[] = [
   "Bike",
   // Branch names
   "PRIDE COMPARE",
+  "PrideCompare",
   "EAZY COMPARE",
+  "EazyCompare",
   "SWANDRIVE",
+  "SwanDrive",
   "MIDDLESURE",
+  "MiddleSure",
   "IRESURE",
+  "IreSure",
   "BRISTOL",
   "SHEFFIELD",
   "PRIDE",
@@ -64,27 +75,35 @@ export const DEFAULT_SANITIZER_RULES: SanitizerRule[] = DEFAULT_SANITIZER_WORDS.
 
 /**
  * Resolve the effective sanitizer rules. If the superadmin has saved rules,
- * use them verbatim. Otherwise (first run) SEED from the hardcoded defaults
- * plus any legacy `sanitizer_words` (the older custom-only field), de-duped —
- * so existing behavior is preserved and the list is never empty.
+ * use them and ensure all default seed words are included. Otherwise (first run)
+ * SEED from the hardcoded defaults plus any legacy `sanitizer_words`.
  */
 export const resolveSanitizerRules = (
   storedRules?: SanitizerRule[] | null,
   legacyWords?: string[] | null,
 ): SanitizerRule[] => {
-  if (Array.isArray(storedRules) && storedRules.length > 0) {
-    return storedRules
-      .filter((r) => r && typeof r.word === "string" && r.word.trim() !== "")
-      .map((r) => ({ word: r.word.trim(), enabled: r.enabled !== false }));
-  }
   const seen = new Set<string>();
   const rules: SanitizerRule[] = [];
+
+  if (Array.isArray(storedRules) && storedRules.length > 0) {
+    for (const r of storedRules) {
+      if (r && typeof r.word === "string" && r.word.trim() !== "") {
+        const key = r.word.trim().toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          rules.push({ word: r.word.trim(), enabled: r.enabled !== false });
+        }
+      }
+    }
+  }
+
   for (const word of [...DEFAULT_SANITIZER_WORDS, ...(legacyWords ?? [])]) {
     const key = String(word).trim().toLowerCase();
     if (!key || seen.has(key)) continue;
     seen.add(key);
     rules.push({ word: String(word).trim(), enabled: true });
   }
+
   return rules;
 };
 
@@ -95,13 +114,20 @@ export const enabledSanitizerWords = (rules: SanitizerRule[]): string[] =>
 const escapeRegExp = (s: string): string =>
   s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Compile a term into a case-insensitive, word-bounded regex. Multi-word terms
-// match any run of whitespace between words.
+// Compile a term into a case-insensitive, flexible regex.
+// Supports spaces, hyphens, underscores, and camelCase/PascalCase variations (e.g. EazyCompare vs EAZY COMPARE).
 const compileWord = (term: string): RegExp | null => {
   const trimmed = term.trim();
   if (!trimmed) return null;
-  const parts = trimmed.split(/\s+/).map(escapeRegExp);
-  return new RegExp(`\\b${parts.join("\\s+")}\\b`, "gi");
+
+  // Expand camelCase/PascalCase (e.g. EazyCompare -> Eazy Compare) before splitting
+  const expanded = trimmed.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+  const parts = expanded.split(/\s+/).map(escapeRegExp);
+
+  if (parts.length > 1) {
+    return new RegExp(`\\b${parts.join("[\\s-_]*")}\\b`, "gi");
+  }
+  return new RegExp(`\\b${escapeRegExp(trimmed)}\\b`, "gi");
 };
 
 /**
