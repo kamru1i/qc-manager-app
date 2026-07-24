@@ -123,20 +123,42 @@ export function ProfileSettings({
     if (!profile) return;
     setVpnSubmitting(true);
     try {
-      const updatedGs = {
+      // 1. Attempt atomic jsonb_set RPC across all profiles
+      const { error: rpcError } = await supabase.rpc('set_user_vpn_list' as any, {
+        p_vpn_list: nextVpnList
+      });
+
+      let updatedGs = {
         ...(profile.global_settings || {}),
         vpn_list: nextVpnList,
       };
-      const { error } = await supabase
-        .from('profiles')
-        .update({ global_settings: updatedGs })
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-      if (error) throw error;
+
+      if (rpcError) {
+        // Fallback: fetch fresh global_settings from DB to avoid overwriting concurrent changes
+        const { data: fresh } = await supabase
+          .from('profiles')
+          .select('global_settings')
+          .eq('id', sessionUser?.id || profile.id)
+          .maybeSingle();
+
+        updatedGs = {
+          ...((fresh?.global_settings as Record<string, any>) || profile.global_settings || {}),
+          vpn_list: nextVpnList,
+        };
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ global_settings: updatedGs })
+          .neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) throw error;
+      }
 
       setVpnList(nextVpnList);
       const updatedProfile = { ...profile, global_settings: updatedGs };
       setProfile(updatedProfile);
-      localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
+      if (sessionUser) {
+        localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
+      }
       window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
       toast.success('VPN List updated successfully!');
     } catch (err: any) {
@@ -320,27 +342,54 @@ export function ProfileSettings({
     setSubmitting(true);
 
     try {
+      // Helper to retrieve fresh global_settings from DB before updating, preventing stale state overwrites
+      const fetchFreshGs = async () => {
+        const { data: fresh } = await supabase
+          .from('profiles')
+          .select('global_settings')
+          .eq('id', sessionUser.id)
+          .maybeSingle();
+        return (fresh?.global_settings as Record<string, any>) || profile.global_settings || {};
+      };
+
       if (activeSubTab === 'menu_visibility') {
-        const globalSettingsUpdate = {
+        const { error: rpcErr } = await supabase.rpc('set_user_hidden_tabs' as any, {
+          p_user_id: sessionUser.id,
+          p_hidden_tabs: hiddenTabs
+        });
+
+        let updatedGs = {
           ...(profile.global_settings || {}),
           hidden_tabs: hiddenTabs
         };
 
-        const { data: updatedProfile, error } = await supabase
-          .from('profiles')
-          .update({ global_settings: globalSettingsUpdate })
-          .eq('id', sessionUser.id)
-          .select()
-          .single();
+        if (rpcErr) {
+          const freshGs = await fetchFreshGs();
+          updatedGs = {
+            ...freshGs,
+            hidden_tabs: hiddenTabs
+          };
 
-        if (error) throw error;
+          const { error: updateErr } = await supabase
+            .from('profiles')
+            .update({ global_settings: updatedGs })
+            .eq('id', sessionUser.id);
+          if (updateErr) throw updateErr;
+        }
 
-        setProfile({ ...profile, ...updatedProfile });
-        localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
-        window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+        const mergedProfile = { ...profile, global_settings: updatedGs };
+        setProfile(mergedProfile);
+        localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(mergedProfile));
+        window.dispatchEvent(new CustomEvent("profile-updated", { detail: mergedProfile }));
         toast.success('Your menu visibility settings successfully updated!');
         return;
       }
+
+      const freshGs = await fetchFreshGs();
+      const globalSettingsUpdate = {
+        ...freshGs,
+        hidden_tabs: hiddenTabs
+      };
 
       if (isAdminRole(profile)) {
         const updates = {
@@ -351,10 +400,7 @@ export function ProfileSettings({
           job_role: editJobRole,
           default_sign_in: profileSignInTime,
           default_sign_out: profileSignOutTime,
-          global_settings: {
-            ...(profile.global_settings || {}),
-            hidden_tabs: hiddenTabs
-          }
+          global_settings: globalSettingsUpdate
         };
 
         const { data: updatedProfile, error } = await supabase
@@ -371,11 +417,6 @@ export function ProfileSettings({
         window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
         toast.success('Your profile settings successfully updated!');
       } else {
-        const globalSettingsUpdate = {
-          ...(profile.global_settings || {}),
-          hidden_tabs: hiddenTabs
-        };
-
         if (!profile.has_edited_profile) {
           const updates = {
             full_name: editFullName,

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { username } = body;
+    const { username, password } = body;
 
     if (!username || typeof username !== 'string') {
       return NextResponse.json(
@@ -56,20 +56,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Invoke the get_user_email_by_username RPC function (now restricted to service_role)
+    // Security: Require password validation to prevent email disclosure & username enumeration
+    if (!password || typeof password !== 'string') {
+      return NextResponse.json(
+        { error: 'Password is required' },
+        { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
+
+    // Invoke the get_user_email_by_username RPC function (restricted to service_role)
     const { data: email, error } = await supabaseServer.rpc('get_user_email_by_username', {
       p_username: cleanUsername,
     });
 
-    if (error) {
-      console.error('[ResolveEmail] RPC execution error:', error.message);
+    if (error || !email) {
+      // Security: Return uniform authentication failure to prevent username enumeration
       return NextResponse.json(
-        { error: 'Failed to resolve email due to server error' },
-        { status: 500, headers: getCorsHeaders(request) }
+        { error: 'Invalid login credentials' },
+        { status: 401, headers: getCorsHeaders(request) }
       );
     }
 
-    return NextResponse.json({ email }, { headers: getCorsHeaders(request) });
+    // Validate the password against Supabase Auth before releasing the resolved email/session
+    const { data: authData, error: authError } = await supabaseServer.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError || !authData.session) {
+      return NextResponse.json(
+        { error: 'Invalid login credentials' },
+        { status: 401, headers: getCorsHeaders(request) }
+      );
+    }
+
+    return NextResponse.json({ email, session: authData.session }, { headers: getCorsHeaders(request) });
   } catch (err) {
     console.error('[ResolveEmail] Unexpected error:', err);
     return NextResponse.json(

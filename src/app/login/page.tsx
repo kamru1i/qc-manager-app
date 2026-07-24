@@ -74,10 +74,8 @@ export default function LoginPage() {
           message
         });
 
-        if (status === 404) {
-          setForgotError("Codename not found.");
-        } else if (status === 400) {
-          setForgotError(message);
+        if (status === 429) {
+          setForgotError("Too many requests. Please wait a minute.");
         } else if (status === 500) {
           setForgotError("Database unavailable.");
         } else {
@@ -215,25 +213,39 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    // Try resolving username/codename to registered email first
+    // Try resolving username/codename to registered email securely (passing password)
     let loginEmail = email.trim();
     if (!loginEmail.includes("@")) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 seconds timeout
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
 
       let resolvedEmail = null;
       try {
         const res = await fetch(getApiUrl("/api/resolve-email"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: loginEmail }),
+          body: JSON.stringify({ username: loginEmail, password }),
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
+          if (data.session) {
+            const { error: setSessionError } = await supabase.auth.setSession(data.session);
+            if (!setSessionError) {
+              const userId = data.session.user.id;
+              localStorage.setItem(`session_start_time_${userId}`, Date.now().toString());
+              localStorage.setItem(`last_active_time_${userId}`, Date.now().toString());
+              window.location.href = "/quotes";
+              return;
+            }
+          }
           resolvedEmail = data.email;
+        } else if (res.status === 401) {
+          setError("Invalid username or password.");
+          setLoading(false);
+          return;
         }
       } catch {
         clearTimeout(timeoutId);

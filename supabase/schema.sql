@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZAnWyAA2QFyMaPaPjsN4lZHGCQBVGuLToKhsKBHQ4EDu6g1QOKmHb7RHv4XMQpu
+\restrict Ljbuwue4xcOSSc8Ga8MY5QHbZMSZWtpWfgrISg0IHd4hASKBk2tkO8m250nGABa
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.4
@@ -19,6 +19,169 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+DROP POLICY IF EXISTS "Users can update own settlements" ON public.leave_settlements;
+DROP POLICY IF EXISTS "Users can update own holiday responses" ON public.govt_holiday_responses;
+DROP POLICY IF EXISTS "Users can read own settlements" ON public.leave_settlements;
+DROP POLICY IF EXISTS "Users can read own holiday responses" ON public.govt_holiday_responses;
+DROP POLICY IF EXISTS "Users can read own dismissed notifications" ON public.dismissed_notifications;
+DROP POLICY IF EXISTS "Users can insert own settlements" ON public.leave_settlements;
+DROP POLICY IF EXISTS "Users can insert own holiday responses" ON public.govt_holiday_responses;
+DROP POLICY IF EXISTS "Users can insert own dismissed notifications" ON public.dismissed_notifications;
+DROP POLICY IF EXISTS "Users can delete own dismissed notifications" ON public.dismissed_notifications;
+DROP POLICY IF EXISTS "Authenticated users can read leaderboard archive" ON public.leaderboard_archive;
+DROP POLICY IF EXISTS "Allow users to update their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Allow users to update their own chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow users to update own todos" ON public.todos;
+DROP POLICY IF EXISTS "Allow users to update own records, admins/supervisors update al" ON public.records;
+DROP POLICY IF EXISTS "Allow users to read their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Allow users to read their own chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow users to read own todos" ON public.todos;
+DROP POLICY IF EXISTS "Allow users to read own records, admins/supervisors read all" ON public.records;
+DROP POLICY IF EXISTS "Allow users to insert their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Allow users to insert their own chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow users to insert own todos" ON public.todos;
+DROP POLICY IF EXISTS "Allow users to insert own records, admins/supervisors insert al" ON public.records;
+DROP POLICY IF EXISTS "Allow users to delete their own chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow users to delete own todos" ON public.todos;
+DROP POLICY IF EXISTS "Allow users to delete own records, admins/supervisors delete al" ON public.records;
+DROP POLICY IF EXISTS "Allow supervisors to update profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow supervisors to update chuti status" ON public.chuti;
+DROP POLICY IF EXISTS "Allow supervisors to insert chuti for supervised users" ON public.chuti;
+DROP POLICY IF EXISTS "Allow supervisors to delete chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow supervisor to read all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow select for owner, admin, or assigned supervisor" ON public.kpi_assessments;
+DROP POLICY IF EXISTS "Allow public read access to mobile_app_versions" ON public.mobile_app_versions;
+DROP POLICY IF EXISTS "Allow insert/update/delete for owner, admin, or assigned superv" ON public.kpi_assessments;
+DROP POLICY IF EXISTS "Allow authenticated users to read supervisor profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow authenticated users to insert audit logs" ON public.audit_logs;
+DROP POLICY IF EXISTS "Allow authenticated to read login codes" ON public.login_codes;
+DROP POLICY IF EXISTS "Allow authenticated to read compliance rules" ON public.compliance_rules;
+DROP POLICY IF EXISTS "Allow admins, supervisors or authorized editors to update rules" ON public.compliance_rules;
+DROP POLICY IF EXISTS "Allow admins, supervisors or authorized editors to insert rules" ON public.compliance_rules;
+DROP POLICY IF EXISTS "Allow admins, supervisors or authorized editors to delete rules" ON public.compliance_rules;
+DROP POLICY IF EXISTS "Allow admins to update all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow admins to update all chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow admins to read all audit logs" ON public.audit_logs;
+DROP POLICY IF EXISTS "Allow admins to insert profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow admins to insert chuti for all users" ON public.chuti;
+DROP POLICY IF EXISTS "Allow admins to delete profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow admins to delete chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow admins & supervisors to manage login codes" ON public.login_codes;
+DROP POLICY IF EXISTS "Allow admin/supervisor to read all chuti" ON public.chuti;
+DROP POLICY IF EXISTS "Allow admin to read all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins/supervisors can manage settlements" ON public.leave_settlements;
+DROP POLICY IF EXISTS "Admins can update/delete responses" ON public.govt_holiday_responses;
+DROP POLICY IF EXISTS "Admins can read all holiday responses" ON public.govt_holiday_responses;
+DROP POLICY IF EXISTS "Admins can do everything on dismissed notifications" ON public.dismissed_notifications;
+ALTER TABLE IF EXISTS ONLY public.todos DROP CONSTRAINT IF EXISTS todos_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.records DROP CONSTRAINT IF EXISTS records_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.profiles DROP CONSTRAINT IF EXISTS profiles_delegated_supervisor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.profiles DROP CONSTRAINT IF EXISTS profiles_delegated_leave_supervisor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.profiles DROP CONSTRAINT IF EXISTS profiles_delegated_kpi_supervisor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.leave_settlements DROP CONSTRAINT IF EXISTS leave_settlements_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.leave_settlements DROP CONSTRAINT IF EXISTS leave_settlements_processed_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.leave_settlements DROP CONSTRAINT IF EXISTS leave_settlements_action_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.leaderboard_archive DROP CONSTRAINT IF EXISTS leaderboard_archive_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.kpi_assessments DROP CONSTRAINT IF EXISTS kpi_assessments_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.govt_holiday_responses DROP CONSTRAINT IF EXISTS govt_holiday_responses_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.dismissed_notifications DROP CONSTRAINT IF EXISTS dismissed_notifications_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.compliance_rules DROP CONSTRAINT IF EXISTS compliance_rules_updated_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.chuti DROP CONSTRAINT IF EXISTS chuti_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey;
+DROP TRIGGER IF EXISTS trg_update_compliance_rules_updated_at ON public.compliance_rules;
+DROP TRIGGER IF EXISTS todos_set_last_activity ON public.todos;
+DROP TRIGGER IF EXISTS records_set_updated_at ON public.records;
+DROP TRIGGER IF EXISTS on_profile_update_security ON public.profiles;
+DROP TRIGGER IF EXISTS on_profile_role_update ON public.profiles;
+DROP TRIGGER IF EXISTS chuti_set_updated_at ON public.chuti;
+DROP INDEX IF EXISTS public.uq_records_user_file_submitted;
+DROP INDEX IF EXISTS public.unique_user_date;
+DROP INDEX IF EXISTS public.idx_todos_user_id;
+DROP INDEX IF EXISTS public.idx_todos_todo_date;
+DROP INDEX IF EXISTS public.idx_todos_last_activity;
+DROP INDEX IF EXISTS public.idx_records_user_submitted;
+DROP INDEX IF EXISTS public.idx_records_user_id;
+DROP INDEX IF EXISTS public.idx_records_updated_at;
+DROP INDEX IF EXISTS public.idx_records_sale_submitted;
+DROP INDEX IF EXISTS public.idx_leave_settlements_user_year;
+DROP INDEX IF EXISTS public.idx_leaderboard_archive_year;
+DROP INDEX IF EXISTS public.idx_chuti_user_date;
+DROP INDEX IF EXISTS public.idx_chuti_updated_at;
+DROP INDEX IF EXISTS public.idx_chuti_deleted_at;
+DROP INDEX IF EXISTS public.idx_chuti_bulk_id;
+DROP INDEX IF EXISTS public.idx_audit_logs_created_at;
+DROP INDEX IF EXISTS public.idx_audit_logs_created;
+DROP INDEX IF EXISTS public.idx_audit_logs_actor_id;
+ALTER TABLE IF EXISTS ONLY public.leave_settlements DROP CONSTRAINT IF EXISTS unique_user_year_period_category;
+ALTER TABLE IF EXISTS ONLY public.dismissed_notifications DROP CONSTRAINT IF EXISTS unique_user_notification;
+ALTER TABLE IF EXISTS ONLY public.govt_holiday_responses DROP CONSTRAINT IF EXISTS unique_user_holiday;
+ALTER TABLE IF EXISTS ONLY public.todos DROP CONSTRAINT IF EXISTS todos_pkey;
+ALTER TABLE IF EXISTS ONLY public.records DROP CONSTRAINT IF EXISTS records_pkey;
+ALTER TABLE IF EXISTS ONLY public.profiles DROP CONSTRAINT IF EXISTS profiles_username_key;
+ALTER TABLE IF EXISTS ONLY public.profiles DROP CONSTRAINT IF EXISTS profiles_pkey;
+ALTER TABLE IF EXISTS ONLY public.mobile_app_versions DROP CONSTRAINT IF EXISTS mobile_app_versions_pkey;
+ALTER TABLE IF EXISTS ONLY public.login_codes DROP CONSTRAINT IF EXISTS login_codes_pkey;
+ALTER TABLE IF EXISTS ONLY public.leave_settlements DROP CONSTRAINT IF EXISTS leave_settlements_pkey;
+ALTER TABLE IF EXISTS ONLY public.leaderboard_archive DROP CONSTRAINT IF EXISTS leaderboard_archive_username_year_unique;
+ALTER TABLE IF EXISTS ONLY public.leaderboard_archive DROP CONSTRAINT IF EXISTS leaderboard_archive_pkey;
+ALTER TABLE IF EXISTS ONLY public.kpi_assessments DROP CONSTRAINT IF EXISTS kpi_assessments_user_id_month_year_key;
+ALTER TABLE IF EXISTS ONLY public.kpi_assessments DROP CONSTRAINT IF EXISTS kpi_assessments_pkey;
+ALTER TABLE IF EXISTS ONLY public.govt_holiday_responses DROP CONSTRAINT IF EXISTS govt_holiday_responses_pkey;
+ALTER TABLE IF EXISTS ONLY public.dismissed_notifications DROP CONSTRAINT IF EXISTS dismissed_notifications_pkey;
+ALTER TABLE IF EXISTS ONLY public.compliance_rules DROP CONSTRAINT IF EXISTS compliance_rules_pkey;
+ALTER TABLE IF EXISTS ONLY public.chuti DROP CONSTRAINT IF EXISTS chuti_pkey;
+ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_pkey;
+ALTER TABLE IF EXISTS public.mobile_app_versions ALTER COLUMN id DROP DEFAULT;
+DROP TABLE IF EXISTS public.todos;
+DROP TABLE IF EXISTS public.records;
+DROP TABLE IF EXISTS public.profiles;
+DROP SEQUENCE IF EXISTS public.mobile_app_versions_id_seq;
+DROP TABLE IF EXISTS public.mobile_app_versions;
+DROP TABLE IF EXISTS public.login_codes;
+DROP TABLE IF EXISTS public.leave_settlements;
+DROP TABLE IF EXISTS public.leaderboard_archive;
+DROP TABLE IF EXISTS public.kpi_assessments;
+DROP TABLE IF EXISTS public.govt_holiday_responses;
+DROP TABLE IF EXISTS public.dismissed_notifications;
+DROP TABLE IF EXISTS public.compliance_rules;
+DROP TABLE IF EXISTS public.chuti;
+DROP TABLE IF EXISTS public.audit_logs;
+DROP FUNCTION IF EXISTS public.update_todos_last_activity();
+DROP FUNCTION IF EXISTS public.update_records_updated_at();
+DROP FUNCTION IF EXISTS public.update_compliance_rules_updated_at();
+DROP FUNCTION IF EXISTS public.update_chuti_updated_at();
+DROP FUNCTION IF EXISTS public.sync_top_performer_badges();
+DROP FUNCTION IF EXISTS public.set_user_vpn_list(p_vpn_list jsonb);
+DROP FUNCTION IF EXISTS public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb);
+DROP FUNCTION IF EXISTS public.set_temp_access(p_entries jsonb);
+DROP FUNCTION IF EXISTS public.set_sanitizer_words(p_words text[]);
+DROP FUNCTION IF EXISTS public.set_sanitizer_rules(p_rules jsonb);
+DROP FUNCTION IF EXISTS public.set_role_visibility(p_visibility jsonb);
+DROP FUNCTION IF EXISTS public.set_feature_flags(p_flags jsonb);
+DROP FUNCTION IF EXISTS public.set_admin_delegated_flags(p_flags jsonb);
+DROP FUNCTION IF EXISTS public.is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer);
+DROP FUNCTION IF EXISTS public.is_supervisor_of(supervisor_id uuid, employee_id uuid);
+DROP FUNCTION IF EXISTS public.is_supervisor();
+DROP FUNCTION IF EXISTS public.is_superadmin();
+DROP FUNCTION IF EXISTS public.is_admin_or_supervisor();
+DROP FUNCTION IF EXISTS public.is_admin();
+DROP FUNCTION IF EXISTS public.has_leave_access(supervisor_id uuid, employee_id uuid);
+DROP FUNCTION IF EXISTS public.has_kpi_access(supervisor_id uuid, employee_id uuid);
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.get_user_email_by_username(p_username text);
+DROP FUNCTION IF EXISTS public.get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text);
+DROP FUNCTION IF EXISTS public.get_admin_sales_summary(p_today text, p_tz text);
+DROP FUNCTION IF EXISTS public.delete_user_by_id(p_user_id uuid);
+DROP FUNCTION IF EXISTS public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]);
+DROP FUNCTION IF EXISTS public.complete_profile_setup(p_username text, p_full_name text);
+DROP FUNCTION IF EXISTS public.cleanup_old_audit_logs();
+DROP FUNCTION IF EXISTS public.check_profile_updates();
+DROP FUNCTION IF EXISTS public.check_profile_role_change();
+DROP FUNCTION IF EXISTS public.archive_and_prune_old_records(p_tz text);
+DROP FUNCTION IF EXISTS public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text);
+DROP FUNCTION IF EXISTS public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid);
+DROP SCHEMA IF EXISTS public;
 --
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
@@ -951,6 +1114,31 @@ $$;
 
 
 --
+-- Name: set_admin_delegated_flags(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_admin_delegated_flags(p_flags jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.is_superadmin() THEN
+    RAISE EXCEPTION 'Only a superadmin can configure admin delegated feature flags.';
+  END IF;
+
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(
+        COALESCE(global_settings, '{}'::jsonb),
+        '{admin_delegated_flags}',
+        COALESCE(p_flags, '{}'::jsonb),
+        true
+      )
+  WHERE true;  -- intentional: global_settings is replicated to every row
+END;
+$$;
+
+
+--
 -- Name: set_feature_flags(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1071,6 +1259,56 @@ BEGIN
         true
       )
   WHERE true;  -- intentional: global_settings is replicated to every row
+END;
+$$;
+
+
+--
+-- Name: set_user_hidden_tabs(uuid, jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF auth.uid() <> p_user_id AND NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Access denied: You can only update your own settings.';
+  END IF;
+
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(
+        COALESCE(global_settings, '{}'::jsonb),
+        '{hidden_tabs}',
+        COALESCE(p_hidden_tabs, '[]'::jsonb),
+        true
+      )
+  WHERE id = p_user_id;
+END;
+$$;
+
+
+--
+-- Name: set_user_vpn_list(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_user_vpn_list(p_vpn_list jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.is_supervisor() AND NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Access denied: Only supervisor or admin can configure VPN list.';
+  END IF;
+
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(
+        COALESCE(global_settings, '{}'::jsonb),
+        '{vpn_list}',
+        COALESCE(p_vpn_list, '[]'::jsonb),
+        true
+      )
+  WHERE true;
 END;
 $$;
 
@@ -2476,39 +2714,8 @@ ALTER TABLE public.records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: set_admin_delegated_flags(jsonb); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE OR REPLACE FUNCTION public.set_admin_delegated_flags(p_flags jsonb)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public', 'pg_temp'
-AS $$
-BEGIN
-  IF NOT public.is_superadmin() THEN
-    RAISE EXCEPTION 'Only a superadmin can configure admin delegated feature flags.';
-  END IF;
-
-  UPDATE public.profiles
-  SET global_settings = jsonb_set(
-        COALESCE(global_settings, '{}'::jsonb),
-        '{admin_delegated_flags}',
-        COALESCE(p_flags, '{}'::jsonb),
-        true
-      )
-  WHERE true;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.set_admin_delegated_flags(jsonb) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.set_admin_delegated_flags(jsonb) FROM anon;
-GRANT EXECUTE ON FUNCTION public.set_admin_delegated_flags(jsonb) TO authenticated;
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZAnWyAA2QFyMaPaPjsN4lZHGCQBVGuLToKhsKBHQ4EDu6g1QOKmHb7RHv4XMQpu
-
+\unrestrict Ljbuwue4xcOSSc8Ga8MY5QHbZMSZWtpWfgrISg0IHd4hASKBk2tkO8m250nGABa
 

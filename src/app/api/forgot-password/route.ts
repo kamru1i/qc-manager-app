@@ -70,18 +70,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!profile) {
-      return NextResponse.json(
-        { error: 'Codename not found.' },
-        { status: 404, headers: getCorsHeaders(request) }
-      );
+      // Security best practice: return success response regardless to prevent username enumeration
+      return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
     }
 
     const currentSettings = (profile as any).global_settings || {};
     if (currentSettings.password_reset_status === 'pending') {
-      return NextResponse.json(
-        { error: 'Request already submitted.' },
-        { status: 400, headers: getCorsHeaders(request) }
-      );
+      // Security: return success response if request is already pending to prevent status enumeration
+      return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
     }
 
     const updatedSettings = {
