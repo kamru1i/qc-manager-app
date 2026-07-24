@@ -175,7 +175,8 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
 
   // Local state for Box 2 Network & VPN Info
   const [ipAddress, setIpAddress] = useState<string>("Detecting...");
-  const [vpnName, setVpnName] = useState<string>("ExpressVPN");
+  const [vpnName, setVpnName] = useState<string>("None");
+  const [isVpnConnected, setIsVpnConnected] = useState<boolean>(false);
   const [isEditingNetwork, setIsEditingNetwork] = useState<boolean>(false);
   const [isDetectingIp, setIsDetectingIp] = useState<boolean>(true);
 
@@ -206,17 +207,37 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
           try {
             const geoRes = await fetch(`https://ipwho.is/${data.ip}`);
             const geoData = await geoRes.json();
-            if (isMounted && geoData?.connection?.isp) {
-              const isp = geoData.connection.isp;
+            if (isMounted) {
+              const isProxyOrVpn = !!(
+                geoData?.security?.vpn ||
+                geoData?.security?.proxy ||
+                geoData?.security?.tor
+              );
+              const isp = geoData?.connection?.isp || "";
               const matched = availableVpns.find((v: string) =>
                 isp.toLowerCase().includes(v.toLowerCase())
               );
-              if (matched) setVpnName(matched);
+              if (isProxyOrVpn || matched) {
+                setIsVpnConnected(true);
+                setVpnName(matched || isp || "VPN Active");
+              } else {
+                setIsVpnConnected(false);
+                setVpnName("None");
+              }
             }
-          } catch {}
+          } catch {
+            if (isMounted) {
+              setIsVpnConnected(false);
+              setVpnName("None");
+            }
+          }
         }
       } catch {
-        if (isMounted && ipAddress === "Detecting...") setIpAddress("103.145.2.14");
+        if (isMounted && ipAddress === "Detecting...") {
+          setIpAddress("45.125.223.33");
+          setIsVpnConnected(false);
+          setVpnName("None");
+        }
       } finally {
         if (isMounted) setIsDetectingIp(false);
       }
@@ -228,7 +249,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
   }, [availableVpns]);
 
   const copyNetworkBox = async () => {
-    const text = `IP Address: ${ipAddress}\nVPN Connected: ${vpnName}`;
+    const text = `VPN Connected: ${vpnName}\nIP Address: ${ipAddress}`;
     try {
       await navigator.clipboard.writeText(text);
       setLocalCopiedStates((prev) => ({ ...prev, boxNetwork: true }));
@@ -383,21 +404,60 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
       copied: localCopiedStates["boxNetwork"],
       onCopy: copyNetworkBox,
       headerAction: (
-        <button
-          type="button"
-          onClick={() => setIsEditingNetwork(!isEditingNetwork)}
-          className={`p-1.5 border rounded-lg transition-all cursor-pointer ${
-            isEditingNetwork
-              ? "bg-blue-600/20 border-blue-500/40 text-blue-400"
-              : "bg-theme-page-bg hover:bg-theme-border-input border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
-          }`}
-          title="Edit IP & VPN Details"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            type="button"
+            onClick={() => setIsEditingNetwork(!isEditingNetwork)}
+            className={`p-1.5 border rounded-lg transition-all cursor-pointer ${
+              isEditingNetwork
+                ? "bg-blue-600/20 border-blue-500/40 text-blue-400"
+                : "bg-theme-page-bg hover:bg-theme-border-input border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
+            }`}
+            title="Edit IP & VPN Details"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        </div>
       ),
       render: () => (
         <div className="space-y-2.5 text-xs font-sans">
+          {/* 1st Row: VPN Name */}
+          <div className="flex items-center justify-between">
+            <span className="text-theme-text-muted font-medium">VPN Name:</span>
+            {isEditingNetwork ? (
+              <select
+                value={vpnName}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "__custom__") {
+                    const custom = prompt("Enter custom VPN name:", vpnName);
+                    if (custom) {
+                      setVpnName(custom);
+                      setIsVpnConnected(true);
+                    }
+                  } else {
+                    setVpnName(val);
+                    setIsVpnConnected(val !== "None");
+                  }
+                }}
+                className="w-36 px-2 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-right text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="None">None (Disconnected)</option>
+                {availableVpns.map((v: string) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+                <option value="__custom__">+ Custom VPN Name...</option>
+              </select>
+            ) : (
+              <span className={isVpnConnected ? "text-emerald-400 font-bold" : "text-theme-text-secondary font-semibold"}>
+                {vpnName}
+              </span>
+            )}
+          </div>
+
+          {/* 2nd Row: IP Address */}
           <div className="flex items-center justify-between">
             <span className="text-theme-text-muted font-medium">IP Address:</span>
             {isEditingNetwork ? (
@@ -414,39 +474,20 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-theme-text-muted font-medium">VPN Name:</span>
-            {isEditingNetwork ? (
-              <select
-                value={vpnName}
-                onChange={(e) => {
-                  if (e.target.value === "__custom__") {
-                    const custom = prompt("Enter custom VPN name:", vpnName);
-                    if (custom) setVpnName(custom);
-                  } else {
-                    setVpnName(e.target.value);
-                  }
-                }}
-                className="w-36 px-2 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-right text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-              >
-                {availableVpns.map((v: string) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
-                <option value="__custom__">+ Custom VPN Name...</option>
-              </select>
-            ) : (
-              <span className="text-emerald-400 font-bold">{vpnName}</span>
-            )}
-          </div>
-
+          {/* 3rd Row: Status */}
           <div className="flex items-center justify-between text-[11px] pt-1 border-t border-theme-border-muted/50">
             <span className="text-theme-text-muted">Status:</span>
-            <span className="text-emerald-400 font-semibold flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              VPN Connected
-            </span>
+            {isVpnConnected ? (
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                VPN Connected
+              </span>
+            ) : (
+              <span className="text-theme-text-muted font-semibold flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                VPN Off (Disconnected)
+              </span>
+            )}
           </div>
         </div>
       ),
