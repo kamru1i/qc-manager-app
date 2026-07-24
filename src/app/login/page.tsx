@@ -17,6 +17,7 @@ import SmartDownloadButton from "@/components/common/SmartDownloadButton";
 import { isNativeApp } from "@/utils/envHelper";
 
 export default function LoginPage() {
+  const [savePassword, setSavePassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +26,44 @@ export default function LoginPage() {
   const router = useRouter();
   const pathname = usePathname();
   const [isNative, setIsNative] = useState(false);
+
+  // Load saved credentials if "Save Password" was enabled
+  useEffect(() => {
+    try {
+      const isSaved = localStorage.getItem("save_password_enabled") === "true";
+      if (isSaved) {
+        setSavePassword(true);
+        const savedCodename = localStorage.getItem("saved_login_codename");
+        const savedPass = localStorage.getItem("saved_login_password");
+        if (savedCodename) setEmail(savedCodename);
+        if (savedPass) setPassword(savedPass);
+      }
+    } catch (e) {
+      console.warn("Failed to load saved login credentials:", e);
+    }
+  }, []);
+
+  const handleSavePasswordToggle = (checked: boolean) => {
+    setSavePassword(checked);
+    if (!checked) {
+      localStorage.removeItem("save_password_enabled");
+      localStorage.removeItem("saved_login_codename");
+      localStorage.removeItem("saved_login_password");
+    }
+  };
+
+  const saveOrClearCredentials = () => {
+    if (savePassword) {
+      localStorage.setItem("save_password_enabled", "true");
+      localStorage.setItem("saved_login_codename", email.trim());
+      localStorage.setItem("saved_login_password", password);
+    } else {
+      localStorage.removeItem("save_password_enabled");
+      localStorage.removeItem("saved_login_codename");
+      localStorage.removeItem("saved_login_password");
+    }
+  };
+
   useEffect(() => {
     setIsNative(isNativeApp());
   }, []);
@@ -259,6 +298,7 @@ export default function LoginPage() {
                 password: password,
               });
             if (!authError && data.session) {
+              saveOrClearCredentials();
               const userId = data.session.user.id;
               localStorage.setItem(
                 `session_start_time_${userId}`,
@@ -313,6 +353,7 @@ export default function LoginPage() {
       }
 
       if (data.session) {
+        saveOrClearCredentials();
         const userId = data.session.user.id;
         localStorage.setItem(
           `session_start_time_${userId}`,
@@ -418,7 +459,17 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex justify-end -mt-2">
+            <div className="flex items-center justify-between -mt-2">
+              <label className="flex items-center gap-2 text-xs font-medium text-theme-text-muted hover:text-theme-text-secondary cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={savePassword}
+                  onChange={(e) => handleSavePasswordToggle(e.target.checked)}
+                  className="h-4 w-4 rounded border-theme-border-input bg-theme-page-bg/85 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 transition-colors cursor-pointer accent-blue-600"
+                />
+                <span>Save Password</span>
+              </label>
+
               <button
                 type="button"
                 onClick={() => {
