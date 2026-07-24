@@ -27,14 +27,15 @@ export default function LoginPage() {
   const pathname = usePathname();
   const [isNative, setIsNative] = useState(false);
 
-  // Load saved credentials if "Save Password" was enabled
+  // Load saved credentials if "Save Password" was enabled or saved credentials exist
   useEffect(() => {
     try {
       const isSaved = localStorage.getItem("save_password_enabled") === "true";
-      if (isSaved) {
+      const savedCodename = localStorage.getItem("saved_login_codename");
+      const savedPass = localStorage.getItem("saved_login_password");
+
+      if (isSaved || (savedCodename && savedPass)) {
         setSavePassword(true);
-        const savedCodename = localStorage.getItem("saved_login_codename");
-        const savedPass = localStorage.getItem("saved_login_password");
         if (savedCodename) setEmail(savedCodename);
         if (savedPass) setPassword(savedPass);
       }
@@ -43,20 +44,33 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Continuously sync credentials whenever savePassword, email, or password change
+  useEffect(() => {
+    if (savePassword) {
+      localStorage.setItem("save_password_enabled", "true");
+      if (email) localStorage.setItem("saved_login_codename", email.trim());
+      if (password) localStorage.setItem("saved_login_password", password);
+    }
+  }, [savePassword, email, password]);
+
   const handleSavePasswordToggle = (checked: boolean) => {
     setSavePassword(checked);
     if (!checked) {
       localStorage.removeItem("save_password_enabled");
       localStorage.removeItem("saved_login_codename");
       localStorage.removeItem("saved_login_password");
+    } else {
+      localStorage.setItem("save_password_enabled", "true");
+      if (email) localStorage.setItem("saved_login_codename", email.trim());
+      if (password) localStorage.setItem("saved_login_password", password);
     }
   };
 
   const saveOrClearCredentials = () => {
     if (savePassword) {
       localStorage.setItem("save_password_enabled", "true");
-      localStorage.setItem("saved_login_codename", email.trim());
-      localStorage.setItem("saved_login_password", password);
+      if (email) localStorage.setItem("saved_login_codename", email.trim());
+      if (password) localStorage.setItem("saved_login_password", password);
     } else {
       localStorage.removeItem("save_password_enabled");
       localStorage.removeItem("saved_login_codename");
@@ -412,6 +426,7 @@ export default function LoginPage() {
                   id="email"
                   name="email"
                   type="text"
+                  autoComplete="username"
                   required
                   placeholder="e.g., KI1024"
                   value={email}
@@ -439,6 +454,7 @@ export default function LoginPage() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   required
                   placeholder="••••••••"
                   value={password}
