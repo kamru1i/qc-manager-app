@@ -559,119 +559,182 @@ export const UserStats: React.FC<UserStatsProps> = ({
               </div>
 
               <div className="space-y-4">
-                {/* H1 Section */}
-                <div className="bg-theme-page-bg/40 border border-theme-border-muted p-4 rounded-xl">
-                  <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-theme-border-input pb-1.5 uppercase tracking-wider">
-                    H1 (January - June)
-                  </h4>
-                  <div
-                    className={`grid ${hasH1Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
-                  >
-                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                        {hasH1Carryover ? "Base" : "Allocated"}
-                      </span>
-                      {renderTwoLineLeave(
-                        hasH1Carryover
-                          ? halfYearlyStats.h1Base
-                          : halfYearlyStats.h1Total,
-                        workingHours,
-                      )}
-                    </div>
-                    {hasH1Carryover && (
+                {halfYearlyStats.isMergedMode ? (
+                  /* Merged Full Year Section */
+                  <div className="bg-theme-page-bg/40 border border-theme-border-muted p-4 rounded-xl">
+                    <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-theme-border-input pb-1.5 uppercase tracking-wider">
+                      Full Year (January - December)
+                    </h4>
+                    <div
+                      className={`grid ${hasH1Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
+                    >
                       <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
                         <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                          Carryover
-                        </span>
-                        {renderTwoLineLeave(h1Carryover, workingHours, true)}
-                      </div>
-                    )}
-                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                        Taken
-                      </span>
-                      {renderTwoLineLeave(
-                        halfYearlyStats.h1Taken,
-                        workingHours,
-                      )}
-                    </div>
-                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                        Remaining
-                      </span>
-                      {renderTwoLineLeave(
-                        halfYearlyStats.h1Remaining,
-                        workingHours,
-                        false,
-                        halfYearlyStats.h1Remaining < 0
-                          ? "text-rose-455"
-                          : "text-emerald-400",
-                      )}
-                    </div>
-                  </div>
-                  {halfYearlyStats.h1Remaining < 0 && (
-                    <p className="text-[10px] text-red-400 mt-2">
-                      ⚠️ Extra leave was taken in the 1st half, which may be
-                      deducted from salary.
-                    </p>
-                  )}
-                </div>
-
-                {/* H2 Section */}
-                <div className="bg-theme-page-bg/40 border border-theme-border-muted p-4 rounded-xl">
-                  <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-theme-border-input pb-1.5 uppercase tracking-wider">
-                    H2 (July - December)
-                  </h4>
-                  <div
-                    className={`grid ${hasH2Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
-                  >
-                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                        {hasH2Carryover ? "Base" : "Allocated"}
-                      </span>
-                      {renderTwoLineLeave(
-                        hasH2Carryover
-                          ? halfYearlyStats.h2Base
-                          : halfYearlyStats.h2Total,
-                        workingHours,
-                      )}
-                    </div>
-                    {hasH2Carryover && (
-                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
-                        <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                          Carryover
+                          {hasH1Carryover ? "Base" : "Allocated"}
                         </span>
                         {renderTwoLineLeave(
-                          halfYearlyStats.carryForward,
+                          hasH1Carryover
+                            ? halfYearlyStats.h1Base
+                            : halfYearlyStats.h1Total,
                           workingHours,
-                          true,
                         )}
                       </div>
+                      {hasH1Carryover && (
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                            Carryover
+                          </span>
+                          {renderTwoLineLeave(h1Carryover, workingHours, true)}
+                        </div>
+                      )}
+                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                          Taken
+                        </span>
+                        {renderTwoLineLeave(
+                          halfYearlyStats.h1Taken,
+                          workingHours,
+                        )}
+                      </div>
+                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                          Remaining
+                        </span>
+                        {renderTwoLineLeave(
+                          halfYearlyStats.h1Remaining,
+                          workingHours,
+                          false,
+                          halfYearlyStats.h1Remaining < 0
+                            ? "text-rose-455"
+                            : "text-emerald-400",
+                        )}
+                      </div>
+                    </div>
+                    {halfYearlyStats.h1Remaining < 0 && (
+                      <p className="text-[10px] text-red-400 mt-2">
+                        ⚠️ Extra leave was taken for the year, which may be
+                        deducted from salary.
+                      </p>
                     )}
-                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                        Taken
-                      </span>
-                      {renderTwoLineLeave(
-                        halfYearlyStats.h2Taken,
-                        workingHours,
-                      )}
-                    </div>
-                    <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
-                      <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
-                        Remaining
-                      </span>
-                      {renderTwoLineLeave(
-                        halfYearlyStats.h2Remaining,
-                        workingHours,
-                        false,
-                        halfYearlyStats.h2Remaining < 0
-                          ? "text-rose-455"
-                          : "text-emerald-400",
-                      )}
-                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Split H1 and H2 Sections */
+                  <>
+                    {/* H1 Section */}
+                    <div className="bg-theme-page-bg/40 border border-theme-border-muted p-4 rounded-xl">
+                      <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-theme-border-input pb-1.5 uppercase tracking-wider">
+                        H1 (January - June)
+                      </h4>
+                      <div
+                        className={`grid ${hasH1Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
+                      >
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                            {hasH1Carryover ? "Base" : "Allocated"}
+                          </span>
+                          {renderTwoLineLeave(
+                            hasH1Carryover
+                              ? halfYearlyStats.h1Base
+                              : halfYearlyStats.h1Total,
+                            workingHours,
+                          )}
+                        </div>
+                        {hasH1Carryover && (
+                          <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                            <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                              Carryover
+                            </span>
+                            {renderTwoLineLeave(h1Carryover, workingHours, true)}
+                          </div>
+                        )}
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                            Taken
+                          </span>
+                          {renderTwoLineLeave(
+                            halfYearlyStats.h1Taken,
+                            workingHours,
+                          )}
+                        </div>
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                            Remaining
+                          </span>
+                          {renderTwoLineLeave(
+                            halfYearlyStats.h1Remaining,
+                            workingHours,
+                            false,
+                            halfYearlyStats.h1Remaining < 0
+                              ? "text-rose-455"
+                              : "text-emerald-400",
+                          )}
+                        </div>
+                      </div>
+                      {halfYearlyStats.h1Remaining < 0 && (
+                        <p className="text-[10px] text-red-400 mt-2">
+                          ⚠️ Extra leave was taken in the 1st half, which may be
+                          deducted from salary.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* H2 Section */}
+                    <div className="bg-theme-page-bg/40 border border-theme-border-muted p-4 rounded-xl">
+                      <h4 className="text-xs font-bold text-blue-400 mb-2 border-b border-theme-border-input pb-1.5 uppercase tracking-wider">
+                        H2 (July - December)
+                      </h4>
+                      <div
+                        className={`grid ${hasH2Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
+                      >
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                            {hasH2Carryover ? "Base" : "Allocated"}
+                          </span>
+                          {renderTwoLineLeave(
+                            hasH2Carryover
+                              ? halfYearlyStats.h2Base
+                              : halfYearlyStats.h2Total,
+                            workingHours,
+                          )}
+                        </div>
+                        {hasH2Carryover && (
+                          <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                            <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                              Carryover
+                            </span>
+                            {renderTwoLineLeave(
+                              halfYearlyStats.carryForward,
+                              workingHours,
+                              true,
+                            )}
+                          </div>
+                        )}
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                            Taken
+                          </span>
+                          {renderTwoLineLeave(
+                            halfYearlyStats.h2Taken,
+                            workingHours,
+                          )}
+                        </div>
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
+                            Remaining
+                          </span>
+                          {renderTwoLineLeave(
+                            halfYearlyStats.h2Remaining,
+                            workingHours,
+                            false,
+                            halfYearlyStats.h2Remaining < 0
+                              ? "text-rose-455"
+                              : "text-emerald-400",
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="mt-5 pt-4 border-t border-theme-border-input/80 flex justify-end">

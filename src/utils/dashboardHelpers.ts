@@ -7,6 +7,7 @@ import {
 } from '@/utils/fileNameSanitizer';
 
 export interface GlobalSettings {
+  office_leave_mode?: 'split' | 'merged';
   office_leave_h1: number;
   office_leave_h2: number;
   /** @deprecated Use office_leave_h1 + office_leave_h2 instead. Kept for backward compatibility. */
@@ -65,6 +66,7 @@ export interface TempAccessEntry {
 }
 
 export const defaultGlobalSettings: GlobalSettings = {
+  office_leave_mode: 'split',
   office_leave_h1: 7,
   office_leave_h2: 7,
   eid_fitr_leave: 0,
@@ -73,12 +75,20 @@ export const defaultGlobalSettings: GlobalSettings = {
 };
 
 /** Helper: derive H1/H2 from legacy office_leave_default if new fields are missing */
-const deriveH1H2 = (gs: any): { h1: number; h2: number } => {
+const deriveH1H2 = (gs: any): { h1: number; h2: number; mode: 'split' | 'merged' } => {
+  const mode: 'split' | 'merged' = gs.office_leave_mode === 'merged' ? 'merged' : 'split';
+  if (mode === 'merged') {
+    const total = Number(
+      gs.office_leave_default ??
+      (gs.office_leave_h1 != null ? gs.office_leave_h1 : 14)
+    );
+    return { h1: total, h2: 0, mode: 'merged' };
+  }
   if (gs.office_leave_h1 != null && gs.office_leave_h2 != null) {
-    return { h1: Number(gs.office_leave_h1), h2: Number(gs.office_leave_h2) };
+    return { h1: Number(gs.office_leave_h1), h2: Number(gs.office_leave_h2), mode: 'split' };
   }
   const total = Number(gs.office_leave_default ?? 14);
-  return { h1: Math.floor(total / 2), h2: total - Math.floor(total / 2) };
+  return { h1: Math.floor(total / 2), h2: total - Math.floor(total / 2), mode: 'split' };
 };
 
 export const parseHolidayItem = (item: any): { date: string; name: string } => {
@@ -99,9 +109,10 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
       if (gs && typeof gs === 'object') {
         const derived = deriveH1H2(gs);
         return {
+          office_leave_mode: derived.mode,
           office_leave_h1: derived.h1,
           office_leave_h2: derived.h2,
-          office_leave_default: Number(gs.office_leave_default ?? 14),
+          office_leave_default: Number(gs.office_leave_default ?? (derived.h1 + derived.h2)),
           eid_fitr_leave: Number(gs.eid_fitr_leave ?? 0),
           eid_adha_leave: Number(gs.eid_adha_leave ?? 0),
           govt_holidays: Array.isArray(gs.govt_holidays) ? gs.govt_holidays : [],
@@ -508,6 +519,7 @@ export interface HalfYearlyOfficeLeaveStats {
   h2Taken: number;
   h2Remaining: number;
   currentHalf: 1 | 2;
+  isMergedMode?: boolean;
 }
 
 export const getSettlementSplits = (s: LeaveSettlement) => {
@@ -560,6 +572,8 @@ export const calculateHalfYearlyOfficeLeave = (
       .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
   }
 
+  const isMergedMode = officeLeaveH2 === 0;
+
   // 2. Base quotas: H1 uses admin-set h1 quota + any carried over from previous year.
   const h1Quota = officeLeaveH1 + carriedOffice;
   const h2Quota = officeLeaveH2;
@@ -586,7 +600,7 @@ export const calculateHalfYearlyOfficeLeave = (
       if (!shouldCountAsOffice) return;
 
       const month = parseInt(r.date.substring(5, 7), 10);
-      if (month <= 6) {
+      if (isMergedMode || month <= 6) {
         h1Taken += 1;
       } else {
         h2Taken += 1;
@@ -600,7 +614,7 @@ export const calculateHalfYearlyOfficeLeave = (
       const dayEquivalent = mins / (workingHours * 60);
 
       const month = parseInt(r.date.substring(5, 7), 10);
-      if (month <= 6) {
+      if (isMergedMode || month <= 6) {
         h1Taken += dayEquivalent;
       } else {
         h2Taken += dayEquivalent;
@@ -652,7 +666,7 @@ export const calculateHalfYearlyOfficeLeave = (
   } else if (selectedYear > currentYear) {
     currentHalf = 1;
   } else {
-    currentHalf = (now.getMonth() + 1) <= 6 ? 1 : 2;
+    currentHalf = now.getMonth() >= 6 ? 2 : 1;
   }
 
   return {
@@ -666,6 +680,7 @@ export const calculateHalfYearlyOfficeLeave = (
     h2Taken,
     h2Remaining,
     currentHalf,
+    isMergedMode,
   };
 };
 

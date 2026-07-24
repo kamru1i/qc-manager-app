@@ -19,8 +19,10 @@ export function AdminLeaveSettings({
   onSaveGlobalSettings,
 }: AdminLeaveSettingsProps) {
   // 1. Office Leave Settings State
+  const [officeLeaveMode, setOfficeLeaveMode] = useState<'split' | 'merged'>('split');
   const [officeLeaveH1, setOfficeLeaveH1] = useState(7);
   const [officeLeaveH2, setOfficeLeaveH2] = useState(7);
+  const [officeLeaveYearly, setOfficeLeaveYearly] = useState(14);
   const [submittingOffice, setSubmittingOffice] = useState(false);
 
   // 2. Eid Leave Settings State
@@ -37,8 +39,13 @@ export function AdminLeaveSettings({
   // Sync state with globalSettings on load/change
   useEffect(() => {
     if (globalSettings) {
-      setOfficeLeaveH1(globalSettings.office_leave_h1 ?? 7);
-      setOfficeLeaveH2(globalSettings.office_leave_h2 ?? 7);
+      const mode = globalSettings.office_leave_mode === 'merged' ? 'merged' : 'split';
+      setOfficeLeaveMode(mode);
+      const h1 = globalSettings.office_leave_h1 ?? 7;
+      const h2 = globalSettings.office_leave_h2 ?? 7;
+      setOfficeLeaveH1(h1);
+      setOfficeLeaveH2(h2);
+      setOfficeLeaveYearly(mode === 'merged' ? (globalSettings.office_leave_default ?? (h1 + h2)) : (h1 + h2));
 
       setEidFitrLeave(globalSettings.eid_fitr_leave ?? 0);
       setEidAdhaLeave(globalSettings.eid_adha_leave ?? 0);
@@ -63,15 +70,27 @@ export function AdminLeaveSettings({
   const handleSaveOffice = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittingOffice(true);
+
+    let updatedH1 = Number(officeLeaveH1);
+    let updatedH2 = Number(officeLeaveH2);
+    let updatedDefault = updatedH1 + updatedH2;
+
+    if (officeLeaveMode === 'merged') {
+      updatedDefault = Number(officeLeaveYearly);
+      updatedH1 = updatedDefault;
+      updatedH2 = 0;
+    }
+
     const success = await onSaveGlobalSettings({
       ...globalSettings,
-      office_leave_h1: Number(officeLeaveH1),
-      office_leave_h2: Number(officeLeaveH2),
-      office_leave_default: Number(officeLeaveH1) + Number(officeLeaveH2),
+      office_leave_mode: officeLeaveMode,
+      office_leave_h1: updatedH1,
+      office_leave_h2: updatedH2,
+      office_leave_default: updatedDefault,
     }, { silent: true });
     setSubmittingOffice(false);
     if (success) {
-      toast.success('Office allocated leave settings updated successfully!');
+      toast.success(`Office allocated leave updated (${officeLeaveMode === 'merged' ? 'Merged Yearly' : 'Split H1/H2'})!`);
     }
   };
 
@@ -221,40 +240,85 @@ export function AdminLeaveSettings({
 
           {/* Card 1: Office Allocated Leave Settings */}
           <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-xl rounded-2xl p-5 flex flex-col gap-4">
-            <div>
-              <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider">Office Allocated Leaves</h4>
-              <p className="text-[10px] text-theme-text-muted mt-0.5">Configure allocated days for H1 and H2 periods</p>
+            <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-theme-border-muted/60">
+              <div>
+                <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider">Office Allocated Leaves</h4>
+                <p className="text-[10px] text-theme-text-muted mt-0.5">
+                  {officeLeaveMode === 'split' ? 'Configure allocated days for H1 and H2 periods' : 'Configure allocated days for the full year'}
+                </p>
+              </div>
+              {/* Split / Merge Pill Toggle */}
+              <div className="flex bg-theme-page-bg border border-theme-border-input p-0.5 rounded-lg text-[10px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setOfficeLeaveMode('split')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                    officeLeaveMode === 'split'
+                      ? 'bg-blue-600 text-white shadow-xs font-bold'
+                      : 'text-theme-text-muted hover:text-theme-text-primary'
+                  }`}
+                >
+                  Split (H1/H2)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOfficeLeaveMode('merged')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                    officeLeaveMode === 'merged'
+                      ? 'bg-blue-600 text-white shadow-xs font-bold'
+                      : 'text-theme-text-muted hover:text-theme-text-primary'
+                  }`}
+                >
+                  Merged (Yearly)
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSaveOffice} className="space-y-4 text-xs font-medium">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-theme-text-muted font-semibold mb-1">H1 (Jan - Jun)</label>
+              {officeLeaveMode === 'split' ? (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-150">
+                  <div>
+                    <label className="block text-theme-text-muted font-semibold mb-1">H1 (Jan - Jun)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      required
+                      value={officeLeaveH1}
+                      onChange={(e) => setOfficeLeaveH1(Math.round(parseFloat(e.target.value) || 0))}
+                      className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
+                    />
+                    <span className="text-[9px] text-theme-text-muted mt-1 block">Usually 7 Days</span>
+                  </div>
+                  <div>
+                    <label className="block text-theme-text-muted font-semibold mb-1">H2 (Jul - Dec)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      required
+                      value={officeLeaveH2}
+                      onChange={(e) => setOfficeLeaveH2(Math.round(parseFloat(e.target.value) || 0))}
+                      className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
+                    />
+                    <span className="text-[9px] text-theme-text-muted mt-1 block">Usually 7 Days</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="animate-in fade-in duration-150">
+                  <label className="block text-theme-text-muted font-semibold mb-1">Full Year Allocated Leave (Days)</label>
                   <input
                     type="number"
                     min="0"
                     step="1"
                     required
-                    value={officeLeaveH1}
-                    onChange={(e) => setOfficeLeaveH1(Math.round(parseFloat(e.target.value) || 0))}
+                    value={officeLeaveYearly}
+                    onChange={(e) => setOfficeLeaveYearly(Math.round(parseFloat(e.target.value) || 0))}
                     className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
                   />
-                  <span className="text-[9px] text-theme-text-muted mt-1 block">Usually 7 Days</span>
+                  <span className="text-[9px] text-theme-text-muted mt-1 block">Usually 14 Days (Jan - Dec)</span>
                 </div>
-                <div>
-                  <label className="block text-theme-text-muted font-semibold mb-1">H2 (Jul - Dec)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    required
-                    value={officeLeaveH2}
-                    onChange={(e) => setOfficeLeaveH2(Math.round(parseFloat(e.target.value) || 0))}
-                    className="block w-full px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 font-mono"
-                  />
-                  <span className="text-[9px] text-theme-text-muted mt-1 block">Usually 7 Days</span>
-                </div>
-              </div>
+              )}
 
               <div className="pt-2 border-t border-theme-border-muted">
                 <button

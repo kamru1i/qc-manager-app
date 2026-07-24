@@ -47,21 +47,30 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
   let officeSubtext = '';
 
   if (halfYearlyStats) {
-    const isH1 = halfYearlyStats.currentHalf === 1;
-    officeRemainingVal = isH1
-      ? halfYearlyStats.h1Remaining
-      : halfYearlyStats.h2Remaining;
-    const h1Carryover = halfYearlyStats.h1Total - halfYearlyStats.h1Base;
-    const hasH1Carryover = h1Carryover > 0;
-    const hasH2Carryover = halfYearlyStats.carryForward > 0;
+    if (halfYearlyStats.isMergedMode) {
+      officeRemainingVal = halfYearlyStats.h1Remaining;
+      const h1Carryover = halfYearlyStats.h1Total - halfYearlyStats.h1Base;
+      const hasH1Carryover = h1Carryover > 0;
+      officeSubtext = hasH1Carryover
+        ? `Full Year Allowance: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} carryover`
+        : `Full Year Allowance: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)}`;
+    } else {
+      const isH1 = halfYearlyStats.currentHalf === 1;
+      officeRemainingVal = isH1
+        ? halfYearlyStats.h1Remaining
+        : halfYearlyStats.h2Remaining;
+      const h1Carryover = halfYearlyStats.h1Total - halfYearlyStats.h1Base;
+      const hasH1Carryover = h1Carryover > 0;
+      const hasH2Carryover = halfYearlyStats.carryForward > 0;
 
-    officeSubtext = isH1
-      ? (hasH1Carryover
-          ? `H1 (Jan-Jun) Allowance: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} carryover`
-          : `H1 (Jan-Jun) Allowance: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)}`)
-      : (hasH2Carryover
-          ? `H2 (Jul-Dec) Allowance: ${formatDaysAndHours(halfYearlyStats.h2Base, workingHours)} + ${formatDaysAndHours(halfYearlyStats.carryForward, workingHours)} carryover`
-          : `H2 (Jul-Dec) Allowance: ${formatDaysAndHours(halfYearlyStats.h2Total, workingHours)}`);
+      officeSubtext = isH1
+        ? (hasH1Carryover
+            ? `H1 (Jan-Jun) Allowance: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} carryover`
+            : `H1 (Jan-Jun) Allowance: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)}`)
+        : (hasH2Carryover
+            ? `H2 (Jul-Dec) Allowance: ${formatDaysAndHours(halfYearlyStats.h2Base, workingHours)} + ${formatDaysAndHours(halfYearlyStats.carryForward, workingHours)} carryover`
+            : `H2 (Jul-Dec) Allowance: ${formatDaysAndHours(halfYearlyStats.h2Total, workingHours)}`);
+    }
   }
 
   const finalOfficeRemaining = officeRemainingVal - officeDeduction;
