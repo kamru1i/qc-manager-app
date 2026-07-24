@@ -35,8 +35,26 @@ async function main() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!token || !repo) {
-    console.error('Error: GITHUB_TOKEN and GITHUB_REPOSITORY are required.');
-    process.exit(1);
+    console.warn('Warning: GITHUB_TOKEN or GITHUB_REPOSITORY not set. Generating local latest.json manifest for testing...');
+    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const version = packageJson.version;
+    const releaseNotes = getReleaseNotesForVersion(version);
+
+    const localLatestJson = {
+      version,
+      notes: releaseNotes,
+      pub_date: new Date().toISOString(),
+      releaseDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      platforms: {},
+      checksums: {},
+      downloads: {}
+    };
+
+    const latestJsonPath = path.join(process.cwd(), 'latest.json');
+    fs.writeFileSync(latestJsonPath, JSON.stringify(localLatestJson, null, 2));
+    console.log(`Local latest.json generated successfully for v${version}!`);
+    return;
   }
 
   const packageJsonPath = path.join(process.cwd(), 'package.json');

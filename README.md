@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,15 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.0 — Granular Access, Feature Flags & Session Egress Optimization (Current)
+### 🚀 v6.4.1 — Patch Release (Feature Flag Scoping, UI Reset & Realtime Sync) (Current)
+
+- **Target Employee Feature Flag Scoping**: Updated leave application form (`AddLeave.tsx`) to resolve feature flags against target employee accounts (`targetProfile || profile`). Prevents supervisor/admin overrides from affecting employee leave entries.
+- **State Pollution Fix in User Management**: Added deep equality guards (`JSON.stringify(updated) !== JSON.stringify(viewingStaff)`) when switching staff profiles in User Management, preventing stale feature flag overrides from leaking across user profiles.
+- **Database Reset RPC & Migration**: Deployed `reset_all_user_feature_flags()` RPC migration (`supabase/add_reset_user_feature_flags_rpc.sql`) on Supabase PostgreSQL database to atomically clear leftover individual overrides across all profiles.
+- **Global Feature Flags Reset Button**: Added a dedicated **"Reset All Users to Inherit"** button under **Settings** → **Feature Flags** for Superadmins to easily clear individual overrides fleet-wide.
+- **Realtime Global Settings Sync**: Integrated `refreshProfiles()` and custom window events into `ProfileSettings.tsx`, guaranteeing global feature flag updates reflect instantly across the entire application context without requiring a manual page refresh.
+
+### 🚀 v6.4.0 — Granular Access, Feature Flags & Session Egress Optimization
 
 - **Settings Subtabs Restructuring & Per-Role Access:** Renamed and reorganized Profile Settings subtabs into 6 distinct views: **Profile**, **Menu**, **Sanitizer**, **Access**, **Feature Flags**, and **VPN**. Configured granular access control so administrators can toggle visibility for every individual Settings subtab independently per role.
 - **Dynamic Feature Flags Engine:** Built a full feature flag system (`featureFlagsRegistry.ts`) supporting 14 feature flags (Break Time, Jummah Adjustment, Custom Entry, Bulk Add Leave, Reserve Holiday, Overtime, Short Leave, Split/Merged Office Leave, etc.) with role defaults and per-user override matrix.

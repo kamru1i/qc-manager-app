@@ -1,0 +1,9 @@
+{
+  "version": "6.4.1",
+  "notes": "### 🚀 v6.4.1 — Patch Release (Feature Flag Scoping, UI Reset & Realtime Sync) (Current)\n\n- **Target Employee Feature Flag Scoping**: Updated leave application form (`AddLeave.tsx`) to resolve feature flags against target employee accounts (`targetProfile || profile`). Prevents supervisor/admin overrides from affecting employee leave entries.\n- **State Pollution Fix in User Management**: Added deep equality guards (`JSON.stringify(updated) !== JSON.stringify(viewingStaff)`) when switching staff profiles in User Management, preventing stale feature flag overrides from leaking across user profiles.\n- **Database Reset RPC & Migration**: Deployed `reset_all_user_feature_flags()` RPC migration (`supabase/add_reset_user_feature_flags_rpc.sql`) on Supabase PostgreSQL database to atomically clear leftover individual overrides across all profiles.\n- **Global Feature Flags Reset Button**: Added a dedicated **\"Reset All Users to Inherit\"** button under **Settings** → **Feature Flags** for Superadmins to easily clear individual overrides fleet-wide.\n- **Realtime Global Settings Sync**: Integrated `refreshProfiles()` and custom window events into `ProfileSettings.tsx`, guaranteeing global feature flag updates reflect instantly across the entire application context without requiring a manual page refresh.",
+  "pub_date": "2026-07-24T15:30:27.703Z",
+  "releaseDate": "July 24, 2026",
+  "platforms": {},
+  "checksums": {},
+  "downloads": {}
+}
