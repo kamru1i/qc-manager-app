@@ -1,6 +1,6 @@
 import { Profile } from "@/types";
 import { getDefaultRoleVisibility } from '@/utils/menuTabsRegistry';
-import { getDefaultFeatureFlagState } from '@/utils/featureFlagsRegistry';
+import { getDefaultFeatureFlagState, FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
 
 /**
  * True only for the superadmin role. Use for superadmin-exclusive capabilities
@@ -35,19 +35,20 @@ export const ROLE_RANK: Record<string, number> = {
 /**
  * Superadmin feature flag check. Gates functionality (not nav). Reading an
  * unset flag falls back to default feature state (getDefaultFeatureFlagState).
+ * Per-user override takes precedence over global setting.
  */
 export const isFeatureEnabled = (
   flagKey: string,
   globalSettings?: { feature_flags?: Record<string, boolean> } | null,
   user?: Profile | null
 ): boolean => {
-  if (user && isSuperadmin(user)) return true;
-
-  // Check per-user feature flag override (if explicitly configured by Superadmin)
+  // Check per-user feature flag override (if explicitly configured)
   const userOverride = user?.global_settings?.user_feature_flags?.[flagKey];
   if (typeof userOverride === 'boolean') {
     return userOverride;
   }
+
+  if (user && isSuperadmin(user)) return true;
 
   const configuredFlag = globalSettings?.feature_flags?.[flagKey];
   if (typeof configuredFlag === 'boolean') {
@@ -88,12 +89,13 @@ export const canAdminManageFeatureFlag = (
 };
 
 interface VisibilitySettings {
+  feature_flags?: Record<string, boolean>;
   role_visibility?: Record<string, Record<string, boolean>>;
   temp_access?: Array<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string }>;
 }
 
 /**
- * Superadmin-configurable per-role tab visibility, with time-boxed overrides.
+ * Superadmin-configurable per-role tab visibility, with time-boxed overrides & feature flag gating.
  *
  * Base: a tab is hidden for a role when role_visibility[role][tabKey] === false,
  * or when unset and default role permission is false (getDefaultRoleVisibility).
@@ -106,6 +108,13 @@ export const isTabVisibleForRole = (
   globalSettings?: VisibilitySettings | null
 ): boolean => {
   if (!user) return false;
+
+  // Check mapped feature flag first
+  const mappedFlag = Object.keys(FLAG_TO_TAB_KEY).find((flag) => FLAG_TO_TAB_KEY[flag] === tabKey);
+  if (mappedFlag && !isFeatureEnabled(mappedFlag, globalSettings, user)) {
+    return false;
+  }
+
   if (isSuperadmin(user)) return true; // superadmin always sees everything
 
   const roleVis = globalSettings?.role_visibility?.[user.role];

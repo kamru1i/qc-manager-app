@@ -112,6 +112,9 @@ export function AddLeave({
   // Feature flags (superadmin-controlled; default ON)
   const breakFeatureOn = isFeatureEnabled('break_time', globalSettings, profile);
   const jummahFeatureOn = isFeatureEnabled('jummah_adjustment', globalSettings, profile);
+  const leaveAdjustmentsOn = isFeatureEnabled('leave_adjustments', globalSettings, profile);
+  const bulkLeaveOn = isFeatureEnabled('bulk_leave_submission', globalSettings, profile);
+  const reserveClaimingOn = isFeatureEnabled('reserve_holiday_claiming', globalSettings, profile);
 
   // Break time is only offered for Short Leave when signed in more than 1 hour late.
   const breakEligible = breakFeatureOn && isBreakEligible(leaveType, signInTime, defaultSignIn || '13:00');
@@ -924,6 +927,9 @@ export function AddLeave({
                 adjustJummah={adjustJummah}
                 setAdjustJummah={setAdjustJummah}
                 jummahEnabled={jummahFeatureOn}
+                leaveAdjustmentsEnabled={leaveAdjustmentsOn}
+                bulkLeaveEnabled={bulkLeaveOn}
+                reserveClaimingEnabled={reserveClaimingOn}
                 breakEligible={breakEligible}
                 breakEnabled={breakEnabled}
                 setBreakEnabled={setBreakEnabled}

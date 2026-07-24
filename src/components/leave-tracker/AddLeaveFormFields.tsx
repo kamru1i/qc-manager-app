@@ -60,6 +60,9 @@ interface AddLeaveFormFieldsProps {
   setBreakEnabled?: (val: boolean) => void;
   breakMinutes?: number;
   setBreakMinutes?: (val: number) => void;
+  leaveAdjustmentsEnabled?: boolean;
+  bulkLeaveEnabled?: boolean;
+  reserveClaimingEnabled?: boolean;
   onDateErrorChange?: (id: string, hasError: boolean) => void;
 }
 
@@ -106,6 +109,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   setBreakEnabled,
   breakMinutes = 20,
   setBreakMinutes,
+  leaveAdjustmentsEnabled = true,
+  bulkLeaveEnabled = true,
+  reserveClaimingEnabled = true,
 }) => {
   const isHoliday = globalSettings
     ? checkIfHolidayOrWeekend(date, globalSettings)
@@ -296,7 +302,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               }
               className="bg-theme-page-bg text-xs py-2"
             />
-            {isFullLeave && (
+            {isFullLeave && bulkLeaveEnabled && (
               <button
                 type="button"
                 onClick={handleAddBulkDate}
@@ -333,7 +339,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
       </div>
 
       {/* Bulk Dates Input List */}
-      {isFullLeave && bulkDates.length > 0 && (
+      {isFullLeave && bulkLeaveEnabled && bulkDates.length > 0 && (
         <div className="space-y-2.5 p-3 bg-theme-page-bg/40 rounded-lg border border-theme-border-muted/80 max-h-48 overflow-y-auto">
           <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
             Additional Leave Dates ({bulkDates.length}{" "}
@@ -368,13 +374,13 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                       type="button"
                       onClick={() => handleRemoveBulkDate(index)}
                       className="p-1.5 bg-red-955/60 hover:bg-red-900 border border-red-900/50 text-red-400 rounded-lg transition-all flex items-center justify-center cursor-pointer shrink-0"
-                      title="Remove"
+                      title="Remove date"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   {bulkDup && (
-                    <p className="text-red-500 font-semibold text-[9px] pl-6 leading-snug">
+                    <p className="text-red-500 font-semibold text-[10px] ml-6 leading-snug">
                       ⚠️ Duplicate! {formatDate(bulkDate)} is already added as{" "}
                       {bulkDup.leave_type === "Full Leave"
                         ? "Full Leave"
@@ -393,7 +399,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
       {/* Adjustment Category & Overtime/Reserve Switch */}
       <div className="grid grid-cols-1 gap-4">
         {/* Render Adjustment Category Toggles only for Full Leave */}
-        {leaveType === "Full Leave" && hasAnyFullLeaveToggle && (
+        {leaveType === "Full Leave" && leaveAdjustmentsEnabled && hasAnyFullLeaveToggle && (
           <div className="space-y-2">
             <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Leave Adjustment
@@ -440,7 +446,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     onClick={() => handleToggleCategory("Govt Holiday")}
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                       adjustmentCategory === "Govt Holiday"
-                        ? "bg-teal-600"
+                        ? "bg-blue-600"
                         : "bg-theme-border-input"
                     }`}
                   >
@@ -460,7 +466,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
                   <div>
                     <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                      Eid-ul-Fitr
+                      Eid-ul-Fitr Reserve
                     </span>
                   </div>
                   <button
@@ -468,7 +474,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     onClick={() => handleToggleCategory("Eid-ul-Fitr")}
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                       adjustmentCategory === "Eid-ul-Fitr"
-                        ? "bg-purple-600"
+                        ? "bg-blue-600"
                         : "bg-theme-border-input"
                     }`}
                   >
@@ -488,7 +494,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
                   <div>
                     <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                      Eid-ul-Adha
+                      Eid-ul-Adha Reserve
                     </span>
                   </div>
                   <button
@@ -496,7 +502,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     onClick={() => handleToggleCategory("Eid-ul-Adha")}
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                       adjustmentCategory === "Eid-ul-Adha"
-                        ? "bg-purple-600"
+                        ? "bg-blue-600"
                         : "bg-theme-border-input"
                     }`}
                   >
@@ -516,6 +522,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
         {/* Short Leave Adjustment toggles */}
         {leaveType === "Short Leave" &&
+          reserveClaimingEnabled &&
           (govtHolidayRemaining > 0 ||
             eidFitrRemaining > 0 ||
             eidAdhaRemaining > 0) && (

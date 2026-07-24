@@ -5,6 +5,8 @@ import { ScrollText, ArrowLeft, Copy, Check } from "lucide-react";
 import { RecordItem, Profile } from "@/types";
 import { AdminSalesSummary } from "@/utils/adminSalesSummary";
 
+import { isFeatureEnabled } from "@/utils/permissionService";
+
 // ─── Reusable card chrome ────────────────────────────────────────────
 
 interface CopyHelperCardProps {
@@ -314,7 +316,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
       key: "admin_sales_summary",
       title: "Sales Summary",
       subtitle: "(Sales Report for Admin)",
-      visible: hasSalePermission,
+      visible: hasSalePermission && isFeatureEnabled('copy_helper_admin_summary', profile?.global_settings, profile),
       copied: copiedStates["boxAdmin"],
       onCopy: copyAdminSummary,
       render: () => (

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, ShieldAlert } from 'lucide-react';
 import { RecordItem, Profile } from '@/types';
+import { isFeatureEnabled } from '@/utils/permissionService';
 import { ReportSummaryCards } from './ReportSummaryCards';
 import { SubmissionVolumeChart } from './SubmissionVolumeChart';
 import { BranchContributionChart } from './BranchContributionChart';
@@ -17,11 +18,12 @@ import {
 interface ReportsDashboardViewProps {
   records: RecordItem[];
   profilesList: Profile[];
-  profile: Profile | null;
+  profile?: Profile | null;
 }
 
 export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
   records,
+  profile,
 }) => {
   // Available years from records
   const availableYears = useMemo(() => {
@@ -305,32 +307,43 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
         comparisonLabel={metricsTimeScope === 'yearly' ? 'year' : 'month'}
       />
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <SubmissionVolumeChart
-          monthlyData={monthlyData}
-          maxMonthlyVal={maxMonthlyVal}
-          selectedYear={selectedYear}
-        />
-        <BranchContributionChart
-          branchData={branchData}
-          scopeLabel={scopeLabel}
-        />
-      </div>
+      {/* Charts Grid & Operational Insights */}
+      {isFeatureEnabled('reports_analytics', profile?.global_settings, profile) ? (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <SubmissionVolumeChart
+              monthlyData={monthlyData}
+              maxMonthlyVal={maxMonthlyVal}
+              selectedYear={selectedYear}
+            />
+            <BranchContributionChart
+              branchData={branchData}
+              scopeLabel={scopeLabel}
+            />
+          </div>
 
-      {/* Category Breakdown & Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <FileCategoryChart
-          categoryBreakdown={categoryBreakdown}
-          scopeLabel={scopeLabel}
-        />
-        <OperationalInsights
-          totalRecords={systemMetricsFilteredRecords.length}
-          scopedDaysCount={scopedDaysCount}
-          dominantActivity={dominantActivity}
-          stats={stats}
-        />
-      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <FileCategoryChart
+              categoryBreakdown={categoryBreakdown}
+              scopeLabel={scopeLabel}
+            />
+            <OperationalInsights
+              totalRecords={systemMetricsFilteredRecords.length}
+              scopedDaysCount={scopedDaysCount}
+              dominantActivity={dominantActivity}
+              stats={stats}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="p-8 bg-slate-900/60 border border-slate-800/80 rounded-2xl text-center space-y-2.5">
+          <ShieldAlert className="h-7 w-7 text-amber-400 mx-auto" />
+          <h3 className="text-sm font-bold text-slate-200">Advanced Performance Analytics Disabled</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto">
+            Detailed analytics charts and visual performance insights are currently disabled for this account by feature flag settings.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
