@@ -177,7 +177,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
   const [ipAddress, setIpAddress] = useState<string>("Detecting...");
   const [vpnName, setVpnName] = useState<string>("None");
   const [isVpnConnected, setIsVpnConnected] = useState<boolean>(false);
-  const [isEditingNetwork, setIsEditingNetwork] = useState<boolean>(false);
+  const [editingNetworkField, setEditingNetworkField] = useState<'vpnName' | 'ipAddress' | null>(null);
   const [isDetectingIp, setIsDetectingIp] = useState<boolean>(true);
 
   // Managed VPN list from profile settings
@@ -403,28 +403,12 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
       visible: hasSalePermission,
       copied: localCopiedStates["boxNetwork"],
       onCopy: copyNetworkBox,
-      headerAction: (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            type="button"
-            onClick={() => setIsEditingNetwork(!isEditingNetwork)}
-            className={`p-1.5 border rounded-lg transition-all cursor-pointer ${
-              isEditingNetwork
-                ? "bg-blue-600/20 border-blue-500/40 text-blue-400"
-                : "bg-theme-page-bg hover:bg-theme-border-input border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
-            }`}
-            title="Edit IP & VPN Details"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ),
       render: () => (
         <div className="space-y-2.5 text-xs font-sans">
           {/* 1st Row: VPN Name */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between group/field py-0.5">
             <span className="text-theme-text-muted font-medium">VPN Name:</span>
-            {isEditingNetwork ? (
+            {editingNetworkField === "vpnName" ? (
               <select
                 value={vpnName}
                 onChange={(e) => {
@@ -439,8 +423,11 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
                     setVpnName(val);
                     setIsVpnConnected(val !== "None");
                   }
+                  setEditingNetworkField(null);
                 }}
-                className="w-36 px-2 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-right text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                onBlur={() => setEditingNetworkField(null)}
+                autoFocus
+                className="w-36 px-2 py-1 bg-theme-page-bg border border-blue-500 rounded-lg text-theme-text-primary text-right text-xs focus:outline-none cursor-pointer"
               >
                 <option value="None">None (Disconnected)</option>
                 {availableVpns.map((v: string) => (
@@ -451,26 +438,49 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
                 <option value="__custom__">+ Custom VPN Name...</option>
               </select>
             ) : (
-              <span className={isVpnConnected ? "text-emerald-400 font-bold" : "text-theme-text-secondary font-semibold"}>
-                {vpnName}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className={isVpnConnected ? "text-emerald-400 font-bold" : "text-theme-text-secondary font-semibold"}>
+                  {vpnName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setEditingNetworkField("vpnName")}
+                  className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer"
+                  title="Edit VPN Name"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              </div>
             )}
           </div>
 
           {/* 2nd Row: IP Address */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between group/field py-0.5">
             <span className="text-theme-text-muted font-medium">IP Address:</span>
-            {isEditingNetwork ? (
+            {editingNetworkField === "ipAddress" ? (
               <input
                 type="text"
                 value={ipAddress}
                 onChange={(e) => setIpAddress(e.target.value)}
-                className="w-36 px-2 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-right font-mono text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                onBlur={() => setEditingNetworkField(null)}
+                onKeyDown={(e) => e.key === "Enter" && setEditingNetworkField(null)}
+                autoFocus
+                className="w-36 px-2 py-1 bg-theme-page-bg border border-blue-500 rounded-lg text-theme-text-primary text-right font-mono text-xs focus:outline-none"
               />
             ) : (
-              <span className="text-theme-text-primary font-bold font-mono">
-                {ipAddress} {isDetectingIp && "(detecting...)"}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-theme-text-primary font-bold font-mono">
+                  {ipAddress} {isDetectingIp && "(detecting...)"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setEditingNetworkField("ipAddress")}
+                  className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer"
+                  title="Edit IP Address"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -499,7 +509,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
       render: () => (
         <div className="space-y-3 font-sans">
           {/* Quick Copy Item 1 */}
-          <div className="flex items-center justify-between p-2 bg-theme-page-bg border border-theme-border-muted rounded-lg group">
+          <div className="flex items-center justify-between p-2 bg-theme-page-bg border border-theme-border-muted rounded-lg group/item">
             {editingQuickText1 ? (
               <input
                 type="text"
@@ -516,7 +526,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingQuickText1(true)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
+                  className="opacity-0 group-hover/item:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
                   title="Edit text"
                 >
                   <Pencil className="h-3 w-3" />
@@ -542,7 +552,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
           </div>
 
           {/* Quick Copy Item 2 */}
-          <div className="flex items-center justify-between p-2 bg-theme-page-bg border border-theme-border-muted rounded-lg group">
+          <div className="flex items-center justify-between p-2 bg-theme-page-bg border border-theme-border-muted rounded-lg group/item">
             {editingQuickText2 ? (
               <input
                 type="text"
@@ -559,7 +569,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingQuickText2(true)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
+                  className="opacity-0 group-hover/item:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
                   title="Edit text"
                 >
                   <Pencil className="h-3 w-3" />
