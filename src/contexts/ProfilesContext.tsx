@@ -56,6 +56,7 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const fetchingRef = useRef(false);
+  const loadedUserIdRef = useRef<string | null>(null);
 
   const refreshProfiles = useCallback(async () => {
     if (fetchingRef.current) return;
@@ -66,9 +67,9 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
         .select(PROFILE_COLUMNS)
         .order('username', { ascending: true });
       if (!error && data) {
-        const mapped = data.map(
-          (p) => mapProfilePasswordResetStatus(p as unknown as Profile) as Profile,
-        );
+        const mapped = data
+          .map((p) => mapProfilePasswordResetStatus(p as unknown as Profile) as Profile)
+          .sort((a, b) => (a.username || '').localeCompare(b.username || ''));
         setProfilesList(mapped);
         // Mirror to IndexedDB so offline sessions still get the list
         try {
@@ -86,24 +87,34 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
   }, []);
 
   // Initial load: cache-first for instant paint/offline, then network
+  const sessionUserId = sessionUser?.id;
+
   useEffect(() => {
-    if (!sessionUser) {
+    if (!sessionUserId) {
       setProfilesList([]);
       setIsLoaded(false);
+      loadedUserIdRef.current = null;
       return;
     }
     let active = true;
 
     (async () => {
-      try {
-        const cached = (await getCacheData('profiles_cache')) as Profile[];
-        if (active && cached.length > 0) {
-          setProfilesList(cached.map((p) => mapProfilePasswordResetStatus(p) as Profile));
-          setIsLoaded(true);
+      if (loadedUserIdRef.current !== sessionUserId) {
+        try {
+          const cached = (await getCacheData('profiles_cache')) as Profile[];
+          if (active && cached.length > 0) {
+            const mappedAndSorted = cached
+              .map((p) => mapProfilePasswordResetStatus(p) as Profile)
+              .sort((a, b) => (a.username || '').localeCompare(b.username || ''));
+            setProfilesList(mappedAndSorted);
+            setIsLoaded(true);
+          }
+        } catch {
+          // no cache — network fetch below covers it
         }
-      } catch {
-        // no cache — network fetch below covers it
+        loadedUserIdRef.current = sessionUserId;
       }
+
       if (typeof window === 'undefined' || navigator.onLine) {
         await refreshProfiles();
       } else if (active) {
@@ -114,7 +125,7 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
     return () => {
       active = false;
     };
-  }, [sessionUser, refreshProfiles]);
+  }, [sessionUserId, refreshProfiles]);
 
   // Single realtime patcher for the whole app
   const handleProfilesRealtime = useCallback(
@@ -123,7 +134,10 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
         const mapped = mapProfilePasswordResetStatus(
           payload.new as unknown as Profile,
         ) as Profile;
-        setProfilesList((prev) => prev.map((p) => (p.id === mapped.id ? mapped : p)));
+        setProfilesList((prev) => {
+          const updated = prev.map((p) => (p.id === mapped.id ? mapped : p));
+          return updated.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
+        });
       } else {
         // INSERT / DELETE — membership changed, refetch the list once
         refreshProfiles();
