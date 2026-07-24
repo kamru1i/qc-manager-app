@@ -3,6 +3,7 @@
 import React from "react";
 import { Profile } from "@/types";
 import { StaffSettingsForm } from "@/components/leave-tracker/StaffSettingsForm";
+import { useProfiles } from "@/contexts/ProfilesContext";
 import {
   RefreshCw,
   KeyRound,
@@ -153,6 +154,14 @@ export const UserProfileSettingsPanel: React.FC<
   editUserFeatureFlags,
   setEditUserFeatureFlags,
 }) => {
+  const { profilesList } = useProfiles();
+  const superadminProfile = React.useMemo(() => profilesList.find((p) => p.role === "superadmin"), [profilesList]);
+  const effectiveAdminDelegatedFlags = React.useMemo(() => {
+    const saFlags = superadminProfile?.global_settings?.admin_delegated_flags;
+    const userFlags = currentUser?.global_settings?.admin_delegated_flags;
+    return { ...(userFlags || {}), ...(saFlags || {}) };
+  }, [superadminProfile, currentUser]);
+
   const isSupervisor = currentUser?.role === "supervisor";
   const isTargetAdmin = viewingStaff.role === "admin" || viewingStaff.role === "superadmin";
   const showSupervisorWarning = isSupervisor && isTargetAdmin;
@@ -230,6 +239,7 @@ export const UserProfileSettingsPanel: React.FC<
         setDelegatedKpiSupervisorId={setEditDelegatedKpiSupervisorId}
         userFeatureFlags={editUserFeatureFlags}
         setUserFeatureFlags={setEditUserFeatureFlags}
+        adminDelegatedFlags={effectiveAdminDelegatedFlags}
       />
 
       <div className="bg-theme-card-bg/20 border border-theme-border-muted/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">

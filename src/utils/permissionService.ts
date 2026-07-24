@@ -62,9 +62,12 @@ export const isFeatureEnabled = (
  */
 export const isAdminDelegatedFeature = (
   flagKey: string,
-  globalSettings?: { admin_delegated_flags?: Record<string, boolean> } | null
+  globalSettings?: { admin_delegated_flags?: Record<string, boolean> } | null,
+  superadminProfile?: Profile | null
 ): boolean => {
-  return !!globalSettings?.admin_delegated_flags?.[flagKey];
+  if (globalSettings?.admin_delegated_flags?.[flagKey]) return true;
+  if (superadminProfile?.global_settings?.admin_delegated_flags?.[flagKey]) return true;
+  return false;
 };
 
 /**
@@ -73,12 +76,13 @@ export const isAdminDelegatedFeature = (
 export const canAdminManageFeatureFlag = (
   currentUser: Profile | null,
   flagKey: string,
-  globalSettings?: { admin_delegated_flags?: Record<string, boolean> } | null
+  globalSettings?: { admin_delegated_flags?: Record<string, boolean> } | null,
+  superadminProfile?: Profile | null
 ): boolean => {
   if (!currentUser) return false;
   if (isSuperadmin(currentUser)) return true;
   if (isAdminRole(currentUser)) {
-    return isAdminDelegatedFeature(flagKey, globalSettings);
+    return isAdminDelegatedFeature(flagKey, globalSettings, superadminProfile);
   }
   return false;
 };

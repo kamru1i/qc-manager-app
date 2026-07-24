@@ -11,6 +11,7 @@ import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer'
 import { TempAccessEntry } from '@/utils/dashboardHelpers';
 import { MENU_TABS, CONFIGURABLE_ROLES, getDefaultRoleVisibility } from '@/utils/menuTabsRegistry';
 import { FEATURE_FLAGS, getDefaultFeatureFlagState, FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
+import { useProfiles } from '@/contexts/ProfilesContext';
 
 interface ProfileSettingsProps {
   profile: Profile | null;
@@ -60,6 +61,16 @@ export function ProfileSettings({
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
   const [adminDelegatedFlags, setAdminDelegatedFlags] = useState<Record<string, boolean>>({});
   const [activeFlagKey, setActiveFlagKey] = useState<string | null>(null);
+
+  const { profilesList } = useProfiles();
+  const superadminProfile = useMemo(() => profilesList.find((p) => p.role === 'superadmin'), [profilesList]);
+
+  // Derived effective admin delegated flags (combines superadmin profile settings with local state and current profile)
+  const effectiveAdminDelegatedFlags = useMemo(() => {
+    const saFlags = superadminProfile?.global_settings?.admin_delegated_flags;
+    const userFlags = profile?.global_settings?.admin_delegated_flags;
+    return { ...(userFlags || {}), ...(saFlags || {}), ...(adminDelegatedFlags || {}) };
+  }, [superadminProfile, profile, adminDelegatedFlags]);
 
   // Temporary access controls (superadmin-only, time-boxed per-role overrides).
   const [tempAccess, setTempAccess] = useState<TempAccessEntry[]>([]);
@@ -527,18 +538,34 @@ export function ProfileSettings({
   const handleToggleAdminDelegation = async (flagKey: string, nextDelegated: boolean) => {
     if (!profile || !isSuperadmin(profile) || activeFlagKey === `delegate:${flagKey}`) return;
     
-    const nextDelegatedFlags = { ...adminDelegatedFlags, [flagKey]: nextDelegated };
+    const nextDelegatedFlags = { ...(effectiveAdminDelegatedFlags || {}), [flagKey]: nextDelegated };
     setActiveFlagKey(`delegate:${flagKey}`);
     try {
-      const updatedGs = {
-        ...(profile.global_settings || {}),
-        admin_delegated_flags: nextDelegatedFlags
-      };
-      const { error } = await supabase.from('profiles').update({ global_settings: updatedGs }).eq('id', profile.id);
-      if (error) throw error;
+      // 1. Try set_admin_delegated_flags RPC first to replicate across all rows
+      const { error: rpcErr } = await supabase.rpc('set_admin_delegated_flags' as any, { p_flags: nextDelegatedFlags });
+
+      // 2. Fallback: update across all profiles if RPC function isn't created in DB yet
+      if (rpcErr) {
+        console.warn('set_admin_delegated_flags RPC fallback:', rpcErr.message);
+        const updatedGs = {
+          ...(profile.global_settings || {}),
+          admin_delegated_flags: nextDelegatedFlags
+        };
+        const { error: updateErr } = await supabase
+          .from('profiles')
+          .update({ global_settings: updatedGs })
+          .neq('id', '00000000-0000-0000-0000-000000000000');
+        if (updateErr) throw updateErr;
+      }
 
       setAdminDelegatedFlags(nextDelegatedFlags);
-      const updatedProfile = { ...profile, global_settings: updatedGs };
+      const updatedProfile = {
+        ...profile,
+        global_settings: {
+          ...(profile.global_settings || {}),
+          admin_delegated_flags: nextDelegatedFlags
+        }
+      };
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
       window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
@@ -1173,7 +1200,7 @@ export function ProfileSettings({
               </p>
             </div>
             <div className="flex flex-col gap-2">
-              {FEATURE_FLAGS.filter((flag) => isSuperAdmin || adminDelegatedFlags[flag.key] === true).map((flag) => {
+              {FEATURE_FLAGS.filter((flag) => isSuperAdmin || effectiveAdminDelegatedFlags[flag.key] === true).map((flag) => {
                 const configured = featureFlags[flag.key];
                 const isGlobalEnabled = typeof configured === 'boolean'
                   ? configured
@@ -1197,7 +1224,7 @@ export function ProfileSettings({
                 const isFullyOff = !isGlobalEnabled || (hasRoleMapping && rolesOnCount === 0);
 
                 const isPending = activeFlagKey === flag.key;
-                const isDelegated = !!adminDelegatedFlags[flag.key];
+                const isDelegated = !!effectiveAdminDelegatedFlags[flag.key];
                 const isDelegatePending = activeFlagKey === `delegate:${flag.key}`;
 
                 return (
@@ -1272,7 +1299,7 @@ export function ProfileSettings({
                 );
               })}
 
-              {!isSuperAdmin && FEATURE_FLAGS.filter((flag) => adminDelegatedFlags[flag.key] === true).length === 0 && (
+              {!isSuperAdmin && FEATURE_FLAGS.filter((flag) => effectiveAdminDelegatedFlags[flag.key] === true).length === 0 && (
                 <div className="p-6 text-center text-xs text-theme-text-muted italic bg-theme-page-bg/30 rounded-xl border border-theme-border-input/40">
                   No operational feature flags have been delegated to Admins by Superadmin yet.
                 </div>
