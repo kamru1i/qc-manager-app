@@ -41,14 +41,39 @@ async function main() {
     const version = packageJson.version;
     const releaseNotes = getReleaseNotesForVersion(version);
 
+    const checksums = {};
+    const downloads = {
+      windows: { x64: {}, arm64: {} },
+      macos: { universal: {}, appleSilicon: {}, intel: {} },
+      linux: { deb: {}, appimage: {}, rpm: {} },
+      android: { apk: {} }
+    };
+
+    const tempArtifactsDir = path.join(process.cwd(), 'temp_artifacts');
+    if (fs.existsSync(tempArtifactsDir)) {
+      function findLocalFiles(dir) {
+        const list = fs.readdirSync(dir);
+        for (const file of list) {
+          const fullPath = path.join(dir, file);
+          if (fs.statSync(fullPath).isDirectory()) {
+            findLocalFiles(fullPath);
+          } else if (file.endsWith('.apk') || file.endsWith('.dmg') || file.endsWith('.exe') || file.endsWith('.deb') || file.endsWith('.zip')) {
+            const sha = computeSha256(fullPath);
+            checksums[file] = sha;
+          }
+        }
+      }
+      findLocalFiles(tempArtifactsDir);
+    }
+
     const localLatestJson = {
       version,
       notes: releaseNotes,
       pub_date: new Date().toISOString(),
       releaseDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
       platforms: {},
-      checksums: {},
-      downloads: {}
+      checksums,
+      downloads
     };
 
     const latestJsonPath = path.join(process.cwd(), 'latest.json');

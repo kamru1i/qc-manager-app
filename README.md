@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.1** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,12 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.1 — Patch Release (Feature Flag Scoping, UI Reset & Realtime Sync) (Current)
+### 🚀 v6.4.2 — Patch Release (Database Schema Synchronization & Audit) (Current)
+
+- **PostgreSQL Database Schema Audit & Sync**: Conducted a deep live schema audit against Supabase PostgreSQL database across 35 RPC functions, 13 base tables, and 37 custom indexes. Synchronized missing RPC definitions (`reset_all_user_feature_flags()`) into `supabase/schema.sql`.
+- **Local Release Manifest Generator**: Enhanced `generate-release-manifests.js` script with local fallback mode, allowing instant offline generation of `latest.json` for testing and deployment verification.
+
+### 🚀 v6.4.1 — Patch Release (Feature Flag Scoping, UI Reset & Realtime Sync)
 
 - **Target Employee Feature Flag Scoping**: Updated leave application form (`AddLeave.tsx`) to resolve feature flags against target employee accounts (`targetProfile || profile`). Prevents supervisor/admin overrides from affecting employee leave entries.
 - **State Pollution Fix in User Management**: Added deep equality guards (`JSON.stringify(updated) !== JSON.stringify(viewingStaff)`) when switching staff profiles in User Management, preventing stale feature flag overrides from leaking across user profiles.

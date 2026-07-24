@@ -7675,8 +7675,34 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 
 
 --
+-- Name: reset_all_user_feature_flags(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE OR REPLACE FUNCTION public.reset_all_user_feature_flags()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $$
+BEGIN
+  IF NOT public.is_superadmin() THEN
+    RAISE EXCEPTION 'Only a superadmin can reset user feature flags.';
+  END IF;
+
+  UPDATE public.profiles
+  SET global_settings = global_settings - 'user_feature_flags'
+  WHERE global_settings ? 'user_feature_flags';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.reset_all_user_feature_flags() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.reset_all_user_feature_flags() FROM anon;
+GRANT EXECUTE ON FUNCTION public.reset_all_user_feature_flags() TO authenticated;
+
+--
 -- PostgreSQL database dump complete
 --
 
 \unrestrict 3IwI4VqbhTNpUI3rBqlj482e1EnHLgL6ljzNzZbqm2P5W3tVOfTHcM3wzV0EOZ2
+
 
