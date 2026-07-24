@@ -230,8 +230,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   </button>
                 )}
 
-                {/* Team Leave Records (Admin and Supervisor Only) */}
-                {(isAdminRole(profile) || profile?.role === 'supervisor') && !tabHidden('team_leaves') && (
+                {/* Team Leave Records */}
+                {!tabHidden('team_leaves') && (
                   <button
                     onClick={() => { onChutiTabChange('team_leaves'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Team Leave Records' : undefined}
@@ -248,8 +248,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   </button>
                 )}
 
-                {/* 3. Govt Holiday Response (Admin Only) */}
-                {isAdminRole(profile) && !tabHidden('govt_responses') && (
+                {/* 3. Govt Holiday Response */}
+                {!tabHidden('govt_responses') && (
                   <button
                     onClick={() => { onChutiTabChange('govt_responses'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Govt Holiday Response' : undefined}
@@ -266,8 +266,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   </button>
                 )}
 
-                {/* 4. Review & Settlements (Admin Only) */}
-                {isAdminRole(profile) && !tabHidden('settlement') && (
+                {/* 4. Review & Settlements */}
+                {!tabHidden('settlement') && (
                   <button
                     onClick={() => { onChutiTabChange('settlement'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Review & Settlements' : undefined}
@@ -284,8 +284,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   </button>
                 )}
 
-                {/* 5. Leave Settings (Admin Only) */}
-                {isAdminRole(profile) && !tabHidden('leave_settings') && (
+                {/* 5. Leave Settings */}
+                {!tabHidden('leave_settings') && (
                   <button
                     onClick={() => { onChutiTabChange('leave_settings'); onNavItemClick?.(); }}
                     title={isSidebarCollapsed ? 'Leave Settings' : undefined}

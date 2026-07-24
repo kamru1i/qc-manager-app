@@ -210,68 +210,36 @@ export const isDirectlySupervised = (
 export const canAccessModule = (
   currentUser: Profile | null,
   targetUser: Profile | null,
-  module: 'kpi' | 'leave' | 'profile_settings' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'audit_logs',
-  profilesList: Profile[] = []
+  module: 'kpi' | 'leave' | 'profile_settings' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'audit_logs' | string,
+  profilesList: Profile[] = [],
+  globalSettings?: VisibilitySettings | null
 ): boolean => {
   if (!currentUser) return false;
-  
-  // Admin / Superadmin (highest permission priority). Superadmin inherits all
-  // admin capabilities; Todos is superadmin-only.
-  if (isAdminRole(currentUser)) {
-    if (module === 'todo') {
-      return isSuperadmin(currentUser);
+  if (isSuperadmin(currentUser)) return true;
+
+  // Single source of truth: Tab Access (per role) configuration in global_settings
+  const gs = globalSettings || currentUser.global_settings;
+  const isVisible = isTabVisibleForRole(currentUser, module, gs);
+  if (!isVisible) return false;
+
+  // Additional target-user supervision checks for team management
+  if (targetUser && currentUser.role === 'supervisor') {
+    if (targetUser.id === currentUser.id) return true;
+    if (module === 'leave') {
+      return (
+        isSupervisedTeam(currentUser, targetUser, profilesList) ||
+        targetUser.delegated_leave_supervisor_id === currentUser.id
+      );
     }
-    return true;
+    if (module === 'kpi') {
+      return (
+        isDirectlySupervised(currentUser, targetUser) ||
+        targetUser.delegated_kpi_supervisor_id === currentUser.id
+      );
+    }
   }
 
-  // Regular User permissions
-  if (currentUser.role === 'user') {
-    if (module === 'todo') {
-      return isSuperadmin(currentUser);
-    }
-    if (module === 'kpi') return targetUser ? targetUser.id === currentUser.id : true;
-    if (module === 'leave') return targetUser ? targetUser.id === currentUser.id : true;
-    if (module === 'profile_settings') return true;
-    if (module === 'quotes') return !!currentUser.has_quotes_access;
-    if (module === 'leaderboard' || module === 'reports') return true;
-    return false;
-  }
-  
-  // Supervisor permissions
-  if (currentUser.role === 'supervisor') {
-    if (module === 'audit_logs') return false; // explicitly revoked for supervisors
-    if (module === 'todo') {
-      return isSuperadmin(currentUser);
-    }
-    if (module === 'user_management') return true;
-    if (module === 'quotes') return !!currentUser.has_quotes_access;
-    if (module === 'leaderboard' || module === 'reports') return true;
-    
-    // Checks for specific target users
-    if (targetUser) {
-      if (targetUser.id === currentUser.id) return true; // full access to self
-      
-      switch (module) {
-        case 'leave':
-          return (
-            isSupervisedTeam(currentUser, targetUser, profilesList) ||
-            targetUser.delegated_leave_supervisor_id === currentUser.id
-          );
-        case 'kpi':
-          return (
-            isDirectlySupervised(currentUser, targetUser) ||
-            targetUser.delegated_kpi_supervisor_id === currentUser.id
-          );
-        case 'profile_settings':
-          return true; // allowed to access Profile Settings tab, but specific sections are restricted
-        default:
-          return false;
-      }
-    }
-    return true;
-  }
-  
-  return false;
+  return true;
 };
 
 /**

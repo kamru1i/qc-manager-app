@@ -70,12 +70,12 @@ export function ProfileSettings({
   const [submitting, setSubmitting] = useState(false);
   const [isCodenameEditable, setIsCodenameEditable] = useState(false);
 
-  // Subtabs state (Profile / Menu Visibility / superadmin-only Sanitizer & Access Controls)
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls'>(() => {
+  // Subtabs state (Profile / Menu Visibility / superadmin-only Sanitizer, Access Controls & Feature Flags)
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags'>(() => {
     if (typeof window === 'undefined') return 'profile';
     try {
       const saved = localStorage.getItem('settings_active_subtab');
-      if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls') {
+      if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags') {
         return saved as any;
       }
     } catch {}
@@ -84,13 +84,13 @@ export function ProfileSettings({
 
   // Fallback check: if user is not superadmin and saved subtab is superadmin-only, revert to profile
   useEffect(() => {
-    if (profile && (activeSubTab === 'sanitizer' || activeSubTab === 'access_controls') && !isSuperadmin(profile)) {
+    if (profile && (activeSubTab === 'sanitizer' || activeSubTab === 'access_controls' || activeSubTab === 'feature_flags') && !isSuperadmin(profile)) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
     }
   }, [profile, activeSubTab]);
 
-  const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls') => {
+  const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags') => {
     setActiveSubTab(tab);
     localStorage.setItem('settings_active_subtab', tab);
   };
@@ -670,6 +670,19 @@ export function ProfileSettings({
               <Shield className="h-4 w-4" />
               <span>Access Controls</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleSubTabChange('feature_flags')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeSubTab === 'feature_flags'
+                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                  : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
+              }`}
+            >
+              <Settings className="h-4 w-4" />
+              <span>Feature Flags</span>
+            </button>
           </>
         )}
       </div>
@@ -1021,54 +1034,6 @@ export function ProfileSettings({
             )}
           </div>
 
-          {/* Feature Flags */}
-          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
-                <Settings className="h-4 w-4 text-blue-400" />
-                Feature Flags
-              </h3>
-              <p className="text-[11px] text-theme-text-muted mt-2">
-                Turn app features on or off globally. All default ON — disabling
-                one hides that functionality for users, supervisors, and admins. Superadmins retain full access. Changes save immediately.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              {FEATURE_FLAGS.map((flag) => {
-                const enabled = featureFlags[flag.key] !== false;
-                const isPending = activeFlagKey === flag.key;
-                return (
-                  <div
-                    key={flag.key}
-                    className="flex items-center justify-between gap-4 p-3 rounded-xl border border-theme-border-input/60 bg-theme-page-bg/40"
-                  >
-                    <div className="min-w-0">
-                      <span className="block text-xs font-semibold text-theme-text-primary">
-                        {flag.label}
-                      </span>
-                      <span className="block text-[10px] text-theme-text-muted mt-0.5">
-                        {flag.description}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => handleToggleFeatureFlag(flag.key, !enabled)}
-                      title={enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}
-                      className={`shrink-0 w-16 h-6 rounded-lg border text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-colors ${
-                        enabled
-                          ? 'bg-emerald-955/30 border-emerald-500/30 text-emerald-400 hover:bg-emerald-955/50'
-                          : 'bg-rose-955/30 border-rose-500/30 text-rose-400 hover:bg-rose-955/50'
-                      } ${isPending ? 'animate-pulse opacity-50 cursor-wait' : ''}`}
-                    >
-                      {enabled ? 'On' : 'Off'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Temporary Access Controls */}
           <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
             <div>
@@ -1178,8 +1143,60 @@ export function ProfileSettings({
         </div>
       )}
 
+      {/* Feature Flags Subtab (Superadmin only) */}
+      {activeSubTab === 'feature_flags' && isSuperAdmin && (
+        <div className="space-y-6 w-full">
+          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
+                <Settings className="h-4 w-4 text-blue-400" />
+                Global Feature Flags
+              </h3>
+              <p className="text-[11px] text-theme-text-muted mt-2">
+                Turn app features on or off globally. All default ON — disabling
+                one hides that functionality for users, supervisors, and admins. Superadmins retain full access. Changes save immediately.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {FEATURE_FLAGS.map((flag) => {
+                const enabled = featureFlags[flag.key] !== false;
+                const isPending = activeFlagKey === flag.key;
+                return (
+                  <div
+                    key={flag.key}
+                    className="flex items-center justify-between gap-4 p-3 rounded-xl border border-theme-border-input/60 bg-theme-page-bg/40"
+                  >
+                    <div className="min-w-0">
+                      <span className="block text-xs font-semibold text-theme-text-primary">
+                        {flag.label}
+                      </span>
+                      <span className="block text-[10px] text-theme-text-muted mt-0.5">
+                        {flag.description}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleToggleFeatureFlag(flag.key, !enabled)}
+                      title={enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}
+                      className={`shrink-0 w-16 h-6 rounded-lg border text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-colors ${
+                        enabled
+                          ? 'bg-emerald-955/30 border-emerald-500/30 text-emerald-400 hover:bg-emerald-955/50'
+                          : 'bg-rose-955/30 border-rose-500/30 text-rose-400 hover:bg-rose-955/50'
+                      } ${isPending ? 'animate-pulse opacity-50 cursor-wait' : ''}`}
+                    >
+                      {enabled ? 'On' : 'Off'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Save Changes Bar (Profile & Menu Visibility subtabs) */}
-      {activeSubTab !== 'sanitizer' && activeSubTab !== 'access_controls' && profile?.profile_change_status !== 'pending' && (
+      {activeSubTab !== 'sanitizer' && activeSubTab !== 'access_controls' && activeSubTab !== 'feature_flags' && profile?.profile_change_status !== 'pending' && (
         <div className="flex justify-end pt-4 border-t border-theme-border-input/60 w-full">
           <button
             type={activeSubTab === 'profile' ? 'submit' : 'button'}
