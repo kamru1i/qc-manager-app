@@ -237,7 +237,8 @@ export default function LoginPage() {
               const userId = data.session.user.id;
               localStorage.setItem(`session_start_time_${userId}`, Date.now().toString());
               localStorage.setItem(`last_active_time_${userId}`, Date.now().toString());
-              window.location.href = "/quotes";
+              router.push("/");
+              router.refresh();
               return;
             }
           }

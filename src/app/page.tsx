@@ -288,9 +288,9 @@ export default function AppPortal() {
 
       if (session) {
         const currentUserId = sessionUserRef.current?.id;
-        if (currentUserId === session.user.id) {
+        if (currentUserId === session.user.id && _cachedInitialState?.profile) {
           addLog(
-            "onAuthStateChange: Same user session already active. Skipping profile fetch.",
+            "onAuthStateChange: Same user session already active and profile cached. Skipping profile fetch.",
           );
           setSessionUser(session.user);
           sessionUserRef.current = session.user;
