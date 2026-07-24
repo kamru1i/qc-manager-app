@@ -16,9 +16,11 @@ import { AuditLogsSkeleton } from '@/components/common/skeleton/AuditLogsSkeleto
 import { TeamLeaveRecordsSkeleton } from '@/components/common/skeleton/TeamLeaveRecordsSkeleton';
 import { ProfileSettingsSkeleton } from '@/components/common/skeleton/ProfileSettingsSkeleton';
 import { KpiSkeleton } from '@/components/common/skeleton/KpiSkeleton';
+import { CopyHelperSkeleton } from '@/components/common/skeleton/CopyHelperSkeleton';
 
 interface SkeletonLoaderProps {
-  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'leaderboard' | 'audit-logs' | 'team-leaves-report' | 'profile-settings' | 'kpi';
+  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'leaderboard' | 'audit-logs' | 'team-leaves-report' | 'profile-settings' | 'kpi' | 'copy-helper' | 'save-file';
+  type?: string;
   rows?: number;
   cards?: number;
   className?: string;
@@ -27,14 +29,20 @@ interface SkeletonLoaderProps {
 }
 
 export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
-  variant = 'table',
+  variant,
+  type,
   rows = 5,
   cards = 4,
   className = '',
   allowOvertime = false,
   showNameColumn = false,
 }) => {
-  switch (variant) {
+  const activeVariant = type || variant || 'table';
+
+  switch (activeVariant) {
+    case 'copy-helper':
+    case 'copy_helper':
+      return <CopyHelperSkeleton className={className} />;
     case 'stats':
       return <StatsSkeleton cards={cards} className={className} />;
     case 'list':
