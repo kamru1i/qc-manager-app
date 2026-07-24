@@ -71,19 +71,24 @@ export function ProfileSettings({
   const [isCodenameEditable, setIsCodenameEditable] = useState(false);
 
   // Subtabs state (Profile / Menu Visibility / superadmin-only Sanitizer & Access Controls)
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls'>('profile');
-
-  // Restore saved subtab on mount/profile load
-  useEffect(() => {
-    const saved = localStorage.getItem('settings_active_subtab');
-    if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls') {
-      if ((saved === 'sanitizer' || saved === 'access_controls') && !isSuperadmin(profile)) {
-        setActiveSubTab('profile');
-      } else {
-        setActiveSubTab(saved as any);
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls'>(() => {
+    if (typeof window === 'undefined') return 'profile';
+    try {
+      const saved = localStorage.getItem('settings_active_subtab');
+      if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls') {
+        return saved as any;
       }
+    } catch {}
+    return 'profile';
+  });
+
+  // Fallback check: if user is not superadmin and saved subtab is superadmin-only, revert to profile
+  useEffect(() => {
+    if (profile && (activeSubTab === 'sanitizer' || activeSubTab === 'access_controls') && !isSuperadmin(profile)) {
+      setActiveSubTab('profile');
+      localStorage.setItem('settings_active_subtab', 'profile');
     }
-  }, [profile]);
+  }, [profile, activeSubTab]);
 
   const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls') => {
     setActiveSubTab(tab);

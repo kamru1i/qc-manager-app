@@ -127,15 +127,17 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, []);
 
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi'>('leave');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi'>(() => {
+    if (typeof window === 'undefined') return 'leave';
+    try {
+      const saved = localStorage.getItem('user_management_active_subtab');
+      if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'analytics' || saved === 'kpi') {
+        return saved as any;
+      }
+    } catch {}
+    return 'leave';
+  });
   const prevViewingStaffRef = useRef<Profile | null>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('user_management_active_subtab');
-    if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'analytics' || saved === 'kpi') {
-      setActiveSubTab(saved as any);
-    }
-  }, []);
 
   // Restore viewingStaff on page reload/mount when profiles list is loaded
   useEffect(() => {
