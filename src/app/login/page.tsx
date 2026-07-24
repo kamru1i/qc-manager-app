@@ -231,17 +231,6 @@ export default function LoginPage() {
 
         if (res.ok) {
           const data = await res.json();
-          if (data.session) {
-            const { error: setSessionError } = await supabase.auth.setSession(data.session);
-            if (!setSessionError) {
-              const userId = data.session.user.id;
-              localStorage.setItem(`session_start_time_${userId}`, Date.now().toString());
-              localStorage.setItem(`last_active_time_${userId}`, Date.now().toString());
-              router.push("/");
-              router.refresh();
-              return;
-            }
-          }
           resolvedEmail = data.email;
         } else if (res.status === 401) {
           setError("Invalid username or password.");

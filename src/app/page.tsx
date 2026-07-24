@@ -95,7 +95,8 @@ function getInitialState() {
 }
 
 // Cache the initial state so we don't parse localStorage JSON 5 times during mount
-const _cachedInitialState =
+// Mutable: cleared on logout so stale user data doesn't interfere with re-login
+let _cachedInitialState =
   typeof window !== "undefined" ? getInitialState() : null;
 
 export default function AppPortal() {
@@ -126,7 +127,7 @@ export default function AppPortal() {
     // Silent in production
   };
 
-  const loadUserProfile = useCallback(async (userId: string) => {
+  const loadUserProfile = useCallback(async (userId: string, retryCount = 0) => {
     if (fetchingRef.current === userId) {
       addLog(`loadUserProfile duplicate call skipped for ${userId}`);
       return;
@@ -242,6 +243,13 @@ export default function AppPortal() {
       setLoading(false);
     } catch (err: any) {
       addLog(`Background fetch error: ${err?.message || err}`);
+      // Retry once on transient failures (common during user switching)
+      if (retryCount < 1) {
+        addLog(`Retrying profile load (attempt ${retryCount + 1})...`);
+        fetchingRef.current = null;
+        await new Promise(r => setTimeout(r, 500));
+        return loadUserProfile(userId, retryCount + 1);
+      }
       if (!cachedProfile) {
         setErrorMsg("Error loading profile settings.");
         setLoading(false);
@@ -308,6 +316,10 @@ export default function AppPortal() {
         sessionUserRef.current = null;
         setProfile(null);
         setIsProfileFresh(false);
+        setErrorMsg(null);
+        fetchingRef.current = null;
+        // Invalidate module-level cache so next login doesn't use stale data
+        _cachedInitialState = null;
         setLoading(false);
       } else {
         addLog(
@@ -327,6 +339,15 @@ export default function AppPortal() {
 
   const handleLogout = async () => {
     setLoading(true);
+    // Clean up user-specific cached data to prevent stale state on next login
+    const currentUserId = sessionUserRef.current?.id;
+    if (currentUserId) {
+      localStorage.removeItem(`cached_profile_${currentUserId}`);
+      localStorage.removeItem(`session_start_time_${currentUserId}`);
+      localStorage.removeItem(`last_active_time_${currentUserId}`);
+      localStorage.removeItem(`last_access_time_${currentUserId}`);
+    }
+    localStorage.removeItem('qc_session_id');
     // Local scope: log out this device only. The previous global default
     // revoked ALL of the user's refresh tokens, logging out every other
     // device (Web/Desktop/Android) at once.

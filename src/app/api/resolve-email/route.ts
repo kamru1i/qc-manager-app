@@ -77,20 +77,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate the password against Supabase Auth before releasing the resolved email/session
-    const { data: authData, error: authError } = await supabaseServer.auth.signInWithPassword({
+    // Validate the password against Supabase Auth before releasing the resolved email
+    // The client will then do its own signInWithPassword to create a proper client-side session
+    const { error: authError } = await supabaseServer.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (authError || !authData.session) {
+    if (authError) {
       return NextResponse.json(
         { error: 'Invalid login credentials' },
         { status: 401, headers: getCorsHeaders(request) }
       );
     }
 
-    return NextResponse.json({ email, session: authData.session }, { headers: getCorsHeaders(request) });
+    // Only return email — client does its own signInWithPassword for a proper session
+    return NextResponse.json({ email }, { headers: getCorsHeaders(request) });
   } catch (err) {
     console.error('[ResolveEmail] Unexpected error:', err);
     return NextResponse.json(
