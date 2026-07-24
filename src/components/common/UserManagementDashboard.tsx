@@ -231,6 +231,8 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditDelegatedLeaveSupervisorId(viewingStaff.delegated_leave_supervisor_id || null);
       setEditDelegatedKpiSupervisorId(viewingStaff.delegated_kpi_supervisor_id || null);
       setEditUserFeatureFlags(viewingStaff.global_settings?.user_feature_flags || {});
+    } else {
+      setEditUserFeatureFlags({});
     }
   }, [viewingStaff]);
 
@@ -247,14 +249,14 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     }
   }, [profiles, hasStaffAccess]);
 
-  // Synchronize viewingStaff with latest data from profiles list
+  // Synchronize viewingStaff with latest data from profiles list (only if data changed)
   useEffect(() => {
     if (viewingStaff) {
       const updated = profiles.find(p => p.id === viewingStaff.id);
-      if (updated) {
-        updateViewingStaff(updated);
-      } else {
+      if (!updated) {
         updateViewingStaff(null); // User was deleted
+      } else if (JSON.stringify(updated) !== JSON.stringify(viewingStaff)) {
+        updateViewingStaff(updated);
       }
     }
   }, [profiles, viewingStaff, updateViewingStaff]);
