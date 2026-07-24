@@ -98,6 +98,7 @@ interface StaffSettingsFormProps {
   userFeatureFlags?: Record<string, boolean>;
   setUserFeatureFlags?: (val: Record<string, boolean>) => void;
   adminDelegatedFlags?: Record<string, boolean>;
+  onResetAllUserFlags?: () => void;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -164,6 +165,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   userFeatureFlags = {},
   setUserFeatureFlags,
   adminDelegatedFlags = {},
+  onResetAllUserFlags,
 }) => {
   const effectiveAdminDelegatedFlags = React.useMemo(() => {
     const userFlags = currentUser?.global_settings?.admin_delegated_flags;

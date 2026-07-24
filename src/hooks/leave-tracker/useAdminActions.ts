@@ -559,15 +559,55 @@ export const useAdminActions = ({
     } catch (err) {
       console.error('Error updating user profile:', err);
       showToast('error', 'Error updating profile: ' + (err instanceof Error ? err.message : String(err)));
-      setSubmitting(false);
       return false;
     }
   }, [showToast, logActivity, profilesList, refreshProfiles, setSubmitting, updateLastActivity]);
+
+  const resetAllUserFeatureFlags = useCallback(async (): Promise<boolean> => {
+    setSubmitting(true);
+    try {
+      // 1. Try calling the RPC function first
+      const { error: rpcErr } = await supabase.rpc('reset_all_user_feature_flags' as any);
+
+      if (rpcErr) {
+        // Fallback: manually strip 'user_feature_flags' from global_settings on every profile row
+        const { data: allProfiles, error: fetchErr } = await supabase
+          .from('profiles')
+          .select('id, global_settings');
+
+        if (fetchErr) throw fetchErr;
+
+        if (allProfiles) {
+          for (const p of allProfiles) {
+            if (p.global_settings && typeof p.global_settings === 'object' && 'user_feature_flags' in p.global_settings) {
+              const updatedGs = { ...(p.global_settings as Record<string, any>) };
+              delete updatedGs.user_feature_flags;
+              await supabase
+                .from('profiles')
+                .update({ global_settings: updatedGs })
+                .eq('id', p.id);
+            }
+          }
+        }
+      }
+
+      await refreshProfiles();
+      showToast('success', 'All individual user feature flag overrides reset to Inherit!');
+      setSubmitting(false);
+      return true;
+    } catch (err: any) {
+      console.error('Error resetting feature flag overrides:', err);
+      showToast('error', 'Failed to reset overrides: ' + (err?.message || String(err)));
+      setSubmitting(false);
+      return false;
+    }
+  }, [refreshProfiles, setSubmitting, showToast]);
 
   return {
     createUser,
     resetUserPassword,
     deleteUser,
     adminUpdateUserProfile,
+    resetAllUserFeatureFlags,
   };
 };

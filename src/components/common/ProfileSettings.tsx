@@ -62,7 +62,7 @@ export function ProfileSettings({
   const [adminDelegatedFlags, setAdminDelegatedFlags] = useState<Record<string, boolean>>({});
   const [activeFlagKey, setActiveFlagKey] = useState<string | null>(null);
 
-  const { profilesList } = useProfiles();
+  const { profilesList, refreshProfiles } = useProfiles();
   const superadminProfile = useMemo(() => profilesList.find((p) => p.role === 'superadmin'), [profilesList]);
 
   // Dynamic access check for each Settings subtab (superadmin always sees everything, otherwise role_visibility / isTabVisibleForRole)
@@ -634,6 +634,7 @@ export function ProfileSettings({
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
       window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      await refreshProfiles();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update feature flag.');
     } finally {
@@ -681,6 +682,46 @@ export function ProfileSettings({
       toast.error(err.message || 'Failed to update admin delegation.');
     } finally {
       setActiveFlagKey(null);
+    }
+  };
+
+  const handleResetAllUserFeatureFlags = async () => {
+    if (!profile || !isSuperadmin(profile)) return;
+    setSubmitting(true);
+    try {
+      const { error: rpcErr } = await supabase.rpc('reset_all_user_feature_flags' as any);
+      if (rpcErr) {
+        console.warn('reset_all_user_feature_flags RPC fallback:', rpcErr.message);
+        const { data: allProfiles } = await supabase.from('profiles').select('id, global_settings');
+        if (allProfiles) {
+          for (const p of allProfiles) {
+            if (p.global_settings && typeof p.global_settings === 'object' && 'user_feature_flags' in p.global_settings) {
+              const updatedGs = { ...(p.global_settings as Record<string, any>) };
+              delete updatedGs.user_feature_flags;
+              await supabase.from('profiles').update({ global_settings: updatedGs }).eq('id', p.id);
+            }
+          }
+        }
+      }
+
+      // Update local profile state
+      const cleanedGs = { ...(profile.global_settings || {}) };
+      delete cleanedGs.user_feature_flags;
+      const updatedProfile = { ...profile, global_settings: cleanedGs };
+      setProfile(updatedProfile);
+      if (sessionUser?.id) {
+        localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
+      }
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+
+      // Refresh shared profiles context across app
+      await refreshProfiles();
+
+      toast.success('All individual user overrides reset to Inherit!');
+    } catch (err: any) {
+      toast.error('Failed to reset overrides: ' + (err?.message || String(err)));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1314,16 +1355,27 @@ export function ProfileSettings({
       {activeSubTab === 'feature_flags' && isAdminRole(profile) && (
         <div className="space-y-6 w-full">
           <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
-                <Settings className="h-4 w-4 text-blue-400" />
-                Global Feature Flags
-              </h3>
-              <p className="text-[11px] text-theme-text-muted mt-2">
-                {isSuperAdmin
-                  ? 'Turn app features on or off globally. You can also grant Admins permission to manage specific operational flags.'
-                  : 'Turn operational features on or off globally for all users. Superadmin has granted you access to manage these flags.'}
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-theme-border-input/40 pb-2">
+              <div>
+                <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-blue-400" />
+                  Global Feature Flags
+                </h3>
+                <p className="text-[11px] text-theme-text-muted mt-2">
+                  {isSuperAdmin
+                    ? 'Turn app features on or off globally. You can also grant Admins permission to manage specific operational flags.'
+                    : 'Turn operational features on or off globally for all users. Superadmin has granted you access to manage these flags.'}
+                </p>
+              </div>
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  onClick={handleResetAllUserFeatureFlags}
+                  className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0"
+                >
+                  Reset All Users to Inherit
+                </button>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               {FEATURE_FLAGS.filter((flag) => isSuperAdmin || effectiveAdminDelegatedFlags[flag.key] === true).map((flag) => {

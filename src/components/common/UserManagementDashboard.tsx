@@ -586,7 +586,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   };
 
   // Setup Admin Actions hook
-  const { createUser, resetUserPassword, deleteUser, adminUpdateUserProfile } = useAdminActions({
+  const { createUser, resetUserPassword, deleteUser, adminUpdateUserProfile, resetAllUserFeatureFlags } = useAdminActions({
     profilesList: profiles,
     setProfilesList: setProfiles,
     showToast,
@@ -1037,6 +1037,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   setEditDelegatedKpiSupervisorId={setEditDelegatedKpiSupervisorId}
                   editUserFeatureFlags={editUserFeatureFlags}
                   setEditUserFeatureFlags={setEditUserFeatureFlags}
+                  onResetAllUserFlags={resetAllUserFeatureFlags}
                   onViewKpiReport={(periodKey) => {
                     setPreSelectedKpiPeriodKey(periodKey);
                     setActiveSubTab('kpi');

@@ -82,6 +82,7 @@ interface UserProfileSettingsPanelProps {
   setEditDelegatedKpiSupervisorId: (val: string | null) => void;
   editUserFeatureFlags?: Record<string, boolean>;
   setEditUserFeatureFlags?: (val: Record<string, boolean>) => void;
+  onResetAllUserFlags?: () => void;
 }
 
 export const UserProfileSettingsPanel: React.FC<
@@ -153,6 +154,7 @@ export const UserProfileSettingsPanel: React.FC<
   setEditDelegatedKpiSupervisorId,
   editUserFeatureFlags,
   setEditUserFeatureFlags,
+  onResetAllUserFlags,
 }) => {
   const { profilesList } = useProfiles();
   const superadminProfile = React.useMemo(() => profilesList.find((p) => p.role === "superadmin"), [profilesList]);
@@ -240,6 +242,7 @@ export const UserProfileSettingsPanel: React.FC<
         userFeatureFlags={editUserFeatureFlags}
         setUserFeatureFlags={setEditUserFeatureFlags}
         adminDelegatedFlags={effectiveAdminDelegatedFlags}
+        onResetAllUserFlags={onResetAllUserFlags}
       />
 
       <div className="bg-theme-card-bg/20 border border-theme-border-muted/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
