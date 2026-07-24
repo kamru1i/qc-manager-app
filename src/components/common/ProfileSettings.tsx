@@ -704,11 +704,11 @@ export function ProfileSettings({
       </div>
 
       {/* Subtab Navigation */}
-      <div className="flex items-center gap-2 border-b border-theme-border-input/60 pb-3">
+      <div className="flex items-center gap-2 border-b border-theme-border-input/60 pb-3 overflow-x-auto max-w-full scrollbar-thin whitespace-nowrap pt-0.5">
         <button
           type="button"
           onClick={() => handleSubTabChange('profile')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeSubTab === 'profile'
               ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
               : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
@@ -721,7 +721,7 @@ export function ProfileSettings({
         <button
           type="button"
           onClick={() => handleSubTabChange('menu_visibility')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeSubTab === 'menu_visibility'
               ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
               : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
@@ -736,7 +736,7 @@ export function ProfileSettings({
             <button
               type="button"
               onClick={() => handleSubTabChange('sanitizer')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeSubTab === 'sanitizer'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
                   : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
@@ -749,7 +749,7 @@ export function ProfileSettings({
             <button
               type="button"
               onClick={() => handleSubTabChange('access_controls')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeSubTab === 'access_controls'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
                   : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
@@ -765,7 +765,7 @@ export function ProfileSettings({
           <button
             type="button"
             onClick={() => handleSubTabChange('feature_flags')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'feature_flags'
                 ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
@@ -780,7 +780,7 @@ export function ProfileSettings({
           <button
             type="button"
             onClick={() => handleSubTabChange('vpn_list')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'vpn_list'
                 ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
