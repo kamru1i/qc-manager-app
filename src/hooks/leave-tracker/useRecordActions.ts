@@ -167,13 +167,6 @@ export const useRecordActions = ({
 
       if (error) throw error;
 
-      // Audit Log
-      await logActivity(
-        'DELETE_RECORD',
-        id,
-        `Deleted record: ${recordDetails}`
-      );
-
       // Optimistically remove from local cache immediately
       const cached = await getCacheData<RecordItem>('records_cache');
       const updatedCache = cached.filter(r => r.id !== id);
@@ -188,26 +181,12 @@ export const useRecordActions = ({
       showToast('error', 'Failed to delete record: ' + (err instanceof Error ? err.message : String(err)));
       return false;
     }
-  }, [sessionUser, showToast, logActivity, fetchRecords, fetchAvailableDates, updateLastActivity]);
+  }, [sessionUser, showToast, fetchRecords, fetchAvailableDates, updateLastActivity]);
 
   // Delete multiple records (Bulk Delete)
   const deleteRecords = useCallback(async (ids: string[]) => {
     if (!sessionUser) return false;
     updateLastActivity();
-
-    // Cache info resolution for audit logging
-    let deletedDetails = `${ids.length} records`;
-    try {
-      const cached = await getCacheData<RecordItem>('records_cache');
-      const targetRecords = cached.filter(r => ids.includes(r.id));
-      if (targetRecords.length > 0) {
-        deletedDetails = targetRecords
-          .map(r => `'${r.file_name}' (${r.file_type} for ${r.branch_name})`)
-          .join(', ');
-      }
-    } catch (cacheErr) {
-      console.error('Failed to read cache for audit log info:', cacheErr);
-    }
 
     try {
       if (!navigator.onLine) {
@@ -221,13 +200,6 @@ export const useRecordActions = ({
         .in('id', ids);
 
       if (error) throw error;
-
-      // Audit Log
-      await logActivity(
-        'DELETE_RECORD',
-        null,
-        `Deleted ${ids.length} records in bulk: ${deletedDetails}`
-      );
 
       // Optimistically remove from local cache immediately
       const cached = await getCacheData<RecordItem>('records_cache');
@@ -243,7 +215,7 @@ export const useRecordActions = ({
       showToast('error', 'Failed to delete records: ' + (err instanceof Error ? err.message : String(err)));
       return false;
     }
-  }, [sessionUser, showToast, logActivity, fetchRecords, fetchAvailableDates, updateLastActivity]);
+  }, [sessionUser, showToast, fetchRecords, fetchAvailableDates, updateLastActivity]);
 
   // Update/Edit a Record
   const updateRecord = useCallback(async (
@@ -258,33 +230,14 @@ export const useRecordActions = ({
     setSubmitting(true);
     updateLastActivity();
 
-    let oldDetails = `ID ${id}`;
     try {
-      const cached = await getCacheData<RecordItem>('records_cache');
-      const targetRecord = cached.find(r => r.id === id);
-      if (targetRecord) {
-        oldDetails = `'${targetRecord.file_name}' (${targetRecord.file_type} for ${targetRecord.branch_name})`;
-      }
-    } catch (cacheErr) {
-      console.error('Failed to read cache for audit log info:', cacheErr);
-    }
-    try {
-      const updates: {
-        file_name: string;
-        branch_name: string;
-        codename: string;
-        file_type: FileType;
-        submitted_at?: string;
-      } = {
+      const updates: Partial<RecordItem> = {
         file_name: fileName,
         branch_name: branchName.toUpperCase().trim(),
         codename: codename.toUpperCase().trim(),
-        file_type: fileType
+        file_type: fileType,
       };
-
-      if (submittedAt) {
-        updates.submitted_at = submittedAt;
-      }
+      if (submittedAt) updates.submitted_at = submittedAt;
 
       if (!navigator.onLine) {
         const pending = await getOfflineRecords();
@@ -293,13 +246,7 @@ export const useRecordActions = ({
         if (pendingInsert && pendingInsert.action === 'insert') {
           // Edit the pending insert record in-place in outbox
           if (pendingInsert.localId) {
-            await updateOfflineRecordAction(pendingInsert.localId, {
-              file_name: fileName,
-              branch_name: branchName.toUpperCase().trim(),
-              codename: codename.toUpperCase().trim(),
-              file_type: fileType,
-              submitted_at: submittedAt || pendingInsert.submitted_at
-            });
+            await updateOfflineRecordAction(pendingInsert.localId, updates);
           }
         } else {
           // Server record, queue an update action
@@ -314,7 +261,7 @@ export const useRecordActions = ({
               ...r,
               ...updates,
               profiles: {
-                username: codename.toUpperCase().trim(),
+                username: updates.codename || (r.profiles?.username || r.codename),
                 full_name: r.profiles?.full_name || null
               }
             };
@@ -337,13 +284,6 @@ export const useRecordActions = ({
 
       if (error) throw error;
 
-      // Audit Log
-      await logActivity(
-        'UPDATE_RECORD',
-        id,
-        `Updated record ${oldDetails} -> '${fileName}' (${fileType} for ${branchName.toUpperCase().trim()})`
-      );
-
       await fetchRecords(true);
       await fetchAvailableDates();
       showToast('success', 'Record updated successfully!');
@@ -355,7 +295,7 @@ export const useRecordActions = ({
       setSubmitting(false);
       return false;
     }
-  }, [sessionUser, showToast, logActivity, fetchRecords, fetchAvailableDates, setSubmitting, updateLastActivity]);
+  }, [sessionUser, showToast, fetchRecords, fetchAvailableDates, setSubmitting, updateLastActivity]);
 
   const bulkUpdateRecords = useCallback(async (
     updatesMap: Record<string, Partial<RecordItem>>
@@ -441,13 +381,6 @@ export const useRecordActions = ({
       });
 
       await Promise.all(updatePromises);
-
-      // Bulk Audit Log
-      await logActivity(
-        'UPDATE_RECORD',
-        recordIds[0],
-        `Bulk updated ${recordIds.length} records in grid edit`
-      );
 
       await fetchRecords(true);
       await fetchAvailableDates();

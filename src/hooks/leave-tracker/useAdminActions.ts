@@ -163,15 +163,6 @@ export const useAdminActions = ({
         showToast('error', result.message || 'Failed to reset password.');
         return false;
       }
-
-      // Audit Log
-      const targetProfile = profilesList.find(p => p.id === userId);
-      const targetName = targetProfile ? `${targetProfile.username} (${targetProfile.full_name || 'N/A'})` : `ID ${userId}`;
-      await logActivity(
-        'RESET_PASSWORD',
-        userId,
-        `Reset password for user: ${targetName}`
-      );
       return true;
     } catch (err) {
       console.error('Error resetting password:', err);
@@ -556,16 +547,6 @@ export const useAdminActions = ({
         changes.push(`Role:\nNone → ${role}`);
         changes.push(`Allowed Types:\nNone → ${allowedTypes.join(', ')}`);
         changes.push(`Quote Rules Permission:\nNone → ${formatBool(canManageRules)}`);
-      }
-
-      // Audit Log: Only create if at least one field has changed
-      if (changes.length > 0) {
-        const logDetails = `Updated user profile\n\n${changes.join('\n\n')}`;
-        await logActivity(
-          'UPDATE_USER',
-          userId,
-          logDetails
-        );
       }
 
       // Refresh profiles list via the shared provider fetch

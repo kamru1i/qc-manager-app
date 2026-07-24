@@ -262,18 +262,6 @@ export function ProfileSettings({
 
         if (error) throw error;
 
-        try {
-          await supabase.from('audit_logs').insert({
-            actor_id: sessionUser.id,
-            actor_codename: profile.username || 'SYSTEM',
-            action_type: 'UPDATE_PROFILE',
-            target_id: sessionUser.id,
-            details: `User updated their own menu visibility settings.`
-          });
-        } catch (logErr) {
-          console.error('Failed to log profile update:', logErr);
-        }
-
         setProfile({ ...profile, ...updatedProfile });
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
         window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
@@ -336,19 +324,6 @@ export function ProfileSettings({
 
           if (error) throw error;
 
-          // Log in audit logs
-          try {
-            await supabase.from('audit_logs').insert({
-              actor_id: sessionUser.id,
-              actor_codename: profile.username || 'SYSTEM',
-              action_type: 'UPDATE_PROFILE',
-              target_id: sessionUser.id,
-              details: `User updated their own profile properties. Name: "${editFullName}", Job Role: "${editJobRole}", Working Hours: ${editWorkingHours}, Break: ${editBreakTime}m, Sign In: ${profileSignInTime}, Sign Out: ${profileSignOutTime}`
-            });
-          } catch (logErr) {
-            console.error('Failed to log UPDATE_PROFILE:', logErr);
-          }
-
           setProfile({ ...profile, ...updatedProfile });
           localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
           window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
@@ -385,29 +360,6 @@ export function ProfileSettings({
             .single();
 
           if (error) throw error;
-
-          // Log request or update in audit logs
-          try {
-            if (hasProfileFieldChanges) {
-              await supabase.from('audit_logs').insert({
-                actor_id: sessionUser.id,
-                actor_codename: profile.username || 'SYSTEM',
-                action_type: 'SUBMIT_PROFILE_REQUEST',
-                target_id: sessionUser.id,
-                details: `User submitted a profile change request. Requested Name: "${editFullName}", Job Role: "${editJobRole}", Working Hours: ${editWorkingHours}, Break: ${editBreakTime}m, Sign In: ${profileSignInTime}, Sign Out: ${profileSignOutTime}`
-              });
-            } else {
-              await supabase.from('audit_logs').insert({
-                actor_id: sessionUser.id,
-                actor_codename: profile.username || 'SYSTEM',
-                action_type: 'UPDATE_PROFILE',
-                target_id: sessionUser.id,
-                details: `User updated their own menu visibility settings.`
-              });
-            }
-          } catch (logErr) {
-            console.error('Failed to log profile update:', logErr);
-          }
 
           setProfile({ ...profile, ...updatedProfile });
           localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));

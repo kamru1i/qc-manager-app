@@ -1295,11 +1295,24 @@ export const UserKpiPerformancePanel: React.FC<
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       toast.success("KPI sheet exported to Excel format!");
+    }
+
+    if (currentUser?.id) {
+      try {
+        await supabase.from('audit_logs').insert({
+          actor_id: currentUser.id,
+          actor_codename: currentUser.username || 'SYSTEM',
+          action_type: 'EXPORT_EXCEL',
+          target_id: targetStaff.id,
+          details: `Exported KPI performance sheet for '${targetStaff.username}' (${fileName})`,
+        });
+      } catch (err) {
+        console.error('Failed to log KPI export:', err);
+      }
     }
   };
 
