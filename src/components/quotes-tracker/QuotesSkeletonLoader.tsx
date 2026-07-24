@@ -8,6 +8,7 @@ import { AuditLogsSkeleton } from "@/components/common/skeleton/AuditLogsSkeleto
 import { IPCheckerSkeleton } from "@/components/common/skeleton/IPCheckerSkeleton";
 import { LoginCodesSkeleton } from "@/components/common/skeleton/LoginCodesSkeleton";
 import { AsitisCausalitySkeleton } from "@/components/common/skeleton/AsitisCausalitySkeleton";
+import { CopyHelperSkeleton } from "@/components/common/skeleton/CopyHelperSkeleton";
 
 interface SkeletonLoaderProps {
   type?:
@@ -59,39 +60,8 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
     return <DailyEntrySkeleton />;
   }
 
-  if (type === "copy-helper") {
-    return (
-      <div className="bg-theme-page-bg/20 border border-theme-border-muted/80 rounded-2xl p-5 space-y-6 animate-pulse">
-        {/* Header */}
-        <div className="flex justify-between items-center border-b border-theme-border-muted/50 pb-4">
-          <div className="space-y-2">
-            <div className={`h-5 w-48 ${innerBg}`} />
-            <div className={`h-3 w-64 ${innerBg}`} />
-          </div>
-          <div className={`h-8 w-8 rounded-lg ${innerBg}`} />
-        </div>
-        {/* Helper Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Left Boxes */}
-          <div className="space-y-5">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-theme-card-bg/40 border border-theme-border-muted/60 rounded-xl p-4.5 space-y-3">
-                <div className={`h-4 w-28 ${innerBg}`} />
-                <div className="space-y-2">
-                  <div className={`h-3 w-full ${innerBg}`} />
-                  <div className={`h-3 w-5/6 ${innerBg}`} />
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* Right Box (Notes) */}
-          <div className="bg-theme-card-bg/40 border border-theme-border-muted/60 rounded-xl p-4.5 space-y-3 flex flex-col h-full">
-            <div className={`h-4 w-32 ${innerBg}`} />
-            <div className={`h-36 w-full ${innerBg} flex-1`} />
-          </div>
-        </div>
-      </div>
-    );
+  if (type === "copy-helper" || type === "copy_helper") {
+    return <CopyHelperSkeleton />;
   }
 
   if (type === "save-file") {

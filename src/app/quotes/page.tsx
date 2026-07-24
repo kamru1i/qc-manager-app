@@ -1133,7 +1133,7 @@ export default function Dashboard({
 
   // Loading Screen
   if (loading) {
-    let loaderType: "form" | "table" | "leaderboard" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "generic" = "generic";
+    let loaderType: "form" | "table" | "leaderboard" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file" | "generic" = "generic";
     if (activeTab === "entry") loaderType = "form";
     else if (activeTab === "causality") loaderType = "causality";
     else if (activeTab === "monthly") loaderType = "table";
@@ -1142,6 +1142,8 @@ export default function Dashboard({
     else if (activeTab === "rules") loaderType = "rules";
     else if (activeTab === "ip_checker") loaderType = "ip_checker";
     else if (activeTab === "login_codes") loaderType = "login_codes";
+    else if (activeTab === "copy_helper") loaderType = "copy_helper";
+    else if (activeTab === "save_file") loaderType = "save_file";
 
     return (
       <div className="w-full">
