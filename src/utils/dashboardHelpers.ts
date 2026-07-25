@@ -76,17 +76,60 @@ export const defaultGlobalSettings: GlobalSettings = {
   govt_holidays: []
 };
 
+/** Helper: synchronously load initial global settings from local cache to prevent flash on reload */
+export const getInitialGlobalSettings = (): GlobalSettings => {
+  if (typeof window !== 'undefined') {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('cached_profile_')) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const cachedProfile = JSON.parse(raw);
+            if (cachedProfile && cachedProfile.global_settings) {
+              return getGlobalSettingsFromProfile(cachedProfile);
+            }
+          }
+        }
+      }
+      const rawGs = localStorage.getItem('global_settings_cache');
+      if (rawGs) {
+        const parsedGs = JSON.parse(rawGs);
+        if (parsedGs && typeof parsedGs === 'object') {
+          const derived = deriveH1H2(parsedGs);
+          return {
+            ...defaultGlobalSettings,
+            ...parsedGs,
+            office_leave_mode: derived.mode,
+            office_leave_h1: derived.h1,
+            office_leave_h2: derived.h2,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading initial global settings from storage:', e);
+    }
+  }
+  return defaultGlobalSettings;
+};
+
 /** Helper: derive H1/H2 from legacy office_leave_default if new fields are missing */
 const deriveH1H2 = (gs: any): { h1: number; h2: number; mode: 'split' | 'merged' } => {
-  const mode: 'split' | 'merged' = gs.office_leave_mode === 'merged' ? 'merged' : 'split';
+  let mode: 'split' | 'merged' = 'split';
+  if (gs.office_leave_mode === 'merged' || (gs.office_leave_h2 === 0 && (gs.office_leave_h1 > 0 || gs.office_leave_default > 0))) {
+    mode = 'merged';
+  } else if (gs.office_leave_mode === 'split') {
+    mode = 'split';
+  }
+
   if (mode === 'merged') {
     const total = Number(
       gs.office_leave_default ??
-      (gs.office_leave_h1 != null ? gs.office_leave_h1 : 14)
+      (gs.office_leave_h1 != null && gs.office_leave_h1 > 0 ? gs.office_leave_h1 : 14)
     );
     return { h1: total, h2: 0, mode: 'merged' };
   }
-  if (gs.office_leave_h1 != null && gs.office_leave_h2 != null) {
+  if (gs.office_leave_h1 != null && gs.office_leave_h2 != null && gs.office_leave_h2 > 0) {
     return { h1: Number(gs.office_leave_h1), h2: Number(gs.office_leave_h2), mode: 'split' };
   }
   const total = Number(gs.office_leave_default ?? 14);

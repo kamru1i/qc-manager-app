@@ -8,7 +8,7 @@ import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse }
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 
-import { getGlobalSettingsFromProfile, defaultGlobalSettings, GlobalSettings, parseHolidayItem } from '@/utils/dashboardHelpers';
+import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, parseHolidayItem } from '@/utils/dashboardHelpers';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { CHUTI_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS, LEAVE_SETTLEMENT_COLUMNS } from '@/utils/dbColumns';
@@ -99,8 +99,8 @@ export const useDashboardData = () => {
   // Theme Toggle state
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
-  // Global Settings state
-  const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(defaultGlobalSettings);
+  // Global Settings state (synchronously loaded from local cache to prevent mode flash on reload)
+  const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(() => getInitialGlobalSettings());
 
   // Fetch Chuti Records based on Role
   const fetchRecords = useCallback(async () => {
@@ -487,6 +487,22 @@ export const useDashboardData = () => {
     }
 
     setGlobalSettings(newSettings);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('global_settings_cache', JSON.stringify(newSettings));
+        if (sessionUser) {
+          const cacheKey = `cached_profile_${sessionUser.id}`;
+          const raw = localStorage.getItem(cacheKey);
+          if (raw) {
+            const p = JSON.parse(raw);
+            p.global_settings = newSettings;
+            localStorage.setItem(cacheKey, JSON.stringify(p));
+          }
+        }
+      } catch (e) {
+        console.warn('Error updating local global_settings cache:', e);
+      }
+    }
     if (!options?.silent) {
       setMessage({ type: 'success', text: 'Leave quota settings successfully updated!' });
     }

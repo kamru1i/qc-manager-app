@@ -20,7 +20,7 @@ export function AdminLeaveSettings({
 }: AdminLeaveSettingsProps) {
   // 1. Office Leave Settings State
   const [officeLeaveMode, setOfficeLeaveMode] = useState<'split' | 'merged'>(() => {
-    return globalSettings?.office_leave_mode === 'merged' ? 'merged' : 'split';
+    return (globalSettings?.office_leave_mode === 'merged' || globalSettings?.office_leave_h2 === 0) ? 'merged' : 'split';
   });
   const [officeLeaveH1, setOfficeLeaveH1] = useState<number>(() => {
     return globalSettings?.office_leave_split_h1 ?? (globalSettings?.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
@@ -53,7 +53,7 @@ export function AdminLeaveSettings({
   // Sync state with globalSettings on load/change
   useEffect(() => {
     if (globalSettings) {
-      const mode = globalSettings.office_leave_mode === 'merged' ? 'merged' : 'split';
+      const mode = (globalSettings.office_leave_mode === 'merged' || globalSettings.office_leave_h2 === 0) ? 'merged' : 'split';
       setOfficeLeaveMode(mode);
 
       const splitH1 = globalSettings.office_leave_split_h1 ?? (globalSettings.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
