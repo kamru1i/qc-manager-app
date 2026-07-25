@@ -21,8 +21,15 @@ import { SkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader
 import { LeaderboardTable } from "@/components/leaderboard-and-reports/LeaderboardTable";
 import { ReportsPanel } from "@/components/leaderboard-and-reports/ReportsPanel";
 import { AuditLogsPanel } from "@/components/common/AuditLogsPanel";
-import { isSuperadmin, isAdminRole, isFeatureEnabled } from "@/utils/permissionService";
-import { getGlobalSettingsFromProfile, getSanitizerWords } from "@/utils/dashboardHelpers";
+import {
+  isSuperadmin,
+  isAdminRole,
+  isFeatureEnabled,
+} from "@/utils/permissionService";
+import {
+  getGlobalSettingsFromProfile,
+  getSanitizerWords,
+} from "@/utils/dashboardHelpers";
 import { QuoteRulesPanel } from "@/components/quotes-tracker/QuoteRulesPanel";
 import { CopyHelperPanel } from "@/components/quotes-tracker/CopyHelperPanel";
 import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperPanel";
@@ -68,8 +75,30 @@ const ALL_10_FILE_TYPES = [
 ];
 
 interface DashboardProps {
-  activeTab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "login_codes" | "causality" | "copy_helper" | "save_file";
-  onTabChange: (tab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "login_codes" | "causality" | "copy_helper" | "save_file") => void;
+  activeTab:
+    | "entry"
+    | "monthly"
+    | "leaderboard"
+    | "reports"
+    | "audit_logs"
+    | "rules"
+    | "login_codes"
+    | "causality"
+    | "copy_helper"
+    | "save_file";
+  onTabChange: (
+    tab:
+      | "entry"
+      | "monthly"
+      | "leaderboard"
+      | "reports"
+      | "audit_logs"
+      | "rules"
+      | "login_codes"
+      | "causality"
+      | "copy_helper"
+      | "save_file",
+  ) => void;
   onBackToSidebarTab?: () => void;
 }
 
@@ -111,7 +140,8 @@ export default function Dashboard({
       }
     };
     window.addEventListener("quotes-tab-change", handleTabChange);
-    return () => window.removeEventListener("quotes-tab-change", handleTabChange);
+    return () =>
+      window.removeEventListener("quotes-tab-change", handleTabChange);
   }, [onTabChange]);
 
   const specificDateRef = useRef<HTMLInputElement>(null);
@@ -154,15 +184,21 @@ export default function Dashboard({
     return buildCleanFileName(getSanitizerWords(gs));
   }, [profile]);
 
-  const globalSettings = useMemo(() => getGlobalSettingsFromProfile(profile), [profile]);
+  const globalSettings = useMemo(
+    () => getGlobalSettingsFromProfile(profile),
+    [profile],
+  );
 
   // Feature flag: Custom Entry modal (superadmin-controlled; default ON).
   const customEntryEnabled = useMemo(
-    () => isFeatureEnabled('custom_entry', getGlobalSettingsFromProfile(profile), profile),
-    [profile]
+    () =>
+      isFeatureEnabled(
+        "custom_entry",
+        getGlobalSettingsFromProfile(profile),
+        profile,
+      ),
+    [profile],
   );
-
-
 
   // Fetch audit logs when activeTab becomes 'audit_logs'
   useEffect(() => {
@@ -250,7 +286,8 @@ export default function Dashboard({
           if (onBackToSidebarTab) {
             onBackToSidebarTab();
           } else {
-            const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
+            const lastQuotesTab =
+              localStorage.getItem("quotes_sales_active_tab") || "entry";
             onTabChange(lastQuotesTab as any);
           }
         }
@@ -263,10 +300,6 @@ export default function Dashboard({
     };
   }, [activeTab, viewingReports, onTabChange, onBackToSidebarTab]);
 
-
-
-
-
   // Monthly Table Search Query
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -276,8 +309,6 @@ export default function Dashboard({
   // Branch Selection Filters
   const [selectedBranch, setSelectedBranch] = useState("");
   const [todaySelectedBranch, setTodaySelectedBranch] = useState("");
-
-
 
   // Monthly Table Date filter state
   const [selectedDate, setSelectedDate] = useState("");
@@ -349,15 +380,15 @@ export default function Dashboard({
   // Admin Backdated Entry Modal State
   const [isCustomEntryModalOpen, setIsCustomEntryModalOpen] = useState(false);
 
-
-
   // Edit Record Modal State
   const [editingRecord, setEditingRecord] = useState<RecordItem | null>(null);
   const [editFileName, setEditFileName] = useState("");
   const [editBranchName, setEditBranchName] = useState("");
   const [editCodename, setEditCodename] = useState("");
   const [editFileType, setEditFileType] = useState<FileType>("Quote");
-  const [editSaleStatus, setEditSaleStatus] = useState<"SOLD" | "UNSOLD">("SOLD");
+  const [editSaleStatus, setEditSaleStatus] = useState<"SOLD" | "UNSOLD">(
+    "SOLD",
+  );
   const [editSubmittedDate, setEditSubmittedDate] = useState("");
   const [editSubmittedTime, setEditSubmittedTime] = useState("");
   const [editCanChangeSubmittedAt, setEditCanChangeSubmittedAt] =
@@ -374,19 +405,27 @@ export default function Dashboard({
   // Save File States
   const [showSaveFileHelper] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("quotes_sales_show_save_file_helper") === "true";
+      return (
+        localStorage.getItem("quotes_sales_show_save_file_helper") === "true"
+      );
     }
     return false;
   });
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("quotes_sales_show_report_helper", String(showReportHelper));
+      localStorage.setItem(
+        "quotes_sales_show_report_helper",
+        String(showReportHelper),
+      );
     }
   }, [showReportHelper]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("quotes_sales_show_save_file_helper", String(showSaveFileHelper));
+      localStorage.setItem(
+        "quotes_sales_show_save_file_helper",
+        String(showSaveFileHelper),
+      );
     }
   }, [showSaveFileHelper]);
 
@@ -406,13 +445,13 @@ export default function Dashboard({
     submittedAtDate: string;
   } | null>(null);
 
-
-
   const todayUserRecords = useMemo(() => {
     const effectiveCodename = codenameInput || profile?.username || "";
     return records.filter((r) => {
-      const isToday = new Date(r.submitted_at).toDateString() === new Date().toDateString();
-      const matchesUser = r.codename.toUpperCase() === effectiveCodename.toUpperCase();
+      const isToday =
+        new Date(r.submitted_at).toDateString() === new Date().toDateString();
+      const matchesUser =
+        r.codename.toUpperCase() === effectiveCodename.toUpperCase();
       return isToday && matchesUser;
     });
   }, [records, codenameInput, profile?.username]);
@@ -472,16 +511,23 @@ export default function Dashboard({
     copyText1,
     copyText2,
     copyNotes,
-  } = useCopyHelper({ showToast, todayUserRecords, profile, codenameInput, adminSalesSummary });
-
-
+  } = useCopyHelper({
+    showToast,
+    todayUserRecords,
+    profile,
+    codenameInput,
+    adminSalesSummary,
+  });
 
   // Record deletion state for confirmation modal
   const [deletingRecordId, setDeletingRecordId] = useState<string | null>(null);
 
   // Bulk record deletion state for confirmation modal
-  const [bulkDeletingRecordIds, setBulkDeletingRecordIds] = useState<string[] | null>(null);
-  const [isBulkDeletingInProgress, setIsBulkDeletingInProgress] = useState(false);
+  const [bulkDeletingRecordIds, setBulkDeletingRecordIds] = useState<
+    string[] | null
+  >(null);
+  const [isBulkDeletingInProgress, setIsBulkDeletingInProgress] =
+    useState(false);
 
   // Force Change Password / Onboarding Customization Modal State
   const [ownFullName, setOwnFullName] = useState(
@@ -617,7 +663,10 @@ export default function Dashboard({
       }
       // Branch Dropdown filter
       if (selectedBranch) {
-        if (r.branch_name.toUpperCase().trim() !== selectedBranch.toUpperCase().trim()) {
+        if (
+          r.branch_name.toUpperCase().trim() !==
+          selectedBranch.toUpperCase().trim()
+        ) {
           return false;
         }
       }
@@ -644,7 +693,15 @@ export default function Dashboard({
       }
       return true;
     });
-  }, [records, adminViewMode, selectedDate, searchQuery, selectedBranch, profile, sessionUser]);
+  }, [
+    records,
+    adminViewMode,
+    selectedDate,
+    searchQuery,
+    selectedBranch,
+    profile,
+    sessionUser,
+  ]);
 
   // Today's entries (submitted on the current local day)
   const todayRecords = useMemo(() => {
@@ -668,7 +725,10 @@ export default function Dashboard({
     return todayRecords.filter((r) => {
       // Branch Dropdown filter
       if (todaySelectedBranch) {
-        if (r.branch_name.toUpperCase().trim() !== todaySelectedBranch.toUpperCase().trim()) {
+        if (
+          r.branch_name.toUpperCase().trim() !==
+          todaySelectedBranch.toUpperCase().trim()
+        ) {
           return false;
         }
       }
@@ -697,59 +757,83 @@ export default function Dashboard({
     });
   }, [todayRecords, todaySearchQuery, todaySelectedBranch]);
 
-
-
   // Statistics calculation for today's entries (filtered by search terms)
   const todayStats = useMemo(() => {
     const stats = calculateSummaryStats(todayFilteredRecords);
     if (todaySearchQuery) {
-      const activeTabOtherSiteTotal = todayRecords.filter(r => {
-        if (todaySelectedBranch) {
-          return r.branch_name.toUpperCase().trim() === todaySelectedBranch.toUpperCase().trim();
-        }
-        return true;
-      }).filter(r => r.file_type === 'Other Site').length;
+      const activeTabOtherSiteTotal = todayRecords
+        .filter((r) => {
+          if (todaySelectedBranch) {
+            return (
+              r.branch_name.toUpperCase().trim() ===
+              todaySelectedBranch.toUpperCase().trim()
+            );
+          }
+          return true;
+        })
+        .filter((r) => r.file_type === "Other Site").length;
       return {
         ...stats,
-        datasetOtherSiteTotal: activeTabOtherSiteTotal
+        datasetOtherSiteTotal: activeTabOtherSiteTotal,
       };
     }
     return stats;
-  }, [todayFilteredRecords, todaySearchQuery, todayRecords, todaySelectedBranch]);
+  }, [
+    todayFilteredRecords,
+    todaySearchQuery,
+    todayRecords,
+    todaySelectedBranch,
+  ]);
 
   // Statistics calculation for monthly entries (filtered by search query)
   const monthlyStats = useMemo(() => {
     const stats = calculateSummaryStats(monthlyFilteredRecords);
     if (searchQuery) {
-      const activeTabOtherSiteTotal = records.filter((r) => {
-        if (
-          (isAdminRole(profile) || profile?.role === "supervisor") &&
-          adminViewMode === "mine" &&
-          r.user_id !== sessionUser?.id
-        ) {
-          return false;
-        }
-        if (selectedDate) {
-          const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
-          if (recordDate !== selectedDate) {
+      const activeTabOtherSiteTotal = records
+        .filter((r) => {
+          if (
+            (isAdminRole(profile) || profile?.role === "supervisor") &&
+            adminViewMode === "mine" &&
+            r.user_id !== sessionUser?.id
+          ) {
             return false;
           }
-        }
-        if (selectedBranch) {
-          if (r.branch_name.toUpperCase().trim() !== selectedBranch.toUpperCase().trim()) {
-            return false;
+          if (selectedDate) {
+            const recordDate = new Date(r.submitted_at).toLocaleDateString(
+              "en-CA",
+            );
+            if (recordDate !== selectedDate) {
+              return false;
+            }
           }
-        }
-        return true;
-      }).filter(r => r.file_type === 'Other Site').length;
+          if (selectedBranch) {
+            if (
+              r.branch_name.toUpperCase().trim() !==
+              selectedBranch.toUpperCase().trim()
+            ) {
+              return false;
+            }
+          }
+          return true;
+        })
+        .filter((r) => r.file_type === "Other Site").length;
 
       return {
         ...stats,
-        datasetOtherSiteTotal: activeTabOtherSiteTotal
+        datasetOtherSiteTotal: activeTabOtherSiteTotal,
       };
     }
     return stats;
-  }, [monthlyFilteredRecords, searchQuery, records, adminViewMode, selectedDate, selectedBranch, profile, sessionUser]);
+  }, [
+    monthlyFilteredRecords,
+    searchQuery,
+    records,
+    adminViewMode,
+    selectedDate,
+    selectedBranch,
+    profile,
+    sessionUser,
+  ]);
 
   // Export handlers
   const handleExportTodayExcel = () => {
@@ -758,17 +842,24 @@ export default function Dashboard({
     logActivity(
       "EXPORT_EXCEL",
       null,
-      `Exported today's records (Count: ${todayFilteredRecords.length}) to Excel`
+      `Exported today's records (Count: ${todayFilteredRecords.length}) to Excel`,
     );
   };
 
   const handleExportMonthlyExcel = () => {
-    const monthName = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1).toLocaleString('en-US', { month: 'long' });
-    exportToCSV(monthlyFilteredRecords, `Monthly_Logs_${monthName}_${selectedYear}`);
+    const monthName = new Date(
+      parseInt(selectedYear),
+      parseInt(selectedMonth) - 1,
+      1,
+    ).toLocaleString("en-US", { month: "long" });
+    exportToCSV(
+      monthlyFilteredRecords,
+      `Monthly_Logs_${monthName}_${selectedYear}`,
+    );
     logActivity(
       "EXPORT_EXCEL",
       null,
-      `Exported monthly records for ${monthName} ${selectedYear} (Count: ${monthlyFilteredRecords.length}) to Excel`
+      `Exported monthly records for ${monthName} ${selectedYear} (Count: ${monthlyFilteredRecords.length}) to Excel`,
     );
   };
 
@@ -814,7 +905,7 @@ export default function Dashboard({
 
     // For non-admin mode, use currentUserProfile; for admin/supervisor mode, look up in profilesList
     const targetProfile =
-      (isAdminRole(profile) || profile?.role === "supervisor")
+      isAdminRole(profile) || profile?.role === "supervisor"
         ? profilesList.find((p) => p.id === userId)
         : userId === profile?.id
           ? profile
@@ -961,7 +1052,12 @@ export default function Dashboard({
       });
       setShowSaleModal(true);
     } else {
-      await submitNewEntry(cleanedFileName, branchName, codenameInput, fileType);
+      await submitNewEntry(
+        cleanedFileName,
+        branchName,
+        codenameInput,
+        fileType,
+      );
     }
   };
 
@@ -1026,7 +1122,10 @@ export default function Dashboard({
       editedSubmittedAt = parsedDate.toISOString();
     }
 
-    const finalFileName = editFileType === "Sale" ? `${editFileName} [${editSaleStatus}]` : editFileName;
+    const finalFileName =
+      editFileType === "Sale"
+        ? `${editFileName} [${editSaleStatus}]`
+        : editFileName;
     const success = await updateRecord(
       editingRecord.id,
       finalFileName,
@@ -1041,7 +1140,10 @@ export default function Dashboard({
     }
   };
 
-  const handleSaveInline = async (id: string, updates: Partial<RecordItem>): Promise<boolean> => {
+  const handleSaveInline = async (
+    id: string,
+    updates: Partial<RecordItem>,
+  ): Promise<boolean> => {
     if (updates.file_name !== undefined && !updates.file_name.trim()) {
       showToast("error", "File name cannot be empty.");
       return false;
@@ -1055,14 +1157,29 @@ export default function Dashboard({
       return false;
     }
 
-    const originalRecord = records.find(r => r.id === id);
+    const originalRecord = records.find((r) => r.id === id);
     if (!originalRecord) return false;
 
-    const finalFileName = updates.file_name !== undefined ? updates.file_name : originalRecord.file_name;
-    const finalBranchName = updates.branch_name !== undefined ? updates.branch_name : originalRecord.branch_name;
-    const finalCodename = updates.codename !== undefined ? updates.codename : originalRecord.codename;
-    const finalFileType = updates.file_type !== undefined ? updates.file_type : originalRecord.file_type;
-    const finalSubmittedAt = updates.submitted_at !== undefined ? updates.submitted_at : originalRecord.submitted_at;
+    const finalFileName =
+      updates.file_name !== undefined
+        ? updates.file_name
+        : originalRecord.file_name;
+    const finalBranchName =
+      updates.branch_name !== undefined
+        ? updates.branch_name
+        : originalRecord.branch_name;
+    const finalCodename =
+      updates.codename !== undefined
+        ? updates.codename
+        : originalRecord.codename;
+    const finalFileType =
+      updates.file_type !== undefined
+        ? updates.file_type
+        : originalRecord.file_type;
+    const finalSubmittedAt =
+      updates.submitted_at !== undefined
+        ? updates.submitted_at
+        : originalRecord.submitted_at;
 
     const success = await updateRecord(
       id,
@@ -1070,13 +1187,15 @@ export default function Dashboard({
       finalBranchName,
       finalCodename,
       finalFileType,
-      finalSubmittedAt
+      finalSubmittedAt,
     );
 
     return success;
   };
 
-  const handleBulkSaveInline = async (updatesMap: Record<string, Partial<RecordItem>>): Promise<boolean> => {
+  const handleBulkSaveInline = async (
+    updatesMap: Record<string, Partial<RecordItem>>,
+  ): Promise<boolean> => {
     for (const id of Object.keys(updatesMap)) {
       const updates = updatesMap[id];
       if (updates.file_name !== undefined && !updates.file_name.trim()) {
@@ -1104,7 +1223,7 @@ export default function Dashboard({
     const submittedAt = new Date(record.submitted_at);
 
     setEditingRecord(record);
-    const cleanName = record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, '');
+    const cleanName = record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "");
     setEditFileName(cleanName);
     setEditBranchName(record.branch_name);
     setEditCodename(record.codename);
@@ -1136,8 +1255,6 @@ export default function Dashboard({
       setEditSubmittedTime("");
     }
   };
-
-
 
   // Admin reset password handled inline inside EditProfileModal
 
@@ -1184,11 +1301,22 @@ export default function Dashboard({
 
   // Loading Screen
   if (loading) {
-    let loaderType: "form" | "table" | "leaderboard" | "audit-logs" | "rules" | "login_codes" | "causality" | "copy_helper" | "save_file" | "generic" = "generic";
+    let loaderType:
+      | "form"
+      | "table"
+      | "leaderboard"
+      | "audit-logs"
+      | "rules"
+      | "login_codes"
+      | "causality"
+      | "copy_helper"
+      | "save_file"
+      | "generic" = "generic";
     if (activeTab === "entry") loaderType = "form";
     else if (activeTab === "causality") loaderType = "causality";
     else if (activeTab === "monthly") loaderType = "table";
-    else if (activeTab === "leaderboard" || activeTab === "reports") loaderType = "leaderboard";
+    else if (activeTab === "leaderboard" || activeTab === "reports")
+      loaderType = "leaderboard";
     else if (activeTab === "audit_logs") loaderType = "audit-logs";
     else if (activeTab === "rules") loaderType = "rules";
     else if (activeTab === "login_codes") loaderType = "login_codes";
@@ -1980,12 +2108,15 @@ export default function Dashboard({
                     data.branch_name,
                     data.codename,
                     data.file_type as FileType,
+                    undefined,
+                    undefined,
+                    { skipToast: true, skipFetch: true },
                   );
                 }}
                 onCompleteSuccess={(count) => {
                   showToast(
                     "success",
-                    `🎉 Successfully submitted ${count} Quotes!`,
+                    `🎉 Successfully submitted ${count} Files!`,
                   );
                   fetchRecords();
                 }}

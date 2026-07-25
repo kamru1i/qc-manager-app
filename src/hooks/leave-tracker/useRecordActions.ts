@@ -47,7 +47,8 @@ export const useRecordActions = ({
     codename: string,
     fileType: FileType,
     customUserId?: string,
-    customSubmittedAt?: string
+    customSubmittedAt?: string,
+    options?: { skipToast?: boolean; skipFetch?: boolean }
   ) => {
     if (!sessionUser) return false;
     if (isAddingRef.current) {
@@ -86,9 +87,13 @@ export const useRecordActions = ({
         };
         await mergeCacheData('records_cache', [cachedRecordItem]);
 
-        await fetchRecords(true);
-        await fetchAvailableDates();
-        showToast('success', 'Saved offline! Data will sync when online.');
+        if (!options?.skipFetch) {
+          await fetchRecords(true);
+          await fetchAvailableDates();
+        }
+        if (!options?.skipToast) {
+          showToast('success', 'Saved offline! Data will sync when online.');
+        }
         return true;
       }
 
@@ -105,9 +110,13 @@ export const useRecordActions = ({
 
       if (error) throw error;
 
-      await fetchRecords(true);
-      await fetchAvailableDates();
-      showToast('success', 'Data entry saved successfully!');
+      if (!options?.skipFetch) {
+        await fetchRecords(true);
+        await fetchAvailableDates();
+      }
+      if (!options?.skipToast) {
+        showToast('success', 'Data entry saved successfully!');
+      }
       return true;
     } catch (err) {
       console.error('Error adding record:', err);
