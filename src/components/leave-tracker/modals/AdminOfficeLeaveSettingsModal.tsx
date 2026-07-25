@@ -16,23 +16,66 @@ export function AdminOfficeLeaveSettingsModal({
   globalSettings,
   onSave,
 }: AdminOfficeLeaveSettingsModalProps) {
-  const [officeLeaveMode, setOfficeLeaveMode] = useState<'split' | 'merged'>('split');
-  const [officeLeaveH1, setOfficeLeaveH1] = useState(7);
-  const [officeLeaveH2, setOfficeLeaveH2] = useState(7);
-  const [officeLeaveYearly, setOfficeLeaveYearly] = useState(14);
+  const [officeLeaveMode, setOfficeLeaveMode] = useState<'split' | 'merged'>(() => {
+    return globalSettings?.office_leave_mode === 'merged' ? 'merged' : 'split';
+  });
+  const [officeLeaveH1, setOfficeLeaveH1] = useState<number>(() => {
+    return globalSettings?.office_leave_split_h1 ?? (globalSettings?.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
+  });
+  const [officeLeaveH2, setOfficeLeaveH2] = useState<number>(() => {
+    return globalSettings?.office_leave_split_h2 ?? (globalSettings?.office_leave_h2 > 0 ? globalSettings.office_leave_h2 : 7);
+  });
+  const [officeLeaveYearly, setOfficeLeaveYearly] = useState<number>(() => {
+    return globalSettings?.office_leave_default ?? ((globalSettings?.office_leave_h1 || 7) + (globalSettings?.office_leave_h2 || 7));
+  });
+  const [rememberedH1, setRememberedH1] = useState<number>(() => {
+    return globalSettings?.office_leave_split_h1 ?? (globalSettings?.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
+  });
+  const [rememberedH2, setRememberedH2] = useState<number>(() => {
+    return globalSettings?.office_leave_split_h2 ?? (globalSettings?.office_leave_h2 > 0 ? globalSettings.office_leave_h2 : 7);
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (showModal) {
+    if (showModal && globalSettings) {
       const mode = globalSettings.office_leave_mode === 'merged' ? 'merged' : 'split';
       setOfficeLeaveMode(mode);
-      const h1 = globalSettings.office_leave_h1 ?? 7;
-      const h2 = globalSettings.office_leave_h2 ?? 7;
-      setOfficeLeaveH1(h1);
-      setOfficeLeaveH2(h2);
-      setOfficeLeaveYearly(mode === 'merged' ? (globalSettings.office_leave_default ?? (h1 + h2)) : (h1 + h2));
+
+      const splitH1 = globalSettings.office_leave_split_h1 ?? (globalSettings.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
+      const splitH2 = globalSettings.office_leave_split_h2 ?? (globalSettings.office_leave_h2 > 0 ? globalSettings.office_leave_h2 : 7);
+
+      setRememberedH1(splitH1);
+      setRememberedH2(splitH2);
+
+      if (mode === 'split') {
+        const h1 = globalSettings.office_leave_h1 ?? splitH1;
+        const h2 = globalSettings.office_leave_h2 ?? splitH2;
+        setOfficeLeaveH1(h1);
+        setOfficeLeaveH2(h2);
+        setOfficeLeaveYearly(h1 + h2);
+      } else {
+        setOfficeLeaveH1(splitH1);
+        setOfficeLeaveH2(splitH2);
+        setOfficeLeaveYearly(globalSettings.office_leave_default ?? (splitH1 + splitH2));
+      }
     }
   }, [showModal, globalSettings]);
+
+  const handleSelectSplitMode = () => {
+    setOfficeLeaveMode('split');
+    const h1 = rememberedH1 || officeLeaveH1 || 7;
+    const h2 = rememberedH2 || officeLeaveH2 || 7;
+    setOfficeLeaveH1(h1);
+    setOfficeLeaveH2(h2);
+    setOfficeLeaveYearly(h1 + h2);
+  };
+
+  const handleSelectMergedMode = () => {
+    setOfficeLeaveMode('merged');
+    setRememberedH1(officeLeaveH1);
+    setRememberedH2(officeLeaveH2);
+    setOfficeLeaveYearly(officeLeaveH1 + officeLeaveH2);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,11 +84,18 @@ export function AdminOfficeLeaveSettingsModal({
     let updatedH1 = Number(officeLeaveH1);
     let updatedH2 = Number(officeLeaveH2);
     let updatedDefault = updatedH1 + updatedH2;
+    let finalSplitH1 = rememberedH1 || updatedH1;
+    let finalSplitH2 = rememberedH2 || updatedH2;
 
     if (officeLeaveMode === 'merged') {
       updatedDefault = Number(officeLeaveYearly);
       updatedH1 = updatedDefault;
       updatedH2 = 0;
+      finalSplitH1 = rememberedH1 || Math.floor(updatedDefault / 2);
+      finalSplitH2 = rememberedH2 || (updatedDefault - Math.floor(updatedDefault / 2));
+    } else {
+      finalSplitH1 = updatedH1;
+      finalSplitH2 = updatedH2;
     }
 
     const success = await onSave({
@@ -54,6 +104,8 @@ export function AdminOfficeLeaveSettingsModal({
       office_leave_h1: updatedH1,
       office_leave_h2: updatedH2,
       office_leave_default: updatedDefault,
+      office_leave_split_h1: finalSplitH1,
+      office_leave_split_h2: finalSplitH2,
     });
     setSubmitting(false);
     if (success) {
@@ -76,7 +128,7 @@ export function AdminOfficeLeaveSettingsModal({
           <div className="flex bg-theme-card-bg border border-theme-border-muted p-0.5 rounded-lg text-xs font-semibold">
             <button
               type="button"
-              onClick={() => setOfficeLeaveMode('split')}
+              onClick={handleSelectSplitMode}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 officeLeaveMode === 'split'
                   ? 'bg-blue-600 text-white shadow-xs font-bold'
@@ -87,7 +139,7 @@ export function AdminOfficeLeaveSettingsModal({
             </button>
             <button
               type="button"
-              onClick={() => setOfficeLeaveMode('merged')}
+              onClick={handleSelectMergedMode}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 officeLeaveMode === 'merged'
                   ? 'bg-blue-600 text-white shadow-xs font-bold'

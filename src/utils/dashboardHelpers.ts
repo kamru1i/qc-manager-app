@@ -10,6 +10,8 @@ export interface GlobalSettings {
   office_leave_mode?: 'split' | 'merged';
   office_leave_h1: number;
   office_leave_h2: number;
+  office_leave_split_h1?: number;
+  office_leave_split_h2?: number;
   /** @deprecated Use office_leave_h1 + office_leave_h2 instead. Kept for backward compatibility. */
   office_leave_default?: number;
   eid_fitr_leave: number;
@@ -112,6 +114,8 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           office_leave_mode: derived.mode,
           office_leave_h1: derived.h1,
           office_leave_h2: derived.h2,
+          office_leave_split_h1: gs.office_leave_split_h1 != null ? Number(gs.office_leave_split_h1) : undefined,
+          office_leave_split_h2: gs.office_leave_split_h2 != null ? Number(gs.office_leave_split_h2) : undefined,
           office_leave_default: Number(gs.office_leave_default ?? (derived.h1 + derived.h2)),
           eid_fitr_leave: Number(gs.eid_fitr_leave ?? 0),
           eid_adha_leave: Number(gs.eid_adha_leave ?? 0),
