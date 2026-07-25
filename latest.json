@@ -1,7 +1,7 @@
 {
-  "version": "6.5.0",
-  "notes": "### 🚀 v6.5.0 — Minor Release (Bulk Quick Import, System File Picker, IP Checker Cleanup & Egress Optimizations) (Current)\n\n- **Bulk Quick Import & Auto-Parser**: Introduced a high-tech Quick Import modal allowing multi-line raw text pastes with automatic branch, file-type, and client-name parsing.\n- **System File Picker**: Select local computer files directly to auto-detect branches, file types, and sanitized file names.\n- **1-by-1 Sequential Async Queue**: Submits batch imports sequentially with live UI progress and zero intermediate refetches.\n- **Complete IP Checker Removal**: Cleaned all IP Checker dead code, proxy rules, and environment variables across the codebase.\n- **Supabase Egress & Realtime Optimizations**: Deployed session role caching (`get_my_role`), no-op badge update skip guards (`IS DISTINCT FROM`), and strict `.eq('id', ...)` profile settings updates.",
-  "pub_date": "2026-07-25T11:54:49.221Z",
+  "version": "6.6.0",
+  "notes": "### 🚀 v6.6.0 — Minor Release (Role & Per-User Temporary Access Controls, Custom DateTime Picker, Alignment & Feature Flag Management) (Current)\n\n- **Superadmin Access Control Matrix**: Registered `Quick Import` & `Custom Quote Entry` as controllable subtabs under Tab Access Matrix.\n- **Per-User & Per-Role Temporary Access**: Configurable time-boxed temporary overrides targeting either a role or a specific user by `Codename (Full Name)`.\n- **Custom DateTime Picker**: Integrated custom `DateTimeInput` component enforcing `DD-MM-YYYY, HH:MM AM/PM` formatting with instant browser picker popup.\n- **Layout & Alignment Polish**: Rearranged Temporary Access Controls into a 2-line layout and flush right-aligned Copy Helper session/network fields with left-side pencil icons.",
+  "pub_date": "2026-07-25T16:18:35.000Z",
   "releaseDate": "July 25, 2026",
   "platforms": {},
   "checksums": {},

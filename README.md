@@ -115,7 +115,14 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.5.0 — Minor Release (Bulk Quick Import, System File Picker, IP Checker Cleanup & Egress Optimizations) (Current)
+### 🚀 v6.6.0 — Minor Release (Role & Per-User Temporary Access Controls, Custom DateTime Picker, Alignment & Feature Flag Management) (Current)
+
+- **Superadmin Access Control Matrix**: Registered `Quick Import` & `Custom Quote Entry` as controllable subtabs under Tab Access Matrix (`Settings > Access`).
+- **Per-User & Per-Role Temporary Access**: Configurable time-boxed temporary overrides targeting either an entire role (`user`, `supervisor`, `admin`) or a specific single user by `Codename (Full Name)`.
+- **Custom DateTime Picker**: Integrated custom `DateTimeInput` component enforcing `DD-MM-YYYY, HH:MM AM/PM` formatting with instant browser picker popup.
+- **Layout & Alignment Polish**: Rearranged Temporary Access Controls into a spacious 2-line layout and flush right-aligned Copy Helper session/network fields with left-side pencil icons.
+
+### 🚀 v6.5.0 — Minor Release (Bulk Quick Import, System File Picker, IP Checker Cleanup & Egress Optimizations)
 
 - **Bulk Quick Import & Auto-Parser**: Introduced a high-tech Quick Import modal allowing multi-line raw text pastes with automatic branch, file-type, and client-name parsing.
 - **System File Picker**: Select local computer files directly to auto-detect branches, file types, and sanitized file names.

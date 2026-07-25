@@ -18,6 +18,8 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'leaderboard', label: 'Leaderboard (Workspace)', category: 'Main Workspace Sections' },
   { key: 'audit_logs', label: 'Audit Logs (Workspace)', category: 'Main Workspace Sections' },
   { key: 'user_management', label: 'User Management', category: 'Main Workspace Sections' },
+  { key: 'bd_clock', label: 'Navbar BD Clock', category: 'Main Workspace Sections' },
+  { key: 'uk_clock', label: 'Navbar UK Clock', category: 'Main Workspace Sections' },
 
   // Quotes Tracker Subtabs
   { key: 'copy_helper', label: 'Copy Helper Subtab', category: 'Quotes Tracker Subtabs' },
@@ -91,6 +93,8 @@ export const getDefaultRoleVisibility = (
     case 'leave_history':
     case 'quick_import':
     case 'custom_entry':
+    case 'bd_clock':
+    case 'uk_clock':
       return true;
 
     default:

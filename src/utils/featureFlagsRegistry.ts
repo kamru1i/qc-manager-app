@@ -85,6 +85,16 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
 
   // System & Management Features
   {
+    key: 'bd_clock',
+    label: 'Navbar BD Clock',
+    description: 'The Bangladesh (BD) live clock display in the top navbar header.',
+  },
+  {
+    key: 'uk_clock',
+    label: 'Navbar UK Clock',
+    description: 'The United Kingdom (UK) live clock display with automatic DST in the top navbar header.',
+  },
+  {
     key: 'todo_management',
     label: 'Todos & Task Management',
     description: 'Creating, assigning, and managing task todos in the Todos Panel.',
@@ -118,4 +128,6 @@ export const FLAG_TO_TAB_KEY: Record<string, string> = {
   yearly_leaderboard: 'leaderboard',
   quick_import: 'quick_import',
   custom_entry: 'custom_entry',
+  bd_clock: 'bd_clock',
+  uk_clock: 'uk_clock',
 };

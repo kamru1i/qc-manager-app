@@ -14,6 +14,8 @@ import { Profile } from "@/types";
 import { useRouter } from "next/navigation";
 import { isNativeApp } from "@/utils/envHelper";
 
+import { isTabVisibleForRole } from "@/utils/permissionService";
+import { getGlobalSettingsFromProfile } from "@/utils/dashboardHelpers";
 import { UserDisplayName } from "@/components/common/UserDisplayName";
 import { LiveClock } from "@/components/common/LiveClock";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
@@ -63,6 +65,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   React.useEffect(() => {
     setIsNative(isNativeApp());
   }, []);
+
+  const showBd = React.useMemo(
+    () => isTabVisibleForRole(profile, "bd_clock", getGlobalSettingsFromProfile(profile)),
+    [profile]
+  );
+  const showUk = React.useMemo(
+    () => isTabVisibleForRole(profile, "uk_clock", getGlobalSettingsFromProfile(profile)),
+    [profile]
+  );
 
   return (
     <header
@@ -133,8 +144,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Live Clock (100% Client-Side Local System Time) */}
-          <LiveClock />
+          {/* Live Clocks (Superadmin-controlled via Access Control & Feature Flags) */}
+          <LiveClock showBd={showBd} showUk={showUk} />
 
           {/* Theme Toggle */}
           <button
