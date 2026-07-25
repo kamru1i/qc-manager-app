@@ -1297,8 +1297,13 @@ export function ProfileSettings({
                 <input
                   type="datetime-local"
                   value={tempForm.expires_at}
+                  onClick={(e) => {
+                    try {
+                      e.currentTarget.showPicker?.();
+                    } catch {}
+                  }}
                   onChange={(e) => setTempForm((f) => ({ ...f, expires_at: e.target.value }))}
-                  className="w-full h-9 px-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50"
+                  className="w-full h-9 px-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50 cursor-pointer"
                 />
               </div>
               <button
