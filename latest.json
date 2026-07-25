@@ -1,6 +1,6 @@
 {
-  "version": "6.4.11",
-  "notes": "### 🚀 v6.4.11 — Patch Release (Live Database Schema Sync & Leaderboard RLS Fix) (Current)\n\n- **Live Database Schema Sync**: Consolidated all 28 SQL patch files into live Supabase PostgreSQL DB and regenerated `supabase/schema.sql` as the single source of truth.\n- **Leaderboard RLS Policy Deployment**: Deployed updated RLS policies allowing authenticated users to read leaderboard statistics across profiles and records.\n- **Top Performer Badge Sync Security**: Optimized `sync_top_performer_badges` function to prevent duplicate Realtime UPDATE broadcasts with targeted `IS DISTINCT FROM` guards.",
+  "version": "6.5.0",
+  "notes": "### 🚀 v6.5.0 — Minor Release (Bulk Quick Import, System File Picker, IP Checker Cleanup & Egress Optimizations) (Current)\n\n- **Bulk Quick Import & Auto-Parser**: Introduced a high-tech Quick Import modal allowing multi-line raw text pastes with automatic branch, file-type, and client-name parsing.\n- **System File Picker**: Select local computer files directly to auto-detect branches, file types, and sanitized file names.\n- **1-by-1 Sequential Async Queue**: Submits batch imports sequentially with live UI progress and zero intermediate refetches.\n- **Complete IP Checker Removal**: Cleaned all IP Checker dead code, proxy rules, and environment variables across the codebase.\n- **Supabase Egress & Realtime Optimizations**: Deployed session role caching (`get_my_role`), no-op badge update skip guards (`IS DISTINCT FROM`), and strict `.eq('id', ...)` profile settings updates.",
   "pub_date": "2026-07-25T11:54:49.221Z",
   "releaseDate": "July 25, 2026",
   "platforms": {},

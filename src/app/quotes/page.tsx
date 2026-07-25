@@ -25,6 +25,7 @@ import {
   isSuperadmin,
   isAdminRole,
   isFeatureEnabled,
+  isTabVisibleForRole,
 } from "@/utils/permissionService";
 import {
   getGlobalSettingsFromProfile,
@@ -189,15 +190,16 @@ export default function Dashboard({
     [profile],
   );
 
-  // Feature flag: Custom Entry modal (superadmin-controlled; default ON).
+  // Access & Feature flag check: Quick Import modal (Superadmin-controlled via Access Matrix & Feature Flags).
+  const quickImportEnabled = useMemo(
+    () => isTabVisibleForRole(profile, "quick_import", globalSettings),
+    [profile, globalSettings],
+  );
+
+  // Access & Feature flag check: Custom Entry modal (Superadmin-controlled via Access Matrix & Feature Flags).
   const customEntryEnabled = useMemo(
-    () =>
-      isFeatureEnabled(
-        "custom_entry",
-        getGlobalSettingsFromProfile(profile),
-        profile,
-      ),
-    [profile],
+    () => isTabVisibleForRole(profile, "custom_entry", globalSettings),
+    [profile, globalSettings],
   );
 
   // Fetch audit logs when activeTab becomes 'audit_logs'
@@ -1499,13 +1501,16 @@ export default function Dashboard({
                 Fill out the form below to submit file data.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsBulkModalOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer hover:opacity-95 shrink-0"
-            >
-              <span>Quick Import</span>
-            </button>
+            {quickImportEnabled && (
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(true)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer hover:opacity-95 shrink-0"
+              >
+                <Sparkles className="h-4 w-4 text-yellow-300" />
+                <span>Quick Import</span>
+              </button>
+            )}
           </div>
 
           {/* Data Entry Form Component */}

@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.11** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.5.0** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,15 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.11 — Patch Release (Live Database Schema Sync & Leaderboard RLS Fix) (Current)
+### 🚀 v6.5.0 — Minor Release (Bulk Quick Import, System File Picker, IP Checker Cleanup & Egress Optimizations) (Current)
+
+- **Bulk Quick Import & Auto-Parser**: Introduced a high-tech Quick Import modal allowing multi-line raw text pastes with automatic branch, file-type, and client-name parsing.
+- **System File Picker**: Select local computer files directly to auto-detect branches, file types, and sanitized file names.
+- **1-by-1 Sequential Async Queue**: Submits batch imports sequentially with live UI progress, zero intermediate refetches, and zero per-row toast spam.
+- **Complete IP Checker Removal**: Cleaned all IP Checker dead code, proxy rules, and environment variables across the codebase.
+- **Supabase Egress & Realtime Optimizations**: Deployed session role caching (`get_my_role`), no-op badge update skip guards (`IS DISTINCT FROM`), and strict `.eq('id', ...)` profile settings updates.
+
+### 🚀 v6.4.11 — Patch Release (Live Database Schema Sync & Leaderboard RLS Fix)
 
 - **Live Database Schema Sync**: Consolidated all 28 SQL patch files into live Supabase PostgreSQL DB and regenerated `supabase/schema.sql` as the single source of truth.
 - **Leaderboard RLS Policy Deployment**: Deployed updated RLS policies allowing authenticated users to read leaderboard statistics across profiles and records.

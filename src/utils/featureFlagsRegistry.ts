@@ -41,6 +41,11 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
 
   // Quotes Tracker Features
   {
+    key: 'quick_import',
+    label: 'Bulk Quick Import',
+    description: 'The Bulk Import / Quick Paste modal for multi-line text paste and file auto-detection in Daily Entry.',
+  },
+  {
     key: 'custom_entry',
     label: 'Custom Quote Entry',
     description: 'The Custom Entry modal for adding historical/backdated quote records.',
@@ -111,4 +116,6 @@ export const FLAG_TO_TAB_KEY: Record<string, string> = {
   copy_helper_save_file: 'save_file',
   causality_generator: 'causality',
   yearly_leaderboard: 'leaderboard',
+  quick_import: 'quick_import',
+  custom_entry: 'custom_entry',
 };
