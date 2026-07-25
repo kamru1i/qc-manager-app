@@ -1,5 +1,5 @@
 "use client";
- 
+
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, usePathname } from "next/navigation";
@@ -8,7 +8,7 @@ import { useSaveFileHelper } from "@/hooks/quotes-tracker/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/quotes-tracker/useCopyHelper";
 import { useCopyHelperPermissions } from "@/hooks/quotes-tracker/useCopyHelperPermissions";
 import { useAdminSalesSummary } from "@/hooks/quotes-tracker/useAdminSalesSummary";
- 
+
 import { StatsGrid } from "@/components/common/StatsGrid";
 import { RecordsTable } from "@/components/quotes-tracker/RecordsTable";
 import { DailyEntryForm } from "@/components/leave-tracker/DailyEntryForm";
@@ -28,6 +28,7 @@ import { CopyHelperPanel } from "@/components/quotes-tracker/CopyHelperPanel";
 import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperPanel";
 import { CustomSelect } from "@/components/common/CustomSelect";
 import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
+import { BulkImportModal } from "@/components/quotes-tracker/modals/BulkImportModal";
 import { CausalityPanel } from "@/components/quotes-tracker/CausalityPanel";
 import { validator } from "@/utils/quotesValidator";
 import {
@@ -50,6 +51,7 @@ import {
   RefreshCw,
   Search,
   FileSpreadsheet,
+  Sparkles,
 } from "lucide-react";
 
 const ALL_10_FILE_TYPES = [
@@ -140,6 +142,7 @@ export default function Dashboard({
     auditLogsLoading,
     fetchAuditLogs,
     logActivity,
+    fetchRecords,
   } = dashboardData;
 
   const isSuperAdmin = isSuperadmin(profile);
@@ -150,6 +153,8 @@ export default function Dashboard({
     const gs = getGlobalSettingsFromProfile(profile);
     return buildCleanFileName(getSanitizerWords(gs));
   }, [profile]);
+
+  const globalSettings = useMemo(() => getGlobalSettingsFromProfile(profile), [profile]);
 
   // Feature flag: Custom Entry modal (superadmin-controlled; default ON).
   const customEntryEnabled = useMemo(
@@ -172,6 +177,7 @@ export default function Dashboard({
   // users) and briefly overwrote the correct rank with a bogus one.
 
   // Daily Entry Form State
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [fileName, setFileName] = useState("");
   const [branchName, setBranchName] = useState("");
   const [codenameInput, setCodenameInput] = useState(
@@ -1353,344 +1359,149 @@ export default function Dashboard({
 
   return (
     <>
-          {/* TAB 1: DAILY ENTRY */}
-          {activeTab === "entry" && (
-            <div className="space-y-6">
+      {/* TAB 1: DAILY ENTRY */}
+      {activeTab === "entry" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-theme-text-primary">
+                New File Entry
+              </h2>
+              <p className="text-xs text-theme-text-muted mt-1">
+                Fill out the form below to submit file data.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsBulkModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer hover:opacity-95 shrink-0"
+            >
+              <span>Quick Import</span>
+            </button>
+          </div>
+
+          {/* Data Entry Form Component */}
+          <Suspense fallback={<SkeletonLoader type="form" />}>
+            <DailyEntryForm
+              fileName={fileName}
+              setFileName={setFileName}
+              branchName={branchName}
+              setBranchName={setBranchName}
+              codenameInput={codenameInput}
+              setCodenameInput={setCodenameInput}
+              fileType={fileType}
+              setFileType={setFileType}
+              allowedCategories={allowedCategories}
+              submitting={submitting}
+              onSubmit={handleAddEntry}
+              isAdmin={false}
+              cleanFileName={cleanFileName}
+            />
+          </Suspense>
+
+          {/* Today's Data Title and Summary Stats */}
+          <div className="border-t border-theme-border-input/80 pt-6 space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <h2 className="text-xl font-bold text-theme-text-primary">New File Entry</h2>
-                <p className="text-xs text-theme-text-muted mt-1">
-                  Fill out the form below to submit file data.
+                <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
+                  <Clock className="h-4.5 w-4.5 text-blue-500" />
+                  Today's File Entry List
+                </h3>
+                <p className="text-[11px] text-theme-text-muted mt-0.5">
+                  Date:{" "}
+                  {new Date().toLocaleDateString("en-US", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </p>
               </div>
 
-              {/* Data Entry Form Component */}
-              <Suspense fallback={<SkeletonLoader type="form" />}>
-                <DailyEntryForm
-                  fileName={fileName}
-                  setFileName={setFileName}
-                  branchName={branchName}
-                  setBranchName={setBranchName}
-                  codenameInput={codenameInput}
-                  setCodenameInput={setCodenameInput}
-                  fileType={fileType}
-                  setFileType={setFileType}
-                  allowedCategories={allowedCategories}
-                  submitting={submitting}
-                  onSubmit={handleAddEntry}
-                  isAdmin={false}
-                  cleanFileName={cleanFileName}
-                />
-              </Suspense>
+              {/* Filter Controls */}
+              <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+                <button
+                  onClick={handleExportTodayExcel}
+                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
+                  title="Export to Excel"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  <span>Excel</span>
+                </button>
 
-              {/* Today's Data Title and Summary Stats */}
-              <div className="border-t border-theme-border-input/80 pt-6 space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <div>
-                    <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
-                      <Clock className="h-4.5 w-4.5 text-blue-500" />
-                      Today's File Entry List
-                    </h3>
-                    <p className="text-[11px] text-theme-text-muted mt-0.5">
-                      Date:{" "}
-                      {new Date().toLocaleDateString("en-US", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </div>
-
-                  {/* Filter Controls */}
-                  <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
-                    <button
-                      onClick={handleExportTodayExcel}
-                      className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
-                      title="Export to Excel"
-                    >
-                      <FileSpreadsheet className="h-3.5 w-3.5" />
-                      <span>Excel</span>
-                    </button>
-
-                    {(isAdminRole(profile) || profile?.role === "supervisor") && (
-                      <AdminViewToggle
-                        viewMode={adminViewMode}
-                        onChange={handleAdminViewModeChange}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <>
-                    {/* Search Filters for Today's Table - BEFORE Stats */}
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <div className="relative flex-1">
-                        <input
-                          type="text"
-                          placeholder="Search name, codename..."
-                          value={todaySearchQuery}
-                          onChange={(e) => setTodaySearchQuery(e.target.value)}
-                          className="block w-full pl-8 pr-8 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-8"
-                        />
-                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-theme-text-muted" />
-                        {todaySearchQuery && (
-                          <button
-                            type="button"
-                            onClick={() => setTodaySearchQuery("")}
-                            className="absolute right-2.5 top-1.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
-                            title="Clear search"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-
-                      <CustomSelect
-                        value={todaySelectedBranch}
-                        onChange={setTodaySelectedBranch}
-                        options={[
-                          { value: "", label: "All Branches" },
-                          ...uniqueBranches.map((b) => ({ value: b, label: b })),
-                        ]}
-                        buttonClassName="w-full sm:w-44 px-3 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-8 flex items-center justify-between gap-2 text-left font-semibold select-none"
-                        className="w-full sm:w-44"
-                      />
-
-                      {(todaySearchQuery || todaySelectedBranch) && (
-                        <button
-                          type="button"
-                          onClick={handleClearTodayFilters}
-                          className="px-3 py-1 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-[10px] text-theme-text-muted hover:text-theme-text-primary font-semibold rounded-lg transition-all h-8 cursor-pointer flex items-center gap-1 shrink-0"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                          Clear
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Stat pills summary Component */}
-                    <Suspense fallback={<SkeletonLoader type="stats" />}>
-                      <StatsGrid stats={todayStats} isLoading={recordsLoading} />
-                    </Suspense>
-
-                    {/* Today's Records Table Component */}
-                    <Suspense fallback={<SkeletonLoader type="table" />}>
-                      <RecordsTable
-                        records={todayFilteredRecords}
-                        emptyMessage="No file entries for today matching the filters."
-                        showDate={false}
-                        onEdit={(record) => handleOpenEditRecord(record, false)}
-                        onDelete={setDeletingRecordId}
-                        isLoading={recordsLoading}
-                        currentUserId={sessionUser?.id}
-                        isAdmin={isAdminRole(profile) || profile?.role === "supervisor"}
-                        onBulkDelete={setBulkDeletingRecordIds}
-                        onSaveInline={handleSaveInline}
-                        onBulkSaveInline={handleBulkSaveInline}
-                        allowedCategories={allowedCategories}
-                        submitting={submitting}
-                      />
-                    </Suspense>
-                  </>
+                {(isAdminRole(profile) || profile?.role === "supervisor") && (
+                  <AdminViewToggle
+                    viewMode={adminViewMode}
+                    onChange={handleAdminViewModeChange}
+                  />
+                )}
               </div>
             </div>
-          )}
 
-          {/* TAB 2: MONTHLY LIST */}
-          {activeTab === "monthly" && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <div>
-                  <h2 className="text-xl font-bold text-theme-text-primary">
-                    Monthly Quotes & Sales Logs
-                  </h2>
-                  <p className="text-xs text-theme-text-muted mt-1">
-                    Filter and view data for all months and years.
-                  </p>
-                </div>
-
-                {/* View toggle & Custom Entry Controls */}
-                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
-                  <button
-                    onClick={handleExportMonthlyExcel}
-                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
-                    title="Export to Excel"
-                  >
-                    <FileSpreadsheet className="h-3.5 w-3.5" />
-                    <span>Excel</span>
-                  </button>
-
-                  {customEntryEnabled && (
-                  <button
-                    onClick={() => setIsCustomEntryModalOpen(true)}
-                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg shadow-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>Entry</span>
-                  </button>
-                  )}
-                  {(isAdminRole(profile) || profile?.role === "supervisor") && (
-                    <AdminViewToggle
-                      viewMode={adminViewMode}
-                      onChange={handleAdminViewModeChange}
-                    />
+            <>
+              {/* Search Filters for Today's Table - BEFORE Stats */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search name, codename..."
+                    value={todaySearchQuery}
+                    onChange={(e) => setTodaySearchQuery(e.target.value)}
+                    className="block w-full pl-8 pr-8 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-8"
+                  />
+                  <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-theme-text-muted" />
+                  {todaySearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setTodaySearchQuery("")}
+                      className="absolute right-2.5 top-1.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   )}
                 </div>
+
+                <CustomSelect
+                  value={todaySelectedBranch}
+                  onChange={setTodaySelectedBranch}
+                  options={[
+                    { value: "", label: "All Branches" },
+                    ...uniqueBranches.map((b) => ({ value: b, label: b })),
+                  ]}
+                  buttonClassName="w-full sm:w-44 px-3 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-8 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  className="w-full sm:w-44"
+                />
+
+                {(todaySearchQuery || todaySelectedBranch) && (
+                  <button
+                    type="button"
+                    onClick={handleClearTodayFilters}
+                    className="px-3 py-1 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-[10px] text-theme-text-muted hover:text-theme-text-primary font-semibold rounded-lg transition-all h-8 cursor-pointer flex items-center gap-1 shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Clear
+                  </button>
+                )}
               </div>
 
-              {/* Date selection row & Filters */}
-              <div className="space-y-4">
-                <div className="bg-theme-page-bg/40 p-4 rounded-2xl border border-theme-border-muted grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end w-full">
-                  {/* 1. Search Box */}
-                  <div className="md:col-span-3">
-                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                      Search
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search name, codename..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="block w-full pl-8 pr-8 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
-                      />
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-theme-text-muted" />
-                      {searchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setSearchQuery("")}
-                          className="absolute right-2.5 top-2.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
-                          title="Clear search"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 2. Branch Selector */}
-                  <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                      Branch
-                    </label>
-                    <CustomSelect
-                      value={selectedBranch}
-                      onChange={setSelectedBranch}
-                      options={[
-                        { value: "", label: "All Branches" },
-                        ...uniqueBranches.map((b) => ({ value: b, label: b })),
-                      ]}
-                      buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* 2. Year Selection */}
-                  <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                      Year
-                    </label>
-                    <CustomSelect
-                      value={selectedYear}
-                      disabled={!!selectedDate}
-                      onChange={(val) => {
-                        setSelectedYear(val);
-                        setSelectedDate(""); // Reset specific date filter
-                      }}
-                      options={dynamicYears.map((year) => ({
-                        value: year,
-                        label: year,
-                      }))}
-                      buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* 3. Month Selection */}
-                  <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                      Month
-                    </label>
-                    <CustomSelect
-                      value={selectedMonth}
-                      disabled={!!selectedDate}
-                      onChange={(val) => {
-                        setSelectedMonth(val);
-                        setSelectedDate(""); // Reset specific date filter
-                      }}
-                      options={dynamicMonths.map((m) => ({
-                        value: m.val,
-                        label: m.name,
-                      }))}
-                      buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* 4. Specific Date Input */}
-                  <div className="md:col-span-3">
-                    <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                      Specific Date
-                    </label>
-                    <div className="flex gap-1.5 items-center">
-                      <input
-                        type="text"
-                        placeholder="DD-MM-YYYY"
-                        value={dateInputVal}
-                        onChange={(e) => handleDateInputChange(e.target.value)}
-                        maxLength={10}
-                        className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
-                      />
-                      <input
-                        type="date"
-                        ref={specificDateRef}
-                        value={selectedDate}
-                        onChange={(e) => handleDateFilterChange(e.target.value)}
-                        className="absolute w-px h-px opacity-0 pointer-events-none select-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleOpenSpecificDatePicker}
-                        className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
-                        title="Open Calendar"
-                      >
-                        <Calendar className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchQuery("");
-                          setSelectedBranch("");
-                          setSelectedYear(new Date().getFullYear().toString());
-                          setSelectedMonth(String(new Date().getMonth() + 1).padStart(2, '0'));
-                          setSelectedDate("");
-                          setDateInputVal("");
-                        }}
-                        className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
-                        title="Reset all filters"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Monthly Stats summary grid */}
+              {/* Stat pills summary Component */}
               <Suspense fallback={<SkeletonLoader type="stats" />}>
-                <StatsGrid stats={monthlyStats} isLoading={recordsLoading} />
+                <StatsGrid stats={todayStats} isLoading={recordsLoading} />
               </Suspense>
 
-              {/* Monthly Table Component */}
+              {/* Today's Records Table Component */}
               <Suspense fallback={<SkeletonLoader type="table" />}>
                 <RecordsTable
-                  records={monthlyFilteredRecords}
-                  emptyMessage="No file records found matching the filters."
-                  showDate={true}
-                  onEdit={(record) => handleOpenEditRecord(record, true)}
+                  records={todayFilteredRecords}
+                  emptyMessage="No file entries for today matching the filters."
+                  showDate={false}
+                  onEdit={(record) => handleOpenEditRecord(record, false)}
                   onDelete={setDeletingRecordId}
                   isLoading={recordsLoading}
                   currentUserId={sessionUser?.id}
-                  isAdmin={isAdminRole(profile) || profile?.role === "supervisor"}
+                  isAdmin={
+                    isAdminRole(profile) || profile?.role === "supervisor"
+                  }
                   onBulkDelete={setBulkDeletingRecordIds}
                   onSaveInline={handleSaveInline}
                   onBulkSaveInline={handleBulkSaveInline}
@@ -1698,272 +1509,512 @@ export default function Dashboard({
                   submitting={submitting}
                 />
               </Suspense>
+            </>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: MONTHLY LIST */}
+      {activeTab === "monthly" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-theme-text-primary">
+                Monthly Quotes & Sales Logs
+              </h2>
+              <p className="text-xs text-theme-text-muted mt-1">
+                Filter and view data for all months and years.
+              </p>
             </div>
-          )}
 
-          {activeTab === "leaderboard" && !viewingReports && (
-            <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
-              <LeaderboardTable
-                profile={profile}
-                onViewFullReport={() => updateViewingReports(true)}
-                onBack={() => {
-                  if (onBackToSidebarTab) {
-                    onBackToSidebarTab();
-                  } else {
-                    const lastQuotesTab = localStorage.getItem("quotes_sales_active_tab") || "entry";
-                    onTabChange(lastQuotesTab as any);
-                  }
-                }}
-              />
-            </Suspense>
-          )}
+            {/* View toggle & Custom Entry Controls */}
+            <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+              <button
+                onClick={handleExportMonthlyExcel}
+                className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
+                title="Export to Excel"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                <span>Excel</span>
+              </button>
 
-          {activeTab === "leaderboard" && viewingReports && (
-            <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
-              <ReportsPanel
-                records={records}
-                profilesList={profilesList}
-                profile={profile}
-                onBack={() => updateViewingReports(false)}
-              />
-            </Suspense>
-          )}
+              {customEntryEnabled && (
+                <button
+                  onClick={() => setIsCustomEntryModalOpen(true)}
+                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg shadow-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Entry</span>
+                </button>
+              )}
+              {(isAdminRole(profile) || profile?.role === "supervisor") && (
+                <AdminViewToggle
+                  viewMode={adminViewMode}
+                  onChange={handleAdminViewModeChange}
+                />
+              )}
+            </div>
+          </div>
 
-          {activeTab === "reports" && (
-            <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
-              <ReportsPanel
-                records={records}
-                profilesList={profilesList}
-                profile={profile}
-                onBack={() => {
-                  if (onBackToSidebarTab) {
-                    onBackToSidebarTab();
-                  } else {
-                    onTabChange("leaderboard");
-                  }
-                }}
-              />
-            </Suspense>
-          )}
-
-          {/* TAB 5: SYSTEM AUDIT LOGS */}
-          {activeTab === "audit_logs" && isAdminRole(profile) && (
-            <Suspense fallback={<SkeletonLoader type="audit-logs" />}>
-              <AuditLogsPanel
-                logs={auditLogs}
-                isLoading={auditLogsLoading}
-                onRefresh={fetchAuditLogs}
-              />
-            </Suspense>
-          )}
-
-          {/* TAB 6: QUOTE RULES */}
-          {activeTab === "rules" && (
-            <Suspense fallback={<SkeletonLoader type="rules" />}>
-              <QuoteRulesPanel
-                profile={profile}
-                sessionUser={sessionUser}
-                isOnline={isOnline}
-                showToast={showToast}
-              />
-            </Suspense>
-          )}
-
-          {/* TAB 8: LOGIN CODES */}
-          {activeTab === "login_codes" && (
-            <LoginCodesPanel
-              canEdit={isAdminRole(profile) || profile?.role === 'supervisor'}
-              isOnline={isOnline}
-              showToast={showToast}
-            />
-          )}
-
-          {/* TAB 9: CAUSALITY (Asitis + EUI combined) */}
-          {activeTab === "causality" && (
-            <CausalityPanel
-              profile={profile}
-              isOnline={isOnline}
-            />
-          )}
-
-          {/* TAB 11: COPY HELPER (all authenticated users; box visibility
-              is driven by the "Sale" file type permission) */}
-          {activeTab === "copy_helper" && (
-            <Suspense fallback={<SkeletonLoader type="copy-helper" />}>
-              <CopyHelperPanel
-                profile={profile}
-                hasSalePermission={hasSalePermission}
-                codenameInput={codenameInput}
-                spokeTo={spokeTo}
-                setSpokeTo={setSpokeTo}
-                soldDate={soldDate}
-                setSoldDate={setSoldDate}
-                pcUsed={pcUsed}
-                handlePcUsedChange={handlePcUsedChange}
-                reportNotes={reportNotes}
-                handleNotesChange={handleNotesChange}
-                totalAttempt={totalAttempt}
-                soldCount={soldCount}
-                unsoldCount={unsoldCount}
-                allSales={allSales}
-                hasSubmissions={hasSubmissions}
-                todayUserRecords={todayUserRecords}
-                adminSalesSummary={adminSalesSummary}
-                copyBox1={copyBox1}
-                copyBox2={copyBox2}
-                copyBox4={copyBox4}
-                copyAdminSummary={copyAdminSummary}
-                copyText1={copyText1}
-                copyText2={copyText2}
-                copyNotes={copyNotes}
-                copiedStates={copiedStates}
-                setShowReportHelper={() => onTabChange("entry")}
-              />
-            </Suspense>
-          )}
-
-          {/* TAB 12: SAVE FILE (Superadmin only) */}
-          {activeTab === "save_file" && isSuperAdmin && (
-            <Suspense fallback={<SkeletonLoader type="save-file" />}>
-              <SaveFileHelperPanel
-                editorRef={editorRef}
-                baseDirectory={baseDirectory}
-                handleChooseDirectory={handleChooseDirectory}
-                todayUserRecords={todayUserRecords}
-                savedRecordIds={savedRecordIds}
-                selectedRecordIdForSave={selectedRecordIdForSave}
-                setSelectedRecordIdForSave={setSelectedRecordIdForSave}
-                savedFilePath={savedFilePath}
-                handleUpdateWord={handleUpdateWord}
-                handleCancelEdit={handleCancelEdit}
-                handleSaveAsWord={handleSaveAsWord}
-                savedDocuments={savedDocuments}
-                handleEditDocument={handleEditDocument}
-                handleDeleteDocument={handleDeleteDocument}
-                setShowSaveFileHelper={() => onTabChange("entry")}
-                permissionModal={permissionModal}
-                setPermissionModal={setPermissionModal}
-              />
-            </Suspense>
-          )}
-
-
-      {mounted && typeof window !== "undefined" && document.getElementById("root-modals-portal") ? (
-        createPortal(
-          <>
-            {/* MODAL 0: SOLD/UNSOLD CHOICE */}
-            <SaleStatusModal
-              isOpen={showSaleModal}
-              fileName={customSaleDetails?.fileName || saleFormDetails?.fileName || ""}
-              onConfirm={handleConfirmSaleStatus}
-              onClose={() => {
-                setShowSaleModal(false);
-                setSaleFormDetails(null);
-                setCustomSaleDetails(null);
-              }}
-            />
-
-            {/* MODAL 1: EDIT RECORD */}
-            {editingRecord && (
-              <EditRecordModal
-                editFileName={editFileName}
-                setEditFileName={setEditFileName}
-                editBranchName={editBranchName}
-                setEditBranchName={setEditBranchName}
-                editCodename={editCodename}
-                setEditCodename={setEditCodename}
-                editFileType={editFileType}
-                setEditFileType={setEditFileType}
-                canEditSubmittedAt={editCanChangeSubmittedAt}
-                editSubmittedDate={editSubmittedDate}
-                setEditSubmittedDate={setEditSubmittedDate}
-                editSubmittedTime={editSubmittedTime}
-                setEditSubmittedTime={setEditSubmittedTime}
-                allowedCategories={allowedCategories}
-                onClose={() => setEditingRecord(null)}
-                onSave={handleSaveEdit}
-                editSaleStatus={editSaleStatus}
-                setEditSaleStatus={setEditSaleStatus}
-                submitting={submitting}
-              />
-            )}
-
-
-
-            {/* MODAL 6: DELETE RECORD CONFIRMATION */}
-            <ConfirmModal
-              isOpen={!!deletingRecordId}
-              onClose={() => setDeletingRecordId(null)}
-              onConfirm={() => {
-                if (deletingRecordId) {
-                  deleteRecord(deletingRecordId);
-                  setDeletingRecordId(null);
-                }
-              }}
-              title="Delete File Record"
-              message="Are you sure you want to permanently delete this file record? This action cannot be undone."
-              confirmText="Delete Record"
-              cancelText="Cancel"
-              isDanger={true}
-            />
-
-            {/* MODAL 6b: BULK DELETE RECORD CONFIRMATION */}
-            <ConfirmModal
-              isOpen={!!bulkDeletingRecordIds}
-              onClose={() => setBulkDeletingRecordIds(null)}
-              onConfirm={async () => {
-                if (bulkDeletingRecordIds) {
-                  const idsToDelete = [...bulkDeletingRecordIds];
-                  setBulkDeletingRecordIds(null);
-                  setIsBulkDeletingInProgress(true);
-                  try {
-                    await deleteRecords(idsToDelete);
-                  } catch (err) {
-                    console.error("Bulk delete failed:", err);
-                  } finally {
-                    setIsBulkDeletingInProgress(false);
-                  }
-                }
-              }}
-              title="Delete Selected Records"
-              message={`Are you sure you want to permanently delete the ${bulkDeletingRecordIds?.length} selected file records? This action cannot be undone.`}
-              confirmText="Delete Records"
-              cancelText="Cancel"
-              isDanger={true}
-            />
-
-            {/* MODAL 7: CUSTOM DATE ENTRY */}
-            <CustomEntryModal
-              isOpen={isCustomEntryModalOpen}
-              onClose={() => setIsCustomEntryModalOpen(false)}
-              profilesList={profilesList}
-              currentUserProfile={profile}
-              submitting={submitting}
-              adminMode={(isAdminRole(profile) || profile?.role === "supervisor") && adminViewMode === "all"}
-              onSubmit={handleAdminCustomEntrySubmit}
-            />
-
-            {/* BULK DELETING OVERLAY */}
-            {isBulkDeletingInProgress && (
-              <div className="fixed inset-0 bg-theme-page-bg/70 backdrop-blur-xs z-9999 flex flex-col items-center justify-center select-none">
-                <div className="flex flex-col items-center p-6 bg-theme-card-bg border border-theme-border-input rounded-2xl shadow-2xl animate-fade-in max-w-sm w-full mx-4 text-center">
-                  <div className="relative w-12 h-12 flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-theme-border-input border-t-blue-500 rounded-full animate-spin"></div>
-                  </div>
-                  <h4 className="text-sm font-bold text-theme-text-primary mt-4 uppercase tracking-wider">Deleting Records...</h4>
-                  <p className="text-xs text-theme-text-muted mt-2">
-                    Please wait while the selected entries are being permanently removed from the database.
-                  </p>
-                  <p className="text-[10px] text-theme-text-muted mt-4 italic">
-                    You can reload the page if it hangs.
-                  </p>
+          {/* Date selection row & Filters */}
+          <div className="space-y-4">
+            <div className="bg-theme-page-bg/40 p-4 rounded-2xl border border-theme-border-muted grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end w-full">
+              {/* 1. Search Box */}
+              <div className="md:col-span-3">
+                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
+                  Search
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search name, codename..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="block w-full pl-8 pr-8 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
+                  />
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-theme-text-muted" />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-2.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-          </>,
-          document.getElementById("root-modals-portal")!
-        )
-      ) : null}
+
+              {/* 2. Branch Selector */}
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
+                  Branch
+                </label>
+                <CustomSelect
+                  value={selectedBranch}
+                  onChange={setSelectedBranch}
+                  options={[
+                    { value: "", label: "All Branches" },
+                    ...uniqueBranches.map((b) => ({ value: b, label: b })),
+                  ]}
+                  buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  className="w-full"
+                />
+              </div>
+
+              {/* 2. Year Selection */}
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
+                  Year
+                </label>
+                <CustomSelect
+                  value={selectedYear}
+                  disabled={!!selectedDate}
+                  onChange={(val) => {
+                    setSelectedYear(val);
+                    setSelectedDate(""); // Reset specific date filter
+                  }}
+                  options={dynamicYears.map((year) => ({
+                    value: year,
+                    label: year,
+                  }))}
+                  buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  className="w-full"
+                />
+              </div>
+
+              {/* 3. Month Selection */}
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
+                  Month
+                </label>
+                <CustomSelect
+                  value={selectedMonth}
+                  disabled={!!selectedDate}
+                  onChange={(val) => {
+                    setSelectedMonth(val);
+                    setSelectedDate(""); // Reset specific date filter
+                  }}
+                  options={dynamicMonths.map((m) => ({
+                    value: m.val,
+                    label: m.name,
+                  }))}
+                  buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  className="w-full"
+                />
+              </div>
+
+              {/* 4. Specific Date Input */}
+              <div className="md:col-span-3">
+                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
+                  Specific Date
+                </label>
+                <div className="flex gap-1.5 items-center">
+                  <input
+                    type="text"
+                    placeholder="DD-MM-YYYY"
+                    value={dateInputVal}
+                    onChange={(e) => handleDateInputChange(e.target.value)}
+                    maxLength={10}
+                    className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
+                  />
+                  <input
+                    type="date"
+                    ref={specificDateRef}
+                    value={selectedDate}
+                    onChange={(e) => handleDateFilterChange(e.target.value)}
+                    className="absolute w-px h-px opacity-0 pointer-events-none select-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleOpenSpecificDatePicker}
+                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
+                    title="Open Calendar"
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSelectedBranch("");
+                      setSelectedYear(new Date().getFullYear().toString());
+                      setSelectedMonth(
+                        String(new Date().getMonth() + 1).padStart(2, "0"),
+                      );
+                      setSelectedDate("");
+                      setDateInputVal("");
+                    }}
+                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
+                    title="Reset all filters"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Monthly Stats summary grid */}
+          <Suspense fallback={<SkeletonLoader type="stats" />}>
+            <StatsGrid stats={monthlyStats} isLoading={recordsLoading} />
+          </Suspense>
+
+          {/* Monthly Table Component */}
+          <Suspense fallback={<SkeletonLoader type="table" />}>
+            <RecordsTable
+              records={monthlyFilteredRecords}
+              emptyMessage="No file records found matching the filters."
+              showDate={true}
+              onEdit={(record) => handleOpenEditRecord(record, true)}
+              onDelete={setDeletingRecordId}
+              isLoading={recordsLoading}
+              currentUserId={sessionUser?.id}
+              isAdmin={isAdminRole(profile) || profile?.role === "supervisor"}
+              onBulkDelete={setBulkDeletingRecordIds}
+              onSaveInline={handleSaveInline}
+              onBulkSaveInline={handleBulkSaveInline}
+              allowedCategories={allowedCategories}
+              submitting={submitting}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {activeTab === "leaderboard" && !viewingReports && (
+        <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
+          <LeaderboardTable
+            profile={profile}
+            onViewFullReport={() => updateViewingReports(true)}
+            onBack={() => {
+              if (onBackToSidebarTab) {
+                onBackToSidebarTab();
+              } else {
+                const lastQuotesTab =
+                  localStorage.getItem("quotes_sales_active_tab") || "entry";
+                onTabChange(lastQuotesTab as any);
+              }
+            }}
+          />
+        </Suspense>
+      )}
+
+      {activeTab === "leaderboard" && viewingReports && (
+        <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
+          <ReportsPanel
+            records={records}
+            profilesList={profilesList}
+            profile={profile}
+            onBack={() => updateViewingReports(false)}
+          />
+        </Suspense>
+      )}
+
+      {activeTab === "reports" && (
+        <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
+          <ReportsPanel
+            records={records}
+            profilesList={profilesList}
+            profile={profile}
+            onBack={() => {
+              if (onBackToSidebarTab) {
+                onBackToSidebarTab();
+              } else {
+                onTabChange("leaderboard");
+              }
+            }}
+          />
+        </Suspense>
+      )}
+
+      {/* TAB 5: SYSTEM AUDIT LOGS */}
+      {activeTab === "audit_logs" && isAdminRole(profile) && (
+        <Suspense fallback={<SkeletonLoader type="audit-logs" />}>
+          <AuditLogsPanel
+            logs={auditLogs}
+            isLoading={auditLogsLoading}
+            onRefresh={fetchAuditLogs}
+          />
+        </Suspense>
+      )}
+
+      {/* TAB 6: QUOTE RULES */}
+      {activeTab === "rules" && (
+        <Suspense fallback={<SkeletonLoader type="rules" />}>
+          <QuoteRulesPanel
+            profile={profile}
+            sessionUser={sessionUser}
+            isOnline={isOnline}
+            showToast={showToast}
+          />
+        </Suspense>
+      )}
+
+      {/* TAB 8: LOGIN CODES */}
+      {activeTab === "login_codes" && (
+        <LoginCodesPanel
+          canEdit={isAdminRole(profile) || profile?.role === "supervisor"}
+          isOnline={isOnline}
+          showToast={showToast}
+        />
+      )}
+
+      {/* TAB 9: CAUSALITY (Asitis + EUI combined) */}
+      {activeTab === "causality" && (
+        <CausalityPanel profile={profile} isOnline={isOnline} />
+      )}
+
+      {/* TAB 11: COPY HELPER (all authenticated users; box visibility
+              is driven by the "Sale" file type permission) */}
+      {activeTab === "copy_helper" && (
+        <Suspense fallback={<SkeletonLoader type="copy-helper" />}>
+          <CopyHelperPanel
+            profile={profile}
+            hasSalePermission={hasSalePermission}
+            codenameInput={codenameInput}
+            spokeTo={spokeTo}
+            setSpokeTo={setSpokeTo}
+            soldDate={soldDate}
+            setSoldDate={setSoldDate}
+            pcUsed={pcUsed}
+            handlePcUsedChange={handlePcUsedChange}
+            reportNotes={reportNotes}
+            handleNotesChange={handleNotesChange}
+            totalAttempt={totalAttempt}
+            soldCount={soldCount}
+            unsoldCount={unsoldCount}
+            allSales={allSales}
+            hasSubmissions={hasSubmissions}
+            todayUserRecords={todayUserRecords}
+            adminSalesSummary={adminSalesSummary}
+            copyBox1={copyBox1}
+            copyBox2={copyBox2}
+            copyBox4={copyBox4}
+            copyAdminSummary={copyAdminSummary}
+            copyText1={copyText1}
+            copyText2={copyText2}
+            copyNotes={copyNotes}
+            copiedStates={copiedStates}
+            setShowReportHelper={() => onTabChange("entry")}
+          />
+        </Suspense>
+      )}
+
+      {/* TAB 12: SAVE FILE (Superadmin only) */}
+      {activeTab === "save_file" && isSuperAdmin && (
+        <Suspense fallback={<SkeletonLoader type="save-file" />}>
+          <SaveFileHelperPanel
+            editorRef={editorRef}
+            baseDirectory={baseDirectory}
+            handleChooseDirectory={handleChooseDirectory}
+            todayUserRecords={todayUserRecords}
+            savedRecordIds={savedRecordIds}
+            selectedRecordIdForSave={selectedRecordIdForSave}
+            setSelectedRecordIdForSave={setSelectedRecordIdForSave}
+            savedFilePath={savedFilePath}
+            handleUpdateWord={handleUpdateWord}
+            handleCancelEdit={handleCancelEdit}
+            handleSaveAsWord={handleSaveAsWord}
+            savedDocuments={savedDocuments}
+            handleEditDocument={handleEditDocument}
+            handleDeleteDocument={handleDeleteDocument}
+            setShowSaveFileHelper={() => onTabChange("entry")}
+            permissionModal={permissionModal}
+            setPermissionModal={setPermissionModal}
+          />
+        </Suspense>
+      )}
+
+      {mounted &&
+      typeof window !== "undefined" &&
+      document.getElementById("root-modals-portal")
+        ? createPortal(
+            <>
+              {/* MODAL 0: SOLD/UNSOLD CHOICE */}
+              <SaleStatusModal
+                isOpen={showSaleModal}
+                fileName={
+                  customSaleDetails?.fileName || saleFormDetails?.fileName || ""
+                }
+                onConfirm={handleConfirmSaleStatus}
+                onClose={() => {
+                  setShowSaleModal(false);
+                  setSaleFormDetails(null);
+                  setCustomSaleDetails(null);
+                }}
+              />
+
+              {/* MODAL 1: EDIT RECORD */}
+              {editingRecord && (
+                <EditRecordModal
+                  editFileName={editFileName}
+                  setEditFileName={setEditFileName}
+                  editBranchName={editBranchName}
+                  setEditBranchName={setEditBranchName}
+                  editCodename={editCodename}
+                  setEditCodename={setEditCodename}
+                  editFileType={editFileType}
+                  setEditFileType={setEditFileType}
+                  canEditSubmittedAt={editCanChangeSubmittedAt}
+                  editSubmittedDate={editSubmittedDate}
+                  setEditSubmittedDate={setEditSubmittedDate}
+                  editSubmittedTime={editSubmittedTime}
+                  setEditSubmittedTime={setEditSubmittedTime}
+                  allowedCategories={allowedCategories}
+                  onClose={() => setEditingRecord(null)}
+                  onSave={handleSaveEdit}
+                  editSaleStatus={editSaleStatus}
+                  setEditSaleStatus={setEditSaleStatus}
+                  submitting={submitting}
+                />
+              )}
+
+              {/* MODAL 6: DELETE RECORD CONFIRMATION */}
+              <ConfirmModal
+                isOpen={!!deletingRecordId}
+                onClose={() => setDeletingRecordId(null)}
+                onConfirm={() => {
+                  if (deletingRecordId) {
+                    deleteRecord(deletingRecordId);
+                    setDeletingRecordId(null);
+                  }
+                }}
+                title="Delete File Record"
+                message="Are you sure you want to permanently delete this file record? This action cannot be undone."
+                confirmText="Delete Record"
+                cancelText="Cancel"
+                isDanger={true}
+              />
+
+              {/* MODAL 6b: BULK DELETE RECORD CONFIRMATION */}
+              <ConfirmModal
+                isOpen={!!bulkDeletingRecordIds}
+                onClose={() => setBulkDeletingRecordIds(null)}
+                onConfirm={async () => {
+                  if (bulkDeletingRecordIds) {
+                    const idsToDelete = [...bulkDeletingRecordIds];
+                    setBulkDeletingRecordIds(null);
+                    setIsBulkDeletingInProgress(true);
+                    try {
+                      await deleteRecords(idsToDelete);
+                    } catch (err) {
+                      console.error("Bulk delete failed:", err);
+                    } finally {
+                      setIsBulkDeletingInProgress(false);
+                    }
+                  }
+                }}
+                title="Delete Selected Records"
+                message={`Are you sure you want to permanently delete the ${bulkDeletingRecordIds?.length} selected file records? This action cannot be undone.`}
+                confirmText="Delete Records"
+                cancelText="Cancel"
+                isDanger={true}
+              />
+
+              {/* MODAL 7: CUSTOM DATE ENTRY */}
+              <CustomEntryModal
+                isOpen={isCustomEntryModalOpen}
+                onClose={() => setIsCustomEntryModalOpen(false)}
+                profilesList={profilesList}
+                currentUserProfile={profile}
+                submitting={submitting}
+                adminMode={
+                  (isAdminRole(profile) || profile?.role === "supervisor") &&
+                  adminViewMode === "all"
+                }
+                onSubmit={handleAdminCustomEntrySubmit}
+              />
+
+              {/* MODAL 8: IMPORT MODAL */}
+              <BulkImportModal
+                isOpen={isBulkModalOpen}
+                onClose={() => setIsBulkModalOpen(false)}
+                allowedBranches={uniqueBranches}
+                allowedTypes={allowedCategories}
+                sanitizerWords={getSanitizerWords(globalSettings)}
+                codename={ownCodename || profile?.username || ""}
+                onSubmitRecord={async (data) => {
+                  return await addRecord(
+                    data.file_name,
+                    data.branch_name,
+                    data.codename,
+                    data.file_type as FileType,
+                  );
+                }}
+                onCompleteSuccess={(count) => {
+                  showToast(
+                    "success",
+                    `🎉 Successfully submitted ${count} Quotes!`,
+                  );
+                  fetchRecords();
+                }}
+              />
+
+              {/* BULK DELETING OVERLAY */}
+              {isBulkDeletingInProgress && (
+                <div className="fixed inset-0 bg-theme-page-bg/70 backdrop-blur-xs z-9999 flex flex-col items-center justify-center select-none">
+                  <div className="flex flex-col items-center p-6 bg-theme-card-bg border border-theme-border-input rounded-2xl shadow-2xl animate-fade-in max-w-sm w-full mx-4 text-center">
+                    <div className="relative w-12 h-12 flex items-center justify-center">
+                      <div className="w-10 h-10 border-4 border-theme-border-input border-t-blue-500 rounded-full animate-spin"></div>
+                    </div>
+                    <h4 className="text-sm font-bold text-theme-text-primary mt-4 uppercase tracking-wider">
+                      Deleting Records...
+                    </h4>
+                    <p className="text-xs text-theme-text-muted mt-2">
+                      Please wait while the selected entries are being
+                      permanently removed from the database.
+                    </p>
+                    <p className="text-[10px] text-theme-text-muted mt-4 italic">
+                      You can reload the page if it hangs.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>,
+            document.getElementById("root-modals-portal")!,
+          )
+        : null}
     </>
   );
 }
