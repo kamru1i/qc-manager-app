@@ -84,7 +84,9 @@ export function UserSettleModal({
   }, [records, globalSettings.office_leave_h1, globalSettings.office_leave_h2, selectedYear, settlements, profile]);
 
   const currentHalfPeriod: 'H1' | 'H2' = halfYearlyStats.currentHalf === 1 ? 'H1' : 'H2';
-  const officeRemaining = halfYearlyStats.currentHalf === 1 ? halfYearlyStats.h1Remaining : halfYearlyStats.h2Remaining;
+  const officeRemaining = halfYearlyStats.isMergedMode
+    ? halfYearlyStats.h1Remaining
+    : (halfYearlyStats.currentHalf === 1 ? halfYearlyStats.h1Remaining : halfYearlyStats.h2Remaining);
 
   const activeGovtSettledForPeriod = settlements.some(
     s => s.user_id === profile?.id && s.year === selectedYear && s.leave_category === 'Govt Holiday' && s.period === currentHalfPeriod && (s.status === 'processed' || s.status === 'responded')

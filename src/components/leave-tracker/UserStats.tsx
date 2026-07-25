@@ -267,18 +267,25 @@ export const UserStats: React.FC<UserStatsProps> = ({
     : "";
 
   if (halfYearlyStats) {
-    const isH1 = halfYearlyStats.currentHalf === 1;
-    officeRemainingDisplay = isH1
-      ? formatDaysAndHoursNode(halfYearlyStats.h1Remaining, workingHours)
-      : formatDaysAndHoursNode(halfYearlyStats.h2Remaining, workingHours);
+    if (halfYearlyStats.isMergedMode) {
+      officeRemainingDisplay = formatDaysAndHoursNode(halfYearlyStats.h1Remaining, workingHours);
+      officeSubtitle = hasH1Carryover
+        ? `Full Year (Jan-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
+        : `Full Year (Jan-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`;
+    } else {
+      const isH1 = halfYearlyStats.currentHalf === 1;
+      officeRemainingDisplay = isH1
+        ? formatDaysAndHoursNode(halfYearlyStats.h1Remaining, workingHours)
+        : formatDaysAndHoursNode(halfYearlyStats.h2Remaining, workingHours);
 
-    officeSubtitle = isH1
-      ? hasH1Carryover
-        ? `H1 (Jan-Jun) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
-        : `H1 (Jan-Jun) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
-      : hasH2Carryover
-        ? `H2 (Jul-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h2Base, workingHours)} + ${formatDaysAndHours(halfYearlyStats.carryForward, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h2Taken, workingHours)}`
-        : `H2 (Jul-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h2Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h2Taken, workingHours)}`;
+      officeSubtitle = isH1
+        ? hasH1Carryover
+          ? `H1 (Jan-Jun) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
+          : `H1 (Jan-Jun) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
+        : hasH2Carryover
+          ? `H2 (Jul-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h2Base, workingHours)} + ${formatDaysAndHours(halfYearlyStats.carryForward, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h2Taken, workingHours)}`
+          : `H2 (Jul-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h2Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h2Taken, workingHours)}`;
+    }
   }
 
   return (
@@ -294,7 +301,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
             iconBorderClass="border-blue-500/20"
             title={
               halfYearlyStats
-                ? `Allocated Office Leave (H${halfYearlyStats.currentHalf})`
+                ? halfYearlyStats.isMergedMode
+                  ? "Allocated Office Leave (Full Year)"
+                  : `Allocated Office Leave (H${halfYearlyStats.currentHalf})`
                 : "Allocated Office Leave"
             }
             value={officeRemainingDisplay}
@@ -305,7 +314,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   type="button"
                   onClick={() => setShowOfficeDetailsModal(true)}
                   className="p-1.5 bg-theme-border-input hover:bg-theme-border-active text-blue-400 border border-theme-border-active rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
-                  title="Half-Yearly Leave Account"
+                  title={halfYearlyStats.isMergedMode ? "Yearly Leave Account" : "Half-Yearly Leave Account"}
                 >
                   <Info className="h-3.5 w-3.5" />
                 </button>
@@ -547,8 +556,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
                 <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-blue-400" /> Half-Yearly
-                  Office Leave Details
+                  <Calendar className="h-4 w-4 text-blue-400" />
+                  {halfYearlyStats.isMergedMode ? 'Yearly Office Leave Details' : 'Half-Yearly Office Leave Details'}
                 </h3>
                 <button
                   onClick={() => setShowOfficeDetailsModal(false)}

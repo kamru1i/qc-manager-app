@@ -622,8 +622,6 @@ export const calculateHalfYearlyOfficeLeave = (
     }
   });
 
-  let h1Remaining = h1Quota - h1Taken;
-  
   // Calculate H1 carry forward dynamically based on H1 settlement
   let carryForward = 0;
   if (leaveSettlements && userId) {
@@ -633,10 +631,21 @@ export const calculateHalfYearlyOfficeLeave = (
     if (h1Settlements.length > 0) {
       const activeSettlement = h1Settlements.find((s) => s.status === 'processed' || s.status === 'responded');
       if (activeSettlement) {
-        if (ignoreSettlementPeriod !== 'H1' && ignoreSettlementPeriod !== 'all') {
-          h1Remaining = 0;
-        }
         carryForward = getSettlementSplits(activeSettlement).carry_forward;
+      }
+    }
+  }
+
+  const h1TotalAllocated = isMergedMode ? (h1Quota + carryForward) : h1Quota;
+  let h1Remaining = h1TotalAllocated - h1Taken;
+  if (leaveSettlements && userId && !isMergedMode) {
+    const h1Settlements = leaveSettlements.filter(
+      (s) => s.user_id === userId && s.year === selectedYear && s.period === 'H1' && s.leave_category === 'Office Leave'
+    );
+    if (h1Settlements.length > 0) {
+      const activeSettlement = h1Settlements.find((s) => s.status === 'processed' || s.status === 'responded');
+      if (activeSettlement && ignoreSettlementPeriod !== 'H1' && ignoreSettlementPeriod !== 'all') {
+        h1Remaining = 0;
       }
     }
   }
@@ -645,14 +654,12 @@ export const calculateHalfYearlyOfficeLeave = (
   let h2Remaining = h2Total - h2Taken;
   if (leaveSettlements && userId) {
     const h2Settlements = leaveSettlements.filter(
-      (s) => s.user_id === userId && s.year === selectedYear && s.period === 'H2' && s.leave_category === 'Office Leave'
+      (s) => s.user_id === userId && s.year === selectedYear && (s.period === 'H2' || (s.period as string) === 'Full Year') && s.leave_category === 'Office Leave'
     );
     if (h2Settlements.length > 0) {
       const activeSettlement = h2Settlements.find((s) => s.status === 'processed' || s.status === 'responded');
-      if (activeSettlement) {
-        if (ignoreSettlementPeriod !== 'H2' && ignoreSettlementPeriod !== 'all') {
-          h2Remaining = 0;
-        }
+      if (activeSettlement && ignoreSettlementPeriod !== 'H2' && ignoreSettlementPeriod !== 'all') {
+        h2Remaining = 0;
       }
     }
   }
@@ -671,7 +678,7 @@ export const calculateHalfYearlyOfficeLeave = (
 
   return {
     h1Base: officeLeaveH1,
-    h1Total: h1Quota,
+    h1Total: h1TotalAllocated,
     h1Taken,
     h1Remaining,
     carryForward,
