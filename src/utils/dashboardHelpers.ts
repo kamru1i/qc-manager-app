@@ -78,8 +78,36 @@ export const defaultGlobalSettings: GlobalSettings = {
 
 /** Helper: synchronously load initial global settings from local cache to prevent flash on reload */
 export const getInitialGlobalSettings = (): GlobalSettings => {
+  let fallbackMode: 'split' | 'merged' = 'split';
   if (typeof window !== 'undefined') {
     try {
+      const savedMode = localStorage.getItem('qc_office_leave_mode');
+      if (savedMode === 'merged' || savedMode === 'split') {
+        fallbackMode = savedMode;
+      }
+
+      // 1. Priority: global_settings_cache
+      const rawGs = localStorage.getItem('global_settings_cache');
+      if (rawGs) {
+        const parsedGs = JSON.parse(rawGs);
+        if (parsedGs && typeof parsedGs === 'object') {
+          const derived = deriveH1H2(parsedGs);
+          const finalMode = savedMode === 'merged' ? 'merged' : derived.mode;
+          if (finalMode === 'merged') {
+            localStorage.setItem('qc_office_leave_mode', 'merged');
+          }
+          return {
+            ...defaultGlobalSettings,
+            ...parsedGs,
+            office_leave_mode: finalMode,
+            office_leave_h1: finalMode === 'merged' ? (parsedGs.office_leave_default ?? parsedGs.office_leave_h1 ?? 14) : derived.h1,
+            office_leave_h2: finalMode === 'merged' ? 0 : derived.h2,
+          };
+        }
+      }
+
+      // 2. Priority: find cached profiles in localStorage (prefer admin role or explicit office_leave_mode)
+      let foundSettings: GlobalSettings | null = null;
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('cached_profile_')) {
@@ -87,36 +115,38 @@ export const getInitialGlobalSettings = (): GlobalSettings => {
           if (raw) {
             const cachedProfile = JSON.parse(raw);
             if (cachedProfile && cachedProfile.global_settings) {
-              return getGlobalSettingsFromProfile(cachedProfile);
+              const res = getGlobalSettingsFromProfile(cachedProfile);
+              if (cachedProfile.role === 'admin' || res.office_leave_mode === 'merged') {
+                foundSettings = res;
+                break;
+              }
+              if (!foundSettings) foundSettings = res;
             }
           }
         }
       }
-      const rawGs = localStorage.getItem('global_settings_cache');
-      if (rawGs) {
-        const parsedGs = JSON.parse(rawGs);
-        if (parsedGs && typeof parsedGs === 'object') {
-          const derived = deriveH1H2(parsedGs);
-          return {
-            ...defaultGlobalSettings,
-            ...parsedGs,
-            office_leave_mode: derived.mode,
-            office_leave_h1: derived.h1,
-            office_leave_h2: derived.h2,
-          };
+      if (foundSettings) {
+        if (savedMode === 'merged' && foundSettings.office_leave_mode !== 'merged') {
+          return { ...foundSettings, office_leave_mode: 'merged', office_leave_h2: 0 };
         }
+        return foundSettings;
       }
     } catch (e) {
       console.warn('Error reading initial global settings from storage:', e);
     }
   }
+
+  if (fallbackMode === 'merged') {
+    return { ...defaultGlobalSettings, office_leave_mode: 'merged', office_leave_h1: 14, office_leave_h2: 0 };
+  }
+
   return defaultGlobalSettings;
 };
 
 /** Helper: derive H1/H2 from legacy office_leave_default if new fields are missing */
 const deriveH1H2 = (gs: any): { h1: number; h2: number; mode: 'split' | 'merged' } => {
   let mode: 'split' | 'merged' = 'split';
-  if (gs.office_leave_mode === 'merged' || (gs.office_leave_h2 === 0 && (gs.office_leave_h1 > 0 || gs.office_leave_default > 0))) {
+  if (gs.office_leave_mode === 'merged' || (gs.office_leave_h2 === 0 && gs.office_leave_mode !== 'split')) {
     mode = 'merged';
   } else if (gs.office_leave_mode === 'split') {
     mode = 'split';
@@ -125,11 +155,11 @@ const deriveH1H2 = (gs: any): { h1: number; h2: number; mode: 'split' | 'merged'
   if (mode === 'merged') {
     const total = Number(
       gs.office_leave_default ??
-      (gs.office_leave_h1 != null && gs.office_leave_h1 > 0 ? gs.office_leave_h1 : 14)
+      (gs.office_leave_h1 != null ? gs.office_leave_h1 : 14)
     );
     return { h1: total, h2: 0, mode: 'merged' };
   }
-  if (gs.office_leave_h1 != null && gs.office_leave_h2 != null && gs.office_leave_h2 > 0) {
+  if (gs.office_leave_h1 != null && gs.office_leave_h2 != null) {
     return { h1: Number(gs.office_leave_h1), h2: Number(gs.office_leave_h2), mode: 'split' };
   }
   const total = Number(gs.office_leave_default ?? 14);
@@ -153,6 +183,11 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
         : profile.global_settings;
       if (gs && typeof gs === 'object') {
         const derived = deriveH1H2(gs);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('qc_office_leave_mode', derived.mode);
+          } catch (e) {}
+        }
         return {
           office_leave_mode: derived.mode,
           office_leave_h1: derived.h1,

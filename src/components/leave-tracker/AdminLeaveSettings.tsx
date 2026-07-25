@@ -20,22 +20,22 @@ export function AdminLeaveSettings({
 }: AdminLeaveSettingsProps) {
   // 1. Office Leave Settings State
   const [officeLeaveMode, setOfficeLeaveMode] = useState<'split' | 'merged'>(() => {
-    return (globalSettings?.office_leave_mode === 'merged' || globalSettings?.office_leave_h2 === 0) ? 'merged' : 'split';
+    return (globalSettings?.office_leave_mode === 'merged' || (globalSettings?.office_leave_h2 === 0 && globalSettings?.office_leave_mode !== 'split')) ? 'merged' : 'split';
   });
   const [officeLeaveH1, setOfficeLeaveH1] = useState<number>(() => {
-    return globalSettings?.office_leave_split_h1 ?? (globalSettings?.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
+    return globalSettings?.office_leave_split_h1 ?? globalSettings?.office_leave_h1 ?? 7;
   });
   const [officeLeaveH2, setOfficeLeaveH2] = useState<number>(() => {
-    return globalSettings?.office_leave_split_h2 ?? (globalSettings?.office_leave_h2 > 0 ? globalSettings.office_leave_h2 : 7);
+    return globalSettings?.office_leave_split_h2 ?? globalSettings?.office_leave_h2 ?? 7;
   });
   const [officeLeaveYearly, setOfficeLeaveYearly] = useState<number>(() => {
-    return globalSettings?.office_leave_default ?? ((globalSettings?.office_leave_h1 || 7) + (globalSettings?.office_leave_h2 || 7));
+    return globalSettings?.office_leave_default ?? ((globalSettings?.office_leave_h1 ?? 7) + (globalSettings?.office_leave_h2 ?? 7));
   });
   const [rememberedH1, setRememberedH1] = useState<number>(() => {
-    return globalSettings?.office_leave_split_h1 ?? (globalSettings?.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
+    return globalSettings?.office_leave_split_h1 ?? globalSettings?.office_leave_h1 ?? 7;
   });
   const [rememberedH2, setRememberedH2] = useState<number>(() => {
-    return globalSettings?.office_leave_split_h2 ?? (globalSettings?.office_leave_h2 > 0 ? globalSettings.office_leave_h2 : 7);
+    return globalSettings?.office_leave_split_h2 ?? globalSettings?.office_leave_h2 ?? 7;
   });
   const [submittingOffice, setSubmittingOffice] = useState(false);
 
@@ -53,11 +53,11 @@ export function AdminLeaveSettings({
   // Sync state with globalSettings on load/change
   useEffect(() => {
     if (globalSettings) {
-      const mode = (globalSettings.office_leave_mode === 'merged' || globalSettings.office_leave_h2 === 0) ? 'merged' : 'split';
+      const mode = (globalSettings.office_leave_mode === 'merged' || (globalSettings.office_leave_h2 === 0 && globalSettings.office_leave_mode !== 'split')) ? 'merged' : 'split';
       setOfficeLeaveMode(mode);
 
-      const splitH1 = globalSettings.office_leave_split_h1 ?? (globalSettings.office_leave_h1 > 0 ? globalSettings.office_leave_h1 : 7);
-      const splitH2 = globalSettings.office_leave_split_h2 ?? (globalSettings.office_leave_h2 > 0 ? globalSettings.office_leave_h2 : 7);
+      const splitH1 = globalSettings.office_leave_split_h1 ?? globalSettings.office_leave_h1 ?? 7;
+      const splitH2 = globalSettings.office_leave_split_h2 ?? globalSettings.office_leave_h2 ?? 7;
 
       setRememberedH1(splitH1);
       setRememberedH2(splitH2);
@@ -95,8 +95,11 @@ export function AdminLeaveSettings({
 
   const handleSelectSplitMode = () => {
     setOfficeLeaveMode('split');
-    const h1 = rememberedH1 || officeLeaveH1 || 7;
-    const h2 = rememberedH2 || officeLeaveH2 || 7;
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('qc_office_leave_mode', 'split'); } catch (e) {}
+    }
+    const h1 = rememberedH1 ?? officeLeaveH1 ?? 7;
+    const h2 = rememberedH2 ?? officeLeaveH2 ?? 7;
     setOfficeLeaveH1(h1);
     setOfficeLeaveH2(h2);
     setOfficeLeaveYearly(h1 + h2);
@@ -104,6 +107,9 @@ export function AdminLeaveSettings({
 
   const handleSelectMergedMode = () => {
     setOfficeLeaveMode('merged');
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('qc_office_leave_mode', 'merged'); } catch (e) {}
+    }
     setRememberedH1(officeLeaveH1);
     setRememberedH2(officeLeaveH2);
     setOfficeLeaveYearly(officeLeaveH1 + officeLeaveH2);
@@ -117,15 +123,15 @@ export function AdminLeaveSettings({
     let updatedH1 = Number(officeLeaveH1);
     let updatedH2 = Number(officeLeaveH2);
     let updatedDefault = updatedH1 + updatedH2;
-    let finalSplitH1 = rememberedH1 || updatedH1;
-    let finalSplitH2 = rememberedH2 || updatedH2;
+    let finalSplitH1 = rememberedH1 ?? updatedH1;
+    let finalSplitH2 = rememberedH2 ?? updatedH2;
 
     if (officeLeaveMode === 'merged') {
       updatedDefault = Number(officeLeaveYearly);
       updatedH1 = updatedDefault;
       updatedH2 = 0;
-      finalSplitH1 = rememberedH1 || Math.floor(updatedDefault / 2);
-      finalSplitH2 = rememberedH2 || (updatedDefault - Math.floor(updatedDefault / 2));
+      finalSplitH1 = rememberedH1 ?? Math.floor(updatedDefault / 2);
+      finalSplitH2 = rememberedH2 ?? (updatedDefault - Math.floor(updatedDefault / 2));
     } else {
       finalSplitH1 = updatedH1;
       finalSplitH2 = updatedH2;
