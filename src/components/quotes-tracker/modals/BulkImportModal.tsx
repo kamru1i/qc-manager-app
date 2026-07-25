@@ -65,7 +65,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   // Handle parsing text from textarea
   const handleParseText = () => {
     if (!rawText.trim()) return;
-    const parsed = parseBulkQuoteLines(rawText, sanitizerWords, defaultBranch);
+    const parsed = parseBulkQuoteLines(rawText, sanitizerWords, branchesList);
     setItems((prev) => [...prev, ...parsed]);
     setRawText("");
   };
@@ -77,7 +77,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
     const newItems: ParsedQuoteItem[] = [];
     Array.from(files).forEach((file) => {
-      const parsed = parseQuoteLine(file.name, sanitizerWords, defaultBranch);
+      const parsed = parseQuoteLine(file.name, sanitizerWords, branchesList);
       newItems.push(parsed);
     });
 
