@@ -1544,6 +1544,45 @@ $$;
 
 
 --
+-- Name: get_my_role(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_role() RETURNS text
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_role text;
+BEGIN
+  -- Try to read from the per-transaction cache first
+  BEGIN
+    v_role := current_setting('app.user_role', true);
+    IF v_role IS NOT NULL AND v_role <> '' THEN
+      RETURN v_role;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    -- Setting doesn't exist yet, compute it
+  END;
+
+  -- Cache miss: look up the role from profiles (single PK lookup)
+  SELECT role INTO v_role
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  -- Store in transaction-scoped session variable (resets at txn end)
+  IF v_role IS NOT NULL THEN
+    PERFORM set_config('app.user_role', v_role, true);
+  ELSE
+    PERFORM set_config('app.user_role', 'none', true);
+    v_role := 'none';
+  END IF;
+
+  RETURN v_role;
+END;
+$$;
+
+
+--
 -- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1551,10 +1590,7 @@ CREATE FUNCTION public.is_admin() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
-  );
+  SELECT public.get_my_role() IN ('admin', 'superadmin');
 $$;
 
 
@@ -1566,10 +1602,7 @@ CREATE FUNCTION public.is_admin_or_supervisor() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND (role = 'admin' OR role = 'supervisor' OR role = 'superadmin')
-  );
+  SELECT public.get_my_role() IN ('admin', 'supervisor', 'superadmin');
 $$;
 
 
@@ -1581,10 +1614,7 @@ CREATE FUNCTION public.is_superadmin() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'superadmin'
-  );
+  SELECT public.get_my_role() = 'superadmin';
 $$;
 
 
@@ -1596,10 +1626,7 @@ CREATE FUNCTION public.is_supervisor() RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'supervisor'
-  );
+  SELECT public.get_my_role() = 'supervisor';
 $$;
 
 
@@ -1913,12 +1940,10 @@ BEGIN
   LIMIT 5;
 
   -- খ. যারা আগের মাসের টপ ৫-এ নেই, তাদের প্রোফাইলের ব্যাজ মুছে ফেলা
-  -- Only touch rows that actually carry the badge — otherwise every profile row
-  -- gets a new version on each run and realtime emits an UPDATE per profile.
   UPDATE public.profiles
   SET global_settings = COALESCE(global_settings, '{}'::JSONB) - 'top_performer_badge'
   WHERE id NOT IN (SELECT user_id FROM temp_top_5)
-    AND global_settings ? 'top_performer_badge';
+    AND global_settings->'top_performer_badge' IS NOT NULL;
 
   -- গ. টপ ৫ পারফর্মারদের লুপ চালিয়ে ধারাবাহিকতা (streaks) ও বার্ষিক উইন ক্যালকুলেট করে আপডেট করা
   FOR r_user IN (SELECT * FROM temp_top_5) LOOP
@@ -1955,7 +1980,8 @@ BEGIN
     -- ইউজারের প্রোফাইলে ব্যাজ সেট করা
     UPDATE public.profiles
     SET global_settings = COALESCE(global_settings, '{}'::JSONB) || JSONB_BUILD_OBJECT('top_performer_badge', v_badge_json)
-    WHERE id = r_user.user_id;
+    WHERE id = r_user.user_id
+      AND (global_settings->'top_performer_badge') IS DISTINCT FROM v_badge_json;
   END LOOP;
 END;
 $$;
