@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.8** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.10** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,16 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.8 — Patch Release (Independent Date & Time Line Inline Editing) (Current)
+### 🚀 v6.4.10 — Patch Release (Left-Aligned Date Input Refinement) (Current)
+
+- **Left-Aligned Date Editor (`text-left`)**: Updated `submitted_date` inline text input alignment from `text-center` to `text-left px-1.5` in `RecordsTable.tsx`. Ensures that entering edit mode seamlessly maintains left text alignment matching the table's default date layout.
+
+### 🚀 v6.4.9 — Patch Release (Strict DD-MM-YYYY Date Format & React Input Prop Fix)
+
+- **Strict `DD-MM-YYYY` Date Format**: Updated the inline date editor for `submitted_date` to use a clean text input formatted as `DD-MM-YYYY` (e.g. `25-07-2026`). Prevents browser locale auto-formatting to US `MM/DD/YYYY` (`07/25/2026`).
+- **React Controlled Input Prop Fix**: Removed redundant `defaultValue` props from `<input>` elements in `RecordsTable.tsx`, eliminating React dev console warnings.
+
+### 🚀 v6.4.8 — Patch Release (Independent Date & Time Line Inline Editing)
 
 - **Independent Date & Time Line Inline Editing**: Split the Date/Time cell in `RecordsTable.tsx` into two independent line targets (`submitted_date` and `submitted_time`).
 - **Date Line Interaction**: Clicking/multi-clicking the top Date line (e.g. `25-07-2026`) opens `<input type="date">` pre-filled with the exact date (`YYYY-MM-DD`), leaving the bottom Time line visible.

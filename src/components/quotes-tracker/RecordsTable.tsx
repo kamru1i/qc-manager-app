@@ -102,7 +102,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
         // Multi-click / Premiere Pro style double-click
         const val = getCellValue(record, "submitted_at");
         if (field === "submitted_date") {
-          setTempValue(formatDateToYYYYMMDD(val));
+          setTempValue(formatDate(val));
         } else if (field === "submitted_time") {
           setTempValue(formatTimeToHHMM(val));
         }
@@ -149,20 +149,29 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       finalValue = (value as string).trim();
       if (!finalValue) return; // Cannot be empty
     } else if (field === "submitted_date") {
-      if (!value) return; // Date cannot be empty
+      if (!value || !value.trim()) return; // Date cannot be empty
+      const parts = value.trim().split(/[-/]/);
+      if (parts.length !== 3) return;
+      const day = Number(parts[0]);
+      const month = Number(parts[1]);
+      const year = Number(parts[2]);
+      if (
+        isNaN(day) || isNaN(month) || isNaN(year) ||
+        day < 1 || day > 31 ||
+        month < 1 || month > 12 ||
+        year < 1900 || year > 2100
+      ) {
+        return;
+      }
+
       const originalRecord = records.find((r) => r.id === id);
       const currentSubAt = originalRecord ? getCellValue(originalRecord, "submitted_at") : new Date().toISOString();
       const d = new Date(currentSubAt);
       const origTime = isNaN(d.getTime()) ? new Date() : d;
-      const [yyyy, mm, dd] = value.split("-").map(Number);
-      if (yyyy && mm && dd) {
-        const newDate = new Date(origTime);
-        newDate.setFullYear(yyyy, mm - 1, dd);
-        targetField = "submitted_at";
-        finalValue = newDate.toISOString();
-      } else {
-        return;
-      }
+      const newDate = new Date(origTime);
+      newDate.setFullYear(year, month - 1, day);
+      targetField = "submitted_at";
+      finalValue = newDate.toISOString();
     } else if (field === "submitted_time") {
       if (!value) return; // Time cannot be empty
       const originalRecord = records.find((r) => r.id === id);
@@ -314,7 +323,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       if (record) {
         if (editingCell.field === "submitted_date") {
           const val = getCellValue(record, "submitted_at");
-          setTempValue(formatDateToYYYYMMDD(val));
+          setTempValue(formatDate(val));
         } else if (editingCell.field === "submitted_time") {
           const val = getCellValue(record, "submitted_at");
           setTempValue(formatTimeToHHMM(val));
@@ -757,9 +766,8 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         editingCell.id === r.id &&
                         editingCell.field === "submitted_date" ? (
                           <input
-                            type="date"
+                            type="text"
                             value={tempValue}
-                            defaultValue={formatDateToYYYYMMDD(getCellValue(r, "submitted_at"))}
                             onChange={(e) => setTempValue(e.target.value)}
                             onBlur={() => {
                               if (isCancelledRef.current) {
@@ -777,7 +785,8 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                               }
                             }}
                             autoFocus
-                            className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mb-0.5"
+                            placeholder="DD-MM-YYYY"
+                            className="bg-theme-card-container border border-theme-border-active rounded px-1.5 py-0.5 text-theme-text-primary text-xs w-full text-left focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mb-0.5"
                           />
                         ) : (
                           <span
@@ -807,7 +816,6 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         <input
                           type="time"
                           value={tempValue}
-                          defaultValue={formatTimeToHHMM(getCellValue(r, "submitted_at"))}
                           onChange={(e) => setTempValue(e.target.value)}
                           onBlur={() => {
                             if (isCancelledRef.current) {
