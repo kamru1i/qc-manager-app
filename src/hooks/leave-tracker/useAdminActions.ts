@@ -129,7 +129,7 @@ export const useAdminActions = ({
       );
 
       // Refresh the profiles list via the shared provider fetch
-      await refreshProfiles();
+      await refreshProfiles({ force: true });
 
       showToast('success', `User created successfully! Password: ${activePassword}`);
 
@@ -550,7 +550,7 @@ export const useAdminActions = ({
       }
 
       // Refresh profiles list via the shared provider fetch
-      await refreshProfiles();
+      await refreshProfiles({ force: true });
 
       showToast('success', 'User profile updated successfully!');
 
@@ -591,7 +591,7 @@ export const useAdminActions = ({
         }
       }
 
-      await refreshProfiles();
+      await refreshProfiles({ force: true });
       showToast('success', 'All individual user feature flag overrides reset to Inherit!');
       setSubmitting(false);
       return true;

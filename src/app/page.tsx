@@ -760,7 +760,7 @@ function AppPortalInner({
             // ignore storage failures
           }
           // Pull the updated badge data into the shared list
-          refreshProfiles();
+          refreshProfiles({ force: true });
         }
       } catch (err) {
         console.error("Error triggering top performer badges sync:", err);

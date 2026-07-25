@@ -651,7 +651,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   const fetchProfiles = useCallback(async () => {
     setIsLoading(true);
     try {
-      await refreshProfiles();
+      await refreshProfiles({ force: true });
     } finally {
       setIsLoading(false);
     }

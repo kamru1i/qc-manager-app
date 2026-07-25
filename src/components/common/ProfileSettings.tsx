@@ -634,7 +634,7 @@ export function ProfileSettings({
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
       window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
-      await refreshProfiles();
+      await refreshProfiles({ force: true });
     } catch (err: any) {
       toast.error(err.message || 'Failed to update feature flag.');
     } finally {
@@ -715,7 +715,7 @@ export function ProfileSettings({
       window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
 
       // Refresh shared profiles context across app
-      await refreshProfiles();
+      await refreshProfiles({ force: true });
 
       toast.success('All individual user overrides reset to Inherit!');
     } catch (err: any) {

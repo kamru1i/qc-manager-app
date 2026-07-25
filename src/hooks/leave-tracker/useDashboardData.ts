@@ -492,7 +492,7 @@ export const useDashboardData = () => {
     const { error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('id', sessionUser.id); // E1 fix: Only update admin's own profile (not ALL profiles)
+      .eq('id', sessionUser!.id); // E1 fix: Only update admin's own profile (not ALL profiles)
 
     if (error) {
       setMessage({ type: 'error', text: 'Failed to save settings: ' + error.message });
