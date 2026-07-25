@@ -27,7 +27,6 @@ import { QuoteRulesPanel } from "@/components/quotes-tracker/QuoteRulesPanel";
 import { CopyHelperPanel } from "@/components/quotes-tracker/CopyHelperPanel";
 import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperPanel";
 import { CustomSelect } from "@/components/common/CustomSelect";
-import { IPChecker } from "@/components/leave-tracker/IPChecker";
 import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
 import { CausalityPanel } from "@/components/quotes-tracker/CausalityPanel";
 import { validator } from "@/utils/quotesValidator";
@@ -67,8 +66,8 @@ const ALL_10_FILE_TYPES = [
 ];
 
 interface DashboardProps {
-  activeTab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file";
-  onTabChange: (tab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file") => void;
+  activeTab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "login_codes" | "causality" | "copy_helper" | "save_file";
+  onTabChange: (tab: "entry" | "monthly" | "leaderboard" | "reports" | "audit_logs" | "rules" | "login_codes" | "causality" | "copy_helper" | "save_file") => void;
   onBackToSidebarTab?: () => void;
 }
 
@@ -101,7 +100,6 @@ export default function Dashboard({
         targetTab === "reports" ||
         targetTab === "audit_logs" ||
         targetTab === "rules" ||
-        targetTab === "ip_checker" ||
         targetTab === "login_codes" ||
         targetTab === "causality" ||
         targetTab === "copy_helper" ||
@@ -1180,14 +1178,13 @@ export default function Dashboard({
 
   // Loading Screen
   if (loading) {
-    let loaderType: "form" | "table" | "leaderboard" | "audit-logs" | "rules" | "ip_checker" | "login_codes" | "causality" | "copy_helper" | "save_file" | "generic" = "generic";
+    let loaderType: "form" | "table" | "leaderboard" | "audit-logs" | "rules" | "login_codes" | "causality" | "copy_helper" | "save_file" | "generic" = "generic";
     if (activeTab === "entry") loaderType = "form";
     else if (activeTab === "causality") loaderType = "causality";
     else if (activeTab === "monthly") loaderType = "table";
     else if (activeTab === "leaderboard" || activeTab === "reports") loaderType = "leaderboard";
     else if (activeTab === "audit_logs") loaderType = "audit-logs";
     else if (activeTab === "rules") loaderType = "rules";
-    else if (activeTab === "ip_checker") loaderType = "ip_checker";
     else if (activeTab === "login_codes") loaderType = "login_codes";
     else if (activeTab === "copy_helper") loaderType = "copy_helper";
     else if (activeTab === "save_file") loaderType = "save_file";
@@ -1770,11 +1767,6 @@ export default function Dashboard({
                 showToast={showToast}
               />
             </Suspense>
-          )}
-
-          {/* TAB 7: IP CHECKER */}
-          {activeTab === "ip_checker" && (
-            <IPChecker showToast={showToast} />
           )}
 
           {/* TAB 8: LOGIN CODES */}

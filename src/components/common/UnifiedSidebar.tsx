@@ -28,8 +28,8 @@ import {
 interface UnifiedSidebarProps {
   activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'audit_logs' | 'kpi' | 'profile_settings';
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'ip_checker' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file') => void;
   activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
@@ -447,24 +447,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                   >
                     <BookOpen className="h-4 w-4 shrink-0" />
                     {!isSidebarCollapsed && <span className="whitespace-nowrap">Quote Rules</span>}
-                  </button>
-                )}
-
-                {/* 5. IP Checker */}
-                {!tabHidden('ip_checker') && (
-                  <button
-                    onClick={() => { onQuotesTabChange('ip_checker'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'IP Checker' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'ip_checker'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <Globe className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">IP Checker</span>}
                   </button>
                 )}
 

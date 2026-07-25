@@ -227,7 +227,6 @@ export function ProfileSettings({
         return hasQuotesAccess && isSuperAdmin;
       case 'monthly':
       case 'rules':
-      case 'ip_checker':
       case 'login_codes':
       case 'causality':
         return hasQuotesAccess;

@@ -5,7 +5,6 @@ import { MonthlyListSkeleton } from "@/components/common/skeleton/MonthlyListSke
 import { QuoteRulesSkeleton } from "@/components/common/skeleton/QuoteRulesSkeleton";
 import { LeaderboardSkeleton } from "@/components/common/skeleton/LeaderboardSkeleton";
 import { AuditLogsSkeleton } from "@/components/common/skeleton/AuditLogsSkeleton";
-import { IPCheckerSkeleton } from "@/components/common/skeleton/IPCheckerSkeleton";
 import { LoginCodesSkeleton } from "@/components/common/skeleton/LoginCodesSkeleton";
 import { AsitisCausalitySkeleton } from "@/components/common/skeleton/AsitisCausalitySkeleton";
 import { CopyHelperSkeleton } from "@/components/common/skeleton/CopyHelperSkeleton";
@@ -22,7 +21,7 @@ interface SkeletonLoaderProps {
     | "users"
     | "leaderboard"
     | "audit-logs"
-    | "ip_checker"
+    | "login_codes"
     | "login_codes"
     | "asitis_causality"
     | "eui_causality"
@@ -165,10 +164,6 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
 
   if (type === "audit-logs") {
     return <AuditLogsSkeleton />;
-  }
-
-  if (type === "ip_checker") {
-    return <IPCheckerSkeleton />;
   }
 
   if (type === "login_codes") {

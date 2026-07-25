@@ -495,7 +495,6 @@ function AppPortalInner({
     | "reports"
     | "audit_logs"
     | "rules"
-    | "ip_checker"
     | "login_codes"
     | "causality"
     | "copy_helper"
@@ -518,7 +517,6 @@ function AppPortalInner({
         saved === "reports" ||
         saved === "audit_logs" ||
         saved === "rules" ||
-        saved === "ip_checker" ||
         saved === "login_codes" ||
         saved === "copy_helper" ||
         saved === "save_file"
@@ -561,7 +559,6 @@ function AppPortalInner({
       | "reports"
       | "audit_logs"
       | "rules"
-      | "ip_checker"
       | "login_codes"
       | "causality"
       | "copy_helper"
@@ -1548,15 +1545,13 @@ function AppPortalInner({
                               ? "leaderboard"
                               : activeQuotesTab === "audit_logs"
                                 ? "audit-logs"
-                                : activeQuotesTab === "ip_checker"
-                                  ? "ip_checker"
-                                  : activeQuotesTab === "login_codes"
-                                    ? "login_codes"
-                                    : activeQuotesTab === "copy_helper"
-                                      ? "copy_helper"
-                                      : activeQuotesTab === "save_file"
-                                        ? "save_file"
-                                        : "generic"
+                                : activeQuotesTab === "login_codes"
+                                  ? "login_codes"
+                                  : activeQuotesTab === "copy_helper"
+                                    ? "copy_helper"
+                                    : activeQuotesTab === "save_file"
+                                      ? "save_file"
+                                      : "generic"
                     }
                   />
                 ) : activeTab === "user_management" ? (

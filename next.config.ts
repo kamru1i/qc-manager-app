@@ -7,20 +7,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  async rewrites() {
-    // Disable rewrites during static exports
-    if (isStaticBuild) return [];
-    return [
-      {
-        source: '/api-proxy/ip2location',
-        destination: 'https://api.ip2location.io/',
-      },
-      {
-        source: '/api-proxy/criminalip/:path*',
-        destination: 'https://api.criminalip.io/:path*',
-      },
-    ];
-  },
   async headers() {
     if (isStaticBuild) return [];
     return [

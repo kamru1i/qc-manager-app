@@ -25,7 +25,6 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'monthly', label: 'Monthly List Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'rules', label: 'Quote Rules Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'login_codes', label: 'Login Codes Subtab', category: 'Quotes Tracker Subtabs' },
-  { key: 'ip_checker', label: 'IP Checker Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'causality', label: 'Causality Subtab', category: 'Quotes Tracker Subtabs' },
 
   // Leave Tracker Subtabs
@@ -86,7 +85,6 @@ export const getDefaultRoleVisibility = (
     case 'monthly':
     case 'rules':
     case 'login_codes':
-    case 'ip_checker':
     case 'causality':
     case 'leave_history':
       return true;
