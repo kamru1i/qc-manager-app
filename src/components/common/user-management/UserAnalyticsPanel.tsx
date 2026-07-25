@@ -40,7 +40,8 @@ export const UserAnalyticsPanel: React.FC<UserAnalyticsPanelProps> = ({
           // Column-limited to the RecordItem fields the analytics view consumes
           // (avoids shipping the user's full row payloads on every profile view)
           .select('id, user_id, file_name, branch_name, codename, file_type, submitted_at, created_at')
-          .eq('user_id', viewingStaff.id);
+          .eq('user_id', viewingStaff.id)
+          .gte('submitted_at', new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
 
         if (error) throw error;
 

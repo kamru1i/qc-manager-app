@@ -40,10 +40,8 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       window.location.protocol === "tauri:" ||
       window.location.hostname === "tauri.localhost";
 
-    // Use Supabase URL for Tauri builds; otherwise use origin favicon
-    const pingUrl = isTauri
-      ? (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://google.com")
-      : "/favicon.ico";
+    // Use origin favicon for ping on all platforms (avoids sending HEAD requests to Supabase URL)
+    const pingUrl = "/favicon.ico";
 
     try {
       const controller = new AbortController();

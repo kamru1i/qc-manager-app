@@ -126,7 +126,8 @@ export function useGlobalNotifications(
           const { data: holidayData, error: holidayError } = await supabase
             .from('govt_holiday_responses')
             .select('id, user_id, holiday_date, holiday_name, response, created_at')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(100);
 
           if (holidayError) {
             console.error('Failed to fetch holiday responses in useGlobalNotifications:', {

@@ -77,7 +77,8 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
         // Column-limited to the RecordItem fields the history table consumes
         .select('id, user_id, file_name, branch_name, codename, file_type, submitted_at, created_at')
         .eq('user_id', viewingStaff.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(0, 199);
 
       if (error) throw error;
       setRecords((data as RecordItem[]) || []);
