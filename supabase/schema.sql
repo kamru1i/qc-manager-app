@@ -271,6 +271,7 @@ ALTER FUNCTION "public"."check_profile_role_change"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."check_profile_updates"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
   -- If the session bypass variable is set, allow the update (system functions/syncs)
@@ -283,19 +284,13 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- If the editor is an admin, allow everything
-  IF EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  ) THEN
+  -- If the editor is an admin or superadmin, allow everything
+  IF public.is_admin() THEN
     RETURN NEW;
   END IF;
 
   -- If the editor is a supervisor
-  IF EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'supervisor'
-  ) THEN
+  IF public.is_supervisor() THEN
     -- If editing self, allow everything
     IF auth.uid() = NEW.id THEN
       RETURN NEW;
