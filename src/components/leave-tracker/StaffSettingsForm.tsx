@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Settings } from "lucide-react";
+import { Check, Settings, AlertTriangle } from "lucide-react";
 import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
 import { Profile } from "@/types";
@@ -179,6 +179,35 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   const [newSkillText, setNewSkillText] = React.useState("");
   const [newDeptIndicatorText, setNewDeptIndicatorText] = React.useState("");
   const [newOtherDeptIndicatorText, setNewOtherDeptIndicatorText] = React.useState("");
+
+  // Custom confirmation modal state for disabling department / data entry
+  const [confirmModalConfig, setConfirmModalConfig] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const requestDepartmentChangeConfirm = (
+    title: string,
+    message: string,
+    onConfirmAction: () => void
+  ) => {
+    setConfirmModalConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirmAction();
+        setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
 
   const [previousEvaluations, setPreviousEvaluations] = React.useState<any[]>([]);
 
@@ -930,19 +959,31 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   value={department}
                   disabled={!isAdmin && !isSupervisor}
                   onChange={(e) => {
-                    const dept = e.target.value;
-                    if (setDepartment) setDepartment(dept);
-                    if (setPerformsOtherDeptTasks) setPerformsOtherDeptTasks(false);
-                    if (setOtherDepartment) {
-                      const allDepts = ["Data Entry", "IT", "Accounts", "HR", "Other"];
-                      const newOthers = allDepts.filter(d => d !== dept);
-                      setOtherDepartment(newOthers[0]);
-                    }
+                    const newDept = e.target.value;
+                    const executeChange = () => {
+                      if (setDepartment) setDepartment(newDept);
+                      if (setPerformsOtherDeptTasks) setPerformsOtherDeptTasks(false);
+                      if (setOtherDepartment) {
+                        const allDepts = ["Data Entry", "IT", "Accounts", "HR", "Other"];
+                        const newOthers = allDepts.filter((d) => d !== newDept);
+                        setOtherDepartment(newOthers[0]);
+                      }
 
-                    if (dept === "Data Entry") {
-                      if (setPerformsDataEntry) setPerformsDataEntry(true);
+                      if (newDept === "Data Entry") {
+                        if (setPerformsDataEntry) setPerformsDataEntry(true);
+                      } else {
+                        if (setPerformsDataEntry) setPerformsDataEntry(false);
+                      }
+                    };
+
+                    if (department === "Data Entry" && newDept !== "Data Entry" && otherDepartment !== "Data Entry") {
+                      requestDepartmentChangeConfirm(
+                        "Disable Data Entry Department?",
+                        "Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?",
+                        executeChange
+                      );
                     } else {
-                      if (setPerformsDataEntry) setPerformsDataEntry(false);
+                      executeChange();
                     }
                   }}
                   className="w-full bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
@@ -1043,53 +1084,32 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       onChange={(e) => {
                         const checked = e.target.checked;
 
-                        // If unchecking, and they had Data Entry enabled, ask for confirmation
-                        if (!checked && department !== "Data Entry" && otherDepartment === "Data Entry") {
-                          const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
-                          if (!confirmHide) return;
-                        }
+                        const executeToggle = () => {
+                          if (setPerformsOtherDeptTasks) setPerformsOtherDeptTasks(checked);
 
-                        if (setPerformsOtherDeptTasks) setPerformsOtherDeptTasks(checked);
+                          if (checked) {
+                            const defaultOther = otherDeptOptions[0];
+                            if (setOtherDepartment) setOtherDepartment(defaultOther);
 
-                        if (checked) {
-                          const defaultOther = otherDeptOptions[0];
-                          if (setOtherDepartment) setOtherDepartment(defaultOther);
-
-                          if (department !== "Data Entry" && defaultOther === "Data Entry") {
-                            if (setPerformsDataEntry) setPerformsDataEntry(true);
+                            if (department !== "Data Entry" && defaultOther === "Data Entry") {
+                              if (setPerformsDataEntry) setPerformsDataEntry(true);
+                            } else {
+                              if (setPerformsDataEntry) setPerformsDataEntry(false);
+                            }
                           } else {
                             if (setPerformsDataEntry) setPerformsDataEntry(false);
+                            if (setKpiOtherDeptIndicators) setKpiOtherDeptIndicators([]);
                           }
+                        };
 
-                          // Pre-populate default indicators for secondary department
-                          if (setKpiOtherDeptIndicators) {
-                            if (defaultOther === "IT") {
-                              setKpiOtherDeptIndicators([
-                                "Server Maintenance & Security",
-                                "Technical Support & Troubleshooting",
-                                "Software & System Updates",
-                                "Database & Backup Management"
-                              ]);
-                            } else if (defaultOther === "Accounts") {
-                              setKpiOtherDeptIndicators([
-                                "Financial Reporting & Billing",
-                                "Expense & Invoice Processing",
-                                "Audit Compliance & Accounts Reconciliation"
-                              ]);
-                            } else if (defaultOther === "HR") {
-                              setKpiOtherDeptIndicators([
-                                "Employee Recruitment & Onboarding",
-                                "Payroll Processing",
-                                "Leave & Attendance Tracking",
-                                "Policy Enforcement & Conflict Resolution"
-                              ]);
-                            } else {
-                              setKpiOtherDeptIndicators(defaultOther === "Data Entry" ? [] : ["Task Efficiency", "Team Collaboration"]);
-                            }
-                          }
+                        if (!checked && department !== "Data Entry" && otherDepartment === "Data Entry") {
+                          requestDepartmentChangeConfirm(
+                            "Disable Data Entry Department?",
+                            "Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?",
+                            executeToggle
+                          );
                         } else {
-                          if (setPerformsDataEntry) setPerformsDataEntry(false);
-                          if (setKpiOtherDeptIndicators) setKpiOtherDeptIndicators([]);
+                          executeToggle();
                         }
                       }}
                       className="sr-only"
@@ -1121,44 +1141,24 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         onChange={(e) => {
                           const dept = e.target.value;
 
-                          if (department !== "Data Entry" && otherDepartment === "Data Entry" && dept !== "Data Entry") {
-                            const confirmHide = window.confirm("Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?");
-                            if (!confirmHide) return;
-                          }
+                          const executeOtherChange = () => {
+                            if (setOtherDepartment) setOtherDepartment(dept);
 
-                          if (setOtherDepartment) setOtherDepartment(dept);
-
-                          if (department !== "Data Entry" && dept === "Data Entry") {
-                            if (setPerformsDataEntry) setPerformsDataEntry(true);
-                          } else {
-                            if (setPerformsDataEntry) setPerformsDataEntry(false);
-                          }
-
-                          // Pre-populate default indicators for secondary department
-                          if (setKpiOtherDeptIndicators) {
-                            if (dept === "IT") {
-                              setKpiOtherDeptIndicators([
-                                "Server Maintenance & Security",
-                                "Technical Support & Troubleshooting",
-                                "Software & System Updates",
-                                "Database & Backup Management"
-                              ]);
-                            } else if (dept === "Accounts") {
-                              setKpiOtherDeptIndicators([
-                                "Financial Reporting & Billing",
-                                "Expense & Invoice Processing",
-                                "Audit Compliance & Accounts Reconciliation"
-                              ]);
-                            } else if (dept === "HR") {
-                              setKpiOtherDeptIndicators([
-                                "Employee Recruitment & Onboarding",
-                                "Payroll Processing",
-                                "Leave & Attendance Tracking",
-                                "Policy Enforcement & Conflict Resolution"
-                              ]);
+                            if (department !== "Data Entry" && dept === "Data Entry") {
+                              if (setPerformsDataEntry) setPerformsDataEntry(true);
                             } else {
-                              setKpiOtherDeptIndicators(dept === "Data Entry" ? [] : ["Task Efficiency", "Team Collaboration"]);
+                              if (setPerformsDataEntry) setPerformsDataEntry(false);
                             }
+                          };
+
+                          if (department !== "Data Entry" && otherDepartment === "Data Entry" && dept !== "Data Entry") {
+                            requestDepartmentChangeConfirm(
+                              "Disable Data Entry Department?",
+                              "Disabling Data Entry will hide quotations and file type rows from their KPI sheet. Proceed?",
+                              executeOtherChange
+                            );
+                          } else {
+                            executeOtherChange();
                           }
                         }}
                         className="w-full bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
@@ -1425,6 +1425,46 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             )}
           </div>
         )}
+
+      {/* Custom Confirmation Modal for Department / Data Entry Disable */}
+      {confirmModalConfig.isOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-start gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-theme-text-primary">
+                  {confirmModalConfig.title}
+                </h3>
+                <p className="text-xs text-theme-text-secondary leading-relaxed">
+                  {confirmModalConfig.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-theme-border-muted/50">
+              <button
+                type="button"
+                onClick={() =>
+                  setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }))
+                }
+                className="px-4 py-2 bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs font-semibold rounded-xl hover:bg-theme-border-input/50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmModalConfig.onConfirm}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-amber-600/30 transition-all cursor-pointer"
+              >
+                Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
