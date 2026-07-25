@@ -63,7 +63,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
   >({});
   const [editingCell, setEditingCell] = useState<{
     id: string;
-    field: "file_name" | "branch_name" | "codename" | "file_type";
+    field: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_at";
   } | null>(null);
   const [lastClick, setLastClick] = useState<{
     id: string;
@@ -77,7 +77,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
   const getCellValue = useCallback((
     r: RecordItem,
-    field: "file_name" | "branch_name" | "codename" | "file_type",
+    field: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_at",
   ) => {
     if (editedRecords[r.id] && editedRecords[r.id][field] !== undefined) {
       return editedRecords[r.id][field]!;
@@ -109,7 +109,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
   const handleCellDoubleClick = (
     record: RecordItem,
-    field: "codename" | "file_type",
+    field: "codename" | "file_type" | "submitted_at",
   ) => {
     if (submitting || bulkSaving || savingRows[record.id]) return;
 
@@ -117,8 +117,23 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       // restricted to Admins only
       if (!isAdmin) return;
     } else {
-      // file_type is editable by the record owner or admin
+      // file_type and submitted_at are editable by the record owner or admin
       if (!isAdmin && record.user_id !== currentUserId) return;
+    }
+
+    if (field === "submitted_at") {
+      const val = getCellValue(record, "submitted_at");
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        setTempValue(`${yyyy}-${mm}-${dd}`);
+      } else {
+        setTempValue("");
+      }
+    } else if (field === "codename") {
+      setTempValue(getCellValue(record, "codename"));
     }
 
     setEditingCell({ id: record.id, field });
@@ -126,7 +141,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
   const handleCommitEdit = (
     id: string,
-    field: "file_name" | "branch_name" | "codename" | "file_type",
+    field: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_at",
     value: string,
   ) => {
     let finalValue = value;
@@ -135,6 +150,18 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     } else if (field === "file_name") {
       finalValue = (value as string).trim();
       if (!finalValue) return; // Cannot be empty
+    } else if (field === "submitted_at") {
+      if (!value) return; // Date cannot be empty
+      const originalRecord = records.find((r) => r.id === id);
+      const origTime = originalRecord ? new Date(originalRecord.submitted_at) : new Date();
+      const [yyyy, mm, dd] = value.split("-").map(Number);
+      if (yyyy && mm && dd) {
+        const newDate = new Date(origTime);
+        newDate.setFullYear(yyyy, mm - 1, dd);
+        finalValue = newDate.toISOString();
+      } else {
+        return;
+      }
     }
 
     setEditedRecords((prev) => {
@@ -164,7 +191,9 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
           (updated.codename === undefined ||
             updated.codename === originalRecord.codename) &&
           (updated.file_type === undefined ||
-            updated.file_type === originalRecord.file_type);
+            updated.file_type === originalRecord.file_type) &&
+          (updated.submitted_at === undefined ||
+            updated.submitted_at === originalRecord.submitted_at);
 
         if (matchesOriginal) {
           const next = { ...prev };
@@ -688,21 +717,68 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                   }`}
                 >
                   <td
-                    className={`px-4 py-1.5 ${showDate ? "w-30 min-w-30" : "w-28 min-w-28"}`}
+                    className={`px-4 py-1.5 ${showDate ? "w-36 min-w-36" : "w-32 min-w-32"}`}
                   >
-                    {showDate ? (
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-theme-text-primary whitespace-nowrap">
-                          {formatDate(r.submitted_at)}
-                        </span>
-                        <span className="text-[10px] text-theme-text-muted mt-0.5">
-                          {formatTimeToAMPM(r.submitted_at)}
-                        </span>
-                      </div>
+                    {editingCell &&
+                    editingCell.id === r.id &&
+                    editingCell.field === "submitted_at" ? (
+                      <input
+                        type="date"
+                        value={tempValue}
+                        onChange={(e) => setTempValue(e.target.value)}
+                        onBlur={() => {
+                          if (isCancelledRef.current) {
+                            isCancelledRef.current = false;
+                            return;
+                          }
+                          handleCommitEdit(r.id, "submitted_at", tempValue);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter")
+                            handleCommitEdit(r.id, "submitted_at", tempValue);
+                          if (e.key === "Escape") {
+                            isCancelledRef.current = true;
+                            setEditingCell(null);
+                          }
+                        }}
+                        autoFocus
+                        className="bg-theme-card-container border border-theme-border-active rounded px-1.5 py-0.5 text-theme-text-primary text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+                      />
                     ) : (
-                      <span className="text-xs text-theme-text-muted">
-                        {formatTimeToAMPM(r.submitted_at)}
-                      </span>
+                      <div
+                        onDoubleClick={() =>
+                          handleCellDoubleClick(r, "submitted_at")
+                        }
+                        className={`px-1.5 py-0.5 rounded border border-transparent transition-all ${
+                          isAdmin || r.user_id === currentUserId
+                            ? "cursor-pointer"
+                            : ""
+                        } ${
+                          editedRecords[r.id]?.submitted_at !== undefined
+                            ? "text-purple-400 border border-purple-500/25 bg-purple-500/5 font-semibold"
+                            : ""
+                        }`}
+                        title={
+                          isAdmin || r.user_id === currentUserId
+                            ? "Double-click to edit date"
+                            : ""
+                        }
+                      >
+                        {showDate ? (
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-theme-text-primary whitespace-nowrap">
+                              {formatDate(getCellValue(r, "submitted_at"))}
+                            </span>
+                            <span className="text-[10px] text-theme-text-muted mt-0.5">
+                              {formatTimeToAMPM(getCellValue(r, "submitted_at"))}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-theme-text-muted">
+                            {formatTimeToAMPM(getCellValue(r, "submitted_at"))}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
 

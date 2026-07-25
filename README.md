@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.4** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.5** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,12 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.4 — Patch Release (Strict Chronological Leave History Sorting Fix) (Current)
+### 🚀 v6.4.5 — Patch Release (Quotes Tracker Inline Date Editing & Bulk Save) (Current)
+
+- **Quotes Tracker Inline Date Editing**: Enabled double-click inline date editing for the Date/Time column in both **Daily Entry** and **Monthly Entry** tables.
+- **Bulk Save & Visual Highlights**: Editing a date opens an inline `<input type="date">` editor that preserves submission time while updating the date part. Modified dates highlight with a purple unsaved badge and commit seamlessly alongside file name, branch, codename, and file type changes during single or bulk save operations.
+
+### 🚀 v6.4.4 — Patch Release (Strict Chronological Leave History Sorting Fix)
 
 - **Strict Chronological Date Sorting (`sortChutiRecordsDescending`)**: Introduced a robust date parsing and sorting comparator across `LeavesRecordsTable`, `UserLeaveHistoryPanel`, `UserManagementDashboard`, and `useDashboardData`. Guarantees that leave history records (in both Leave Tracker and User Profile Leave History views) are strictly ordered with the latest date at the top (date descending, and created/submitted timestamp descending for ties), eliminating random shuffling when adding or updating leave entries.
 
