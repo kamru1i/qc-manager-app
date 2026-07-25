@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { Check, Settings, AlertTriangle } from "lucide-react";
 import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
@@ -176,6 +177,11 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   const showLeaveSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'leave_settings');
   const showQuotesSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'quotes_settings');
   const showKpiSettings = isNewUser ? (isAdmin || isSupervisor) : (canAccessProfileSection(currentUser || null, viewingStaff, 'kpi_settings') && !!setKpiSkills);
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [newSkillText, setNewSkillText] = React.useState("");
   const [newDeptIndicatorText, setNewDeptIndicatorText] = React.useState("");
   const [newOtherDeptIndicatorText, setNewOtherDeptIndicatorText] = React.useState("");
@@ -1427,9 +1433,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
         )}
 
       {/* Custom Confirmation Modal for Department / Data Entry Disable */}
-      {confirmModalConfig.isOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5">
+      {confirmModalConfig.isOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
             <div className="flex items-start gap-3.5">
               <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                 <AlertTriangle className="h-5 w-5" />
@@ -1463,7 +1469,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
