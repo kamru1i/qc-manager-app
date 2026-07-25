@@ -61,6 +61,9 @@ export const DEFAULT_VPN_LIST: string[] = [
 
 /** A time-boxed grant/revoke of a tab for a role. Ignored past expires_at. */
 export interface TempAccessEntry {
+  target_type?: 'role' | 'user';
+  user_id?: string;
+  user_codename?: string;
   role: string;
   tabKey: string;
   action: 'grant' | 'revoke';

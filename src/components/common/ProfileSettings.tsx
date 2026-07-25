@@ -106,9 +106,25 @@ export function ProfileSettings({
   // Temporary access controls (superadmin-only, time-boxed per-role overrides).
   const [tempAccess, setTempAccess] = useState<TempAccessEntry[]>([]);
   const [tempSubmitting, setTempSubmitting] = useState(false);
-  const [tempForm, setTempForm] = useState<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string; comment: string }>(
-    { role: 'user', tabKey: MENU_TABS[0]?.key || '', action: 'revoke', expires_at: '', comment: '' }
-  );
+  const [tempForm, setTempForm] = useState<{
+    target_type: 'role' | 'user';
+    user_id: string;
+    user_codename: string;
+    role: string;
+    tabKey: string;
+    action: 'grant' | 'revoke';
+    expires_at: string;
+    comment: string;
+  }>({
+    target_type: 'role',
+    user_id: '',
+    user_codename: '',
+    role: 'user',
+    tabKey: MENU_TABS[0]?.key || '',
+    action: 'revoke',
+    expires_at: '',
+    comment: '',
+  });
 
   // Setup submissions state
   const [submitting, setSubmitting] = useState(false);
@@ -769,6 +785,10 @@ export function ProfileSettings({
   };
 
   const handleAddTempAccess = () => {
+    if (tempForm.target_type === 'user' && !tempForm.user_id) {
+      toast.error('Select a specific user.');
+      return;
+    }
     if (!tempForm.expires_at) {
       toast.error('Pick an expiry date/time.');
       return;
@@ -777,17 +797,27 @@ export function ProfileSettings({
       toast.error('Expiry must be in the future.');
       return;
     }
-    // Drop any existing override for the same role+tab, plus expired entries.
     const now = Date.now();
-    const kept = tempAccess.filter(
-      (t) =>
-        !(t.role === tempForm.role && t.tabKey === tempForm.tabKey) &&
-        new Date(t.expires_at).getTime() > now
-    );
+    const kept = tempAccess.filter((t) => {
+      if (new Date(t.expires_at).getTime() <= now) return false;
+      if (tempForm.target_type === 'user') {
+        return !(t.target_type === 'user' && (t.user_id === tempForm.user_id || t.user_codename === tempForm.user_codename) && t.tabKey === tempForm.tabKey);
+      } else {
+        return !((!t.target_type || t.target_type === 'role') && t.role === tempForm.role && t.tabKey === tempForm.tabKey);
+      }
+    });
+
+    const targetUserObj = profilesList.find((p) => p.id === tempForm.user_id);
+    const targetUserRole = targetUserObj?.role || 'user';
+    const targetCodename = targetUserObj ? (targetUserObj.codename || targetUserObj.full_name || targetUserObj.username) : tempForm.user_codename;
+
     handleSaveTempAccess([
       ...kept,
       {
-        role: tempForm.role,
+        target_type: tempForm.target_type,
+        user_id: tempForm.target_type === 'user' ? tempForm.user_id : undefined,
+        user_codename: tempForm.target_type === 'user' ? targetCodename : undefined,
+        role: tempForm.target_type === 'user' ? targetUserRole : tempForm.role,
         tabKey: tempForm.tabKey,
         action: tempForm.action,
         expires_at: new Date(tempForm.expires_at).toISOString(),
@@ -1282,21 +1312,73 @@ export function ProfileSettings({
             </div>
 
             <div className="space-y-3">
-              {/* Line 1: Role, Tab, Action */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Role</label>
+              {/* Line 1: Target Type (Role vs User), Role/User Selector, Tab, Action */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div className="sm:col-span-3">
+                  <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Target Type</label>
                   <select
-                    value={tempForm.role}
-                    onChange={(e) => setTempForm((f) => ({ ...f, role: e.target.value }))}
-                    className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50"
+                    value={tempForm.target_type}
+                    onChange={(e) => {
+                      const val = e.target.value as 'role' | 'user';
+                      const defaultUser = profilesList[0];
+                      setTempForm((f) => ({
+                        ...f,
+                        target_type: val,
+                        user_id: val === 'user' && !f.user_id && defaultUser ? defaultUser.id : f.user_id,
+                        user_codename: val === 'user' && !f.user_codename && defaultUser ? (defaultUser.codename || defaultUser.full_name || defaultUser.username) : f.user_codename,
+                      }));
+                    }}
+                    className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50 font-semibold"
                   >
-                    {CONFIGURABLE_ROLES.map((r) => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
+                    <option value="role">By Role (Group)</option>
+                    <option value="user">Specific User (Codename)</option>
                   </select>
                 </div>
-                <div>
+
+                {tempForm.target_type === 'role' ? (
+                  <div className="sm:col-span-3">
+                    <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Role</label>
+                    <select
+                      value={tempForm.role}
+                      onChange={(e) => setTempForm((f) => ({ ...f, role: e.target.value }))}
+                      className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50"
+                    >
+                      {CONFIGURABLE_ROLES.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="sm:col-span-3">
+                    <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Select User (Codename)</label>
+                    <select
+                      value={tempForm.user_id}
+                      onChange={(e) => {
+                        const targetId = e.target.value;
+                        const u = profilesList.find((p) => p.id === targetId);
+                        setTempForm((f) => ({
+                          ...f,
+                          user_id: targetId,
+                          user_codename: u ? (u.codename || u.full_name || u.username) : '',
+                          role: u?.role || 'user',
+                        }));
+                      }}
+                      className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50"
+                    >
+                      <option value="">-- Choose User --</option>
+                      {profilesList.map((p) => {
+                        const label = p.codename || p.full_name || p.username;
+                        return (
+                          <option key={p.id} value={p.id}>
+                            [{label}] {p.full_name ? `${p.full_name} ` : ''}({p.role})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+
+                <div className="sm:col-span-3">
                   <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Tab / Feature</label>
                   <select
                     value={tempForm.tabKey}
@@ -1308,15 +1390,16 @@ export function ProfileSettings({
                     ))}
                   </select>
                 </div>
-                <div>
+
+                <div className="sm:col-span-3">
                   <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Action</label>
                   <select
                     value={tempForm.action}
                     onChange={(e) => setTempForm((f) => ({ ...f, action: e.target.value as 'grant' | 'revoke' }))}
-                    className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50"
+                    className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50 font-semibold"
                   >
-                    <option value="grant">Grant (Temporary Access)</option>
-                    <option value="revoke">Revoke (Temporary Block)</option>
+                    <option value="revoke">Revoke (Turn OFF / Block)</option>
+                    <option value="grant">Grant (Turn ON / Access)</option>
                   </select>
                 </div>
               </div>
@@ -1369,10 +1452,18 @@ export function ProfileSettings({
                     >
                       <span>
                         <strong className="capitalize">{entry.action}</strong> “{tabLabel}” for{' '}
-                        <strong className="capitalize">{entry.role}</strong> until{' '}
-                        {formatCustomDateTime(entry.expires_at)}
+                        {entry.target_type === 'user' ? (
+                          <span>
+                            user <strong className="text-blue-400 font-bold">[{entry.user_codename || 'User'}]</strong> ({entry.role})
+                          </span>
+                        ) : (
+                          <span>
+                            role <strong className="capitalize">{entry.role}</strong>
+                          </span>
+                        )}{' '}
+                        until {formatCustomDateTime(entry.expires_at)}
                         {entry.comment && (
-                          <span className="ml-2 font-medium text-blue-400">
+                          <span className="ml-2 font-medium text-amber-300">
                             — "{entry.comment}"
                           </span>
                         )}

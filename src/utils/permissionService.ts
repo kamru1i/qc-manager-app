@@ -91,7 +91,16 @@ export const canAdminManageFeatureFlag = (
 interface VisibilitySettings {
   feature_flags?: Record<string, boolean>;
   role_visibility?: Record<string, Record<string, boolean>>;
-  temp_access?: Array<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string; comment?: string }>;
+  temp_access?: Array<{
+    target_type?: 'role' | 'user';
+    user_id?: string;
+    user_codename?: string;
+    role: string;
+    tabKey: string;
+    action: 'grant' | 'revoke';
+    expires_at: string;
+    comment?: string;
+  }>;
 }
 
 /**
@@ -99,7 +108,7 @@ interface VisibilitySettings {
  *
  * Base: a tab is hidden for a role when role_visibility[role][tabKey] === false,
  * or when unset and default role permission is false (getDefaultRoleVisibility).
- * An active (non-expired) temp_access entry for the (role, tabKey) overrides the base:
+ * An active (non-expired) temp_access entry for the (role/user, tabKey) overrides the base:
  * 'revoke' forces hidden, 'grant' forces visible.
  */
 export const isTabVisibleForRole = (
@@ -126,14 +135,33 @@ export const isTabVisibleForRole = (
   }
 
   const now = Date.now();
-  const override = (globalSettings?.temp_access ?? []).find(
+  const tempEntries = globalSettings?.temp_access ?? [];
+
+  // 1st Priority: Specific Per-User temporary override (matches user.id or user.codename/username/full_name)
+  const userOverride = tempEntries.find(
     (t) =>
+      t.target_type === 'user' &&
+      (t.user_id === user.id ||
+        (t.user_codename &&
+          (t.user_codename === user.codename ||
+            t.user_codename === user.full_name ||
+            t.user_codename === user.username))) &&
+      t.tabKey === tabKey &&
+      t.expires_at &&
+      new Date(t.expires_at).getTime() > now
+  );
+  if (userOverride) return userOverride.action === 'grant';
+
+  // 2nd Priority: Per-Role temporary override (matches user.role)
+  const roleOverride = tempEntries.find(
+    (t) =>
+      (!t.target_type || t.target_type === 'role') &&
       t.role === user.role &&
       t.tabKey === tabKey &&
       t.expires_at &&
       new Date(t.expires_at).getTime() > now
   );
-  if (override) return override.action === 'grant';
+  if (roleOverride) return roleOverride.action === 'grant';
 
   return base;
 };
