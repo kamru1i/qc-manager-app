@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.10** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.11** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,13 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.10 — Patch Release (Left-Aligned Date Input Refinement) (Current)
+### 🚀 v6.4.11 — Patch Release (Live Database Schema Sync & Leaderboard RLS Fix) (Current)
+
+- **Live Database Schema Sync**: Consolidated all 28 SQL patch files into live Supabase PostgreSQL DB and regenerated `supabase/schema.sql` as the single source of truth.
+- **Leaderboard RLS Policy Deployment**: Deployed updated RLS policies allowing authenticated users to read leaderboard statistics across profiles and records.
+- **Top Performer Badge Sync Security**: Optimized `sync_top_performer_badges` function to prevent duplicate Realtime UPDATE broadcasts with targeted `IS DISTINCT FROM` guards.
+
+### 🚀 v6.4.10 — Patch Release (Left-Aligned Date Input Refinement)
 
 - **Left-Aligned Date Editor (`text-left`)**: Updated `submitted_date` inline text input alignment from `text-center` to `text-left px-1.5` in `RecordsTable.tsx`. Ensures that entering edit mode seamlessly maintains left text alignment matching the table's default date layout.
 
