@@ -11,7 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { RecordItem } from "@/types";
-import { formatDate, formatTimeToAMPM } from "@/utils/quotesDashboardHelpers";
+import { formatDate, formatDateToYYYYMMDD, formatTimeToAMPM, formatTimeToHHMM } from "@/utils/quotesDashboardHelpers";
 
 interface RecordsTableProps {
   records: RecordItem[];
@@ -63,7 +63,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
   >({});
   const [editingCell, setEditingCell] = useState<{
     id: string;
-    field: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_at";
+    field: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_date" | "submitted_time";
   } | null>(null);
   const [lastClick, setLastClick] = useState<{
     id: string;
@@ -87,9 +87,10 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
   const handleCellClick = (
     record: RecordItem,
-    field: "file_name" | "branch_name",
+    field: "file_name" | "branch_name" | "submitted_date" | "submitted_time",
     e: React.MouseEvent
   ) => {
+    if (field === "submitted_date" && !showDate) return;
     // Only allow editing if the user has permission to edit this record
     if (!isAdmin && record.user_id !== currentUserId) return;
     if (submitting || bulkSaving || savingRows[record.id]) return;
@@ -97,8 +98,14 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     const clickTime = e.timeStamp;
     if (lastClick && lastClick.id === record.id && lastClick.field === field) {
       const delay = clickTime - lastClick.time;
-      if (delay >= 300 && delay <= 1500) {
-        // Slow click twice (Premiere Pro style)
+      if (delay <= 1500) {
+        // Multi-click / Premiere Pro style double-click
+        const val = getCellValue(record, "submitted_at");
+        if (field === "submitted_date") {
+          setTempValue(formatDateToYYYYMMDD(val));
+        } else if (field === "submitted_time") {
+          setTempValue(formatTimeToHHMM(val));
+        }
         setEditingCell({ id: record.id, field });
         setLastClick(null);
         return;
@@ -109,7 +116,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
   const handleCellDoubleClick = (
     record: RecordItem,
-    field: "codename" | "file_type" | "submitted_at",
+    field: "codename" | "file_type",
   ) => {
     if (submitting || bulkSaving || savingRows[record.id]) return;
 
@@ -117,22 +124,11 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       // restricted to Admins only
       if (!isAdmin) return;
     } else {
-      // file_type and submitted_at are editable by the record owner or admin
+      // file_type is editable by the record owner or admin
       if (!isAdmin && record.user_id !== currentUserId) return;
     }
 
-    if (field === "submitted_at") {
-      const val = getCellValue(record, "submitted_at");
-      const d = new Date(val);
-      if (!isNaN(d.getTime())) {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        setTempValue(`${yyyy}-${mm}-${dd}`);
-      } else {
-        setTempValue("");
-      }
-    } else if (field === "codename") {
+    if (field === "codename") {
       setTempValue(getCellValue(record, "codename"));
     }
 
@@ -141,23 +137,43 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
   const handleCommitEdit = (
     id: string,
-    field: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_at",
+    field: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_date" | "submitted_time",
     value: string,
   ) => {
     let finalValue = value;
+    let targetField: "file_name" | "branch_name" | "codename" | "file_type" | "submitted_at" = field as any;
+
     if (field === "codename" || field === "branch_name") {
       finalValue = (value as string).toUpperCase().trim();
     } else if (field === "file_name") {
       finalValue = (value as string).trim();
       if (!finalValue) return; // Cannot be empty
-    } else if (field === "submitted_at") {
+    } else if (field === "submitted_date") {
       if (!value) return; // Date cannot be empty
       const originalRecord = records.find((r) => r.id === id);
-      const origTime = originalRecord ? new Date(originalRecord.submitted_at) : new Date();
+      const currentSubAt = originalRecord ? getCellValue(originalRecord, "submitted_at") : new Date().toISOString();
+      const d = new Date(currentSubAt);
+      const origTime = isNaN(d.getTime()) ? new Date() : d;
       const [yyyy, mm, dd] = value.split("-").map(Number);
       if (yyyy && mm && dd) {
         const newDate = new Date(origTime);
         newDate.setFullYear(yyyy, mm - 1, dd);
+        targetField = "submitted_at";
+        finalValue = newDate.toISOString();
+      } else {
+        return;
+      }
+    } else if (field === "submitted_time") {
+      if (!value) return; // Time cannot be empty
+      const originalRecord = records.find((r) => r.id === id);
+      const currentSubAt = originalRecord ? getCellValue(originalRecord, "submitted_at") : new Date().toISOString();
+      const d = new Date(currentSubAt);
+      const origDate = isNaN(d.getTime()) ? new Date() : d;
+      const [hours, minutes] = value.split(":").map(Number);
+      if (hours !== undefined && minutes !== undefined) {
+        const newDate = new Date(origDate);
+        newDate.setHours(hours, minutes, 0, 0);
+        targetField = "submitted_at";
         finalValue = newDate.toISOString();
       } else {
         return;
@@ -168,7 +184,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       const currentUpdates = prev[id] || {};
       const updated = {
         ...currentUpdates,
-        [field]: finalValue,
+        [targetField]: finalValue,
       };
 
       const originalRecord = records.find((r) => r.id === id);
@@ -296,11 +312,19 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     if (editingCell) {
       const record = records.find((r) => r.id === editingCell.id);
       if (record) {
-        const val = getCellValue(record, editingCell.field);
-        if (editingCell.field === "file_name") {
-          setTempValue((val as string).replace(/ \[(SOLD|UNSOLD)\]$/, ""));
+        if (editingCell.field === "submitted_date") {
+          const val = getCellValue(record, "submitted_at");
+          setTempValue(formatDateToYYYYMMDD(val));
+        } else if (editingCell.field === "submitted_time") {
+          const val = getCellValue(record, "submitted_at");
+          setTempValue(formatTimeToHHMM(val));
         } else {
-          setTempValue(val as string);
+          const val = getCellValue(record, editingCell.field);
+          if (editingCell.field === "file_name") {
+            setTempValue((val as string).replace(/ \[(SOLD|UNSOLD)\]$/, ""));
+          } else {
+            setTempValue(val as string);
+          }
         }
       }
     }
@@ -716,70 +740,113 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                       : ""
                   }`}
                 >
+                  {/* Date/Time Cell */}
                   <td
                     className={`px-4 py-1.5 ${showDate ? "w-36 min-w-36" : "w-32 min-w-32"}`}
                   >
-                    {editingCell &&
-                    editingCell.id === r.id &&
-                    editingCell.field === "submitted_at" ? (
-                      <input
-                        type="date"
-                        value={tempValue}
-                        onChange={(e) => setTempValue(e.target.value)}
-                        onBlur={() => {
-                          if (isCancelledRef.current) {
-                            isCancelledRef.current = false;
-                            return;
-                          }
-                          handleCommitEdit(r.id, "submitted_at", tempValue);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter")
-                            handleCommitEdit(r.id, "submitted_at", tempValue);
-                          if (e.key === "Escape") {
-                            isCancelledRef.current = true;
-                            setEditingCell(null);
-                          }
-                        }}
-                        autoFocus
-                        className="bg-theme-card-container border border-theme-border-active rounded px-1.5 py-0.5 text-theme-text-primary text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
-                      />
-                    ) : (
-                      <div
-                        onDoubleClick={() =>
-                          handleCellDoubleClick(r, "submitted_at")
-                        }
-                        className={`px-1.5 py-0.5 rounded border border-transparent transition-all ${
-                          isAdmin || r.user_id === currentUserId
-                            ? "cursor-pointer"
-                            : ""
-                        } ${
-                          editedRecords[r.id]?.submitted_at !== undefined
-                            ? "text-purple-400 border border-purple-500/25 bg-purple-500/5 font-semibold"
-                            : ""
-                        }`}
-                        title={
-                          isAdmin || r.user_id === currentUserId
-                            ? "Double-click to edit date"
-                            : ""
-                        }
-                      >
-                        {showDate ? (
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-theme-text-primary whitespace-nowrap">
-                              {formatDate(getCellValue(r, "submitted_at"))}
-                            </span>
-                            <span className="text-[10px] text-theme-text-muted mt-0.5">
-                              {formatTimeToAMPM(getCellValue(r, "submitted_at"))}
-                            </span>
-                          </div>
+                    <div
+                      className={`px-1.5 py-0.5 rounded border border-transparent transition-all flex flex-col justify-center ${
+                        editedRecords[r.id]?.submitted_at !== undefined
+                          ? "text-purple-400 border border-purple-500/25 bg-purple-500/5 font-semibold"
+                          : ""
+                      }`}
+                    >
+                      {/* Top Line: Date (Only shown in Monthly view) */}
+                      {showDate && (
+                        editingCell &&
+                        editingCell.id === r.id &&
+                        editingCell.field === "submitted_date" ? (
+                          <input
+                            type="date"
+                            value={tempValue}
+                            defaultValue={formatDateToYYYYMMDD(getCellValue(r, "submitted_at"))}
+                            onChange={(e) => setTempValue(e.target.value)}
+                            onBlur={() => {
+                              if (isCancelledRef.current) {
+                                isCancelledRef.current = false;
+                                return;
+                              }
+                              handleCommitEdit(r.id, "submitted_date", tempValue);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter")
+                                handleCommitEdit(r.id, "submitted_date", tempValue);
+                              if (e.key === "Escape") {
+                                isCancelledRef.current = true;
+                                setEditingCell(null);
+                              }
+                            }}
+                            autoFocus
+                            className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mb-0.5"
+                          />
                         ) : (
-                          <span className="text-xs text-theme-text-muted">
-                            {formatTimeToAMPM(getCellValue(r, "submitted_at"))}
+                          <span
+                            onClick={(e) =>
+                              handleCellClick(r, "submitted_date", e)
+                            }
+                            className={`font-semibold text-theme-text-primary whitespace-nowrap px-1 py-0.5 rounded transition-colors ${
+                              isAdmin || r.user_id === currentUserId
+                                ? "cursor-text hover:bg-theme-border/20"
+                                : ""
+                            }`}
+                            title={
+                              isAdmin || r.user_id === currentUserId
+                                ? "Slow click twice to edit date"
+                                : ""
+                            }
+                          >
+                            {formatDate(getCellValue(r, "submitted_at"))}
                           </span>
-                        )}
-                      </div>
-                    )}
+                        )
+                      )}
+
+                      {/* Bottom Line: Time */}
+                      {editingCell &&
+                      editingCell.id === r.id &&
+                      editingCell.field === "submitted_time" ? (
+                        <input
+                          type="time"
+                          value={tempValue}
+                          defaultValue={formatTimeToHHMM(getCellValue(r, "submitted_at"))}
+                          onChange={(e) => setTempValue(e.target.value)}
+                          onBlur={() => {
+                            if (isCancelledRef.current) {
+                              isCancelledRef.current = false;
+                              return;
+                            }
+                            handleCommitEdit(r.id, "submitted_time", tempValue);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter")
+                              handleCommitEdit(r.id, "submitted_time", tempValue);
+                            if (e.key === "Escape") {
+                              isCancelledRef.current = true;
+                              setEditingCell(null);
+                            }
+                          }}
+                          autoFocus
+                          className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-[11px] w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mt-0.5"
+                        />
+                      ) : (
+                        <span
+                          onClick={(e) =>
+                            handleCellClick(r, "submitted_time", e)
+                          }
+                          className={`text-[10px] text-theme-text-muted px-1 py-0.5 rounded transition-colors whitespace-nowrap ${
+                            isAdmin || r.user_id === currentUserId
+                              ? "cursor-text hover:bg-theme-border/20"
+                              : ""
+                          }`}
+                          title={
+                            isAdmin || r.user_id === currentUserId
+                              ? "Slow click twice to edit time"
+                              : ""
+                          }
+                        >
+                          {formatTimeToAMPM(getCellValue(r, "submitted_at"))}
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* File Name Cell */}
@@ -894,7 +961,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         onClick={(e) => handleCellClick(r, "branch_name", e)}
                         className={`px-2 py-1 rounded border border-transparent transition-all mx-auto w-fit ${
                           isAdmin || r.user_id === currentUserId
-                            ? "cursor-pointer"
+                            ? "cursor-text"
                             : ""
                         } ${
                           editedRecords[r.id]?.branch_name !== undefined
@@ -1021,7 +1088,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         }
                         className={`px-2 py-0.5 rounded border border-transparent transition-all mx-auto w-fit ${
                           isAdmin || r.user_id === currentUserId
-                            ? "cursor-pointer"
+                            ? "cursor-text"
                             : ""
                         }`}
                         title={

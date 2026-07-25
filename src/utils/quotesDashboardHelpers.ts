@@ -16,6 +16,41 @@ export const formatDate = (dateStr: string | null | undefined): string => {
   }
 };
 
+// Helper function to convert any date string format (ISO, DD-MM-YYYY, YYYY-MM-DD) into YYYY-MM-DD for HTML date inputs
+export const formatDateToYYYYMMDD = (val: string | null | undefined): string => {
+  if (!val) return '';
+  const str = String(val).trim();
+  if (!str) return '';
+
+  // Match DD-MM-YYYY or DD/MM/YYYY
+  const ddmmyyyyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (ddmmyyyyMatch) {
+    const [, day, month, year] = ddmmyyyyMatch;
+    const mm = month.padStart(2, '0');
+    const dd = day.padStart(2, '0');
+    return `${year}-${mm}-${dd}`;
+  }
+
+  // Match YYYY-MM-DD
+  const yyyymmddMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (yyyymmddMatch) {
+    const [, year, month, day] = yyyymmddMatch;
+    const mm = month.padStart(2, '0');
+    const dd = day.padStart(2, '0');
+    return `${year}-${mm}-${dd}`;
+  }
+
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return '';
+};
+
 // Helper function to format ISO timestamp to 12-hour AM/PM format (e.g. 03:04 PM)
 export const formatTimeToAMPM = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '-';
@@ -30,6 +65,33 @@ export const formatTimeToAMPM = (dateStr: string | null | undefined): string => 
   } catch {
     return dateStr;
   }
+};
+
+// Helper function to format timestamp/time string to 24-hour HH:MM format for HTML time inputs
+export const formatTimeToHHMM = (val: string | null | undefined): string => {
+  if (!val) return '12:00';
+  const str = String(val).trim();
+  if (!str) return '12:00';
+
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+
+  const ampmMatch = str.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);
+  if (ampmMatch) {
+    let hours = Number(ampmMatch[1]);
+    const minutes = ampmMatch[2];
+    const meridiem = ampmMatch[3].toUpperCase();
+    if (meridiem === 'PM' && hours !== 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    const hh = String(hours).padStart(2, '0');
+    return `${hh}:${minutes}`;
+  }
+
+  return '12:00';
 };
 
 // Calculate counts of files of each type

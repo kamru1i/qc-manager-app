@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.5** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.8** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,23 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.5 — Patch Release (Quotes Tracker Inline Date Editing & Bulk Save) (Current)
+### 🚀 v6.4.8 — Patch Release (Independent Date & Time Line Inline Editing) (Current)
+
+- **Independent Date & Time Line Inline Editing**: Split the Date/Time cell in `RecordsTable.tsx` into two independent line targets (`submitted_date` and `submitted_time`).
+- **Date Line Interaction**: Clicking/multi-clicking the top Date line (e.g. `25-07-2026`) opens `<input type="date">` pre-filled with the exact date (`YYYY-MM-DD`), leaving the bottom Time line visible.
+- **Time Line Interaction**: Clicking/multi-clicking the bottom Time line (e.g. `05:38 PM`) opens `<input type="time">` pre-filled with the exact 24-hour time (`HH:MM`), leaving the top Date line visible.
+
+### 🚀 v6.4.7 — Patch Release (Universal Date Pre-fill Parsing Fix for HTML Date Inputs)
+
+- **Universal Date Pre-fill Parser (`formatDateToYYYYMMDD`)**: Implemented a multi-pattern date parser in `quotesDashboardHelpers.ts` handling ISO strings, `DD-MM-YYYY`, `DD/MM/YYYY`, and standard dates. Guarantees that opening the inline date editor in the Monthly list pre-selects the record's current saved date (e.g. `2026-07-25`) without falling back to empty `mm/dd/yyyy` placeholders.
+
+### 🚀 v6.4.6 — Patch Release (Monthly List Date Editing, Default Date Selection & Editable Cursor Refinements)
+
+- **Monthly List Scope & Slow-Click Support**: Confined date inline editing strictly to the **Monthly Entry** view (disabled on Daily tab where date column is unnecessary) using the unified multi-click / slow-click twice interaction model.
+- **Default Selected Date & Pre-fill**: Opening the inline date picker automatically pre-fills and selects the record's current saved date value (`tempValue` set to `YYYY-MM-DD`).
+- **Editable Text Cursor (`cursor-text`)**: Updated table cell styling across all editable fields (`file_name`, `branch_name`, `codename`, `file_type`, `submitted_at`) to display `cursor-text` instead of hand pointer (`cursor-pointer`) on mouse hover.
+
+### 🚀 v6.4.5 — Patch Release (Quotes Tracker Inline Date Editing & Bulk Save)
 
 - **Quotes Tracker Inline Date Editing**: Enabled double-click inline date editing for the Date/Time column in both **Daily Entry** and **Monthly Entry** tables.
 - **Bulk Save & Visual Highlights**: Editing a date opens an inline `<input type="date">` editor that preserves submission time while updating the date part. Modified dates highlight with a purple unsaved badge and commit seamlessly alongside file name, branch, codename, and file type changes during single or bulk save operations.

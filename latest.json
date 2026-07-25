@@ -1,7 +1,7 @@
 {
-  "version": "6.4.5",
-  "notes": "### 🚀 v6.4.5 — Patch Release (Quotes Tracker Inline Date Editing & Bulk Save) (Current)\n\n- **Quotes Tracker Inline Date Editing**: Enabled double-click inline date editing for the Date/Time column in both **Daily Entry** and **Monthly Entry** tables.\n- **Bulk Save & Visual Highlights**: Editing a date opens an inline `<input type=\"date\">` editor that preserves submission time while updating the date part. Modified dates highlight with a purple unsaved badge and commit seamlessly alongside file name, branch, codename, and file type changes during single or bulk save operations.",
-  "pub_date": "2026-07-25T11:44:30.200Z",
+  "version": "6.4.8",
+  "notes": "### 🚀 v6.4.8 — Patch Release (Independent Date & Time Line Inline Editing) (Current)\n\n- **Independent Date & Time Line Inline Editing**: Split the Date/Time cell in `RecordsTable.tsx` into two independent line targets (`submitted_date` and `submitted_time`).\n- **Date Line Interaction**: Clicking/multi-clicking the top Date line (e.g. `25-07-2026`) opens `<input type=\"date\">` pre-filled with the exact date (`YYYY-MM-DD`), leaving the bottom Time line visible.\n- **Time Line Interaction**: Clicking/multi-clicking the bottom Time line (e.g. `05:38 PM`) opens `<input type=\"time\">` pre-filled with the exact 24-hour time (`HH:MM`), leaving the top Date line visible.",
+  "pub_date": "2026-07-25T11:51:38.188Z",
   "releaseDate": "July 25, 2026",
   "platforms": {},
   "checksums": {},
