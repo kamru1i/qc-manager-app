@@ -42,7 +42,7 @@ import { UserKpiPerformancePanel } from '@/components/common/user-management/Use
 import { AddLeave } from '@/components/leave-tracker/AddLeave';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
-import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
+import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending } from '@/utils/dashboardHelpers';
 import { PROFILE_COLUMNS, CHUTI_COLUMNS, LEAVE_SETTLEMENT_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS } from '@/utils/dbColumns';
 
 interface UserManagementDashboardProps {
@@ -370,7 +370,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       if (sRes.error) throw sRes.error;
       if (hrRes.error) throw hrRes.error;
 
-      setViewingStaffRecords((chutiRes.data || []) as unknown as ChutiRecord[]);
+      setViewingStaffRecords(sortChutiRecordsDescending((chutiRes.data || []) as unknown as ChutiRecord[]));
       setViewingStaffSettlements((sRes.data || []) as unknown as LeaveSettlement[]);
       setViewingStaffHolidayResponses((hrRes.data || []) as unknown as GovtHolidayResponse[]);
       // NOTE: admin global_settings are loaded once via a dedicated effect below,
@@ -1088,10 +1088,10 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                         if (newRecords && Array.isArray(newRecords) && newRecords.length > 0) {
                           if (editingLeaveRecord) {
                             // Update existing record in list
-                            setViewingStaffRecords(prev => prev.map(r => r.id === editingLeaveRecord.id ? { ...r, ...newRecords[0] } : r));
+                            setViewingStaffRecords(prev => sortChutiRecordsDescending(prev.map(r => r.id === editingLeaveRecord.id ? { ...r, ...newRecords[0] } : r)));
                           } else {
-                            // Prepend new records
-                            setViewingStaffRecords(prev => [...newRecords, ...prev]);
+                            // Prepend new records & sort descending
+                            setViewingStaffRecords(prev => sortChutiRecordsDescending([...newRecords, ...prev]));
                           }
                         }
                         setShowAddLeaveForStaff(false);

@@ -8,7 +8,7 @@ import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse }
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 
-import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, parseHolidayItem } from '@/utils/dashboardHelpers';
+import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, parseHolidayItem, sortChutiRecordsDescending } from '@/utils/dashboardHelpers';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { CHUTI_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS, LEAVE_SETTLEMENT_COLUMNS } from '@/utils/dbColumns';
@@ -144,11 +144,11 @@ export const useDashboardData = () => {
         const finalChuti = [...pendingInserts, ...mergedChuti];
 
         if (isAdminRole(profile) || profile.role === 'supervisor') {
-          setAdminRecords(finalChuti as ChutiRecordWithProfile[]);
+          setAdminRecords(sortChutiRecordsDescending(finalChuti as ChutiRecordWithProfile[]));
         }
 
         const loggedInUserChuti = finalChuti.filter(r => r.user_id === sessionUser.id);
-        setUserRecords(loggedInUserChuti);
+        setUserRecords(sortChutiRecordsDescending(loggedInUserChuti));
 
         // Load holiday responses cache
         const cachedResponses = await getCacheData('holiday_responses_cache');
@@ -332,13 +332,13 @@ export const useDashboardData = () => {
               mergedMap.set(r.id, r);
             }
           });
-          const mergedUserRecords = Array.from(mergedMap.values());
+          const mergedUserRecords = sortChutiRecordsDescending(Array.from(mergedMap.values()));
           setUserRecords(mergedUserRecords);
           userRecordsData = mergedUserRecords;
 
           if (deletedIds.size > 0) await removeCacheItems('chuti_cache', Array.from(deletedIds));
         } else if (!error) {
-          const cachedUserChuti = (await getCacheData('chuti_cache')).filter(r => r.user_id === sessionUser.id);
+          const cachedUserChuti = sortChutiRecordsDescending((await getCacheData('chuti_cache')).filter(r => r.user_id === sessionUser.id));
           if (cachedUserChuti.length > 0) {
             setUserRecords(cachedUserChuti);
             userRecordsData = cachedUserChuti;
@@ -351,7 +351,7 @@ export const useDashboardData = () => {
             .eq('user_id', sessionUser.id)
             .is('deleted_at', null)
             .order('date', { ascending: false });
-          const records = recordsRaw as unknown as ChutiRecord[] | null;
+          const records = sortChutiRecordsDescending((recordsRaw as unknown as ChutiRecord[] | null) || []);
           if (!fullErr && records) {
             setUserRecords(records);
             userRecordsData = records;
@@ -364,7 +364,7 @@ export const useDashboardData = () => {
           .eq('user_id', sessionUser.id)
           .is('deleted_at', null)
           .order('date', { ascending: false });
-        const records = recordsRaw as unknown as ChutiRecord[] | null;
+        const records = sortChutiRecordsDescending((recordsRaw as unknown as ChutiRecord[] | null) || []);
 
         if (!error && records) {
           setUserRecords(records);

@@ -7,6 +7,7 @@ import { FilterPanel } from '@/components/leave-tracker/FilterPanel';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
+import { sortChutiRecordsDescending } from '@/utils/dashboardHelpers';
 
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 
@@ -125,13 +126,14 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   ];
 
   const filteredRecords = React.useMemo(() => {
-    return records.filter((r) => {
+    const filtered = records.filter((r) => {
       if (!searchTerm.trim()) return true;
       const term = searchTerm.toLowerCase();
       const commentMatch = (r.comment || '').toLowerCase().includes(term);
       const typeMatch = (r.leave_type || '').toLowerCase().includes(term);
       return commentMatch || typeMatch;
     });
+    return sortChutiRecordsDescending(filtered);
   }, [records, searchTerm]);
 
   const showActionColumn = isSelectionMode && !hideDelete;

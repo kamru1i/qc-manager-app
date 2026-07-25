@@ -9,7 +9,8 @@ import {
   calculateStats,
   GlobalSettings,
   formatDuration,
-  parseIntervalToMinutes
+  parseIntervalToMinutes,
+  sortChutiRecordsDescending
 } from '@/utils/dashboardHelpers';
 
 interface UserLeaveHistoryPanelProps {
@@ -85,7 +86,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
 
   // Filtered records for Leave History list
   const filteredStaffRecords = React.useMemo(() => {
-    return viewingStaffRecords.filter(r => {
+    const filtered = viewingStaffRecords.filter(r => {
       const isApproved = r.status === 'approved';
       if (isApproved && selectedYear !== 'all' && r.date && r.date.substring(0, 4) !== selectedYear) return false;
       if (leaveFilterType !== 'all') {
@@ -102,6 +103,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
       }
       return true;
     });
+
+    return sortChutiRecordsDescending(filtered);
   }, [viewingStaffRecords, selectedYear, leaveFilterType, leaveFilterStartDate, leaveFilterEndDate, leaveSearchQuery]);
 
   if (loadingLeaveData && viewingStaffRecords.length === 0) {

@@ -930,3 +930,52 @@ export const applyBreakComment = (
   return cleaned;
 };
 
+/**
+ * Safely parses any date string (YYYY-MM-DD, ISO string, or DD-MM-YYYY) into milliseconds timestamp.
+ */
+export const parseDateToMs = (dateStr: string | null | undefined): number => {
+  if (!dateStr) return 0;
+  const str = String(dateStr).trim();
+  if (!str) return 0;
+
+  // 1. Check DD-MM-YYYY or DD/MM/YYYY format
+  const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    const year = dmyMatch[3];
+    const ms = new Date(`${year}-${month}-${day}T00:00:00`).getTime();
+    if (!isNaN(ms)) return ms;
+  }
+
+  // 2. Standard ISO / YYYY-MM-DD format
+  const ISO_STR = str.includes('T') ? str : `${str}T00:00:00`;
+  const ms = new Date(ISO_STR).getTime();
+  if (!isNaN(ms)) return ms;
+
+  // Fallback: standard Date.parse
+  const fallback = Date.parse(str);
+  return isNaN(fallback) ? 0 : fallback;
+};
+
+/**
+ * Sorts an array of leave records in descending order (latest date first).
+ * If dates are identical, falls back to created_at / submitted_at / timestamp descending (newest submission first).
+ */
+export function sortChutiRecordsDescending<T extends { date?: string | null; created_at?: string | null; submitted_at?: string | null; timestamp?: string | null }>(records: T[]): T[] {
+  if (!records || !Array.isArray(records)) return [];
+  return [...records].sort((a, b) => {
+    const dateA = parseDateToMs(a.date);
+    const dateB = parseDateToMs(b.date);
+
+    if (dateB !== dateA) {
+      return dateB - dateA; // Latest date first
+    }
+
+    // Secondary sort by created_at / submitted_at / timestamp
+    const timeA = parseDateToMs(a.created_at || a.submitted_at || a.timestamp);
+    const timeB = parseDateToMs(b.created_at || b.submitted_at || b.timestamp);
+    return timeB - timeA;
+  });
+}
+

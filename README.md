@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.3** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.4** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,11 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.3 — Patch Release (Office Leave Split/Merged Memory, KPI Department & Supervisor Columns Fixes) (Current)
+### 🚀 v6.4.4 — Patch Release (Strict Chronological Leave History Sorting Fix) (Current)
+
+- **Strict Chronological Date Sorting (`sortChutiRecordsDescending`)**: Introduced a robust date parsing and sorting comparator across `LeavesRecordsTable`, `UserLeaveHistoryPanel`, `UserManagementDashboard`, and `useDashboardData`. Guarantees that leave history records (in both Leave Tracker and User Profile Leave History views) are strictly ordered with the latest date at the top (date descending, and created/submitted timestamp descending for ties), eliminating random shuffling when adding or updating leave entries.
+
+### 🚀 v6.4.3 — Patch Release (Office Leave Split/Merged Memory, KPI Department & Supervisor Columns Fixes)
 
 - **Office Allocated Leaves Split/Merged Mode**: Synchronized leave quota calculations across Merged and Split modes, ensuring zero values (e.g. H1=0) and old split placements are accurately remembered without state loss or initial reload flicker.
 - **Conditional Supervisor Column**: Dynamically hides the Supervisor column from screen table, PDF exports, and Excel downloads for users with disabled supervisor approval feature (`needs_supervisor_approval === false`).
