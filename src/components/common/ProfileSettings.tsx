@@ -809,14 +809,19 @@ export function ProfileSettings({
 
     const targetUserObj = profilesList.find((p) => p.id === tempForm.user_id);
     const targetUserRole = targetUserObj?.role || 'user';
-    const targetCodename = targetUserObj ? (targetUserObj.codename || targetUserObj.full_name || targetUserObj.username) : tempForm.user_codename;
+    const targetCodename = targetUserObj
+      ? (targetUserObj.codename || targetUserObj.username || 'User')
+      : tempForm.user_codename;
+    const displayUserLabel = targetUserObj?.full_name
+      ? `${targetCodename} (${targetUserObj.full_name})`
+      : targetCodename;
 
     handleSaveTempAccess([
       ...kept,
       {
         target_type: tempForm.target_type,
         user_id: tempForm.target_type === 'user' ? tempForm.user_id : undefined,
-        user_codename: tempForm.target_type === 'user' ? targetCodename : undefined,
+        user_codename: tempForm.target_type === 'user' ? displayUserLabel : undefined,
         role: tempForm.target_type === 'user' ? targetUserRole : tempForm.role,
         tabKey: tempForm.tabKey,
         action: tempForm.action,
@@ -1367,10 +1372,11 @@ export function ProfileSettings({
                     >
                       <option value="">-- Choose User --</option>
                       {profilesList.map((p) => {
-                        const label = p.codename || p.full_name || p.username;
+                        const codename = p.codename || p.username || 'User';
+                        const label = p.full_name ? `${codename} (${p.full_name})` : codename;
                         return (
                           <option key={p.id} value={p.id}>
-                            [{label}] {p.full_name ? `${p.full_name} ` : ''}({p.role})
+                            {label}
                           </option>
                         );
                       })}
@@ -1454,7 +1460,7 @@ export function ProfileSettings({
                         <strong className="capitalize">{entry.action}</strong> “{tabLabel}” for{' '}
                         {entry.target_type === 'user' ? (
                           <span>
-                            user <strong className="text-blue-400 font-bold">[{entry.user_codename || 'User'}]</strong> ({entry.role})
+                            user <strong className="text-blue-400 font-bold">{entry.user_codename || 'User'}</strong>
                           </span>
                         ) : (
                           <span>
