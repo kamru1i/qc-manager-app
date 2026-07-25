@@ -246,12 +246,12 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
             {/* Multiline Raw Input */}
             <textarea
-              rows={4}
+              rows={6}
               value={rawText}
               disabled={isSubmitting}
               onChange={(e) => setRawText(e.target.value)}
               placeholder={`Paste multiple lines here. Example:\nAli Gull BI Requote\nBenjamin Harris-price Swan drive\nJalal Udin Ahmadzai BC requote\nMuhammad Akif Jacaria Abdulgani Sort\nRaminder SINGH ADI`}
-              className="block w-full p-3 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-mono transition-all disabled:opacity-50"
+              className="block w-full min-h-[140px] p-3 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-mono transition-all disabled:opacity-50"
             />
 
             <div className="flex justify-end gap-2">
@@ -371,7 +371,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                             ...(allowedTypes.length > 0
                               ? allowedTypes
                               : ALL_10_FILE_TYPES),
-                          ])
+                          ]),
                         ).map((t: string) => (
                           <option key={t} value={t}>
                             {t}
@@ -443,7 +443,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
-                  Submit All ({items.length})
+                  Submit ({items.length})
                 </>
               )}
             </button>
