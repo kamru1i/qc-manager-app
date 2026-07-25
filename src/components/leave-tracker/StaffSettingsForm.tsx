@@ -941,34 +941,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
                     if (dept === "Data Entry") {
                       if (setPerformsDataEntry) setPerformsDataEntry(true);
-                      if (setKpiDeptIndicators) setKpiDeptIndicators([]);
                     } else {
                       if (setPerformsDataEntry) setPerformsDataEntry(false);
-                      if (setKpiDeptIndicators) {
-                        if (dept === "IT") {
-                          setKpiDeptIndicators([
-                            "Server Maintenance & Security",
-                            "Technical Support & Troubleshooting",
-                            "Software & System Updates",
-                            "Database & Backup Management"
-                          ]);
-                        } else if (dept === "Accounts") {
-                          setKpiDeptIndicators([
-                            "Financial Reporting & Billing",
-                            "Expense & Invoice Processing",
-                            "Audit Compliance & Accounts Reconciliation"
-                          ]);
-                        } else if (dept === "HR") {
-                          setKpiDeptIndicators([
-                            "Employee Recruitment & Onboarding",
-                            "Payroll Processing",
-                            "Leave & Attendance Tracking",
-                            "Policy Enforcement & Conflict Resolution"
-                          ]);
-                        } else {
-                          setKpiDeptIndicators(["Task Efficiency", "Team Collaboration"]);
-                        }
-                      }
                     }
                   }}
                   className="w-full bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-55"
