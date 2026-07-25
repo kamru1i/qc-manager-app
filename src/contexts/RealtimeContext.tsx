@@ -109,14 +109,14 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
       let stale = false;
       const channel = supabase
         .channel(`realtime-unified-${sessionUser.id}`)
-        // ── chuti ──
+        // ── chuti (always user-scoped to prevent approver broadcast fanout) ──
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'chuti',
-            ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
+            filter: `user_id=eq.${sessionUser.id}`,
           },
           (payload) => dispatch('chuti', payload as unknown as RealtimePayload)
         )

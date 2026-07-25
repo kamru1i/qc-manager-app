@@ -164,7 +164,8 @@ BEGIN
     -- ইউজারের প্রোফাইলে ব্যাজ সেট করা
     UPDATE public.profiles
     SET global_settings = COALESCE(global_settings, '{}'::JSONB) || JSONB_BUILD_OBJECT('top_performer_badge', v_badge_json)
-    WHERE id = r_user.user_id;
+    WHERE id = r_user.user_id
+      AND (global_settings->'top_performer_badge') IS DISTINCT FROM v_badge_json;
   END LOOP;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
