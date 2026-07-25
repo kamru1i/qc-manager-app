@@ -453,7 +453,7 @@ export const useDashboardData = () => {
 
         // Store current globalSettings to cache if they are derived
         // E1 fix: All roles read global settings from the admin profile
-        const adminForCache = profilesData.find(p => isAdminRole(p)) || profile;
+        const adminForCache = profilesData.find(p => p.role === 'superadmin' && p.global_settings) || profilesData.find(p => isAdminRole(p)) || profile;
         const currentGlobalSettings = getGlobalSettingsFromProfile(adminForCache);
         await setGlobalSettingsCache(currentGlobalSettings);
 
@@ -795,9 +795,11 @@ export const useDashboardData = () => {
 
   useEffect(() => {
     if (profile) {
-      // Find the first admin profile in profilesList with custom settings, or fall back to the first admin profile
-      const adminProfile = profilesList.find(p => p.role === 'admin' && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings))
-        || profilesList.find(p => p.role === 'admin');
+      // Find the superadmin or admin profile in profilesList with custom settings, or fall back to the first superadmin/admin profile
+      const adminProfile = profilesList.find(p => p.role === 'superadmin' && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings))
+        || profilesList.find(p => isAdminRole(p) && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings))
+        || profilesList.find(p => p.role === 'superadmin')
+        || profilesList.find(p => isAdminRole(p));
 
       // E1 fix: ALL roles derive global settings from the admin profile.
       // Non-admin users no longer have global_settings written to their own row,

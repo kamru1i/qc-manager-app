@@ -477,8 +477,11 @@ export function useGlobalNotifications(
   const globalSettings = useMemo(() => {
     if (!profile) return defaultGlobalSettings;
     const adminProfile = profilesList.find(
+      p => p.role === 'superadmin' && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings)
+    ) || profilesList.find(
       p => isAdminRole(p) && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings)
-    ) || profilesList.find(p => isAdminRole(p));
+    ) || profilesList.find(p => p.role === 'superadmin')
+      || profilesList.find(p => isAdminRole(p));
 
     if (adminProfile) {
       return getGlobalSettingsFromProfile(adminProfile);
