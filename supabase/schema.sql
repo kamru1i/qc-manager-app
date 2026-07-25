@@ -1,6 +1,6 @@
 -- PostgreSQL database dump
 
--- \restrict 40UHw8msuIsaRNe2h9ftx1l1z1auTo71gsVQSGonca7QvqyQpsBmIALa1ByWKx9
+-- \restrict PCFGcg4kFACKhe1AHT0vxVTsledSgvF3PD1fWXpQlu4qxlK9PAys54vdZWSuoiU
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.4
@@ -2020,11 +2020,6 @@ CREATE POLICY "Admins can update/delete responses" ON "public"."govt_holiday_res
 CREATE POLICY "Admins/supervisors can manage settlements" ON "public"."leave_settlements" USING (("public"."is_admin"() OR "public"."is_supervisor"())) WITH CHECK (("public"."is_admin"() OR "public"."is_supervisor"()));
 
 
--- Name: profiles Allow admin to read all profiles; Type: POLICY; Schema: public; Owner: postgres
-
-CREATE POLICY "Allow admin to read all profiles" ON "public"."profiles" FOR SELECT USING ("public"."is_admin"());
-
-
 -- Name: chuti Allow admin/supervisor to read all chuti; Type: POLICY; Schema: public; Owner: postgres
 
 CREATE POLICY "Allow admin/supervisor to read all chuti" ON "public"."chuti" FOR SELECT USING ("public"."is_admin_or_supervisor"());
@@ -2110,9 +2105,14 @@ CREATE POLICY "Allow authenticated to read login codes" ON "public"."login_codes
 CREATE POLICY "Allow authenticated users to insert audit logs" ON "public"."audit_logs" FOR INSERT TO "authenticated" WITH CHECK (("actor_id" = "auth"."uid"()));
 
 
--- Name: profiles Allow authenticated users to read supervisor profiles; Type: POLICY; Schema: public; Owner: postgres
+-- Name: profiles Allow authenticated users to read all profiles; Type: POLICY; Schema: public; Owner: postgres
 
-CREATE POLICY "Allow authenticated users to read supervisor profiles" ON "public"."profiles" FOR SELECT TO "authenticated" USING (("role" = 'supervisor'::"text"));
+CREATE POLICY "Allow authenticated users to read all profiles" ON "public"."profiles" FOR SELECT TO "authenticated" USING (true);
+
+
+-- Name: records Allow authenticated users to read all records; Type: POLICY; Schema: public; Owner: postgres
+
+CREATE POLICY "Allow authenticated users to read all records" ON "public"."records" FOR SELECT TO "authenticated" USING (true);
 
 
 -- Name: kpi_assessments Allow insert/update/delete for owner, admin, or assigned superv; Type: POLICY; Schema: public; Owner: postgres
@@ -2128,11 +2128,6 @@ CREATE POLICY "Allow public read access to mobile_app_versions" ON "public"."mob
 -- Name: kpi_assessments Allow select for owner, admin, or assigned supervisor; Type: POLICY; Schema: public; Owner: postgres
 
 CREATE POLICY "Allow select for owner, admin, or assigned supervisor" ON "public"."kpi_assessments" FOR SELECT TO "authenticated" USING ((("auth"."uid"() = "user_id") OR "public"."is_admin"() OR ("public"."is_supervisor"() AND "public"."has_kpi_access"("auth"."uid"(), "user_id"))));
-
-
--- Name: profiles Allow supervisor to read all profiles; Type: POLICY; Schema: public; Owner: postgres
-
-CREATE POLICY "Allow supervisor to read all profiles" ON "public"."profiles" FOR SELECT USING ("public"."is_supervisor"());
 
 
 -- Name: chuti Allow supervisors to delete chuti; Type: POLICY; Schema: public; Owner: postgres
@@ -2190,11 +2185,6 @@ CREATE POLICY "Allow users to insert their own chuti" ON "public"."chuti" FOR IN
 CREATE POLICY "Allow users to insert their own profile" ON "public"."profiles" FOR INSERT WITH CHECK ((("auth"."uid"() = "id") AND ("role" = 'user'::"text")));
 
 
--- Name: records Allow users to read own records, admins/supervisors read all; Type: POLICY; Schema: public; Owner: postgres
-
-CREATE POLICY "Allow users to read own records, admins/supervisors read all" ON "public"."records" FOR SELECT TO "authenticated" USING ((("auth"."uid"() = "user_id") OR "public"."is_admin"() OR "public"."is_supervisor"()));
-
-
 -- Name: todos Allow users to read own todos; Type: POLICY; Schema: public; Owner: postgres
 
 CREATE POLICY "Allow users to read own todos" ON "public"."todos" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
@@ -2203,11 +2193,6 @@ CREATE POLICY "Allow users to read own todos" ON "public"."todos" FOR SELECT TO 
 -- Name: chuti Allow users to read their own chuti; Type: POLICY; Schema: public; Owner: postgres
 
 CREATE POLICY "Allow users to read their own chuti" ON "public"."chuti" FOR SELECT USING (("auth"."uid"() = "user_id"));
-
-
--- Name: profiles Allow users to read their own profile; Type: POLICY; Schema: public; Owner: postgres
-
-CREATE POLICY "Allow users to read their own profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
 
 
 -- Name: records Allow users to update own records, admins/supervisors update al; Type: POLICY; Schema: public; Owner: postgres
@@ -2740,5 +2725,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "supabase_admin" IN SCHEMA "public" GRANT ALL 
 
 -- PostgreSQL database dump complete
 
--- \unrestrict 40UHw8msuIsaRNe2h9ftx1l1z1auTo71gsVQSGonca7QvqyQpsBmIALa1ByWKx9
+-- \unrestrict PCFGcg4kFACKhe1AHT0vxVTsledSgvF3PD1fWXpQlu4qxlK9PAys54vdZWSuoiU
 
