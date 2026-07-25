@@ -91,7 +91,7 @@ export const canAdminManageFeatureFlag = (
 interface VisibilitySettings {
   feature_flags?: Record<string, boolean>;
   role_visibility?: Record<string, Record<string, boolean>>;
-  temp_access?: Array<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string }>;
+  temp_access?: Array<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string; comment?: string }>;
 }
 
 /**

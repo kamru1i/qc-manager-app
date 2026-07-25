@@ -7,9 +7,32 @@ import { isSuperadmin, isAdminRole, isTabVisibleForRole, canAdminManageFeatureFl
 import { ProfileFields } from '@/components/leave-tracker/ProfileFields';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
+import { DateTimeInput } from '@/components/common/DateTimeInput';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
 import { TempAccessEntry, DEFAULT_VPN_LIST } from '@/utils/dashboardHelpers';
-import { MENU_TABS, CONFIGURABLE_ROLES, getDefaultRoleVisibility } from '@/utils/menuTabsRegistry';
+import {
+  MENU_TABS,
+  getDefaultRoleVisibility,
+  CONFIGURABLE_ROLES,
+} from '@/utils/menuTabsRegistry';
+
+function formatCustomDateTime(dateInput: string | Date): string {
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return String(dateInput);
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+
+  return `${day}-${month}-${year}, ${strHours}:${minutes} ${ampm}`;
+}
 import { FEATURE_FLAGS, getDefaultFeatureFlagState, FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
 import { useProfiles } from '@/contexts/ProfilesContext';
 
@@ -83,8 +106,8 @@ export function ProfileSettings({
   // Temporary access controls (superadmin-only, time-boxed per-role overrides).
   const [tempAccess, setTempAccess] = useState<TempAccessEntry[]>([]);
   const [tempSubmitting, setTempSubmitting] = useState(false);
-  const [tempForm, setTempForm] = useState<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string }>(
-    { role: 'user', tabKey: MENU_TABS[0]?.key || '', action: 'revoke', expires_at: '' }
+  const [tempForm, setTempForm] = useState<{ role: string; tabKey: string; action: 'grant' | 'revoke'; expires_at: string; comment: string }>(
+    { role: 'user', tabKey: MENU_TABS[0]?.key || '', action: 'revoke', expires_at: '', comment: '' }
   );
 
   // Setup submissions state
@@ -768,8 +791,10 @@ export function ProfileSettings({
         tabKey: tempForm.tabKey,
         action: tempForm.action,
         expires_at: new Date(tempForm.expires_at).toISOString(),
+        comment: tempForm.comment.trim() || undefined,
       },
     ]);
+    setTempForm((f) => ({ ...f, comment: '' }));
   };
 
   const handleRemoveTempAccess = (entry: TempAccessEntry) => {
@@ -1256,64 +1281,76 @@ export function ProfileSettings({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 items-end">
-              <div>
-                <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Role</label>
-                <select
-                  value={tempForm.role}
-                  onChange={(e) => setTempForm((f) => ({ ...f, role: e.target.value }))}
-                  className="w-full h-9 px-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50"
-                >
-                  {CONFIGURABLE_ROLES.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
+            <div className="space-y-3">
+              {/* Line 1: Role, Tab, Action */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Role</label>
+                  <select
+                    value={tempForm.role}
+                    onChange={(e) => setTempForm((f) => ({ ...f, role: e.target.value }))}
+                    className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50"
+                  >
+                    {CONFIGURABLE_ROLES.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Tab / Feature</label>
+                  <select
+                    value={tempForm.tabKey}
+                    onChange={(e) => setTempForm((f) => ({ ...f, tabKey: e.target.value }))}
+                    className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50"
+                  >
+                    {MENU_TABS.map((t) => (
+                      <option key={t.key} value={t.key}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Action</label>
+                  <select
+                    value={tempForm.action}
+                    onChange={(e) => setTempForm((f) => ({ ...f, action: e.target.value as 'grant' | 'revoke' }))}
+                    className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50"
+                  >
+                    <option value="grant">Grant (Temporary Access)</option>
+                    <option value="revoke">Revoke (Temporary Block)</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Tab</label>
-                <select
-                  value={tempForm.tabKey}
-                  onChange={(e) => setTempForm((f) => ({ ...f, tabKey: e.target.value }))}
-                  className="w-full h-9 px-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50"
-                >
-                  {MENU_TABS.map((t) => (
-                    <option key={t.key} value={t.key}>{t.label}</option>
-                  ))}
-                </select>
+
+              {/* Line 2: Until (Date-Time Picker) + Comment / Reason + Add Button */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <div className="sm:col-span-5">
+                  <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Until Expiration Date & Time</label>
+                  <DateTimeInput
+                    value={tempForm.expires_at}
+                    onChange={(val) => setTempForm((f) => ({ ...f, expires_at: val }))}
+                  />
+                </div>
+                <div className="sm:col-span-5">
+                  <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Comment / Reason (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Audit requirement, temp project access"
+                    value={tempForm.comment || ""}
+                    onChange={(e) => setTempForm((f) => ({ ...f, comment: e.target.value }))}
+                    className="w-full h-9 px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:border-blue-500/50"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <button
+                    type="button"
+                    onClick={handleAddTempAccess}
+                    disabled={tempSubmitting}
+                    className="w-full h-9 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50 transition-all shadow-md"
+                  >
+                    Add Rule
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Action</label>
-                <select
-                  value={tempForm.action}
-                  onChange={(e) => setTempForm((f) => ({ ...f, action: e.target.value as 'grant' | 'revoke' }))}
-                  className="w-full h-9 px-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary capitalize focus:outline-none focus:border-blue-500/50"
-                >
-                  <option value="revoke">Revoke</option>
-                  <option value="grant">Grant</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[9px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Until</label>
-                <input
-                  type="datetime-local"
-                  value={tempForm.expires_at}
-                  onClick={(e) => {
-                    try {
-                      e.currentTarget.showPicker?.();
-                    } catch {}
-                  }}
-                  onChange={(e) => setTempForm((f) => ({ ...f, expires_at: e.target.value }))}
-                  className="w-full h-9 px-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleAddTempAccess}
-                disabled={tempSubmitting}
-                className="h-9 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50 transition-all"
-              >
-                Add
-              </button>
             </div>
 
             {tempAccess.length > 0 ? (
@@ -1333,8 +1370,13 @@ export function ProfileSettings({
                       <span>
                         <strong className="capitalize">{entry.action}</strong> “{tabLabel}” for{' '}
                         <strong className="capitalize">{entry.role}</strong> until{' '}
-                        {new Date(entry.expires_at).toLocaleString()}
-                        {expired && <span className="ml-2 italic">(expired)</span>}
+                        {formatCustomDateTime(entry.expires_at)}
+                        {entry.comment && (
+                          <span className="ml-2 font-medium text-blue-400">
+                            — "{entry.comment}"
+                          </span>
+                        )}
+                        {expired && <span className="ml-2 italic text-red-400">(expired)</span>}
                       </span>
                       <button
                         type="button"

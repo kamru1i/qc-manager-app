@@ -65,6 +65,7 @@ export interface TempAccessEntry {
   tabKey: string;
   action: 'grant' | 'revoke';
   expires_at: string; // ISO timestamp
+  comment?: string;
 }
 
 export const defaultGlobalSettings: GlobalSettings = {
