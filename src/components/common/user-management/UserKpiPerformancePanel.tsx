@@ -352,11 +352,39 @@ export const UserKpiPerformancePanel: React.FC<
   ]);
 
   const globalSettingsStr = JSON.stringify(targetStaff.global_settings || {});
-  const performsDataEntry =
-    targetStaff.global_settings?.performs_data_entry !== false;
+  
+  const mainDepartment = useMemo(() => {
+    return targetStaff.global_settings?.department || "IT";
+  }, [targetStaff.global_settings?.department]);
+
   const performsOtherDeptTasks =
     !!targetStaff.global_settings?.performs_other_dept_tasks;
-  const otherDepartment = targetStaff.global_settings?.other_department || "IT";
+  const otherDepartment = targetStaff.global_settings?.other_department || "";
+
+  const isDataEntryDept = (dept?: string) => {
+    if (!dept) return false;
+    const cleaned = dept.trim().toLowerCase().replace(/[\s_-]+/g, "");
+    return (
+      cleaned === "dataentry" ||
+      cleaned === "data_entry" ||
+      cleaned === "data entry"
+    );
+  };
+
+  const performsDataEntry = useMemo(() => {
+    // 1. Check if main department is Data Entry
+    if (isDataEntryDept(mainDepartment)) return true;
+    // 2. Check if secondary department is Data Entry
+    if (performsOtherDeptTasks && isDataEntryDept(otherDepartment)) return true;
+    // 3. Check if explicitly enabled in global_settings
+    if (targetStaff.global_settings?.performs_data_entry === true) return true;
+    return false;
+  }, [
+    mainDepartment,
+    performsOtherDeptTasks,
+    otherDepartment,
+    targetStaff.global_settings?.performs_data_entry,
+  ]);
 
   const kpiDeptIndicators = useMemo(() => {
     return targetStaff.global_settings?.kpi_dept_indicators || [];
@@ -369,17 +397,26 @@ export const UserKpiPerformancePanel: React.FC<
   const allowedTypesStr = JSON.stringify(targetStaff.allowed_types || []);
   const supervisorIdsStr = JSON.stringify(targetStaff.supervisor_ids || []);
 
-  // Filter allowed file types for this user
+  // Filter allowed file types for this user based on allowed_types permission
   const activeFileTypes = useMemo(() => {
-    if (!targetStaff.has_quotes_access) return [];
-    try {
-      const parsed = JSON.parse(allowedTypesStr);
-      if (!Array.isArray(parsed) || parsed.length === 0) return [];
-      return CORE_FILE_TYPES.filter((t) => parsed.includes(t.key));
-    } catch {
-      return [];
+    const rawAllowed =
+      targetStaff.allowed_types ??
+      targetStaff.global_settings?.allowed_types;
+
+    let parsed: string[] = [];
+    if (Array.isArray(rawAllowed)) {
+      parsed = rawAllowed;
+    } else if (typeof rawAllowed === "string") {
+      try {
+        parsed = JSON.parse(rawAllowed);
+      } catch {
+        parsed = [];
+      }
     }
-  }, [allowedTypesStr, targetStaff.has_quotes_access]);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) return [];
+    return CORE_FILE_TYPES.filter((t) => parsed.includes(t.key));
+  }, [targetStaff.allowed_types, targetStaff.global_settings?.allowed_types]);
 
   // 1. Fetch default supervisor name if empty (only when targetStaff or supervisors list changes)
   useEffect(() => {
