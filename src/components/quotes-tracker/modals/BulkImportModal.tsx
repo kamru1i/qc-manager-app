@@ -58,9 +58,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
   const branchesList =
     allowedBranches.length > 0 ? allowedBranches : DEFAULT_BRANCHES;
-  const defaultBranch = branchesList[0] || "PrideCompare";
-  const fileTypesList =
-    allowedTypes.length > 0 ? allowedTypes : ALL_10_FILE_TYPES;
 
   // Handle parsing text from textarea
   const handleParseText = () => {
@@ -110,7 +107,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
     const newItem: ParsedQuoteItem = {
       id: Math.random().toString(36).substring(2, 11),
       file_name: "",
-      branch_name: defaultBranch,
+      branch_name: branchesList[0] || "PrideCompare",
       file_type: "Quote",
       raw_line: "",
       status: "pending",
@@ -368,7 +365,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                         }
                         className="w-full px-2.5 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
-                        {fileTypesList.map((t: string) => (
+                        {Array.from(
+                          new Set([
+                            item.file_type,
+                            ...(allowedTypes.length > 0
+                              ? allowedTypes
+                              : ALL_10_FILE_TYPES),
+                          ])
+                        ).map((t: string) => (
                           <option key={t} value={t}>
                             {t}
                           </option>
