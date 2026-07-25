@@ -1067,6 +1067,10 @@ export const UserKpiPerformancePanel: React.FC<
   };
 
   // Printer view trigger
+  const showSupervisorColumn = useMemo(() => {
+    return targetStaff.needs_supervisor_approval !== false;
+  }, [targetStaff.needs_supervisor_approval]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -1081,7 +1085,7 @@ export const UserKpiPerformancePanel: React.FC<
       "Target",
       "Weightage",
       "Self Score",
-      "Supervisor Score",
+      ...(showSupervisorColumn ? ["Supervisor Score"] : []),
       "Comments",
     ];
 
@@ -1105,7 +1109,7 @@ export const UserKpiPerformancePanel: React.FC<
     if (performsDataEntry) {
       const dataSrl = currentSrl++;
       activeFileTypes.forEach((type) => {
-        rows.push([
+        const row = [
           String(dataSrl),
           "Data Entry",
           type.label,
@@ -1113,13 +1117,16 @@ export const UserKpiPerformancePanel: React.FC<
           "100%",
           `${weightages[type.key] ?? defaultWeightages[type.key] ?? 0}%`,
           `${computedSelfScores[type.key] || 0}%`,
-          `${supervisorScores[type.key] !== undefined ? supervisorScores[type.key] : 0}%`,
-          comments[type.key] || "",
-        ]);
+        ];
+        if (showSupervisorColumn) {
+          row.push(`${supervisorScores[type.key] !== undefined ? supervisorScores[type.key] : 0}%`);
+        }
+        row.push(comments[type.key] || "");
+        rows.push(row);
       });
 
       // Mistakes row
-      rows.push([
+      const mistakesRow = [
         String(dataSrl),
         "Data Entry",
         "Number of Mistakes",
@@ -1127,9 +1134,12 @@ export const UserKpiPerformancePanel: React.FC<
         "0%",
         `${weightages["mistakes"] ?? 0}%`,
         `${selfScores["mistakes"] ?? 0}%`,
-        `${supervisorScores["mistakes"] !== undefined ? supervisorScores["mistakes"] : 0}%`,
-        comments["mistakes"] || "",
-      ]);
+      ];
+      if (showSupervisorColumn) {
+        mistakesRow.push(`${supervisorScores["mistakes"] !== undefined ? supervisorScores["mistakes"] : 0}%`);
+      }
+      mistakesRow.push(comments["mistakes"] || "");
+      rows.push(mistakesRow);
     }
 
     // Serial 2: Custom Department indicators
@@ -1137,7 +1147,7 @@ export const UserKpiPerformancePanel: React.FC<
       const deptSrl = currentSrl++;
       kpiDeptIndicators.forEach((indicator: string) => {
         const key = `dept_${indicator}`;
-        rows.push([
+        const row = [
           String(deptSrl),
           department,
           indicator,
@@ -1145,9 +1155,12 @@ export const UserKpiPerformancePanel: React.FC<
           "100%",
           `${weightages[key] ?? defaultWeightages[key] ?? 0}%`,
           `${selfScores[key] ?? 0}%`,
-          `${supervisorScores[key] !== undefined ? supervisorScores[key] : 0}%`,
-          comments[key] || "",
-        ]);
+        ];
+        if (showSupervisorColumn) {
+          row.push(`${supervisorScores[key] !== undefined ? supervisorScores[key] : 0}%`);
+        }
+        row.push(comments[key] || "");
+        rows.push(row);
       });
     }
 
@@ -1156,7 +1169,7 @@ export const UserKpiPerformancePanel: React.FC<
       const otherDeptSrl = currentSrl++;
       kpiOtherDeptIndicators.forEach((indicator: string) => {
         const key = `other_dept_${indicator}`;
-        rows.push([
+        const row = [
           String(otherDeptSrl),
           otherDepartment,
           indicator,
@@ -1164,16 +1177,19 @@ export const UserKpiPerformancePanel: React.FC<
           "100%",
           `${weightages[key] ?? defaultWeightages[key] ?? 0}%`,
           `${selfScores[key] ?? 0}%`,
-          `${supervisorScores[key] !== undefined ? supervisorScores[key] : 0}%`,
-          comments[key] || "",
-        ]);
+        ];
+        if (showSupervisorColumn) {
+          row.push(`${supervisorScores[key] !== undefined ? supervisorScores[key] : 0}%`);
+        }
+        row.push(comments[key] || "");
+        rows.push(row);
       });
     }
 
     // Serial 3: Monthly Reports
     if (performsDataEntry) {
       const reportSrl = currentSrl++;
-      rows.push([
+      const reportRow = [
         String(reportSrl),
         "Monthly Data Entry Report",
         "Monthly Reports",
@@ -1181,14 +1197,17 @@ export const UserKpiPerformancePanel: React.FC<
         "100%",
         `${weightages["monthly_reports"] ?? defaultWeightages["monthly_reports"] ?? 5}%`,
         `${selfScores["monthly_reports"] ?? 0}%`,
-        `${supervisorScores["monthly_reports"] !== undefined ? supervisorScores["monthly_reports"] : 0}%`,
-        comments["monthly_reports"] || "",
-      ]);
+      ];
+      if (showSupervisorColumn) {
+        reportRow.push(`${supervisorScores["monthly_reports"] !== undefined ? supervisorScores["monthly_reports"] : 0}%`);
+      }
+      reportRow.push(comments["monthly_reports"] || "");
+      rows.push(reportRow);
     }
 
     // Serial 4: Self Development
     const selfDevSrl = currentSrl++;
-    rows.push([
+    const selfDevRow = [
       String(selfDevSrl),
       "Self Development Initiative",
       kpiSkillsJoined,
@@ -1196,13 +1215,16 @@ export const UserKpiPerformancePanel: React.FC<
       "100%",
       `${weightages["self_development"] ?? defaultWeightages["self_development"] ?? 5}%`,
       `${selfScores["self_development"] ?? 0}%`,
-      `${supervisorScores["self_development"] !== undefined ? supervisorScores["self_development"] : 0}%`,
-      comments["self_development"] || "",
-    ]);
+    ];
+    if (showSupervisorColumn) {
+      selfDevRow.push(`${supervisorScores["self_development"] !== undefined ? supervisorScores["self_development"] : 0}%`);
+    }
+    selfDevRow.push(comments["self_development"] || "");
+    rows.push(selfDevRow);
 
     // Total Row
     rows.push([]);
-    rows.push([
+    const totalRow = [
       "Total",
       "",
       "",
@@ -1210,9 +1232,12 @@ export const UserKpiPerformancePanel: React.FC<
       "",
       `${totals.weightage.toFixed(1)}%`,
       `${totals.self.toFixed(1)}%`,
-      `${totals.supervisor.toFixed(1)}%`,
-      "",
-    ]);
+    ];
+    if (showSupervisorColumn) {
+      totalRow.push(`${totals.supervisor.toFixed(1)}%`);
+    }
+    totalRow.push("");
+    rows.push(totalRow);
 
     // Signatures
     rows.push([]);
@@ -1863,9 +1888,11 @@ USING (auth.uid() = user_id OR EXISTS (
                 <th className="py-3 px-3 text-center border-r border-theme-border-input w-20 print:border-black">
                   Self
                 </th>
-                <th className="py-3 px-3 text-center border-r border-theme-border-input w-24 print:border-black">
-                  Supervisor
-                </th>
+                {showSupervisorColumn && (
+                  <th className="py-3 px-3 text-center border-r border-theme-border-input w-24 print:border-black">
+                    Supervisor
+                  </th>
+                )}
                 <th className="py-3 px-4 print:text-black">Comments</th>
               </tr>
             </thead>
@@ -1966,34 +1993,36 @@ USING (auth.uid() = user_id OR EXISTS (
                               </td>
 
                               {/* Supervisor score */}
-                              <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
-                                {isSupervisorOrAdmin ? (
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      max="100"
-                                      value={supervisorScores[type.key] ?? 0}
-                                      onChange={(e) =>
-                                        handleSupervisorScoreChange(
-                                          type.key,
-                                          Number(e.target.value),
-                                        )
-                                      }
-                                      className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
-                                    />
-                                    <span className="text-[10px] text-theme-text-muted font-semibold">
-                                      %
+                              {showSupervisorColumn && (
+                                <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
+                                  {isSupervisorOrAdmin ? (
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={supervisorScores[type.key] ?? 0}
+                                        onChange={(e) =>
+                                          handleSupervisorScoreChange(
+                                            type.key,
+                                            Number(e.target.value),
+                                          )
+                                        }
+                                        className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
+                                      />
+                                      <span className="text-[10px] text-theme-text-muted font-semibold">
+                                        %
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="font-bold text-theme-text-secondary print:text-black">
+                                      {supervisorScores[type.key] !== undefined
+                                        ? `${supervisorScores[type.key]}%`
+                                        : "—"}
                                     </span>
-                                  </div>
-                                ) : (
-                                  <span className="font-bold text-theme-text-secondary print:text-black">
-                                    {supervisorScores[type.key] !== undefined
-                                      ? `${supervisorScores[type.key]}%`
-                                      : "—"}
-                                  </span>
-                                )}
-                              </td>
+                                  )}
+                                </td>
+                              )}
 
                               {/* Comments */}
                               <td className="py-2 px-3">
@@ -2099,34 +2128,36 @@ USING (auth.uid() = user_id OR EXISTS (
                           </td>
 
                           {/* Supervisor */}
-                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
-                            {isSupervisorOrAdmin ? (
-                              <div className="flex items-center justify-center gap-1.5">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={supervisorScores["mistakes"] ?? 0}
-                                  onChange={(e) =>
-                                    handleSupervisorScoreChange(
-                                      "mistakes",
-                                      Number(e.target.value),
-                                    )
-                                  }
-                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
-                                />
-                                <span className="text-[10px] text-theme-text-muted font-semibold">
-                                  %
+                          {showSupervisorColumn && (
+                            <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
+                              {isSupervisorOrAdmin ? (
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={supervisorScores["mistakes"] ?? 0}
+                                    onChange={(e) =>
+                                      handleSupervisorScoreChange(
+                                        "mistakes",
+                                        Number(e.target.value),
+                                      )
+                                    }
+                                    className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
+                                  />
+                                  <span className="text-[10px] text-theme-text-muted font-semibold">
+                                    %
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="font-bold text-theme-text-secondary print:text-black">
+                                  {supervisorScores["mistakes"] !== undefined
+                                    ? `${supervisorScores["mistakes"]}%`
+                                    : "—"}
                                 </span>
-                              </div>
-                            ) : (
-                              <span className="font-bold text-theme-text-secondary print:text-black">
-                                {supervisorScores["mistakes"] !== undefined
-                                  ? `${supervisorScores["mistakes"]}%`
-                                  : "—"}
-                              </span>
-                            )}
-                          </td>
+                              )}
+                            </td>
+                          )}
 
                           {/* Comments */}
                           <td className="py-2 px-3">
@@ -2258,34 +2289,36 @@ USING (auth.uid() = user_id OR EXISTS (
                               </td>
 
                               {/* Supervisor */}
-                              <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
-                                {isSupervisorOrAdmin ? (
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      max="100"
-                                      value={supervisorScores[key] ?? 0}
-                                      onChange={(e) =>
-                                        handleSupervisorScoreChange(
-                                          key,
-                                          Number(e.target.value),
-                                        )
-                                      }
-                                      className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
-                                    />
-                                    <span className="text-[10px] text-theme-text-muted font-semibold">
-                                      %
+                              {showSupervisorColumn && (
+                                <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
+                                  {isSupervisorOrAdmin ? (
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={supervisorScores[key] ?? 0}
+                                        onChange={(e) =>
+                                          handleSupervisorScoreChange(
+                                            key,
+                                            Number(e.target.value),
+                                          )
+                                        }
+                                        className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
+                                      />
+                                      <span className="text-[10px] text-theme-text-muted font-semibold">
+                                        %
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="font-bold print:text-black">
+                                      {supervisorScores[key] !== undefined
+                                        ? `${supervisorScores[key]}%`
+                                        : "—"}
                                     </span>
-                                  </div>
-                                ) : (
-                                  <span className="font-bold print:text-black">
-                                    {supervisorScores[key] !== undefined
-                                      ? `${supervisorScores[key]}%`
-                                      : "—"}
-                                  </span>
-                                )}
-                              </td>
+                                  )}
+                                </td>
+                              )}
 
                               {/* Comments */}
                               <td className="py-2 px-3">
@@ -2415,34 +2448,36 @@ USING (auth.uid() = user_id OR EXISTS (
                               </td>
 
                               {/* Supervisor */}
-                              <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
-                                {isSupervisorOrAdmin ? (
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      max="100"
-                                      value={supervisorScores[key] ?? 0}
-                                      onChange={(e) =>
-                                        handleSupervisorScoreChange(
-                                          key,
-                                          Number(e.target.value),
-                                        )
-                                      }
-                                      className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
-                                    />
-                                    <span className="text-[10px] text-theme-text-muted font-semibold">
-                                      %
+                              {showSupervisorColumn && (
+                                <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
+                                  {isSupervisorOrAdmin ? (
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={supervisorScores[key] ?? 0}
+                                        onChange={(e) =>
+                                          handleSupervisorScoreChange(
+                                            key,
+                                            Number(e.target.value),
+                                          )
+                                        }
+                                        className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
+                                      />
+                                      <span className="text-[10px] text-theme-text-muted font-semibold">
+                                        %
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="font-bold print:text-black">
+                                      {supervisorScores[key] !== undefined
+                                        ? `${supervisorScores[key]}%`
+                                        : "—"}
                                     </span>
-                                  </div>
-                                ) : (
-                                  <span className="font-bold print:text-black">
-                                    {supervisorScores[key] !== undefined
-                                      ? `${supervisorScores[key]}%`
-                                      : "—"}
-                                  </span>
-                                )}
-                              </td>
+                                  )}
+                                </td>
+                              )}
 
                               {/* Comments */}
                               <td className="py-2 px-3">
@@ -2550,34 +2585,36 @@ USING (auth.uid() = user_id OR EXISTS (
                         </td>
 
                         {/* Supervisor */}
-                        <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
-                          {isSupervisorOrAdmin ? (
-                            <div className="flex items-center justify-center gap-1.5">
-                              <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={supervisorScores["monthly_reports"] ?? 0}
-                                onChange={(e) =>
-                                  handleSupervisorScoreChange(
-                                    "monthly_reports",
-                                    Number(e.target.value),
-                                  )
-                                }
-                                className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
-                              />
-                              <span className="text-[10px] text-theme-text-muted font-semibold">
-                                %
+                        {showSupervisorColumn && (
+                          <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
+                            {isSupervisorOrAdmin ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={supervisorScores["monthly_reports"] ?? 0}
+                                  onChange={(e) =>
+                                    handleSupervisorScoreChange(
+                                      "monthly_reports",
+                                      Number(e.target.value),
+                                    )
+                                  }
+                                  className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
+                                />
+                                <span className="text-[10px] text-theme-text-muted font-semibold">
+                                  %
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="font-bold print:text-black">
+                                {supervisorScores["monthly_reports"] !== undefined
+                                  ? `${supervisorScores["monthly_reports"]}%`
+                                  : "—"}
                               </span>
-                            </div>
-                          ) : (
-                            <span className="font-bold print:text-black">
-                              {supervisorScores["monthly_reports"] !== undefined
-                                ? `${supervisorScores["monthly_reports"]}%`
-                                : "—"}
-                            </span>
-                          )}
-                        </td>
+                            )}
+                          </td>
+                        )}
 
                         {/* Comments */}
                         <td className="py-2 px-3">
@@ -2688,34 +2725,36 @@ USING (auth.uid() = user_id OR EXISTS (
                       </td>
 
                       {/* Supervisor */}
-                      <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
-                        {isSupervisorOrAdmin ? (
-                          <div className="flex items-center justify-center gap-1.5">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={supervisorScores["self_development"] ?? 0}
-                              onChange={(e) =>
-                                handleSupervisorScoreChange(
-                                  "self_development",
-                                  Number(e.target.value),
-                                )
-                              }
-                              className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
-                            />
-                            <span className="text-[10px] text-theme-text-muted font-semibold">
-                              %
+                      {showSupervisorColumn && (
+                        <td className="py-2 px-3 text-center border-r border-theme-border-muted print:border-black">
+                          {isSupervisorOrAdmin ? (
+                            <div className="flex items-center justify-center gap-1.5">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={supervisorScores["self_development"] ?? 0}
+                                onChange={(e) =>
+                                  handleSupervisorScoreChange(
+                                    "self_development",
+                                    Number(e.target.value),
+                                  )
+                                }
+                                className="w-14 bg-theme-card-bg border border-theme-border-input rounded-lg py-1 text-center font-bold text-theme-text-primary focus:outline-hidden focus:border-emerald-500"
+                              />
+                              <span className="text-[10px] text-theme-text-muted font-semibold">
+                                %
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-bold print:text-black">
+                              {supervisorScores["self_development"] !== undefined
+                                ? `${supervisorScores["self_development"]}%`
+                                : "—"}
                             </span>
-                          </div>
-                        ) : (
-                          <span className="font-bold print:text-black">
-                            {supervisorScores["self_development"] !== undefined
-                              ? `${supervisorScores["self_development"]}%`
-                              : "—"}
-                          </span>
-                        )}
-                      </td>
+                          )}
+                        </td>
+                      )}
 
                       {/* Comments */}
                       <td className="py-2 px-3">
@@ -2755,9 +2794,11 @@ USING (auth.uid() = user_id OR EXISTS (
                 <td className="py-3 px-3 text-center border-r border-theme-border-muted font-black text-blue-400 print:border-black print:text-black">
                   {totals.self.toFixed(1)}%
                 </td>
-                <td className="py-3 px-3 text-center border-r border-theme-border-muted font-black text-emerald-400 print:border-black print:text-black">
-                  {totals.supervisor.toFixed(1)}%
-                </td>
+                {showSupervisorColumn && (
+                  <td className="py-3 px-3 text-center border-r border-theme-border-muted font-black text-emerald-400 print:border-black print:text-black">
+                    {totals.supervisor.toFixed(1)}%
+                  </td>
+                )}
                 <td className="py-3 px-4 text-theme-text-muted font-normal italic text-[11px] print:text-black">
                   —
                 </td>
