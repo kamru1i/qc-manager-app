@@ -2026,7 +2026,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
                               {/* Comments */}
                               <td className="py-2 px-3">
-                                {isSupervisorOrAdmin ? (
+                                {canEditAppraiseeFields ? (
                                   <input
                                     type="text"
                                     placeholder="Add feedback"
@@ -2161,7 +2161,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
                           {/* Comments */}
                           <td className="py-2 px-3">
-                            {isSupervisorOrAdmin ? (
+                            {canEditAppraiseeFields ? (
                               <input
                                 type="text"
                                 placeholder="Add feedback"
@@ -2322,7 +2322,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
                               {/* Comments */}
                               <td className="py-2 px-3">
-                                {isSupervisorOrAdmin ? (
+                                {canEditAppraiseeFields ? (
                                   <input
                                     type="text"
                                     placeholder="Add feedback"
@@ -2481,7 +2481,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
                               {/* Comments */}
                               <td className="py-2 px-3">
-                                {isSupervisorOrAdmin ? (
+                                {canEditAppraiseeFields ? (
                                   <input
                                     type="text"
                                     placeholder="Add feedback"
@@ -2618,7 +2618,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
                         {/* Comments */}
                         <td className="py-2 px-3">
-                          {isSupervisorOrAdmin ? (
+                          {canEditAppraiseeFields ? (
                             <input
                               type="text"
                               placeholder="Add feedback"
@@ -2758,7 +2758,7 @@ USING (auth.uid() = user_id OR EXISTS (
 
                       {/* Comments */}
                       <td className="py-2 px-3">
-                        {isSupervisorOrAdmin ? (
+                        {canEditAppraiseeFields ? (
                           <input
                             type="text"
                             placeholder="Add feedback"
