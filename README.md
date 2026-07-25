@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.4.2** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
+**Version 6.4.3** | A premium, modern, and high-performance desktop and web utility built with **Next.js (TypeScript)**, **Supabase (PostgreSQL)**, and **Tauri v2**. It integrates two comprehensive corporate workspaces under a single secure, role-based role management structure.
 
 ---
 
@@ -115,7 +115,14 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.4.2 — Patch Release (Database Schema Synchronization & Audit) (Current)
+### 🚀 v6.4.3 — Patch Release (Office Leave Split/Merged Memory, KPI Department & Supervisor Columns Fixes) (Current)
+
+- **Office Allocated Leaves Split/Merged Mode**: Synchronized leave quota calculations across Merged and Split modes, ensuring zero values (e.g. H1=0) and old split placements are accurately remembered without state loss or initial reload flicker.
+- **Conditional Supervisor Column**: Dynamically hides the Supervisor column from screen table, PDF exports, and Excel downloads for users with disabled supervisor approval feature (`needs_supervisor_approval === false`).
+- **Dynamic Primary & Secondary Department KPI Logic**: Synchronized Primary Department header and conditional Data Entry section based on primary or secondary department assignment and file type permissions.
+- **Custom Department Confirmation Modal**: Replaced native browser confirm popups with a glassmorphic confirmation modal, portaled directly to `document.body` for dead-center viewport alignment.
+
+### 🚀 v6.4.2 — Patch Release (Database Schema Synchronization & Audit)
 
 - **PostgreSQL Database Schema Audit & Sync**: Conducted a deep live schema audit against Supabase PostgreSQL database across 35 RPC functions, 13 base tables, and 37 custom indexes. Synchronized missing RPC definitions (`reset_all_user_feature_flags()`) into `supabase/schema.sql`.
 - **Local Release Manifest Generator**: Enhanced `generate-release-manifests.js` script with local fallback mode, allowing instant offline generation of `latest.json` for testing and deployment verification.
