@@ -305,7 +305,7 @@ export const useQuotesDashboardData = () => {
                 let query = supabase
                   .from('records')
                   .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
-                  .gte('submitted_at', '2026-05-01T00:00:00.000Z')
+                  .gte('submitted_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
                   .order('submitted_at', { ascending: false })
                   .range(from, to);
                 if (!isApproverScope) query = query.eq('user_id', sessionUser.id);

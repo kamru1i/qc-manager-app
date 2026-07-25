@@ -219,6 +219,10 @@ export const useDashboardData = () => {
             const pageSize = 1000;
             let hasMore = true;
             let syncError = null;
+            // E2 fix: Bound fallback fetch to last 90 days (matches cache purge TTL)
+            const chutiCutoff1 = new Date();
+            chutiCutoff1.setDate(chutiCutoff1.getDate() - 90);
+            const chutiCutoffStr1 = chutiCutoff1.toISOString().split('T')[0];
 
             while (hasMore) {
               const from = page * pageSize;
@@ -228,6 +232,7 @@ export const useDashboardData = () => {
                 .from('chuti')
                 .select(`${CHUTI_COLUMNS}, profiles (username, full_name, role, supervisor_ids)`)
                 .is('deleted_at', null)
+                .gte('date', chutiCutoffStr1)
                 .order('date', { ascending: false })
                 .range(from, to);
 
@@ -259,6 +264,10 @@ export const useDashboardData = () => {
           const pageSize = 1000;
           let hasMore = true;
           let syncError = null;
+          // E2 fix: Bound first-load fetch to last 90 days (matches cache purge TTL)
+          const chutiCutoff = new Date();
+          chutiCutoff.setDate(chutiCutoff.getDate() - 90);
+          const chutiCutoffStr = chutiCutoff.toISOString().split('T')[0];
 
           while (hasMore) {
             const from = page * pageSize;
@@ -268,6 +277,7 @@ export const useDashboardData = () => {
               .from('chuti')
               .select(`${CHUTI_COLUMNS}, profiles (username, full_name, role, supervisor_ids)`)
               .is('deleted_at', null)
+              .gte('date', chutiCutoffStr)
               .order('date', { ascending: false })
               .range(from, to);
 
@@ -364,20 +374,24 @@ export const useDashboardData = () => {
 
       // 3. Fetch Govt Holiday Responses and settlements
       if (isAdminRole(profile) || profile.role === 'supervisor') {
+        // E4 fix: Bound admin responses fetch to prevent unbounded growth
         const { data: responsesRaw, error: respError } = await supabase
           .from('govt_holiday_responses')
           .select(`${GOVT_HOLIDAY_RESPONSE_COLUMNS}, profiles (full_name, username)`)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(1000);
         const responses = responsesRaw as unknown as GovtHolidayResponse[] | null;
         if (!respError && responses) {
           setHolidayResponses(responses);
           responsesData = responses;
         }
 
+        // E4 fix: Bound admin settlements fetch to prevent unbounded growth
         const { data: settlementsRaw, error: settError } = await supabase
           .from('leave_settlements')
           .select(`${LEAVE_SETTLEMENT_COLUMNS}, profiles!leave_settlements_user_id_fkey (full_name, username)`)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(1000);
         const settlements = settlementsRaw as unknown as LeaveSettlement[] | null;
         if (!settError && settlements) {
           setLeaveSettlements(settlements);
@@ -438,9 +452,9 @@ export const useDashboardData = () => {
         }
 
         // Store current globalSettings to cache if they are derived
-        const currentGlobalSettings = (isAdminRole(profile) || profile.role === 'supervisor')
-          ? getGlobalSettingsFromProfile(profilesData.find(p => p.role === 'admin') || profile)
-          : getGlobalSettingsFromProfile(profile);
+        // E1 fix: All roles read global settings from the admin profile
+        const adminForCache = profilesData.find(p => isAdminRole(p)) || profile;
+        const currentGlobalSettings = getGlobalSettingsFromProfile(adminForCache);
         await setGlobalSettingsCache(currentGlobalSettings);
 
         // TTL: Purge chuti records older than 2 years from cache
@@ -478,7 +492,7 @@ export const useDashboardData = () => {
     const { error } = await supabase
       .from('profiles')
       .update(updates)
-      .neq('role', 'none');
+      .eq('id', sessionUser.id); // E1 fix: Only update admin's own profile (not ALL profiles)
 
     if (error) {
       setMessage({ type: 'error', text: 'Failed to save settings: ' + error.message });
@@ -785,7 +799,10 @@ export const useDashboardData = () => {
       const adminProfile = profilesList.find(p => p.role === 'admin' && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings))
         || profilesList.find(p => p.role === 'admin');
 
-      if (adminProfile && (isAdminRole(profile) || profile.role === 'supervisor')) {
+      // E1 fix: ALL roles derive global settings from the admin profile.
+      // Non-admin users no longer have global_settings written to their own row,
+      // so they must read from the admin profile in the shared profilesList.
+      if (adminProfile) {
         const derived = getGlobalSettingsFromProfile(adminProfile);
         setGlobalSettings(derived);
         // Keep the offline cache aligned — fetchRecords may have run before the

@@ -479,7 +479,7 @@ export function useGlobalNotifications(
       p => isAdminRole(p) && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings)
     ) || profilesList.find(p => isAdminRole(p));
 
-    if (adminProfile && (isAdminRole(profile) || profile.role === 'supervisor')) {
+    if (adminProfile) {
       return getGlobalSettingsFromProfile(adminProfile);
     } else {
       return getGlobalSettingsFromProfile(profile);

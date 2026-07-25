@@ -163,7 +163,7 @@ export function ProfileSettings({
         const { error } = await supabase
           .from('profiles')
           .update({ global_settings: updatedGs })
-          .neq('id', '00000000-0000-0000-0000-000000000000');
+          .eq('id', sessionUser?.id || profile.id);
         if (error) throw error;
       }
 
@@ -662,7 +662,7 @@ export function ProfileSettings({
         const { error: updateErr } = await supabase
           .from('profiles')
           .update({ global_settings: updatedGs })
-          .neq('id', '00000000-0000-0000-0000-000000000000');
+          .eq('id', sessionUser?.id || profile.id);
         if (updateErr) throw updateErr;
       }
 
