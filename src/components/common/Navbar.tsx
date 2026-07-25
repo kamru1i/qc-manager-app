@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { isNativeApp } from "@/utils/envHelper";
 
 import { UserDisplayName } from "@/components/common/UserDisplayName";
+import { LiveClock } from "@/components/common/LiveClock";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
 
 interface NavbarProps {
@@ -131,6 +132,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               Sync ({offlineCount})
             </button>
           )}
+
+          {/* Live Clock (100% Client-Side Local System Time) */}
+          <LiveClock />
 
           {/* Theme Toggle */}
           <button
