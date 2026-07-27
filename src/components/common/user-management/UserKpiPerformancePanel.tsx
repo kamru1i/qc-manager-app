@@ -175,14 +175,10 @@ export const UserKpiPerformancePanel: React.FC<
   const [appraiserName, setAppraiserName] = useState("");
   const [reviewerName, setReviewerName] = useState("");
 
-  // Keep department synced with targetStaff profile settings (auto-correct mistakenly saved IT)
+  // Keep department synced with targetStaff profile settings
   useEffect(() => {
-    let dept = targetStaff?.global_settings?.department || "Data Entry";
-    if (dept === "IT" && targetStaff?.global_settings?.performs_data_entry !== false && targetStaff?.job_role !== 'IT Specialist' && targetStaff?.job_role !== 'IT Manager') {
-      dept = "Data Entry";
-    }
-    setDepartment(dept);
-  }, [targetStaff.id, targetStaff.global_settings?.department, targetStaff.global_settings?.performs_data_entry, targetStaff.job_role]);
+    setDepartment(targetStaff?.global_settings?.department || "Data Entry");
+  }, [targetStaff.id, targetStaff.global_settings?.department]);
 
   // Table row data maps
   const [weightages, setWeightages] = useState<Record<string, number>>({});
@@ -375,12 +371,8 @@ export const UserKpiPerformancePanel: React.FC<
   const globalSettingsStr = JSON.stringify(targetStaff.global_settings || {});
   
   const mainDepartment = useMemo(() => {
-    let dept = targetStaff.global_settings?.department || "Data Entry";
-    if (dept === "IT" && targetStaff.global_settings?.performs_data_entry !== false && targetStaff.job_role !== 'IT Specialist' && targetStaff.job_role !== 'IT Manager') {
-      dept = "Data Entry";
-    }
-    return dept;
-  }, [targetStaff.global_settings?.department, targetStaff.global_settings?.performs_data_entry, targetStaff.job_role]);
+    return targetStaff.global_settings?.department || "Data Entry";
+  }, [targetStaff.global_settings?.department]);
 
   const performsOtherDeptTasks =
     !!targetStaff.global_settings?.performs_other_dept_tasks;

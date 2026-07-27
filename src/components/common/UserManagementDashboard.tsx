@@ -225,11 +225,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditUserKpiDeptIndicators(viewingStaff.global_settings?.kpi_dept_indicators || []);
       setEditUserKpiOtherDeptIndicators(viewingStaff.global_settings?.kpi_other_dept_indicators || []);
       setEditUserPerformsDataEntry(viewingStaff.global_settings?.performs_data_entry !== false);
-      let dept = viewingStaff.global_settings?.department || 'Data Entry';
-      if (dept === 'IT' && viewingStaff.global_settings?.performs_data_entry !== false && viewingStaff.job_role !== 'IT Specialist' && viewingStaff.job_role !== 'IT Manager') {
-        dept = 'Data Entry';
-      }
-      setEditUserDepartment(dept);
+      setEditUserDepartment(viewingStaff.global_settings?.department || 'Data Entry');
       setEditUserPerformsOtherDeptTasks(!!viewingStaff.global_settings?.performs_other_dept_tasks);
       setEditUserOtherDepartment(viewingStaff.global_settings?.other_department || 'IT');
       setEditDelegatedLeaveSupervisorId(viewingStaff.delegated_leave_supervisor_id || null);
@@ -239,39 +235,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
       setEditUserFeatureFlags({});
     }
   }, [viewingStaff]);
-
-  // One-time automatic database repair for profiles mistakenly set to IT department
-  useEffect(() => {
-    if (profiles.length === 0 || !isAdminRole(profile)) return;
-
-    const repairProfiles = async () => {
-      const affectedProfiles = profiles.filter((p) => {
-        const dept = p.global_settings?.department;
-        const isDataEntry = p.global_settings?.performs_data_entry !== false;
-        const isNotItSpecialist = p.job_role !== 'IT Specialist' && p.job_role !== 'IT Manager';
-        return dept === 'IT' && isDataEntry && isNotItSpecialist;
-      });
-
-      if (affectedProfiles.length === 0) return;
-
-      for (const p of affectedProfiles) {
-        try {
-          const updatedGs = {
-            ...(p.global_settings || {}),
-            department: 'Data Entry',
-          };
-          await supabase
-            .from('profiles')
-            .update({ global_settings: updatedGs })
-            .eq('id', p.id);
-        } catch (err) {
-          console.warn('[UserManagementDashboard] Auto-repair department failed for profile', p.id, err);
-        }
-      }
-    };
-
-    repairProfiles();
-  }, [profiles, profile]);
 
   // Load saved viewingStaff on mount or when profiles finish loading
   useEffect(() => {
