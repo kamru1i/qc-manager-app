@@ -8,7 +8,7 @@
 export interface MenuTabDef {
   key: string;
   label: string;
-  category: 'Main Workspace Sections' | 'Quotes Tracker Subtabs' | 'Leave Tracker Subtabs' | 'Settings Subtabs' | 'User Profile View Subtabs';
+  category: 'Main Workspace Sections' | 'Quotes Tracker Subtabs' | 'Leave Tracker Subtabs' | 'Settings Subtabs' | 'User Profile View Subtabs' | 'User Profile Settings Components';
 }
 
 export const MENU_TABS: MenuTabDef[] = [
@@ -52,7 +52,12 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'user_profile_analytics', label: 'User Management > User Profile > Analytics', category: 'User Profile View Subtabs' },
   { key: 'user_profile_kpi', label: 'User Management > User Profile > KPI & Performance', category: 'User Profile View Subtabs' },
   { key: 'user_profile_settings', label: 'User Management > User Profile > Profile Settings', category: 'User Profile View Subtabs' },
-  { key: 'user_profile_change_password', label: 'User Management > User Profile > Change Password?', category: 'User Profile View Subtabs' },
+
+  // User Profile Settings Components Access Controls
+  { key: 'profile_component_leave_workspace', label: 'User Profile Settings > Leave Tracker Workspace', category: 'User Profile Settings Components' },
+  { key: 'profile_component_quotes_workspace', label: 'User Profile Settings > Quotes Manager Workspace', category: 'User Profile Settings Components' },
+  { key: 'profile_component_kpi_settings', label: 'User Profile Settings > KPI & Performance Settings', category: 'User Profile Settings Components' },
+  { key: 'profile_component_change_password', label: 'User Profile Settings > Change Password?', category: 'User Profile Settings Components' },
 ];
 
 /** Roles a superadmin can configure visibility for (never superadmin itself). */
@@ -93,7 +98,6 @@ export const getDefaultRoleVisibility = (
     case 'user_profile_analytics':
     case 'user_profile_kpi':
     case 'user_profile_settings':
-    case 'user_profile_change_password':
       return role === 'supervisor' || role === 'admin';
 
     case 'settings_profile':
@@ -109,6 +113,10 @@ export const getDefaultRoleVisibility = (
     case 'custom_entry':
     case 'bd_clock':
     case 'uk_clock':
+    case 'profile_component_leave_workspace':
+    case 'profile_component_quotes_workspace':
+    case 'profile_component_kpi_settings':
+    case 'profile_component_change_password':
       return true;
 
     default:

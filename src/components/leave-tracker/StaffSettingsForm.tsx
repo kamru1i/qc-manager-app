@@ -11,6 +11,7 @@ import {
   canAccessProfileSection,
   canAccessUserProfileSubtab,
   isFeatureEnabled,
+  isTabVisibleForRole,
   isSuperadmin,
   isAdminRole,
   getAllowedRoleOptions,
@@ -177,19 +178,10 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
     return { ...(targetFlags || {}), ...(userFlags || {}), ...(adminDelegatedFlags || {}) };
   }, [currentUser, viewingStaff, adminDelegatedFlags]);
 
+  const showLeaveSettings = isTabVisibleForRole(currentUser || null, 'profile_component_leave_workspace', currentUser?.global_settings) && (isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'leave_settings'));
+  const showQuotesSettings = isTabVisibleForRole(currentUser || null, 'profile_component_quotes_workspace', currentUser?.global_settings) && (isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'quotes_settings'));
+  const showKpiSettings = isTabVisibleForRole(currentUser || null, 'profile_component_kpi_settings', currentUser?.global_settings) && (isNewUser ? (isAdmin || isSupervisor) : (canAccessProfileSection(currentUser || null, viewingStaff, 'kpi_settings') && !!setKpiSkills));
   const { profilesList } = useProfiles();
-  const showLeaveSettings = isFeatureEnabled('user_profile_leave_workspace', currentUser?.global_settings, currentUser) && 
-    canAccessUserProfileSubtab(currentUser || null, 'user_profile_leave', currentUser?.global_settings, profilesList) && 
-    (isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'leave_settings'));
-
-  const showQuotesSettings = isFeatureEnabled('user_profile_quotes_workspace', currentUser?.global_settings, currentUser) && 
-    canAccessUserProfileSubtab(currentUser || null, 'user_profile_quotes', currentUser?.global_settings, profilesList) && 
-    (isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'quotes_settings'));
-
-  const showKpiSettings = isFeatureEnabled('user_profile_kpi_settings', currentUser?.global_settings, currentUser) && 
-    canAccessUserProfileSubtab(currentUser || null, 'user_profile_kpi', currentUser?.global_settings, profilesList) && 
-    (isNewUser ? (isAdmin || isSupervisor) : (canAccessProfileSection(currentUser || null, viewingStaff, 'kpi_settings') && !!setKpiSkills));
-    
   const [showAssignSupervisorPrompt, setShowAssignSupervisorPrompt] = React.useState(false);
 
   const hasAssignedSupervisor = needsApproval && (supervisorIds.length > 0 || (viewingStaff?.supervisor_ids && viewingStaff.supervisor_ids.length > 0));

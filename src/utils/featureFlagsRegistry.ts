@@ -105,26 +105,26 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     description: 'Inspecting system security, user activity, and admin audit log entries.',
   },
 
-  // User Profile Sections Features
+  // User Profile Settings Components Features
   {
-    key: 'user_profile_leave_workspace',
-    label: 'Leave Tracker Workspace',
-    description: 'Global toggle for Leave Tracker Workspace card on staff profiles.',
+    key: 'profile_component_leave_workspace',
+    label: 'User Profile Settings: Leave Tracker Workspace',
+    description: 'Global feature flag toggle for Leave Tracker Workspace card on user profile settings.',
   },
   {
-    key: 'user_profile_quotes_workspace',
-    label: 'Quotes Manager Workspace',
-    description: 'Global toggle for Quotes Manager Workspace card on staff profiles.',
+    key: 'profile_component_quotes_workspace',
+    label: 'User Profile Settings: Quotes Manager Workspace',
+    description: 'Global feature flag toggle for Quotes Manager Workspace card on user profile settings.',
   },
   {
-    key: 'user_profile_kpi_settings',
-    label: 'KPI & Performance Settings',
-    description: 'Global toggle for KPI & Performance Settings card on staff profiles.',
+    key: 'profile_component_kpi_settings',
+    label: 'User Profile Settings: KPI & Performance Settings',
+    description: 'Global feature flag toggle for KPI & Performance Settings card on user profile settings.',
   },
   {
-    key: 'user_profile_change_password_feature',
-    label: 'Change Password',
-    description: 'Global toggle for Change Password? section on staff profiles.',
+    key: 'profile_component_change_password',
+    label: 'User Profile Settings: Change Password',
+    description: 'Global feature flag toggle for Change Password? section on user profile settings.',
   },
 ];
 
@@ -152,8 +152,8 @@ export const FLAG_TO_TAB_KEY: Record<string, string> = {
   custom_entry: 'custom_entry',
   bd_clock: 'bd_clock',
   uk_clock: 'uk_clock',
-  user_profile_leave_workspace: 'user_profile_leave',
-  user_profile_quotes_workspace: 'user_profile_quotes',
-  user_profile_kpi_settings: 'user_profile_kpi',
-  user_profile_change_password_feature: 'user_profile_change_password',
+  profile_component_leave_workspace: 'profile_component_leave_workspace',
+  profile_component_quotes_workspace: 'profile_component_quotes_workspace',
+  profile_component_kpi_settings: 'profile_component_kpi_settings',
+  profile_component_change_password: 'profile_component_change_password',
 };

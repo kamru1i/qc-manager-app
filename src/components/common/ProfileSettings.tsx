@@ -1176,8 +1176,7 @@ export function ProfileSettings({
           </form>
 
           {/* Security & Password Section */}
-          {isFeatureEnabled('user_profile_change_password_feature', profile?.global_settings, profile) &&
-           isTabVisibleForRole(profile, 'user_profile_change_password', profile?.global_settings) && (
+          {isTabVisibleForRole(profile, 'profile_component_change_password', profile?.global_settings) && (
             <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-5 space-y-3 w-full">
               <h3
                 onClick={() => setShowPasswordFields(!showPasswordFields)}
@@ -1396,7 +1395,7 @@ export function ProfileSettings({
               </p>
             </div>
 
-            {['Main Workspace Sections', 'Quotes Tracker Subtabs', 'Leave Tracker Subtabs', 'Settings Subtabs', 'User Profile View Subtabs'].map(
+            {['Main Workspace Sections', 'Quotes Tracker Subtabs', 'Leave Tracker Subtabs', 'Settings Subtabs', 'User Profile View Subtabs', 'User Profile Settings Components'].map(
               (category) => {
                 const tabs = MENU_TABS.filter((t) => t.category === category);
                 if (tabs.length === 0) return null;
@@ -1494,10 +1493,10 @@ export function ProfileSettings({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     {[
-                      { key: 'user_profile_leave', label: 'User Management > User Profile > Leave History' },
-                      { key: 'user_profile_quotes', label: 'User Management > User Profile > Quotes History' },
+                      { key: 'user_profile_leave', label: 'User Management > User Profile > Leave Tracker Workspace' },
+                      { key: 'user_profile_quotes', label: 'User Management > User Profile > Quotes Manager Workspace' },
                       { key: 'user_profile_analytics', label: 'User Management > User Profile > Analytics' },
-                      { key: 'user_profile_kpi', label: 'User Management > User Profile > KPI & Performance' },
+                      { key: 'user_profile_kpi', label: 'User Management > User Profile > KPI & Performance Settings' },
                       { key: 'user_profile_settings', label: 'User Management > User Profile > Profile Settings' },
                       { key: 'user_profile_change_password', label: 'User Management > User Profile > Change Password?' },
                     ].map((item) => {

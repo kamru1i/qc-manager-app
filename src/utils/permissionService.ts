@@ -147,7 +147,7 @@ export const getEffectiveGlobalSettings = (
  */
 export const canAccessUserProfileSubtab = (
   supervisor: Profile | null,
-  subtabKey: 'user_profile_leave' | 'user_profile_quotes' | 'user_profile_analytics' | 'user_profile_kpi' | 'user_profile_settings' | 'user_profile_change_password' | string,
+  subtabKey: 'user_profile_leave' | 'user_profile_quotes' | 'user_profile_analytics' | 'user_profile_kpi' | 'user_profile_settings' | string,
   globalSettings?: VisibilitySettings | null,
   profilesList: Profile[] = []
 ): boolean => {
