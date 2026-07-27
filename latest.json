@@ -1,7 +1,7 @@
 {
-  "version": "6.7.2",
-  "notes": "### 🩹 v6.7.2 — Patch Release (Flag Icon Verification, Explicit SVG Dimensions & Auto-Repair Refinement) (Current)\n\n- **Explicit Vector SVG Dimensions**: Updated `<BdFlagIcon />` and `<UkFlagIcon />` with explicit SVG dimensions (`width=18`, `height=12`) and crisp borders (`border-white/20`), completely eliminating OS emoji font dependencies.\n- **Refined Department Auto-Repair**: Background database migration automatically scans and restores profiles mistakenly set to 'IT' back to 'Data Entry'.\n- **Live Clock Cross-Platform Consistency**: Fixed header clock layout rendering on Windows, macOS, Linux, and mobile browsers.",
-  "pub_date": "2026-07-27T16:57:00.000Z",
+  "version": "6.7.3",
+  "notes": "### 🩹 v6.7.3 — Patch Release (Unified Staff Settings, Role Permissions & Manual Department Control) (Current)\n\n- **Unified Staff Profile Form**: Replaced fragmented profile inputs with unified `StaffSettingsForm` across both Settings > Profile and User Management.\n- **Workspace & Feature Flag Permissions**: Enforced strict per-role permissions for Leave Tracker, Quotes Manager, and KPI Performance settings across User, Supervisor, Admin, and Superadmin roles.\n- **Individual Feature Flags Bug Fix**: Fixed per-user feature flag overrides to correctly display and persist real database values.\n- **Manual Department Control**: Completely removed legacy auto-swap/auto-repair scripts; user and admin manual department configurations are preserved 100%.\n- **Dynamic Save Changes Button**: Enforced disabled state by default when no fields are modified, enabling dynamically as soon as permitted fields are edited.",
+  "pub_date": "2026-07-27T21:45:00.000Z",
   "releaseDate": "July 27, 2026",
   "platforms": {},
   "checksums": {},

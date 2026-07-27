@@ -115,7 +115,16 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🩹 v6.7.2 — Patch Release (Flag Icon Verification, Explicit SVG Dimensions & Auto-Repair Refinement) (Current)
+### 🩹 v6.7.3 — Patch Release (Unified Staff Settings, Role Permissions & Manual Department Control) (Current)
+
+- **Unified Staff Profile Form**: Replaced fragmented profile inputs with unified `StaffSettingsForm` across both Settings > Profile and User Management > User Profile.
+- **Workspace & Feature Flag Permissions**: Enforced strict per-role permissions for Leave Tracker, Quotes Manager, and KPI Performance settings across User, Supervisor, Admin, and Superadmin roles.
+- **Individual Feature Flags Bug Fix**: Fixed per-user feature flag overrides to correctly display and persist real database values.
+- **Manual Department Control**: Completely removed legacy auto-swap/auto-repair scripts; user and admin manual department configurations are preserved 100%.
+- **Dynamic Save Changes Button**: Enforced disabled state by default when no fields are modified, enabling dynamically as soon as permitted fields are edited.
+- **Inline Change Password Layout**: Re-aligned the Change Password section into a 3-column inline grid across full container width.
+
+### 🩹 v6.7.2 — Patch Release (Flag Icon Verification, Explicit SVG Dimensions & Auto-Repair Refinement)
 
 - **Explicit Vector SVG Dimensions**: Updated `<BdFlagIcon />` and `<UkFlagIcon />` with explicit SVG dimensions (`width=18`, `height=12`) and crisp borders (`border-white/20`), completely eliminating OS emoji font dependencies.
 - **Refined Department Auto-Repair**: Background database migration automatically scans and restores profiles mistakenly set to 'IT' back to 'Data Entry'.

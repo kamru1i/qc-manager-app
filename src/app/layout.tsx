@@ -65,7 +65,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-theme-page-bg text-theme-text-primary">
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-theme-page-bg text-theme-text-primary">
         <PWARegister />
         <AppUpdater />
         <NetworkProvider>{children}</NetworkProvider>
