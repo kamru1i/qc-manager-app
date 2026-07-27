@@ -47,11 +47,11 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'settings_vpn', label: 'Settings > VPN', category: 'Settings Subtabs' },
 
   // User Profile View Subtabs (Supervisor Access)
-  { key: 'user_profile_leave', label: 'User Profile > Leave History', category: 'User Profile View Subtabs' },
-  { key: 'user_profile_quotes', label: 'User Profile > Quotes History', category: 'User Profile View Subtabs' },
-  { key: 'user_profile_analytics', label: 'User Profile > Analytics', category: 'User Profile View Subtabs' },
-  { key: 'user_profile_kpi', label: 'User Profile > KPI & Performance', category: 'User Profile View Subtabs' },
-  { key: 'user_profile_settings', label: 'User Profile > Profile Settings', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_leave', label: 'User Management > User Profile > Leave History', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_quotes', label: 'User Management > User Profile > Quotes History', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_analytics', label: 'User Management > User Profile > Analytics', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_kpi', label: 'User Management > User Profile > KPI & Performance', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_settings', label: 'User Management > User Profile > Profile Settings', category: 'User Profile View Subtabs' },
 ];
 
 /** Roles a superadmin can configure visibility for (never superadmin itself). */

@@ -1390,11 +1390,11 @@ export function ProfileSettings({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     {[
-                      { key: 'user_profile_leave', label: 'User Profile > Leave History' },
-                      { key: 'user_profile_quotes', label: 'User Profile > Quotes History' },
-                      { key: 'user_profile_analytics', label: 'User Profile > Analytics' },
-                      { key: 'user_profile_kpi', label: 'User Profile > KPI & Performance' },
-                      { key: 'user_profile_settings', label: 'User Profile > Profile Settings' },
+                      { key: 'user_profile_leave', label: 'User Management > User Profile > Leave History' },
+                      { key: 'user_profile_quotes', label: 'User Management > User Profile > Quotes History' },
+                      { key: 'user_profile_analytics', label: 'User Management > User Profile > Analytics' },
+                      { key: 'user_profile_kpi', label: 'User Management > User Profile > KPI & Performance' },
+                      { key: 'user_profile_settings', label: 'User Management > User Profile > Profile Settings' },
                     ].map((item) => {
                       const supOverrides = supervisorAccessOverrides[selectedSupervisorId];
                       const isConfigured = supOverrides && typeof supOverrides[item.key] === 'boolean';
