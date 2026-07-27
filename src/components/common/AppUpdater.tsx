@@ -272,7 +272,7 @@ export default function AppUpdater() {
   if (!isNativeApp || !updateAvailable || dismissed) return null;
 
   return (
-    <div className="fixed bottom-5 left-4 right-4 sm:left-auto sm:right-5 sm:w-84 z-[99999] bg-theme-card-bg/95 backdrop-blur-xl border border-theme-border-input rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-theme-text-primary font-sans animate-fade-in">
+    <div className="fixed bottom-5 left-4 right-4 sm:left-auto sm:right-5 sm:w-84 z-99999 bg-theme-card-bg/95 backdrop-blur-xl border border-theme-border-input rounded-2xl shadow-2xl p-4 flex flex-col gap-3 text-theme-text-primary font-sans animate-fade-in">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl shrink-0 border border-blue-500/20">

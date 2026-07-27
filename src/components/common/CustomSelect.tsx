@@ -45,10 +45,21 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     };
   }, [isOpen]);
 
+  // Find matching option index (with float fallback for numeric strings like "6" vs "6.0")
+  const getActiveOptionIndex = (opts: Option[], val: string) => {
+    let idx = opts.findIndex((o) => o.value === val);
+    if (idx >= 0) return idx;
+    const numVal = parseFloat(val);
+    if (!isNaN(numVal)) {
+      idx = opts.findIndex((o) => parseFloat(o.value) === numVal);
+    }
+    return idx;
+  };
+
   // Synchronize highlighted index & detect vertical placement when the dropdown is opened
   useEffect(() => {
     if (isOpen) {
-      const activeIdx = options.findIndex((o) => o.value === value);
+      const activeIdx = getActiveOptionIndex(options, value);
       setHighlightedIndex(activeIdx >= 0 ? activeIdx : 0);
 
       if (dropUp) {
@@ -73,7 +84,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     }
   }, [isOpen, options, value, dropUp]);
 
-  const activeOption = options.find((o) => o.value === value) || options[0];
+  const activeOptionIdx = getActiveOptionIndex(options, value);
+  const activeOption = activeOptionIdx >= 0 ? options[activeOptionIdx] : options[0];
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (disabled) return;
@@ -146,7 +158,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           style={{ overscrollBehavior: 'contain' }}
         >
           {options.map((option, idx) => {
-            const isSelected = option.value === value;
+            const isSelected = idx === activeOptionIdx;
             const isHighlighted = idx === highlightedIndex;
  
             return (

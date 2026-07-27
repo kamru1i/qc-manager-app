@@ -52,7 +52,7 @@ export function ProfileSettings({
   const [editUsername, setEditUsername] = useState(() => profile?.username || '');
   const [editFullName, setEditFullName] = useState(() => profile?.full_name || '');
   const [editJobRole, setEditJobRole] = useState(() => profile?.job_role || '');
-  const [editWorkingHours, setEditWorkingHours] = useState(() => (profile?.working_hours ?? 9.5).toString());
+  const [editWorkingHours, setEditWorkingHours] = useState(() => Number(profile?.working_hours ?? 9.5).toFixed(1));
   const [editBreakTime, setEditBreakTime] = useState(() => (profile?.break_time ?? 0).toString());
   const [profileSignInTime, setProfileSignInTime] = useState(() => profile?.default_sign_in || '');
   const [profileSignOutTime, setProfileSignOutTime] = useState(() => profile?.default_sign_out || '');
@@ -332,7 +332,7 @@ export function ProfileSettings({
       setEditUsername(profile.username || '');
       setEditFullName(profile.full_name || '');
       setEditJobRole(profile.job_role || '');
-      setEditWorkingHours((profile.working_hours ?? 9.5).toString());
+      setEditWorkingHours(Number(profile.working_hours ?? 9.5).toFixed(1));
       setEditBreakTime((profile.break_time ?? 0).toString());
       setProfileSignInTime(profile.default_sign_in || '');
       setProfileSignOutTime(profile.default_sign_out || '');

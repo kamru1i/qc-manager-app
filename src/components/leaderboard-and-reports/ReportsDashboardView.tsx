@@ -271,7 +271,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
           </div>
 
           <div className="flex flex-row items-center gap-2 w-full sm:w-auto relative z-30">
-            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl min-w-[100px]">
+            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl min-w-25">
               <CustomSelect
                 value={selectedMonth}
                 onChange={setSelectedMonth}
@@ -283,7 +283,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
                 className="w-full"
               />
             </div>
-            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl min-w-[80px]">
+            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl min-w-20">
               <CustomSelect
                 value={selectedYear}
                 onChange={setSelectedYear}

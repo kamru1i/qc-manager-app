@@ -7,7 +7,7 @@ interface LiveClockProps {
 
 const BdFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4.5 h-3" }) => (
   <svg
-    className={`${className} rounded-[2px] overflow-hidden shrink-0 border border-white/20 shadow-xs inline-block align-middle`}
+    className={`${className} rounded-xs overflow-hidden shrink-0 border border-white/20 shadow-xs inline-block align-middle`}
     viewBox="0 0 20 12"
     width="18"
     height="12"
@@ -20,7 +20,7 @@ const BdFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4.5 h-3" 
 
 const UkFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4.5 h-3" }) => (
   <svg
-    className={`${className} rounded-[2px] overflow-hidden shrink-0 border border-white/20 shadow-xs inline-block align-middle`}
+    className={`${className} rounded-xs overflow-hidden shrink-0 border border-white/20 shadow-xs inline-block align-middle`}
     viewBox="0 0 60 30"
     width="18"
     height="12"

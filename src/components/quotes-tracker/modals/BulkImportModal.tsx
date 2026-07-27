@@ -251,7 +251,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               disabled={isSubmitting}
               onChange={(e) => setRawText(e.target.value)}
               placeholder={`Paste multiple lines here. Example:\nAli Gull BI Requote\nBenjamin Harris-price Swan drive\nJalal Udin Ahmadzai BC requote\nMuhammad Akif Jacaria Abdulgani Sort\nRaminder SINGH ADI`}
-              className="block w-full min-h-[140px] p-3 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-mono transition-all disabled:opacity-50"
+              className="block w-full min-h-35 p-3 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-mono transition-all disabled:opacity-50"
             />
 
             <div className="flex justify-end gap-2">
@@ -303,7 +303,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                 <strong>Select Files</strong>.
               </div>
             ) : (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-100 overflow-y-auto pr-1">
                 {items.map((item, idx) => (
                   <div
                     key={item.id}
@@ -320,7 +320,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                     </span>
 
                     {/* File Name Field */}
-                    <div className="flex-1 min-w-[200px]">
+                    <div className="flex-1 min-w-50">
                       <input
                         type="text"
                         value={item.file_name}
@@ -334,7 +334,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                     </div>
 
                     {/* Branch Dropdown */}
-                    <div className="w-full sm:w-[150px] shrink-0">
+                    <div className="w-full sm:w-37.5 shrink-0">
                       <select
                         value={item.branch_name}
                         disabled={isSubmitting}
@@ -356,7 +356,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                     </div>
 
                     {/* File Type Dropdown */}
-                    <div className="w-full sm:w-[150px] shrink-0">
+                    <div className="w-full sm:w-37.5 shrink-0">
                       <select
                         value={item.file_type}
                         disabled={isSubmitting}
