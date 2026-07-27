@@ -33,7 +33,7 @@ export const SubmissionVolumeChart: React.FC<SubmissionVolumeChartProps> = ({
 
   return (
     <div className="lg:col-span-2 bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl shadow-xl relative min-h-96">
-      <h4 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
+      <h4 className="text-sm font-bold text-theme-text-primary mb-6 flex items-center gap-2">
         <Calendar className="h-4.5 w-4.5 text-blue-400" />
         Monthly Submission Volumes ({selectedYear})
       </h4>
@@ -144,7 +144,7 @@ export const SubmissionVolumeChart: React.FC<SubmissionVolumeChartProps> = ({
 
         {hoveredBar && (
           <div
-            className="absolute bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-white shadow-2xl pointer-events-none z-45 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100"
+            className="absolute bg-theme-card-bg border border-theme-border-input rounded-xl px-3 py-2 text-[11px] text-theme-text-primary shadow-2xl pointer-events-none z-45 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100"
             style={{ left: `${hoveredBar.x}px`, top: `${hoveredBar.y}px`, transform: 'translateX(-50%)' }}
           >
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{hoveredBar.month}</span>

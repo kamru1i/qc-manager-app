@@ -78,14 +78,14 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-900 text-slate-400 hover:text-white cursor-pointer transition-all"
+              className="p-2 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-900 text-slate-400 hover:text-theme-text-primary cursor-pointer transition-all"
               title="Back to Leaderboard"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
           <div className="space-y-0.5">
-            <h2 className="text-xl font-bold text-white tracking-wide">
+            <h2 className="text-xl font-bold text-theme-text-primary tracking-wide">
               {isAdmin && activeReportTab === 'all' ? 'All Report' : 'My Report'}
             </h2>
             <p className="text-xs text-slate-400">
@@ -104,7 +104,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeReportTab === 'mine'
                   ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-400 hover:text-theme-text-primary'
               }`}
             >
               My Report
@@ -114,7 +114,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeReportTab === 'all'
                   ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-400 hover:text-theme-text-primary'
               }`}
             >
               All Report

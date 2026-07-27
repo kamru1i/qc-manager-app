@@ -109,7 +109,7 @@ export const ReportSummaryCards: React.FC<ReportSummaryCardsProps> = ({
               <div className="space-y-1.5 min-w-0">
                 <p className="text-xs font-semibold text-slate-400">{def.title}</p>
                 <div className="space-y-1 mt-1.5">
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight break-all">
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all">
                     {stats[def.key]}
                   </h3>
                   <div>

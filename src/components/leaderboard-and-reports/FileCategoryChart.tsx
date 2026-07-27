@@ -19,7 +19,7 @@ export const FileCategoryChart: React.FC<FileCategoryChartProps> = ({
 }) => {
   return (
     <div className="lg:col-span-2 bg-slate-900/20 border border-slate-800/80 p-5 rounded-2xl shadow-xl flex flex-col min-h-96">
-      <h4 className="text-sm font-bold text-white mb-5 flex items-center gap-2">
+      <h4 className="text-sm font-bold text-theme-text-primary mb-5 flex items-center gap-2">
         <FileText className="h-4.5 w-4.5 text-blue-400 animate-pulse" />
         File Category Distribution Breakdown ({scopeLabel})
       </h4>
@@ -38,7 +38,7 @@ export const FileCategoryChart: React.FC<FileCategoryChartProps> = ({
             >
               <div className="flex justify-between items-center text-xs">
                 <span className="font-bold text-slate-300">{cat.name}</span>
-                <span className="font-extrabold text-white">
+                <span className="font-extrabold text-theme-text-primary">
                   {cat.count}{' '}
                   <span className="text-[10px] text-slate-500 font-bold">
                     ({cat.percentage}%)

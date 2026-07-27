@@ -127,7 +127,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Award className="h-6 w-6 text-yellow-500" />
-                <h2 className="text-xl font-bold text-white tracking-wide">
+                <h2 className="text-xl font-bold text-theme-text-primary tracking-wide">
                   Performance Leaderboard
                 </h2>
               </div>
@@ -148,7 +148,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 placeholder="Search by name or codename..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-950/40 hover:bg-slate-950/60 border border-slate-800/60 hover:border-slate-700/60 text-white placeholder-slate-500 text-xs rounded-xl pl-9 pr-4 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                className="w-full bg-slate-950/40 hover:bg-slate-950/60 border border-slate-800/60 hover:border-slate-700/60 text-theme-text-primary placeholder-slate-500 text-xs rounded-xl pl-9 pr-4 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
           </div>
@@ -163,7 +163,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                   leaderboardPeriod === "monthly"
                     ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                    : "text-slate-400 hover:text-white border border-transparent"
+                    : "text-slate-400 hover:text-theme-text-primary border border-transparent"
                 }`}
               >
                 Monthly
@@ -173,7 +173,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                   leaderboardPeriod === "yearly"
                     ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                    : "text-slate-400 hover:text-white border border-transparent"
+                    : "text-slate-400 hover:text-theme-text-primary border border-transparent"
                 }`}
               >
                 Yearly
@@ -191,7 +191,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                   value: m.value,
                   label: m.name,
                 }))}
-                buttonClassName="w-28 bg-slate-950/85 border border-slate-800/80 hover:border-slate-700 text-white text-base md:text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all flex items-center justify-between gap-2 text-left font-bold"
+                buttonClassName="w-28 bg-slate-950/85 border border-slate-800/80 hover:border-slate-700 text-theme-text-primary text-base md:text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all flex items-center justify-between gap-2 text-left font-bold"
                 className="w-28"
               />
             ) : (
@@ -199,7 +199,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 value={selectedYear}
                 onChange={setSelectedYear}
                 options={availableYears.map((y) => ({ value: y, label: y }))}
-                buttonClassName="w-28 bg-slate-950/85 border border-slate-800/80 hover:border-slate-700 text-white text-base md:text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all flex items-center justify-between gap-2 text-left font-bold"
+                buttonClassName="w-28 bg-slate-950/85 border border-slate-800/80 hover:border-slate-700 text-theme-text-primary text-base md:text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all flex items-center justify-between gap-2 text-left font-bold"
                 className="w-28"
               />
             )}
@@ -245,7 +245,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400 bg-slate-900/60 border border-slate-800/80 rounded-lg px-2.5 py-1">
               Total Staff:{" "}
-              <strong className="text-white font-semibold">
+              <strong className="text-theme-text-primary font-semibold">
                 {leaderboardData.length}
               </strong>
             </span>

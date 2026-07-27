@@ -18,7 +18,7 @@ export const OperationalInsights: React.FC<OperationalInsightsProps> = ({
   return (
     <div className="bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl shadow-xl flex flex-col justify-between min-h-96">
       <div>
-        <h4 className="text-sm font-bold text-white mb-5 flex items-center gap-2">
+        <h4 className="text-sm font-bold text-theme-text-primary mb-5 flex items-center gap-2">
           <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
           Operational Insights
         </h4>
@@ -29,7 +29,7 @@ export const OperationalInsights: React.FC<OperationalInsightsProps> = ({
               Average Submissions / Day
             </span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-extrabold text-white">
+              <span className="text-2xl font-extrabold text-theme-text-primary">
                 {(totalRecords / scopedDaysCount).toFixed(1)}
               </span>
               <span className="text-xs text-slate-400 font-semibold">
@@ -43,7 +43,7 @@ export const OperationalInsights: React.FC<OperationalInsightsProps> = ({
               Dominant Submission Type
             </span>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-extrabold text-white truncate max-w-[65%]">
+              <span className="text-xs font-extrabold text-theme-text-primary truncate max-w-[65%]">
                 {dominantActivity.name}
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 shrink-0">

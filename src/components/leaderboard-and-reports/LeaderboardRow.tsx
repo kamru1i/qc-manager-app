@@ -83,7 +83,7 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ user, isCurrentU
               showRank={false}
               showBadge={true}
               tooltipPosition="bottom"
-              nameClassName="text-sm font-bold text-white hover:text-blue-400 transition-colors"
+              nameClassName="text-sm font-bold text-theme-text-primary hover:text-blue-400 transition-colors"
             />
           </div>
           <span className="text-[9px] text-slate-500 font-bold tracking-wider mt-0.5">

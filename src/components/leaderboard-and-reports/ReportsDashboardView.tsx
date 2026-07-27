@@ -241,7 +241,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
       {/* Filter Header (Remove backdrop-blur-md to fix Safari native select dropdown popup glitch) */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/80 p-4 border border-slate-800/60 rounded-2xl">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold text-theme-text-primary flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-500" />
             Performance Reports
           </h2>
@@ -255,7 +255,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
             <button
               onClick={() => setMetricsTimeScope('yearly')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                metricsTimeScope === 'yearly' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white font-medium'
+                metricsTimeScope === 'yearly' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-theme-text-primary font-medium'
               }`}
             >
               Yearly
@@ -263,7 +263,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
             <button
               onClick={() => setMetricsTimeScope('monthly')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                metricsTimeScope === 'monthly' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white font-medium'
+                metricsTimeScope === 'monthly' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-theme-text-primary font-medium'
               }`}
             >
               Monthly
@@ -279,7 +279,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
                   value: m.value,
                   label: m.name,
                 }))}
-                buttonClassName="bg-transparent border-none text-slate-300 hover:text-white text-base md:text-xs outline-none focus:outline-none focus:ring-0 cursor-pointer font-semibold flex items-center justify-between gap-1 w-full select-none text-left p-0"
+                buttonClassName="bg-transparent border-none text-theme-text-secondary hover:text-theme-text-primary text-base md:text-xs outline-none focus:outline-none focus:ring-0 cursor-pointer font-semibold flex items-center justify-between gap-1 w-full select-none text-left p-0"
                 className="w-full"
               />
             </div>
@@ -291,7 +291,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
                   value: year,
                   label: year,
                 }))}
-                buttonClassName="bg-transparent border-none text-slate-300 hover:text-white text-base md:text-xs outline-none focus:outline-none focus:ring-0 cursor-pointer font-semibold flex items-center justify-between gap-1 w-full select-none text-left p-0"
+                buttonClassName="bg-transparent border-none text-theme-text-secondary hover:text-theme-text-primary text-base md:text-xs outline-none focus:outline-none focus:ring-0 cursor-pointer font-semibold flex items-center justify-between gap-1 w-full select-none text-left p-0"
                 className="w-full"
               />
             </div>

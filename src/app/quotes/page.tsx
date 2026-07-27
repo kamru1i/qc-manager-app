@@ -1506,8 +1506,7 @@ export default function Dashboard({
                 type="button"
                 onClick={() => setIsBulkModalOpen(true)}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer hover:opacity-95 shrink-0"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-300" />
+              >√
                 <span>Quick Import</span>
               </button>
             )}
