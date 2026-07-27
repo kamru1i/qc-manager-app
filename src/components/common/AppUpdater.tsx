@@ -142,31 +142,31 @@ export default function AppUpdater() {
           let latestVer = "";
           let apkTargetUrl = "";
 
-          // Source A: Try fetching latest.json from GitHub Release
+          // Source A: Try GitHub API (CORS-friendly for web browsers & mobile)
           try {
-            const manifestRes = await fetch(MANIFEST_URL, { cache: "no-store" });
-            if (manifestRes.ok) {
-              const manifestData = await manifestRes.json();
-              if (manifestData && manifestData.version) {
-                latestVer = manifestData.version;
+            const ghRes = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { cache: "no-store" });
+            if (ghRes.ok) {
+              const ghData = await ghRes.json();
+              if (ghData && ghData.tag_name) {
+                latestVer = ghData.tag_name.replace(/^v/, "");
               }
             }
-          } catch (mErr) {
-            console.warn("[AppUpdater] Could not fetch manifest, trying GitHub API:", mErr);
+          } catch (ghErr) {
+            console.warn("[AppUpdater] Could not fetch GitHub release API:", ghErr);
           }
 
-          // Source B: Try GitHub API if manifest failed
+          // Source B: Try fetching latest.json manifest (for native apps)
           if (!latestVer) {
             try {
-              const ghRes = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { cache: "no-store" });
-              if (ghRes.ok) {
-                const ghData = await ghRes.json();
-                if (ghData && ghData.tag_name) {
-                  latestVer = ghData.tag_name.replace(/^v/, "");
+              const manifestRes = await fetch(MANIFEST_URL, { cache: "no-store" });
+              if (manifestRes.ok) {
+                const manifestData = await manifestRes.json();
+                if (manifestData && manifestData.version) {
+                  latestVer = manifestData.version;
                 }
               }
-            } catch (ghErr) {
-              console.warn("[AppUpdater] Could not fetch GitHub release API:", ghErr);
+            } catch {
+              // Ignore manifest fetch error in web browser fallback
             }
           }
 
