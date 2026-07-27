@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { NoInternetOverlay } from "@/components/common/NoInternetOverlay";
 import { supabase } from "@/utils/supabase";
 
@@ -110,8 +110,13 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [isOnline, mounted]);
 
+  const contextValue = useMemo(
+    () => ({ isOnline, isChecking, checkConnectivity }),
+    [isOnline, isChecking, checkConnectivity]
+  );
+
   return (
-    <NetworkContext.Provider value={{ isOnline, isChecking, checkConnectivity }}>
+    <NetworkContext.Provider value={contextValue}>
       {children}
       {mounted && !isOnline && (
         <NoInternetOverlay
