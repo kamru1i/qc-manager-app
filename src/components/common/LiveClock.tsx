@@ -5,10 +5,12 @@ interface LiveClockProps {
   showUk?: boolean;
 }
 
-const BdFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-3" }) => (
+const BdFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4.5 h-3" }) => (
   <svg
-    className={`${className} rounded-[2px] overflow-hidden shrink-0 shadow-xs border border-white/10`}
+    className={`${className} rounded-[2px] overflow-hidden shrink-0 border border-white/20 shadow-xs inline-block align-middle`}
     viewBox="0 0 20 12"
+    width="18"
+    height="12"
     aria-label="Bangladesh Flag"
   >
     <rect width="20" height="12" fill="#006A4E" />
@@ -16,10 +18,12 @@ const BdFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-3" })
   </svg>
 );
 
-const UkFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-3" }) => (
+const UkFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4.5 h-3" }) => (
   <svg
-    className={`${className} rounded-[2px] overflow-hidden shrink-0 shadow-xs border border-white/10`}
+    className={`${className} rounded-[2px] overflow-hidden shrink-0 border border-white/20 shadow-xs inline-block align-middle`}
     viewBox="0 0 60 30"
+    width="18"
+    height="12"
     aria-label="United Kingdom Flag"
   >
     <rect width="60" height="30" fill="#012169" />
