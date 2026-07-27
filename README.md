@@ -115,7 +115,14 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.7.0 — Minor Release (Supervisor Access Controls, Per-Supervisor Overrides, KPI Evaluation Period & Workspace Permission Delegation) (Current)
+### 🩹 v6.7.1 — Patch Release (Android Auto-Updater Fixes, Cross-Platform SVG Flag Rendering & Department Auto-Repair) (Current)
+
+- **Android Mobile Auto-Update Fixes**: Fixed state timing bug preventing mobile update checks, added 3-source version resolution (GitHub manifest, GitHub API, Supabase), and introduced interactive Download & Install action button with fallback.
+- **Cross-Platform SVG Vector Flags**: Replaced OS-dependent Unicode flag emojis with crisp inline SVG vector icons for Bangladesh 🇧🇩 and United Kingdom 🇬🇧, fixing Windows Segoe UI text rendering issues.
+- **Department Database Auto-Repair**: Implemented automated client-side background migration reverting mistakenly overwritten profile department records from 'IT' back to 'Data Entry'.
+- **Safe Global Settings Preservation**: Updated user profile update handler to safely preserve existing KPI skills, department indicators, and department selections upon saving.
+
+### 🚀 v6.7.0 — Minor Release (Supervisor Access Controls, Per-Supervisor Overrides, KPI Evaluation Period & Workspace Permission Delegation)
 
 - **Per-Supervisor Specific Access Controls**: Added supervisor dropdown selector and granular subtab permission overrides under Settings > Access (`User Management > User Profile > Leave History / Quotes History / Analytics / KPI & Performance / Profile Settings`).
 - **Workspace Permission Delegation & Prompt Modal**: Enables Quotes Manager Workspace with automatic confirmation prompt modal to assign a supervisor. If assigned, filetype permissions and KPI settings are managed by the supervisor (or admin with explicit KPI subtab permission).
