@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2, Users } from 'lucide-react';
 import { Profile } from '@/types';
 import { isSuperadmin, isAdminRole, isTabVisibleForRole, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
-import { ProfileFields } from '@/components/leave-tracker/ProfileFields';
+import { StaffSettingsForm } from '@/components/leave-tracker/StaffSettingsForm';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
 import { DateTimeInput } from '@/components/common/DateTimeInput';
@@ -1011,124 +1011,127 @@ export function ProfileSettings({
         </div>
       )}
 
-      {/* Main Grid Layout (Profile & Shift) */}
+      {/* Main Layout (Profile Settings with Unified StaffSettingsForm) */}
       {activeSubTab === 'profile' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="space-y-6">
+          <form id="profile-settings-form" onSubmit={handleSaveSettings} className="space-y-6">
+            <StaffSettingsForm
+              isNewUser={false}
+              currentUser={profile}
+              viewingStaff={profile}
+              codename={editUsername}
+              setCodename={setEditUsername}
+              fullName={editFullName}
+              setFullName={setEditFullName}
+              role={profile?.role || 'user'}
+              setRole={() => {}}
+              hasChutiAccess={profile?.has_chuti_access !== false}
+              setHasChutiAccess={() => {}}
+              needsApproval={profile?.needs_supervisor_approval !== false}
+              setNeedsApproval={() => {}}
+              supervisors={profilesList.filter((p) => p.role === 'supervisor')}
+              supervisorIds={profile?.supervisor_ids || []}
+              setSupervisorIds={() => {}}
+              eligibleOfficeLeave={profile?.eligible_office_leave !== false}
+              setEligibleOfficeLeave={() => {}}
+              eligibleGovtHoliday={profile?.eligible_govt_holiday !== false}
+              setEligibleGovtHoliday={() => {}}
+              allowOvertime={profile?.allow_overtime || false}
+              setAllowOvertime={() => {}}
+              allowReserve={profile?.allow_reserve || false}
+              setAllowReserve={() => {}}
+              hasQuotesAccess={profile?.has_quotes_access !== false}
+              setHasQuotesAccess={() => {}}
+              allowedTypes={profile?.allowed_types || []}
+              setAllowedTypes={() => {}}
+              canManageRules={profile?.can_manage_rules || false}
+              setCanManageRules={() => {}}
+              isAdmin={isAdminRole(profile)}
+              isSupervisor={profile?.role === 'supervisor'}
+              jobRole={editJobRole}
+              setJobRole={setEditJobRole}
+              workingHours={editWorkingHours}
+              setWorkingHours={setEditWorkingHours}
+              breakTime={editBreakTime}
+              setBreakTime={setEditBreakTime}
+              signInTime={profileSignInTime}
+              setSignInTime={setProfileSignInTime}
+              signOutTime={profileSignOutTime}
+              setSignOutTime={setProfileSignOutTime}
+              kpiSkills={profile?.global_settings?.kpi_skills || []}
+              setKpiSkills={() => {}}
+              kpiDeptIndicators={profile?.global_settings?.kpi_dept_indicators || []}
+              setKpiDeptIndicators={() => {}}
+              kpiOtherDeptIndicators={profile?.global_settings?.kpi_other_dept_indicators || []}
+              setKpiOtherDeptIndicators={() => {}}
+              performsDataEntry={profile?.global_settings?.performs_data_entry !== false}
+              setPerformsDataEntry={() => {}}
+              department={profile?.global_settings?.department || 'Data Entry'}
+              setDepartment={() => {}}
+              performsOtherDeptTasks={profile?.global_settings?.performs_other_dept_tasks || false}
+              setPerformsOtherDeptTasks={() => {}}
+              otherDepartment={profile?.global_settings?.other_department || ''}
+              setOtherDepartment={() => {}}
+              delegatedLeaveSupervisorId={profile?.delegated_leave_supervisor_id || null}
+              setDelegatedLeaveSupervisorId={() => {}}
+              delegatedKpiSupervisorId={profile?.delegated_kpi_supervisor_id || null}
+              setDelegatedKpiSupervisorId={() => {}}
+              userFeatureFlags={profile?.global_settings?.feature_flags || {}}
+              setUserFeatureFlags={() => {}}
+              adminDelegatedFlags={effectiveAdminDelegatedFlags}
+            />
+          </form>
 
-          {/* Column 1: Settings Form */}
-          <div className="lg:col-span-7 bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-5">
-            <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
-              <User className="h-4 w-4 text-blue-400" />
-              Personal & Shift Settings
+          {/* Security & Password Section */}
+          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4 max-w-2xl">
+            <h3
+              onClick={() => setShowPasswordFields(!showPasswordFields)}
+              className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center justify-between pb-2 border-b border-theme-border-input/40 cursor-pointer hover:text-blue-400 transition-colors select-none"
+            >
+              <span className="flex items-center gap-2">
+                <Key className="h-4 w-4 text-blue-400" />
+                Change Password
+              </span>
+              <span className="text-[10px] text-blue-400 capitalize">{showPasswordFields ? 'Hide' : 'Show'}</span>
             </h3>
 
-            <form id="profile-settings-form" onSubmit={handleSaveSettings} className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">Codename</label>
-                  {isAdminRole(profile) && (
-                    <button
-                      type="button"
-                      onClick={() => setIsCodenameEditable(!isCodenameEditable)}
-                      className={`text-[10px] flex items-center gap-1 transition-colors px-2.5 py-1 rounded-md cursor-pointer ${
-                        isCodenameEditable
-                          ? 'text-purple-400 bg-purple-955/40 hover:bg-purple-955/60 border border-purple-800/30'
-                          : 'text-blue-400 hover:text-blue-300 bg-blue-955/20 hover:bg-blue-950/40 border border-blue-900/20'
-                      }`}
-                    >
-                      <span>{isCodenameEditable ? 'Lock' : 'Change Codename'}</span>
-                    </button>
-                  )}
+            <div
+              className={`transition-all duration-300 ease-in-out ${
+                showPasswordFields
+                  ? 'max-h-[300px] opacity-100 overflow-visible mt-2'
+                  : 'max-h-0 opacity-0 overflow-hidden pointer-events-none mt-0'
+              }`}
+            >
+              <form onSubmit={handleUpdatePassword} className="space-y-3.5 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">New Password</label>
+                  <input
+                    type="password"
+                    placeholder="Enter at least 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
+                  />
                 </div>
-                <input
-                  type="text"
-                  disabled={!isCodenameEditable}
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value)}
-                  className={`mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono ${
-                    isCodenameEditable
-                      ? 'border-blue-500/50 text-theme-text-primary cursor-text opacity-100 ring-1 ring-blue-500/30'
-                      : 'border-theme-border-muted text-theme-text-muted/60 cursor-not-allowed opacity-60'
-                  }`}
-                />
-              </div>
-
-              <ProfileFields
-                fullName={editFullName}
-                setFullName={setEditFullName}
-                jobRole={editJobRole}
-                setJobRole={setEditJobRole}
-                workingHours={editWorkingHours}
-                setWorkingHours={setEditWorkingHours}
-                breakTime={editBreakTime}
-                setBreakTime={setEditBreakTime}
-                signInTime={profileSignInTime}
-                setSignInTime={setProfileSignInTime}
-                signOutTime={profileSignOutTime}
-                setSignOutTime={setProfileSignOutTime}
-                disabled={profile?.profile_change_status === 'pending'}
-              />
-
-
-            </form>
-          </div>
-
-          {/* Column 2: Notifications & Security */}
-          <div className="lg:col-span-5 space-y-6">
-
-
-
-            {/* Change Password Panel */}
-            <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
-              <h3
-                onClick={() => setShowPasswordFields(!showPasswordFields)}
-                className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center justify-between pb-2 border-b border-theme-border-input/40 cursor-pointer hover:text-blue-400 transition-colors select-none"
-              >
-                <span className="flex items-center gap-2">
-                  <Key className="h-4 w-4 text-blue-400" />
-                  Change Password
-                </span>
-                <span className="text-[10px] text-blue-400 capitalize">{showPasswordFields ? 'Hide' : 'Show'}</span>
-              </h3>
-
-              <div
-                className={`transition-all duration-300 ease-in-out ${
-                  showPasswordFields
-                    ? 'max-h-[300px] opacity-100 overflow-visible mt-2'
-                    : 'max-h-0 opacity-0 overflow-hidden pointer-events-none mt-0'
-                }`}
-              >
-                <form onSubmit={handleUpdatePassword} className="space-y-3.5 pt-1">
-                  <div>
-                    <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">New Password</label>
-                    <input
-                      type="password"
-                      placeholder="Enter at least 6 characters"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Confirm New Password</label>
-                    <input
-                      type="password"
-                      placeholder="Verify new password"
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={passwordSubmitting}
-                    className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-theme-text-primary bg-theme-border-input hover:bg-theme-border-active hover:text-theme-text-inverse cursor-pointer disabled:opacity-50 transition-all items-center gap-2 active:scale-98"
-                  >
-                    {passwordSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                    <span>{passwordSubmitting ? 'Updating...' : 'Update Password'}</span>
-                  </button>
-                </form>
-              </div>
+                <div>
+                  <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Confirm New Password</label>
+                  <input
+                    type="password"
+                    placeholder="Verify new password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={passwordSubmitting}
+                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-theme-text-primary bg-theme-border-input hover:bg-theme-border-active hover:text-theme-text-inverse cursor-pointer disabled:opacity-50 transition-all items-center gap-2 active:scale-98"
+                >
+                  {passwordSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+                  <span>{passwordSubmitting ? 'Updating...' : 'Update Password'}</span>
+                </button>
+              </form>
             </div>
           </div>
         </div>
