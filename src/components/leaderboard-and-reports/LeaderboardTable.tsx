@@ -154,7 +154,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           </div>
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end shrink-0 flex-nowrap overflow-x-auto">
+          <div className="flex items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end shrink-0 flex-wrap sm:flex-nowrap relative z-30">
             {/* Monthly / Yearly period toggle (feature-flagged) */}
             {yearlyEnabled && (
             <div className="flex bg-slate-950/85 p-1 rounded-xl border border-slate-800/80 text-xs shrink-0">

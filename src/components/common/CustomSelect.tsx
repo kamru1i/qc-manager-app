@@ -61,14 +61,14 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         const spaceBelowViewport = window.innerHeight - rect.bottom;
         
         let spaceBelowContainer = spaceBelowViewport;
-        const scrollParent = containerRef.current.closest('.overflow-y-auto, .overflow-auto, .overflow-hidden');
+        const scrollParent = containerRef.current.closest('.overflow-y-auto, .overflow-y-scroll');
         if (scrollParent) {
           const parentRect = scrollParent.getBoundingClientRect();
           spaceBelowContainer = parentRect.bottom - rect.bottom;
         }
 
         const effectiveSpaceBelow = Math.min(spaceBelowViewport, spaceBelowContainer);
-        setOpenUpward(effectiveSpaceBelow < 220);
+        setOpenUpward(effectiveSpaceBelow < 180 && spaceBelowViewport < 180);
       }
     }
   }, [isOpen, options, value, dropUp]);
@@ -138,10 +138,10 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
       {isOpen && (
         <div 
-          className={`absolute left-0 w-full min-w-[150px] bg-theme-page-bg border border-theme-border-input rounded-lg shadow-2xl z-[100] py-1 max-h-64 overflow-y-auto custom-scrollbar ${
+          className={`absolute right-0 sm:left-0 min-w-[140px] bg-theme-card-bg border border-theme-border-input rounded-xl shadow-2xl z-[9999] py-1 max-h-64 overflow-y-auto custom-scrollbar ${
             openUpward
-              ? 'bottom-full mb-1 animate-in fade-in slide-in-from-bottom-1 duration-150'
-              : 'top-full mt-1 animate-in fade-in slide-in-from-top-1 duration-150'
+              ? 'bottom-full mb-1.5 animate-in fade-in slide-in-from-bottom-1 duration-150'
+              : 'top-full mt-1.5 animate-in fade-in slide-in-from-top-1 duration-150'
           }`}
           style={{ overscrollBehavior: 'contain' }}
         >
