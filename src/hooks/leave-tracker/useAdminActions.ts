@@ -281,15 +281,32 @@ export const useAdminActions = ({
       }
 
       const existingSettings = targetProfile?.global_settings || {};
+      
+      // Safely preserve existing kpi_skills, department & indicators if empty passed
+      const resolvedKpiSkills = (kpiSkills && kpiSkills.length > 0)
+        ? kpiSkills
+        : (existingSettings.kpi_skills || []);
+
+      const resolvedKpiDeptIndicators = (kpiDeptIndicators && kpiDeptIndicators.length > 0)
+        ? kpiDeptIndicators
+        : (existingSettings.kpi_dept_indicators || []);
+
+      const resolvedKpiOtherDeptIndicators = (kpiOtherDeptIndicators && kpiOtherDeptIndicators.length > 0)
+        ? kpiOtherDeptIndicators
+        : (existingSettings.kpi_other_dept_indicators || []);
+
+      const resolvedDept = department || existingSettings.department || 'Data Entry';
+      const resolvedOtherDept = otherDepartment || existingSettings.other_department || 'IT';
+
       const updatedSettings = {
         ...existingSettings,
-        kpi_skills: kpiSkills || [],
-        kpi_dept_indicators: kpiDeptIndicators || [],
-        kpi_other_dept_indicators: kpiOtherDeptIndicators || [],
-        performs_data_entry: performsDataEntry !== undefined ? performsDataEntry : true,
-        department: department || 'Data Entry',
-        performs_other_dept_tasks: performsOtherDeptTasks !== undefined ? performsOtherDeptTasks : false,
-        other_department: otherDepartment || 'IT',
+        kpi_skills: resolvedKpiSkills,
+        kpi_dept_indicators: resolvedKpiDeptIndicators,
+        kpi_other_dept_indicators: resolvedKpiOtherDeptIndicators,
+        performs_data_entry: performsDataEntry !== undefined ? performsDataEntry : (existingSettings.performs_data_entry !== false),
+        department: resolvedDept,
+        performs_other_dept_tasks: performsOtherDeptTasks !== undefined ? performsOtherDeptTasks : (!!existingSettings.performs_other_dept_tasks),
+        other_department: resolvedOtherDept,
         user_feature_flags: userFeatureFlags !== undefined ? userFeatureFlags : existingSettings.user_feature_flags || {}
       };
 

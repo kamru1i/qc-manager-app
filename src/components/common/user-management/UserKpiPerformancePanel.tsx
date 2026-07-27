@@ -171,7 +171,7 @@ export const UserKpiPerformancePanel: React.FC<
   // Header inputs
   const [empId, setEmpId] = useState("");
   const [dateOfJoining, setDateOfJoining] = useState("");
-  const [department, setDepartment] = useState(() => targetStaff.global_settings?.department || "IT");
+  const [department, setDepartment] = useState(() => targetStaff.global_settings?.department || "Data Entry");
   const [appraiserName, setAppraiserName] = useState("");
   const [reviewerName, setReviewerName] = useState("");
 
@@ -373,7 +373,7 @@ export const UserKpiPerformancePanel: React.FC<
   const globalSettingsStr = JSON.stringify(targetStaff.global_settings || {});
   
   const mainDepartment = useMemo(() => {
-    return targetStaff.global_settings?.department || "IT";
+    return targetStaff.global_settings?.department || "Data Entry";
   }, [targetStaff.global_settings?.department]);
 
   const performsOtherDeptTasks =
@@ -781,7 +781,7 @@ export const UserKpiPerformancePanel: React.FC<
             const currentProfileDept = targetStaff.global_settings?.department;
             setEmpId(data.emp_id || "");
             setDateOfJoining(data.date_of_joining || "");
-            setDepartment(currentProfileDept || data.department || "IT");
+            setDepartment(currentProfileDept || data.department || "Data Entry");
             setAppraiserName(data.appraiser_name || "");
             setReviewerName(data.reviewer_name || "");
 
@@ -811,7 +811,7 @@ export const UserKpiPerformancePanel: React.FC<
               targetStaff.global_settings?.date_of_joining || "",
             );
             setDepartment(
-              targetStaff.global_settings?.department || "IT",
+              targetStaff.global_settings?.department || "Data Entry",
             );
             setReviewerName("");
             setWeightages(defaultWeightages);
@@ -854,7 +854,7 @@ export const UserKpiPerformancePanel: React.FC<
               const currentProfileDept = targetStaff.global_settings?.department;
               setEmpId(localData.emp_id || "");
               setDateOfJoining(localData.date_of_joining || "");
-              setDepartment(currentProfileDept || localData.department || "IT");
+              setDepartment(currentProfileDept || localData.department || "Data Entry");
               setAppraiserName(localData.appraiser_name || "");
               setReviewerName(localData.reviewer_name || "");
               setWeightages(localData.kpis?.weightages || {});
@@ -877,7 +877,7 @@ export const UserKpiPerformancePanel: React.FC<
             setEmpId("");
             setDateOfJoining("");
             setDepartment(
-              targetStaff.global_settings?.department || "IT",
+              targetStaff.global_settings?.department || "Data Entry",
             );
             setReviewerName("");
             setWeightages(defaultWeightages);
