@@ -112,9 +112,9 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
     <div className="space-y-6">
       {/* Header and Controls Card (Remove backdrop-blur-md to fix Safari native select dropdown popup glitch) */}
       <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 shadow-lg">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:flex-nowrap">
           {/* Left: Title & Subtitle */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {onBack && (
               <button
                 onClick={onBack}
@@ -138,10 +138,10 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           </div>
 
           {/* Center: Search input (fitted in the middle of the header) */}
-          <div className="w-full lg:w-64 xl:w-80">
+          <div className="w-full lg:w-auto lg:flex-1 lg:max-w-xs xl:max-w-sm">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-slate-555 text-slate-500" />
+                <Search className="h-4 w-4 text-slate-500" />
               </span>
               <input
                 type="text"
@@ -154,7 +154,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           </div>
 
           {/* Right: Controls */}
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+          <div className="flex items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end shrink-0 flex-nowrap overflow-x-auto">
             {/* Monthly / Yearly period toggle (feature-flagged) */}
             {yearlyEnabled && (
             <div className="flex bg-slate-950/85 p-1 rounded-xl border border-slate-800/80 text-xs shrink-0">
@@ -208,7 +208,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             {onViewFullReport && (
               <button
                 onClick={onViewFullReport}
-                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl px-3.5 py-2 transition-all shadow-md shadow-blue-900/20 cursor-pointer"
+                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl px-3.5 py-2 transition-all shadow-md shadow-blue-900/20 cursor-pointer shrink-0"
               >
                 View Report
                 <ChevronRight className="h-3.5 w-3.5" />
