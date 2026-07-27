@@ -5,6 +5,31 @@ interface LiveClockProps {
   showUk?: boolean;
 }
 
+const BdFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-3" }) => (
+  <svg
+    className={`${className} rounded-[2px] overflow-hidden shrink-0 shadow-xs border border-white/10`}
+    viewBox="0 0 20 12"
+    aria-label="Bangladesh Flag"
+  >
+    <rect width="20" height="12" fill="#006A4E" />
+    <circle cx="9" cy="6" r="4" fill="#F42A41" />
+  </svg>
+);
+
+const UkFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-3" }) => (
+  <svg
+    className={`${className} rounded-[2px] overflow-hidden shrink-0 shadow-xs border border-white/10`}
+    viewBox="0 0 60 30"
+    aria-label="United Kingdom Flag"
+  >
+    <rect width="60" height="30" fill="#012169" />
+    <path d="M0 0L60 30M60 0L0 30" stroke="#FFFFFF" strokeWidth="6" />
+    <path d="M0 0L60 30M60 0L0 30" stroke="#C8102E" strokeWidth="2" />
+    <path d="M30 0V30M0 15H60" stroke="#FFFFFF" strokeWidth="10" />
+    <path d="M30 0V30M0 15H60" stroke="#C8102E" strokeWidth="6" />
+  </svg>
+);
+
 function getTimeComponents(timeZone: string, use24Hour: boolean = false) {
   try {
     const d = new Date();
@@ -63,12 +88,10 @@ export const LiveClock: React.FC<LiveClockProps> = ({
 
   return (
     <div className="hidden sm:flex flex-col justify-center gap-0.5 text-[11px] font-mono select-none">
-      {/* BD Time Row (Clean & Minimal) */}
+      {/* BD Time Row */}
       {showBd && bdClock && bdClock.timeStr && (
         <div className="flex items-center gap-1.5 text-theme-text-primary">
-          <span className="text-sm leading-none shrink-0" role="img" aria-label="Bangladesh Flag">
-            🇧🇩
-          </span>
+          <BdFlagIcon />
           <span className="font-bold text-theme-text-primary">BD:</span>
           <span className="font-medium text-theme-text-secondary">{bdClock.dateStr}</span>
           <span className="text-theme-text-muted/60">•</span>
@@ -76,12 +99,10 @@ export const LiveClock: React.FC<LiveClockProps> = ({
         </div>
       )}
 
-      {/* UK Time Row (Clean & Minimal) */}
+      {/* UK Time Row */}
       {showUk && ukClock && ukClock.timeStr && (
         <div className="flex items-center gap-1.5 text-theme-text-primary">
-          <span className="text-sm leading-none shrink-0" role="img" aria-label="United Kingdom Flag">
-            🇬🇧
-          </span>
+          <UkFlagIcon />
           <span className="font-bold text-theme-text-primary">UK:</span>
           <span className="font-medium text-theme-text-secondary">{ukClock.dateStr}</span>
           <span className="text-theme-text-muted/60">•</span>
