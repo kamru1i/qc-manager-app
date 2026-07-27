@@ -480,6 +480,7 @@ export function ProfileSettings({
         setProfile(mergedProfile);
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(mergedProfile));
         window.dispatchEvent(new CustomEvent("profile-updated", { detail: mergedProfile }));
+        await refreshProfiles({ force: true });
         toast.success('Your menu visibility settings successfully updated!');
         return;
       }
@@ -514,6 +515,7 @@ export function ProfileSettings({
         setProfile({ ...profile, ...updatedProfile });
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
         window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+        await refreshProfiles({ force: true });
         toast.success('Your profile settings successfully updated!');
       } else {
         if (!profile.has_edited_profile) {
@@ -577,6 +579,7 @@ export function ProfileSettings({
           setProfile({ ...profile, ...updatedProfile });
           localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
           window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+          await refreshProfiles({ force: true });
 
           if (hasProfileFieldChanges) {
             toast.success('Profile change request has been sent to the admin.');

@@ -73,16 +73,7 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
       // If counts match AND we're not force-refreshing (INSERT/DELETE event),
       // the realtime UPDATE handler has already patched field-level changes
       // inline, so the cached list is current and we can skip the full fetch.
-      if (!options?.force && profilesListRef.current.length > 0) {
-        const { count, error: countErr } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true });
-        if (!countErr && count !== null && count === profilesListRef.current.length) {
-          // Row count unchanged — inline patches from realtime are sufficient
-          return;
-        }
-      }
-
+      // Fetch fresh profiles from Supabase to guarantee global_settings, tab access & feature flags sync
       const { data, error } = await supabase
         .from('profiles')
         .select(PROFILE_COLUMNS)

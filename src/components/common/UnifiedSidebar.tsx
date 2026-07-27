@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Profile } from '@/types';
 import { canAccessModule, isSuperadmin, isAdminRole, isTabVisibleForRole } from '@/utils/permissionService';
+import { useProfiles } from '@/contexts/ProfilesContext';
 import {
   PanelLeftOpen,
   PanelLeftClose,
@@ -51,6 +52,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   onNavItemClick,
 }) => {
   const router = useRouter();
+  const { profilesList } = useProfiles();
 
   // Subtabs expanded/collapsed state persisted in localStorage
   const [isChutiExpanded, setIsChutiExpanded] = useState<boolean>(() => {
@@ -90,10 +92,14 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   const isSuperAdmin = isSuperadmin(profile);
   const userHiddenTabs = profile.global_settings?.hidden_tabs || [];
-  // A tab is hidden when the user hid it (per-user) OR a superadmin disabled it
-  // for this role (per-role role_visibility). Superadmins bypass both.
-  const tabHidden = (key: string): boolean =>
-    userHiddenTabs.includes(key) || !isTabVisibleForRole(profile, key, profile.global_settings);
+  
+  // A tab is hidden when the user explicitly hid it in Settings > Menu (per-user hidden_tabs).
+  // If not explicitly hidden: Superadmins see everything. Other roles check role_visibility.
+  const tabHidden = (key: string): boolean => {
+    if (userHiddenTabs.includes(key)) return true;
+    if (isSuperAdmin) return false;
+    return !isTabVisibleForRole(profile, key, profile.global_settings, profilesList);
+  };
 
   // Navigation handlers
   const handleChutiNav = () => {

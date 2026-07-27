@@ -177,19 +177,22 @@ export const canAccessUserProfileSubtab = (
 export const isTabVisibleForRole = (
   user: Profile | null,
   tabKey: string,
-  globalSettings?: VisibilitySettings | null
+  globalSettings?: VisibilitySettings | null,
+  profilesList: Profile[] = []
 ): boolean => {
   if (!user) return false;
 
+  const gs = getEffectiveGlobalSettings(user, globalSettings, profilesList);
+
   // Check mapped feature flag first
   const mappedFlag = Object.keys(FLAG_TO_TAB_KEY).find((flag) => FLAG_TO_TAB_KEY[flag] === tabKey);
-  if (mappedFlag && !isFeatureEnabled(mappedFlag, globalSettings, user)) {
+  if (mappedFlag && !isFeatureEnabled(mappedFlag, gs, user)) {
     return false;
   }
 
   if (isSuperadmin(user)) return true; // superadmin always sees everything
 
-  const roleVis = globalSettings?.role_visibility?.[user.role];
+  const roleVis = gs?.role_visibility?.[user.role];
   let base: boolean;
   if (roleVis && typeof roleVis[tabKey] === 'boolean') {
     base = roleVis[tabKey];
