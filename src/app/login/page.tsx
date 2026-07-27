@@ -320,10 +320,6 @@ export default function LoginPage() {
         if (res.ok) {
           const data = await res.json();
           resolvedEmail = data.email;
-        } else if (res.status === 401) {
-          setError("Invalid username or password.");
-          setLoading(false);
-          return;
         }
       } catch {
         clearTimeout(timeoutId);

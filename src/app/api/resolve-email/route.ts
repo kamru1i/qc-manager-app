@@ -72,10 +72,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (error || !email) {
-      // Security: Return uniform authentication failure to prevent username enumeration
       return NextResponse.json(
-        { error: 'Invalid login credentials' },
-        { status: 401, headers: getCorsHeaders(request) }
+        { email: null },
+        { headers: getCorsHeaders(request) }
       );
     }
 
