@@ -1,13 +1,15 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Check, Settings, AlertTriangle } from "lucide-react";
+import { Check, Settings, AlertTriangle, UserCheck } from "lucide-react";
 import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
 import { Profile } from "@/types";
 import { formatTimeToAMPM } from "@/utils/dashboardHelpers";
 import { supabase } from "@/utils/supabase";
+import { useProfiles } from "@/contexts/ProfilesContext";
 import {
   canAccessProfileSection,
+  canAccessUserProfileSubtab,
   isSuperadmin,
   isAdminRole,
   getAllowedRoleOptions,
@@ -177,6 +179,38 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   const showLeaveSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'leave_settings');
   const showQuotesSettings = isNewUser ? (isAdmin || isSupervisor) : canAccessProfileSection(currentUser || null, viewingStaff, 'quotes_settings');
   const showKpiSettings = isNewUser ? (isAdmin || isSupervisor) : (canAccessProfileSection(currentUser || null, viewingStaff, 'kpi_settings') && !!setKpiSkills);
+  const { profilesList } = useProfiles();
+  const [showAssignSupervisorPrompt, setShowAssignSupervisorPrompt] = React.useState(false);
+
+  const hasAssignedSupervisor = needsApproval && (supervisorIds.length > 0 || (viewingStaff?.supervisor_ids && viewingStaff.supervisor_ids.length > 0));
+  const isCurrentSuperadmin = isSuperadmin(currentUser || null);
+  const isCurrentAssignedSupervisor = isSupervisor || 
+    (currentUser && viewingStaff?.supervisor_ids?.includes(currentUser.id)) ||
+    (currentUser && viewingStaff?.delegated_leave_supervisor_id === currentUser.id) ||
+    (currentUser && viewingStaff?.delegated_kpi_supervisor_id === currentUser.id) ||
+    (currentUser && supervisorIds.includes(currentUser.id));
+
+  // Permitted File Entry Types (Categories) Editing Lock
+  const isFiletypeDisabled = React.useMemo(() => {
+    if (isCurrentSuperadmin) return false;
+    if (isCurrentAssignedSupervisor) return false;
+    if (hasAssignedSupervisor) return true; // Locked for Admin when supervisor is assigned
+    return !isAdmin;
+  }, [isCurrentSuperadmin, isCurrentAssignedSupervisor, hasAssignedSupervisor, isAdmin]);
+
+  // KPI & Performance Settings Editing Lock
+  const isKpiSettingsDisabled = React.useMemo(() => {
+    if (isCurrentSuperadmin) return false;
+    if (isCurrentAssignedSupervisor) return false;
+    if (hasAssignedSupervisor) {
+      // Check if current Admin has explicit KPI access in Settings > Access
+      const canAdminManageKpi = canAccessUserProfileSubtab(currentUser || null, 'user_profile_kpi', undefined, profilesList);
+      if (canAdminManageKpi) return false;
+      return true; // Locked for Admin if KPI permission is OFF in Settings > Access
+    }
+    return !isAdmin;
+  }, [isCurrentSuperadmin, isCurrentAssignedSupervisor, hasAssignedSupervisor, currentUser, profilesList, isAdmin]);
+
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);
@@ -790,7 +824,12 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
               {(isAdmin || isSupervisor) && (
                 <Toggle
                   checked={hasQuotesAccess}
-                  onChange={setHasQuotesAccess}
+                  onChange={(checked) => {
+                    setHasQuotesAccess(checked);
+                    if (checked && !needsApproval) {
+                      setShowAssignSupervisorPrompt(true);
+                    }
+                  }}
                   label="Access"
                 />
               )}
@@ -802,8 +841,14 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 <CategoryCheckboxList
                   allowedTypes={allowedTypes}
                   onChange={setAllowedTypes}
-                  disabled={!isAdmin && !isSupervisor}
+                  disabled={isFiletypeDisabled}
                 />
+                {isFiletypeDisabled && hasAssignedSupervisor && (
+                  <p className="text-[11px] text-amber-400/90 font-medium flex items-center gap-1.5 mt-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    Permitted file entry types are managed by the assigned supervisor.
+                  </p>
+                )}
 
                 {/* Can Manage Quote Rules (Only Admin edits) */}
                 <div className="border-t border-theme-border-muted/70 pt-3">
@@ -953,6 +998,11 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   KPI & Performance Settings
                 </h3>
               </div>
+              {isKpiSettingsDisabled && hasAssignedSupervisor && (
+                <span className="text-[10px] text-amber-400 font-medium flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                  <AlertTriangle className="h-3 w-3 shrink-0" /> Managed by assigned supervisor
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-5">
@@ -963,7 +1013,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 </label>
                 <select
                   value={department}
-                  disabled={!isAdmin && !isSupervisor}
+                  disabled={isKpiSettingsDisabled}
                   onChange={(e) => {
                     const newDept = e.target.value;
                     const executeChange = () => {
@@ -1021,7 +1071,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     value={newDeptIndicatorText}
                     onChange={(e) => setNewDeptIndicatorText(e.target.value)}
                     placeholder="e.g. Server Maintenance, Tech Support"
-                    disabled={!isAdmin && !isSupervisor}
+                    disabled={isKpiSettingsDisabled}
                     className="flex-1 bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -1036,7 +1086,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   />
                   <button
                     type="button"
-                    disabled={(!isAdmin && !isSupervisor) || !newDeptIndicatorText.trim()}
+                    disabled={isKpiSettingsDisabled || !newDeptIndicatorText.trim()}
                     onClick={() => {
                       const val = newDeptIndicatorText.trim();
                       if (val && !kpiDeptIndicators.includes(val)) {
@@ -1060,7 +1110,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-950/20 border border-blue-900/30 text-blue-300 rounded-lg text-xs font-medium"
                       >
                         <span>{indicator}</span>
-                        {(isAdmin || isSupervisor) && (
+                        {!isKpiSettingsDisabled && (
                           <button
                             type="button"
                             onClick={() => {
@@ -1086,7 +1136,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     <input
                       type="checkbox"
                       checked={performsOtherDeptTasks}
-                      disabled={!isAdmin && !isSupervisor}
+                      disabled={isKpiSettingsDisabled}
                       onChange={(e) => {
                         const checked = e.target.checked;
 
@@ -1143,7 +1193,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       </label>
                       <select
                         value={otherDepartment}
-                        disabled={!isAdmin && !isSupervisor}
+                        disabled={isKpiSettingsDisabled}
                         onChange={(e) => {
                           const dept = e.target.value;
 
@@ -1195,7 +1245,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                             value={newOtherDeptIndicatorText}
                             onChange={(e) => setNewOtherDeptIndicatorText(e.target.value)}
                             placeholder="e.g. Server Maintenance, Tech Support"
-                            disabled={!isAdmin && !isSupervisor}
+                            disabled={isKpiSettingsDisabled}
                             className="flex-1 bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -1210,7 +1260,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                           />
                           <button
                             type="button"
-                            disabled={(!isAdmin && !isSupervisor) || !newOtherDeptIndicatorText.trim()}
+                            disabled={isKpiSettingsDisabled || !newOtherDeptIndicatorText.trim()}
                             onClick={() => {
                               const val = newOtherDeptIndicatorText.trim();
                               if (val && !kpiOtherDeptIndicators.includes(val)) {
@@ -1234,7 +1284,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                                 className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-950/20 border border-blue-900/30 text-blue-300 rounded-lg text-xs font-medium"
                               >
                                 <span>{indicator}</span>
-                                {(isAdmin || isSupervisor) && (
+                                {!isKpiSettingsDisabled && (
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -1273,7 +1323,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   value={newSkillText}
                   onChange={(e) => setNewSkillText(e.target.value)}
                   placeholder="e.g. Video Editing, Digital Marketing, SEO"
-                  disabled={!isAdmin && !isSupervisor}
+                  disabled={isKpiSettingsDisabled}
                   className="flex-1 bg-theme-card-container/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-hidden focus:border-blue-500 transition-colors disabled:opacity-50"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -1288,7 +1338,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 />
                 <button
                   type="button"
-                  disabled={(!isAdmin && !isSupervisor) || !newSkillText.trim()}
+                  disabled={isKpiSettingsDisabled || !newSkillText.trim()}
                   onClick={() => {
                     const val = newSkillText.trim();
                     if (val && !kpiSkills.includes(val)) {
@@ -1312,7 +1362,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-950/20 border border-blue-900/30 text-blue-300 rounded-lg text-xs font-medium"
                     >
                       <span>{skill}</span>
-                      {(isAdmin || isSupervisor) && (
+                      {!isKpiSettingsDisabled && (
                         <button
                           type="button"
                           onClick={() => {
@@ -1466,6 +1516,48 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-amber-600/30 transition-all cursor-pointer"
               >
                 Proceed
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Assign Supervisor Confirmation Modal */}
+      {showAssignSupervisorPrompt && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                <UserCheck className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-theme-text-primary">
+                  Assign a Supervisor?
+                </h3>
+                <p className="text-xs text-theme-text-secondary leading-relaxed">
+                  Quotes Manager Workspace has been enabled. Would you like to assign a supervisor for this staff member?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-theme-border-muted/50">
+              <button
+                type="button"
+                onClick={() => setShowAssignSupervisorPrompt(false)}
+                className="px-4 py-2 bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs font-semibold rounded-xl hover:bg-theme-border-input/50 transition-colors cursor-pointer"
+              >
+                No, I'll Manage Directly
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setNeedsApproval(true);
+                  setShowAssignSupervisorPrompt(false);
+                }}
+                className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
+              >
+                Yes, Assign Supervisor
               </button>
             </div>
           </div>
