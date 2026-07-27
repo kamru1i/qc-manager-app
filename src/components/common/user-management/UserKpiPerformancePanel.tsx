@@ -117,6 +117,12 @@ export const UserKpiPerformancePanel: React.FC<
     ];
 
     for (let y = currentYear; y >= currentYear - 1; y--) {
+      options.push({
+        key: `yearly-${y}`,
+        label: `Full Year ${y} (Jan 1 - Dec 31)`,
+        isCustom: false,
+      });
+
       for (let m = 11; m >= 0; m--) {
         const key = `${y}-${String(m + 1).padStart(2, "0")}`;
         options.push({
@@ -128,7 +134,9 @@ export const UserKpiPerformancePanel: React.FC<
     }
 
     savedPeriods.forEach((p) => {
-      const isStandardPattern = /^\d{4}-\d{2}$/.test(p.month_year);
+      const isStandardPattern =
+        /^\d{4}-\d{2}$/.test(p.month_year) ||
+        /^yearly-\d{4}$/.test(p.month_year);
       if (!isStandardPattern) {
         const customLabel = p.kpis?.customPeriodLabel || p.month_year;
         if (!options.some((opt) => opt.key === p.month_year)) {
@@ -147,8 +155,10 @@ export const UserKpiPerformancePanel: React.FC<
   useEffect(() => {
     if (preSelectedPeriodKey) {
       setActivePeriodKey(preSelectedPeriodKey);
-      const isStandardPattern = /^\d{4}-\d{2}$/.test(preSelectedPeriodKey);
-      if (isStandardPattern) {
+      if (preSelectedPeriodKey.startsWith("yearly-")) {
+        const parts = preSelectedPeriodKey.split("-");
+        setSelectedYear(Number(parts[1]));
+      } else if (/^\d{4}-\d{2}$/.test(preSelectedPeriodKey)) {
         const parts = preSelectedPeriodKey.split("-");
         setSelectedYear(Number(parts[0]));
         setSelectedMonth(Number(parts[1]) - 1);
@@ -332,7 +342,16 @@ export const UserKpiPerformancePanel: React.FC<
 
   // Format dates for display
   const evaluationPeriod = useMemo(() => {
-    const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
+    if (monthYearKey.startsWith("yearly-")) {
+      const year = monthYearKey.split("-")[1] || String(selectedYear);
+      return {
+        from: `01-01-${year}`,
+        to: `31-12-${year}`,
+      };
+    }
+    const isCustom =
+      !/^\d{4}-\d{2}$/.test(monthYearKey) &&
+      !/^yearly-\d{4}$/.test(monthYearKey);
     if (isCustom && dbCustomPeriodFrom && dbCustomPeriodTo) {
       return {
         from: formatDateToDMY(dbCustomPeriodFrom),
@@ -439,21 +458,31 @@ export const UserKpiPerformancePanel: React.FC<
     };
   }, [targetStaff.id, supervisorIdsStr]);
 
-  // 2. Fetch record counts for the selected month/custom period
+  // 2. Fetch record counts for the selected month/yearly/custom period
   useEffect(() => {
     let active = true;
     const fetchProductionCounts = async () => {
       let startDate: Date;
       let endDate: Date;
 
-      const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
-      if (isCustom && dbCustomPeriodFrom && dbCustomPeriodTo) {
-        startDate = new Date(dbCustomPeriodFrom);
-        endDate = new Date(dbCustomPeriodTo);
-        endDate.setHours(23, 59, 59, 999);
+      if (monthYearKey.startsWith("yearly-")) {
+        const year = Number(monthYearKey.split("-")[1]) || selectedYear;
+        startDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
+        endDate = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
       } else {
-        startDate = new Date(selectedYear, selectedMonth, 1);
-        endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+        const isCustom =
+          !/^\d{4}-\d{2}$/.test(monthYearKey) &&
+          !/^yearly-\d{4}$/.test(monthYearKey);
+        if (isCustom && dbCustomPeriodFrom && dbCustomPeriodTo) {
+          const fromParts = dbCustomPeriodFrom.split("-").map(Number);
+          const toParts = dbCustomPeriodTo.split("-").map(Number);
+          startDate = new Date(Date.UTC(fromParts[0], fromParts[1] - 1, fromParts[2], 0, 0, 0, 0));
+          endDate = new Date(Date.UTC(toParts[0], toParts[1] - 1, toParts[2], 23, 59, 59, 999));
+        } else {
+          startDate = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0, 0));
+          const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+          endDate = new Date(Date.UTC(selectedYear, selectedMonth, lastDay, 23, 59, 59, 999));
+        }
       }
 
       const { data: recordData } = await supabase
@@ -798,7 +827,9 @@ export const UserKpiPerformancePanel: React.FC<
             setAppraiserSigned(false);
             setAppraiserSignDate("");
 
-            const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
+            const isCustom =
+              !/^\d{4}-\d{2}$/.test(monthYearKey) &&
+              !/^yearly-\d{4}$/.test(monthYearKey);
             if (!isCustom) {
               setDbCustomPeriodFrom("");
               setDbCustomPeriodTo("");
@@ -976,7 +1007,9 @@ export const UserKpiPerformancePanel: React.FC<
     }
 
     setSaving(true);
-    const activeKeyIsCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
+    const activeKeyIsCustom =
+      !/^\d{4}-\d{2}$/.test(monthYearKey) &&
+      !/^yearly-\d{4}$/.test(monthYearKey);
     const kpisPayload = {
       weightages,
       selfScores,
@@ -1506,17 +1539,26 @@ export const UserKpiPerformancePanel: React.FC<
               }
               onChange={(e) => {
                 const val = e.target.value;
-                const isStandardPattern = /^\d{4}-\d{2}$/.test(val);
-                if (isStandardPattern) {
+                const isMonthlyPattern = /^\d{4}-\d{2}$/.test(val);
+                const isYearlyPattern = /^yearly-\d{4}$/.test(val);
+                if (isMonthlyPattern) {
                   const parts = val.split("-");
                   setSelectedYear(Number(parts[0]));
                   setSelectedMonth(Number(parts[1]) - 1);
                   setActivePeriodKey("");
+                  setDbCustomPeriodFrom("");
+                  setDbCustomPeriodTo("");
+                } else if (isYearlyPattern) {
+                  const year = Number(val.split("-")[1]);
+                  setSelectedYear(year);
+                  setActivePeriodKey(val);
+                  setDbCustomPeriodFrom("");
+                  setDbCustomPeriodTo("");
                 } else {
                   setActivePeriodKey(val);
                 }
               }}
-              className="bg-transparent text-xs font-semibold text-theme-text-secondary px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[160px] truncate"
+              className="bg-transparent text-xs font-semibold text-theme-text-secondary px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[220px] truncate"
             >
               {periodOptions.map((opt) => (
                 <option
@@ -1860,26 +1902,35 @@ USING (auth.uid() = user_id OR EXISTS (
               <button
                 type="button"
                 onClick={() => {
-                  const isCustom = !/^\d{4}-\d{2}$/.test(monthYearKey);
-                  if (isCustom) {
-                    setNewCustomPeriodLabel(
-                      dbCustomPeriodLabel || monthYearKey,
-                    );
-                    setNewCustomPeriodFrom(dbCustomPeriodFrom);
-                    setNewCustomPeriodTo(dbCustomPeriodTo);
+                  if (monthYearKey.startsWith("yearly-")) {
+                    const year = monthYearKey.split("-")[1] || String(selectedYear);
+                    setNewCustomPeriodLabel(`Full Year ${year}`);
+                    setNewCustomPeriodFrom(`${year}-01-01`);
+                    setNewCustomPeriodTo(`${year}-12-31`);
                   } else {
-                    setNewCustomPeriodLabel(
-                      `${months[selectedMonth]} ${selectedYear}`,
-                    );
-                    const startStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
-                    const lastDay = new Date(
-                      selectedYear,
-                      selectedMonth + 1,
-                      0,
-                    ).getDate();
-                    const endStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-                    setNewCustomPeriodFrom(startStr);
-                    setNewCustomPeriodTo(endStr);
+                    const isCustom =
+                      !/^\d{4}-\d{2}$/.test(monthYearKey) &&
+                      !/^yearly-\d{4}$/.test(monthYearKey);
+                    if (isCustom && dbCustomPeriodFrom && dbCustomPeriodTo) {
+                      setNewCustomPeriodLabel(
+                        dbCustomPeriodLabel || monthYearKey,
+                      );
+                      setNewCustomPeriodFrom(dbCustomPeriodFrom);
+                      setNewCustomPeriodTo(dbCustomPeriodTo);
+                    } else {
+                      setNewCustomPeriodLabel(
+                        `${months[selectedMonth]} ${selectedYear}`,
+                      );
+                      const startStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-01`;
+                      const lastDay = new Date(
+                        selectedYear,
+                        selectedMonth + 1,
+                        0,
+                      ).getDate();
+                      const endStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+                      setNewCustomPeriodFrom(startStr);
+                      setNewCustomPeriodTo(endStr);
+                    }
                   }
                   setCustomPeriodModalOpen(true);
                 }}
