@@ -115,7 +115,13 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🩹 v6.7.1 — Patch Release (Android Auto-Updater Fixes, Cross-Platform SVG Flag Rendering & Department Auto-Repair) (Current)
+### 🩹 v6.7.2 — Patch Release (Flag Icon Verification, Explicit SVG Dimensions & Auto-Repair Refinement) (Current)
+
+- **Explicit Vector SVG Dimensions**: Updated `<BdFlagIcon />` and `<UkFlagIcon />` with explicit SVG dimensions (`width=18`, `height=12`) and crisp borders (`border-white/20`), completely eliminating OS emoji font dependencies.
+- **Refined Department Auto-Repair**: Background database migration automatically scans and restores profiles mistakenly set to 'IT' back to 'Data Entry'.
+- **Live Clock Cross-Platform Consistency**: Fixed header clock layout rendering on Windows, macOS, Linux, and mobile browsers.
+
+### 🩹 v6.7.1 — Patch Release (Android Auto-Updater Fixes, Cross-Platform SVG Flag Rendering & Department Auto-Repair)
 
 - **Android Mobile Auto-Update Fixes**: Fixed state timing bug preventing mobile update checks, added 3-source version resolution (GitHub manifest, GitHub API, Supabase), and introduced interactive Download & Install action button with fallback.
 - **Cross-Platform SVG Vector Flags**: Replaced OS-dependent Unicode flag emojis with crisp inline SVG vector icons for Bangladesh 🇧🇩 and United Kingdom 🇬🇧, fixing Windows Segoe UI text rendering issues.
