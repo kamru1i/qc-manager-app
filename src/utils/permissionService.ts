@@ -105,6 +105,38 @@ interface VisibilitySettings {
 }
 
 /**
+ * Resolves effective global settings across passed settings, profile settings, or profiles list.
+ * Central superadmin / admin settings with supervisor_access_overrides take priority over empty user profile settings.
+ */
+export const getEffectiveGlobalSettings = (
+  user?: Profile | null,
+  globalSettings?: VisibilitySettings | null,
+  profilesList: Profile[] = []
+): VisibilitySettings => {
+  if (globalSettings?.supervisor_access_overrides || globalSettings?.role_visibility) {
+    return globalSettings;
+  }
+  if (user?.global_settings?.supervisor_access_overrides) {
+    return user.global_settings;
+  }
+  const sa = profilesList.find((p) => p.role === 'superadmin' && p.global_settings);
+  if (sa?.global_settings?.supervisor_access_overrides || sa?.global_settings?.role_visibility) {
+    return sa.global_settings;
+  }
+
+  const admin = profilesList.find(
+    (p) => isAdminRole(p) && (p.global_settings?.supervisor_access_overrides || p.global_settings?.role_visibility)
+  );
+  if (admin?.global_settings) return admin.global_settings;
+
+  if (user?.global_settings) {
+    return user.global_settings;
+  }
+
+  return {};
+};
+
+/**
  * Checks if a supervisor or admin can access a specific subtab in User Profile View
  * ('user_profile_leave', 'user_profile_quotes', 'user_profile_analytics', 'user_profile_kpi', 'user_profile_settings').
  *
@@ -116,12 +148,13 @@ interface VisibilitySettings {
 export const canAccessUserProfileSubtab = (
   supervisor: Profile | null,
   subtabKey: 'user_profile_leave' | 'user_profile_quotes' | 'user_profile_analytics' | 'user_profile_kpi' | 'user_profile_settings' | string,
-  globalSettings?: VisibilitySettings | null
+  globalSettings?: VisibilitySettings | null,
+  profilesList: Profile[] = []
 ): boolean => {
   if (!supervisor) return false;
   if (isSuperadmin(supervisor)) return true;
 
-  const gs = globalSettings || supervisor.global_settings;
+  const gs = getEffectiveGlobalSettings(supervisor, globalSettings, profilesList);
 
   // 1. Per-supervisor specific override
   const supervisorOverrides = gs?.supervisor_access_overrides?.[supervisor.id];
