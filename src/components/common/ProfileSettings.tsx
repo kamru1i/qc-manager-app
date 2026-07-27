@@ -123,6 +123,7 @@ export function ProfileSettings({
   
   // Feature flags (superadmin-only by default, delegated operational flags available to admins).
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
+  const [userFeatureFlags, setUserFeatureFlags] = useState<Record<string, boolean>>(() => profile?.global_settings?.user_feature_flags || {});
   const [adminDelegatedFlags, setAdminDelegatedFlags] = useState<Record<string, boolean>>({});
   const [activeFlagKey, setActiveFlagKey] = useState<string | null>(null);
 
@@ -356,6 +357,7 @@ export function ProfileSettings({
           ? profile.global_settings.feature_flags
           : {}
       );
+      setUserFeatureFlags(profile.global_settings?.user_feature_flags || {});
       setAdminDelegatedFlags(
         (profile.global_settings?.admin_delegated_flags &&
           typeof profile.global_settings.admin_delegated_flags === 'object')
@@ -488,7 +490,8 @@ export function ProfileSettings({
       const freshGs = await fetchFreshGs();
       const globalSettingsUpdate = {
         ...freshGs,
-        hidden_tabs: hiddenTabs
+        hidden_tabs: hiddenTabs,
+        user_feature_flags: userFeatureFlags,
       };
 
       if (isAdminRole(profile)) {
@@ -1076,21 +1079,21 @@ export function ProfileSettings({
               setDelegatedLeaveSupervisorId={() => {}}
               delegatedKpiSupervisorId={profile?.delegated_kpi_supervisor_id || null}
               setDelegatedKpiSupervisorId={() => {}}
-              userFeatureFlags={profile?.global_settings?.feature_flags || {}}
-              setUserFeatureFlags={() => {}}
+              userFeatureFlags={userFeatureFlags}
+              setUserFeatureFlags={setUserFeatureFlags}
               adminDelegatedFlags={effectiveAdminDelegatedFlags}
             />
           </form>
 
           {/* Security & Password Section */}
-          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4 max-w-2xl">
+          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-5 space-y-3 w-full">
             <h3
               onClick={() => setShowPasswordFields(!showPasswordFields)}
               className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center justify-between pb-2 border-b border-theme-border-input/40 cursor-pointer hover:text-blue-400 transition-colors select-none"
             >
               <span className="flex items-center gap-2">
                 <Key className="h-4 w-4 text-blue-400" />
-                Change Password
+                Change Password?
               </span>
               <span className="text-[10px] text-blue-400 capitalize">{showPasswordFields ? 'Hide' : 'Show'}</span>
             </h3>
@@ -1102,35 +1105,37 @@ export function ProfileSettings({
                   : 'max-h-0 opacity-0 overflow-hidden pointer-events-none mt-0'
               }`}
             >
-              <form onSubmit={handleUpdatePassword} className="space-y-3.5 pt-1">
-                <div>
-                  <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">New Password</label>
+              <form onSubmit={handleUpdatePassword} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end pt-1 w-full font-sans">
+                <div className="md:col-span-5">
+                  <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">New Password</label>
                   <input
                     type="password"
                     placeholder="Enter at least 6 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
+                    className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">Confirm New Password</label>
+                <div className="md:col-span-5">
+                  <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">Confirm New Password</label>
                   <input
                     type="password"
                     placeholder="Verify new password"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3.5 py-2 bg-theme-page-bg border border-theme-border-muted rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 text-theme-text-primary"
+                    className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={passwordSubmitting}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-theme-text-primary bg-theme-border-input hover:bg-theme-border-active hover:text-theme-text-inverse cursor-pointer disabled:opacity-50 transition-all items-center gap-2 active:scale-98"
-                >
-                  {passwordSubmitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                  <span>{passwordSubmitting ? 'Updating...' : 'Update Password'}</span>
-                </button>
+                <div className="md:col-span-2">
+                  <button
+                    type="submit"
+                    disabled={passwordSubmitting}
+                    className="w-full h-[36px] flex justify-center items-center py-2 px-3 border border-transparent rounded-lg shadow-md text-xs font-bold text-theme-text-primary bg-theme-border-input hover:bg-theme-border-active hover:text-theme-text-inverse cursor-pointer disabled:opacity-50 transition-all gap-1.5 active:scale-98 shrink-0"
+                  >
+                    {passwordSubmitting && <RefreshCw className="h-3 w-3 animate-spin" />}
+                    <span className="truncate">{passwordSubmitting ? 'Updating...' : 'Update Password'}</span>
+                  </button>
+                </div>
               </form>
             </div>
           </div>

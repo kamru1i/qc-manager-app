@@ -184,6 +184,8 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
   const hasAssignedSupervisor = needsApproval && (supervisorIds.length > 0 || (viewingStaff?.supervisor_ids && viewingStaff.supervisor_ids.length > 0));
   const isCurrentSuperadmin = isSuperadmin(currentUser || null);
+  const isSelfEdit = Boolean(currentUser && viewingStaff && currentUser.id === viewingStaff.id);
+  const canEditShift = isAdmin || isSelfEdit || isSupervisor;
   const isCurrentAssignedSupervisor = isSupervisor || 
     (currentUser && viewingStaff?.supervisor_ids?.includes(currentUser.id)) ||
     (currentUser && viewingStaff?.delegated_leave_supervisor_id === currentUser.id) ||
@@ -307,7 +309,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Full Name
             </label>
-            {isAdmin ? (
+            {canEditShift ? (
               <input
                 type="text"
                 placeholder="e.g. Kamrul Islam"
@@ -359,7 +361,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Job Role
             </label>
-            {isAdmin ? (
+            {canEditShift ? (
               <input
                 type="text"
                 placeholder="e.g. IT Officer"
@@ -378,7 +380,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Working Hours
             </label>
-            {isAdmin ? (
+            {canEditShift ? (
               <select
                 value={workingHours}
                 onChange={(e) => setWorkingHours?.(e.target.value)}
@@ -399,7 +401,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
             <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
               Break (Minutes)
             </label>
-            {isAdmin || isSupervisor ? (
+            {canEditShift ? (
               <input
                 type="number"
                 min="0"
@@ -425,7 +427,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 </span>
               )}
             </div>
-            {isAdmin || isSupervisor ? (
+            {canEditShift ? (
               <input
                 type="time"
                 value={signInTime}
@@ -450,7 +452,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 </span>
               )}
             </div>
-            {isAdmin || isSupervisor ? (
+            {canEditShift ? (
               <input
                 type="time"
                 value={signOutTime}
