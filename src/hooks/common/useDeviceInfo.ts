@@ -64,11 +64,6 @@ export function useDeviceInfo(): UseDeviceInfoResult {
                   appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...data.downloads.macos?.appleSilicon, version: data.version, releaseDate: dateStr, releaseNotes: notesText },
                   intel: { ...DOWNLOADS.macos.intel, ...data.downloads.macos?.intel, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
                 },
-                linux: {
-                  deb: { ...DOWNLOADS.linux.deb, ...data.downloads.linux?.deb, version: data.version, releaseDate: dateStr, releaseNotes: notesText },
-                  appimage: { ...DOWNLOADS.linux.appimage, ...data.downloads.linux?.appimage, version: data.version, releaseDate: dateStr, releaseNotes: notesText },
-                  rpm: { ...DOWNLOADS.linux.rpm, ...data.downloads.linux?.rpm, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
-                },
                 android: {
                   apk: { ...DOWNLOADS.android.apk, ...data.downloads.android?.apk, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
                 }
@@ -114,9 +109,6 @@ export function useDeviceInfo(): UseDeviceInfoResult {
           const macUnivInfo = getAssetInfo(n => n.endsWith('.dmg') && n.includes('universal'));
           const macSiliconInfo = getAssetInfo(n => n.endsWith('.dmg') && (n.includes('aarch64') || n.includes('arm64')));
           const macIntelInfo = getAssetInfo(n => n.endsWith('.dmg') && (n.includes('x64') || n.includes('x86_64')) && !n.includes('aarch64') && !n.includes('arm64') && !n.includes('universal'));
-          const linuxDebInfo = getAssetInfo(n => n.endsWith('.deb'));
-          const linuxAppImageInfo = getAssetInfo(n => n.endsWith('.appimage'));
-          const linuxRpmInfo = getAssetInfo(n => n.endsWith('.rpm'));
           const androidApkInfo = getAssetInfo(n => n.endsWith('.apk'));
 
           const mergedDownloads = {
@@ -128,11 +120,6 @@ export function useDeviceInfo(): UseDeviceInfoResult {
               universal: { ...DOWNLOADS.macos.universal, ...(macUnivInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
               appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...(macSiliconInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
               intel: { ...DOWNLOADS.macos.intel, ...(macIntelInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText }
-            },
-            linux: {
-              deb: { ...DOWNLOADS.linux.deb, ...(linuxDebInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
-              appimage: { ...DOWNLOADS.linux.appimage, ...(linuxAppImageInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
-              rpm: { ...DOWNLOADS.linux.rpm, ...(linuxRpmInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
             },
             android: {
               apk: { ...DOWNLOADS.android.apk, ...(androidApkInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText }
@@ -191,18 +178,6 @@ function getRecommendation(info: DeviceInfo, currentDownloads: typeof DOWNLOADS)
         return currentDownloads.macos.intel;
       }
       return currentDownloads.macos.universal;
-      
-    case 'Linux':
-      // Recommend deb for Ubuntu/Debian/Mint/Pop!_OS/Kali
-      if (info.linuxDistro === 'Ubuntu' || info.linuxDistro === 'Debian') {
-        return currentDownloads.linux.deb;
-      }
-      // Recommend rpm for Fedora/RedHat/openSUSE
-      if (info.linuxDistro === 'Fedora' || info.linuxDistro === 'RedHat' || info.linuxDistro === 'openSUSE') {
-        return currentDownloads.linux.rpm;
-      }
-      // Default to AppImage for unknown Linux
-      return currentDownloads.linux.appimage;
       
     case 'Android':
       return currentDownloads.android.apk;

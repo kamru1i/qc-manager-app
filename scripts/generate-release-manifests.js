@@ -45,7 +45,6 @@ async function main() {
     const downloads = {
       windows: { x64: {}, arm64: {} },
       macos: { universal: {}, appleSilicon: {}, intel: {} },
-      linux: { deb: {}, appimage: {}, rpm: {} },
       android: { apk: {} }
     };
 
@@ -440,8 +439,6 @@ async function main() {
         platformKey = 'darwin-x86_64';
       } else if (targetName.includes('aarch64.app.tar.gz') || targetName.includes('arm64.app.tar.gz')) {
         platformKey = 'darwin-aarch64';
-      } else if (targetName.endsWith('.AppImage')) {
-        platformKey = 'linux-x86_64';
       }
 
       if (platformKey) {
@@ -501,23 +498,6 @@ async function main() {
           url: assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.browser_download_url || '',
           fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.name] || '',
           sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.name] || ''
-        }
-      },
-      linux: {
-        deb: {
-          url: assets.find(a => a.name.endsWith('.deb'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.endsWith('.deb'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.endsWith('.deb'))?.name] || ''
-        },
-        appimage: {
-          url: assets.find(a => a.name.endsWith('.AppImage'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.endsWith('.AppImage'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.endsWith('.AppImage'))?.name] || ''
-        },
-        rpm: {
-          url: assets.find(a => a.name.endsWith('.rpm'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.endsWith('.rpm'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.endsWith('.rpm'))?.name] || ''
         }
       },
       android: {

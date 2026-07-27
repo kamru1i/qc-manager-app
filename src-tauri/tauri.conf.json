@@ -27,7 +27,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi", "dmg", "app", "deb", "appimage", "rpm"],
+    "targets": ["nsis", "msi", "dmg", "app"],
     "createUpdaterArtifacts": true,
     "category": "Productivity",
     "publisher": "Kamrul Islam, IT Officer, B&F Corporate",

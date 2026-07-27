@@ -195,21 +195,6 @@ export default function DownloadsPage() {
               </div>
             </div>
 
-            {/* Linux Category */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                Linux Installer
-              </h3>
-              <div className="flex flex-col gap-3">
-                {renderBuildRow(downloads.linux.deb, "Debian Package (.deb)")}
-                {renderBuildRow(
-                  downloads.linux.appimage,
-                  "AppImage Executable (.AppImage)",
-                )}
-                {renderBuildRow(downloads.linux.rpm, "RPM Package (.rpm)")}
-              </div>
-            </div>
-
             {/* Mobile Category */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
