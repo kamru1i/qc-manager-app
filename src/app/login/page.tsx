@@ -272,11 +272,37 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Read direct input values from DOM form to ensure browser-autofilled values are captured
+    const form = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
+    const rawEmail = (formData.get("email") as string || email).trim();
+    const rawPassword = (formData.get("password") as string || password);
+
+    // If email contains @ keep as-is, otherwise format codename to UPPERCASE
+    const loginEmailInput = rawEmail.includes("@") ? rawEmail : rawEmail.toUpperCase();
+    const loginPasswordInput = rawPassword;
+
+    // Sync state so UI reflects whatever was submitted
+    if (loginEmailInput !== email) setEmail(loginEmailInput);
+    if (loginPasswordInput !== password) setPassword(loginPasswordInput);
+
+    // Guard: if codename or email is empty, focus email input
+    if (!loginEmailInput) {
+      document.getElementById("email")?.focus();
+      return;
+    }
+
+    // Guard: if password is empty, smoothly move focus to password field instead of rejecting with 401
+    if (!loginPasswordInput) {
+      document.getElementById("password")?.focus();
+      return;
+    }
+
     setLoading(true);
     setError("");
 
-    // Try resolving username/codename to registered email securely (passing password)
-    let loginEmail = email.trim();
+    let loginEmail = loginEmailInput;
     if (!loginEmail.includes("@")) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
@@ -286,7 +312,7 @@ export default function LoginPage() {
         const res = await fetch(getApiUrl("/api/resolve-email"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: loginEmail, password }),
+          body: JSON.stringify({ username: loginEmail, password: loginPasswordInput }),
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
@@ -318,7 +344,7 @@ export default function LoginPage() {
             const { data, error: authError } =
               await supabase.auth.signInWithPassword({
                 email: baseName + suffix,
-                password: password,
+                password: loginPasswordInput,
               });
             if (!authError && data.session) {
               saveOrClearCredentials();
@@ -361,7 +387,7 @@ export default function LoginPage() {
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
           email: loginEmail,
-          password: password,
+          password: loginPasswordInput,
         },
       );
 
