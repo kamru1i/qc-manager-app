@@ -8,7 +8,7 @@
 export interface MenuTabDef {
   key: string;
   label: string;
-  category: 'Main Workspace Sections' | 'Quotes Tracker Subtabs' | 'Leave Tracker Subtabs' | 'Settings Subtabs';
+  category: 'Main Workspace Sections' | 'Quotes Tracker Subtabs' | 'Leave Tracker Subtabs' | 'Settings Subtabs' | 'User Profile View Subtabs';
 }
 
 export const MENU_TABS: MenuTabDef[] = [
@@ -45,6 +45,13 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'settings_access', label: 'Settings > Access', category: 'Settings Subtabs' },
   { key: 'settings_feature_flags', label: 'Settings > Feature Flags', category: 'Settings Subtabs' },
   { key: 'settings_vpn', label: 'Settings > VPN', category: 'Settings Subtabs' },
+
+  // User Profile View Subtabs (Supervisor Access)
+  { key: 'user_profile_leave', label: 'User Profile > Leave History', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_quotes', label: 'User Profile > Quotes History', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_analytics', label: 'User Profile > Analytics', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_kpi', label: 'User Profile > KPI & Performance', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_settings', label: 'User Profile > Profile Settings', category: 'User Profile View Subtabs' },
 ];
 
 /** Roles a superadmin can configure visibility for (never superadmin itself). */
@@ -80,6 +87,11 @@ export const getDefaultRoleVisibility = (
     case 'user_management':
     case 'team_leaves':
     case 'settings_vpn':
+    case 'user_profile_leave':
+    case 'user_profile_quotes':
+    case 'user_profile_analytics':
+    case 'user_profile_kpi':
+    case 'user_profile_settings':
       return role === 'supervisor' || role === 'admin';
 
     case 'settings_profile':

@@ -6,7 +6,7 @@ import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
-import { canAccessModule, isAdminRole, getDisplayRole, getRoleLabel } from '@/utils/permissionService';
+import { canAccessModule, canAccessUserProfileSubtab, isAdminRole, getDisplayRole, getRoleLabel } from '@/utils/permissionService';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
 import { Modal } from '@/components/common/Modal';
 import { UserManagementSkeleton } from '@/components/common/skeleton/UserManagementSkeleton';
@@ -300,18 +300,22 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
   // Redirect to an authorized subtab if the current subtab is restricted
   useEffect(() => {
     if (viewingStaff) {
-      const isLeaveAllowed = canAccessModule(profile, viewingStaff, 'leave', profiles);
-      const isKpiAllowed = canAccessModule(profile, viewingStaff, 'kpi', profiles);
-      const isQuotesAllowed = viewingStaff.has_quotes_access && canAccessModule(profile, viewingStaff, 'quotes', profiles);
+      const isLeaveAllowed = canAccessUserProfileSubtab(profile, 'user_profile_leave') && canAccessModule(profile, viewingStaff, 'leave', profiles);
+      const isQuotesAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_quotes') && canAccessModule(profile, viewingStaff, 'quotes', profiles);
+      const isAnalyticsAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_analytics') && canAccessModule(profile, viewingStaff, 'quotes', profiles);
+      const isKpiAllowed = canAccessUserProfileSubtab(profile, 'user_profile_kpi') && canAccessModule(profile, viewingStaff, 'kpi', profiles);
+      const isProfileSettingsAllowed = canAccessUserProfileSubtab(profile, 'user_profile_settings');
       
       if (activeSubTab === 'leave' && !isLeaveAllowed) {
-        handleSetActiveSubTab(isKpiAllowed ? 'kpi' : isQuotesAllowed ? 'quotes' : 'profile');
-      } else if (activeSubTab === 'kpi' && !isKpiAllowed) {
-        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isQuotesAllowed ? 'quotes' : 'profile');
+        handleSetActiveSubTab(isQuotesAllowed ? 'quotes' : isAnalyticsAllowed ? 'analytics' : isKpiAllowed ? 'kpi' : isProfileSettingsAllowed ? 'profile' : 'profile');
       } else if (activeSubTab === 'quotes' && !isQuotesAllowed) {
-        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isKpiAllowed ? 'kpi' : 'profile');
-      } else if (activeSubTab === 'analytics' && !isQuotesAllowed) {
-        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isKpiAllowed ? 'kpi' : 'profile');
+        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isAnalyticsAllowed ? 'analytics' : isKpiAllowed ? 'kpi' : isProfileSettingsAllowed ? 'profile' : 'profile');
+      } else if (activeSubTab === 'analytics' && !isAnalyticsAllowed) {
+        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isQuotesAllowed ? 'quotes' : isKpiAllowed ? 'kpi' : isProfileSettingsAllowed ? 'profile' : 'profile');
+      } else if (activeSubTab === 'kpi' && !isKpiAllowed) {
+        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isQuotesAllowed ? 'quotes' : isAnalyticsAllowed ? 'analytics' : isProfileSettingsAllowed ? 'profile' : 'profile');
+      } else if (activeSubTab === 'profile' && !isProfileSettingsAllowed) {
+        handleSetActiveSubTab(isLeaveAllowed ? 'leave' : isQuotesAllowed ? 'quotes' : isAnalyticsAllowed ? 'analytics' : isKpiAllowed ? 'kpi' : 'profile');
       }
     }
   }, [viewingStaff, activeSubTab, profile, profiles]);
@@ -882,7 +886,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
             {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
             {!isCreatingNewUser && viewingStaff && (
               <div className="flex border-b border-theme-border-input gap-1 mt-2 overflow-x-auto whitespace-nowrap scrollbar-none pb-px max-w-full">
-                {canAccessModule(profile, viewingStaff, 'leave', profiles) && (
+                {canAccessUserProfileSubtab(profile, 'user_profile_leave') && canAccessModule(profile, viewingStaff, 'leave', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('leave')}
@@ -895,7 +899,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <Calendar className="h-3.5 w-3.5" /> Leave History
                   </button>
                 )}
-                {viewingStaff.has_quotes_access && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
+                {viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_quotes') && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('quotes')}
@@ -908,7 +912,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <FileText className="h-3.5 w-3.5 text-purple-400" /> Quotes History
                   </button>
                 )}
-                {viewingStaff.has_quotes_access && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
+                {viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_analytics') && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('analytics')}
@@ -921,7 +925,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <TrendingUp className="h-3.5 w-3.5 text-indigo-400" /> Analytics
                   </button>
                 )}
-                {canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
+                {canAccessUserProfileSubtab(profile, 'user_profile_kpi') && canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('kpi')}
@@ -934,17 +938,19 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                     <BarChart2 className="h-3.5 w-3.5" /> KPI & Performance
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => handleSetActiveSubTab('profile')}
-                  className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeSubTab === 'profile'
-                      ? 'border-blue-500 text-blue-400 font-bold'
-                      : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
-                  }`}
-                >
-                  <Settings className="h-3.5 w-3.5" /> Profile Settings
-                </button>
+                {canAccessUserProfileSubtab(profile, 'user_profile_settings') && (
+                  <button
+                    type="button"
+                    onClick={() => handleSetActiveSubTab('profile')}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeSubTab === 'profile'
+                        ? 'border-blue-500 text-blue-400 font-bold'
+                        : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
+                    }`}
+                  >
+                    <Settings className="h-3.5 w-3.5" /> Profile Settings
+                  </button>
+                )}
               </div>
             )}
           </div>

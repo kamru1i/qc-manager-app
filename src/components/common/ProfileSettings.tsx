@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2 } from 'lucide-react';
+import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2, Users } from 'lucide-react';
 import { Profile } from '@/types';
 import { isSuperadmin, isAdminRole, isTabVisibleForRole, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
 import { ProfileFields } from '@/components/leave-tracker/ProfileFields';
@@ -79,6 +79,47 @@ export function ProfileSettings({
   // Shape: { [role]: { [tabKey]: boolean } } — false = hidden for that role.
   const [roleVisibility, setRoleVisibility] = useState<Record<string, Record<string, boolean>>>({});
   const [activeRoleVisKey, setActiveRoleVisKey] = useState<string | null>(null);
+
+  // Per-supervisor specific access overrides
+  const [supervisorAccessOverrides, setSupervisorAccessOverrides] = useState<Record<string, Record<string, boolean>>>(
+    () => profile?.global_settings?.supervisor_access_overrides || {}
+  );
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>('');
+
+  const handleToggleSupervisorOverride = async (supervisorId: string, tabKey: string, enabled: boolean) => {
+    if (!profile) return;
+    try {
+      const currentOverrides = { ...(supervisorAccessOverrides[supervisorId] || {}) };
+      currentOverrides[tabKey] = enabled;
+      const nextAllOverrides = {
+        ...supervisorAccessOverrides,
+        [supervisorId]: currentOverrides,
+      };
+
+      let updatedGs = {
+        ...(profile.global_settings || {}),
+        supervisor_access_overrides: nextAllOverrides,
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ global_settings: updatedGs })
+        .eq('id', sessionUser?.id || profile.id);
+
+      if (error) throw error;
+
+      setSupervisorAccessOverrides(nextAllOverrides);
+      const updatedProfile = { ...profile, global_settings: updatedGs };
+      setProfile(updatedProfile);
+      if (sessionUser) {
+        localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
+      }
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      toast.success('Supervisor access override updated!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update supervisor access override');
+    }
+  };
   
   // Feature flags (superadmin-only by default, delegated operational flags available to admins).
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
@@ -319,6 +360,12 @@ export function ProfileSettings({
         (profile.global_settings?.admin_delegated_flags &&
           typeof profile.global_settings.admin_delegated_flags === 'object')
           ? profile.global_settings.admin_delegated_flags
+          : {}
+      );
+      setSupervisorAccessOverrides(
+        (profile.global_settings?.supervisor_access_overrides &&
+          typeof profile.global_settings.supervisor_access_overrides === 'object')
+          ? profile.global_settings.supervisor_access_overrides
           : {}
       );
       setTempAccess(
@@ -1245,7 +1292,7 @@ export function ProfileSettings({
               </p>
             </div>
 
-            {['Main Workspace Sections', 'Quotes Tracker Subtabs', 'Leave Tracker Subtabs', 'Settings Subtabs'].map(
+            {['Main Workspace Sections', 'Quotes Tracker Subtabs', 'Leave Tracker Subtabs', 'Settings Subtabs', 'User Profile View Subtabs'].map(
               (category) => {
                 const tabs = MENU_TABS.filter((t) => t.category === category);
                 if (tabs.length === 0) return null;
@@ -1299,6 +1346,91 @@ export function ProfileSettings({
                 );
               }
             )}
+          </div>
+
+          {/* Per-Supervisor Specific Access Controls (User Profile View & Features) */}
+          <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
+                <Users className="h-4 w-4 text-purple-400" />
+                Per-Supervisor Specific Access Controls
+              </h3>
+              <p className="text-[11px] text-theme-text-muted mt-2">
+                Configure feature and profile subtab access for an individual <strong>Supervisor</strong> when viewing their assigned team members. Specific supervisor settings override role defaults.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1.5">
+                  Select Supervisor
+                </label>
+                <select
+                  value={selectedSupervisorId}
+                  onChange={(e) => setSelectedSupervisorId(e.target.value)}
+                  className="w-full sm:w-80 h-9 px-3 bg-theme-page-bg border border-theme-border-input rounded-xl text-xs text-theme-text-primary font-medium outline-none focus:border-blue-500 transition-colors"
+                >
+                  <option value="">-- Choose a Supervisor --</option>
+                  {profilesList
+                    .filter((p) => p.role === 'supervisor' || p.role === 'admin')
+                    .map((sup) => (
+                      <option key={sup.id} value={sup.id}>
+                        {sup.full_name || sup.username} ({sup.role})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {selectedSupervisorId && (
+                <div className="bg-theme-card-container/80 rounded-xl border border-theme-border-input p-4 space-y-3">
+                  <div className="text-xs font-bold text-theme-text-primary border-b border-theme-border-input/40 pb-2 flex justify-between items-center">
+                    <span>Subtab & Feature Permissions for: <strong className="text-blue-400">{profilesList.find((p) => p.id === selectedSupervisorId)?.full_name || profilesList.find((p) => p.id === selectedSupervisorId)?.username}</strong></span>
+                    <span className="text-[10px] text-theme-text-muted font-normal">Saves automatically</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {[
+                      { key: 'user_profile_leave', label: 'User Profile > Leave History' },
+                      { key: 'user_profile_quotes', label: 'User Profile > Quotes History' },
+                      { key: 'user_profile_analytics', label: 'User Profile > Analytics' },
+                      { key: 'user_profile_kpi', label: 'User Profile > KPI & Performance' },
+                      { key: 'user_profile_settings', label: 'User Profile > Profile Settings' },
+                    ].map((item) => {
+                      const supOverrides = supervisorAccessOverrides[selectedSupervisorId];
+                      const isConfigured = supOverrides && typeof supOverrides[item.key] === 'boolean';
+                      const activeVal = isConfigured
+                        ? supOverrides[item.key]
+                        : getDefaultRoleVisibility('supervisor', item.key);
+
+                      return (
+                        <div
+                          key={item.key}
+                          className="flex items-center justify-between p-3 bg-theme-page-bg/80 border border-theme-border-input/60 rounded-xl"
+                        >
+                          <div>
+                            <span className="text-xs font-semibold text-theme-text-primary block">{item.label}</span>
+                            <span className="text-[10px] text-theme-text-muted">
+                              {isConfigured ? 'Custom Supervisor Override' : 'Supervisor Role Default'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSupervisorOverride(selectedSupervisorId, item.key, !activeVal)}
+                            className={`w-20 h-7 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                              activeVal
+                                ? 'bg-emerald-955/30 border-emerald-500/30 text-emerald-400 hover:bg-emerald-955/50'
+                                : 'bg-rose-955/30 border-rose-500/30 text-rose-400 hover:bg-rose-955/50'
+                            }`}
+                          >
+                            {activeVal ? 'Allowed' : 'Hidden'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Temporary Access Controls */}

@@ -91,6 +91,7 @@ export const canAdminManageFeatureFlag = (
 interface VisibilitySettings {
   feature_flags?: Record<string, boolean>;
   role_visibility?: Record<string, Record<string, boolean>>;
+  supervisor_access_overrides?: Record<string, Record<string, boolean>>;
   temp_access?: Array<{
     target_type?: 'role' | 'user';
     user_id?: string;
@@ -102,6 +103,35 @@ interface VisibilitySettings {
     comment?: string;
   }>;
 }
+
+/**
+ * Checks if a supervisor or admin can access a specific subtab in User Profile View
+ * ('user_profile_leave', 'user_profile_quotes', 'user_profile_analytics', 'user_profile_kpi', 'user_profile_settings').
+ *
+ * Evaluates:
+ * 1. Superadmin -> true
+ * 2. Per-supervisor specific override in supervisor_access_overrides[supervisor.id][subtabKey]
+ * 3. Role-level tab visibility (isTabVisibleForRole)
+ */
+export const canAccessUserProfileSubtab = (
+  supervisor: Profile | null,
+  subtabKey: 'user_profile_leave' | 'user_profile_quotes' | 'user_profile_analytics' | 'user_profile_kpi' | 'user_profile_settings' | string,
+  globalSettings?: VisibilitySettings | null
+): boolean => {
+  if (!supervisor) return false;
+  if (isSuperadmin(supervisor)) return true;
+
+  const gs = globalSettings || supervisor.global_settings;
+
+  // 1. Per-supervisor specific override
+  const supervisorOverrides = gs?.supervisor_access_overrides?.[supervisor.id];
+  if (supervisorOverrides && typeof supervisorOverrides[subtabKey] === 'boolean') {
+    return supervisorOverrides[subtabKey];
+  }
+
+  // 2. Fallback to per-role visibility
+  return isTabVisibleForRole(supervisor, subtabKey, gs);
+};
 
 /**
  * Superadmin-configurable per-role tab visibility, with time-boxed overrides & feature flag gating.
