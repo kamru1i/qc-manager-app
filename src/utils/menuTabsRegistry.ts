@@ -52,6 +52,7 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'user_profile_analytics', label: 'User Management > User Profile > Analytics', category: 'User Profile View Subtabs' },
   { key: 'user_profile_kpi', label: 'User Management > User Profile > KPI & Performance', category: 'User Profile View Subtabs' },
   { key: 'user_profile_settings', label: 'User Management > User Profile > Profile Settings', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_change_password', label: 'User Management > User Profile > Change Password?', category: 'User Profile View Subtabs' },
 ];
 
 /** Roles a superadmin can configure visibility for (never superadmin itself). */
@@ -92,6 +93,7 @@ export const getDefaultRoleVisibility = (
     case 'user_profile_analytics':
     case 'user_profile_kpi':
     case 'user_profile_settings':
+    case 'user_profile_change_password':
       return role === 'supervisor' || role === 'admin';
 
     case 'settings_profile':

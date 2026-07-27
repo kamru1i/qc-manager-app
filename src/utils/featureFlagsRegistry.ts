@@ -104,6 +104,28 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     label: 'Security Audit Logs Inspection',
     description: 'Inspecting system security, user activity, and admin audit log entries.',
   },
+
+  // User Profile Sections Features
+  {
+    key: 'user_profile_leave_workspace',
+    label: 'Leave Tracker Workspace',
+    description: 'Global toggle for Leave Tracker Workspace card on staff profiles.',
+  },
+  {
+    key: 'user_profile_quotes_workspace',
+    label: 'Quotes Manager Workspace',
+    description: 'Global toggle for Quotes Manager Workspace card on staff profiles.',
+  },
+  {
+    key: 'user_profile_kpi_settings',
+    label: 'KPI & Performance Settings',
+    description: 'Global toggle for KPI & Performance Settings card on staff profiles.',
+  },
+  {
+    key: 'user_profile_change_password_feature',
+    label: 'Change Password',
+    description: 'Global toggle for Change Password? section on staff profiles.',
+  },
 ];
 
 /** Default state for a feature flag when no explicit superadmin toggle exists. */
@@ -130,4 +152,8 @@ export const FLAG_TO_TAB_KEY: Record<string, string> = {
   custom_entry: 'custom_entry',
   bd_clock: 'bd_clock',
   uk_clock: 'uk_clock',
+  user_profile_leave_workspace: 'user_profile_leave',
+  user_profile_quotes_workspace: 'user_profile_quotes',
+  user_profile_kpi_settings: 'user_profile_kpi',
+  user_profile_change_password_feature: 'user_profile_change_password',
 };
