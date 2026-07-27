@@ -78,13 +78,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only return email — the client does signInWithPassword to create a proper session.
-    // Previously the server also called signInWithPassword here to validate the password
-    // before releasing the email, but this doubled auth API calls per login and generated
-    // wasted session tokens. Security is maintained because:
-    //   1. The RPC is restricted to service_role (cannot be called from client)
-    //   2. If the username doesn't exist, we return 401 above (no email enumeration)
-    //   3. The client's signInWithPassword will reject wrong passwords
+    // Validate the password server-side before releasing the email to prevent
+    // email enumeration attacks. The client will still call signInWithPassword
+    // to create the actual session, but this ensures only valid credentials
+    // can resolve a username to an email.
+    const { error: signInError } = await supabaseServer.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      // Wrong password or auth failure — return null to prevent email enumeration
+      return NextResponse.json(
+        { email: null },
+        { headers: getCorsHeaders(request) }
+      );
+    }
+
     return NextResponse.json({ email }, { headers: getCorsHeaders(request) });
   } catch (err) {
     console.error('[ResolveEmail] Unexpected error:', err);

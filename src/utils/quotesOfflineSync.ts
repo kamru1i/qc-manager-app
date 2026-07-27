@@ -4,6 +4,20 @@ import { createIdbStore, generateUUID } from './idbStoreFactory';
 
 export { generateUUID };
 
+/** Maximum number of sync retries before a record is permanently dropped from the queue. */
+const MAX_SYNC_RETRIES = 3;
+
+/** Log a permanently failed record for observability (dead-letter). */
+function logDeadLetter(module: string, action: string, record: { localId?: string; id?: string; _retryCount?: number }, error: unknown) {
+  console.error(`[${module}] Dead-letter: permanently dropping ${action} after ${record._retryCount ?? 0} retries`, {
+    localId: record.localId,
+    remoteId: record.id,
+    action,
+    error: error instanceof Error ? error.message : String(error),
+    timestamp: new Date().toISOString(),
+  });
+}
+
 export interface PendingRecordAction {
   localId?: string; // local temporary UUID key
   id?: string; // remote Supabase ID (for update/delete)
@@ -16,6 +30,7 @@ export interface PendingRecordAction {
   action: 'insert' | 'update' | 'delete';
   data?: Partial<Omit<RecordItem, 'id' | 'profiles'>>;
   synced: boolean;
+  _retryCount?: number;
 }
 
 const STORE_NAME = 'pending_records';
@@ -163,7 +178,13 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
           .eq('id', record.id);
 
         if (deleteError) {
-          console.error('Error syncing offline delete:', deleteError);
+          const retries = (record._retryCount || 0) + 1;
+          if (retries >= MAX_SYNC_RETRIES && record.localId) {
+            logDeadLetter('QuotesOfflineSync', 'delete', { ...record, _retryCount: retries }, deleteError);
+            await deleteOfflineRecord(record.localId);
+          } else if (record.localId) {
+            await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+          }
           continue;
         }
         isSyncedSuccessfully = true;
@@ -194,7 +215,13 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
           .eq('id', record.id);
 
         if (updateError) {
-          console.error('Error syncing offline update:', updateError);
+          const retries = (record._retryCount || 0) + 1;
+          if (retries >= MAX_SYNC_RETRIES && record.localId) {
+            logDeadLetter('QuotesOfflineSync', 'update', { ...record, _retryCount: retries }, updateError);
+            await deleteOfflineRecord(record.localId);
+          } else if (record.localId) {
+            await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+          }
           continue;
         }
         isSyncedSuccessfully = true;
@@ -218,6 +245,13 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
             isSyncedSuccessfully = true;
           } else {
             console.error('Error syncing offline record:', insertError);
+            const retries = (record._retryCount || 0) + 1;
+            if (retries >= MAX_SYNC_RETRIES && record.localId) {
+              logDeadLetter('QuotesOfflineSync', 'insert', { ...record, _retryCount: retries }, insertError);
+              await deleteOfflineRecord(record.localId);
+            } else if (record.localId) {
+              await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+            }
             continue;
           }
         } else {

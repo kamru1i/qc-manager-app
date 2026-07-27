@@ -396,15 +396,18 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
           .select(CHUTI_COLUMNS)
           .eq('user_id', staffId)
           .is('deleted_at', null)
-          .order('date', { ascending: false }),
+          .order('date', { ascending: false })
+          .limit(500),
         supabase
           .from('leave_settlements')
           .select(LEAVE_SETTLEMENT_COLUMNS)
-          .eq('user_id', staffId),
+          .eq('user_id', staffId)
+          .limit(500),
         supabase
           .from('govt_holiday_responses')
           .select(GOVT_HOLIDAY_RESPONSE_COLUMNS)
-          .eq('user_id', staffId),
+          .eq('user_id', staffId)
+          .limit(500),
       ]);
 
       if (chutiRes.error) throw chutiRes.error;
