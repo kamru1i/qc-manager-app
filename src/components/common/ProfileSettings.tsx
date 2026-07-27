@@ -57,6 +57,27 @@ export function ProfileSettings({
   const [profileSignInTime, setProfileSignInTime] = useState(() => profile?.default_sign_in || '');
   const [profileSignOutTime, setProfileSignOutTime] = useState(() => profile?.default_sign_out || '');
 
+  // Workspace & KPI settings state
+  const [editHasChutiAccess, setEditHasChutiAccess] = useState(() => profile?.has_chuti_access !== false);
+  const [editNeedsApproval, setEditNeedsApproval] = useState(() => profile?.needs_supervisor_approval !== false);
+  const [editSupervisorIds, setEditSupervisorIds] = useState<string[]>(() => profile?.supervisor_ids || []);
+  const [editEligibleOfficeLeave, setEditEligibleOfficeLeave] = useState(() => profile?.eligible_office_leave !== false);
+  const [editEligibleGovtHoliday, setEditEligibleGovtHoliday] = useState(() => profile?.eligible_govt_holiday !== false);
+  const [editAllowOvertime, setEditAllowOvertime] = useState(() => !!profile?.allow_overtime);
+  const [editAllowReserve, setEditAllowReserve] = useState(() => !!profile?.allow_reserve);
+  const [editHasQuotesAccess, setEditHasQuotesAccess] = useState(() => profile?.has_quotes_access !== false);
+  const [editAllowedTypes, setEditAllowedTypes] = useState<string[]>(() => profile?.allowed_types || []);
+  const [editCanManageRules, setEditCanManageRules] = useState(() => !!profile?.can_manage_rules);
+  const [editKpiSkills, setEditKpiSkills] = useState<string[]>(() => profile?.global_settings?.kpi_skills || []);
+  const [editKpiDeptIndicators, setEditKpiDeptIndicators] = useState<string[]>(() => profile?.global_settings?.kpi_dept_indicators || []);
+  const [editKpiOtherDeptIndicators, setEditKpiOtherDeptIndicators] = useState<string[]>(() => profile?.global_settings?.kpi_other_dept_indicators || []);
+  const [editPerformsDataEntry, setEditPerformsDataEntry] = useState(() => profile?.global_settings?.performs_data_entry !== false);
+  const [editDepartment, setEditDepartment] = useState(() => profile?.global_settings?.department || 'Data Entry');
+  const [editPerformsOtherDeptTasks, setEditPerformsOtherDeptTasks] = useState(() => !!profile?.global_settings?.performs_other_dept_tasks);
+  const [editOtherDepartment, setEditOtherDepartment] = useState(() => profile?.global_settings?.other_department || 'IT');
+  const [editDelegatedLeaveSupervisorId, setEditDelegatedLeaveSupervisorId] = useState<string | null>(() => profile?.delegated_leave_supervisor_id || null);
+  const [editDelegatedKpiSupervisorId, setEditDelegatedKpiSupervisorId] = useState<string | null>(() => profile?.delegated_kpi_supervisor_id || null);
+
   // Password fields state
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -337,6 +358,25 @@ export function ProfileSettings({
       setEditBreakTime((profile.break_time ?? 0).toString());
       setProfileSignInTime(profile.default_sign_in || '');
       setProfileSignOutTime(profile.default_sign_out || '');
+      setEditHasChutiAccess(profile.has_chuti_access !== false);
+      setEditNeedsApproval(profile.needs_supervisor_approval !== false);
+      setEditSupervisorIds(profile.supervisor_ids || []);
+      setEditEligibleOfficeLeave(profile.eligible_office_leave !== false);
+      setEditEligibleGovtHoliday(profile.eligible_govt_holiday !== false);
+      setEditAllowOvertime(!!profile.allow_overtime);
+      setEditAllowReserve(!!profile.allow_reserve);
+      setEditHasQuotesAccess(profile.has_quotes_access !== false);
+      setEditAllowedTypes(profile.allowed_types || []);
+      setEditCanManageRules(!!profile.can_manage_rules);
+      setEditKpiSkills(profile.global_settings?.kpi_skills || []);
+      setEditKpiDeptIndicators(profile.global_settings?.kpi_dept_indicators || []);
+      setEditKpiOtherDeptIndicators(profile.global_settings?.kpi_other_dept_indicators || []);
+      setEditPerformsDataEntry(profile.global_settings?.performs_data_entry !== false);
+      setEditDepartment(profile.global_settings?.department || 'Data Entry');
+      setEditPerformsOtherDeptTasks(!!profile.global_settings?.performs_other_dept_tasks);
+      setEditOtherDepartment(profile.global_settings?.other_department || 'IT');
+      setEditDelegatedLeaveSupervisorId(profile.delegated_leave_supervisor_id || null);
+      setEditDelegatedKpiSupervisorId(profile.delegated_kpi_supervisor_id || null);
       setHiddenTabs(profile.global_settings?.hidden_tabs || []);
       // Seed from defaults + any saved rules/legacy words so the list is never empty.
       setSanitizerRules(
@@ -492,10 +532,17 @@ export function ProfileSettings({
         ...freshGs,
         hidden_tabs: hiddenTabs,
         user_feature_flags: userFeatureFlags,
+        kpi_skills: editKpiSkills,
+        kpi_dept_indicators: editKpiDeptIndicators,
+        kpi_other_dept_indicators: editKpiOtherDeptIndicators,
+        performs_data_entry: editPerformsDataEntry,
+        department: editDepartment,
+        performs_other_dept_tasks: editPerformsOtherDeptTasks,
+        other_department: editOtherDepartment,
       };
 
       if (isAdminRole(profile)) {
-        const updates = {
+        const updates: any = {
           username: editUsername.toUpperCase().trim(),
           full_name: editFullName,
           working_hours: parseFloat(editWorkingHours) || 9.5,
@@ -503,6 +550,18 @@ export function ProfileSettings({
           job_role: editJobRole,
           default_sign_in: profileSignInTime,
           default_sign_out: profileSignOutTime,
+          has_chuti_access: editHasChutiAccess,
+          needs_supervisor_approval: editNeedsApproval,
+          supervisor_ids: editSupervisorIds,
+          eligible_office_leave: editEligibleOfficeLeave,
+          eligible_govt_holiday: editEligibleGovtHoliday,
+          allow_overtime: editAllowOvertime,
+          allow_reserve: editAllowReserve,
+          has_quotes_access: editHasQuotesAccess,
+          allowed_types: editAllowedTypes,
+          can_manage_rules: editCanManageRules,
+          delegated_leave_supervisor_id: editDelegatedLeaveSupervisorId,
+          delegated_kpi_supervisor_id: editDelegatedKpiSupervisorId,
           global_settings: globalSettingsUpdate
         };
 
@@ -1028,27 +1087,27 @@ export function ProfileSettings({
               setFullName={setEditFullName}
               role={profile?.role || 'user'}
               setRole={() => {}}
-              hasChutiAccess={profile?.has_chuti_access !== false}
-              setHasChutiAccess={() => {}}
-              needsApproval={profile?.needs_supervisor_approval !== false}
-              setNeedsApproval={() => {}}
+              hasChutiAccess={editHasChutiAccess}
+              setHasChutiAccess={setEditHasChutiAccess}
+              needsApproval={editNeedsApproval}
+              setNeedsApproval={setEditNeedsApproval}
               supervisors={profilesList.filter((p) => p.role === 'supervisor')}
-              supervisorIds={profile?.supervisor_ids || []}
-              setSupervisorIds={() => {}}
-              eligibleOfficeLeave={profile?.eligible_office_leave !== false}
-              setEligibleOfficeLeave={() => {}}
-              eligibleGovtHoliday={profile?.eligible_govt_holiday !== false}
-              setEligibleGovtHoliday={() => {}}
-              allowOvertime={profile?.allow_overtime || false}
-              setAllowOvertime={() => {}}
-              allowReserve={profile?.allow_reserve || false}
-              setAllowReserve={() => {}}
-              hasQuotesAccess={profile?.has_quotes_access !== false}
-              setHasQuotesAccess={() => {}}
-              allowedTypes={profile?.allowed_types || []}
-              setAllowedTypes={() => {}}
-              canManageRules={profile?.can_manage_rules || false}
-              setCanManageRules={() => {}}
+              supervisorIds={editSupervisorIds}
+              setSupervisorIds={setEditSupervisorIds}
+              eligibleOfficeLeave={editEligibleOfficeLeave}
+              setEligibleOfficeLeave={setEditEligibleOfficeLeave}
+              eligibleGovtHoliday={editEligibleGovtHoliday}
+              setEligibleGovtHoliday={setEditEligibleGovtHoliday}
+              allowOvertime={editAllowOvertime}
+              setAllowOvertime={setEditAllowOvertime}
+              allowReserve={editAllowReserve}
+              setAllowReserve={setEditAllowReserve}
+              hasQuotesAccess={editHasQuotesAccess}
+              setHasQuotesAccess={setEditHasQuotesAccess}
+              allowedTypes={editAllowedTypes}
+              setAllowedTypes={setEditAllowedTypes}
+              canManageRules={editCanManageRules}
+              setCanManageRules={setEditCanManageRules}
               isAdmin={isAdminRole(profile)}
               isSupervisor={profile?.role === 'supervisor'}
               jobRole={editJobRole}
@@ -1061,24 +1120,24 @@ export function ProfileSettings({
               setSignInTime={setProfileSignInTime}
               signOutTime={profileSignOutTime}
               setSignOutTime={setProfileSignOutTime}
-              kpiSkills={profile?.global_settings?.kpi_skills || []}
-              setKpiSkills={() => {}}
-              kpiDeptIndicators={profile?.global_settings?.kpi_dept_indicators || []}
-              setKpiDeptIndicators={() => {}}
-              kpiOtherDeptIndicators={profile?.global_settings?.kpi_other_dept_indicators || []}
-              setKpiOtherDeptIndicators={() => {}}
-              performsDataEntry={profile?.global_settings?.performs_data_entry !== false}
-              setPerformsDataEntry={() => {}}
-              department={profile?.global_settings?.department || 'Data Entry'}
-              setDepartment={() => {}}
-              performsOtherDeptTasks={profile?.global_settings?.performs_other_dept_tasks || false}
-              setPerformsOtherDeptTasks={() => {}}
-              otherDepartment={profile?.global_settings?.other_department || ''}
-              setOtherDepartment={() => {}}
-              delegatedLeaveSupervisorId={profile?.delegated_leave_supervisor_id || null}
-              setDelegatedLeaveSupervisorId={() => {}}
-              delegatedKpiSupervisorId={profile?.delegated_kpi_supervisor_id || null}
-              setDelegatedKpiSupervisorId={() => {}}
+              kpiSkills={editKpiSkills}
+              setKpiSkills={setEditKpiSkills}
+              kpiDeptIndicators={editKpiDeptIndicators}
+              setKpiDeptIndicators={setEditKpiDeptIndicators}
+              kpiOtherDeptIndicators={editKpiOtherDeptIndicators}
+              setKpiOtherDeptIndicators={setEditKpiOtherDeptIndicators}
+              performsDataEntry={editPerformsDataEntry}
+              setPerformsDataEntry={setEditPerformsDataEntry}
+              department={editDepartment}
+              setDepartment={setEditDepartment}
+              performsOtherDeptTasks={editPerformsOtherDeptTasks}
+              setPerformsOtherDeptTasks={setEditPerformsOtherDeptTasks}
+              otherDepartment={editOtherDepartment}
+              setOtherDepartment={setEditOtherDepartment}
+              delegatedLeaveSupervisorId={editDelegatedLeaveSupervisorId}
+              setDelegatedLeaveSupervisorId={setEditDelegatedLeaveSupervisorId}
+              delegatedKpiSupervisorId={editDelegatedKpiSupervisorId}
+              setDelegatedKpiSupervisorId={setEditDelegatedKpiSupervisorId}
               userFeatureFlags={userFeatureFlags}
               setUserFeatureFlags={setUserFeatureFlags}
               adminDelegatedFlags={effectiveAdminDelegatedFlags}
