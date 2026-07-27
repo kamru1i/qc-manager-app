@@ -1,8 +1,8 @@
 {
-  "version": "6.6.0",
-  "notes": "### 🚀 v6.6.0 — Minor Release (Role & Per-User Temporary Access Controls, Custom DateTime Picker, Alignment & Feature Flag Management) (Current)\n\n- **Superadmin Access Control Matrix**: Registered `Quick Import` & `Custom Quote Entry` as controllable subtabs under Tab Access Matrix.\n- **Per-User & Per-Role Temporary Access**: Configurable time-boxed temporary overrides targeting either a role or a specific user by `Codename (Full Name)`.\n- **Custom DateTime Picker**: Integrated custom `DateTimeInput` component enforcing `DD-MM-YYYY, HH:MM AM/PM` formatting with instant browser picker popup.\n- **Layout & Alignment Polish**: Rearranged Temporary Access Controls into a 2-line layout and flush right-aligned Copy Helper session/network fields with left-side pencil icons.",
-  "pub_date": "2026-07-25T16:18:35.000Z",
-  "releaseDate": "July 25, 2026",
+  "version": "6.7.0",
+  "notes": "### 🚀 v6.7.0 — Minor Release (Supervisor Access Controls, Per-Supervisor Overrides, KPI Evaluation Period & Workspace Permission Delegation) (Current)\n\n- **Per-Supervisor Specific Access Controls**: Added supervisor dropdown selector and granular subtab permission overrides under Settings > Access (`User Management > User Profile > Leave History / Quotes History / Analytics / KPI & Performance / Profile Settings`).\n- **Workspace Permission Delegation & Prompt Modal**: Enables Quotes Manager Workspace with automatic confirmation prompt modal to assign a supervisor. If assigned, filetype permissions and KPI settings are managed by the supervisor (or admin with explicit KPI subtab permission).\n- **KPI Evaluation Period & Date Bounding**: Added Full Year (`Jan 1 - Dec 31`) & custom evaluation date ranges for KPI performance calculations automatically fetching submitted quote data.\n- **Header & Button Contrast Fixes**: Resolved wrapping white space in leaderboard header and updated disabled button contrast in Light Mode.",
+  "pub_date": "2026-07-27T14:12:00.000Z",
+  "releaseDate": "July 27, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {

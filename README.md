@@ -115,7 +115,14 @@ npm run tauri build
 ```
 
 ## 📜 Version History / Changelog
-### 🚀 v6.6.0 — Minor Release (Role & Per-User Temporary Access Controls, Custom DateTime Picker, Alignment & Feature Flag Management) (Current)
+### 🚀 v6.7.0 — Minor Release (Supervisor Access Controls, Per-Supervisor Overrides, KPI Evaluation Period & Workspace Permission Delegation) (Current)
+
+- **Per-Supervisor Specific Access Controls**: Added supervisor dropdown selector and granular subtab permission overrides under Settings > Access (`User Management > User Profile > Leave History / Quotes History / Analytics / KPI & Performance / Profile Settings`).
+- **Workspace Permission Delegation & Prompt Modal**: Enables Quotes Manager Workspace with automatic confirmation prompt modal to assign a supervisor. If assigned, filetype permissions and KPI settings are managed by the supervisor (or admin with explicit KPI subtab permission).
+- **KPI Evaluation Period & Date Bounding**: Added Full Year (`Jan 1 - Dec 31`) & custom evaluation date ranges for KPI performance calculations automatically fetching submitted quote data.
+- **Header & Button Contrast Fixes**: Resolved wrapping white space in leaderboard header and updated disabled button contrast in Light Mode.
+
+### 🚀 v6.6.0 — Minor Release (Role & Per-User Temporary Access Controls, Custom DateTime Picker, Alignment & Feature Flag Management)
 
 - **Superadmin Access Control Matrix**: Registered `Quick Import` & `Custom Quote Entry` as controllable subtabs under Tab Access Matrix (`Settings > Access`).
 - **Per-User & Per-Role Temporary Access**: Configurable time-boxed temporary overrides targeting either an entire role (`user`, `supervisor`, `admin`) or a specific single user by `Codename (Full Name)`.
