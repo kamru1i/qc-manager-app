@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
@@ -296,6 +296,61 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingStaff, isCreatingNewUser, updateViewingStaff]);
+
+  // Determine if viewingStaff profile inputs have changes
+  const hasUserChanges = useMemo(() => {
+    if (!viewingStaff) return false;
+
+    const isCodenameChanged = (editUserCodename || '').toUpperCase().trim() !== (viewingStaff.username || '').toUpperCase().trim();
+    const isFullNameChanged = (editUserFullName || '').trim() !== (viewingStaff.full_name || '').trim();
+    const isRoleChanged = editUserRole !== (viewingStaff.role || 'user');
+    const isWorkingHoursChanged = (parseFloat(editUserWorkingHours) || 9.5) !== (viewingStaff.working_hours ?? 9.5);
+    const isBreakTimeChanged = (parseInt(editUserBreakTime) || 0) !== (viewingStaff.break_time ?? 0);
+    const isJobRoleChanged = (editUserJobRole || '').trim() !== (viewingStaff.job_role || '').trim();
+    const isSignInChanged = (editUserSignInTime || '') !== (viewingStaff.default_sign_in || '');
+    const isSignOutChanged = (editUserSignOutTime || '') !== (viewingStaff.default_sign_out || '');
+
+    const isHasChutiAccessChanged = editHasChutiAccess !== (viewingStaff.has_chuti_access !== false);
+    const isNeedsApprovalChanged = editNeedsApproval !== (viewingStaff.needs_supervisor_approval !== false);
+    const isSupervisorIdsChanged = JSON.stringify([...editSupervisorIds].sort()) !== JSON.stringify([...(viewingStaff.supervisor_ids || [])].sort());
+    const isEligibleOfficeLeaveChanged = editEligibleOfficeLeave !== (viewingStaff.eligible_office_leave !== false);
+    const isEligibleGovtHolidayChanged = editEligibleGovtHoliday !== (viewingStaff.eligible_govt_holiday !== false);
+    const isAllowOvertimeChanged = editAllowOvertime !== (!!viewingStaff.allow_overtime);
+    const isAllowReserveChanged = editAllowReserve !== (!!viewingStaff.allow_reserve);
+    const isHasQuotesAccessChanged = editHasQuotesAccess !== (viewingStaff.has_quotes_access !== false);
+    const isAllowedTypesChanged = JSON.stringify([...editUserAllowedTypes].sort()) !== JSON.stringify([...(viewingStaff.allowed_types || [])].sort());
+    const isCanManageRulesChanged = editUserCanManageRules !== (!!viewingStaff.can_manage_rules);
+
+    const isKpiSkillsChanged = JSON.stringify(editUserKpiSkills) !== JSON.stringify(viewingStaff.global_settings?.kpi_skills || []);
+    const isKpiDeptIndicatorsChanged = JSON.stringify(editUserKpiDeptIndicators) !== JSON.stringify(viewingStaff.global_settings?.kpi_dept_indicators || []);
+    const isKpiOtherDeptIndicatorsChanged = JSON.stringify(editUserKpiOtherDeptIndicators) !== JSON.stringify(viewingStaff.global_settings?.kpi_other_dept_indicators || []);
+    const isPerformsDataEntryChanged = editUserPerformsDataEntry !== (viewingStaff.global_settings?.performs_data_entry !== false);
+    const isDepartmentChanged = editUserDepartment !== (viewingStaff.global_settings?.department || 'Data Entry');
+    const isPerformsOtherDeptTasksChanged = editUserPerformsOtherDeptTasks !== (!!viewingStaff.global_settings?.performs_other_dept_tasks);
+    const isOtherDepartmentChanged = editUserOtherDepartment !== (viewingStaff.global_settings?.other_department || 'IT');
+    const isDelegatedLeaveSupervisorIdChanged = editDelegatedLeaveSupervisorId !== (viewingStaff.delegated_leave_supervisor_id || null);
+    const isDelegatedKpiSupervisorIdChanged = editDelegatedKpiSupervisorId !== (viewingStaff.delegated_kpi_supervisor_id || null);
+    const isUserFeatureFlagsChanged = JSON.stringify(editUserFeatureFlags) !== JSON.stringify(viewingStaff.global_settings?.user_feature_flags || {});
+
+    return isCodenameChanged || isFullNameChanged || isRoleChanged || isWorkingHoursChanged ||
+           isBreakTimeChanged || isJobRoleChanged || isSignInChanged || isSignOutChanged ||
+           isHasChutiAccessChanged || isNeedsApprovalChanged || isSupervisorIdsChanged ||
+           isEligibleOfficeLeaveChanged || isEligibleGovtHolidayChanged || isAllowOvertimeChanged ||
+           isAllowReserveChanged || isHasQuotesAccessChanged || isAllowedTypesChanged ||
+           isCanManageRulesChanged || isKpiSkillsChanged || isKpiDeptIndicatorsChanged ||
+           isKpiOtherDeptIndicatorsChanged || isPerformsDataEntryChanged || isDepartmentChanged ||
+           isPerformsOtherDeptTasksChanged || isOtherDepartmentChanged || isDelegatedLeaveSupervisorIdChanged ||
+           isDelegatedKpiSupervisorIdChanged || isUserFeatureFlagsChanged;
+  }, [
+    viewingStaff, editUserCodename, editUserFullName, editUserRole, editUserWorkingHours,
+    editUserBreakTime, editUserJobRole, editUserSignInTime, editUserSignOutTime,
+    editHasChutiAccess, editNeedsApproval, editSupervisorIds, editEligibleOfficeLeave,
+    editEligibleGovtHoliday, editAllowOvertime, editAllowReserve, editHasQuotesAccess,
+    editUserAllowedTypes, editUserCanManageRules, editUserKpiSkills, editUserKpiDeptIndicators,
+    editUserKpiOtherDeptIndicators, editUserPerformsDataEntry, editUserDepartment,
+    editUserPerformsOtherDeptTasks, editUserOtherDepartment, editDelegatedLeaveSupervisorId,
+    editDelegatedKpiSupervisorId, editUserFeatureFlags
+  ]);
 
   // Redirect to an authorized subtab if the current subtab is restricted
   useEffect(() => {
@@ -1047,6 +1102,7 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
                   editUserFeatureFlags={editUserFeatureFlags}
                   setEditUserFeatureFlags={setEditUserFeatureFlags}
                   onResetAllUserFlags={resetAllUserFeatureFlags}
+                  hasChanges={hasUserChanges}
                   onViewKpiReport={(periodKey) => {
                     setPreSelectedKpiPeriodKey(periodKey);
                     setActiveSubTab('kpi');

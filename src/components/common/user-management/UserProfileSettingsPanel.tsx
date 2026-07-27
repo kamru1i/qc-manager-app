@@ -83,6 +83,7 @@ interface UserProfileSettingsPanelProps {
   editUserFeatureFlags?: Record<string, boolean>;
   setEditUserFeatureFlags?: (val: Record<string, boolean>) => void;
   onResetAllUserFlags?: () => void;
+  hasChanges?: boolean;
 }
 
 export const UserProfileSettingsPanel: React.FC<
@@ -91,6 +92,7 @@ export const UserProfileSettingsPanel: React.FC<
   isAdmin,
   currentUser,
   submitting,
+  hasChanges,
   profiles,
   viewingStaff,
   editUserCodename,
@@ -283,9 +285,13 @@ export const UserProfileSettingsPanel: React.FC<
           <div>
             <button
               type="button"
-              disabled={submitting}
+              disabled={submitting || hasChanges === false}
               onClick={onSaveProfileClick}
-              className="px-6 py-2.5 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-lg shadow-blue-950/20 border border-blue-700/30 flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                submitting || hasChanges === false
+                  ? 'border-theme-border-input bg-theme-border-input/40 text-theme-text-muted/60 cursor-not-allowed opacity-50'
+                  : 'bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white cursor-pointer shadow-lg shadow-blue-950/20 border-blue-700/30 hover:scale-[1.01] active:scale-[0.99]'
+              }`}
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

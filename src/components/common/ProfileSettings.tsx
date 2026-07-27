@@ -431,16 +431,47 @@ export function ProfileSettings({
     const isSignInChanged = (profileSignInTime || '') !== (profile.default_sign_in || '');
     const isSignOutChanged = (profileSignOutTime || '') !== (profile.default_sign_out || '');
 
+    const isHasChutiAccessChanged = editHasChutiAccess !== (profile.has_chuti_access !== false);
+    const isNeedsApprovalChanged = editNeedsApproval !== (profile.needs_supervisor_approval !== false);
+    const isSupervisorIdsChanged = JSON.stringify([...editSupervisorIds].sort()) !== JSON.stringify([...(profile.supervisor_ids || [])].sort());
+    const isEligibleOfficeLeaveChanged = editEligibleOfficeLeave !== (profile.eligible_office_leave !== false);
+    const isEligibleGovtHolidayChanged = editEligibleGovtHoliday !== (profile.eligible_govt_holiday !== false);
+    const isAllowOvertimeChanged = editAllowOvertime !== (!!profile.allow_overtime);
+    const isAllowReserveChanged = editAllowReserve !== (!!profile.allow_reserve);
+    const isHasQuotesAccessChanged = editHasQuotesAccess !== (profile.has_quotes_access !== false);
+    const isAllowedTypesChanged = JSON.stringify([...editAllowedTypes].sort()) !== JSON.stringify([...(profile.allowed_types || [])].sort());
+    const isCanManageRulesChanged = editCanManageRules !== (!!profile.can_manage_rules);
+
+    const isKpiSkillsChanged = JSON.stringify(editKpiSkills) !== JSON.stringify(profile.global_settings?.kpi_skills || []);
+    const isKpiDeptIndicatorsChanged = JSON.stringify(editKpiDeptIndicators) !== JSON.stringify(profile.global_settings?.kpi_dept_indicators || []);
+    const isKpiOtherDeptIndicatorsChanged = JSON.stringify(editKpiOtherDeptIndicators) !== JSON.stringify(profile.global_settings?.kpi_other_dept_indicators || []);
+    const isPerformsDataEntryChanged = editPerformsDataEntry !== (profile.global_settings?.performs_data_entry !== false);
+    const isDepartmentChanged = editDepartment !== (profile.global_settings?.department || 'Data Entry');
+    const isPerformsOtherDeptTasksChanged = editPerformsOtherDeptTasks !== (!!profile.global_settings?.performs_other_dept_tasks);
+    const isOtherDepartmentChanged = editOtherDepartment !== (profile.global_settings?.other_department || 'IT');
+    const isDelegatedLeaveSupervisorIdChanged = editDelegatedLeaveSupervisorId !== (profile.delegated_leave_supervisor_id || null);
+    const isDelegatedKpiSupervisorIdChanged = editDelegatedKpiSupervisorId !== (profile.delegated_kpi_supervisor_id || null);
+
+    const isUserFeatureFlagsChanged = JSON.stringify(userFeatureFlags) !== JSON.stringify(profile.global_settings?.user_feature_flags || {});
     const isHiddenTabsChanged = JSON.stringify([...hiddenTabs].sort()) !== JSON.stringify([...(profile.global_settings?.hidden_tabs || [])].sort());
 
-    if (isAdminRole(profile)) {
-      return isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged ||
-             isJobRoleChanged || isSignInChanged || isSignOutChanged || isHiddenTabsChanged;
-    } else {
-      return isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged ||
-             isJobRoleChanged || isSignInChanged || isSignOutChanged || isHiddenTabsChanged;
-    }
-  }, [profile, syncedProfileId, editUsername, editFullName, editWorkingHours, editBreakTime, editJobRole, profileSignInTime, profileSignOutTime, hiddenTabs]);
+    return isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged ||
+           isJobRoleChanged || isSignInChanged || isSignOutChanged || isHasChutiAccessChanged ||
+           isNeedsApprovalChanged || isSupervisorIdsChanged || isEligibleOfficeLeaveChanged ||
+           isEligibleGovtHolidayChanged || isAllowOvertimeChanged || isAllowReserveChanged ||
+           isHasQuotesAccessChanged || isAllowedTypesChanged || isCanManageRulesChanged ||
+           isKpiSkillsChanged || isKpiDeptIndicatorsChanged || isKpiOtherDeptIndicatorsChanged ||
+           isPerformsDataEntryChanged || isDepartmentChanged || isPerformsOtherDeptTasksChanged ||
+           isOtherDepartmentChanged || isDelegatedLeaveSupervisorIdChanged || isDelegatedKpiSupervisorIdChanged ||
+           isUserFeatureFlagsChanged || isHiddenTabsChanged;
+  }, [
+    profile, syncedProfileId, editUsername, editFullName, editWorkingHours, editBreakTime, editJobRole,
+    profileSignInTime, profileSignOutTime, editHasChutiAccess, editNeedsApproval, editSupervisorIds,
+    editEligibleOfficeLeave, editEligibleGovtHoliday, editAllowOvertime, editAllowReserve, editHasQuotesAccess,
+    editAllowedTypes, editCanManageRules, editKpiSkills, editKpiDeptIndicators, editKpiOtherDeptIndicators,
+    editPerformsDataEntry, editDepartment, editPerformsOtherDeptTasks, editOtherDepartment,
+    editDelegatedLeaveSupervisorId, editDelegatedKpiSupervisorId, userFeatureFlags, hiddenTabs
+  ]);
 
 
 
