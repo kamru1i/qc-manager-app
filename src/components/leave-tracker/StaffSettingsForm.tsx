@@ -1044,7 +1044,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                         setNewDeptIndicatorText("");
                       }
                     }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-theme-border-muted border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
                   >
                     Add
                   </button>
@@ -1218,7 +1218,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                                 setNewOtherDeptIndicatorText("");
                               }
                             }}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-theme-border-muted border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
                           >
                             Add
                           </button>
@@ -1296,7 +1296,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                       setNewSkillText("");
                     }
                   }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-theme-border-muted border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed border border-blue-700/30 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
                 >
                   Add
                 </button>
