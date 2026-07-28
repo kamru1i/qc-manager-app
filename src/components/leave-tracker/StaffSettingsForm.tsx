@@ -825,7 +825,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   Quotes Manager Workspace
                 </h3>
               </div>
-              {(isAdmin || isSupervisor) && (
+              {isAdmin && (
                 <Toggle
                   checked={hasQuotesAccess}
                   onChange={(checked) => {

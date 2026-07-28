@@ -109,6 +109,10 @@ export function ProfileSettings({
 
   const handleToggleSupervisorOverride = async (supervisorId: string, tabKey: string, enabled: boolean) => {
     if (!profile) return;
+    if (!isAdminRole(profile)) {
+      toast.error('Only Admin or Superadmin can configure supervisor access overrides.');
+      return;
+    }
     try {
       const currentOverrides = { ...(supervisorAccessOverrides[supervisorId] || {}) };
       currentOverrides[tabKey] = enabled;
