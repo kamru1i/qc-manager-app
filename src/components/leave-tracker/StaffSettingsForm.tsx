@@ -188,11 +188,27 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   const isCurrentSuperadmin = isSuperadmin(currentUser || null);
   const isSelfEdit = Boolean(currentUser && viewingStaff && currentUser.id === viewingStaff.id);
   const canEditShift = isAdmin || isSelfEdit || isSupervisor;
-  const isCurrentAssignedSupervisor = isSupervisor || 
-    (currentUser && viewingStaff?.supervisor_ids?.includes(currentUser.id)) ||
-    (currentUser && viewingStaff?.delegated_leave_supervisor_id === currentUser.id) ||
-    (currentUser && viewingStaff?.delegated_kpi_supervisor_id === currentUser.id) ||
-    (currentUser && supervisorIds.includes(currentUser.id));
+  const isCurrentAssignedSupervisor = React.useMemo(() => {
+    if (!currentUser) return false;
+    if (isAdminRole(currentUser)) return true;
+    if (viewingStaff && currentUser.id === viewingStaff.id) return true;
+
+    const targetSupervisorIds = supervisorIds.length > 0
+      ? supervisorIds
+      : (viewingStaff?.supervisor_ids || []);
+
+    if (targetSupervisorIds.includes(currentUser.id)) return true;
+    if (viewingStaff?.delegated_leave_supervisor_id === currentUser.id) return true;
+    if (viewingStaff?.delegated_kpi_supervisor_id === currentUser.id) return true;
+
+    const delegatingSupervisors = profilesList
+      .filter((p) => p.delegated_supervisor_id === currentUser.id)
+      .map((p) => p.id);
+
+    if (targetSupervisorIds.some((supId) => delegatingSupervisors.includes(supId))) return true;
+
+    return false;
+  }, [currentUser, viewingStaff, supervisorIds, profilesList]);
 
   // Permitted File Entry Types (Categories) Editing Lock
   const isFiletypeDisabled = React.useMemo(() => {

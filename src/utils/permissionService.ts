@@ -441,7 +441,7 @@ export const canAccessProfileSection = (
     switch (section) {
       case 'basic_details':
       case 'quotes_settings':
-        return true; // supervisors can edit basic details and quotes settings of all users
+        return true; // supervisors can view quotes settings of all users (editing is restricted to assigned/delegated supervisors)
       case 'leave_settings':
         return true; // supervisors can read leave settings of all users (write is blocked via disabled={!isAdmin} in form)
       case 'kpi_settings':
