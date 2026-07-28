@@ -117,8 +117,12 @@ export function ProfileSettings({
         [supervisorId]: currentOverrides,
       };
 
-      let updatedGs = {
-        ...(profile.global_settings || {}),
+      const baseGs = (profile.global_settings && typeof profile.global_settings === 'object')
+        ? profile.global_settings
+        : {};
+
+      const updatedGs = {
+        ...baseGs,
         supervisor_access_overrides: nextAllOverrides,
       };
 
@@ -984,6 +988,13 @@ export function ProfileSettings({
     );
   };
 
+  // Timestamp updated in effect to satisfy React compiler / react-hooks/purity rules
+  const [currentTimestamp, setCurrentTimestamp] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    setCurrentTimestamp(Date.now());
+  }, [tempAccess]);
+
   return (
     <div className="w-full space-y-6 font-sans">
       {/* Decorative background blobs */}
@@ -1681,7 +1692,7 @@ export function ProfileSettings({
             {tempAccess.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {tempAccess.map((entry, i) => {
-                  const expired = new Date(entry.expires_at).getTime() <= Date.now();
+                  const expired = new Date(entry.expires_at).getTime() <= currentTimestamp;
                   const tabLabel = MENU_TABS.find((t) => t.key === entry.tabKey)?.label || entry.tabKey;
                   return (
                     <div
