@@ -693,32 +693,34 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
       </div>
 
       {/* Comment/Important Notes Box */}
-      <div className="bg-theme-card-bg/40 border border-theme-border-muted rounded-xl p-4 space-y-2.5">
-        <div className="flex justify-between items-center">
-          <h5 className="text-xs font-bold text-rose-500 uppercase tracking-wider">Important Notes</h5>
-          <button
-            type="button"
-            onClick={copyNotes}
-            className={`p-1 border rounded-md transition-all cursor-pointer ${
-              copiedStates["notes"]
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 hover:text-emerald-300"
-                : "bg-theme-page-bg hover:bg-theme-border-input border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
-            }`}
-            title="Copy Notes"
-          >
-            {copiedStates["notes"] ? (
-              <Check className="h-3 w-3 text-emerald-400" />
-            ) : (
-              <Copy className="h-3 w-3" />
-            )}
-          </button>
+      {isFeatureEnabled('copy_helper_important_notes', profile?.global_settings, profile) && (
+        <div className="bg-theme-card-bg/40 border border-theme-border-muted rounded-xl p-4 space-y-2.5">
+          <div className="flex justify-between items-center">
+            <h5 className="text-xs font-bold text-rose-500 uppercase tracking-wider">Important Notes</h5>
+            <button
+              type="button"
+              onClick={copyNotes}
+              className={`p-1 border rounded-md transition-all cursor-pointer ${
+                copiedStates["notes"]
+                  ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 hover:text-emerald-300"
+                  : "bg-theme-page-bg hover:bg-theme-border-input border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
+              }`}
+              title="Copy Notes"
+            >
+              {copiedStates["notes"] ? (
+                <Check className="h-3 w-3 text-emerald-400" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+          </div>
+          <textarea
+            value={reportNotes}
+            onChange={(e) => handleNotesChange(e.target.value)}
+            className="w-full h-20 bg-theme-page-bg border border-theme-border-input rounded-lg text-rose-400 placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-rose-500/30 text-xs p-3 font-semibold resize-none"
+          />
         </div>
-        <textarea
-          value={reportNotes}
-          onChange={(e) => handleNotesChange(e.target.value)}
-          className="w-full h-20 bg-theme-page-bg border border-theme-border-input rounded-lg text-rose-400 placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-rose-500/30 text-xs p-3 font-semibold resize-none"
-        />
-      </div>
+      )}
 
       {/* Custom VPN Name Modal */}
       <Modal

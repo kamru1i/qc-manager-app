@@ -66,6 +66,11 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     description: 'The deduplicated daily Sales Report for Admin summary box in Copy Helper.',
   },
   {
+    key: 'copy_helper_important_notes',
+    label: 'Copy Helper Important Notes',
+    description: 'The editable Important Notes box at the bottom of the Copy Helper panel.',
+  },
+  {
     key: 'causality_generator',
     label: 'Causality Document Generator',
     description: 'Generating causality breakdown and compliance text templates.',
@@ -141,6 +146,7 @@ export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
     case 'copy_helper_save_file':
     case 'copy_helper_admin_summary':
     case 'copy_helper_user_summary':
+    case 'copy_helper_important_notes':
       return false;
     default:
       return true;
