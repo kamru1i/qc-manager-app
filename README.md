@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.7.4** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.7.5** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.7.4 — Patch Release (Granular Profile Settings Permissions, Feature Flags & Complete Documentation Audit) (Current)
+### 🩹 v6.7.5 — Patch Release (Copy Helper Date Controls, Unified Feature Flags & Supervisor Delegation Security) (Current)
+
+- **Copy Helper Date Controls & Independent Filtering**: Added independent per-box date pickers with hover pencil icons, DD/MM/YYYY formatting, and independent record filtering across Box 4 (User Sales Summary), Box 5 (Detailed File Report), and Box 6 (Admin Sales Summary).
+- **Copy Helper Feature Flags**: Added `copy_helper_user_summary` (Box 4) and `copy_helper_important_notes` (Important Notes) to the Feature Flags registry with Superadmin control, and ensured dynamic box renumbering without gaps.
+- **Unified Temporary Access Controls**: Extended Temporary Access Controls in Profile Settings to support both Navigation Tabs and Feature Flags with target-user granularity.
+- **Strict Workspace & Supervisor Access Control**: Restricted Quotes Manager Workspace access toggles and supervisor assignments strictly to Admin/Superadmin.
+- **Supervisor Team & Delegation Scoping**: Enforced read-only view mode for Quotes Manager Workspace when viewed by a supervisor for staff outside their assigned or delegated team.
+
+### 🩹 v6.7.4 — Patch Release (Granular Profile Settings Permissions, Feature Flags & Complete Documentation Audit)
 
 - **Granular User Profile Settings Access Control**: Registered `User Profile Settings Components` category under `Settings > Access`, enabling Superadmin and Admin role-level visibility control and temporary overrides for Leave Tracker Workspace, Quotes Manager Workspace, KPI & Performance Settings, and Change Password.
 - **Global Feature Flags Integration**: Added matching `profile_component_` entries to `Settings > Feature Flags`, enabling instant global ON/OFF toggles across all user accounts.

@@ -1,8 +1,8 @@
 {
-  "version": "6.7.4",
-  "notes": "### 🩹 v6.7.4 — Patch Release (Granular Profile Settings Permissions, Feature Flags & Complete Documentation Audit) (Current)\n\n- **Granular User Profile Settings Access Control**: Added `User Profile Settings Components` category under `Settings > Access` allowing Superadmins and Admins to manage per-role visibility and temporary overrides for Leave Tracker Workspace, Quotes Manager Workspace, KPI & Performance Settings, and Change Password.\n- **Global Feature Flags Integration**: Registered all User Profile Settings components under `Settings > Feature Flags`, enabling company-wide ON/OFF toggles.\n- **Dynamic Component Guarding**: Updated `ProfileSettings.tsx` and `StaffSettingsForm.tsx` to dynamically query permission policies and feature flags before rendering sensitive profile sections.\n- **Manual Department Preservation**: Ensured 100% manual control over staff department assignments with no automatic overwrites.\n- **Full Architectural Audit & Documentation Sync**: Completed an A-Z codebase review and completely refreshed project documentation.",
-  "pub_date": "2026-07-27T22:15:00.000Z",
-  "releaseDate": "July 27, 2026",
+  "version": "6.7.5",
+  "notes": "### 🩹 v6.7.5 — Patch Release (Copy Helper Date Controls, Unified Feature Flags & Supervisor Delegation Security) (Current)\n\n- **Copy Helper Date Controls & Filtering**: Added independent per-box date pickers with hover pencil icons, DD/MM/YYYY formatting, and independent record filtering for Box 4, Box 5, and Box 6.\n- **Copy Helper Feature Flags**: Added `copy_helper_user_summary` and `copy_helper_important_notes` feature flags with superadmin control and seamless dynamic box renumbering.\n- **Unified Temporary Access Controls**: Extended Temporary Access Controls in Profile Settings to support both Navigation Tabs and Feature Flags with target-user granularity.\n- **Strict Workspace & Supervisor Access Control**: Restricted Quotes Manager Workspace access toggles and supervisor assignments strictly to Admin/Superadmin.\n- **Supervisor Team & Delegation Scoping**: Enforced read-only view mode for Quotes Manager Workspace when viewed by a supervisor for staff outside their assigned or delegated team.",
+  "pub_date": "2026-07-28T16:10:00.000Z",
+  "releaseDate": "July 28, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {
