@@ -1638,9 +1638,16 @@ export function ProfileSettings({
                     onChange={(e) => setTempForm((f) => ({ ...f, tabKey: e.target.value }))}
                     className="w-full h-9 px-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary focus:outline-none focus:border-blue-500/50"
                   >
-                    {MENU_TABS.map((t) => (
-                      <option key={t.key} value={t.key}>{t.label}</option>
-                    ))}
+                    <optgroup label="Navigation Tabs">
+                      {MENU_TABS.map((t) => (
+                        <option key={t.key} value={t.key}>{t.label}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Feature Flags & Operational Tools">
+                      {FEATURE_FLAGS.map((f) => (
+                        <option key={f.key} value={f.key}>{f.label}</option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
 
@@ -1693,7 +1700,9 @@ export function ProfileSettings({
               <div className="flex flex-col gap-2">
                 {tempAccess.map((entry, i) => {
                   const expired = new Date(entry.expires_at).getTime() <= currentTimestamp;
-                  const tabLabel = MENU_TABS.find((t) => t.key === entry.tabKey)?.label || entry.tabKey;
+                  const tabLabel = MENU_TABS.find((t) => t.key === entry.tabKey)?.label
+                    || FEATURE_FLAGS.find((f) => f.key === entry.tabKey)?.label
+                    || entry.tabKey;
                   return (
                     <div
                       key={`${entry.role}-${entry.tabKey}-${entry.expires_at}-${i}`}

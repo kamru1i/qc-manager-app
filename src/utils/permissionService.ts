@@ -39,16 +39,55 @@ export const ROLE_RANK: Record<string, number> = {
  */
 export const isFeatureEnabled = (
   flagKey: string,
-  globalSettings?: { feature_flags?: Record<string, boolean> } | null,
+  globalSettings?: VisibilitySettings | null,
   user?: Profile | null
 ): boolean => {
-  // Check per-user feature flag override (if explicitly configured)
+  if (!user) {
+    const configuredFlag = globalSettings?.feature_flags?.[flagKey];
+    if (typeof configuredFlag === 'boolean') return configuredFlag;
+    return getDefaultFeatureFlagState(flagKey);
+  }
+
+  const now = Date.now();
+  const tempEntries = globalSettings?.temp_access ?? user?.global_settings?.temp_access ?? [];
+
+  // 1st Priority: Active per-user temporary access control rule (matches user ID or codename)
+  const userTempOverride = tempEntries.find(
+    (t: any) =>
+      t.target_type === 'user' &&
+      (t.user_id === user.id ||
+        (t.user_codename &&
+          (t.user_codename === user.codename ||
+            t.user_codename === user.full_name ||
+            t.user_codename === user.username))) &&
+      t.tabKey === flagKey &&
+      t.expires_at &&
+      new Date(t.expires_at).getTime() > now
+  );
+  if (userTempOverride) {
+    return userTempOverride.action === 'grant';
+  }
+
+  // 2nd Priority: Active per-role temporary access control rule (matches role)
+  const roleTempOverride = tempEntries.find(
+    (t: any) =>
+      (!t.target_type || t.target_type === 'role') &&
+      t.role === user.role &&
+      t.tabKey === flagKey &&
+      t.expires_at &&
+      new Date(t.expires_at).getTime() > now
+  );
+  if (roleTempOverride) {
+    return roleTempOverride.action === 'grant';
+  }
+
+  // 3rd Priority: Per-user feature flag override (if explicitly configured)
   const userOverride = user?.global_settings?.user_feature_flags?.[flagKey];
   if (typeof userOverride === 'boolean') {
     return userOverride;
   }
 
-  if (user && isSuperadmin(user)) return true;
+  if (isSuperadmin(user)) return true;
 
   const configuredFlag = globalSettings?.feature_flags?.[flagKey];
   if (typeof configuredFlag === 'boolean') {
