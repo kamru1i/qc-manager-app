@@ -56,6 +56,11 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     description: 'The direct Word document file saving helper inside the Copy Helper panel.',
   },
   {
+    key: 'copy_helper_user_summary',
+    label: 'Copy Helper User Sales Summary',
+    description: 'The daily Sales Summary box (Box 4) in Copy Helper panel for individual users.',
+  },
+  {
     key: 'copy_helper_admin_summary',
     label: 'Copy Helper Admin Sales Summary',
     description: 'The deduplicated daily Sales Report for Admin summary box in Copy Helper.',
@@ -135,6 +140,7 @@ export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
     case 'audit_logs_inspection':
     case 'copy_helper_save_file':
     case 'copy_helper_admin_summary':
+    case 'copy_helper_user_summary':
       return false;
     default:
       return true;

@@ -582,7 +582,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
     {
       key: "sales_summary",
       title: "Sales Summary",
-      visible: hasSalePermission,
+      visible: hasSalePermission && isFeatureEnabled('copy_helper_user_summary', profile?.global_settings, profile),
       copied: localCopiedStates["box2"] || copiedStates["box2"],
       onCopy: handleCopyBox4Summary,
       render: () => (
