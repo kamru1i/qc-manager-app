@@ -445,49 +445,14 @@ export default function Dashboard({
     submittedAtDate: string;
   } | null>(null);
 
-  const todayUserRecords = useMemo(() => {
-    const effectiveCodename = codenameInput || profile?.username || "";
-    return records.filter((r) => {
-      const isToday =
-        new Date(r.submitted_at).toDateString() === new Date().toDateString();
-      const matchesUser =
-        r.codename.toUpperCase() === effectiveCodename.toUpperCase();
-      return isToday && matchesUser;
-    });
-  }, [records, codenameInput, profile?.username]);
-
-  // ── Save File Helper Hook ──────────────────────────────────────────
-  const {
-    savedRecordIds,
-    savedDocuments,
-    savedFilePath,
-    selectedRecordIdForSave,
-    setSelectedRecordIdForSave,
-    editorRef,
-    baseDirectory,
-    permissionModal,
-    setPermissionModal,
-    triggerChooseDirectoryWithPermission: handleChooseDirectory,
-    triggerSaveWithPermission: handleSaveAsWordRaw,
-    handleUpdateWord,
-    handleEditDocument,
-    handleCancelEdit,
-    handleDeleteDocument,
-  } = useSaveFileHelper({ showToast });
-
-  // Wrap handleSaveAsWord to pass todayUserRecords (component expects no-arg version)
-  const handleSaveAsWord = () => handleSaveAsWordRaw(todayUserRecords);
-
+  // ── Copy Helper Hook ───────────────────────────────────────────────
+  // Box visibility is driven by the "Sale" file type permission
   // ── Copy Helper Hook ───────────────────────────────────────────────
   // Box visibility is driven by the "Sale" file type permission
   const { hasSalePermission } = useCopyHelperPermissions(profile);
 
-  // Today's overall deduplicated sales report (all users) — only fetched
-  // while the admin summary box can actually be shown
-  const adminSalesSummary = useAdminSalesSummary({
-    enabled: activeTab === "copy_helper" && hasSalePermission,
-    records,
-  });
+  // Temporary placeholder for admin summary to initialize useCopyHelper
+  const initialAdminSummary = { totalSold: 0, totalUnsold: 0, totalAttempts: 0 };
 
   const {
     spokeTo,
@@ -513,11 +478,65 @@ export default function Dashboard({
     copyNotes,
   } = useCopyHelper({
     showToast,
-    todayUserRecords,
+    todayUserRecords: [], // Handled by targetDateStr calculation below
     profile,
     codenameInput,
-    adminSalesSummary,
+    adminSalesSummary: initialAdminSummary,
   });
+
+  const targetDateStr = useMemo(() => {
+    if (!soldDate) return new Date().toDateString();
+    const parts = soldDate.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) return d.toDateString();
+    }
+    const fallback = new Date(soldDate);
+    return isNaN(fallback.getTime()) ? new Date().toDateString() : fallback.toDateString();
+  }, [soldDate]);
+
+  const todayUserRecords = useMemo(() => {
+    const effectiveCodename = codenameInput || profile?.username || "";
+    return records.filter((r) => {
+      const matchesDate =
+        new Date(r.submitted_at).toDateString() === targetDateStr;
+      const matchesUser =
+        r.codename.toUpperCase() === effectiveCodename.toUpperCase();
+      return matchesDate && matchesUser;
+    });
+  }, [records, codenameInput, profile?.username, targetDateStr]);
+
+  // Deduplicated sales report (all users) for the selected report date
+  const adminSalesSummary = useAdminSalesSummary({
+    enabled: activeTab === "copy_helper" && hasSalePermission,
+    records,
+    targetDateStr,
+  });
+
+  // ── Save File Helper Hook ──────────────────────────────────────────
+  const {
+    savedRecordIds,
+    savedDocuments,
+    savedFilePath,
+    selectedRecordIdForSave,
+    setSelectedRecordIdForSave,
+    editorRef,
+    baseDirectory,
+    permissionModal,
+    setPermissionModal,
+    triggerChooseDirectoryWithPermission: handleChooseDirectory,
+    triggerSaveWithPermission: handleSaveAsWordRaw,
+    handleUpdateWord,
+    handleEditDocument,
+    handleCancelEdit,
+    handleDeleteDocument,
+  } = useSaveFileHelper({ showToast });
+
+  // Wrap handleSaveAsWord to pass todayUserRecords (component expects no-arg version)
+  const handleSaveAsWord = () => handleSaveAsWordRaw(todayUserRecords);
 
   // Record deletion state for confirmation modal
   const [deletingRecordId, setDeletingRecordId] = useState<string | null>(null);
@@ -1958,6 +1977,7 @@ export default function Dashboard({
             hasSubmissions={hasSubmissions}
             todayUserRecords={todayUserRecords}
             adminSalesSummary={adminSalesSummary}
+            records={records}
             copyBox1={copyBox1}
             copyBox2={copyBox2}
             copyBox4={copyBox4}

@@ -15,6 +15,7 @@ interface UseAdminSalesSummaryOptions {
   enabled: boolean;
   /** Already-loaded month records — used as instant fallback and for admins (who have all rows locally). */
   records: RecordItem[];
+  targetDateStr?: string;
 }
 
 const REFRESH_THROTTLE_MS = 30000;
@@ -27,14 +28,14 @@ const REFRESH_THROTTLE_MS = 30000;
  * under RLS, and admins avoid re-scanning locally). Fallback: local
  * calculation over the already-fetched records (offline / RPC unavailable).
  */
-export const useAdminSalesSummary = ({ enabled, records }: UseAdminSalesSummaryOptions) => {
+export const useAdminSalesSummary = ({ enabled, records, targetDateStr }: UseAdminSalesSummaryOptions) => {
   const [serverSummary, setServerSummary] = useState<AdminSalesSummary | null>(null);
   const lastFetchRef = useRef(0);
 
-  // Local fallback, memoized: today's Sale records → dedup → counts
+  // Local fallback, memoized: selected date's Sale records → dedup → counts
   const localSummary = useMemo<AdminSalesSummary>(
-    () => calculateAdminSalesSummary(getTodaySalesRecords(records)),
-    [records]
+    () => calculateAdminSalesSummary(getTodaySalesRecords(records, targetDateStr)),
+    [records, targetDateStr]
   );
 
   const fetchSummary = useCallback(async (force = false) => {
@@ -42,10 +43,14 @@ export const useAdminSalesSummary = ({ enabled, records }: UseAdminSalesSummaryO
     if (!force && now - lastFetchRef.current < REFRESH_THROTTLE_MS) return;
     lastFetchRef.current = now;
     try {
-      const todayStr = new Date().toLocaleDateString('en-CA');
+      const parsedDate = targetDateStr ? new Date(targetDateStr) : new Date();
+      const dateIso = !isNaN(parsedDate.getTime())
+        ? `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`
+        : new Date().toLocaleDateString('en-CA');
+
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
       const { data, error } = await supabase.rpc('get_admin_sales_summary', {
-        p_today: todayStr,
+        p_today: dateIso,
         p_tz: timeZone,
       });
       if (error) throw error;
@@ -57,7 +62,7 @@ export const useAdminSalesSummary = ({ enabled, records }: UseAdminSalesSummaryO
       // Keep local fallback; RPC may not be deployed yet or device is offline
       console.warn('[useAdminSalesSummary] RPC failed, using local records:', err);
     }
-  }, []);
+  }, [targetDateStr]);
 
   useEffect(() => {
     if (!enabled) return;

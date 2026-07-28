@@ -30,11 +30,11 @@ const SOLD_SUFFIX_RE = / \[(SOLD|UNSOLD)\]$/;
 
 const isSoldRecord = (r: RecordItem) => r.file_name.endsWith(' [SOLD]');
 
-/** Filter to today's Sale submissions (local time), any user. */
-export const getTodaySalesRecords = (records: RecordItem[]): RecordItem[] => {
-  const todayStr = new Date().toDateString();
+/** Filter to selected date's Sale submissions (local time), any user. */
+export const getTodaySalesRecords = (records: RecordItem[], targetDateStr?: string): RecordItem[] => {
+  const dateStr = targetDateStr || new Date().toDateString();
   return records.filter(
-    (r) => r.file_type === 'Sale' && new Date(r.submitted_at).toDateString() === todayStr
+    (r) => r.file_type === 'Sale' && new Date(r.submitted_at).toDateString() === dateStr
   );
 };
 
