@@ -243,10 +243,10 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
     setEditFileType(record.file_type);
     setEditCanChangeSubmittedAt(canChangeSubmittedAt);
 
-    if (record.file_name.endsWith(" [UNSOLD]")) {
-      setEditSaleStatus("UNSOLD");
-    } else {
+    if (record.file_name.endsWith(" [SOLD]")) {
       setEditSaleStatus("SOLD");
+    } else {
+      setEditSaleStatus("UNSOLD");
     }
 
     if (!isNaN(submittedAt.getTime())) {

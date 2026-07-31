@@ -27,6 +27,14 @@ interface UseRecordActionsOptions {
   updateLastActivity: () => void;
 }
 
+const getErrorMessage = (err: any): string => {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "object" && err !== null) {
+    return err.message || err.details || err.hint || JSON.stringify(err);
+  }
+  return String(err);
+};
+
 export const useRecordActions = ({
   sessionUser,
   profile,
@@ -187,7 +195,7 @@ export const useRecordActions = ({
       return true;
     } catch (err) {
       console.error('Error deleting record:', err);
-      showToast('error', 'Failed to delete record: ' + (err instanceof Error ? err.message : String(err)));
+      showToast('error', 'Failed to delete record: ' + getErrorMessage(err));
       return false;
     }
   }, [sessionUser, showToast, fetchRecords, fetchAvailableDates, updateLastActivity]);
@@ -221,7 +229,7 @@ export const useRecordActions = ({
       return true;
     } catch (err) {
       console.error('Error deleting records in bulk:', err);
-      showToast('error', 'Failed to delete records: ' + (err instanceof Error ? err.message : String(err)));
+      showToast('error', 'Failed to delete records: ' + getErrorMessage(err));
       return false;
     }
   }, [sessionUser, showToast, fetchRecords, fetchAvailableDates, updateLastActivity]);
@@ -300,7 +308,7 @@ export const useRecordActions = ({
       return true;
     } catch (err) {
       console.error('Error updating record:', err);
-      showToast('error', 'Failed to update record: ' + (err instanceof Error ? err.message : String(err)));
+      showToast('error', 'Failed to update record: ' + getErrorMessage(err));
       setSubmitting(false);
       return false;
     }
