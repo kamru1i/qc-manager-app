@@ -1225,29 +1225,6 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
         <UserManagementSkeleton rows={8} />
       ) : (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-theme-text-primary">User Management</h2>
-              <p className="text-xs text-theme-text-muted mt-1">
-                Add new staff members, set roles (Admin, Supervisor, User), and configure Leave and Quotes Tracker access permissions.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 font-sans">
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    setIsCreatingNewUser(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Add New Staff
-                </button>
-              )}
-            </div>
-          </div>
-
           {/* Search and Filters */}
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-theme-page-bg/45 p-4 rounded-xl border border-theme-border-input/40">
             <div className="relative w-full md:max-w-xs">
@@ -1272,8 +1249,22 @@ export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = (
               )}
             </div>
 
-            <div className="text-[11px] text-theme-text-muted">
-              Showing <span className="text-theme-text-primary font-semibold">{visibleProfiles.length}</span> users
+            <div className="flex items-center gap-4">
+              <div className="text-[11px] text-theme-text-muted">
+                Showing <span className="text-theme-text-primary font-semibold">{visibleProfiles.length}</span> users
+              </div>
+
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setIsCreatingNewUser(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer font-sans shrink-0"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add New Staff
+                </button>
+              )}
             </div>
           </div>
 

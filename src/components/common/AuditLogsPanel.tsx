@@ -188,30 +188,10 @@ export const AuditLogsPanel: React.FC<AuditLogsPanelProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-theme-card-bg/20 p-4 border border-theme-border-input/40 rounded-2xl backdrop-blur-md">
-        <div>
-          <h2 className="text-lg font-bold text-theme-text-primary flex items-center gap-2">
-            <ScrollText className="h-5 w-5 text-blue-500" />
-            System Audit Log Panel
-          </h2>
-          <p className="text-xs text-theme-text-muted mt-0.5 font-medium">Review administrative actions and user record modifications with exact timestamps.</p>
-        </div>
-
-        <button
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh Logs</span>
-        </button>
-      </div>
-
       {/* Filter Row */}
       <div className="bg-theme-card-container/40 p-4 rounded-2xl border border-theme-border-muted grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
         {/* Search */}
-        <div className="md:col-span-8">
+        <div className="md:col-span-6">
           <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">Search Logs</label>
           <div className="relative">
             <input
@@ -247,6 +227,18 @@ export const AuditLogsPanel: React.FC<AuditLogsPanelProps> = ({
             <option value="users">User Account Changes (Add/Update/Delete)</option>
             <option value="security">Security & Onboarding (Passwords/Onboard)</option>
           </select>
+        </div>
+
+        {/* Refresh Logs Button */}
+        <div className="md:col-span-2">
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Refresh Logs</span>
+          </button>
         </div>
       </div>
 

@@ -1308,16 +1308,6 @@ export function ProfileSettings({
       {/* Menu Visibility Configuration */}
       {activeSubTab === 'menu_visibility' && profile && (
         <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4 w-full">
-          <div>
-            <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
-              <Layout className="h-4 w-4 text-blue-400" />
-              Menu Tab Visibility Settings ⚙️
-            </h3>
-            <p className="text-[11px] text-theme-text-muted mt-2">
-              Uncheck options to hide them from your sidebar navigation dashboard, and click the <strong>Save Changes</strong> button below to persist.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
             {['Main Workspace Sections', 'Quotes Tracker Subtabs', 'Leave Tracker Subtabs'].map((category) => {
               // Single source of truth — the shared MENU_TABS registry.
@@ -1371,19 +1361,6 @@ export function ProfileSettings({
       {activeSubTab === 'sanitizer' && (isSuperAdmin || canSeeSanitizer) && (
         <div className="space-y-6 w-full">
           <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
-                <FileText className="h-4 w-4 text-blue-400" />
-                File Name Sanitizer
-              </h3>
-              <p className="text-[11px] text-theme-text-muted mt-2">
-                Words stripped from quote file names (branch names, file types,
-                comment phrases, etc.). The built-in defaults are pre-loaded below.
-                Toggle to disable/re-enable without deleting, or remove entirely.
-                Applies to all users. Changes save immediately.
-              </p>
-            </div>
-
             <div className="flex gap-2">
               <input
                 type="text"
@@ -1957,38 +1934,35 @@ export function ProfileSettings({
       {activeSubTab === 'vpn_list' && (isSuperAdmin || canSeeVpn) && (
         <div className="space-y-6 w-full font-sans">
           <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-theme-border-input/40">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-theme-border-input/40">
+              <h3 className="text-sm font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 shrink-0">
                 <Globe className="h-4 w-4 text-blue-400" />
                 VPN List Management
               </h3>
-              <p className="text-[11px] text-theme-text-muted mt-2">
-                Manage available VPN names for Quotes Copy Helper dashboard. Superadmins, Admins, and Supervisors can add, edit, or remove VPN names from this list.
-              </p>
-            </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newVpnInput}
-                onChange={(e) => setNewVpnInput(e.target.value)}
-                placeholder="e.g. ExpressVPN, NordVPN, Surfshark"
-                className="flex-1 bg-theme-page-bg/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500 font-sans"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddVpnName();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                disabled={vpnSubmitting || !newVpnInput.trim()}
-                onClick={handleAddVpnName}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer font-sans"
-              >
-                Add VPN
-              </button>
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                <input
+                  type="text"
+                  value={newVpnInput}
+                  onChange={(e) => setNewVpnInput(e.target.value)}
+                  placeholder="e.g. ExpressVPN, NordVPN, Surfshark"
+                  className="flex-1 bg-theme-page-bg/80 border border-theme-border-input rounded-xl px-3 py-2 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500 font-sans"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddVpnName();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={vpnSubmitting || !newVpnInput.trim()}
+                  onClick={handleAddVpnName}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer font-sans shrink-0"
+                >
+                  Add VPN
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
