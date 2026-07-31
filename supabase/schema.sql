@@ -101,8 +101,13 @@ CREATE FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_usern
     SET search_path TO 'public', 'extensions', 'pg_temp'
     AS $$
 BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Only admins can update credentials';
+  -- Permission Guard: Admins/Superadmins can update any credentials;
+  -- Supervisors can update credentials for employees under their supervision/delegation.
+  IF NOT (
+    public.is_admin() OR 
+    (public.is_supervisor() AND public.has_leave_access(auth.uid(), p_user_id))
+  ) THEN
+    RAISE EXCEPTION 'Permission denied: Only admins or assigned supervisors can update user credentials.';
   END IF;
 
   -- Update username in profiles if provided

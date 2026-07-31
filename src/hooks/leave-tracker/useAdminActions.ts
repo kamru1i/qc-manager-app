@@ -144,6 +144,14 @@ export const useAdminActions = ({
     }
   }, [showToast, logActivity, refreshProfiles, setSubmitting]);
 
+const getErrorMessage = (err: any): string => {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "object" && err !== null) {
+    return err.message || err.details || err.hint || JSON.stringify(err);
+  }
+  return String(err);
+};
+
   // Admin: Reset password of another user
   const resetUserPassword = useCallback(async (userId: string, newPassword: string) => {
     if (!navigator.onLine) {
@@ -166,7 +174,7 @@ export const useAdminActions = ({
       return true;
     } catch (err) {
       console.error('Error resetting password:', err);
-      showToast('error', 'Error changing password: ' + (err instanceof Error ? err.message : String(err)));
+      showToast('error', 'Error changing password: ' + getErrorMessage(err));
       return false;
     }
   }, [showToast, logActivity, profilesList]);
@@ -205,7 +213,7 @@ export const useAdminActions = ({
       return true;
     } catch (err) {
       console.error('Error deleting user:', err);
-      showToast('error', 'Error deleting user: ' + (err instanceof Error ? err.message : String(err)));
+      showToast('error', 'Error deleting user: ' + getErrorMessage(err));
       return false;
     }
   }, [showToast, logActivity, profilesList, setProfilesList, updateLastActivity]);
