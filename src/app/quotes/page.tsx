@@ -1994,7 +1994,7 @@ export default function Dashboard({
           onCompleteSuccess={(count) => {
             showToast(
               "success",
-              `🎉 Successfully submitted ${count} Files!`,
+              `Successfully submitted ${count} Files!`,
             );
             fetchRecords();
           }}
@@ -2126,7 +2126,7 @@ export default function Dashboard({
                 onCompleteSuccess={(count) => {
                   showToast(
                     "success",
-                    `🎉 Successfully submitted ${count} Files!`,
+                    `Successfully submitted ${count} Files!`,
                   );
                   fetchRecords();
                 }}
