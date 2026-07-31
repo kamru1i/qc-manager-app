@@ -656,27 +656,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
 
   return (
     <div className="bg-theme-page-bg/20 border border-theme-border-muted rounded-2xl p-5 space-y-6 animate-fade-in font-sans">
-      <div className="flex justify-between items-center">
-        <div>
-          <h4 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
-            <ScrollText className="h-4.5 w-4.5 text-blue-500" />
-            Sales & Files Copy Helper Dashboard
-          </h4>
-          <p className="text-[11px] text-theme-text-muted mt-0.5">
-            Copy pre-formatted logs for Slack, WhatsApp, or reports.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowReportHelper(false)}
-          className="flex items-center justify-center p-2 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer"
-          title="Back to Table"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {visibleBoxes.map((box, index) => (
           <CopyHelperCard
             key={box.key}
