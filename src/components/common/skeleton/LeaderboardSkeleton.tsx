@@ -30,8 +30,6 @@ export const LeaderboardSkeleton: React.FC<LeaderboardSkeletonProps> = ({ classN
         <div className="flex items-center gap-3 flex-wrap w-full lg:w-auto justify-end">
           {/* Month selector skeleton (fixed width w-28) */}
           <div className={`h-9 w-28 bg-slate-850/60 border border-slate-800/40 rounded-xl`} />
-          {/* View Report button skeleton */}
-          <div className="h-9 w-28 bg-blue-600/25 rounded-xl border border-blue-600/10" />
         </div>
       </div>
 

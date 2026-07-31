@@ -12,6 +12,7 @@ import {
   ScrollText,
   Save,
   FileText,
+  FileSpreadsheet,
   BookOpen,
   Key,
   CheckSquare,
@@ -23,7 +24,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Profile } from "@/types";
-import { isSuperadmin, isTabVisibleForRole } from "@/utils/permissionService";
+import { isSuperadmin, isTabVisibleForRole, isAdminRole } from "@/utils/permissionService";
 import { useProfiles } from "@/contexts/ProfilesContext";
 
 interface WorkspaceSubNavProps {
@@ -226,7 +227,13 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       active: true,
       onClick: () => {},
     });
-  } else if (activeTab === "kpi" || activeTab === "leaderboard" || activeTab === "reports") {
+  } else if (
+    activeTab === "kpi" ||
+    activeTab === "leaderboard" ||
+    activeTab === "reports" ||
+    activeTab === "my_report" ||
+    activeTab === "all_report"
+  ) {
     subTabs.push({
       id: "kpi",
       label: "KPI Report",
@@ -241,6 +248,22 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       active: activeTab === "leaderboard",
       onClick: () => onQuotesTabChange?.("leaderboard" as any),
     });
+    subTabs.push({
+      id: "my_report",
+      label: "My Report",
+      icon: FileText,
+      active: activeTab === "my_report",
+      onClick: () => onQuotesTabChange?.("my_report" as any),
+    });
+    if (isAdminRole(profile) || profile?.role === "supervisor") {
+      subTabs.push({
+        id: "all_report",
+        label: "All Report",
+        icon: FileSpreadsheet,
+        active: activeTab === "all_report",
+        onClick: () => onQuotesTabChange?.("all_report" as any),
+      });
+    }
   } else if (activeTab === "audit_logs") {
     subTabs.push({
       id: "activity",

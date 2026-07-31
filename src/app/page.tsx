@@ -467,6 +467,8 @@ function AppPortalInner({
     | "user_management"
     | "todo"
     | "leaderboard"
+    | "my_report"
+    | "all_report"
     | "reports"
     | "audit_logs"
     | "kpi"
@@ -559,6 +561,8 @@ function AppPortalInner({
       | "entry"
       | "monthly"
       | "leaderboard"
+      | "my_report"
+      | "all_report"
       | "reports"
       | "audit_logs"
       | "rules"
@@ -569,7 +573,14 @@ function AppPortalInner({
       | "quick_import"
       | "kpi",
   ) => {
-    if (tab === "leaderboard" || tab === "reports" || tab === "audit_logs" || tab === "kpi") {
+    if (
+      tab === "leaderboard" ||
+      tab === "my_report" ||
+      tab === "all_report" ||
+      tab === "reports" ||
+      tab === "audit_logs" ||
+      tab === "kpi"
+    ) {
       setActiveTab(tab as any);
       localStorage.setItem("last_active_dashboard", tab);
     } else {
@@ -1155,7 +1166,7 @@ function AppPortalInner({
         ? "user_management"
         : activeTab === "todo"
           ? "todo"
-          : activeTab === "leaderboard" || activeTab === "reports"
+          : activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report"
             ? "leaderboard"
             : activeTab === "audit_logs"
               ? "audit_logs"
@@ -1559,7 +1570,7 @@ function AppPortalInner({
                   <SkeletonLoader variant="staff-table" rows={8} />
                 ) : activeTab === "todo" ? (
                   <SkeletonLoader variant="todo" />
-                ) : activeTab === "leaderboard" || activeTab === "reports" ? (
+                ) : activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report" ? (
                   <SkeletonLoader variant="leaderboard" />
                 ) : activeTab === "audit_logs" ? (
                   <SkeletonLoader variant="audit-logs" />
@@ -1578,6 +1589,8 @@ function AppPortalInner({
               className={
                 activeTab !== "quotes" &&
                 activeTab !== "leaderboard" &&
+                activeTab !== "my_report" &&
+                activeTab !== "all_report" &&
                 activeTab !== "reports" &&
                 activeTab !== "audit_logs"
                   ? "hidden"

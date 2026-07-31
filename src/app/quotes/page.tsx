@@ -78,6 +78,8 @@ interface DashboardProps {
     | "entry"
     | "monthly"
     | "leaderboard"
+    | "my_report"
+    | "all_report"
     | "reports"
     | "audit_logs"
     | "rules"
@@ -91,6 +93,8 @@ interface DashboardProps {
       | "entry"
       | "monthly"
       | "leaderboard"
+      | "my_report"
+      | "all_report"
       | "reports"
       | "audit_logs"
       | "rules"
@@ -1824,11 +1828,10 @@ export default function Dashboard({
         </div>
       )}
 
-      {activeTab === "leaderboard" && !viewingReports && (
+      {activeTab === "leaderboard" && (
         <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
           <LeaderboardTable
             profile={profile}
-            onViewFullReport={() => updateViewingReports(true)}
             onBack={() => {
               if (onBackToSidebarTab) {
                 onBackToSidebarTab();
@@ -1842,30 +1845,24 @@ export default function Dashboard({
         </Suspense>
       )}
 
-      {activeTab === "leaderboard" && viewingReports && (
+      {(activeTab === "my_report" || activeTab === "reports") && (
         <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
           <ReportsPanel
             records={records}
             profilesList={profilesList}
             profile={profile}
-            onBack={() => updateViewingReports(false)}
+            initialReportTab="mine"
           />
         </Suspense>
       )}
 
-      {activeTab === "reports" && (
+      {activeTab === "all_report" && (
         <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
           <ReportsPanel
             records={records}
             profilesList={profilesList}
             profile={profile}
-            onBack={() => {
-              if (onBackToSidebarTab) {
-                onBackToSidebarTab();
-              } else {
-                onTabChange("leaderboard");
-              }
-            }}
+            initialReportTab="all"
           />
         </Suspense>
       )}

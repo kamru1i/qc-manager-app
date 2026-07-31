@@ -4,7 +4,6 @@ import {
   Search,
   AlertCircle,
   FileSpreadsheet,
-  ChevronRight,
 } from "lucide-react";
 import { Profile } from "@/types";
 import { useLeaderboardData } from "@/hooks/quotes-tracker/useLeaderboardData";
@@ -18,13 +17,11 @@ import { getGlobalSettingsFromProfile } from '@/utils/dashboardHelpers';
 
 interface LeaderboardTableProps {
   profile: Profile | null;
-  onViewFullReport?: () => void;
   onBack?: () => void;
 }
 
 export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   profile,
-  onViewFullReport,
   onBack,
 }) => {
   const {
@@ -217,17 +214,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 buttonClassName="w-28 bg-slate-950/85 border border-slate-800/80 hover:border-slate-700 text-theme-text-primary text-base md:text-xs rounded-xl px-3 py-2 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-all flex items-center justify-between gap-2 text-left font-bold"
                 className="w-28"
               />
-            )}
-
-            {/* View Report Button */}
-            {onViewFullReport && (
-              <button
-                onClick={onViewFullReport}
-                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl px-3.5 py-2 transition-all shadow-md shadow-blue-900/20 cursor-pointer shrink-0"
-              >
-                View Report
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
             )}
           </div>
         </div>
