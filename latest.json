@@ -1,8 +1,8 @@
 {
-  "version": "6.7.5",
-  "notes": "### 🩹 v6.7.5 — Patch Release (Copy Helper Date Controls, Unified Feature Flags & Supervisor Delegation Security) (Current)\n\n- **Copy Helper Date Controls & Filtering**: Added independent per-box date pickers with hover pencil icons, DD/MM/YYYY formatting, and independent record filtering for Box 4, Box 5, and Box 6.\n- **Copy Helper Feature Flags**: Added `copy_helper_user_summary` and `copy_helper_important_notes` feature flags with superadmin control and seamless dynamic box renumbering.\n- **Unified Temporary Access Controls**: Extended Temporary Access Controls in Profile Settings to support both Navigation Tabs and Feature Flags with target-user granularity.\n- **Strict Workspace & Supervisor Access Control**: Restricted Quotes Manager Workspace access toggles and supervisor assignments strictly to Admin/Superadmin.\n- **Supervisor Team & Delegation Scoping**: Enforced read-only view mode for Quotes Manager Workspace when viewed by a supervisor for staff outside their assigned or delegated team.",
-  "pub_date": "2026-07-28T16:10:00.000Z",
-  "releaseDate": "July 28, 2026",
+  "version": "6.7.6",
+  "notes": "### 🩹 v6.7.6 — Patch Release (Quick Import Sale Status Tracking & Automatic [SOLD]/[UNSOLD] Formatting) (Current)\n\n- **Quick Import Sale Status Selector**: Added an inline Sold/Unsold dropdown selector for every item in Quick Import (Bulk Import Modal) when the file type is detected or selected as 'Sale'.\n- **Default Unsold Status**: Defaulted all parsed Sale files in Quick Import to 'Unsold' (with manual toggle to 'Sold') matching Daily Entry tracking rules.\n- **Auto-Detection**: Auto-detected '[SOLD]' or 'sold' in raw text lines during bulk quote parsing to pre-select 'Sold'.\n- **Seamless Database & Analytics Integration**: Formatted file names on submission with ' [SOLD]' or ' [UNSOLD]' suffixes to feed Copy Helper Box 4 (Sales Summary), Box 6 (Admin Sales Summary), and Save File Helper.",
+  "pub_date": "2026-07-31T14:15:00.000Z",
+  "releaseDate": "July 31, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {

@@ -5,6 +5,7 @@ export interface ParsedQuoteItem {
   file_name: string;
   branch_name: string;
   file_type: string;
+  sale_status?: 'SOLD' | 'UNSOLD';
   raw_line: string;
   status: 'pending' | 'submitting' | 'success' | 'error';
   error_message?: string;
@@ -96,6 +97,7 @@ export function parseQuoteLine(
 
   let matchedType = 'Quote';
   let detectedBranch = '';
+  let saleStatus: 'SOLD' | 'UNSOLD' | undefined = undefined;
 
   // 1. Detect File Type
   for (const item of FILE_TYPE_PATTERNS) {
@@ -103,6 +105,15 @@ export function parseQuoteLine(
       matchedType = item.type;
       text = text.replace(item.regex, '');
       break;
+    }
+  }
+
+  // Detect Sale status if type is Sale or text indicates [SOLD] / [UNSOLD]
+  if (matchedType === 'Sale') {
+    if (/\[sold\]/i.test(rawText) || /\bsold\b/i.test(rawText)) {
+      saleStatus = 'SOLD';
+    } else {
+      saleStatus = 'UNSOLD';
     }
   }
 
@@ -130,6 +141,7 @@ export function parseQuoteLine(
     file_name: cleanedName,
     branch_name: finalBranch,
     file_type: matchedType,
+    sale_status: saleStatus,
     raw_line: rawText,
     status: 'pending'
   };

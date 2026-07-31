@@ -87,10 +87,17 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   const handleItemChange = (
     id: string,
     field: keyof ParsedQuoteItem,
-    value: string,
+    value: any,
   ) => {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const updated = { ...item, [field]: value };
+        if (field === "file_type" && value === "Sale" && !updated.sale_status) {
+          updated.sale_status = "UNSOLD";
+        }
+        return updated;
+      }),
     );
   };
 
@@ -141,8 +148,19 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       );
 
       try {
+        let finalFileName = item.file_name.trim();
+        if (item.file_type === "Sale") {
+          const saleStatus = item.sale_status || "UNSOLD";
+          if (
+            !finalFileName.endsWith(" [SOLD]") &&
+            !finalFileName.endsWith(" [UNSOLD]")
+          ) {
+            finalFileName = `${finalFileName} [${saleStatus}]`;
+          }
+        }
+
         const ok = await onSubmitRecord({
-          file_name: item.file_name.trim(),
+          file_name: finalFileName,
           branch_name: item.branch_name,
           codename: codename || "ANON",
           file_type: item.file_type,
@@ -379,6 +397,35 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                         ))}
                       </select>
                     </div>
+
+                    {/* Sale Status Dropdown (Only appears when file_type === "Sale") */}
+                    {item.file_type === "Sale" && (
+                      <div className="w-full sm:w-32 shrink-0 animate-fade-in">
+                        <select
+                          value={item.sale_status || "UNSOLD"}
+                          disabled={isSubmitting}
+                          onChange={(e) =>
+                            handleItemChange(
+                              item.id,
+                              "sale_status",
+                              e.target.value as "SOLD" | "UNSOLD",
+                            )
+                          }
+                          className={`w-full px-2.5 py-1.5 bg-theme-card-bg border rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all ${
+                            (item.sale_status || "UNSOLD") === "SOLD"
+                              ? "border-emerald-500/50 text-emerald-400 font-bold"
+                              : "border-amber-500/40 text-amber-400 font-medium"
+                          }`}
+                        >
+                          <option value="UNSOLD" className="text-amber-400 bg-theme-card-bg font-normal">
+                            Unsold
+                          </option>
+                          <option value="SOLD" className="text-emerald-400 bg-theme-card-bg font-bold">
+                            Sold
+                          </option>
+                        </select>
+                      </div>
+                    )}
 
                     {/* Status / Actions */}
                     <div className="flex items-center justify-end gap-2 shrink-0">

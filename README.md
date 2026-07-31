@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.7.5** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.7.6** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.7.5 — Patch Release (Copy Helper Date Controls, Unified Feature Flags & Supervisor Delegation Security) (Current)
+### 🩹 v6.7.6 — Patch Release (Quick Import Sale Status Tracking & Automatic [SOLD]/[UNSOLD] Formatting) (Current)
+
+- **Quick Import Sale Status Selector**: Added an inline Sold/Unsold dropdown selector for every item in Quick Import (Bulk Import Modal) whenever the file type is detected or selected as 'Sale'.
+- **Default Unsold Status**: Defaulted all parsed Sale files in Quick Import to 'Unsold' (with manual dropdown toggle to 'Sold'), perfectly matching Daily Entry tracking rules.
+- **Auto-Detection**: Auto-detected '[SOLD]' or 'sold' in raw text lines during bulk quote parsing to pre-select 'Sold'.
+- **Seamless Database & Analytics Integration**: Formatted file names on submission with ' [SOLD]' or ' [UNSOLD]' suffixes to feed Copy Helper Box 4 (Sales Summary), Box 6 (Admin Sales Summary), and Save File Helper.
+
+### 🩹 v6.7.5 — Patch Release (Copy Helper Date Controls, Unified Feature Flags & Supervisor Delegation Security)
 
 - **Copy Helper Date Controls & Independent Filtering**: Added independent per-box date pickers with hover pencil icons, DD/MM/YYYY formatting, and independent record filtering across Box 4 (User Sales Summary), Box 5 (Detailed File Report), and Box 6 (Admin Sales Summary).
 - **Copy Helper Feature Flags**: Added `copy_helper_user_summary` (Box 4) and `copy_helper_important_notes` (Important Notes) to the Feature Flags registry with Superadmin control, and ensured dynamic box renumbering without gaps.
