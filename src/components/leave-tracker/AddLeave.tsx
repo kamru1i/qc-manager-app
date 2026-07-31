@@ -101,8 +101,8 @@ export function AddLeave({
 
   const isSupervisorRole = profile?.role === 'supervisor';
   const isUserRole = profile?.role === 'user';
-  // Admin direct edit: no re-approval needed. Supervisor/User edits on approved records: re-approval required.
-  const needsReapproval = !adminDirectEdit && (isSupervisorRole || isUserRole) && !!editingRecord && (editingRecord.status === 'approved' || editingRecord.status === 'settled');
+  // Admin direct edit: no re-approval needed. Any edit on an approved record in dashboard requires re-approval and goes to approval queue.
+  const needsReapproval = !adminDirectEdit && !!editingRecord && (editingRecord.status === 'approved' || editingRecord.status === 'settled');
 
   const targetProfileId = targetProfile?.id;
   const defaultSignIn = targetProfile?.default_sign_in;
@@ -483,26 +483,28 @@ export function AddLeave({
         }
 
         changeDescription = changeDescription.replace(/,\s*$/, '');
-        const editorName = isSupervisorRole 
+        const editorName = isAdminRole(profile)
+          ? (profile?.username?.toUpperCase() || 'ADMIN')
+          : isSupervisorRole 
           ? (profile?.username?.toUpperCase() || 'SUPERVISOR') 
           : (profile?.username?.toUpperCase() || 'USER');
         const editLog = `\n[Edited by ${editorName}: ${changeDescription}. Reason: ${editReason}]`;
         commentWithCategory = baseComment + editLog;
 
-        // Reset status for re-approval
-        if (isSupervisorRole) {
+        // Reset status for re-approval -> goes to admin approval queue
+        if (isSupervisorRole || isAdminRole(profile)) {
           finalStatus = 'approved_by_supervisor';
         } else if (isUserRole) {
           // If user has no supervisor assigned, skip to admin approval directly
-          const hasSupervisors = targetProfile.supervisor_ids && targetProfile.supervisor_ids.length > 0;
+          const hasSupervisors = targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0;
           finalStatus = hasSupervisors ? 'pending_supervisor' : 'approved_by_supervisor';
         }
       } else {
-        // If not approved yet, we keep status or set to approved_by_supervisor if supervisor edits, or pending_supervisor if user edits
-        if (isSupervisorRole) {
+        // If not approved yet, set to approved_by_supervisor for supervisor/admin, or pending_supervisor for user
+        if (isSupervisorRole || isAdminRole(profile)) {
           finalStatus = 'approved_by_supervisor';
         } else if (isUserRole) {
-          const hasSupervisors = targetProfile.supervisor_ids && targetProfile.supervisor_ids.length > 0;
+          const hasSupervisors = targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0;
           finalStatus = hasSupervisors ? 'pending_supervisor' : 'approved_by_supervisor';
         }
       }
