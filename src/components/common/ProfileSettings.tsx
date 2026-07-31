@@ -1039,8 +1039,8 @@ export function ProfileSettings({
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <User className="h-4 w-4" />
-            <span>Profile</span>
+            <User className="h-4 w-4 text-sky-400" />
+            <span>Profile Settings</span>
           </button>
         )}
 
@@ -1050,11 +1050,11 @@ export function ProfileSettings({
             onClick={() => handleSubTabChange('menu_visibility')}
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'menu_visibility'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                ? 'bg-amber-600/15 border border-amber-500/30 text-amber-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <Layout className="h-4 w-4" />
+            <Layout className="h-4 w-4 text-amber-400" />
             <span>Menu</span>
           </button>
         )}
@@ -1065,11 +1065,11 @@ export function ProfileSettings({
             onClick={() => handleSubTabChange('sanitizer')}
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'sanitizer'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                ? 'bg-cyan-600/15 border border-cyan-500/30 text-cyan-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4 text-cyan-400" />
             <span>Sanitizer</span>
           </button>
         )}
@@ -1080,11 +1080,11 @@ export function ProfileSettings({
             onClick={() => handleSubTabChange('access_controls')}
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'access_controls'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                ? 'bg-rose-600/15 border border-rose-500/30 text-rose-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <Shield className="h-4 w-4" />
+            <Shield className="h-4 w-4 text-rose-400" />
             <span>Access</span>
           </button>
         )}
@@ -1095,11 +1095,11 @@ export function ProfileSettings({
             onClick={() => handleSubTabChange('feature_flags')}
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'feature_flags'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                ? 'bg-purple-600/15 border border-purple-500/30 text-purple-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-4 w-4 text-purple-400" />
             <span>Feature Flags</span>
           </button>
         )}
@@ -1129,7 +1129,7 @@ export function ProfileSettings({
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <Globe className="h-4 w-4" />
+            <Globe className="h-4 w-4 text-blue-400" />
             <span>VPN</span>
           </button>
         )}
@@ -1140,11 +1140,11 @@ export function ProfileSettings({
             onClick={() => handleSubTabChange('audit_logs')}
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'audit_logs'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                ? 'bg-orange-600/15 border border-orange-500/30 text-orange-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <ScrollText className="h-4 w-4" />
+            <ScrollText className="h-4 w-4 text-orange-400" />
             <span>Audit Logs</span>
           </button>
         )}
@@ -1155,11 +1155,11 @@ export function ProfileSettings({
             onClick={() => handleSubTabChange('user_management')}
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'user_management'
-                ? 'bg-purple-600/15 border border-purple-500/30 text-purple-400 shadow-sm'
+                ? 'bg-fuchsia-600/15 border border-fuchsia-500/30 text-fuchsia-400 shadow-sm'
                 : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
             }`}
           >
-            <Users className="h-4 w-4 text-purple-400" />
+            <Users className="h-4 w-4 text-fuchsia-400" />
             <span>User Management</span>
           </button>
         )}
