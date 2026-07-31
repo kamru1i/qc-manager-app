@@ -16,6 +16,8 @@ import {
   Edit,
   Trash2,
   Download,
+  Search,
+  Users,
 } from "lucide-react";
 import {
   formatDate,
@@ -59,6 +61,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   const [filterType, setFilterType] = useState("All");
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState(() =>
     new Date().getFullYear().toString(),
   );
@@ -113,7 +116,41 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     });
   }, [adminRecords, selectedDate, teamUserIds]);
 
-  // Group the dailyRecords by supervisor
+  // Filter dailyRecords by leave_type and search term
+  const filteredDailyRecords = useMemo(() => {
+    return dailyRecords.filter((r) => {
+      // 1. Leave type filter
+      if (filterType !== "All" && filterType !== "all" && r.leave_type !== filterType) {
+        return false;
+      }
+      // 2. Search term filter
+      if (searchTerm.trim()) {
+        const query = searchTerm.toLowerCase().trim();
+        const staffProfile = profilesList.find((p) => p.id === r.user_id);
+        const fullName = (
+          staffProfile?.full_name ||
+          staffProfile?.username ||
+          r.username ||
+          ""
+        ).toLowerCase();
+        const codename = (
+          staffProfile?.username ||
+          r.username ||
+          ""
+        ).toLowerCase();
+        const comment = getCleanComment(r.comment).toLowerCase();
+
+        const matches =
+          fullName.includes(query) ||
+          codename.includes(query) ||
+          comment.includes(query);
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }, [dailyRecords, filterType, searchTerm, profilesList]);
+
+  // Group the filteredDailyRecords by supervisor
   const groupedDailyRecords = useMemo(() => {
     // If the user is a supervisor (or not an admin), we group into own team + delegated teams
     if (!isAdminRole(profile)) {
@@ -128,14 +165,13 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           .map((p) => p.id),
         profile.id,
       ];
-      const ownRecords = dailyRecords.filter((r) =>
+      const ownRecords = filteredDailyRecords.filter((r) =>
         ownTeamUserIds.includes(r.user_id),
       );
       const supervisorName = profile.username || "Supervisor";
       groups.push({
         title: `${supervisorName.toUpperCase()} Team Leave Records`,
         records: ownRecords,
-        hideFilterPanel: false,
       });
 
       // 2. Delegated teams records
@@ -153,27 +189,20 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         const teamUserIds = profilesList
           .filter((p) => p.supervisor_ids && p.supervisor_ids.includes(sup.id))
           .map((p) => p.id);
-        const teamRecords = dailyRecords.filter((r) =>
+        const teamRecords = filteredDailyRecords.filter((r) =>
           teamUserIds.includes(r.user_id),
         );
 
         groups.push({
           title: `${(sup.username || "Supervisor").toUpperCase()} Team Leave Records`,
           records: teamRecords,
-          hideFilterPanel: true,
         });
-      });
-
-      // Adjust filter panel visibility
-      groups.forEach((g, index) => {
-        g.hideFilterPanel = index > 0;
       });
 
       return groups;
     }
 
     // Admin logic: group by supervisor, and gather unassigned records
-    // Get all supervisors: users with role 'supervisor' or 'admin'
     const supervisors = profilesList.filter(
       (p) => p.role === "supervisor" || p.role === "admin",
     );
@@ -181,20 +210,16 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
     const groups: {
       title: string;
       records: ChutiRecord[];
-      hideFilterPanel: boolean;
     }[] = [];
 
-    // Track which records are assigned to any supervisor's team
     const assignedRecordIds = new Set<string>();
 
-    // Sort supervisors by username/codename to keep consistent ordering
     const sortedSupervisors = [...supervisors].sort((a, b) =>
       (a.username || "").localeCompare(b.username || ""),
     );
 
-    // Populate groups for each supervisor who has leaves in their team on this day
     sortedSupervisors.forEach((sup) => {
-      const teamRecords = dailyRecords.filter((r) => {
+      const teamRecords = filteredDailyRecords.filter((r) => {
         const staff = profilesList.find((p) => p.id === r.user_id);
         return (staff?.supervisor_ids?.includes(sup.id)) || r.user_id === sup.id;
       });
@@ -205,30 +230,22 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         groups.push({
           title: `${supName} Team Leave Records`,
           records: teamRecords,
-          hideFilterPanel: false, // Will adjust below
         });
       }
     });
 
-    // Gather records that don't belong to any active supervisor
-    const unassignedRecords = dailyRecords.filter(
+    const unassignedRecords = filteredDailyRecords.filter(
       (r) => !assignedRecordIds.has(r.id),
     );
     if (unassignedRecords.length > 0) {
       groups.push({
         title: `Direct Staff Leave Records`,
         records: unassignedRecords,
-        hideFilterPanel: false,
       });
     }
 
-    // Set hideFilterPanel = true for all tables except the first one
-    groups.forEach((g, index) => {
-      g.hideFilterPanel = index > 0;
-    });
-
     return groups;
-  }, [profile, dailyRecords, profilesList]);
+  }, [profile, filteredDailyRecords, profilesList]);
 
   const displayGroups = useMemo(() => {
     if (groupedDailyRecords.length > 0) {
@@ -243,7 +260,6 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
             ? "Team daily leave records"
             : `${cleanName} Team Leave Records`,
         records: [],
-        hideFilterPanel: false,
       },
     ];
   }, [groupedDailyRecords, profile]);
@@ -451,8 +467,34 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           </div>
         </div>
 
-        {/* Date, Leave Type Filter, and Excel Export Control Group */}
+        {/* Date, Leave Type Filter, Search, and Excel Export Control Group */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto self-stretch md:self-auto border-t border-theme-border-muted/80 md:border-t-0 pt-3 md:pt-0">
+          {/* Quick Search Bar */}
+          <div className="flex flex-col min-w-[200px] flex-1 sm:flex-none">
+            <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
+              Search Records
+            </label>
+            <div className="relative w-full">
+              <Search className="h-4 w-4 absolute left-3 top-2.5 text-theme-text-muted" />
+              <input
+                type="text"
+                placeholder="Search by comment or leave type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 bg-theme-card-container border border-theme-border-input text-theme-text-primary placeholder:text-theme-text-muted/60 text-xs rounded-xl focus:outline-none focus:border-blue-500 font-sans"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2.5 top-2 text-xs text-theme-text-muted hover:text-theme-text-primary transition-colors cursor-pointer font-bold"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Leave Type Filter Dropdown */}
           <div className="flex flex-col min-w-[140px]">
             <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
@@ -493,7 +535,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           {/* Excel Export Button (No PDF) */}
           <div className="flex flex-col justify-end self-end">
             <button
-              onClick={() => handleExportExcel(dailyRecords, "")}
+              onClick={() => handleExportExcel(dailyRecords, searchTerm)}
               className="flex items-center gap-1.5 py-2 px-3.5 bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
               title="Export Excel Report"
             >
@@ -538,43 +580,91 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
         </div>
       </div>
 
-      {/* Daily Leaves Tables Grouped by Supervisor */}
-      {displayGroups.map((group) => (
-        <LeavesRecordsTable
-          key={group.title}
-          records={group.records}
-          allowOvertime={false}
-          filterType={filterType}
-          setFilterType={setFilterType}
-          filterStartDate={filterStartDate}
-          setFilterStartDate={setFilterStartDate}
-          filterEndDate={filterEndDate}
-          setFilterEndDate={setFilterEndDate}
-          onResetFilters={handleResetFilters}
-          onExportExcel={handleExportExcel}
-          onExportPDF={handleExportPDF}
-          onToggleAdjustment={() => {}}
-          onDeleteClick={() => {}}
-          formatDate={formatDate}
-          formatTimeToAMPM={formatTimeToAMPM}
-          getCleanComment={getCleanComment}
-          selectedYear={selectedYear}
-          setSelectedYear={setSelectedYear}
-          availableYears={[selectedYear]}
-          onAddLeaveClick={() => {}}
-          title={group.title}
-          emptyMessage="No leave records found for the selected date."
-          showPendingBadge={true}
-          initialFetchDone={initialFetchDone}
-          hideDelete={true}
-          showAddLeave={false}
-          showNameColumn={true}
-          hideAdjustmentAndOvertime={true}
-          hideYearSelect={true}
-          profilesList={profilesList}
-          hideFilterPanel={true}
-        />
-      ))}
+      {/* Daily Leaves Single Unified Table */}
+      <div className="bg-theme-card-bg/40 border border-theme-border-input/80 shadow-2xl rounded-2xl overflow-hidden flex flex-col">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse font-sans">
+            <thead>
+              <tr className="bg-theme-card-container/90 border-b border-theme-border-input/80 text-[11px] uppercase tracking-wider text-theme-text-muted font-bold">
+                <th className="py-3.5 px-4">Name</th>
+                <th className="py-3.5 px-4">Codename</th>
+                <th className="py-3.5 px-4">Type</th>
+                <th className="py-3.5 px-4">Sign In/Out</th>
+                <th className="py-3.5 px-4">Leave Hours</th>
+                <th className="py-3.5 px-4">Comment</th>
+                <th className="py-3.5 px-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-theme-border-input/40">
+              {displayGroups.length === 0 || displayGroups.every((g) => g.records.length === 0) ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-theme-text-muted text-sm font-medium">
+                    No leave records found for the selected date.
+                  </td>
+                </tr>
+              ) : (
+                displayGroups.map((group) => (
+                  <React.Fragment key={group.title}>
+                    {/* Supervisor Team Sub-Header Row */}
+                    <tr className="bg-theme-card-container/80 border-y border-theme-border-input/60">
+                      <td colSpan={7} className="py-2.5 px-4 font-bold text-xs text-blue-400">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-blue-500" />
+                            {group.title}
+                          </span>
+                          <span className="text-[11px] font-normal text-theme-text-muted">
+                            Total: {group.records.length} {group.records.length === 1 ? "entry" : "entries"}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Group Leave Record Rows */}
+                    {group.records.map((r) => {
+                      const staffProfile = profilesList.find((p) => p.id === r.user_id);
+                      const fullName = staffProfile?.full_name || staffProfile?.username || r.username || "Staff User";
+                      const codename = (staffProfile?.username || r.username || "—").toUpperCase();
+
+                      return (
+                        <tr key={r.id} className="hover:bg-theme-card-bg/60 transition-colors">
+                          <td className="py-3 px-4 font-semibold text-theme-text-primary">
+                            {fullName}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-theme-text-secondary text-xs">
+                            {codename}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                              r.leave_type === "short"
+                                ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                                : "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                            }`}>
+                              {r.leave_type === "short" ? "Short Leave" : "Full Leave"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-mono text-xs text-theme-text-secondary">
+                            {r.sign_in_time && r.sign_out_time ? `${formatTimeToAMPM(r.sign_in_time)} / ${formatTimeToAMPM(r.sign_out_time)}` : "—"}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-xs text-theme-text-primary font-bold">
+                            {r.leave_hour ? r.leave_hour : "—"}
+                          </td>
+                          <td className="py-3 px-4 text-theme-text-secondary text-xs max-w-xs truncate" title={getCleanComment(r.comment)}>
+                            {getCleanComment(r.comment) || "—"}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <span className="inline-flex items-center justify-center h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" title="Approved" />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Delegate Access Modal */}
       <Modal
