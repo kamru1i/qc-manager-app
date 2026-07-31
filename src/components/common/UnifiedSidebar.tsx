@@ -218,7 +218,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         {canAccessModule(profile, null, 'leave') && (
           <button
             onClick={handleChutiNav}
-            title={isSidebarCollapsed ? 'Leave Tracker' : undefined}
+            title={isSidebarCollapsed ? 'Chuti' : undefined}
             className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
               isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
             } ${
@@ -228,7 +228,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             }`}
           >
             <Calendar className="h-5 w-5 shrink-0" />
-            {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Tracker</span>}
+            {!isSidebarCollapsed && <span className="whitespace-nowrap">Chuti</span>}
           </button>
         )}
 
@@ -236,7 +236,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         {canAccessModule(profile, null, 'quotes') && (
           <button
             onClick={handleQuotesNav}
-            title={isSidebarCollapsed ? 'Quotes Tracker' : undefined}
+            title={isSidebarCollapsed ? 'Quotation' : undefined}
             className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
               isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
             } ${
@@ -246,7 +246,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             }`}
           >
             <FileText className="h-5 w-5 shrink-0" />
-            {!isSidebarCollapsed && <span className="whitespace-nowrap">Quotes Tracker</span>}
+            {!isSidebarCollapsed && <span className="whitespace-nowrap">Quotation</span>}
           </button>
         )}
 

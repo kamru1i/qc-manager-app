@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.7.7 — Patch Release (Database Health Settings Subtab & Interactive Metric Breakdowns) (Current)
+### 🚀 v6.8.0 — Minor Release (Settings Subtab Restructuring & Subtab UI Polish) (Current)
+
+- **Consolidated Settings Subtabs**: Integrated `Security Logs` (Audit Logs) and `Users` (User Management) into Settings subtabs.
+- **Mobile & Small Screen Scrollable Subtabs**: Added responsive horizontal scrolling for subtabs on small displays.
+- **Subtab UI Polish & Renaming**: Updated subtab labels (`Profile`, `Security Logs`, `Users`) with vibrant icons and cleaned up redundant header cards across Menu, Sanitizer, VPN, and User Management.
+- **Reports Navigation**: Defaulted Reports workspace navigation to Leaderboard and added active subtab memory across navigation sessions.
+
+### 🩹 v6.7.7 — Patch Release (Database Health Settings Subtab & Interactive Metric Breakdowns)
 
 - **Dedicated Database Health Settings Subtab**: Added live Supabase Usage & Health dashboard widget to Settings under Database Health subtab with Granular Feature Flag Access Controls (`system_health_metrics`).
 - **Interactive Daily Trend Modals**: Interactive click handlers on all 8 metric cards displaying daily trend bar charts, usage breakdown tables, hover tooltips, and empty states.

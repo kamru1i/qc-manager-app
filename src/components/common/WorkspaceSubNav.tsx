@@ -70,6 +70,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
     id: string;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
+    iconColor?: string;
     active: boolean;
     onClick: () => void;
   }
@@ -81,6 +82,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "add_leave",
       label: "Add Leave",
       icon: Plus,
+      iconColor: "text-blue-400",
       active: activeChutiTab === "add_leave",
       onClick: () => onChutiTabChange("add_leave"),
     });
@@ -90,6 +92,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "leave_history",
         label: "Leave History",
         icon: History,
+        iconColor: "text-amber-400",
         active: activeChutiTab === "leave_history",
         onClick: () => onChutiTabChange("leave_history"),
       });
@@ -100,6 +103,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "team_leaves",
         label: "Team Leave Records",
         icon: Users,
+        iconColor: "text-purple-400",
         active: activeChutiTab === "team_leaves",
         onClick: () => onChutiTabChange("team_leaves"),
       });
@@ -110,6 +114,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "govt_responses",
         label: "Govt Holiday Response",
         icon: Calendar,
+        iconColor: "text-emerald-400",
         active: activeChutiTab === "govt_responses",
         onClick: () => onChutiTabChange("govt_responses"),
       });
@@ -120,6 +125,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "settlement",
         label: "Review & Settlements",
         icon: RotateCcw,
+        iconColor: "text-rose-400",
         active: activeChutiTab === "settlement",
         onClick: () => onChutiTabChange("settlement"),
       });
@@ -130,6 +136,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "leave_settings",
         label: "Leave Settings",
         icon: Settings,
+        iconColor: "text-indigo-400",
         active: activeChutiTab === "leave_settings",
         onClick: () => onChutiTabChange("leave_settings"),
       });
@@ -139,6 +146,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "entry",
       label: "Daily Entry",
       icon: Clock,
+      iconColor: "text-sky-400",
       active: activeQuotesTab === "entry",
       onClick: () => onQuotesTabChange("entry"),
     });
@@ -148,6 +156,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "copy_helper",
         label: "Copy Helper",
         icon: ScrollText,
+        iconColor: "text-amber-400",
         active: activeQuotesTab === "copy_helper",
         onClick: () => onQuotesTabChange("copy_helper"),
       });
@@ -158,6 +167,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "save_file",
         label: "Save File",
         icon: Save,
+        iconColor: "text-teal-400",
         active: activeQuotesTab === "save_file",
         onClick: () => onQuotesTabChange("save_file"),
       });
@@ -168,6 +178,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "monthly",
         label: "Monthly List",
         icon: FileText,
+        iconColor: "text-cyan-400",
         active: activeQuotesTab === "monthly",
         onClick: () => onQuotesTabChange("monthly"),
       });
@@ -178,6 +189,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "rules",
         label: "Quote Rules",
         icon: BookOpen,
+        iconColor: "text-blue-400",
         active: activeQuotesTab === "rules",
         onClick: () => onQuotesTabChange("rules"),
       });
@@ -188,6 +200,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "login_codes",
         label: "Login Codes",
         icon: Key,
+        iconColor: "text-purple-400",
         active: activeQuotesTab === "login_codes",
         onClick: () => onQuotesTabChange("login_codes"),
       });
@@ -198,6 +211,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "quick_import",
         label: "Quick Import",
         icon: Sparkles,
+        iconColor: "text-amber-300",
         active: activeQuotesTab === "quick_import",
         onClick: () => onQuotesTabChange("quick_import"),
       });
@@ -207,6 +221,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "directory",
       label: "Staff Directory",
       icon: Users,
+      iconColor: "text-purple-400",
       active: !isCreatingNewUser,
       onClick: () => onCreatingNewUserChange?.(false),
     });
@@ -215,6 +230,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "add_user",
         label: "Add New Staff",
         icon: UserPlus,
+        iconColor: "text-emerald-400",
         active: isCreatingNewUser,
         onClick: () => onCreatingNewUserChange?.(true),
       });
@@ -224,6 +240,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "my_todos",
       label: "My Tasks & Todos",
       icon: CheckSquare,
+      iconColor: "text-emerald-400",
       active: true,
       onClick: () => {},
     });
@@ -238,6 +255,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "leaderboard",
       label: "Leaderboard",
       icon: Trophy,
+      iconColor: "text-amber-400",
       active: activeTab === "leaderboard",
       onClick: () => onQuotesTabChange?.("leaderboard" as any),
     });
@@ -245,6 +263,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "kpi",
       label: "KPI Report",
       icon: TrendingUp,
+      iconColor: "text-emerald-400",
       active: activeTab === "kpi" || activeTab === "reports",
       onClick: () => onQuotesTabChange?.("kpi" as any),
     });
@@ -252,6 +271,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "my_report",
       label: "My Report",
       icon: FileText,
+      iconColor: "text-sky-400",
       active: activeTab === "my_report",
       onClick: () => onQuotesTabChange?.("my_report" as any),
     });
@@ -260,6 +280,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         id: "all_report",
         label: "All Report",
         icon: FileSpreadsheet,
+        iconColor: "text-purple-400",
         active: activeTab === "all_report",
         onClick: () => onQuotesTabChange?.("all_report" as any),
       });
@@ -269,6 +290,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       id: "activity",
       label: "System Audit Logs",
       icon: ShieldCheck,
+      iconColor: "text-orange-400",
       active: true,
       onClick: () => {},
     });
@@ -294,7 +316,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
                 : "text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input/40 border border-transparent"
             }`}
           >
-            <Icon className="h-4 w-4 shrink-0" />
+            <Icon className={`h-4 w-4 shrink-0 ${t.iconColor || ""}`} />
             <span>{t.label}</span>
           </button>
         );

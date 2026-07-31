@@ -1,6 +1,6 @@
 {
-  "version": "6.7.7",
-  "notes": "### 🩹 v6.7.7 — Patch Release (Database Health Settings Subtab & Interactive Metric Breakdowns) (Current)\n\n- **Dedicated Database Health Subtab**: Added live Supabase Usage & Health dashboard widget to Settings under Database Health subtab.\n- **Interactive Daily Trend Modals**: Interactive click handlers on all 8 metric cards displaying daily trend bar charts, usage breakdown tables, hover tooltips, and empty states.\n- **Clean Layout**: Removed Manage Database Size link button as requested.",
+  "version": "6.8.0",
+  "notes": "### 🚀 v6.8.0 — Minor Release (Settings Subtab Restructuring & UI Polish) (Current)\n\n- **Consolidated Settings Subtabs**: Integrated Security Logs (Audit Logs) and Users (User Management) into Settings subtabs.\n- **Mobile & Tablet Responsive Bar**: Added horizontal scrolling support for subtab bar on small displays.\n- **UI Polish**: Streamlined header boxes, inline VPN Management controls, and refined Reports workspace navigation.",
   "pub_date": "2026-07-31T15:41:00.000Z",
   "releaseDate": "July 31, 2026",
   "platforms": {},
