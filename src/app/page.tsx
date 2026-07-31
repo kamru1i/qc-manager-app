@@ -566,15 +566,16 @@ function AppPortalInner({
       | "causality"
       | "copy_helper"
       | "save_file"
-      | "quick_import",
+      | "quick_import"
+      | "kpi",
   ) => {
-    if (tab === "leaderboard" || tab === "reports" || tab === "audit_logs") {
-      setActiveTab(tab);
+    if (tab === "leaderboard" || tab === "reports" || tab === "audit_logs" || tab === "kpi") {
+      setActiveTab(tab as any);
       localStorage.setItem("last_active_dashboard", tab);
     } else {
       setActiveTab("quotes");
       localStorage.setItem("last_active_dashboard", "quotes");
-      setActiveQuotesTab(tab);
+      setActiveQuotesTab(tab as any);
       localStorage.setItem("quotes_sales_active_tab", tab);
     }
   };

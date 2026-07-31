@@ -13,7 +13,7 @@ export interface MenuTabDef {
 
 export const MENU_TABS: MenuTabDef[] = [
   // Main Workspace Sections
-  { key: 'kpi', label: 'KPI & Performance', category: 'Main Workspace Sections' },
+  { key: 'kpi', label: 'Reports Workspace (KPI & Leaderboard)', category: 'Main Workspace Sections' },
   { key: 'todo', label: 'Todos Panel', category: 'Main Workspace Sections' },
   { key: 'leaderboard', label: 'Leaderboard (Workspace)', category: 'Main Workspace Sections' },
   { key: 'audit_logs', label: 'Audit Logs (Workspace)', category: 'Main Workspace Sections' },

@@ -144,9 +144,10 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     }
   };
 
-  const handleKpiNav = () => {
-    localStorage.setItem('last_active_dashboard', 'kpi');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'kpi' }));
+  const handleReportsNav = () => {
+    const target = activeSection === 'leaderboard' ? 'leaderboard' : 'kpi';
+    localStorage.setItem('last_active_dashboard', target);
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: target }));
     router.push('/');
     onNavItemClick?.();
   };
@@ -161,13 +162,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   const handleTodoNav = () => {
     localStorage.setItem('last_active_dashboard', 'todo');
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'todo' }));
-    router.push('/');
-    onNavItemClick?.();
-  };
-
-  const handleLeaderboardNav = () => {
-    localStorage.setItem('last_active_dashboard', 'leaderboard');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'leaderboard' }));
     router.push('/');
     onNavItemClick?.();
   };
@@ -249,22 +243,22 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
           </button>
         )}
 
-        {/* Workspace: KPI & Performance */}
-        {canAccessModule(profile, null, 'kpi') && !tabHidden('kpi') && (
+        {/* Workspace: Reports (KPI Report & Leaderboard) */}
+        {(canAccessModule(profile, null, 'kpi') || canAccessModule(profile, null, 'reports') || canAccessModule(profile, null, 'leaderboard')) && !tabHidden('kpi') && (
           <div className="space-y-1">
             <button
-              onClick={handleKpiNav}
-              title={isSidebarCollapsed ? 'KPI & Performance' : undefined}
+              onClick={handleReportsNav}
+              title={isSidebarCollapsed ? 'Reports' : undefined}
               className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
               } ${
-                activeSection === 'kpi'
+                activeSection === 'kpi' || activeSection === 'leaderboard' || activeSection === 'reports'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
                   : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
             >
               <BarChart2 className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">KPI & Performance</span>}
+              {!isSidebarCollapsed && <span className="whitespace-nowrap">Reports</span>}
             </button>
           </div>
         )}
@@ -285,26 +279,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             >
               <ListTodo className="h-5 w-5 shrink-0" />
               {!isSidebarCollapsed && <span className="whitespace-nowrap">Todos</span>}
-            </button>
-          </div>
-        )}
-
-        {/* Workspace: Leaderboard (Everyone) */}
-        {canAccessModule(profile, null, 'leaderboard') && !tabHidden('leaderboard') && (
-          <div className="space-y-1">
-            <button
-              onClick={handleLeaderboardNav}
-              title={isSidebarCollapsed ? 'Leaderboard' : undefined}
-              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-              } ${
-                activeSection === 'leaderboard'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
-              }`}
-            >
-              <Award className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">Leaderboard</span>}
             </button>
           </div>
         )}

@@ -226,27 +226,26 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       active: true,
       onClick: () => {},
     });
-  } else if (activeTab === "leaderboard") {
+  } else if (activeTab === "kpi" || activeTab === "leaderboard" || activeTab === "reports") {
     subTabs.push({
-      id: "monthly",
+      id: "kpi",
+      label: "KPI Report",
+      icon: TrendingUp,
+      active: activeTab === "kpi" || activeTab === "reports",
+      onClick: () => onQuotesTabChange?.("kpi" as any),
+    });
+    subTabs.push({
+      id: "leaderboard",
       label: "Leaderboard",
       icon: Trophy,
-      active: true,
-      onClick: () => {},
+      active: activeTab === "leaderboard",
+      onClick: () => onQuotesTabChange?.("leaderboard" as any),
     });
   } else if (activeTab === "audit_logs") {
     subTabs.push({
       id: "activity",
       label: "System Audit Logs",
       icon: ShieldCheck,
-      active: true,
-      onClick: () => {},
-    });
-  } else if (activeTab === "kpi") {
-    subTabs.push({
-      id: "performance",
-      label: "KPI & Performance",
-      icon: TrendingUp,
       active: true,
       onClick: () => {},
     });
