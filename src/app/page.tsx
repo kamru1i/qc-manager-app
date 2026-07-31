@@ -578,11 +578,17 @@ function AppPortalInner({
       tab === "my_report" ||
       tab === "all_report" ||
       tab === "reports" ||
-      tab === "audit_logs" ||
       tab === "kpi"
     ) {
-      setActiveTab(tab as any);
-      localStorage.setItem("last_active_dashboard", tab);
+      let targetTab = tab;
+      if (tab === "reports") {
+        targetTab = (localStorage.getItem("last_active_reports_subtab") as any) || "leaderboard";
+      }
+      setActiveTab(targetTab as any);
+      localStorage.setItem("last_active_dashboard", targetTab);
+      if (targetTab === "leaderboard" || targetTab === "kpi" || targetTab === "my_report" || targetTab === "all_report") {
+        localStorage.setItem("last_active_reports_subtab", targetTab);
+      }
     } else {
       setActiveTab("quotes");
       localStorage.setItem("last_active_dashboard", "quotes");
@@ -1017,8 +1023,16 @@ function AppPortalInner({
 
       if (profile) {
         const checkModule =
-          targetWorkspace === "chuti" ? "leave" : targetWorkspace;
+          targetWorkspace === "chuti"
+            ? "leave"
+            : targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report"
+              ? "kpi"
+              : targetWorkspace;
         if (!canAccessModule(profile, null, checkModule)) return;
+      }
+
+      if (targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report") {
+        localStorage.setItem("last_active_reports_subtab", targetWorkspace);
       }
 
       setActiveTab(targetWorkspace);

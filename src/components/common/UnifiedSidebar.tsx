@@ -145,7 +145,10 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   };
 
   const handleReportsNav = () => {
-    const target = 'leaderboard';
+    const savedSubtab = localStorage.getItem('last_active_reports_subtab');
+    const target = (savedSubtab === 'leaderboard' || savedSubtab === 'kpi' || savedSubtab === 'my_report' || savedSubtab === 'all_report')
+      ? savedSubtab
+      : 'leaderboard';
     localStorage.setItem('last_active_dashboard', target);
     window.dispatchEvent(new CustomEvent('workspace-change', { detail: target }));
     router.push('/');
