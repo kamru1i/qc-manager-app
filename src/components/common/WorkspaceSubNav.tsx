@@ -235,18 +235,18 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
     activeTab === "all_report"
   ) {
     subTabs.push({
-      id: "kpi",
-      label: "KPI Report",
-      icon: TrendingUp,
-      active: activeTab === "kpi" || activeTab === "reports",
-      onClick: () => onQuotesTabChange?.("kpi" as any),
-    });
-    subTabs.push({
       id: "leaderboard",
       label: "Leaderboard",
       icon: Trophy,
       active: activeTab === "leaderboard",
       onClick: () => onQuotesTabChange?.("leaderboard" as any),
+    });
+    subTabs.push({
+      id: "kpi",
+      label: "KPI Report",
+      icon: TrendingUp,
+      active: activeTab === "kpi" || activeTab === "reports",
+      onClick: () => onQuotesTabChange?.("kpi" as any),
     });
     subTabs.push({
       id: "my_report",
