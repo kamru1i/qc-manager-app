@@ -1027,8 +1027,8 @@ export function ProfileSettings({
       <div className="absolute bottom-[-10%] left-[-15%] w-[35%] h-[35%] rounded-full bg-purple-900/5 blur-[70px] pointer-events-none" />
 
 
-      {/* Subtab Navigation */}
-      <div className="flex items-center gap-2 border-b border-theme-border-input/60 pb-3 overflow-x-auto max-w-full scrollbar-thin whitespace-nowrap pt-0.5">
+      {/* Subtab Navigation (Scrollable on small displays) */}
+      <div className="flex items-center gap-2 border-b border-theme-border-input/60 pb-3 overflow-x-auto overflow-y-hidden max-w-full whitespace-nowrap pt-0.5 scrollbar-thin touch-pan-x scrollbar-thumb-blue-500/20 hover:scrollbar-thumb-blue-500/40">
         {canSeeProfile && (
           <button
             type="button"

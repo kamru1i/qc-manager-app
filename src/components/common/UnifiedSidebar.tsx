@@ -287,26 +287,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
           </div>
         )}
 
-        {/* Workspace: Audit Logs (Admin Only) */}
-        {canAccessModule(profile, null, 'audit_logs') && !tabHidden('audit_logs') && (
-          <div className="space-y-1">
-            <button
-              onClick={handleAuditLogsNav}
-              title={isSidebarCollapsed ? 'Audit Logs' : undefined}
-              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-              } ${
-                activeSection === 'audit_logs'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
-              }`}
-            >
-              <ScrollText className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">Audit Logs</span>}
-            </button>
-          </div>
-        )}
-
         {/* Workspace: Profile Settings (All Users) */}
         {canAccessModule(profile, null, 'profile_settings') && !tabHidden('profile_settings') && (
           <div className="space-y-1">
@@ -323,26 +303,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
             >
               <Settings className="h-5 w-5 shrink-0" />
               {!isSidebarCollapsed && <span className="whitespace-nowrap">Settings</span>}
-            </button>
-          </div>
-        )}
-
-        {/* Workspace 3: User Management (Admin & Supervisor Only) */}
-        {canAccessModule(profile, null, 'user_management') && !tabHidden('user_management') && (
-          <div className="space-y-1">
-            <button
-              onClick={handleUserManagementNav}
-              title={isSidebarCollapsed ? 'User Management' : undefined}
-              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-              } ${
-                activeSection === 'user_management'
-                  ? 'bg-purple-600/15 border border-purple-500/30 text-purple-400 shadow-md shadow-purple-900/5'
-                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
-              }`}
-            >
-              <Users className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">User Management</span>}
             </button>
           </div>
         )}
