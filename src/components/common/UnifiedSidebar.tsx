@@ -153,8 +153,10 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   };
 
   const handleUserManagementNav = () => {
-    localStorage.setItem('last_active_dashboard', 'user_management');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'user_management' }));
+    localStorage.setItem('settings_active_subtab', 'user_management');
+    localStorage.setItem('last_active_dashboard', 'profile_settings');
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'profile_settings' }));
+    window.dispatchEvent(new CustomEvent('settings-subtab-change', { detail: 'user_management' }));
     router.push('/');
     onNavItemClick?.();
   };
@@ -167,8 +169,10 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   };
 
   const handleAuditLogsNav = () => {
-    localStorage.setItem('last_active_dashboard', 'audit_logs');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'audit_logs' }));
+    localStorage.setItem('settings_active_subtab', 'audit_logs');
+    localStorage.setItem('last_active_dashboard', 'profile_settings');
+    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'profile_settings' }));
+    window.dispatchEvent(new CustomEvent('settings-subtab-change', { detail: 'audit_logs' }));
     router.push('/');
     onNavItemClick?.();
   };

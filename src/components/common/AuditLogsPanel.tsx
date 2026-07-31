@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { AuditLogItem } from '@/types';
+import { supabase } from '@/utils/supabase';
 import { 
   ScrollText, 
   Search, 
@@ -11,16 +12,47 @@ import {
 } from 'lucide-react';
 
 interface AuditLogsPanelProps {
-  logs: AuditLogItem[];
-  isLoading: boolean;
-  onRefresh: () => void;
+  logs?: AuditLogItem[];
+  isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
 export const AuditLogsPanel: React.FC<AuditLogsPanelProps> = ({
-  logs,
-  isLoading,
-  onRefresh,
+  logs: externalLogs,
+  isLoading: externalIsLoading,
+  onRefresh: externalOnRefresh,
 }) => {
+  const [internalLogs, setInternalLogs] = useState<AuditLogItem[]>([]);
+  const [internalLoading, setInternalLoading] = useState(false);
+
+  const fetchInternalLogs = useCallback(async () => {
+    setInternalLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(300);
+      if (!error && data) {
+        setInternalLogs(data as AuditLogItem[]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch audit logs:', err);
+    } finally {
+      setInternalLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!externalLogs) {
+      fetchInternalLogs();
+    }
+  }, [externalLogs, fetchInternalLogs]);
+
+  const logs = externalLogs || internalLogs;
+  const isLoading = externalIsLoading !== undefined ? externalIsLoading : internalLoading;
+  const onRefresh = externalOnRefresh || fetchInternalLogs;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedActionGroup, setSelectedActionGroup] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
