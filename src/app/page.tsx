@@ -1480,9 +1480,9 @@ function AppPortalInner({
       </div>
 
       {/* Main container with Sidebar and Section */}
-      <main className="w-full z-10 flex-1 flex flex-col md:flex-row items-stretch min-h-[calc(100vh-61px)]">
+      <main className="w-full z-10 flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
         <div
-          className={`shrink-0 hidden md:block sticky top-[61px] h-[calc(100vh-61px)] z-20 ${
+          className={`shrink-0 hidden md:block h-full overflow-y-auto z-20 ${
             (activeTab === "user_management" && isUserManagementFullView) ||
             (activeTab === "chuti" &&
               (activeChutiTab === "leave_history" ||
@@ -1508,7 +1508,7 @@ function AppPortalInner({
           />
         </div>
 
-        <section className="flex-1 min-w-0 w-full bg-theme-card-bg/20 backdrop-blur-xs p-4 sm:p-6 md:p-8 min-h-[calc(100vh-61px)] self-stretch rounded-none border-none">
+        <section className="flex-1 min-w-0 w-full bg-theme-card-bg/20 backdrop-blur-xs p-4 sm:p-6 md:p-8 h-full overflow-y-auto custom-scrollbar rounded-none border-none">
           <Suspense
             fallback={
               <div className="w-full">

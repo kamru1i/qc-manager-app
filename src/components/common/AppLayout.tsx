@@ -10,7 +10,7 @@ interface AppLayoutProps {
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <SafeAreaProvider>
-      <div className="flex-1 min-h-screen flex flex-col bg-theme-page-bg relative overflow-x-clip text-white selection:bg-purple-650 selection:text-white pb-safe">
+      <div className="h-screen max-h-screen w-full flex flex-col bg-theme-page-bg relative overflow-hidden text-white selection:bg-purple-650 selection:text-white pb-safe">
         {children}
       </div>
     </SafeAreaProvider>

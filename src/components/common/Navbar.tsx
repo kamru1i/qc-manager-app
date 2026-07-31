@@ -77,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className="bg-theme-card-bg/60 backdrop-blur-md border-b border-theme-border-input/60 px-4 py-3 sm:px-6 lg:px-8 z-30 sticky top-0"
+      className="shrink-0 bg-theme-card-bg/60 backdrop-blur-md border-b border-theme-border-input/60 px-4 py-3 sm:px-6 lg:px-8 z-30"
     >
       <div className="w-full flex justify-between items-center">
         <div className="flex items-center gap-3">
