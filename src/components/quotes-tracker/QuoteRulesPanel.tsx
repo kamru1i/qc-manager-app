@@ -781,132 +781,122 @@ Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`
         fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', 'Inter', sans-serif",
       }}
     >
-      {/* ─── HEADER PANEL ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-blue-500" />
-            Compliance & Quote Rules Portal
-          </h2>
-          <p className="text-xs text-theme-text-muted mt-1">
-            Search branch rules, universal policies, announcements, and fines.
-          </p>
+      {/* ─── TOP CONTROL ROW: SEARCH SYSTEM (LEFT) & ADD RULE BUTTON (RIGHT) ─── */}
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4 w-full relative z-30">
+        {/* Search System (Left Aligned) */}
+        <div className="w-full max-w-2xl relative">
+          <div className="relative flex items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-text-muted pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                placeholder="Search insurance company by name or tag (e.g. acorn, marshmallow)..."
+                className="w-full bg-theme-card-bg/40 backdrop-blur-md border border-theme-border-muted focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 rounded-l-xl py-2.5 pl-10 pr-4 text-sm placeholder-theme-text-muted/60 transition-all duration-300 shadow-md outline-none"
+              />
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-24 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (suggestions.length > 0) {
+                  setSelectedCompanyName(suggestions[0].name);
+                  setSearchQuery("");
+                }
+              }}
+              className="shrink-0 px-5 py-2.5 bg-blue-600/10 border border-l-0 border-theme-border-muted hover:bg-blue-600/20 hover:border-blue-500/30 rounded-r-xl text-blue-400 text-sm font-semibold transition-all duration-200"
+            >
+              Search
+            </button>
+          </div>
+
+          {/* Suggestion Dropdown */}
+          {showDropdown && (
+            <div
+              ref={dropdownRef}
+              className="absolute w-full bg-theme-card-bg border border-theme-border-input rounded-xl mt-1.5 overflow-hidden shadow-2xl z-50 animate-fade-in"
+            >
+              <div className="py-1 max-h-56 overflow-y-auto">
+                {suggestions.map((company) => (
+                  <button
+                    key={company.name}
+                    onClick={() => {
+                      setSelectedCompanyName(company.name);
+                      setSearchQuery("");
+                      setSearchFocused(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-theme-border-input/60 transition-colors flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-xs font-semibold text-theme-text-primary">
+                        {company.name}
+                      </p>
+                      <p className="text-[10px] text-theme-text-muted mt-0.5">
+                        {company.tags.map((t) => `#${t}`).join("  ")}
+                      </p>
+                    </div>
+                    <Sparkles className="w-3.5 h-3.5 text-theme-text-muted/65 group-hover:text-blue-400 transition-colors shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick search tags */}
+          {!selectedCompanyName && !searchQuery && (
+            <div className="flex items-center justify-start gap-2 mt-3 flex-wrap">
+              <span className="text-[10px] text-theme-text-muted font-bold uppercase tracking-wider">
+                Quick Select:
+              </span>
+              {[
+                "Acorn",
+                "EUI",
+                "Marshmallow",
+                "Tesco",
+                "Hastings",
+                "1st Central",
+              ].map((nameKey) => {
+                const matchedCompany = uniqueCompanies.find((c) =>
+                  c.name.toLowerCase().includes(nameKey.toLowerCase()),
+                );
+                return (
+                  <button
+                    key={nameKey}
+                    onClick={() => {
+                      if (matchedCompany) {
+                        setSelectedCompanyName(matchedCompany.name);
+                      } else {
+                        setSelectedCompanyName(nameKey);
+                      }
+                    }}
+                    className="text-[11px] text-theme-text-muted hover:text-blue-400 bg-theme-card-bg/60 hover:bg-theme-border-muted border border-theme-border-muted px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer"
+                  >
+                    {nameKey}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Global Action Panel */}
-        <div className="flex items-center gap-3 self-start md:self-auto">
-          {canEdit && (
+        {/* Global Action Panel: Add Rule Button (Right Aligned) */}
+        {canEdit && (
+          <div className="shrink-0 self-start md:self-auto">
             <button
               onClick={() => handleOpenAddModal("company")}
-              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl text-xs font-semibold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-theme-card-container"
+              className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:via-indigo-500 hover:to-blue-500 shadow-md shadow-purple-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
             >
-              <PlusCircle className="h-3.5 w-3.5" />
+              <PlusCircle className="h-4 w-4" />
               Add Rule
             </button>
-          )}
-        </div>
-      </div>
-
-      {/* ─── SEARCH SYSTEM ─── */}
-      <div className="w-full max-w-2xl mx-auto relative z-30">
-        <div className="relative flex items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-text-muted pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              placeholder="Search insurance company by name or tag (e.g. acorn, marshmallow)..."
-              className="w-full bg-theme-card-bg/40 backdrop-blur-md border border-theme-border-muted focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 rounded-l-xl py-2.5 pl-10 pr-4 text-sm placeholder-theme-text-muted/60 transition-all duration-300 shadow-md outline-none"
-            />
-          </div>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-24 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-          <button
-            onClick={() => {
-              if (suggestions.length > 0) {
-                setSelectedCompanyName(suggestions[0].name);
-                setSearchQuery("");
-              }
-            }}
-            className="shrink-0 px-5 py-2.5 bg-blue-600/10 border border-l-0 border-theme-border-muted hover:bg-blue-600/20 hover:border-blue-500/30 rounded-r-xl text-blue-400 text-sm font-semibold transition-all duration-200"
-          >
-            Search
-          </button>
-        </div>
-
-        {/* Suggestion Dropdown */}
-        {showDropdown && (
-          <div
-            ref={dropdownRef}
-            className="absolute w-full bg-theme-card-bg border border-theme-border-input rounded-xl mt-1.5 overflow-hidden shadow-2xl z-50 animate-fade-in"
-          >
-            <div className="py-1 max-h-56 overflow-y-auto">
-              {suggestions.map((company) => (
-                <button
-                  key={company.name}
-                  onClick={() => {
-                    setSelectedCompanyName(company.name);
-                    setSearchQuery("");
-                    setSearchFocused(false);
-                  }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-theme-border-input/60 transition-colors flex items-center justify-between group"
-                >
-                  <div>
-                    <p className="text-xs font-semibold text-theme-text-primary">
-                      {company.name}
-                    </p>
-                    <p className="text-[10px] text-theme-text-muted mt-0.5">
-                      {company.tags.map((t) => `#${t}`).join("  ")}
-                    </p>
-                  </div>
-                  <Sparkles className="w-3.5 h-3.5 text-theme-text-muted/65 group-hover:text-blue-400 transition-colors shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick search tags */}
-        {!selectedCompanyName && !searchQuery && (
-          <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
-            <span className="text-[10px] text-theme-text-muted uppercase tracking-wider">
-              Quick Select:
-            </span>
-            {[
-              "Acorn",
-              "EUI",
-              "Marshmallow",
-              "Tesco",
-              "Hastings",
-              "1st Central",
-            ].map((nameKey) => {
-              const matchedCompany = uniqueCompanies.find((c) =>
-                c.name.toLowerCase().includes(nameKey.toLowerCase()),
-              );
-              return (
-                <button
-                  key={nameKey}
-                  onClick={() => {
-                    if (matchedCompany) {
-                      setSelectedCompanyName(matchedCompany.name);
-                    } else {
-                      setSelectedCompanyName(nameKey);
-                    }
-                  }}
-                  className="text-[11px] text-theme-text-muted hover:text-blue-400 bg-theme-card-bg/60 hover:bg-theme-border-muted border border-theme-border-muted px-2.5 py-1 rounded-lg transition-all duration-200"
-                >
-                  {nameKey}
-                </button>
-              );
-            })}
           </div>
         )}
       </div>
