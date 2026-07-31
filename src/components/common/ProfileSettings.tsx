@@ -1044,36 +1044,6 @@ export function ProfileSettings({
           </button>
         )}
 
-        {canSeeUserManagement && (
-          <button
-            type="button"
-            onClick={() => handleSubTabChange('user_management')}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'user_management'
-                ? 'bg-purple-600/15 border border-purple-500/30 text-purple-400 shadow-sm'
-                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
-            }`}
-          >
-            <Users className="h-4 w-4 text-purple-400" />
-            <span>User Management</span>
-          </button>
-        )}
-
-        {canSeeAuditLogs && (
-          <button
-            type="button"
-            onClick={() => handleSubTabChange('audit_logs')}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'audit_logs'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
-                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
-            }`}
-          >
-            <ScrollText className="h-4 w-4" />
-            <span>Audit Logs</span>
-          </button>
-        )}
-
         {canSeeMenu && (
           <button
             type="button"
@@ -1161,6 +1131,36 @@ export function ProfileSettings({
           >
             <Globe className="h-4 w-4" />
             <span>VPN</span>
+          </button>
+        )}
+
+        {canSeeAuditLogs && (
+          <button
+            type="button"
+            onClick={() => handleSubTabChange('audit_logs')}
+            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubTab === 'audit_logs'
+                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
+            }`}
+          >
+            <ScrollText className="h-4 w-4" />
+            <span>Audit Logs</span>
+          </button>
+        )}
+
+        {canSeeUserManagement && (
+          <button
+            type="button"
+            onClick={() => handleSubTabChange('user_management')}
+            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubTab === 'user_management'
+                ? 'bg-purple-600/15 border border-purple-500/30 text-purple-400 shadow-sm'
+                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
+            }`}
+          >
+            <Users className="h-4 w-4 text-purple-400" />
+            <span>User Management</span>
           </button>
         )}
       </div>
