@@ -229,7 +229,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
   } else if (activeTab === "leaderboard") {
     subTabs.push({
       id: "monthly",
-      label: "Leaderboard Rankings",
+      label: "Leaderboard",
       icon: Trophy,
       active: true,
       onClick: () => {},

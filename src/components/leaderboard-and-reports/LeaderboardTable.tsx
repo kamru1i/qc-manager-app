@@ -5,7 +5,6 @@ import {
   AlertCircle,
   FileSpreadsheet,
   ChevronRight,
-  ArrowLeft,
 } from "lucide-react";
 import { Profile } from "@/types";
 import { useLeaderboardData } from "@/hooks/quotes-tracker/useLeaderboardData";
@@ -110,79 +109,95 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header and Controls Card (Remove backdrop-blur-md to fix Safari native select dropdown popup glitch) */}
-      <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 shadow-lg">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:flex-nowrap">
-          {/* Left: Title & Subtitle */}
-          <div className="flex items-center gap-3 shrink-0">
-            {onBack && (
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center gap-2 bg-red-950/30 border border-red-500/20 text-red-400 text-xs rounded-xl px-4 py-3">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Leaderboard Table Card */}
+      <div className="bg-slate-950/40 border border-slate-850/60 rounded-2xl overflow-hidden backdrop-blur-md shadow-xl">
+        <div className="p-5 border-b border-slate-850/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/20">
+          {/* Left: Title, Staff Count & Export Excel */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <Award className="h-4 w-4 text-blue-500" />
+              Leaderboard (
+              {leaderboardPeriod === "monthly"
+                ? "Monthly"
+                : `Yearly ${selectedYear}`}
+              )
+              {isArchivedYear && (
+                <span className="inline-flex items-center gap-1 normal-case tracking-normal bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[10px] font-bold rounded-lg px-2 py-0.5">
+                  Archived
+                </span>
+              )}
+            </h3>
+            <span className="text-xs text-slate-400 bg-slate-900/60 border border-slate-800/80 rounded-lg px-2.5 py-1">
+              Total:{" "}
+              <strong className="text-theme-text-primary font-semibold">
+                {leaderboardData.length}
+              </strong>
+            </span>
+            {isAdmin && csvEnabled && (
               <button
-                onClick={onBack}
-                className="p-2 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-900 text-slate-400 hover:text-white cursor-pointer transition-all shrink-0"
-                title="Go Back"
+                onClick={handleExportExcel}
+                className="inline-flex items-center gap-1.5 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-lg px-2.5 py-1 transition-all cursor-pointer"
+                title="Export leaderboard to Excel (CSV)"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                Excel
               </button>
             )}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Award className="h-6 w-6 text-yellow-500" />
-                <h2 className="text-xl font-bold text-theme-text-primary tracking-wide">
-                  Performance Leaderboard
-                </h2>
+          </div>
+
+          {/* Right: Search box, Monthly/Yearly toggle, Month/Year dropdown, View Report btn */}
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end shrink-0 relative z-30">
+            {/* Search Input */}
+            <div className="w-full sm:w-auto min-w-[200px] flex-1 sm:flex-none">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-500" />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search by name or codename..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-950/40 hover:bg-slate-950/60 border border-slate-800/60 hover:border-slate-700/60 text-theme-text-primary placeholder-slate-500 text-xs rounded-xl pl-9 pr-4 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                />
               </div>
-              <p className="text-slate-400 text-xs">
-                Live ranks and submission statistics, updated in real-time.
-              </p>
             </div>
-          </div>
 
-          {/* Center: Search input (fitted in the middle of the header) */}
-          <div className="w-full lg:w-auto lg:flex-1 lg:max-w-xs xl:max-w-sm">
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-slate-500" />
-              </span>
-              <input
-                type="text"
-                placeholder="Search by name or codename..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-950/40 hover:bg-slate-950/60 border border-slate-800/60 hover:border-slate-700/60 text-theme-text-primary placeholder-slate-500 text-xs rounded-xl pl-9 pr-4 py-2 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-              />
-            </div>
-          </div>
-
-          {/* Right: Controls */}
-          <div className="flex items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end shrink-0 flex-wrap sm:flex-nowrap relative z-30">
             {/* Monthly / Yearly period toggle (feature-flagged) */}
             {yearlyEnabled && (
-            <div className="flex bg-slate-950/85 p-1 rounded-xl border border-slate-800/80 text-xs shrink-0">
-              <button
-                onClick={() => changePeriod("monthly")}
-                className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  leaderboardPeriod === "monthly"
-                    ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                    : "text-slate-400 hover:text-theme-text-primary border border-transparent"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => changePeriod("yearly")}
-                className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  leaderboardPeriod === "yearly"
-                    ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                    : "text-slate-400 hover:text-theme-text-primary border border-transparent"
-                }`}
-              >
-                Yearly
-              </button>
-            </div>
+              <div className="flex bg-slate-950/85 p-1 rounded-xl border border-slate-800/80 text-xs shrink-0">
+                <button
+                  onClick={() => changePeriod("monthly")}
+                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    leaderboardPeriod === "monthly"
+                      ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                      : "text-slate-400 hover:text-theme-text-primary border border-transparent"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => changePeriod("yearly")}
+                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    leaderboardPeriod === "yearly"
+                      ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                      : "text-slate-400 hover:text-theme-text-primary border border-transparent"
+                  }`}
+                >
+                  Yearly
+                </button>
+              </div>
             )}
 
-            {/* Monthly view: month dropdown. Yearly view: year dropdown
-                (includes archived years pulled from leaderboard_archive). */}
+            {/* Monthly view: month dropdown. Yearly view: year dropdown */}
             {leaderboardPeriod === "monthly" ? (
               <CustomSelect
                 value={selectedMonth}
@@ -212,51 +227,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               >
                 View Report
                 <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Error banner */}
-      {error && (
-        <div className="flex items-center gap-2 bg-red-950/30 border border-red-500/20 text-red-400 text-xs rounded-xl px-4 py-3">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Leaderboard Table Card */}
-      <div className="bg-slate-950/40 border border-slate-850/60 rounded-2xl overflow-hidden backdrop-blur-md shadow-xl">
-        <div className="p-5 border-b border-slate-850/30 flex flex-wrap justify-between items-center gap-3 bg-slate-900/20">
-          <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-            <Award className="h-4 w-4 text-blue-500" />
-            Rankings (
-            {leaderboardPeriod === "monthly"
-              ? "Monthly"
-              : `Yearly ${selectedYear}`}
-            )
-            {isArchivedYear && (
-              <span className="inline-flex items-center gap-1 normal-case tracking-normal bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[10px] font-bold rounded-lg px-2 py-0.5">
-                Archived
-              </span>
-            )}
-          </h3>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 bg-slate-900/60 border border-slate-800/80 rounded-lg px-2.5 py-1">
-              Total Staff:{" "}
-              <strong className="text-theme-text-primary font-semibold">
-                {leaderboardData.length}
-              </strong>
-            </span>
-            {isAdmin && csvEnabled && (
-              <button
-                onClick={handleExportExcel}
-                className="inline-flex items-center gap-1.5 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-lg px-2.5 py-1 transition-all cursor-pointer"
-                title="Export leaderboard to Excel (CSV)"
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5" />
-                Export Excel
               </button>
             )}
           </div>
