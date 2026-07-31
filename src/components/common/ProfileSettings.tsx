@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2, Users } from 'lucide-react';
+import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2, Users, Activity } from 'lucide-react';
 import { Profile } from '@/types';
 import { isSuperadmin, isAdminRole, isTabVisibleForRole, isFeatureEnabled, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
 import { StaffSettingsForm } from '@/components/leave-tracker/StaffSettingsForm';
+import SupabaseUsageWidget from '@/components/common/user-management/SupabaseUsageWidget';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
 import { DateTimeInput } from '@/components/common/DateTimeInput';
@@ -149,7 +150,7 @@ export function ProfileSettings({
       toast.error(err.message || 'Failed to update supervisor access override');
     }
   };
-  
+
   // Feature flags (superadmin-only by default, delegated operational flags available to admins).
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
   const [userFeatureFlags, setUserFeatureFlags] = useState<Record<string, boolean>>(() => profile?.global_settings?.user_feature_flags || {});
@@ -165,6 +166,7 @@ export function ProfileSettings({
   const canSeeSanitizer = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_sanitizer', profile?.global_settings), [profile]);
   const canSeeAccess = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_access', profile?.global_settings), [profile]);
   const canSeeFeatureFlags = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_feature_flags', profile?.global_settings), [profile]);
+  const canSeeSystemHealth = useMemo(() => isSuperadmin(profile) || isFeatureEnabled('system_health_metrics', profile?.global_settings, profile), [profile]);
   const canSeeVpn = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_vpn', profile?.global_settings), [profile]);
 
   // Derived effective admin delegated flags (combines superadmin profile settings with local state and current profile)
@@ -206,11 +208,11 @@ export function ProfileSettings({
   const [newVpnInput, setNewVpnInput] = useState('');
   const [vpnSubmitting, setVpnSubmitting] = useState(false);
 
-  // Subtabs state (Profile / Menu / Sanitizer / Access / Feature Flags / VPN)
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list'>(() => {
+  // Subtabs state (Profile / Menu / Sanitizer / Access / Feature Flags / Database Health / VPN)
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'system_health' | 'vpn_list'>(() => {
     try {
       const saved = localStorage.getItem('settings_active_subtab');
-      if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'vpn_list') {
+      if (saved === 'profile' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'system_health' || saved === 'vpn_list') {
         return saved as any;
       }
     } catch {}
@@ -229,6 +231,9 @@ export function ProfileSettings({
     } else if (activeSubTab === 'feature_flags' && !canSeeFeatureFlags) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
+    } else if (activeSubTab === 'system_health' && !canSeeSystemHealth) {
+      setActiveSubTab('profile');
+      localStorage.setItem('settings_active_subtab', 'profile');
     } else if (activeSubTab === 'vpn_list' && !canSeeVpn) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
@@ -236,9 +241,9 @@ export function ProfileSettings({
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
     }
-  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeVpn, canSeeMenu]);
+  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeSystemHealth, canSeeVpn, canSeeMenu]);
 
-  const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
+  const handleSubTabChange = (tab: 'profile' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'system_health' | 'vpn_list') => {
     setActiveSubTab(tab);
     localStorage.setItem('settings_active_subtab', tab);
   };
@@ -755,7 +760,7 @@ export function ProfileSettings({
   ) => {
     const itemKey = `${role}:${tabKey}`;
     if (!profile || !isSuperadmin(profile) || activeRoleVisKey === itemKey) return;
-    
+
     const roleMap = { ...(roleVisibility[role] || {}), [tabKey]: nextVisible };
     const next: Record<string, Record<string, boolean>> = { ...roleVisibility, [role]: roleMap };
 
@@ -785,7 +790,7 @@ export function ProfileSettings({
       toast.error('You do not have permission to manage this feature flag.');
       return;
     }
-    
+
     const nextFlags = { ...featureFlags, [flagKey]: nextEnabled };
     const tabKey = FLAG_TO_TAB_KEY[flagKey];
 
@@ -834,7 +839,7 @@ export function ProfileSettings({
   // Toggle admin delegation for a feature flag (superadmin only)
   const handleToggleAdminDelegation = async (flagKey: string, nextDelegated: boolean) => {
     if (!profile || !isSuperadmin(profile) || activeFlagKey === `delegate:${flagKey}`) return;
-    
+
     const nextDelegatedFlags = { ...(effectiveAdminDelegatedFlags || {}), [flagKey]: nextDelegated };
     setActiveFlagKey(`delegate:${flagKey}`);
     try {
@@ -1090,6 +1095,21 @@ export function ProfileSettings({
           >
             <Settings className="h-4 w-4" />
             <span>Feature Flags</span>
+          </button>
+        )}
+
+        {canSeeSystemHealth && (
+          <button
+            type="button"
+            onClick={() => handleSubTabChange('system_health')}
+            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubTab === 'system_health'
+                ? 'bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 shadow-sm'
+                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
+            }`}
+          >
+            <Activity className="h-4 w-4 text-emerald-400" />
+            <span>Database</span>
           </button>
         )}
 
@@ -1887,6 +1907,13 @@ export function ProfileSettings({
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Database & System Health Subtab */}
+      {activeSubTab === 'system_health' && canSeeSystemHealth && (
+        <div className="space-y-6 w-full">
+          <SupabaseUsageWidget />
         </div>
       )}
 

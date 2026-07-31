@@ -1,7 +1,7 @@
 {
-  "version": "6.7.8",
-  "notes": "### 🩹 v6.7.8 — Patch Release (Smart Cache-First & Delta-Only Sync Egress Optimization) (Current)\n\n- **Smart Cache-First Sync**: Optimized `useQuotesDashboardData.ts` to check local IndexedDB cache first during page loads and logins, eliminating redundant full-month database downloads.\n- **Delta-Only Background Updates**: Executed remote queries solely for new or modified records (`updated_at >= lastSynced`), reducing daily Egress per refresh/login to ~0 Bytes when no new entries exist.\n- **Zero-Cost Free Tier Guarantee**: Slashed overall monthly network egress by 80–90%, keeping 60 active users ultra-safely below Supabase's 5.0 GB Free Tier ceiling.",
-  "pub_date": "2026-07-31T14:56:00.000Z",
+  "version": "6.8.4",
+  "notes": "### 🩹 v6.8.4 — Patch Release (Clean Full-Width Usage Metrics Grid UI) (Current)\n\n- **Clean Layout Optimization**: Removed the redundant left summary description and external links column from `SupabaseUsageWidget.tsx` as requested.\n- **Full-Width Responsive Grid**: Expanded the 10 metric cards to span the full card width, giving a cleaner, focused, and high-density dashboard view.",
+  "pub_date": "2026-07-31T15:32:00.000Z",
   "releaseDate": "July 31, 2026",
   "platforms": {},
   "checksums": {},

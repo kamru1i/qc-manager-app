@@ -136,6 +136,11 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     label: 'User Profile Settings: Change Password',
     description: 'Global feature flag toggle for Change Password? section on user profile settings.',
   },
+  {
+    key: 'system_health_metrics',
+    label: 'Database & System Health Metrics',
+    description: 'Viewing live Supabase database storage, egress, active connections, and system health status in Profile Settings.',
+  },
 ];
 
 /** Default state for a feature flag when no explicit superadmin toggle exists. */
@@ -168,4 +173,5 @@ export const FLAG_TO_TAB_KEY: Record<string, string> = {
   profile_component_quotes_workspace: 'profile_component_quotes_workspace',
   profile_component_kpi_settings: 'profile_component_kpi_settings',
   profile_component_change_password: 'profile_component_change_password',
+  system_health_metrics: 'system_health_metrics',
 };

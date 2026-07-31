@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { UserDisplayName } from '@/components/common/UserDisplayName';
 import { UserAnalyticsPanel } from '@/components/common/user-management/UserAnalyticsPanel';
+import SupabaseUsageWidget from '@/components/common/user-management/SupabaseUsageWidget';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 
 // Extracted Subtabs Panels

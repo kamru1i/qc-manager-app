@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.7.8** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.8.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,35 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.7.8 — Patch Release (Smart Cache-First & Delta-Only Sync Egress Optimization) (Current)
+### 🩹 v6.8.4 — Patch Release (Clean Full-Width Usage Metrics Grid UI) (Current)
+
+- **Clean Layout Optimization**: Removed the redundant left summary description and external links column from `SupabaseUsageWidget.tsx` as requested.
+- **Full-Width Responsive Grid**: Expanded the 10 metric cards to span the full card width, giving a cleaner, focused, and high-density dashboard view.
+
+### 🩹 v6.8.3 — Patch Release (Billing Period Date Range Display in Usage Widget)
+
+- **Billing Cycle Date Range Badge**: Added active billing period date range badge (`02 Jul 2026 - 02 Aug 2026`) directly next to `Current plan • $0.00 / month` in the `Database Health` widget header.
+- **Dynamic Reset Countdown Calculation**: Updated `/api/admin/supabase-usage/route.ts` to compute current billing start and end reset dates dynamically.
+
+### 🩹 v6.8.2 — Patch Release (Full Supabase Console Usage Summary UI Replication)
+
+- **Exact Supabase Console Dashboard UI**: Redesigned `SupabaseUsageWidget` in `ProfileSettings.tsx` to match Supabase's exact dark-themed Usage Summary dashboard pixel-for-pixel.
+- **Full 10-Metric Suite**: Renders Egress (with SVG red ring gauge for 228%), Realtime Messages (80%), Peak Connections (20%), Database Size (8%), MAU, Edge Invocations, Cached Egress, Third-Party MAU, Storage Size, SSO MAU, and Image Transformations.
+- **Direct Navigation Links**: Included official Supabase documentation links for billing and pricing plans directly in the left summary panel.
+
+### 🩹 v6.8.1 — Patch Release (Database Health Settings Subtab & Granular Feature Flag Access Control)
+
+- **Dedicated Database Health Settings Subtab**: Moved `SupabaseUsageWidget` from User Management to Profile Settings under a dedicated `Database Health` subtab, positioned right after `Feature Flags`.
+- **Feature Flag Control & Governance**: Registered `system_health_metrics` feature flag in `featureFlagsRegistry.ts`, enabling Superadmins to toggle or delegate access globally, per role (Superadmin, Admin, Supervisor), or per user via Temporary Access Controls.
+- **Supervisor & Admin Default Access**: Granted default visibility to Superadmins, Admins, and Supervisors, with full Superadmin capability to grant/revoke access on demand.
+
+### 🚀 v6.8.0 — Feature Release (Live Supabase Infrastructure Health & Usage Dashboard Widget)
+
+- **Live Supabase Infrastructure Widget**: Integrated Supabase Management API (`/v1/projects/{ref}`) and custom PostgreSQL RPC metrics (`get_system_health_metrics()`) directly into the Admin User Management Dashboard.
+- **Real-Time Resource Monitoring**: Displays live Database Storage Size (MB & Limit %), Registered System Users (MAU Limit), Active System Records count, and Monthly Billing Reset countdown (August 2nd).
+- **Zero Console Dependence**: Enabled Admins and Superadmins to monitor system health and database limits directly inside the app without needing to log into the Supabase Web Console.
+
+### 🩹 v6.7.8 — Patch Release (Smart Cache-First & Delta-Only Sync Egress Optimization)
 
 - **Smart Cache-First Sync**: Optimized `useQuotesDashboardData.ts` to check local IndexedDB cache first during page loads and logins, eliminating redundant full-month database downloads.
 - **Delta-Only Background Updates**: Executed remote queries solely for new or modified records (`updated_at >= lastSynced`), reducing daily Egress per refresh/login to ~0 Bytes when no new entries exist.
