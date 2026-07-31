@@ -6,6 +6,7 @@ export interface ParsedQuoteItem {
   branch_name: string;
   file_type: string;
   sale_status?: 'SOLD' | 'UNSOLD';
+  entry_date?: string;
   raw_line: string;
   status: 'pending' | 'submitting' | 'success' | 'error';
   error_message?: string;
@@ -81,6 +82,14 @@ export function resolveMatchedBranch(
   return allowedBranches[0] || detectedKey;
 }
 
+export function getTodayYYYYMMDD(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /**
   Parse a single raw line or filename string into structured quote data.
  */
@@ -142,6 +151,7 @@ export function parseQuoteLine(
     branch_name: finalBranch,
     file_type: matchedType,
     sale_status: saleStatus,
+    entry_date: getTodayYYYYMMDD(),
     raw_line: rawText,
     status: 'pending'
   };

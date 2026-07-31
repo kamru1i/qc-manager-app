@@ -19,7 +19,17 @@ import {
   ParsedQuoteItem,
   ALL_10_FILE_TYPES,
   DEFAULT_BRANCHES,
+  getTodayYYYYMMDD,
 } from "@/utils/bulkQuoteParser";
+
+export const formatYYYYMMDDToDDMMYYYY = (isoDate?: string): string => {
+  const dateStr = isoDate || getTodayYYYYMMDD();
+  const parts = dateStr.split("-");
+  if (parts.length === 3 && parts[0].length === 4) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+  return dateStr;
+};
 
 export interface QuickImportViewProps {
   isOpen?: boolean;
@@ -34,6 +44,7 @@ export interface QuickImportViewProps {
     branch_name: string;
     codename: string;
     file_type: string;
+    entry_date?: string;
   }) => Promise<boolean>;
   onCompleteSuccess: (count: number) => void;
 }
@@ -118,6 +129,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
       file_name: "",
       branch_name: branchesList[0] || "PrideCompare",
       file_type: "Quote",
+      entry_date: new Date().toISOString().split("T")[0],
       raw_line: "",
       status: "pending",
     };
@@ -166,6 +178,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
           branch_name: item.branch_name,
           codename: codename || "ANON",
           file_type: item.file_type,
+          entry_date: item.entry_date || new Date().toISOString().split("T")[0],
         });
 
         if (ok) {
@@ -304,7 +317,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
               <table className="w-full text-left border-collapse text-xs">
                 <thead className="bg-theme-card-container/80 sticky top-0 z-10 border-b border-theme-border-input/80 text-[10px] uppercase tracking-wider text-theme-text-muted font-bold">
                   <tr>
-                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3 w-36">Date</th>
                     <th className="py-2.5 px-3">File Name</th>
                     <th className="py-2.5 px-3 w-40">Branch Name</th>
                     <th className="py-2.5 px-3 w-32">File Type</th>
@@ -324,7 +337,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
                           : ""
                       }`}
                     >
-                      <td className="py-2 px-3 whitespace-nowrap">
+                      <td className="py-2 px-3 whitespace-nowrap w-36">
                         {item.status === "submitting" ? (
                           <span className="inline-flex items-center gap-1 text-[10px] text-blue-400 font-bold">
                             <Loader2 className="h-3 w-3 animate-spin" /> Inserting...
@@ -334,9 +347,39 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
                             Failed
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
-                            <CheckCircle2 className="h-3 w-3 text-emerald-400/70" /> Ready
-                          </span>
+                          <div className="relative w-full">
+                            <input
+                              type="text"
+                              readOnly
+                              value={formatYYYYMMDDToDDMMYYYY(
+                                item.entry_date || getTodayYYYYMMDD()
+                              )}
+                              onClick={(e) => {
+                                const hiddenInput = e.currentTarget
+                                  .nextElementSibling as HTMLInputElement;
+                                try {
+                                  hiddenInput?.showPicker();
+                                } catch {
+                                  hiddenInput?.focus();
+                                }
+                              }}
+                              disabled={isSubmitting}
+                              className="block w-full px-2.5 py-1 bg-theme-page-bg/80 border border-theme-border-input/70 rounded-lg text-xs font-semibold text-theme-text-primary text-center cursor-pointer hover:border-blue-500 transition-all select-none focus:outline-none"
+                              placeholder="DD-MM-YYYY"
+                            />
+                            <input
+                              type="date"
+                              value={item.entry_date || getTodayYYYYMMDD()}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  item.id,
+                                  "entry_date",
+                                  e.target.value
+                                )
+                              }
+                              className="absolute w-px h-px opacity-0 pointer-events-none select-none"
+                            />
+                          </div>
                         )}
                       </td>
                       <td className="py-2 px-3">

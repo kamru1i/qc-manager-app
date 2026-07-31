@@ -1978,13 +1978,16 @@ export default function Dashboard({
           sanitizerWords={getSanitizerWords(globalSettings)}
           codename={ownCodename || profile?.username || ""}
           onSubmitRecord={async (data) => {
+            const customSubmittedAt = data.entry_date
+              ? new Date(`${data.entry_date}T12:00:00`).toISOString()
+              : undefined;
             return await addRecord(
               data.file_name,
               data.branch_name,
               data.codename,
               data.file_type as FileType,
               undefined,
-              undefined,
+              customSubmittedAt,
               { skipToast: true, skipFetch: true },
             );
           }}
@@ -2107,13 +2110,16 @@ export default function Dashboard({
                 sanitizerWords={getSanitizerWords(globalSettings)}
                 codename={ownCodename || profile?.username || ""}
                 onSubmitRecord={async (data) => {
+                  const customSubmittedAt = data.entry_date
+                    ? new Date(`${data.entry_date}T12:00:00`).toISOString()
+                    : undefined;
                   return await addRecord(
                     data.file_name,
                     data.branch_name,
                     data.codename,
                     data.file_type as FileType,
                     undefined,
-                    undefined,
+                    customSubmittedAt,
                     { skipToast: true, skipFetch: true },
                   );
                 }}
