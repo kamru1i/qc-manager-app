@@ -212,288 +212,41 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
       </div>
 
       {/* Main Workspace Tabs */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* Workspace 1: Chuti Leave Tracker */}
         {canAccessModule(profile, null, 'leave') && (
-          <div className="space-y-1">
-            <button
-              onClick={handleChutiClick}
-              title={isSidebarCollapsed ? 'Leave Tracker' : undefined}
-              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-              } ${
-                activeSection === 'chuti'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-955/5'
-                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
-              }`}
-            >
-              <Calendar className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Tracker</span>}
-            </button>
- 
-            {/* Embedded Chuti sub-tabs when chuti section is active */}
-            {activeSection === 'chuti' && isChutiExpanded && onChutiTabChange && activeChutiTab && (
-              <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-theme-border-input/80 ml-6'}`}>
-                {/* 1. Add Leave */}
-                <button
-                  onClick={() => { onChutiTabChange('add_leave'); onNavItemClick?.(); }}
-                  title={isSidebarCollapsed ? 'Add Leave' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeChutiTab === 'add_leave'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                  }`}
-                >
-                  <Plus className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Add Leave</span>}
-                </button>
-
-
-                {/* 3. Leave History (All Users) */}
-                {!tabHidden('leave_history') && (
-                  <button
-                    onClick={() => { onChutiTabChange('leave_history'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Leave History' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeChutiTab === 'leave_history'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <History className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave History</span>}
-                  </button>
-                )}
-
-                {/* Team Leave Records */}
-                {!tabHidden('team_leaves') && (
-                  <button
-                    onClick={() => { onChutiTabChange('team_leaves'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Team Leave Records' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeChutiTab === 'team_leaves'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <Users className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Team Leave Records</span>}
-                  </button>
-                )}
-
-                {/* 3. Govt Holiday Response */}
-                {!tabHidden('govt_responses') && (
-                  <button
-                    onClick={() => { onChutiTabChange('govt_responses'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Govt Holiday Response' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeChutiTab === 'govt_responses'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <Calendar className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Govt Holiday Response</span>}
-                  </button>
-                )}
-
-                {/* 4. Review & Settlements */}
-                {!tabHidden('settlement') && (
-                  <button
-                    onClick={() => { onChutiTabChange('settlement'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Review & Settlements' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeChutiTab === 'settlement'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <RotateCcw className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Review & Settlements</span>}
-                  </button>
-                )}
-
-                {/* 5. Leave Settings */}
-                {!tabHidden('leave_settings') && (
-                  <button
-                    onClick={() => { onChutiTabChange('leave_settings'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Leave Settings' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeChutiTab === 'leave_settings'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <Settings className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Settings</span>}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={handleChutiNav}
+            title={isSidebarCollapsed ? 'Leave Tracker' : undefined}
+            className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+              isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
+            } ${
+              activeSection === 'chuti'
+                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-955/5'
+                : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
+            }`}
+          >
+            <Calendar className="h-5 w-5 shrink-0" />
+            {!isSidebarCollapsed && <span className="whitespace-nowrap">Leave Tracker</span>}
+          </button>
         )}
 
         {/* Workspace 2: Quotes & Sales Tracker */}
         {canAccessModule(profile, null, 'quotes') && (
-          <div className="space-y-1">
-            <button
-              onClick={handleQuotesClick}
-              title={isSidebarCollapsed ? 'Quotes Tracker' : undefined}
-              className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-              } ${
-                activeSection === 'quotes'
-                  ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
-                  : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
-              }`}
-            >
-              <FileText className="h-5 w-5 shrink-0" />
-              {!isSidebarCollapsed && <span className="whitespace-nowrap">Quotes Tracker</span>}
-            </button>
-
-            {/* Embedded Quotes sub-tabs when quotes section is active */}
-            {activeSection === 'quotes' && isQuotesExpanded && onQuotesTabChange && activeQuotesTab && (
-              <div className={`pt-2 space-y-1 ${isSidebarCollapsed ? 'flex flex-col items-center' : 'pl-4 border-l border-theme-border-input/80 ml-6'}`}>
-                {/* 1. Daily Entry */}
-                <button
-                  onClick={() => { onQuotesTabChange('entry'); onNavItemClick?.(); }}
-                  title={isSidebarCollapsed ? 'Daily Entry' : undefined}
-                  className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                  } ${
-                    activeQuotesTab === 'entry'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                  }`}
-                >
-                  <Clock className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span className="whitespace-nowrap">Daily Entry</span>}
-                </button>
-
-                {/* Copy Helper (all authenticated users) */}
-                {!tabHidden('copy_helper') && (
-                  <button
-                    onClick={() => { onQuotesTabChange?.('copy_helper'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Copy Helper' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'copy_helper'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <ScrollText className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Copy Helper</span>}
-                  </button>
-                )}
-
-                {/* Save File (Superadmin only) */}
-                {isSuperAdmin && !tabHidden('save_file') && (
-                  <button
-                    onClick={() => { onQuotesTabChange?.('save_file'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Save File' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'save_file'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <Save className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Save File</span>}
-                  </button>
-                )}
-
-                {/* 2. Monthly List */}
-                {!tabHidden('monthly') && (
-                  <button
-                    onClick={() => { onQuotesTabChange('monthly'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Monthly List' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'monthly'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <ScrollText className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Monthly List</span>}
-                  </button>
-                )}
-
-
-
-                {/* 4. Quote Rules */}
-                {!tabHidden('rules') && (
-                  <button
-                    onClick={() => { onQuotesTabChange('rules'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Quote Rules' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'rules'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <BookOpen className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Quote Rules</span>}
-                  </button>
-                )}
-
-                {/* 6. Login Codes */}
-                {!tabHidden('login_codes') && (
-                  <button
-                    onClick={() => { onQuotesTabChange('login_codes'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Login Codes' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'login_codes'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <Key className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Login Codes</span>}
-                  </button>
-                )}
-
-                {/* 7. Causality (Asitis + EUI) */}
-                {!tabHidden('causality') && (
-                  <button
-                    onClick={() => { onQuotesTabChange('causality'); onNavItemClick?.(); }}
-                    title={isSidebarCollapsed ? 'Causality' : undefined}
-                    className={`w-full flex items-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      isSidebarCollapsed ? 'justify-center p-2.5' : 'justify-start px-3 py-2 gap-2.5'
-                    } ${
-                      activeQuotesTab === 'causality'
-                        ? 'bg-blue-500/10 text-blue-400'
-                        : 'text-theme-text-secondary hover:bg-theme-border-active/60 hover:text-theme-text-inverse'
-                    }`}
-                  >
-                    <FileText className="h-4 w-4 shrink-0" />
-                    {!isSidebarCollapsed && <span className="whitespace-nowrap">Causality</span>}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={handleQuotesNav}
+            title={isSidebarCollapsed ? 'Quotes Tracker' : undefined}
+            className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+              isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
+            } ${
+              activeSection === 'quotes'
+                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
+                : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
+            }`}
+          >
+            <FileText className="h-5 w-5 shrink-0" />
+            {!isSidebarCollapsed && <span className="whitespace-nowrap">Quotes Tracker</span>}
+          </button>
         )}
 
         {/* Workspace: KPI & Performance */}

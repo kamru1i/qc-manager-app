@@ -19,6 +19,7 @@ import SmartDownloadButton from "@/components/common/SmartDownloadButton";
 import { isNativeApp } from "@/utils/envHelper";
 import LoginPage from "@/app/login/page";
 import { UnifiedSidebar } from "@/components/common/UnifiedSidebar";
+import { WorkspaceSubNav } from "@/components/common/WorkspaceSubNav";
 import { Navbar } from "@/components/common/Navbar";
 import { AppLayout } from "@/components/common/AppLayout";
 import { SafeAreaTop } from "@/components/common/SafeAreaTop";
@@ -1509,6 +1510,16 @@ function AppPortalInner({
         </div>
 
         <section className="flex-1 min-w-0 w-full bg-theme-card-bg/20 backdrop-blur-xs p-4 sm:p-6 md:p-8 h-full overflow-y-auto custom-scrollbar rounded-none border-none">
+          <WorkspaceSubNav
+            activeTab={activeTab}
+            activeChutiTab={activeChutiTab}
+            onChutiTabChange={handleChutiTabChange}
+            activeQuotesTab={activeQuotesTab}
+            onQuotesTabChange={handleQuotesTabChange}
+            profile={profile}
+            isCreatingNewUser={isUserManagementFullView}
+            onCreatingNewUserChange={setIsUserManagementFullView}
+          />
           <Suspense
             fallback={
               <div className="w-full">
