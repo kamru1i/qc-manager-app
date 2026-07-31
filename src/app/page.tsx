@@ -1480,9 +1480,9 @@ function AppPortalInner({
       </div>
 
       {/* Main container with Sidebar and Section */}
-      <main className="max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-5 mt-3 pb-12 md:pb-16 w-full z-10 flex-1 flex flex-col md:flex-row items-stretch">
+      <main className="w-full z-10 flex-1 flex flex-col md:flex-row items-stretch min-h-[calc(100vh-61px)]">
         <div
-          className={`shrink-0 hidden md:block h-full self-stretch ${
+          className={`shrink-0 hidden md:block sticky top-[61px] h-[calc(100vh-61px)] z-20 ${
             (activeTab === "user_management" && isUserManagementFullView) ||
             (activeTab === "chuti" &&
               (activeChutiTab === "leave_history" ||
@@ -1492,8 +1492,8 @@ function AppPortalInner({
             activeTab === "kpi" ||
             activeTab === "leaderboard" ||
             activeTab === "reports"
-              ? "md:w-0 md:h-0 md:opacity-0 md:pointer-events-none md:overflow-hidden md:mb-0 md:mr-0"
-              : "md:w-auto md:opacity-100 md:mb-0 md:mr-4"
+              ? "md:w-0 md:h-0 md:opacity-0 md:pointer-events-none md:overflow-hidden"
+              : "md:w-auto md:opacity-100"
           }`}
         >
           <UnifiedSidebar
@@ -1508,7 +1508,7 @@ function AppPortalInner({
           />
         </div>
 
-        <section className="flex-1 min-w-0 w-full bg-theme-card-bg/50 md:backdrop-blur-xl border border-theme-border-input/80 rounded-2xl p-5 sm:p-6 shadow-xl min-h-[calc(100vh-100px)] self-stretch">
+        <section className="flex-1 min-w-0 w-full bg-theme-card-bg/20 backdrop-blur-xs p-4 sm:p-6 md:p-8 min-h-[calc(100vh-61px)] self-stretch rounded-none border-none">
           <Suspense
             fallback={
               <div className="w-full">
