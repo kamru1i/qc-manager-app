@@ -35,7 +35,7 @@ import { CopyHelperPanel } from "@/components/quotes-tracker/CopyHelperPanel";
 import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperPanel";
 import { CustomSelect } from "@/components/common/CustomSelect";
 import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
-import { BulkImportModal } from "@/components/quotes-tracker/modals/BulkImportModal";
+import { QuickImportView } from "@/components/quotes-tracker/QuickImportView";
 import { CausalityPanel } from "@/components/quotes-tracker/CausalityPanel";
 import { validator } from "@/utils/quotesValidator";
 import {
@@ -84,7 +84,8 @@ interface DashboardProps {
     | "login_codes"
     | "causality"
     | "copy_helper"
-    | "save_file";
+    | "save_file"
+    | "quick_import";
   onTabChange: (
     tab:
       | "entry"
@@ -96,7 +97,8 @@ interface DashboardProps {
       | "login_codes"
       | "causality"
       | "copy_helper"
-      | "save_file",
+      | "save_file"
+      | "quick_import",
   ) => void;
   onBackToSidebarTab?: () => void;
 }
@@ -1341,6 +1343,7 @@ export default function Dashboard({
     else if (activeTab === "login_codes") loaderType = "login_codes";
     else if (activeTab === "copy_helper") loaderType = "copy_helper";
     else if (activeTab === "save_file") loaderType = "save_file";
+    else if (activeTab === "quick_import") loaderType = "form";
 
     return (
       <div className="w-full">
@@ -1509,26 +1512,6 @@ export default function Dashboard({
       {/* TAB 1: DAILY ENTRY */}
       {activeTab === "entry" && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div>
-              <h2 className="text-xl font-bold text-theme-text-primary">
-                New File Entry
-              </h2>
-              <p className="text-xs text-theme-text-muted mt-1">
-                Fill out the form below to submit file data.
-              </p>
-            </div>
-            {quickImportEnabled && (
-              <button
-                type="button"
-                onClick={() => setIsBulkModalOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer hover:opacity-95 shrink-0"
-              >
-                <span>Quick Import</span>
-              </button>
-            )}
-          </div>
-
           {/* Data Entry Form Component */}
           <Suspense fallback={<SkeletonLoader type="form" />}>
             <DailyEntryForm
@@ -1548,10 +1531,10 @@ export default function Dashboard({
             />
           </Suspense>
 
-          {/* Today's Data Title and Summary Stats */}
+          {/* Today's Data Title, Search Filters, and Action Controls */}
           <div className="border-t border-theme-border-input/80 pt-6 space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+              <div className="shrink-0">
                 <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
                   <Clock className="h-4.5 w-4.5 text-blue-500" />
                   Today's File Entry List
@@ -1566,30 +1549,9 @@ export default function Dashboard({
                 </p>
               </div>
 
-              {/* Filter Controls */}
-              <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
-                <button
-                  onClick={handleExportTodayExcel}
-                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
-                  title="Export to Excel"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  <span>Excel</span>
-                </button>
-
-                {(isAdminRole(profile) || profile?.role === "supervisor") && (
-                  <AdminViewToggle
-                    viewMode={adminViewMode}
-                    onChange={handleAdminViewModeChange}
-                  />
-                )}
-              </div>
-            </div>
-
-            <>
-              {/* Search Filters for Today's Table - BEFORE Stats */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
+              {/* Search, Branch Filter & Action Controls */}
+              <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto flex-1 lg:justify-end">
+                <div className="relative flex-1 min-w-[200px] max-w-full lg:max-w-md">
                   <input
                     type="text"
                     placeholder="Search name, codename..."
@@ -1617,8 +1579,8 @@ export default function Dashboard({
                     { value: "", label: "All Branches" },
                     ...uniqueBranches.map((b) => ({ value: b, label: b })),
                   ]}
-                  buttonClassName="w-full sm:w-44 px-3 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-8 flex items-center justify-between gap-2 text-left font-semibold select-none"
-                  className="w-full sm:w-44"
+                  buttonClassName="w-full sm:w-40 px-3 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-8 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  className="w-full sm:w-40 shrink-0"
                 />
 
                 {(todaySearchQuery || todaySelectedBranch) && (
@@ -1631,7 +1593,24 @@ export default function Dashboard({
                     Clear
                   </button>
                 )}
+
+                <button
+                  onClick={handleExportTodayExcel}
+                  className="flex items-center gap-1.5 py-1 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md h-8 shrink-0"
+                  title="Export to Excel"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  <span>Excel</span>
+                </button>
+
+                {(isAdminRole(profile) || profile?.role === "supervisor") && (
+                  <AdminViewToggle
+                    viewMode={adminViewMode}
+                    onChange={handleAdminViewModeChange}
+                  />
+                )}
               </div>
+            </div>
 
               {/* Stat pills summary Component */}
               <Suspense fallback={<SkeletonLoader type="stats" />}>
@@ -1658,7 +1637,6 @@ export default function Dashboard({
                   submitting={submitting}
                 />
               </Suspense>
-            </>
           </div>
         </div>
       )}
@@ -2016,6 +1994,35 @@ export default function Dashboard({
         </Suspense>
       )}
 
+      {/* TAB 13: QUICK IMPORT (Full Page View) */}
+      {activeTab === "quick_import" && (
+        <QuickImportView
+          isInline={true}
+          allowedBranches={uniqueBranches}
+          allowedTypes={allowedCategories}
+          sanitizerWords={getSanitizerWords(globalSettings)}
+          codename={ownCodename || profile?.username || ""}
+          onSubmitRecord={async (data) => {
+            return await addRecord(
+              data.file_name,
+              data.branch_name,
+              data.codename,
+              data.file_type as FileType,
+              undefined,
+              undefined,
+              { skipToast: true, skipFetch: true },
+            );
+          }}
+          onCompleteSuccess={(count) => {
+            showToast(
+              "success",
+              `🎉 Successfully submitted ${count} Files!`,
+            );
+            fetchRecords();
+          }}
+        />
+      )}
+
       {mounted &&
       typeof window !== "undefined" &&
       document.getElementById("root-modals-portal")
@@ -2117,7 +2124,7 @@ export default function Dashboard({
               />
 
               {/* MODAL 8: IMPORT MODAL */}
-              <BulkImportModal
+              <QuickImportView
                 isOpen={isBulkModalOpen}
                 onClose={() => setIsBulkModalOpen(false)}
                 allowedBranches={uniqueBranches}

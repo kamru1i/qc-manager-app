@@ -500,6 +500,7 @@ function AppPortalInner({
     | "causality"
     | "copy_helper"
     | "save_file"
+    | "quick_import"
   >(() => {
     if (typeof window !== "undefined") {
       let saved = localStorage.getItem("quotes_sales_active_tab");
@@ -520,7 +521,8 @@ function AppPortalInner({
         saved === "rules" ||
         saved === "login_codes" ||
         saved === "copy_helper" ||
-        saved === "save_file"
+        saved === "save_file" ||
+        saved === "quick_import"
       ) {
         return saved as any;
       }
@@ -563,7 +565,8 @@ function AppPortalInner({
       | "login_codes"
       | "causality"
       | "copy_helper"
-      | "save_file",
+      | "save_file"
+      | "quick_import",
   ) => {
     if (tab === "leaderboard" || tab === "reports" || tab === "audit_logs") {
       setActiveTab(tab);

@@ -20,6 +20,7 @@ import {
   TrendingUp,
   User,
   UserPlus,
+  Sparkles,
 } from "lucide-react";
 import { Profile } from "@/types";
 import { isSuperadmin, isTabVisibleForRole } from "@/utils/permissionService";
@@ -188,6 +189,16 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         icon: Key,
         active: activeQuotesTab === "login_codes",
         onClick: () => onQuotesTabChange("login_codes"),
+      });
+    }
+
+    if (!tabHidden("quick_import")) {
+      subTabs.push({
+        id: "quick_import",
+        label: "Quick Import",
+        icon: Sparkles,
+        active: activeQuotesTab === "quick_import",
+        onClick: () => onQuotesTabChange("quick_import"),
       });
     }
   } else if (activeTab === "user_management") {

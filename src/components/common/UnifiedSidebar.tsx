@@ -29,8 +29,8 @@ import {
 interface UnifiedSidebarProps {
   activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'audit_logs' | 'kpi' | 'profile_settings';
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import') => void;
   activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
