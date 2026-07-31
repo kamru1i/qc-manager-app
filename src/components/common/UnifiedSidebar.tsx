@@ -188,7 +188,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   return (
     <aside
-      className={`shrink-0 bg-theme-card-bg/50 backdrop-blur-xl border border-theme-border-input/80 rounded-2xl p-4 shadow-xl select-none transition-all duration-300 ease-out ${
+      className={`shrink-0 bg-theme-card-bg/50 backdrop-blur-xl border border-theme-border-input/80 rounded-2xl p-4 shadow-xl select-none transition-all duration-300 ease-out h-full self-stretch min-h-[calc(100vh-100px)] ${
         isSidebarCollapsed ? 'w-20' : 'w-64'
       }`}
     >
