@@ -7,6 +7,7 @@ import { ChutiRecord } from "@/utils/offlineSync";
 import { exportHelper } from "@/utils/exportHelper";
 import { LeavesRecordsTable } from "@/components/leave-tracker/LeavesRecordsTable";
 import { DateInput } from "@/components/common/DateInput";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { TeamLeaveRecordsSkeleton } from "@/components/common/skeleton/TeamLeaveRecordsSkeleton";
 import {
   Calendar,
@@ -572,11 +573,11 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
             <thead>
               <tr className="bg-theme-card-container/90 border-b border-theme-border-input/80 text-[11px] uppercase tracking-wider text-theme-text-muted font-bold">
                 <th className="py-3.5 px-4">Name</th>
-                <th className="py-3.5 px-4">Codename</th>
-                <th className="py-3.5 px-4">Type</th>
-                <th className="py-3.5 px-4">Sign In/Out</th>
-                <th className="py-3.5 px-4">Leave Hours</th>
-                <th className="py-3.5 px-4">Comment</th>
+                <th className="py-3.5 px-4 text-center">Codename</th>
+                <th className="py-3.5 px-4 text-center">Type</th>
+                <th className="py-3.5 px-4 text-center">Sign In/Out</th>
+                <th className="py-3.5 px-4 text-center">Leave Hours</th>
+                <th className="py-3.5 px-4 text-center">Comment</th>
                 <th className="py-3.5 px-4 text-center">Status</th>
               </tr>
             </thead>
@@ -622,31 +623,33 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                           <td className="py-3 px-4 font-semibold text-theme-text-primary">
                             {fullName}
                           </td>
-                          <td className="py-3 px-4 font-mono text-theme-text-secondary text-xs">
+                          <td className="py-3 px-4 font-mono text-theme-text-secondary text-xs text-center">
                             {codename}
                           </td>
-                          <td className="py-3 px-4">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                          <td className="py-3 px-4 text-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
                               isOvertime
-                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                ? "bg-emerald-955/50 border border-emerald-800 text-emerald-300"
                                 : isShort
-                                ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                                : "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                                ? "bg-blue-955/50 border border-blue-800 text-blue-300"
+                                : "bg-red-955/50 border border-red-800 text-red-300"
                             }`}>
                               {isOvertime ? "Overtime" : isShort ? "Short Leave" : "Full Leave"}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-mono text-xs text-theme-text-secondary">
+                          <td className="py-3 px-4 font-mono text-xs text-theme-text-secondary text-center">
                             {r.sign_in_time && r.sign_out_time ? `${formatTimeToAMPM(r.sign_in_time)} / ${formatTimeToAMPM(r.sign_out_time)}` : "—"}
                           </td>
-                          <td className="py-3 px-4 font-mono text-xs text-theme-text-primary font-bold">
+                          <td className="py-3 px-4 font-mono text-xs text-theme-text-primary font-bold text-center">
                             {r.leave_hour ? r.leave_hour : "—"}
                           </td>
-                          <td className="py-3 px-4 text-theme-text-secondary text-xs max-w-xs truncate" title={getCleanComment(r.comment)}>
+                          <td className="py-3 px-4 text-theme-text-secondary text-xs max-w-xs truncate text-center" title={getCleanComment(r.comment)}>
                             {getCleanComment(r.comment) || "—"}
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <span className="inline-flex items-center justify-center h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" title="Approved" />
+                            <div className="flex justify-center items-center">
+                              <StatusBadge record={r} />
+                            </div>
                           </td>
                         </tr>
                       );
