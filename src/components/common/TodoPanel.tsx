@@ -687,69 +687,30 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Tab Navigation header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-theme-border-input shrink-0">
-        <div>
-          <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
-            <ListTodo className="w-5 h-5 text-indigo-500" />
-            Superadmin Tasks Registry
-          </h2>
-          <p className="text-xs text-theme-text-muted mt-0.5">
-            Manage daily assignments, carry-overs, and archive tracking.
-          </p>
-        </div>
-
-        {/* Sub-tabs Selector */}
-        <div className="flex bg-theme-card-container p-1.5 rounded-xl border border-theme-border-input text-xs">
-          <button
-            onClick={() => setSubTab("daily")}
-            className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              subTab === "daily"
-                ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                : "text-theme-text-muted hover:text-theme-text-primary"
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            Daily List
-          </button>
-          <button
-            onClick={() => setSubTab("all")}
-            className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              subTab === "all"
-                ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                : "text-theme-text-muted hover:text-theme-text-primary"
-            }`}
-          >
-            <CalendarDays className="w-4 h-4" />
-            All Logs
-          </button>
-        </div>
-      </div>
-
+    <div className="space-y-4">
       {/* SUBTAB 1: DAILY VIEW */}
       {subTab === "daily" && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {loading ? (
             <TodoSkeleton />
           ) : (
             <>
               {/* Add task form and copy options */}
-              <div className="flex flex-col md:flex-row items-center gap-4 bg-theme-card-container/40 p-4 border border-theme-border-input/60 rounded-xl">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-theme-card-container/40 p-3 border border-theme-border-input/60 rounded-xl">
                 <form
                   onSubmit={handleAddTodo}
-                  className="flex-1 w-full flex items-center gap-2.5"
+                  className="flex-1 w-full flex items-center gap-2"
                 >
                   <input
                     type="text"
                     required
-                    placeholder="What task are you working on today? e.g. Fix NS720-pc Outlook issue"
+                    placeholder="What task are you working on today? "
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
                     disabled={loading}
-                    className="flex-1 min-w-0 px-4 py-2.5 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
+                    className="flex-1 min-w-0 px-3.5 py-2 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
                   />
-                  <label className="flex items-center gap-2 px-3.5 py-2.5 bg-theme-card-bg/40 border border-theme-border-input/80 rounded-xl cursor-pointer select-none hover:bg-theme-card-bg transition-colors shrink-0">
+                  <label className="flex items-center gap-2 px-3 py-2 bg-theme-card-bg/40 border border-theme-border-input/80 rounded-xl cursor-pointer select-none hover:bg-theme-card-bg transition-colors shrink-0">
                     <input
                       type="checkbox"
                       checked={isAllTime}
@@ -773,13 +734,13 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                   <button
                     type="submit"
                     disabled={loading || !newTask.trim()}
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 text-center shadow-lg shadow-indigo-650/10"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 text-center shadow-lg shadow-indigo-650/10"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </form>
 
-                <div className="shrink-0 flex items-center gap-2 w-full md:w-auto justify-end">
+                <div className="shrink-0 flex items-center gap-2 w-full lg:w-auto justify-end">
                   {/* Bulk Selection Actions - Inline placement matching RecordsTable with select animations */}
                   <div
                     className={`flex items-center gap-2 transition-all duration-300 transform ${
@@ -831,7 +792,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     type="button"
                     onClick={handleCopyTodos}
                     disabled={loading || todos.length === 0}
-                    className="p-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     title="Copy formatted checklist to clipboard"
                   >
                     {copied ? (
@@ -845,13 +806,39 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     type="button"
                     onClick={fetchDailyTodos}
                     disabled={loading}
-                    className="p-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
                     title="Refresh today's list"
                   >
                     <RefreshCw
                       className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
                     />
                   </button>
+
+                  {/* Sub-tabs Selector (Daily List | All Logs) */}
+                  <div className="flex bg-theme-card-container p-1 rounded-xl border border-theme-border-input text-xs shrink-0 ml-1">
+                    <button
+                      onClick={() => setSubTab("daily")}
+                      className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        (subTab as string) === "daily"
+                          ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                          : "text-theme-text-muted hover:text-theme-text-primary"
+                      }`}
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      Daily List
+                    </button>
+                    <button
+                      onClick={() => setSubTab("all")}
+                      className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        (subTab as string) === "all"
+                          ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                          : "text-theme-text-muted hover:text-theme-text-primary"
+                      }`}
+                    >
+                      <CalendarDays className="w-3.5 h-3.5" />
+                      All Logs
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1060,18 +1047,44 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
               </div>
             </div>
 
-            <div className="ml-auto mt-4 sm:mt-0 shrink-0">
+            <div className="ml-auto flex items-center gap-2 mt-4 sm:mt-0 shrink-0">
               <button
                 type="button"
                 onClick={fetchArchiveTodos}
                 disabled={archiveLoading}
-                className="px-4 py-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
                 <RefreshCw
                   className={`w-3.5 h-3.5 ${archiveLoading ? "animate-spin" : ""}`}
                 />
                 Reload Archives
               </button>
+
+              {/* Sub-tabs Selector (Daily List | All Logs) */}
+              <div className="flex bg-theme-card-container p-1 rounded-xl border border-theme-border-input text-xs shrink-0">
+                <button
+                  onClick={() => setSubTab("daily")}
+                  className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    (subTab as string) === "daily"
+                      ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                      : "text-theme-text-muted hover:text-theme-text-primary"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  Daily List
+                </button>
+                <button
+                  onClick={() => setSubTab("all")}
+                  className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    (subTab as string) === "all"
+                      ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                      : "text-theme-text-muted hover:text-theme-text-primary"
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  All Logs
+                </button>
+              </div>
             </div>
           </div>
 
