@@ -593,16 +593,14 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                   <React.Fragment key={group.title}>
                     {/* Supervisor Team Sub-Header Row */}
                     <tr className="bg-theme-card-container/80 border-y border-theme-border-input/60">
-                      <td colSpan={7} className="py-2.5 px-4 font-bold text-xs text-blue-400">
-                        <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-blue-500" />
-                            {group.title}
-                          </span>
-                          <span className="text-[11px] font-normal text-theme-text-muted">
-                            Total: {group.records.length} {group.records.length === 1 ? "entry" : "entries"}
-                          </span>
-                        </div>
+                      <td colSpan={6} className="py-2.5 px-4 font-bold text-xs text-blue-400">
+                        <span className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-blue-500" />
+                          {group.title}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-4 text-center font-normal text-[11px] text-theme-text-muted">
+                        Total: {group.records.length} {group.records.length === 1 ? "entry" : "entries"}
                       </td>
                     </tr>
 
