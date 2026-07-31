@@ -1644,67 +1644,28 @@ export default function Dashboard({
       {/* TAB 2: MONTHLY LIST */}
       {activeTab === "monthly" && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-            <div>
-              <h2 className="text-xl font-bold text-theme-text-primary">
-                Monthly Quotes & Sales Logs
-              </h2>
-              <p className="text-xs text-theme-text-muted mt-1">
-                Filter and view data for all months and years.
-              </p>
-            </div>
-
-            {/* View toggle & Custom Entry Controls */}
-            <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
-              <button
-                onClick={handleExportMonthlyExcel}
-                className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md"
-                title="Export to Excel"
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5" />
-                <span>Excel</span>
-              </button>
-
-              {customEntryEnabled && (
-                <button
-                  onClick={() => setIsCustomEntryModalOpen(true)}
-                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg shadow-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Entry</span>
-                </button>
-              )}
-              {(isAdminRole(profile) || profile?.role === "supervisor") && (
-                <AdminViewToggle
-                  viewMode={adminViewMode}
-                  onChange={handleAdminViewModeChange}
-                />
-              )}
-            </div>
-          </div>
-
           {/* Date selection row & Filters */}
           <div className="space-y-4">
-            <div className="bg-theme-page-bg/40 p-4 rounded-2xl border border-theme-border-muted grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end w-full">
+            <div className="bg-theme-page-bg/40 p-3.5 rounded-2xl border border-theme-border-muted flex flex-wrap lg:flex-nowrap items-end gap-2 w-full">
               {/* 1. Search Box */}
-              <div className="md:col-span-3">
+              <div className="w-full sm:w-36 md:w-40 lg:w-44 shrink-0">
                 <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                   Search
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search name, codename..."
+                    placeholder="Search name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-8 pr-8 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
+                    className="block w-full pl-7 pr-6 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
                   />
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-theme-text-muted" />
+                  <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-theme-text-muted" />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-2.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
+                      className="absolute right-1.5 top-2 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
                       title="Clear search"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -1714,7 +1675,7 @@ export default function Dashboard({
               </div>
 
               {/* 2. Branch Selector */}
-              <div className="md:col-span-2">
+              <div className="w-full sm:w-28 lg:w-32 shrink-0">
                 <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                   Branch
                 </label>
@@ -1725,13 +1686,13 @@ export default function Dashboard({
                     { value: "", label: "All Branches" },
                     ...uniqueBranches.map((b) => ({ value: b, label: b })),
                   ]}
-                  buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
                   className="w-full"
                 />
               </div>
 
-              {/* 2. Year Selection */}
-              <div className="md:col-span-2">
+              {/* 3. Year Selection */}
+              <div className="w-full sm:w-16 lg:w-20 shrink-0">
                 <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                   Year
                 </label>
@@ -1746,13 +1707,13 @@ export default function Dashboard({
                     value: year,
                     label: year,
                   }))}
-                  buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
                   className="w-full"
                 />
               </div>
 
-              {/* 3. Month Selection */}
-              <div className="md:col-span-2">
+              {/* 4. Month Selection */}
+              <div className="w-full sm:w-20 lg:w-24 shrink-0">
                 <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                   Month
                 </label>
@@ -1767,40 +1728,35 @@ export default function Dashboard({
                     value: m.val,
                     label: m.name,
                   }))}
-                  buttonClassName="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-2 text-left font-semibold select-none"
+                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
                   className="w-full"
                 />
               </div>
 
-              {/* 4. Specific Date Input */}
-              <div className="md:col-span-3">
+              {/* 5. Specific Date Input */}
+              <div className="w-full sm:w-28 lg:w-32 shrink-0">
                 <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
                   Specific Date
                 </label>
-                <div className="flex gap-1.5 items-center">
-                  <input
-                    type="text"
-                    placeholder="DD-MM-YYYY"
-                    value={dateInputVal}
-                    onChange={(e) => handleDateInputChange(e.target.value)}
-                    maxLength={10}
-                    className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
-                  />
-                  <input
-                    type="date"
-                    ref={specificDateRef}
-                    value={selectedDate}
-                    onChange={(e) => handleDateFilterChange(e.target.value)}
-                    className="absolute w-px h-px opacity-0 pointer-events-none select-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleOpenSpecificDatePicker}
-                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
-                    title="Open Calendar"
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </button>
+                <div className="flex gap-1 items-center">
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      placeholder="DD-MM-YYYY"
+                      value={dateInputVal}
+                      onChange={(e) => handleDateInputChange(e.target.value)}
+                      onClick={handleOpenSpecificDatePicker}
+                      maxLength={10}
+                      className="block w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9 cursor-pointer"
+                    />
+                    <input
+                      type="date"
+                      ref={specificDateRef}
+                      value={selectedDate}
+                      onChange={(e) => handleDateFilterChange(e.target.value)}
+                      className="absolute w-px h-px opacity-0 pointer-events-none select-none"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
@@ -1813,12 +1769,31 @@ export default function Dashboard({
                       setSelectedDate("");
                       setDateInputVal("");
                     }}
-                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-9 h-9 cursor-pointer"
+                    className="p-1.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-8 h-9 cursor-pointer"
                     title="Reset all filters"
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                   </button>
                 </div>
+              </div>
+
+              {/* 6. Excel Export & Admin View Toggle Controls (Inline with zero overflow) */}
+              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                <button
+                  onClick={handleExportMonthlyExcel}
+                  className="flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md h-9"
+                  title="Export to Excel"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  <span>Excel</span>
+                </button>
+
+                {(isAdminRole(profile) || profile?.role === "supervisor") && (
+                  <AdminViewToggle
+                    viewMode={adminViewMode}
+                    onChange={handleAdminViewModeChange}
+                  />
+                )}
               </div>
             </div>
           </div>
