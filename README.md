@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.8.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.8.4 — Patch Release (Clean Full-Width Usage Metrics Grid UI) (Current)
+### 🩹 v6.7.7 — Patch Release (Database Health Settings Subtab & Interactive Metric Breakdowns) (Current)
+
+- **Dedicated Database Health Settings Subtab**: Added live Supabase Usage & Health dashboard widget to Settings under Database Health subtab with Granular Feature Flag Access Controls (`system_health_metrics`).
+- **Interactive Daily Trend Modals**: Interactive click handlers on all 8 metric cards displaying daily trend bar charts, usage breakdown tables, hover tooltips, and empty states.
+- **Clean Layout & 30-Day Sync Window**: Removed `Manage Database Size` button as requested and optimized quote initial sync window to 30 days.
+
+### 🩹 v6.8.4 — Patch Release (Clean Full-Width Usage Metrics Grid UI)
 
 - **Clean Layout Optimization**: Removed the redundant left summary description and external links column from `SupabaseUsageWidget.tsx` as requested.
 - **Full-Width Responsive Grid**: Expanded the 10 metric cards to span the full card width, giving a cleaner, focused, and high-density dashboard view.
