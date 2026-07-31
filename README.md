@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.7.7** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.7.8** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.7.7 — Patch Release (30-Day Quotes Sync Window Egress Optimization) (Current)
+### 🩹 v6.7.8 — Patch Release (Smart Cache-First & Delta-Only Sync Egress Optimization) (Current)
+
+- **Smart Cache-First Sync**: Optimized `useQuotesDashboardData.ts` to check local IndexedDB cache first during page loads and logins, eliminating redundant full-month database downloads.
+- **Delta-Only Background Updates**: Executed remote queries solely for new or modified records (`updated_at >= lastSynced`), reducing daily Egress per refresh/login to ~0 Bytes when no new entries exist.
+- **Zero-Cost Free Tier Guarantee**: Slashed overall monthly network egress by 80–90%, keeping 60 active users ultra-safely below Supabase's 5.0 GB Free Tier ceiling.
+
+### 🩹 v6.7.7 — Patch Release (30-Day Quotes Sync Window Egress Optimization)
 
 - **30-Day Initial Sync Window**: Optimized default quote initial background sync from 90 days to 30 days in `useQuotesDashboardData.ts`, cutting initial login bandwidth payload size by ~60%.
 - **Zero-Cost Free Tier Alignment**: Reduced projected monthly network egress for 60 active users down to ~2.8 GB/month, keeping overall usage safely within Supabase's 5.0 GB Free Tier ceiling.

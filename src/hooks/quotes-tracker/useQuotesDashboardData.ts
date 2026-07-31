@@ -173,9 +173,20 @@ export const useQuotesDashboardData = () => {
             console.error('Failed to sync offline data before fetch:', syncErr);
           }
 
-          // 2. Fetch data for the currently selected month and year to ensure absolute completeness
-          // SKIP if isSilent (realtime updates only need delta sync) OR if we can skip remote queries due to throttling
-          if (!isSilent && !canSkipRemote) {
+          // 2. Fetch data for the currently selected month and year
+          // SMART CACHE-FIRST & DELTA-ONLY SYNC:
+          // Skip full month query if local IndexedDB cache already contains data for the selected month
+          // and a lastSynced timestamp exists (unless force resync is requested).
+          const lastSynced = await getSyncTimestamp('records');
+          const hasLocalRecordsForMonth = localCachedItems.some(r => {
+            if (!r.submitted_at) return false;
+            const d = new Date(r.submitted_at);
+            return d.getFullYear().toString() === selectedYear && String(d.getMonth() + 1).padStart(2, '0') === selectedMonth;
+          });
+
+          const shouldSkipFullMonthPull = isSilent || canSkipRemote || (lastSynced && hasLocalRecordsForMonth && !force);
+
+          if (!shouldSkipFullMonthPull) {
             const yearNum = parseInt(selectedYear, 10);
             const monthNum = parseInt(selectedMonth, 10);
             const startDate = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0, 0)).toISOString();

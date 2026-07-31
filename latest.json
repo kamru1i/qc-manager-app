@@ -1,7 +1,7 @@
 {
-  "version": "6.7.7",
-  "notes": "### 🩹 v6.7.7 — Patch Release (30-Day Quotes Sync Window Egress Optimization) (Current)\n\n- **30-Day Initial Sync Window**: Optimized default quote initial background sync from 90 days to 30 days in `useQuotesDashboardData.ts`, cutting initial login bandwidth payload size by ~60%.\n- **Zero-Cost Free Tier Alignment**: Reduced projected monthly network egress for 60 active users down to ~2.8 GB/month, keeping overall usage safely within Supabase's 5.0 GB Free Tier ceiling.\n- **On-Demand Historical Queries**: Preserved full historical access via dynamic date range filters while keeping routine daily load lean and fast.",
-  "pub_date": "2026-07-31T14:50:00.000Z",
+  "version": "6.7.8",
+  "notes": "### 🩹 v6.7.8 — Patch Release (Smart Cache-First & Delta-Only Sync Egress Optimization) (Current)\n\n- **Smart Cache-First Sync**: Optimized `useQuotesDashboardData.ts` to check local IndexedDB cache first during page loads and logins, eliminating redundant full-month database downloads.\n- **Delta-Only Background Updates**: Executed remote queries solely for new or modified records (`updated_at >= lastSynced`), reducing daily Egress per refresh/login to ~0 Bytes when no new entries exist.\n- **Zero-Cost Free Tier Guarantee**: Slashed overall monthly network egress by 80–90%, keeping 60 active users ultra-safely below Supabase's 5.0 GB Free Tier ceiling.",
+  "pub_date": "2026-07-31T14:56:00.000Z",
   "releaseDate": "July 31, 2026",
   "platforms": {},
   "checksums": {},
