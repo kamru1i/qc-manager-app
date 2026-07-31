@@ -162,7 +162,7 @@ export function ProfileSettings({
 
   // Dynamic access check for each Settings subtab (superadmin always sees everything, otherwise role_visibility / isTabVisibleForRole)
   const canSeeProfile = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_profile', profile?.global_settings), [profile]);
-  const canSeeMenu = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_menu', profile?.global_settings), [profile]);
+  const canSeeMenu = useMemo(() => true, []); // Navigation Menu Visibility subtab is available for all users to customize their personal workflow
   const canSeeSanitizer = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_sanitizer', profile?.global_settings), [profile]);
   const canSeeAccess = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_access', profile?.global_settings), [profile]);
   const canSeeFeatureFlags = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_feature_flags', profile?.global_settings), [profile]);

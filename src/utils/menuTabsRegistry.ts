@@ -84,7 +84,6 @@ export const getDefaultRoleVisibility = (
     case 'govt_responses':
     case 'settlement':
     case 'leave_settings':
-    case 'settings_menu':
     case 'settings_sanitizer':
     case 'settings_access':
     case 'settings_feature_flags':
@@ -101,6 +100,7 @@ export const getDefaultRoleVisibility = (
       return role === 'supervisor' || role === 'admin';
 
     case 'settings_profile':
+    case 'settings_menu':
     case 'kpi':
     case 'leaderboard':
     case 'copy_helper':
