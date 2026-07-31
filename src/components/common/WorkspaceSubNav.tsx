@@ -272,14 +272,6 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       active: true,
       onClick: () => {},
     });
-  } else if (activeTab === "profile_settings") {
-    subTabs.push({
-      id: "profile",
-      label: "Profile Settings",
-      icon: User,
-      active: true,
-      onClick: () => {},
-    });
   }
 
   if (subTabs.length === 0) return null;

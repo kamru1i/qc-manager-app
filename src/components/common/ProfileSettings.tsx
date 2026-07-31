@@ -1010,16 +1010,6 @@ export function ProfileSettings({
       <div className="absolute top-[-10%] right-[-15%] w-[45%] h-[45%] rounded-full bg-blue-900/5 blur-[90px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-15%] w-[35%] h-[35%] rounded-full bg-purple-900/5 blur-[70px] pointer-events-none" />
 
-      {/* Page Title Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-theme-border-input/80">
-        <div>
-          <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2.5">
-            <Settings className="h-5.5 w-5.5 text-blue-500" />
-            Settings
-          </h2>
-          <p className="text-xs text-theme-text-muted mt-1">Manage your shift hours, default shift times, password settings, and custom preferences.</p>
-        </div>
-      </div>
 
       {/* Subtab Navigation */}
       <div className="flex items-center gap-2 border-b border-theme-border-input/60 pb-3 overflow-x-auto max-w-full scrollbar-thin whitespace-nowrap pt-0.5">
