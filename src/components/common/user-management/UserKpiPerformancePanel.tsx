@@ -1479,150 +1479,8 @@ export const UserKpiPerformancePanel: React.FC<
           -moz-appearance: textfield;
         }
       `}</style>
-      {/* 1. Header controls (Not printed) */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 bg-theme-card-bg/35 border border-theme-border-muted p-4 rounded-2xl shadow-lg print:hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="px-3.5 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              ←
-            </button>
-          )}
-          <div className="flex items-center gap-3 w-full">
-            <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl shrink-0">
-              <FileText className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-theme-text-primary">
-                KPI Goal Sheet & Monthly Performance Assessment
-              </h4>
-              <p className="text-[11px] text-theme-text-muted">
-                Evaluate, submit self-scores, and save/lock monthly assessments.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Date Month Selector */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-          {hasAssignedAppraisees && (
-            <button
-              type="button"
-              onClick={() => {
-                setShowViewKpiModal(true);
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                if (evaluatorModeProfile) {
-                  setEvaluatorModeProfile(null);
-                  toast.success("Reset view to your own KPI sheet.");
-                }
-              }}
-              className="px-3 py-2 bg-transparent hover:bg-theme-card-bg border border-theme-border-input text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors group"
-              title="Evaluate assigned employee sheets (Right click to reset)"
-            >
-              <Target className="h-3.5 w-3.5 text-theme-text-muted group-hover:text-theme-text-primary" />
-              <span>View KPI</span>
-            </button>
-          )}
-
-          <div className="flex bg-theme-card-container/80 border border-theme-border-input rounded-xl p-1 shrink-0 items-center gap-1">
-            <select
-              value={
-                activePeriodKey ||
-                `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
-              }
-              onChange={(e) => {
-                const val = e.target.value;
-                const isMonthlyPattern = /^\d{4}-\d{2}$/.test(val);
-                const isYearlyPattern = /^yearly-\d{4}$/.test(val);
-                if (isMonthlyPattern) {
-                  const parts = val.split("-");
-                  setSelectedYear(Number(parts[0]));
-                  setSelectedMonth(Number(parts[1]) - 1);
-                  setActivePeriodKey("");
-                  setDbCustomPeriodFrom("");
-                  setDbCustomPeriodTo("");
-                } else if (isYearlyPattern) {
-                  const year = Number(val.split("-")[1]);
-                  setSelectedYear(year);
-                  setActivePeriodKey(val);
-                  setDbCustomPeriodFrom("");
-                  setDbCustomPeriodTo("");
-                } else {
-                  setActivePeriodKey(val);
-                }
-              }}
-              className="bg-transparent text-xs font-semibold text-theme-text-secondary px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[220px] truncate"
-            >
-              {periodOptions.map((opt) => (
-                <option
-                  key={opt.key}
-                  value={opt.key}
-                  className="bg-theme-page-bg text-theme-text-secondary"
-                >
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Create Custom Period Button */}
-            {(isAdminRole(currentUser) ||
-              currentUser?.role === "supervisor") && (
-              <button
-                type="button"
-                onClick={() => {
-                  setNewCustomPeriodLabel("");
-                  setNewCustomPeriodFrom("");
-                  setNewCustomPeriodTo("");
-                  setCustomPeriodModalOpen(true);
-                }}
-                className="p-1 hover:bg-theme-border-input rounded-lg text-theme-text-muted hover:text-theme-text-primary transition-colors cursor-pointer"
-                title="Create Custom Period"
-              >
-                <Calendar className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="p-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
-            title="Print assessment sheet / Save as PDF"
-          >
-            <Printer className="h-4 w-4" /> PDF
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportExcel}
-            className="p-2 bg-emerald-950/20 hover:bg-emerald-900/20 border border-emerald-900/40 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors print:hidden"
-            title="Export assessment sheet to Excel"
-          >
-            <FileSpreadsheet className="h-4 w-4" /> Excel
-          </button>
-
-          <button
-            type="button"
-            disabled={saving}
-            onClick={handleSave}
-            className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg shadow-blue-950/20 border border-blue-700/30 transition-all disabled:opacity-50"
-            title="Save assessment sheet"
-          >
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Save className="h-3.5 w-3.5" />
-            )}
-            Save
-          </button>
-        </div>
-      </div>
-
+      
+      {/* 1. Evaluator Mode Banner (Not printed) */}
       {evaluatorModeProfile && (
         <div className="bg-blue-950/30 border border-blue-900/60 p-4 rounded-2xl text-xs text-blue-300 font-semibold flex justify-between items-center font-sans print:hidden animate-fade-in">
           <span className="flex items-center gap-2">
@@ -1712,11 +1570,129 @@ USING (auth.uid() = user_id OR EXISTS (
 
       {/* 2. MAIN SHEET CONTAINER */}
       <div className="bg-theme-card-container border border-theme-border-muted p-4 sm:p-6.5 rounded-2xl shadow-xl space-y-6 font-sans print:bg-white print:border-0 print:shadow-none print:p-0 print:text-black">
-        {/* Banner Title */}
-        <div className="text-center border-b border-theme-border-input pb-4 print:border-black">
-          <h2 className="text-lg font-bold text-theme-text-primary tracking-wide uppercase print:text-black print:text-base">
-            Performance Assessment : {selectedYear}
-          </h2>
+        {/* Header Row: Title (Left) + Actions/Filters (Right) */}
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 border-b border-theme-border-input pb-5 print:border-neutral-200">
+          <div>
+            <h2 className="text-base font-extrabold text-theme-text-primary tracking-wide uppercase print:text-black">
+              Performance Assessment : {selectedYear}
+            </h2>
+          </div>
+
+          {/* Controls & Date Month Selector (Right Aligned, Hidden in Print) */}
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto print:hidden">
+            {hasAssignedAppraisees && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowViewKpiModal(true);
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  if (evaluatorModeProfile) {
+                    setEvaluatorModeProfile(null);
+                    toast.success("Reset view to your own KPI sheet.");
+                  }
+                }}
+                className="px-3 py-2 bg-transparent hover:bg-theme-card-bg border border-theme-border-input text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors group"
+                title="Evaluate assigned employee sheets (Right click to reset)"
+              >
+                <Target className="h-3.5 w-3.5 text-theme-text-muted group-hover:text-theme-text-primary" />
+                <span>View KPI</span>
+              </button>
+            )}
+
+            <div className="flex bg-theme-card-container/80 border border-theme-border-input rounded-xl p-1 shrink-0 items-center gap-1">
+              <select
+                value={
+                  activePeriodKey ||
+                  `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
+                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const isMonthlyPattern = /^\d{4}-\d{2}$/.test(val);
+                  const isYearlyPattern = /^yearly-\d{4}$/.test(val);
+                  if (isMonthlyPattern) {
+                    const parts = val.split("-");
+                    setSelectedYear(Number(parts[0]));
+                    setSelectedMonth(Number(parts[1]) - 1);
+                    setActivePeriodKey("");
+                    setDbCustomPeriodFrom("");
+                    setDbCustomPeriodTo("");
+                  } else if (isYearlyPattern) {
+                    const year = Number(val.split("-")[1]);
+                    setSelectedYear(year);
+                    setActivePeriodKey(val);
+                    setDbCustomPeriodFrom("");
+                    setDbCustomPeriodTo("");
+                  } else {
+                    setActivePeriodKey(val);
+                  }
+                }}
+                className="bg-transparent text-xs font-semibold text-theme-text-secondary px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[220px] truncate"
+              >
+                {periodOptions.map((opt) => (
+                  <option
+                    key={opt.key}
+                    value={opt.key}
+                    className="bg-theme-page-bg text-theme-text-secondary"
+                  >
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Create Custom Period Button */}
+              {(isAdminRole(currentUser) ||
+                currentUser?.role === "supervisor") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewCustomPeriodLabel("");
+                    setNewCustomPeriodFrom("");
+                    setNewCustomPeriodTo("");
+                    setCustomPeriodModalOpen(true);
+                  }}
+                  className="p-1 hover:bg-theme-border-input rounded-lg text-theme-text-muted hover:text-theme-text-primary transition-colors cursor-pointer"
+                  title="Create Custom Period"
+                >
+                  <Calendar className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="p-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              title="Print assessment sheet / Save as PDF"
+            >
+              <Printer className="h-4 w-4" /> PDF
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              className="p-2 bg-emerald-950/20 hover:bg-emerald-900/20 border border-emerald-900/40 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors print:hidden"
+              title="Export assessment sheet to Excel"
+            >
+              <FileSpreadsheet className="h-4 w-4" /> Excel
+            </button>
+
+            <button
+              type="button"
+              disabled={saving}
+              onClick={handleSave}
+              className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg shadow-blue-950/20 border border-blue-700/30 transition-all disabled:opacity-50"
+              title="Save assessment sheet"
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              Save
+            </button>
+          </div>
         </div>
 
         {/* 3. Details grid */}
