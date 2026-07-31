@@ -6,7 +6,8 @@ import {
   Edit,
   Trash2,
   RotateCcw,
-  Download
+  Download,
+  RefreshCw,
 } from 'lucide-react';
 import { Profile, ChutiRecordWithProfile, GovtHolidayResponse, LeaveSettlement } from '@/types';
 import { getDisplayRole, getRoleLabel } from '@/utils/permissionService';
@@ -466,40 +467,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         <div className="flex flex-col gap-6">
           {activeTab === 'govt_responses' ? (
             /* ================= GOVT HOLIDAY RESPONSES TABLE REPORT ================= */
-            <div className="bg-theme-card-bg/40 backdrop-blur-xl  shadow-2xl rounded-2xl p-6 flex flex-col gap-4 animate-fade-in">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
-                    <Calendar className="h-4.5 w-4.5 text-teal-400" />
-                    Govt Holiday Response Report
-                  </h3>
-                  <p className="text-xs text-theme-text-muted mt-1">
-                    Staff preferences and responses for government holidays (Paid vs Reserve)
-                  </p>
-                </div>
-
-                {/* Export buttons */}
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => onExportHolidayResponsesExcel(filteredResponses)}
-                    disabled={filteredResponses.length === 0}
-                    className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500 hover:bg-emerald-600/10 dark:hover:bg-emerald-500/10 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-40 transition-all shadow-sm"
-                  >
-                    <Download className="h-3.5 w-3.5" /> Excel
-                  </button>
-                  <button
-                    onClick={() => onExportHolidayResponsesPDF(filteredResponses)}
-                    disabled={filteredResponses.length === 0}
-                    className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-red-600 text-red-600 dark:border-red-500 dark:text-red-500 hover:bg-red-600/10 dark:hover:bg-red-500/10 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-40 transition-all shadow-sm"
-                  >
-                    <Download className="h-3.5 w-3.5" /> PDF
-                  </button>
-                </div>
-              </div>
-
-              {/* Search Filters */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full bg-theme-card-container/40 p-3 rounded-xl border border-theme-border-muted">
-                <div className="flex-1 relative">
+            <div className="bg-theme-card-bg/40 backdrop-blur-xl shadow-2xl rounded-2xl p-6 flex flex-col gap-4 animate-fade-in">
+              {/* Search Filters & Excel Export */}
+              <div className="flex flex-col sm:flex-row items-end gap-3 w-full bg-theme-card-container/40 p-3 rounded-xl border border-theme-border-muted">
+                <div className="flex-1 relative w-full">
                   <label className="text-[10px] uppercase tracking-wider text-theme-text-muted font-bold block mb-1">Search by holiday name or Name (codename)</label>
                   <div className="relative">
                     <input
@@ -528,16 +499,26 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     className="bg-theme-card-bg border border-theme-border-input"
                   />
                 </div>
-                <div className="flex items-end">
+                <div className="flex items-end gap-2">
                   <button
                     onClick={() => {
                       setHolidaySearchQuery('');
                       setHolidaySearchDate('');
                     }}
-                    className="flex items-center justify-center h-[32px] w-[32px] bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg cursor-pointer transition-all"
-                    title="Reset"
+                    className="px-3 py-2 bg-theme-card-container hover:bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-bold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-sm h-[38px]"
+                    title="Reset search"
                   >
-                    <RotateCcw className="h-4 w-4" />
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </button>
+
+                  {/* Excel Export Button */}
+                  <button
+                    onClick={() => onExportHolidayResponsesExcel(filteredResponses)}
+                    disabled={filteredResponses.length === 0}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-40 shadow-sm h-[38px] shrink-0"
+                    title="Export Excel Report"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Excel
                   </button>
                 </div>
               </div>

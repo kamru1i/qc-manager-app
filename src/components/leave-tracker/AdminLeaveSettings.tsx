@@ -167,16 +167,38 @@ export function AdminLeaveSettings({
     }
   };
 
-  // Add Govt Holiday to local list
-  const handleAddGovtDate = () => {
-    if (!newDate) return;
+  // Add Govt Holiday and save directly
+  const handleAddGovtDate = async () => {
+    if (!newDate) {
+      toast.error('Please select a date first!');
+      return;
+    }
     const nameVal = newName.trim() || 'Govt Public Holiday';
     if (govtHolidays.some(h => h.date === newDate)) {
       toast.error('This date has already been added!');
       return;
     }
-    setGovtHolidays(prev => [...prev, { date: newDate, name: nameVal }].sort((a, b) => a.date.localeCompare(b.date)));
-    setNewName('');
+    const updatedHolidays = [...govtHolidays, { date: newDate, name: nameVal }].sort((a, b) => a.date.localeCompare(b.date));
+
+    setSubmittingGovt(true);
+    try {
+      const success = await onSaveGlobalSettings({
+        ...globalSettings,
+        govt_holidays: updatedHolidays,
+      }, { silent: true });
+
+      if (success) {
+        setGovtHolidays(updatedHolidays);
+        setNewName('');
+        setNewDate('');
+        toast.success('Government Holiday added successfully!');
+      }
+    } catch (err) {
+      console.error('Error adding holiday:', err);
+      toast.error('Failed to add government holiday.');
+    } finally {
+      setSubmittingGovt(false);
+    }
   };
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -461,9 +483,15 @@ export function AdminLeaveSettings({
               <button
                 type="button"
                 onClick={handleAddGovtDate}
-                className="py-2 px-4 bg-teal-600 hover:bg-teal-555 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer border border-teal-700 shadow-md font-bold text-xs h-[34px] w-full sm:w-auto shrink-0 gap-1"
+                disabled={submittingGovt}
+                className="py-2 px-4 bg-teal-600 hover:bg-teal-555 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer border border-teal-700 shadow-md font-bold text-xs h-[34px] w-full sm:w-auto shrink-0 gap-1 disabled:opacity-50"
               >
-                <Plus className="h-4 w-4" /> Add Date
+                {submittingGovt ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                Add Date
               </button>
             </div>
 
@@ -495,19 +523,6 @@ export function AdminLeaveSettings({
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Save Button for Govt Holidays */}
-            <div className="pt-3 border-t border-theme-border-muted flex justify-end">
-              <button
-                type="button"
-                onClick={handleSaveGovt}
-                disabled={submittingGovt}
-                className="w-full sm:w-auto px-6 py-2.5 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-teal-600 hover:bg-teal-555 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {submittingGovt && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                Save Holiday Calendar
-              </button>
             </div>
           </div>
         </div>

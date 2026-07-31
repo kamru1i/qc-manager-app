@@ -328,34 +328,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
 
   return (
     <div className="bg-theme-card-bg/40 border border-theme-card-bg shadow-2xl rounded-2xl overflow-hidden flex flex-col animate-fade-in font-sans text-xs">
-      {/* Top Controller Header */}
-      <div className="px-6 py-5 border-b border-theme-border-input/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-theme-page-bg/20">
-        <div>
-          <h3 className="text-base font-bold text-theme-text-primary flex items-center gap-2">
-            <RotateCcw className="h-5 w-5 text-blue-500" />
-            Unified Leave Review & Settlements ({selectedYear})
-          </h3>
-          <p className="text-theme-text-muted text-[11px] mt-1">
-            Initiate preference requests and process cash outs, leave adjustments, or carry forwards.
-          </p>
-        </div>
-
-        {/* Export Excel and PDF Buttons */}
-        <div className="flex gap-2.5 shrink-0">
-          <button
-            onClick={handleExportExcel}
-            className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500 hover:bg-emerald-600/10 dark:hover:bg-emerald-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
-          >
-            <Download className="h-3.5 w-3.5" /> Excel
-          </button>
-          <button
-            onClick={handleExportPDF}
-            className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-red-600 text-red-600 dark:border-red-500 dark:text-red-500 hover:bg-red-600/10 dark:hover:bg-red-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
-          >
-            <Download className="h-3.5 w-3.5" /> PDF
-          </button>
-        </div>
-      </div>      {/* Select Period, Category, Search, and Broadcast row */}
+      {/* Select Period, Category, Search, Broadcast & Excel Export row */}
       <div className="px-6 py-4 bg-theme-page-bg/20 border-b border-theme-border-muted/60 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="flex flex-wrap gap-4 items-center flex-1">
           <div className="flex flex-col gap-1.5 min-w-[140px]">
@@ -415,19 +388,26 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
           </div>
         </div>
 
-        {/* Broadcast Trigger Button + Active Status */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0 self-start md:self-end">
-          <div className="flex flex-wrap gap-2.5 justify-end">
-            <button
-              onClick={handleToggleBroadcast}
-              disabled={!isBroadcastActive && !hasEligibleStaffForBroadcast}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0 ${isBroadcastActive
-                  ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400 hover:bg-purple-600/20'
-                  : !hasEligibleStaffForBroadcast
-                    ? 'bg-theme-border-input/40 border border-theme-border-active/60 text-theme-text-muted cursor-not-allowed opacity-50'
-                    : 'bg-indigo-600 border border-indigo-500 text-white hover:bg-indigo-500'
-                }`}
-            >
+        {/* Excel Export & Broadcast Trigger Buttons */}
+        <div className="flex flex-wrap items-center justify-end gap-2.5 shrink-0 self-start md:self-end">
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm h-[38px] shrink-0"
+            title="Export Excel Report"
+          >
+            <Download className="h-3.5 w-3.5" /> Excel
+          </button>
+
+          <button
+            onClick={handleToggleBroadcast}
+            disabled={!isBroadcastActive && !hasEligibleStaffForBroadcast}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0 h-[38px] ${isBroadcastActive
+                ? 'bg-purple-600/10 border border-purple-500/30 text-purple-400 hover:bg-purple-600/20'
+                : !hasEligibleStaffForBroadcast
+                  ? 'bg-theme-border-input/40 border border-theme-border-active/60 text-theme-text-muted cursor-not-allowed opacity-50'
+                  : 'bg-indigo-600 border border-indigo-500 text-white hover:bg-indigo-500'
+              }`}
+          >
               {isBroadcastActive ? (
                 <>
                   <BellOff className="h-4 w-4" />
@@ -463,7 +443,6 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
             </div>
           )}
         </div>
-      </div>
 
       {/* Main Table */}
       {!initialFetchDone ? (
