@@ -279,16 +279,6 @@ export function AdminLeaveSettings({
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in font-sans">
-      {/* Title Header */}
-      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted p-6 rounded-2xl shadow-xl">
-        <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
-          <Settings className="h-4.5 w-4.5 text-blue-400" />
-          Leave Settings
-        </h3>
-        <p className="text-xs text-theme-text-muted mt-1">
-          Directly configure and manage the company leave policy quotas, Eid holidays, and government calendar leaves.
-        </p>
-      </div>
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

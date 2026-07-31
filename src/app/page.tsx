@@ -1482,21 +1482,7 @@ function AppPortalInner({
 
       {/* Main container with Sidebar and Section */}
       <main className="w-full z-10 flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-        <div
-          className={`shrink-0 hidden md:block h-full overflow-y-auto z-20 ${
-            (activeTab === "user_management" && isUserManagementFullView) ||
-            (activeTab === "chuti" &&
-              (activeChutiTab === "leave_history" ||
-                activeChutiTab === "govt_responses" ||
-                activeChutiTab === "settlement" ||
-                activeChutiTab === "team_leaves")) ||
-            activeTab === "kpi" ||
-            activeTab === "leaderboard" ||
-            activeTab === "reports"
-              ? "md:w-0 md:h-0 md:opacity-0 md:pointer-events-none md:overflow-hidden"
-              : "md:w-auto md:opacity-100"
-          }`}
-        >
+        <div className="shrink-0 hidden md:block h-full overflow-y-auto z-20 w-auto opacity-100">
           <UnifiedSidebar
             activeSection={sidebarActiveSection}
             profile={profile}

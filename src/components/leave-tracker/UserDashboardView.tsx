@@ -288,14 +288,6 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      {onBackClick && (
-        <button
-          onClick={onBackClick}
-          className="flex items-center gap-2 text-xs font-semibold text-theme-text-muted hover:text-theme-text-primary transition-all cursor-pointer w-fit p-2 bg-theme-card-container/60 hover:bg-theme-card-bg border border-theme-border-input rounded-xl shadow-md"
-        >
-          <ArrowLeft className="h-4 w-4 text-blue-400" />
-        </button>
-      )}
       {/* Staff Leave Leave Settlement Alert Banner */}
       {showSettlementBanner && (
         <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-indigo-900/40 p-4 rounded-2xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

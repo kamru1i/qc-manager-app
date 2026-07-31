@@ -15,6 +15,7 @@ import {
   Check,
   Edit,
   Trash2,
+  Download,
 } from "lucide-react";
 import {
   formatDate,
@@ -434,15 +435,6 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
       {/* Premium Header */}
       <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="p-2.5 bg-theme-border-muted hover:bg-theme-border-input border border-theme-border-input/80 text-theme-text-secondary rounded-xl hover:text-theme-text-primary transition-all cursor-pointer shrink-0"
-              title="Go Back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-          )}
           <div className="flex items-start gap-3">
             <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl shrink-0 mt-0.5">
               <Calendar className="h-5 w-5 text-blue-500" />
@@ -459,8 +451,24 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           </div>
         </div>
 
-        {/* Date Selector Control Group */}
-        <div className="flex items-center gap-3 w-full md:w-auto self-stretch md:self-auto border-t border-theme-border-muted/80 md:border-t-0 pt-3 md:pt-0">
+        {/* Date, Leave Type Filter, and Excel Export Control Group */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto self-stretch md:self-auto border-t border-theme-border-muted/80 md:border-t-0 pt-3 md:pt-0">
+          {/* Leave Type Filter Dropdown */}
+          <div className="flex flex-col min-w-[140px]">
+            <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
+              Leave Type
+            </label>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer font-sans"
+            >
+              <option value="all">All Categories</option>
+              <option value="full">Full Leave</option>
+              <option value="short">Short Leave</option>
+            </select>
+          </div>
+
           <div className="flex-1 md:flex-none flex flex-col min-w-[170px]">
             <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
               Select Date
@@ -471,6 +479,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
               className="rounded-xl!"
             />
           </div>
+
           <div className="flex flex-col justify-end self-end">
             <button
               onClick={handleResetToToday}
@@ -478,6 +487,17 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
               title="Reset to today's date"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Today
+            </button>
+          </div>
+
+          {/* Excel Export Button (No PDF) */}
+          <div className="flex flex-col justify-end self-end">
+            <button
+              onClick={() => handleExportExcel(dailyRecords, "")}
+              className="flex items-center gap-1.5 py-2 px-3.5 bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+              title="Export Excel Report"
+            >
+              <Download className="h-3.5 w-3.5" /> Excel
             </button>
           </div>
 
@@ -552,7 +572,7 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           hideAdjustmentAndOvertime={true}
           hideYearSelect={true}
           profilesList={profilesList}
-          hideFilterPanel={group.hideFilterPanel}
+          hideFilterPanel={true}
         />
       ))}
 
