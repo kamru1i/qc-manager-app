@@ -87,25 +87,6 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
 
   return (
     <div className="bg-theme-page-bg/20 border border-theme-border-muted rounded-2xl p-5 space-y-6 animate-fade-in text-theme-text-primary">
-      <div className="flex justify-between items-center border-b border-theme-border-muted/80 pb-4">
-        <div>
-          <h4 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
-            <Save className="h-4.5 w-4.5 text-blue-500" />
-            Save Outlook File Helper
-          </h4>
-          <p className="text-[11px] text-theme-text-muted mt-0.5">
-            Paste rich-text (tables/colored lists) from Outlook, choose a daily list record for the file name, and save to disk.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowSaveFileHelper(false)}
-          className="flex items-center justify-center p-2 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer"
-          title="Back to Table"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left and Middle Columns (2/3 width on large screens): Rich Editor and Controls */}
         <div className="lg:col-span-2 space-y-5">
