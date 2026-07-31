@@ -1040,7 +1040,7 @@ export function ProfileSettings({
             }`}
           >
             <User className="h-4 w-4 text-sky-400" />
-            <span>Profile Settings</span>
+            <span>Profile</span>
           </button>
         )}
 
@@ -1145,7 +1145,7 @@ export function ProfileSettings({
             }`}
           >
             <ScrollText className="h-4 w-4 text-orange-400" />
-            <span>Audit Logs</span>
+            <span>Security Logs</span>
           </button>
         )}
 
@@ -1160,7 +1160,7 @@ export function ProfileSettings({
             }`}
           >
             <Users className="h-4 w-4 text-fuchsia-400" />
-            <span>User Management</span>
+            <span>Users</span>
           </button>
         )}
       </div>
