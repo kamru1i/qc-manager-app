@@ -412,22 +412,6 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', 'Inter', sans-serif",
       }}
     >
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-theme-card-bg gap-4">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
-            <Key className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-md font-bold text-theme-text-primary">
-              Login Codes Directory
-            </h3>
-            <p className="text-[11px] text-theme-text-muted mt-0.5">
-              Copy user codes or manage logins
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Toolbar */}
       <div className="bg-theme-card-bg/40 border border-theme-border-muted/60 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-3">
