@@ -1,7 +1,7 @@
 {
-  "version": "6.7.6",
-  "notes": "### 🩹 v6.7.6 — Patch Release (Quick Import Sale Status Tracking & Automatic [SOLD]/[UNSOLD] Formatting) (Current)\n\n- **Quick Import Sale Status Selector**: Added an inline Sold/Unsold dropdown selector for every item in Quick Import (Bulk Import Modal) when the file type is detected or selected as 'Sale'.\n- **Default Unsold Status**: Defaulted all parsed Sale files in Quick Import to 'Unsold' (with manual toggle to 'Sold') matching Daily Entry tracking rules.\n- **Auto-Detection**: Auto-detected '[SOLD]' or 'sold' in raw text lines during bulk quote parsing to pre-select 'Sold'.\n- **Seamless Database & Analytics Integration**: Formatted file names on submission with ' [SOLD]' or ' [UNSOLD]' suffixes to feed Copy Helper Box 4 (Sales Summary), Box 6 (Admin Sales Summary), and Save File Helper.",
-  "pub_date": "2026-07-31T14:15:00.000Z",
+  "version": "6.7.7",
+  "notes": "### 🩹 v6.7.7 — Patch Release (30-Day Quotes Sync Window Egress Optimization) (Current)\n\n- **30-Day Initial Sync Window**: Optimized default quote initial background sync from 90 days to 30 days in `useQuotesDashboardData.ts`, cutting initial login bandwidth payload size by ~60%.\n- **Zero-Cost Free Tier Alignment**: Reduced projected monthly network egress for 60 active users down to ~2.8 GB/month, keeping overall usage safely within Supabase's 5.0 GB Free Tier ceiling.\n- **On-Demand Historical Queries**: Preserved full historical access via dynamic date range filters while keeping routine daily load lean and fast.",
+  "pub_date": "2026-07-31T14:50:00.000Z",
   "releaseDate": "July 31, 2026",
   "platforms": {},
   "checksums": {},
