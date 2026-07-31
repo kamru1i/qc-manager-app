@@ -119,10 +119,25 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   // Filter dailyRecords by leave_type and search term
   const filteredDailyRecords = useMemo(() => {
     return dailyRecords.filter((r) => {
+      const rType = (r.leave_type || "").toLowerCase();
+      const isShort =
+        rType.includes("short") ||
+        (Boolean(r.sign_in_time) && Boolean(r.sign_out_time));
+      const isOvertime = rType.includes("overtime");
+      const isFull = !isShort && !isOvertime;
+
       // 1. Leave type filter
-      if (filterType !== "All" && filterType !== "all" && r.leave_type !== filterType) {
-        return false;
+      if (filterType && filterType !== "All" && filterType !== "all") {
+        const selected = filterType.toLowerCase();
+        if (selected === "short leave" || selected === "short") {
+          if (!isShort) return false;
+        } else if (selected === "full leave" || selected === "full") {
+          if (!isFull) return false;
+        } else if (selected === "overtime") {
+          if (!isOvertime) return false;
+        }
       }
+
       // 2. Search term filter
       if (searchTerm.trim()) {
         const query = searchTerm.toLowerCase().trim();
@@ -139,11 +154,14 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           ""
         ).toLowerCase();
         const comment = getCleanComment(r.comment).toLowerCase();
+        const typeLabel = isOvertime ? "overtime" : isShort ? "short leave" : "full leave";
 
         const matches =
           fullName.includes(query) ||
           codename.includes(query) ||
-          comment.includes(query);
+          comment.includes(query) ||
+          typeLabel.includes(query) ||
+          rType.includes(query);
         if (!matches) return false;
       }
       return true;
@@ -359,41 +377,8 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   };
 
   const handleExportExcel = (filtered: ChutiRecord[], searchTerm: string) => {
-    let targetRecords = filtered;
-    if (isAdminRole(profile)) {
-      // Export all daily records matching categories and date filters
-      targetRecords = dailyRecords.filter((r) => {
-        if (filterType !== "All" && r.leave_type !== filterType) return false;
-        if (filterStartDate && new Date(r.date) < new Date(filterStartDate))
-          return false;
-        if (filterEndDate && new Date(r.date) > new Date(filterEndDate))
-          return false;
-        return true;
-      });
-    } else {
-      // Export all accessible records (own team + delegated teams) matching search
-      targetRecords = searchTerm.trim()
-        ? dailyRecords.filter((r) => {
-            const staffProfile = profilesList.find((p) => p.id === r.user_id);
-            const fullName =
-              staffProfile?.full_name ||
-              staffProfile?.username ||
-              r.username ||
-              "";
-            const codename = staffProfile?.username || r.username || "";
-            return (
-              fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              codename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              getCleanComment(r.comment)
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-            );
-          })
-        : dailyRecords;
-    }
-
     exportHelper.exportDailyLeavesExcel(
-      targetRecords,
+      filteredDailyRecords,
       selectedDate,
       profilesList,
       profile,
@@ -626,6 +611,12 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                       const fullName = staffProfile?.full_name || staffProfile?.username || r.username || "Staff User";
                       const codename = (staffProfile?.username || r.username || "—").toUpperCase();
 
+                      const rType = (r.leave_type || "").toLowerCase();
+                      const isShort =
+                        rType.includes("short") ||
+                        (Boolean(r.sign_in_time) && Boolean(r.sign_out_time));
+                      const isOvertime = rType.includes("overtime");
+
                       return (
                         <tr key={r.id} className="hover:bg-theme-card-bg/60 transition-colors">
                           <td className="py-3 px-4 font-semibold text-theme-text-primary">
@@ -636,11 +627,13 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                           </td>
                           <td className="py-3 px-4">
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                              r.leave_type === "short"
+                              isOvertime
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                : isShort
                                 ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
                                 : "bg-purple-500/10 border-purple-500/30 text-purple-400"
                             }`}>
-                              {r.leave_type === "short" ? "Short Leave" : "Full Leave"}
+                              {isOvertime ? "Overtime" : isShort ? "Short Leave" : "Full Leave"}
                             </span>
                           </td>
                           <td className="py-3 px-4 font-mono text-xs text-theme-text-secondary">
