@@ -52,27 +52,8 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
 
   // Available months containing submissions in the selected year
   const availableMonthsForSelectedYear = useMemo(() => {
-    const monthsSet = new Set<string>();
-    records.forEach((r) => {
-      if (r.submitted_at) {
-        const d = new Date(r.submitted_at);
-        const y = d.getFullYear().toString();
-        if (y === selectedYear) {
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          monthsSet.add(m);
-        }
-      }
-    });
-
-    // Always include current calendar month if it's the current year
-    const now = new Date();
-    if (selectedYear === now.getFullYear().toString()) {
-      monthsSet.add(String(now.getMonth() + 1).padStart(2, '0'));
-    }
-
-    const filteredList = monthsList.filter((m) => monthsSet.has(m.value));
-    return filteredList.length > 0 ? filteredList : monthsList;
-  }, [records, selectedYear]);
+    return monthsList;
+  }, []);
 
   // Sync selectedYear if availableYears updates
   React.useEffect(() => {
@@ -80,14 +61,6 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
       setSelectedYear(availableYears[0]);
     }
   }, [availableYears, selectedYear]);
-
-  // Sync selectedMonth if availableMonthsForSelectedYear updates
-  React.useEffect(() => {
-    const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
-    if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
-      setSelectedMonth(monthValues[0]);
-    }
-  }, [availableMonthsForSelectedYear, selectedMonth]);
 
   // Filter records by selected year
   const systemYearRecords = useMemo(() => {

@@ -71,6 +71,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     time: number;
   } | null>(null);
   const [tempValue, setTempValue] = useState("");
+  const tempValueRef = useRef("");
   const [savingRows, setSavingRows] = useState<Record<string, boolean>>({});
   const [bulkSaving, setBulkSaving] = useState(false);
   const isCancelledRef = useRef(false);
@@ -101,11 +102,14 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       if (delay <= 1500) {
         // Multi-click / Premiere Pro style double-click
         const val = getCellValue(record, "submitted_at");
+        let initialVal = "";
         if (field === "submitted_date") {
-          setTempValue(formatDate(val));
+          initialVal = formatDate(val);
         } else if (field === "submitted_time") {
-          setTempValue(formatTimeToHHMM(val));
+          initialVal = formatTimeToHHMM(val);
         }
+        setTempValue(initialVal);
+        tempValueRef.current = initialVal;
         setEditingCell({ id: record.id, field });
         setLastClick(null);
         return;
@@ -328,20 +332,23 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     if (editingCell) {
       const record = records.find((r) => r.id === editingCell.id);
       if (record) {
+        let initialVal = "";
         if (editingCell.field === "submitted_date") {
           const val = getCellValue(record, "submitted_at");
-          setTempValue(formatDate(val));
+          initialVal = formatDate(val);
         } else if (editingCell.field === "submitted_time") {
           const val = getCellValue(record, "submitted_at");
-          setTempValue(formatTimeToHHMM(val));
+          initialVal = formatTimeToHHMM(val);
         } else {
           const val = getCellValue(record, editingCell.field);
           if (editingCell.field === "file_name") {
-            setTempValue((val as string).replace(/ \[(SOLD|UNSOLD)\]$/, ""));
+            initialVal = (val as string).replace(/ \[(SOLD|UNSOLD)\]$/, "");
           } else {
-            setTempValue(val as string);
+            initialVal = val as string;
           }
         }
+        setTempValue(initialVal);
+        tempValueRef.current = initialVal;
       }
     }
   }, [editingCell, records, getCellValue]);
@@ -772,7 +779,19 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         editingCell &&
                         editingCell.id === r.id &&
                         editingCell.field === "submitted_date" ? (
-                          <div className="relative flex items-center w-full my-0.5">
+                          <div
+                            className="relative flex items-center w-full my-0.5"
+                            onBlur={(e) => {
+                              if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget as Node)) {
+                                return;
+                              }
+                              if (isCancelledRef.current) {
+                                isCancelledRef.current = false;
+                                return;
+                              }
+                              handleCommitEdit(r.id, "submitted_date", tempValueRef.current);
+                            }}
+                          >
                             <input
                               type="text"
                               value={tempValue}
@@ -783,18 +802,13 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                                 if (val.length > 0) formatted += val.substring(0, 2);
                                 if (val.length > 2) formatted += '-' + val.substring(2, 4);
                                 if (val.length > 4) formatted += '-' + val.substring(4, 8);
-                                setTempValue(formatted || e.target.value);
-                              }}
-                              onBlur={() => {
-                                if (isCancelledRef.current) {
-                                  isCancelledRef.current = false;
-                                  return;
-                                }
-                                handleCommitEdit(r.id, "submitted_date", tempValue);
+                                const finalStr = formatted || e.target.value;
+                                tempValueRef.current = finalStr;
+                                setTempValue(finalStr);
                               }}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter")
-                                  handleCommitEdit(r.id, "submitted_date", tempValue);
+                                  handleCommitEdit(r.id, "submitted_date", tempValueRef.current);
                                 if (e.key === "Escape") {
                                   isCancelledRef.current = true;
                                   setEditingCell(null);
@@ -813,9 +827,17 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                                   const parts = ymd.split('-');
                                   if (parts.length === 3) {
                                     const ddmmyyyy = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                                    tempValueRef.current = ddmmyyyy;
                                     setTempValue(ddmmyyyy);
-                                    handleCommitEdit(r.id, "submitted_date", ddmmyyyy);
                                   }
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  handleCommitEdit(r.id, "submitted_date", tempValueRef.current);
+                                if (e.key === "Escape") {
+                                  isCancelledRef.current = true;
+                                  setEditingCell(null);
                                 }
                               }}
                               ref={(el) => {

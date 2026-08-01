@@ -292,12 +292,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   }, [availableDates, archiveYears]);
 
   const availableMonthsForSelectedYear = useMemo(() => {
-    const months = availableDates
-      .filter(d => d.year === selectedYear)
-      .map(d => d.month);
-    const filteredList = monthsList.filter(m => months.includes(m.value));
-    return filteredList.length > 0 ? filteredList : monthsList;
-  }, [availableDates, selectedYear]);
+    return monthsList;
+  }, []);
 
   // Period-adjusted ranking. Monthly = server order (RPC dense rank on
   // months_count). Yearly = re-ranked client-side by overall_score (the

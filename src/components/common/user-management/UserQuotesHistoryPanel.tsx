@@ -133,35 +133,8 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
 
   // Available months containing submissions for the selected year
   const availableMonthsForSelectedYear = useMemo(() => {
-    const monthsSet = new Set<string>();
-    records.forEach((r) => {
-      if (r.submitted_at) {
-        const d = new Date(r.submitted_at);
-        const y = d.getFullYear().toString();
-        if (y === selectedYear) {
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          monthsSet.add(m);
-        }
-      }
-    });
-
-    // Always include current calendar month if it's the current year
-    const now = new Date();
-    if (selectedYear === now.getFullYear().toString()) {
-      monthsSet.add(String(now.getMonth() + 1).padStart(2, '0'));
-    }
-
-    const filteredList = availableMonths.filter((m) => monthsSet.has(m.value));
-    return filteredList.length > 0 ? filteredList : availableMonths;
-  }, [records, selectedYear]);
-
-  // Sync selectedMonth if availableMonthsForSelectedYear updates
-  useEffect(() => {
-    const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
-    if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
-      setSelectedMonth(monthValues[0]);
-    }
-  }, [availableMonthsForSelectedYear, selectedMonth]);
+    return availableMonths;
+  }, []);
 
   // Filtered records for selected Month and Year
   const monthlyFilteredRecords = useMemo(() => {

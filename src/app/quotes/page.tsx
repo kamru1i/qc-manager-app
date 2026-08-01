@@ -610,39 +610,21 @@ export default function Dashboard({
   }, [availableDates]);
 
   const dynamicMonths = useMemo(() => {
-    const allMonthsMap: { [key: string]: string } = {
-      "01": "January",
-      "02": "February",
-      "03": "March",
-      "04": "April",
-      "05": "May",
-      "06": "June",
-      "07": "July",
-      "08": "August",
-      "09": "September",
-      "10": "October",
-      "11": "November",
-      "12": "December",
-    };
-    const monthsForYear = availableDates
-      .filter((d) => d.year === selectedYear)
-      .map((d) => d.month);
-    const uniqueMonths = Array.from(new Set(monthsForYear)).sort(
-      (a, b) => parseInt(a, 10) - parseInt(b, 10),
-    );
-    return uniqueMonths.map((m) => ({
-      val: m,
-      name: allMonthsMap[m] || m,
-    }));
-  }, [availableDates, selectedYear]);
-
-  // Adjust selected month when selected year changes and month is no longer valid
-  useEffect(() => {
-    const isValid = dynamicMonths.some((m) => m.val === selectedMonth);
-    if (!isValid && dynamicMonths.length > 0) {
-      setSelectedMonth(dynamicMonths[dynamicMonths.length - 1].val);
-    }
-  }, [dynamicMonths, selectedMonth, setSelectedMonth]);
+    return [
+      { val: "01", name: "January" },
+      { val: "02", name: "February" },
+      { val: "03", name: "March" },
+      { val: "04", name: "April" },
+      { val: "05", name: "May" },
+      { val: "06", name: "June" },
+      { val: "07", name: "July" },
+      { val: "08", name: "August" },
+      { val: "09", name: "September" },
+      { val: "10", name: "October" },
+      { val: "11", name: "November" },
+      { val: "12", name: "December" },
+    ];
+  }, []);
 
   // Adjust selected year if it's no longer valid
   useEffect(() => {
