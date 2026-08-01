@@ -610,21 +610,74 @@ export default function Dashboard({
   }, [availableDates]);
 
   const dynamicMonths = useMemo(() => {
-    return [
-      { val: "01", name: "January" },
-      { val: "02", name: "February" },
-      { val: "03", name: "March" },
-      { val: "04", name: "April" },
-      { val: "05", name: "May" },
-      { val: "06", name: "June" },
-      { val: "07", name: "July" },
-      { val: "08", name: "August" },
-      { val: "09", name: "September" },
-      { val: "10", name: "October" },
-      { val: "11", name: "November" },
-      { val: "12", name: "December" },
-    ];
-  }, []);
+    const allMonthsMap: { [key: string]: string } = {
+      "01": "January",
+      "02": "February",
+      "03": "March",
+      "04": "April",
+      "05": "May",
+      "06": "June",
+      "07": "July",
+      "08": "August",
+      "09": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December",
+    };
+
+    const now = new Date();
+    const currentYearStr = now.getFullYear().toString();
+    const currentMonthNum = now.getMonth() + 1;
+
+    let minMonth = 12;
+    let hasRecordsInYear = false;
+
+    availableDates.forEach((d) => {
+      if (d.year === selectedYear) {
+        hasRecordsInYear = true;
+        const m = parseInt(d.month, 10);
+        if (m < minMonth) minMonth = m;
+      }
+    });
+
+    const monthsSet = new Set<string>();
+
+    if (selectedYear === currentYearStr) {
+      // For current year (2026): start from June (month 6, when app started) up to current month
+      const startMonth = hasRecordsInYear ? Math.min(minMonth, 6) : 6;
+      const endMonth = Math.max(startMonth, currentMonthNum);
+      for (let m = startMonth; m <= endMonth; m++) {
+        monthsSet.add(String(m).padStart(2, "0"));
+      }
+    } else if (hasRecordsInYear) {
+      for (let m = minMonth; m <= 12; m++) {
+        monthsSet.add(String(m).padStart(2, "0"));
+      }
+    } else {
+      monthsSet.add(String(currentMonthNum).padStart(2, "0"));
+    }
+
+    const allKeys = Array.from(monthsSet).sort(
+      (a, b) => parseInt(a, 10) - parseInt(b, 10),
+    );
+    return allKeys.map((m) => ({
+      val: m,
+      name: allMonthsMap[m] || m,
+    }));
+  }, [availableDates, selectedYear]);
+
+  // Adjust selected month when selected year/dynamicMonths updates
+  useEffect(() => {
+    const monthValues = dynamicMonths.map((m) => m.val);
+    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
+    if (monthValues.includes(nowMonthStr)) {
+      setSelectedMonth((prev) =>
+        monthValues.includes(prev) ? prev : nowMonthStr,
+      );
+    } else if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
+      setSelectedMonth(monthValues[monthValues.length - 1]);
+    }
+  }, [dynamicMonths, selectedMonth, setSelectedMonth]);
 
   // Adjust selected year if it's no longer valid
   useEffect(() => {
