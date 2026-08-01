@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.8.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.8.3 — Patch Release (Removed Menu Subtab & Per-User Hidden Tabs Setup) (Current)
+### 🚀 v6.9.0 — Minor Release (Smart Database-Driven Monthly Filters & KPI Yearly Evaluation) (Current)
+
+- **Database-Driven Monthly Filters**: Restricted monthly filter dropdowns across Leaderboard, Reports, Quotes Tracker, and KPI Report to show only active months with submitted records (June – August 2026).
+- **KPI Yearly/Monthly Evaluation Scope**: Added a Yearly | Monthly toggle scope in KPI Report page for full-year performance assessment and monthly views.
+- **Inline Date Stepper Fix**: Fixed date picker popup closing issue during month arrow navigation and enforced DD-MM-YYYY format.
+- **UI Layout Optimization**: Cleaned up Team Leave Records header layout and spaced out controls.
+
+### 🩹 v6.8.3 — Patch Release (Removed Menu Subtab & Per-User Hidden Tabs Setup)
 
 - **Menu Subtab Removal**: Completely removed the `Settings > Menu` subtab and per-user `hidden_tabs` configuration.
 - **Unified Navigation Governance**: All workspace menu items and subtabs are now governed strictly via superadmin Tab Access Control matrix and Role-Based Access Controls (RBAC).
