@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v6.9.0 — Minor Release (Smart Database-Driven Monthly Filters & KPI Yearly Evaluation) (Current)
+### 🩹 v6.9.1 — Patch Release (Web Auto-Updater Guard & Leaderboard Range Sync) (Current)
+
+- **Web Auto-Updater Guard**: Restricted binary desktop/mobile auto-update popups strictly to native Tauri Desktop and Capacitor Mobile platforms, preventing update toasts on localhost and web browsers.
+- **Leaderboard Range Sync**: Synced Leaderboard monthly filter options to start from app data launch (June 2026) up to current month (August 2026), defaulting to the current month.
+- **KPI Dropdown Formatting**: Cleaned up KPI Report filter labels to show month name in monthly mode and year number in yearly mode.
+
+### 🚀 v6.9.0 — Minor Release (Smart Database-Driven Monthly Filters & KPI Yearly Evaluation)
 
 - **Database-Driven Monthly Filters**: Restricted monthly filter dropdowns across Leaderboard, Reports, Quotes Tracker, and KPI Report to show only active months with submitted records (June – August 2026).
 - **KPI Yearly/Monthly Evaluation Scope**: Added a Yearly | Monthly toggle scope in KPI Report page for full-year performance assessment and monthly views.
