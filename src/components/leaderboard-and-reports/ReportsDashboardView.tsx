@@ -50,10 +50,60 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
   const [metricsTimeScope, setMetricsTimeScope] = useState<'yearly' | 'monthly'>('monthly');
 
-  // Available months containing submissions in the selected year
+  // Available months starting from app launch (June 2026) up to current month for the selected year
   const availableMonthsForSelectedYear = useMemo(() => {
-    return monthsList;
-  }, []);
+    const now = new Date();
+    const currentYearStr = now.getFullYear().toString();
+    const currentMonthNum = now.getMonth() + 1; // 1-12 (8 for August)
+
+    let minMonth = 12;
+    let hasRecordsInYear = false;
+
+    records.forEach((r) => {
+      if (r.submitted_at) {
+        const d = new Date(r.submitted_at);
+        if (!isNaN(d.getTime())) {
+          const y = d.getFullYear().toString();
+          if (y === selectedYear) {
+            hasRecordsInYear = true;
+            const m = d.getMonth() + 1;
+            if (m < minMonth) minMonth = m;
+          }
+        }
+      }
+    });
+
+    const monthsSet = new Set<string>();
+
+    if (selectedYear === currentYearStr) {
+      // For current year (2026): start from June (month 6, when app data started) up to current month
+      const startMonth = hasRecordsInYear ? Math.min(minMonth, 6) : 6;
+      const endMonth = Math.max(startMonth, currentMonthNum);
+      for (let m = startMonth; m <= endMonth; m++) {
+        monthsSet.add(String(m).padStart(2, '0'));
+      }
+    } else if (hasRecordsInYear) {
+      for (let m = minMonth; m <= 12; m++) {
+        monthsSet.add(String(m).padStart(2, '0'));
+      }
+    } else {
+      monthsSet.add(String(currentMonthNum).padStart(2, '0'));
+    }
+
+    const filteredList = monthsList.filter((m) => monthsSet.has(m.value));
+    return filteredList.length > 0 ? filteredList : monthsList;
+  }, [records, selectedYear]);
+
+  // Sync selectedMonth: default to current month if available
+  React.useEffect(() => {
+    const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
+    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+    if (monthValues.includes(nowMonthStr)) {
+      setSelectedMonth((prev) => (monthValues.includes(prev) ? prev : nowMonthStr));
+    } else if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
+      setSelectedMonth(monthValues[monthValues.length - 1]);
+    }
+  }, [availableMonthsForSelectedYear, selectedMonth]);
 
   // Sync selectedYear if availableYears updates
   React.useEffect(() => {

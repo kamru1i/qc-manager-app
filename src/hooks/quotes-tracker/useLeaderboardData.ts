@@ -4,7 +4,7 @@ import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext'
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { Profile } from '@/types';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
-import { fetchSubmittedAtRange, buildAvailableDates } from '@/utils/availableDatesHelper';
+import { fetchSubmittedMonths } from '@/utils/availableDatesHelper';
 import { LEADERBOARD_ARCHIVE_COLUMNS } from '@/utils/dbColumns';
 
 export interface LeaderboardUser {
@@ -144,8 +144,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // Fetch unique month/year dates that contain submitted records
   const fetchAvailableDates = useCallback(async () => {
     try {
-      const { earliestDate, latestDate } = await fetchSubmittedAtRange();
-      setAvailableDates(buildAvailableDates(earliestDate, latestDate));
+      const dates = await fetchSubmittedMonths();
+      setAvailableDates(dates);
     } catch (err) {
       console.error('Error fetching available dates for leaderboard:', err);
     }
@@ -296,7 +296,10 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       .filter(d => d.year === selectedYear)
       .map(d => d.month);
     const filteredList = monthsList.filter(m => months.includes(m.value));
-    return filteredList.length > 0 ? filteredList : monthsList;
+    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+    return filteredList.length > 0
+      ? filteredList
+      : monthsList.filter(m => m.value === nowMonthStr);
   }, [availableDates, selectedYear]);
 
   // Adjust selectedMonth if it is not in availableMonthsForSelectedYear

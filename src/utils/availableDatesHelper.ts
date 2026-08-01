@@ -87,3 +87,43 @@ export function buildAvailableDates(
     return { year, month };
   });
 }
+
+/**
+ * Fetch distinct { year, month } pairs that actually contain records in the database.
+ */
+export async function fetchSubmittedMonths(userId?: string): Promise<AvailableDate[]> {
+  let query = supabase
+    .from('records')
+    .select('submitted_at')
+    .not('submitted_at', 'is', null);
+
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+
+  const { data, error } = await query;
+  if (error || !data || data.length === 0) {
+    const now = new Date();
+    return [{
+      year: now.getFullYear().toString(),
+      month: String(now.getMonth() + 1).padStart(2, '0')
+    }];
+  }
+
+  const datesSet = new Set<string>();
+  data.forEach((r: any) => {
+    if (r.submitted_at) {
+      const d = new Date(r.submitted_at);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear().toString();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        datesSet.add(`${y}-${m}`);
+      }
+    }
+  });
+
+  return Array.from(datesSet).map(s => {
+    const [year, month] = s.split('-');
+    return { year, month };
+  });
+}

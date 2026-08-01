@@ -80,27 +80,55 @@ export const UserKpiPerformancePanel: React.FC<
   const [newCustomPeriodTo, setNewCustomPeriodTo] = useState("");
 
   const [savedPeriods, setSavedPeriods] = useState<any[]>([]);
+  const [recordMonths, setRecordMonths] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchSavedPeriods = async () => {
+    let active = true;
+    const fetchStaffData = async () => {
       try {
-        const { data } = await supabase
-          .from("kpi_assessments")
-          .select("month_year, kpis, appraiser_signed, appraisee_signed")
-          .eq("user_id", targetStaff.id);
-        if (data) {
-          setSavedPeriods(data);
+        const [savedRes, recordRes] = await Promise.all([
+          supabase
+            .from("kpi_assessments")
+            .select("month_year, kpis, appraiser_signed, appraisee_signed")
+            .eq("user_id", targetStaff.id),
+          supabase
+            .from("records")
+            .select("submitted_at")
+            .eq("user_id", targetStaff.id)
+            .not("submitted_at", "is", null),
+        ]);
+
+        if (active) {
+          if (savedRes.data) {
+            setSavedPeriods(savedRes.data);
+          }
+          if (recordRes.data) {
+            const mSet = new Set<string>();
+            recordRes.data.forEach((r: any) => {
+              if (r.submitted_at) {
+                const d = new Date(r.submitted_at);
+                if (!isNaN(d.getTime())) {
+                  const y = d.getFullYear().toString();
+                  const m = String(d.getMonth() + 1).padStart(2, "0");
+                  mSet.add(`${y}-${m}`);
+                }
+              }
+            });
+            setRecordMonths(Array.from(mSet));
+          }
         }
       } catch (err) {
-        console.error("Error fetching saved periods:", err);
+        console.error("Error fetching staff KPI data:", err);
       }
     };
-    fetchSavedPeriods();
+    fetchStaffData();
+    return () => {
+      active = false;
+    };
   }, [targetStaff.id]);
 
   const periodOptions = useMemo(() => {
     const options: { key: string; label: string; isCustom: boolean }[] = [];
-    const currentYear = new Date().getFullYear();
     const monthsNames = [
       "January",
       "February",
@@ -116,7 +144,30 @@ export const UserKpiPerformancePanel: React.FC<
       "December",
     ];
 
-    for (let y = currentYear; y >= currentYear - 1; y--) {
+    // Combine distinct months from records table + savedPeriods from kpi_assessments
+    const validMonthKeys = new Set<string>(recordMonths);
+    savedPeriods.forEach((p) => {
+      if (/^\d{4}-\d{2}$/.test(p.month_year)) {
+        validMonthKeys.add(p.month_year);
+      }
+    });
+
+    // Fallback: if user has no submitted records or assessments yet, include current month
+    if (validMonthKeys.size === 0) {
+      const now = new Date();
+      validMonthKeys.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+    }
+
+    // Extract all unique years present in DB records
+    const yearsSet = new Set<number>();
+    validMonthKeys.forEach((key) => {
+      const [y] = key.split("-").map(Number);
+      if (y) yearsSet.add(y);
+    });
+
+    const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+
+    sortedYears.forEach((y) => {
       options.push({
         key: `yearly-${y}`,
         label: `Full Year ${y} (Jan 1 - Dec 31)`,
@@ -125,13 +176,15 @@ export const UserKpiPerformancePanel: React.FC<
 
       for (let m = 11; m >= 0; m--) {
         const key = `${y}-${String(m + 1).padStart(2, "0")}`;
-        options.push({
-          key,
-          label: `${monthsNames[m]} ${y}`,
-          isCustom: false,
-        });
+        if (validMonthKeys.has(key)) {
+          options.push({
+            key,
+            label: `${monthsNames[m]} ${y}`,
+            isCustom: false,
+          });
+        }
       }
-    }
+    });
 
     savedPeriods.forEach((p) => {
       const isStandardPattern =
@@ -150,7 +203,7 @@ export const UserKpiPerformancePanel: React.FC<
     });
 
     return options;
-  }, [savedPeriods]);
+  }, [recordMonths, savedPeriods]);
 
   useEffect(() => {
     if (preSelectedPeriodKey) {
