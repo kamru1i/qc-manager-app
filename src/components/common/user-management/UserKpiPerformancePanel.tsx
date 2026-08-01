@@ -69,6 +69,7 @@ export const UserKpiPerformancePanel: React.FC<
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
 
+  const [metricsTimeScope, setMetricsTimeScope] = useState<"yearly" | "monthly">("monthly");
   const [activePeriodKey, setActivePeriodKey] = useState<string>("");
   const [dbCustomPeriodFrom, setDbCustomPeriodFrom] = useState<string>("");
   const [dbCustomPeriodTo, setDbCustomPeriodTo] = useState<string>("");
@@ -127,8 +128,11 @@ export const UserKpiPerformancePanel: React.FC<
     };
   }, [targetStaff.id]);
 
-  const periodOptions = useMemo(() => {
-    const options: { key: string; label: string; isCustom: boolean }[] = [];
+  const { monthlyPeriodOptions, yearlyPeriodOptions } = useMemo(() => {
+    const monthly: { key: string; label: string; isCustom: boolean }[] = [];
+    const yearly: { key: string; label: string; isCustom: boolean }[] = [];
+    const custom: { key: string; label: string; isCustom: boolean }[] = [];
+
     const monthsNames = [
       "January",
       "February",
@@ -144,6 +148,10 @@ export const UserKpiPerformancePanel: React.FC<
       "December",
     ];
 
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonthIndex = now.getMonth();
+
     // Combine distinct months from records table + savedPeriods from kpi_assessments
     const validMonthKeys = new Set<string>(recordMonths);
     savedPeriods.forEach((p) => {
@@ -152,34 +160,37 @@ export const UserKpiPerformancePanel: React.FC<
       }
     });
 
-    // Fallback: if user has no submitted records or assessments yet, include current month
-    if (validMonthKeys.size === 0) {
-      const now = new Date();
-      validMonthKeys.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+    // Ensure June 2026 (month 06, when app started) through current month (08) are included for current year
+    const startMonthIndex = 5; // June (0-indexed = 5)
+    for (let m = startMonthIndex; m <= currentMonthIndex; m++) {
+      validMonthKeys.add(`${currentYear}-${String(m + 1).padStart(2, "0")}`);
     }
 
-    // Extract all unique years present in DB records
+    // Extract all unique years present in validMonthKeys
     const yearsSet = new Set<number>();
     validMonthKeys.forEach((key) => {
       const [y] = key.split("-").map(Number);
       if (y) yearsSet.add(y);
     });
+    yearsSet.add(currentYear);
 
     const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
 
     sortedYears.forEach((y) => {
-      options.push({
+      yearly.push({
         key: `yearly-${y}`,
-        label: `Full Year ${y} (Jan 1 - Dec 31)`,
+        label: `${y}`,
         isCustom: false,
       });
 
-      for (let m = 11; m >= 0; m--) {
+      const maxM = y === currentYear ? currentMonthIndex : 11;
+      const minM = y === 2026 ? 5 : 0; // App started in June 2026 (index 5)
+      for (let m = maxM; m >= minM; m--) {
         const key = `${y}-${String(m + 1).padStart(2, "0")}`;
         if (validMonthKeys.has(key)) {
-          options.push({
+          monthly.push({
             key,
-            label: `${monthsNames[m]} ${y}`,
+            label: monthsNames[m],
             isCustom: false,
           });
         }
@@ -192,8 +203,8 @@ export const UserKpiPerformancePanel: React.FC<
         /^yearly-\d{4}$/.test(p.month_year);
       if (!isStandardPattern) {
         const customLabel = p.kpis?.customPeriodLabel || p.month_year;
-        if (!options.some((opt) => opt.key === p.month_year)) {
-          options.push({
+        if (!custom.some((opt) => opt.key === p.month_year)) {
+          custom.push({
             key: p.month_year,
             label: customLabel,
             isCustom: true,
@@ -202,8 +213,15 @@ export const UserKpiPerformancePanel: React.FC<
       }
     });
 
-    return options;
+    return {
+      monthlyPeriodOptions: [...monthly, ...custom],
+      yearlyPeriodOptions: yearly,
+    };
   }, [recordMonths, savedPeriods]);
+
+  const activePeriodOptions = useMemo(() => {
+    return metricsTimeScope === "yearly" ? yearlyPeriodOptions : monthlyPeriodOptions;
+  }, [metricsTimeScope, yearlyPeriodOptions, monthlyPeriodOptions]);
 
   useEffect(() => {
     if (preSelectedPeriodKey) {
@@ -1654,11 +1672,52 @@ USING (auth.uid() = user_id OR EXISTS (
               </button>
             )}
 
+            {/* Scope Toggle: Yearly | Monthly */}
+            <div className="flex bg-theme-card-container/80 border border-theme-border-input rounded-xl p-1 shrink-0 items-center gap-1 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setMetricsTimeScope("yearly");
+                  if (yearlyPeriodOptions.length > 0) {
+                    const firstYearOpt = yearlyPeriodOptions[0];
+                    const yearNum = Number(firstYearOpt.key.split("-")[1]) || new Date().getFullYear();
+                    setSelectedYear(yearNum);
+                    setActivePeriodKey(firstYearOpt.key);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                  metricsTimeScope === "yearly"
+                    ? "bg-blue-600 text-white font-bold shadow-xs"
+                    : "text-theme-text-muted hover:text-theme-text-primary"
+                }`}
+              >
+                Yearly
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMetricsTimeScope("monthly");
+                  setActivePeriodKey("");
+                  const now = new Date();
+                  setSelectedYear(now.getFullYear());
+                  setSelectedMonth(now.getMonth());
+                }}
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                  metricsTimeScope === "monthly"
+                    ? "bg-blue-600 text-white font-bold shadow-xs"
+                    : "text-theme-text-muted hover:text-theme-text-primary"
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+
             <div className="flex bg-theme-card-container/80 border border-theme-border-input rounded-xl p-1 shrink-0 items-center gap-1">
               <select
                 value={
-                  activePeriodKey ||
-                  `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
+                  metricsTimeScope === "yearly"
+                    ? activePeriodKey || `yearly-${selectedYear}`
+                    : activePeriodKey || `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
                 }
                 onChange={(e) => {
                   const val = e.target.value;
@@ -1683,7 +1742,7 @@ USING (auth.uid() = user_id OR EXISTS (
                 }}
                 className="bg-transparent text-xs font-semibold text-theme-text-secondary px-2 py-1.5 focus:outline-hidden cursor-pointer max-w-[220px] truncate"
               >
-                {periodOptions.map((opt) => (
+                {activePeriodOptions.map((opt) => (
                   <option
                     key={opt.key}
                     value={opt.key}
