@@ -434,103 +434,82 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Premium Header */}
-      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl shrink-0 mt-0.5">
-              <Calendar className="h-5 w-5 text-blue-500" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-theme-text-primary">
-                Daily Leave Records Report 📅
-              </h4>
-              <p className="text-xs text-theme-text-muted mt-1 leading-relaxed">
-                View full leaves and short leaves scheduled for today or any
-                other day.
-              </p>
-            </div>
+      {/* Header Controls Bar */}
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-4 rounded-2xl shadow-xl flex flex-wrap items-end justify-between gap-3.5 w-full">
+        {/* Quick Search Bar */}
+        <div className="flex flex-col min-w-[220px] flex-1">
+          <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
+            Search Records
+          </label>
+          <div className="relative w-full">
+            <Search className="h-4 w-4 absolute left-3 top-2.5 text-theme-text-muted" />
+            <input
+              type="text"
+              placeholder="Search by comment or leave type..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 bg-theme-card-container border border-theme-border-input text-theme-text-primary placeholder:text-theme-text-muted/60 text-xs rounded-xl focus:outline-none focus:border-blue-500 font-sans"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2.5 top-2 text-xs text-theme-text-muted hover:text-theme-text-primary transition-colors cursor-pointer font-bold"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Date, Leave Type Filter, Search, and Excel Export Control Group */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto self-stretch md:self-auto border-t border-theme-border-muted/80 md:border-t-0 pt-3 md:pt-0">
-          {/* Quick Search Bar */}
-          <div className="flex flex-col min-w-[200px] flex-1 sm:flex-none">
-            <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
-              Search Records
-            </label>
-            <div className="relative w-full">
-              <Search className="h-4 w-4 absolute left-3 top-2.5 text-theme-text-muted" />
-              <input
-                type="text"
-                placeholder="Search by comment or leave type..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-theme-card-container border border-theme-border-input text-theme-text-primary placeholder:text-theme-text-muted/60 text-xs rounded-xl focus:outline-none focus:border-blue-500 font-sans"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2.5 top-2 text-xs text-theme-text-muted hover:text-theme-text-primary transition-colors cursor-pointer font-bold"
-                  title="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
+        {/* Leave Type Filter Dropdown */}
+        <div className="flex flex-col min-w-[150px]">
+          <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
+            Leave Type
+          </label>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer font-sans"
+          >
+            <option value="all">All Categories</option>
+            <option value="full">Full Leave</option>
+            <option value="short">Short Leave</option>
+          </select>
+        </div>
 
-          {/* Leave Type Filter Dropdown */}
-          <div className="flex flex-col min-w-[140px]">
-            <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
-              Leave Type
-            </label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer font-sans"
-            >
-              <option value="all">All Categories</option>
-              <option value="full">Full Leave</option>
-              <option value="short">Short Leave</option>
-            </select>
-          </div>
+        {/* Select Date */}
+        <div className="flex flex-col min-w-[170px]">
+          <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
+            Select Date
+          </label>
+          <DateInput
+            value={selectedDate}
+            onChange={setSelectedDate}
+            className="rounded-xl!"
+          />
+        </div>
 
-          <div className="flex-1 md:flex-none flex flex-col min-w-[170px]">
-            <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">
-              Select Date
-            </label>
-            <DateInput
-              value={selectedDate}
-              onChange={setSelectedDate}
-              className="rounded-xl!"
-            />
-          </div>
+        {/* Action Buttons: Today, Excel, Access */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={handleResetToToday}
+            className="flex items-center gap-1.5 py-2 px-3.5 bg-theme-card-container hover:bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-bold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-sm"
+            title="Reset to today's date"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Today
+          </button>
 
-          <div className="flex flex-col justify-end self-end">
-            <button
-              onClick={handleResetToToday}
-              className="flex items-center gap-1.5 py-2 px-3.5 bg-theme-card-container hover:bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-bold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-sm"
-              title="Reset to today's date"
-            >
-              <RefreshCw className="h-3.5 w-3.5" /> Today
-            </button>
-          </div>
-
-          {/* Excel Export Button (No PDF) */}
-          <div className="flex flex-col justify-end self-end">
-            <button
-              onClick={() => handleExportExcel(dailyRecords, searchTerm)}
-              className="flex items-center gap-1.5 py-2 px-3.5 bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
-              title="Export Excel Report"
-            >
-              <Download className="h-3.5 w-3.5" /> Excel
-            </button>
-          </div>
+          <button
+            onClick={() => handleExportExcel(dailyRecords, searchTerm)}
+            className="flex items-center gap-1.5 py-2 px-3.5 bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+            title="Export Excel Report"
+          >
+            <Download className="h-3.5 w-3.5" /> Excel
+          </button>
 
           {profile.role === "supervisor" && (
-            <div className="flex flex-col justify-end self-end">
+            <div>
               {profile.delegated_supervisor_id ? (
                 (() => {
                   const delegatedSup = profilesList.find(
