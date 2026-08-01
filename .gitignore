@@ -43,14 +43,16 @@ next-env.d.ts
 
 # tauri keys
 tauri-private.*
-test.txt.sig
 
-# scratch files
+# scratch and temp files
 /scratch
+/graphify-out
 
-# agent documents
+# agent/AI tool configs
 AGENTS.md
 CLAUDE.md
+.claude/
+.mimocode/
 
 # db migrations & backups
 /migration_output*.sql
@@ -60,8 +62,3 @@ CLAUDE.md
 android/*.jks
 android/keystore-base64.txt
 android/android-release-credentials.txt
-
-opus-4.8-report.md
-dead-code-duplication-audit.md
-final-verification-report.md
-PRODUCTION_READINESS_AUDIT.md

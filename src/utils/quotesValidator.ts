@@ -50,60 +50,6 @@ export const validator = {
     };
   },
 
-  // Validate admin user creation
-  validateCreateUserForm: (data: {
-    username?: string;
-    password?: string;
-    confirmPassword?: string;
-    fullName?: string;
-    role?: string;
-  }): ValidationResult => {
-    const errors: string[] = [];
-
-    if (!data.username || data.username.trim() === '') {
-      errors.push('Please enter the codename.');
-    } else if (data.username.trim().length < 3) {
-      errors.push('Codename must be at least 3 characters long.');
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(data.username)) {
-      errors.push('Codename can only contain English letters, numbers, hyphens, and underscores.');
-    }
-
-    if (!data.password || data.password.length === 0) {
-      errors.push('Please enter the password.');
-    } else if (data.password.length < 4) {
-      errors.push('Password must be at least 4 characters long.');
-    }
-
-    if (data.password !== data.confirmPassword) {
-      errors.push('Passwords do not match.');
-    }
-
-    if (!data.role || !['admin', 'user'].includes(data.role)) {
-      errors.push('Please select a valid role.');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  },
-
-  // Validate password strength (change password screen)
-  validatePassword: (password: string): ValidationResult => {
-    const errors: string[] = [];
-
-    if (!password) {
-      errors.push('Please enter the new password.');
-    } else if (password.length < 4) {
-      errors.push('Password must be at least 4 characters long.');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  },
-
   // Validate password strength for user onboarding first-time setup (6 to 12 characters)
   validateOnboardingPassword: (password: string): ValidationResult => {
     const errors: string[] = [];
