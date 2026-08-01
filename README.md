@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,12 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.9.1 — Patch Release (Web Auto-Updater Guard & Leaderboard Range Sync) (Current)
+### 🩹 v6.9.2 — Patch Release (Timezone Boundary Alignment & Offline Cache Sync Fix) (Current)
+
+- **Timezone Boundary Alignment**: Fixed server fetch start/end date calculations to use local timezone boundaries (Asia/Dhaka) instead of UTC, preventing early-morning records on the 1st of the month from being omitted.
+- **Full Month Sync & Prune Fix**: Prevented false cache pruning by ensuring full paginated server fetches load complete month records into IndexedDB cache.
+
+### 🩹 v6.9.1 — Patch Release (Web Auto-Updater Guard & Leaderboard Range Sync)
 
 - **Web Auto-Updater Guard**: Restricted binary desktop/mobile auto-update popups strictly to native Tauri Desktop and Capacitor Mobile platforms, preventing update toasts on localhost and web browsers.
 - **Leaderboard Range Sync**: Synced Leaderboard monthly filter options to start from app data launch (June 2026) up to current month (August 2026), defaulting to the current month.
