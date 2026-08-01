@@ -5,6 +5,8 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN || '';
 
+export const dynamic = 'force-static';
+
 export async function GET() {
   try {
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
