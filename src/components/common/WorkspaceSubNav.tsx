@@ -69,7 +69,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
   interface SubTabItem {
     id: string;
     label: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
     iconColor?: string;
     active: boolean;
     onClick: () => void;
@@ -296,6 +296,61 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
     });
   }
 
+const getSubTabColors = (id: string): { class: string; hex: string } => {
+  switch (id) {
+    case "add_leave":
+      return { class: "text-sky-400", hex: "#38bdf8" };
+    case "leave_history":
+      return { class: "text-amber-400", hex: "#fbbf24" };
+    case "team_leaves":
+      return { class: "text-purple-400", hex: "#c084fc" };
+    case "govt_responses":
+      return { class: "text-emerald-400", hex: "#34d399" };
+    case "settlement":
+      return { class: "text-rose-400", hex: "#fb7185" };
+    case "leave_settings":
+      return { class: "text-indigo-400", hex: "#818cf8" };
+
+    case "entry":
+      return { class: "text-sky-400", hex: "#38bdf8" };
+    case "copy_helper":
+      return { class: "text-amber-400", hex: "#fbbf24" };
+    case "save_file":
+      return { class: "text-teal-400", hex: "#2dd4bf" };
+    case "monthly":
+      return { class: "text-cyan-400", hex: "#22d3ee" };
+    case "rules":
+      return { class: "text-blue-400", hex: "#60a5fa" };
+    case "login_codes":
+      return { class: "text-purple-400", hex: "#c084fc" };
+    case "quick_import":
+      return { class: "text-amber-300", hex: "#fcd34d" };
+
+    case "directory":
+      return { class: "text-purple-400", hex: "#c084fc" };
+    case "add_user":
+      return { class: "text-emerald-400", hex: "#34d399" };
+
+    case "my_todos":
+      return { class: "text-sky-400", hex: "#38bdf8" };
+
+    case "leaderboard":
+      return { class: "text-amber-400", hex: "#fbbf24" };
+    case "kpi":
+      return { class: "text-emerald-400", hex: "#34d399" };
+    case "my_report":
+      return { class: "text-sky-400", hex: "#38bdf8" };
+    case "all_report":
+      return { class: "text-purple-400", hex: "#c084fc" };
+
+    case "activity":
+      return { class: "text-orange-400", hex: "#fb923c" };
+
+    default:
+      return { class: "text-sky-400", hex: "#38bdf8" };
+  }
+};
+
   if (subTabs.length === 0) return null;
 
   return (
@@ -305,6 +360,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
     >
       {subTabs.map((t) => {
         const Icon = t.icon;
+        const colors = getSubTabColors(t.id);
         return (
           <button
             key={t.id}
@@ -316,7 +372,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
                 : "text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input/40 border border-transparent"
             }`}
           >
-            <Icon className={`h-4 w-4 shrink-0 ${t.iconColor || ""}`} />
+            <Icon className={`h-4 w-4 shrink-0 ${colors.class}`} style={{ color: colors.hex }} />
             <span>{t.label}</span>
           </button>
         );
