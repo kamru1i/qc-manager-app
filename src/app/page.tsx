@@ -42,7 +42,7 @@ import { updateGlobalRankCacheDirect } from "@/components/common/UserDisplayName
 import { UserKpiPerformancePanel } from "@/components/common/user-management/UserKpiPerformancePanel";
 import ChutiDashboard from "@/app/chuti/page";
 import QuotesDashboard from "@/app/quotes/page";
-import { UserManagementDashboard } from "@/components/common/UserManagementDashboard";
+import { UserManagement } from "@/components/common/UserManagement";
 import { TodoPanel } from "@/components/common/TodoPanel";
 import { ProfilesProvider, useProfiles } from "@/contexts/ProfilesContext";
 import { fetchOwnProfileRow } from "@/utils/profileFetcher";
@@ -1631,7 +1631,7 @@ function AppPortalInner({
               />
             </div>
             {activeTab === "user_management" && (
-              <UserManagementDashboard
+              <UserManagement
                 sessionUser={sessionUser}
                 profile={profile}
                 onLogout={handleLogout}

@@ -2,12 +2,11 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2, Users, Activity, ScrollText } from 'lucide-react';
-import { UserManagementDashboard } from '@/components/common/UserManagementDashboard';
+import { UserManagement } from '@/components/common/UserManagement';
 import { AuditLogsPanel } from '@/components/common/AuditLogsPanel';
 import { Profile } from '@/types';
 import { isSuperadmin, isAdminRole, isTabVisibleForRole, isFeatureEnabled, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
 import { StaffSettingsForm } from '@/components/leave-tracker/StaffSettingsForm';
-import SupabaseUsageWidget from '@/components/common/user-management/SupabaseUsageWidget';
 import { supabase } from '@/utils/supabase';
 import toast from 'react-hot-toast';
 import { DateTimeInput } from '@/components/common/DateTimeInput';
@@ -170,7 +169,6 @@ export function ProfileSettings({
   const canSeeSanitizer = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_sanitizer', profile?.global_settings), [profile]);
   const canSeeAccess = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_access', profile?.global_settings), [profile]);
   const canSeeFeatureFlags = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_feature_flags', profile?.global_settings), [profile]);
-  const canSeeSystemHealth = useMemo(() => isSuperadmin(profile) || isFeatureEnabled('system_health_metrics', profile?.global_settings, profile), [profile]);
   const canSeeVpn = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_vpn', profile?.global_settings), [profile]);
 
   // Derived effective admin delegated flags (combines superadmin profile settings with local state and current profile)
@@ -212,11 +210,11 @@ export function ProfileSettings({
   const [newVpnInput, setNewVpnInput] = useState('');
   const [vpnSubmitting, setVpnSubmitting] = useState(false);
 
-  // Subtabs state (Profile / User Management / Audit Logs / Menu / Sanitizer / Access / Feature Flags / Database Health / VPN)
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'user_management' | 'audit_logs' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'system_health' | 'vpn_list'>(() => {
+  // Subtabs state (Profile / User Management / Audit Logs / Menu / Sanitizer / Access / Feature Flags / VPN)
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'user_management' | 'audit_logs' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list'>(() => {
     try {
       const saved = localStorage.getItem('settings_active_subtab');
-      if (saved === 'profile' || saved === 'user_management' || saved === 'audit_logs' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'system_health' || saved === 'vpn_list') {
+      if (saved === 'profile' || saved === 'user_management' || saved === 'audit_logs' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'vpn_list') {
         return saved as any;
       }
     } catch {}
@@ -247,9 +245,6 @@ export function ProfileSettings({
     } else if (activeSubTab === 'feature_flags' && !canSeeFeatureFlags) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
-    } else if (activeSubTab === 'system_health' && !canSeeSystemHealth) {
-      setActiveSubTab('profile');
-      localStorage.setItem('settings_active_subtab', 'profile');
     } else if (activeSubTab === 'vpn_list' && !canSeeVpn) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
@@ -257,9 +252,9 @@ export function ProfileSettings({
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
     }
-  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeSystemHealth, canSeeVpn, canSeeMenu]);
+  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeVpn, canSeeMenu]);
 
-  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'audit_logs' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'system_health' | 'vpn_list') => {
+  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'audit_logs' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
     setActiveSubTab(tab);
     localStorage.setItem('settings_active_subtab', tab);
   };
@@ -1104,21 +1099,6 @@ export function ProfileSettings({
           </button>
         )}
 
-        {canSeeSystemHealth && (
-          <button
-            type="button"
-            onClick={() => handleSubTabChange('system_health')}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'system_health'
-                ? 'bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 shadow-sm'
-                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
-            }`}
-          >
-            <Activity className="h-4 w-4 text-emerald-400" />
-            <span>Database</span>
-          </button>
-        )}
-
         {canSeeVpn && (
           <button
             type="button"
@@ -1923,13 +1903,6 @@ export function ProfileSettings({
         </div>
       )}
 
-      {/* Database & System Health Subtab */}
-      {activeSubTab === 'system_health' && canSeeSystemHealth && (
-        <div className="space-y-6 w-full">
-          <SupabaseUsageWidget />
-        </div>
-      )}
-
       {/* VPN List Subtab */}
       {activeSubTab === 'vpn_list' && (isSuperAdmin || canSeeVpn) && (
         <div className="space-y-6 w-full font-sans">
@@ -1987,7 +1960,7 @@ export function ProfileSettings({
 
       {activeSubTab === 'user_management' && canSeeUserManagement && (
         <div className="space-y-6">
-          <UserManagementDashboard
+          <UserManagement
             sessionUser={sessionUser}
             profile={profile}
             onLogout={() => {}}
@@ -2006,7 +1979,7 @@ export function ProfileSettings({
       )}
 
       {/* Bottom Save Changes Bar (Profile & Menu Visibility subtabs) */}
-      {activeSubTab !== 'user_management' && activeSubTab !== 'audit_logs' && activeSubTab !== 'sanitizer' && activeSubTab !== 'access_controls' && activeSubTab !== 'feature_flags' && activeSubTab !== 'vpn_list' && activeSubTab !== 'system_health' && profile?.profile_change_status !== 'pending' && (
+      {activeSubTab !== 'user_management' && activeSubTab !== 'audit_logs' && activeSubTab !== 'sanitizer' && activeSubTab !== 'access_controls' && activeSubTab !== 'feature_flags' && activeSubTab !== 'vpn_list' && profile?.profile_change_status !== 'pending' && (
         <div className="flex justify-end pt-4 border-t border-theme-border-input/60 w-full">
           <button
             type={activeSubTab === 'profile' ? 'submit' : 'button'}

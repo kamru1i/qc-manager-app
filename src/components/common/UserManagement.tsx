@@ -31,7 +31,6 @@ import {
 } from 'lucide-react';
 import { UserDisplayName } from '@/components/common/UserDisplayName';
 import { UserAnalyticsPanel } from '@/components/common/user-management/UserAnalyticsPanel';
-import SupabaseUsageWidget from '@/components/common/user-management/SupabaseUsageWidget';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 
 // Extracted Subtabs Panels
@@ -46,7 +45,7 @@ import { LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending } from '@/utils/dashboardHelpers';
 import { PROFILE_COLUMNS, CHUTI_COLUMNS, LEAVE_SETTLEMENT_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS } from '@/utils/dbColumns';
 
-interface UserManagementDashboardProps {
+interface UserManagementProps {
   sessionUser: { id: string } | null;
   profile: Profile | null;
   onLogout: () => void;
@@ -62,7 +61,7 @@ const ALL_FILE_TYPES = [
   'Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review', 'Individual Review', 'Other Site', 'Van', 'Bike', 'Sale'
 ];
 
-export const UserManagementDashboard: React.FC<UserManagementDashboardProps> = ({
+export const UserManagement: React.FC<UserManagementProps> = ({
   sessionUser,
   profile,
   topPerformerBadges = {},
