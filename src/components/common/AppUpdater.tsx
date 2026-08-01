@@ -37,16 +37,16 @@ export default function AppUpdater() {
       ((window as any).__TAURI_INTERNALS__ !== undefined ||
         window.location.protocol === "tauri:");
 
-    const isMobileDevice =
+    const isCapacitorNative =
       typeof window !== "undefined" &&
       (Capacitor.isNativePlatform() ||
-        (window as any).Capacitor !== undefined ||
-        window.location.protocol === "capacitor:" ||
-        /Android|iPhone|iPad/i.test(navigator.userAgent));
+        window.location.protocol === "capacitor:");
 
-    setIsMobile(isMobileDevice);
+    setIsMobile(isCapacitorNative);
 
-    if (!isTauri && !isMobileDevice) {
+    // BROWSER / WEB / LOCALHOST FIX:
+    // Do not run binary auto-updater popups inside standard web browsers or localhost.
+    if (!isTauri && !isCapacitorNative) {
       return;
     }
 
@@ -133,7 +133,7 @@ export default function AppUpdater() {
     }
 
     // --- 2. CAPACITOR MOBILE AUTO-UPDATER (Android & Mobile) ---
-    if (isMobileDevice) {
+    if (isCapacitorNative) {
       const checkMobileUpdates = async () => {
         if (isCheckingRef.current) return;
         isCheckingRef.current = true;
