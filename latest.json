@@ -1,7 +1,7 @@
 {
-  "version": "6.8.2",
-  "notes": "### 🩹 v6.8.2 — Patch (Build Pipeline Fix & v6.8.1 Security Patch)\n\n- **Build Fix**: Restored build pipeline signing scripts (prepare_key.py, verify_key.py) required by GitHub Actions Tauri build workflow.\n- **Security**: Fixed critical privilege escalation, CORS origin reflection, and rate limiter bypass.\n- **Optimization**: Inline realtime profile patching (zero refetch on INSERT/DELETE).\n- **Cleanup**: Removed ~5.5MB dead code, debug scripts, and stale artifacts.",
-  "pub_date": "2026-08-01T08:13:00.000Z",
+  "version": "6.8.3",
+  "notes": "### 🩹 v6.8.3 — Patch (Removed Menu Subtab & Per-User Hidden Tabs Setup)\n\n- **Feature Removal**: Completely removed the 'Settings > Menu' subtab and per-user hidden tabs configuration from Settings.\n- **Simplified Navigation**: All menu tab visibility is now strictly controlled by enterprise Role-Based Access Controls (RBAC) and superadmin Tab Access matrix.\n- **Code Cleanliness**: Cleaned up state, hooks, sidebar, workspace subnav, and permissions across the codebase.",
+  "pub_date": "2026-08-01T08:35:00.000Z",
   "releaseDate": "August 1, 2026",
   "platforms": {},
   "checksums": {},

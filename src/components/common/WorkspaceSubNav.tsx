@@ -53,10 +53,8 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
   if (!profile) return null;
 
   const isSuperAdmin = isSuperadmin(profile);
-  const userHiddenTabs = profile.global_settings?.hidden_tabs || [];
 
   const tabHidden = (key: string): boolean => {
-    if (userHiddenTabs.includes(key)) return true;
     if (isSuperAdmin) return false;
     return !isTabVisibleForRole(
       profile,

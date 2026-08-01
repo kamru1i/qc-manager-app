@@ -40,7 +40,6 @@ export const MENU_TABS: MenuTabDef[] = [
 
   // Settings Subtabs
   { key: 'settings_profile', label: 'Settings > Profile', category: 'Settings Subtabs' },
-  { key: 'settings_menu', label: 'Settings > Menu', category: 'Settings Subtabs' },
   { key: 'settings_sanitizer', label: 'Settings > Sanitizer', category: 'Settings Subtabs' },
   { key: 'settings_access', label: 'Settings > Access', category: 'Settings Subtabs' },
   { key: 'settings_feature_flags', label: 'Settings > Feature Flags', category: 'Settings Subtabs' },
@@ -100,7 +99,6 @@ export const getDefaultRoleVisibility = (
       return role === 'supervisor' || role === 'admin';
 
     case 'settings_profile':
-    case 'settings_menu':
     case 'kpi':
     case 'leaderboard':
     case 'copy_helper':

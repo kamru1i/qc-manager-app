@@ -91,12 +91,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   if (!profile) return null;
 
   const isSuperAdmin = isSuperadmin(profile);
-  const userHiddenTabs = profile.global_settings?.hidden_tabs || [];
-  
-  // A tab is hidden when the user explicitly hid it in Settings > Menu (per-user hidden_tabs).
-  // If not explicitly hidden: Superadmins see everything. Other roles check role_visibility.
+
   const tabHidden = (key: string): boolean => {
-    if (userHiddenTabs.includes(key)) return true;
     if (isSuperAdmin) return false;
     return !isTabVisibleForRole(profile, key, profile.global_settings, profilesList);
   };

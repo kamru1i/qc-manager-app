@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.8.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.8.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,9 +135,12 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.8.2 — Patch Release (Build Pipeline Fix) (Current)
+### 🩹 v6.8.3 — Patch Release (Removed Menu Subtab & Per-User Hidden Tabs Setup) (Current)
 
-- **Build Fix**: Restored `prepare_key.py` and `verify_key.py` signing scripts required by GitHub Actions Tauri build workflow.
+- **Menu Subtab Removal**: Completely removed the `Settings > Menu` subtab and per-user `hidden_tabs` configuration.
+- **Unified Navigation Governance**: All workspace menu items and subtabs are now governed strictly via superadmin Tab Access Control matrix and Role-Based Access Controls (RBAC).
+
+### 🩹 v6.8.2 — Patch Release (Build Pipeline Fix)
 
 ### 🔒 v6.8.1 — Patch Release (Security Fixes, Dead Code Cleanup & Optimization)
 

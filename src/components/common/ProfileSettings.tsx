@@ -86,9 +86,6 @@ export function ProfileSettings({
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [showPasswordFields, setShowPasswordFields] = useState(false);
 
-  // Hidden tabs (for admin menu visibility)
-  const [hiddenTabs, setHiddenTabs] = useState<string[]>(() => profile?.global_settings?.hidden_tabs || []);
-
   // Tracking profile synchronization state to prevent brief hasChanges flicker on reload
   const [syncedProfileId, setSyncedProfileId] = useState<string | null>(() => profile?.id || null);
 
@@ -165,7 +162,6 @@ export function ProfileSettings({
   const canSeeProfile = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_profile', profile?.global_settings), [profile]);
   const canSeeUserManagement = useMemo(() => isAdminRole(profile) || profile?.role === 'supervisor', [profile]);
   const canSeeAuditLogs = useMemo(() => isAdminRole(profile), [profile]);
-  const canSeeMenu = useMemo(() => true, []); // Navigation Menu Visibility subtab is available for all users to customize their personal workflow
   const canSeeSanitizer = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_sanitizer', profile?.global_settings), [profile]);
   const canSeeAccess = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_access', profile?.global_settings), [profile]);
   const canSeeFeatureFlags = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_feature_flags', profile?.global_settings), [profile]);
@@ -210,11 +206,11 @@ export function ProfileSettings({
   const [newVpnInput, setNewVpnInput] = useState('');
   const [vpnSubmitting, setVpnSubmitting] = useState(false);
 
-  // Subtabs state (Profile / User Management / Audit Logs / Menu / Sanitizer / Access / Feature Flags / VPN)
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'user_management' | 'audit_logs' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list'>(() => {
+  // Subtabs state (Profile / User Management / Audit Logs / Sanitizer / Access / Feature Flags / VPN)
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'user_management' | 'audit_logs' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list'>(() => {
     try {
       const saved = localStorage.getItem('settings_active_subtab');
-      if (saved === 'profile' || saved === 'user_management' || saved === 'audit_logs' || saved === 'menu_visibility' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'vpn_list') {
+      if (saved === 'profile' || saved === 'user_management' || saved === 'audit_logs' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'vpn_list') {
         return saved as any;
       }
     } catch {}
@@ -248,13 +244,10 @@ export function ProfileSettings({
     } else if (activeSubTab === 'vpn_list' && !canSeeVpn) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
-    } else if (activeSubTab === 'menu_visibility' && !canSeeMenu) {
-      setActiveSubTab('profile');
-      localStorage.setItem('settings_active_subtab', 'profile');
     }
-  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeVpn, canSeeMenu]);
+  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeVpn]);
 
-  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'audit_logs' | 'menu_visibility' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
+  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'audit_logs' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
     setActiveSubTab(tab);
     localStorage.setItem('settings_active_subtab', tab);
   };
@@ -325,52 +318,7 @@ export function ProfileSettings({
     handleSaveVpnList(nextList);
   };
 
-  // Unified menu authorization rules (synchronized with UnifiedSidebar.tsx)
   const isSuperAdmin = isSuperadmin(profile);
-  const showTodoTab = isSuperadmin(profile);
-  const hasChutiAccess = !!profile?.has_chuti_access;
-  const hasQuotesAccess = !!profile?.has_quotes_access;
-
-  const isTabAuthorized = (key: string): boolean => {
-    if (!profile) return false;
-    switch (key) {
-      // Main Sections
-      case 'kpi':
-        return true;
-      case 'todo':
-        return showTodoTab;
-      case 'leaderboard':
-        return true;
-      case 'user_management':
-        return isAdminRole(profile) || profile.role === 'supervisor';
-      case 'audit_logs':
-        return isAdminRole(profile);
-
-      // Quotes Tracker Subtabs
-      case 'copy_helper':
-        return hasQuotesAccess; // available to all authenticated quotes users
-      case 'save_file':
-        return hasQuotesAccess && isSuperAdmin;
-      case 'monthly':
-      case 'rules':
-      case 'login_codes':
-      case 'causality':
-        return hasQuotesAccess;
-
-      // Leave Tracker Subtabs
-      case 'leave_history':
-        return hasChutiAccess;
-      case 'team_leaves':
-        return hasChutiAccess && (isAdminRole(profile) || profile.role === 'supervisor');
-      case 'govt_responses':
-      case 'settlement':
-      case 'leave_settings':
-        return hasChutiAccess && isAdminRole(profile);
-
-      default:
-        return false;
-    }
-  };
 
   // Initialize fields
   useEffect(() => {
@@ -401,7 +349,6 @@ export function ProfileSettings({
       setEditOtherDepartment(profile.global_settings?.other_department || 'IT');
       setEditDelegatedLeaveSupervisorId(profile.delegated_leave_supervisor_id || null);
       setEditDelegatedKpiSupervisorId(profile.delegated_kpi_supervisor_id || null);
-      setHiddenTabs(profile.global_settings?.hidden_tabs || []);
       // Seed from defaults + any saved rules/legacy words so the list is never empty.
       setSanitizerRules(
         resolveSanitizerRules(
@@ -477,7 +424,6 @@ export function ProfileSettings({
     const isDelegatedKpiSupervisorIdChanged = editDelegatedKpiSupervisorId !== (profile.delegated_kpi_supervisor_id || null);
 
     const isUserFeatureFlagsChanged = JSON.stringify(userFeatureFlags) !== JSON.stringify(profile.global_settings?.user_feature_flags || {});
-    const isHiddenTabsChanged = JSON.stringify([...hiddenTabs].sort()) !== JSON.stringify([...(profile.global_settings?.hidden_tabs || [])].sort());
 
     return isUsernameChanged || isFullNameChanged || isWorkingHoursChanged || isBreakTimeChanged ||
            isJobRoleChanged || isSignInChanged || isSignOutChanged || isHasChutiAccessChanged ||
@@ -487,14 +433,14 @@ export function ProfileSettings({
            isKpiSkillsChanged || isKpiDeptIndicatorsChanged || isKpiOtherDeptIndicatorsChanged ||
            isPerformsDataEntryChanged || isDepartmentChanged || isPerformsOtherDeptTasksChanged ||
            isOtherDepartmentChanged || isDelegatedLeaveSupervisorIdChanged || isDelegatedKpiSupervisorIdChanged ||
-           isUserFeatureFlagsChanged || isHiddenTabsChanged;
+           isUserFeatureFlagsChanged;
   }, [
     profile, syncedProfileId, editUsername, editFullName, editWorkingHours, editBreakTime, editJobRole,
     profileSignInTime, profileSignOutTime, editHasChutiAccess, editNeedsApproval, editSupervisorIds,
     editEligibleOfficeLeave, editEligibleGovtHoliday, editAllowOvertime, editAllowReserve, editHasQuotesAccess,
     editAllowedTypes, editCanManageRules, editKpiSkills, editKpiDeptIndicators, editKpiOtherDeptIndicators,
     editPerformsDataEntry, editDepartment, editPerformsOtherDeptTasks, editOtherDepartment,
-    editDelegatedLeaveSupervisorId, editDelegatedKpiSupervisorId, userFeatureFlags, hiddenTabs
+    editDelegatedLeaveSupervisorId, editDelegatedKpiSupervisorId, userFeatureFlags
   ]);
 
 
@@ -548,44 +494,9 @@ export function ProfileSettings({
         return (fresh?.global_settings as Record<string, any>) || profile.global_settings || {};
       };
 
-      if (activeSubTab === 'menu_visibility') {
-        const { error: rpcErr } = await supabase.rpc('set_user_hidden_tabs' as any, {
-          p_user_id: sessionUser.id,
-          p_hidden_tabs: hiddenTabs
-        });
-
-        let updatedGs = {
-          ...(profile.global_settings || {}),
-          hidden_tabs: hiddenTabs
-        };
-
-        if (rpcErr) {
-          const freshGs = await fetchFreshGs();
-          updatedGs = {
-            ...freshGs,
-            hidden_tabs: hiddenTabs
-          };
-
-          const { error: updateErr } = await supabase
-            .from('profiles')
-            .update({ global_settings: updatedGs })
-            .eq('id', sessionUser.id);
-          if (updateErr) throw updateErr;
-        }
-
-        const mergedProfile = { ...profile, global_settings: updatedGs };
-        setProfile(mergedProfile);
-        localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(mergedProfile));
-        window.dispatchEvent(new CustomEvent("profile-updated", { detail: mergedProfile }));
-        await refreshProfiles({ force: true });
-        toast.success('Your menu visibility settings successfully updated!');
-        return;
-      }
-
       const freshGs = await fetchFreshGs();
       const globalSettingsUpdate = {
         ...freshGs,
-        hidden_tabs: hiddenTabs,
         user_feature_flags: userFeatureFlags,
         kpi_skills: editKpiSkills,
         kpi_dept_indicators: editKpiDeptIndicators,
@@ -1039,20 +950,7 @@ export function ProfileSettings({
           </button>
         )}
 
-        {canSeeMenu && (
-          <button
-            type="button"
-            onClick={() => handleSubTabChange('menu_visibility')}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'menu_visibility'
-                ? 'bg-amber-600/15 border border-amber-500/30 text-amber-400 shadow-sm'
-                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
-            }`}
-          >
-            <Layout className="h-4 w-4 text-amber-400" />
-            <span>Menu</span>
-          </button>
-        )}
+
 
         {canSeeSanitizer && (
           <button
@@ -1285,57 +1183,7 @@ export function ProfileSettings({
         </div>
       )}
 
-      {/* Menu Visibility Configuration */}
-      {activeSubTab === 'menu_visibility' && profile && (
-        <div className="bg-theme-card-bg/40 rounded-2xl border border-theme-border-input/60 p-6 space-y-4 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-            {['Main Workspace Sections', 'Quotes Tracker Subtabs', 'Leave Tracker Subtabs'].map((category) => {
-              // Single source of truth — the shared MENU_TABS registry.
-              const options = MENU_TABS.filter(
-                (opt) => opt.category === category && isTabAuthorized(opt.key)
-              );
 
-              if (options.length === 0) return null;
-
-              return (
-                <div key={category} className="space-y-2.5">
-                  <span className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider pl-1 border-l-2 border-blue-500/60">
-                    {category}
-                  </span>
-                  <div className="flex flex-col gap-2">
-                    {options.map((opt) => {
-                      const isVisible = !hiddenTabs.includes(opt.key);
-                      return (
-                        <label
-                          key={opt.key}
-                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all cursor-pointer select-none text-[11px] font-medium ${
-                            isVisible
-                              ? 'border-blue-500/20 bg-blue-955/20 text-theme-text-secondary hover:bg-blue-955/30'
-                              : 'border-theme-border-muted/60 bg-theme-card-bg/30 text-theme-text-muted/70 hover:bg-theme-border-muted/20'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isVisible}
-                            onChange={() => {
-                              const newHidden = isVisible
-                                ? [...hiddenTabs, opt.key]
-                                : hiddenTabs.filter((k) => k !== opt.key);
-                              setHiddenTabs(newHidden);
-                            }}
-                            className="rounded border-theme-border-active bg-theme-page-bg text-blue-600 accent-blue-600 focus:ring-blue-550 focus:ring-offset-theme-page-bg h-3.5 w-3.5 cursor-pointer"
-                          />
-                          <span>{opt.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* File Name Sanitizer */}
       {activeSubTab === 'sanitizer' && (isSuperAdmin || canSeeSanitizer) && (
@@ -1418,8 +1266,7 @@ export function ProfileSettings({
               <p className="text-[11px] text-theme-text-muted mt-2">
                 Enable or disable each tab/subtab for <strong>User</strong>,{' '}
                 <strong>Supervisor</strong>, and <strong>Admin</strong>. Disabling
-                hides it from the sidebar for everyone in that role (individual
-                users can still hide their own tabs). Changes save immediately.
+                hides it from the sidebar for everyone in that role. Changes save immediately.
               </p>
             </div>
 
@@ -1978,13 +1825,12 @@ export function ProfileSettings({
         </div>
       )}
 
-      {/* Bottom Save Changes Bar (Profile & Menu Visibility subtabs) */}
-      {activeSubTab !== 'user_management' && activeSubTab !== 'audit_logs' && activeSubTab !== 'sanitizer' && activeSubTab !== 'access_controls' && activeSubTab !== 'feature_flags' && activeSubTab !== 'vpn_list' && profile?.profile_change_status !== 'pending' && (
+      {/* Bottom Save Changes Bar (Profile subtab) */}
+      {activeSubTab === 'profile' && profile?.profile_change_status !== 'pending' && (
         <div className="flex justify-end pt-4 border-t border-theme-border-input/60 w-full">
           <button
-            type={activeSubTab === 'profile' ? 'submit' : 'button'}
-            form={activeSubTab === 'profile' ? 'profile-settings-form' : undefined}
-            onClick={activeSubTab === 'menu_visibility' ? handleSaveSettings : undefined}
+            type="submit"
+            form="profile-settings-form"
             disabled={submitting || !hasChanges}
             className={`w-full md:w-auto md:px-10 flex justify-center py-3 px-6 border rounded-xl shadow-lg text-xs font-bold transition-all items-center gap-2 ${
               submitting || !hasChanges
@@ -1995,7 +1841,7 @@ export function ProfileSettings({
             {submitting && <RefreshCw className="h-4 w-4 animate-spin" />}
             {submitting
               ? 'Updating...'
-              : (isAdminRole(profile) || !profile?.has_edited_profile || activeSubTab === 'menu_visibility'
+              : (isAdminRole(profile) || !profile?.has_edited_profile
                   ? 'Save Changes'
                   : 'Submit Request for Approval')}
           </button>
