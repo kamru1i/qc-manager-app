@@ -152,9 +152,16 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
       if (!value || !value.trim()) return; // Date cannot be empty
       const parts = value.trim().split(/[-/]/);
       if (parts.length !== 3) return;
-      const day = Number(parts[0]);
-      const month = Number(parts[1]);
-      const year = Number(parts[2]);
+      let day: number, month: number, year: number;
+      if (parts[0].length === 4) {
+        year = Number(parts[0]);
+        month = Number(parts[1]);
+        day = Number(parts[2]);
+      } else {
+        day = Number(parts[0]);
+        month = Number(parts[1]);
+        year = Number(parts[2]);
+      }
       if (
         isNaN(day) || isNaN(month) || isNaN(year) ||
         day < 1 || day > 31 ||
@@ -765,29 +772,64 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         editingCell &&
                         editingCell.id === r.id &&
                         editingCell.field === "submitted_date" ? (
-                          <input
-                            type="text"
-                            value={tempValue}
-                            onChange={(e) => setTempValue(e.target.value)}
-                            onBlur={() => {
-                              if (isCancelledRef.current) {
-                                isCancelledRef.current = false;
-                                return;
-                              }
-                              handleCommitEdit(r.id, "submitted_date", tempValue);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter")
+                          <div className="relative flex items-center w-full my-0.5">
+                            <input
+                              type="text"
+                              value={tempValue}
+                              onChange={(e) => {
+                                let val = e.target.value.replace(/[^0-9]/g, '');
+                                if (val.length > 8) val = val.substring(0, 8);
+                                let formatted = '';
+                                if (val.length > 0) formatted += val.substring(0, 2);
+                                if (val.length > 2) formatted += '-' + val.substring(2, 4);
+                                if (val.length > 4) formatted += '-' + val.substring(4, 8);
+                                setTempValue(formatted || e.target.value);
+                              }}
+                              onBlur={() => {
+                                if (isCancelledRef.current) {
+                                  isCancelledRef.current = false;
+                                  return;
+                                }
                                 handleCommitEdit(r.id, "submitted_date", tempValue);
-                              if (e.key === "Escape") {
-                                isCancelledRef.current = true;
-                                setEditingCell(null);
-                              }
-                            }}
-                            autoFocus
-                            placeholder="DD-MM-YYYY"
-                            className="bg-theme-card-container border border-theme-border-active rounded px-1.5 py-0.5 text-theme-text-primary text-xs w-full text-left focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mb-0.5"
-                          />
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  handleCommitEdit(r.id, "submitted_date", tempValue);
+                                if (e.key === "Escape") {
+                                  isCancelledRef.current = true;
+                                  setEditingCell(null);
+                                }
+                              }}
+                              autoFocus
+                              placeholder="DD-MM-YYYY"
+                              className="bg-theme-card-container border border-theme-border-active rounded px-1.5 py-0.5 text-theme-text-primary text-xs w-full text-left focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold font-mono tracking-wide"
+                            />
+                            <input
+                              type="date"
+                              value={formatDateToYYYYMMDD(tempValue)}
+                              onChange={(e) => {
+                                const ymd = e.target.value;
+                                if (ymd) {
+                                  const parts = ymd.split('-');
+                                  if (parts.length === 3) {
+                                    const ddmmyyyy = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                                    setTempValue(ddmmyyyy);
+                                    handleCommitEdit(r.id, "submitted_date", ddmmyyyy);
+                                  }
+                                }
+                              }}
+                              ref={(el) => {
+                                if (el) {
+                                  try { el.showPicker?.(); } catch {}
+                                }
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                try { e.currentTarget.showPicker?.(); } catch {}
+                              }}
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                            />
+                          </div>
                         ) : (
                           <span
                             onClick={(e) =>
@@ -800,7 +842,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                             }`}
                             title={
                               isAdmin || r.user_id === currentUserId
-                                ? "Slow click twice to edit date"
+                                ? "Double-click to pick date"
                                 : ""
                             }
                           >
@@ -832,8 +874,14 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                               setEditingCell(null);
                             }
                           }}
+                          onClick={(e) => {
+                            try { e.currentTarget.showPicker?.(); } catch {}
+                          }}
+                          onFocus={(e) => {
+                            try { e.currentTarget.showPicker?.(); } catch {}
+                          }}
                           autoFocus
-                          className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-[11px] w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mt-0.5"
+                          className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-[11px] w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mt-0.5 cursor-pointer"
                         />
                       ) : (
                         <span
