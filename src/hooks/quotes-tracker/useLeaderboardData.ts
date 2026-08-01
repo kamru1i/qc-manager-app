@@ -293,19 +293,31 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
 
   const availableMonthsForSelectedYear = useMemo(() => {
     const months = availableDates
-      .filter(d => d.year === selectedYear)
-      .map(d => d.month);
-    const filteredList = monthsList.filter(m => months.includes(m.value));
-    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+      .filter((d) => d.year === selectedYear)
+      .map((d) => d.month);
+
+    const now = new Date();
+    const currentYearStr = now.getFullYear().toString();
+    const currentMonthStr = String(now.getMonth() + 1).padStart(2, "0");
+
+    const monthsSet = new Set<string>(months);
+    if (selectedYear === currentYearStr) {
+      monthsSet.add(currentMonthStr);
+    }
+
+    const filteredList = monthsList.filter((m) => monthsSet.has(m.value));
     return filteredList.length > 0
       ? filteredList
-      : monthsList.filter(m => m.value === nowMonthStr);
+      : monthsList.filter((m) => m.value === currentMonthStr);
   }, [availableDates, selectedYear]);
 
-  // Adjust selectedMonth if it is not in availableMonthsForSelectedYear
+  // Adjust selectedMonth: default to current month if available
   useEffect(() => {
     const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
-    if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
+    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
+    if (monthValues.includes(nowMonthStr)) {
+      setSelectedMonth((prev) => (monthValues.includes(prev) ? prev : nowMonthStr));
+    } else if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
       setSelectedMonth(monthValues[monthValues.length - 1]);
     }
   }, [availableMonthsForSelectedYear, selectedMonth]);

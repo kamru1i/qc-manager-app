@@ -111,6 +111,13 @@ export async function fetchSubmittedMonths(userId?: string): Promise<AvailableDa
   }
 
   const datesSet = new Set<string>();
+  const now = new Date();
+  const currentYearStr = now.getFullYear().toString();
+  const currentMonthNum = now.getMonth() + 1;
+
+  let minMonthForCurrentYear = 12;
+  let hasCurrentYearRecords = false;
+
   data.forEach((r: any) => {
     if (r.submitted_at) {
       const d = new Date(r.submitted_at);
@@ -118,9 +125,23 @@ export async function fetchSubmittedMonths(userId?: string): Promise<AvailableDa
         const y = d.getFullYear().toString();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         datesSet.add(`${y}-${m}`);
+        if (y === currentYearStr) {
+          hasCurrentYearRecords = true;
+          const monthVal = d.getMonth() + 1;
+          if (monthVal < minMonthForCurrentYear) {
+            minMonthForCurrentYear = monthVal;
+          }
+        }
       }
     }
   });
+
+  // Always ensure current year includes months from app launch (June = 6) up to current month
+  const startM = hasCurrentYearRecords ? Math.min(minMonthForCurrentYear, 6) : 6;
+  const endM = Math.max(startM, currentMonthNum);
+  for (let m = startM; m <= endM; m++) {
+    datesSet.add(`${currentYearStr}-${String(m).padStart(2, '0')}`);
+  }
 
   return Array.from(datesSet).map(s => {
     const [year, month] = s.split('-');
