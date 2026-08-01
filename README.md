@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.8.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.8.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,11 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🔒 v6.8.1 — Patch Release (Security Fixes, Dead Code Cleanup & Optimization) (Current)
+### 🩹 v6.8.2 — Patch Release (Build Pipeline Fix) (Current)
+
+- **Build Fix**: Restored `prepare_key.py` and `verify_key.py` signing scripts required by GitHub Actions Tauri build workflow.
+
+### 🔒 v6.8.1 — Patch Release (Security Fixes, Dead Code Cleanup & Optimization)
 
 - **Critical Security Fix**: Fixed privilege escalation in `check_profile_updates()` — regular users could modify their own access flags (`has_chuti_access`, `can_manage_rules`, `supervisor_ids`, etc.). Now restricted to superadmin-controlled columns only.
 - **CORS Security Fix**: Replaced wildcard origin reflection with a trusted origin whitelist (`qc-manager-app.vercel.app`, `tauri://localhost`, `capacitor://localhost`, `localhost`).
