@@ -184,13 +184,13 @@ export const useQuotesDashboardData = () => {
             return d.getFullYear().toString() === selectedYear && String(d.getMonth() + 1).padStart(2, '0') === selectedMonth;
           });
 
-          const shouldSkipFullMonthPull = isSilent || canSkipRemote || (lastSynced && hasLocalRecordsForMonth && !force);
+          const shouldSkipFullMonthPull = isSilent || canSkipRemote;
 
           if (!shouldSkipFullMonthPull) {
             const yearNum = parseInt(selectedYear, 10);
             const monthNum = parseInt(selectedMonth, 10);
-            const startDate = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0, 0)).toISOString();
-            const endDate = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59, 999)).toISOString();
+            const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0).toISOString();
+            const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999).toISOString();
 
             let monthlyData: RecordItem[] = [];
             let mPage = 0;
