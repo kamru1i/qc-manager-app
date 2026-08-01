@@ -150,12 +150,25 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
           const updated = prev.map((p) => (p.id === mapped.id ? mapped : p));
           return updated.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
         });
-      } else {
-        // INSERT / DELETE — membership changed, must bypass count-check
-        refreshProfiles({ force: true });
+      } else if (payload.eventType === 'INSERT') {
+        // Add new profile inline — no full refetch needed
+        const mapped = mapProfilePasswordResetStatus(
+          payload.new as unknown as Profile,
+        ) as Profile;
+        setProfilesList((prev) => {
+          // Avoid duplicates if event fires twice
+          if (prev.some((p) => p.id === mapped.id)) return prev;
+          return [...prev, mapped].sort((a, b) => (a.username || '').localeCompare(b.username || ''));
+        });
+      } else if (payload.eventType === 'DELETE') {
+        // Remove deleted profile inline — no full refetch needed
+        const deletedId = (payload.old as Record<string, unknown>)?.id as string;
+        if (deletedId) {
+          setProfilesList((prev) => prev.filter((p) => p.id !== deletedId));
+        }
       }
     },
-    [refreshProfiles],
+    [],
   );
   useRealtimeHandler('profiles', handleProfilesRealtime);
 
