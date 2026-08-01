@@ -356,8 +356,31 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Default fallback: only allow users to edit self (non-supervisors)
+  -- Default fallback: regular users editing their own profile
+  -- ONLY allow safe, non-privileged columns to be modified.
+  -- Access flags, quotas, and supervisor assignments are superadmin-controlled.
   IF auth.uid() = NEW.id THEN
+    IF OLD.role IS DISTINCT FROM NEW.role OR
+       OLD.has_chuti_access IS DISTINCT FROM NEW.has_chuti_access OR
+       OLD.has_quotes_access IS DISTINCT FROM NEW.has_quotes_access OR
+       OLD.can_manage_rules IS DISTINCT FROM NEW.can_manage_rules OR
+       OLD.allow_overtime IS DISTINCT FROM NEW.allow_overtime OR
+       OLD.allow_reserve IS DISTINCT FROM NEW.allow_reserve OR
+       OLD.supervisor_ids IS DISTINCT FROM NEW.supervisor_ids OR
+       OLD.delegated_supervisor_id IS DISTINCT FROM NEW.delegated_supervisor_id OR
+       OLD.delegated_leave_supervisor_id IS DISTINCT FROM NEW.delegated_leave_supervisor_id OR
+       OLD.delegated_kpi_supervisor_id IS DISTINCT FROM NEW.delegated_kpi_supervisor_id OR
+       OLD.eligible_govt_holiday IS DISTINCT FROM NEW.eligible_govt_holiday OR
+       OLD.eligible_office_leave IS DISTINCT FROM NEW.eligible_office_leave OR
+       OLD.needs_supervisor_approval IS DISTINCT FROM NEW.needs_supervisor_approval OR
+       OLD.max_full_leaves IS DISTINCT FROM NEW.max_full_leaves OR
+       OLD.max_short_leaves IS DISTINCT FROM NEW.max_short_leaves OR
+       OLD.quotes_role IS DISTINCT FROM NEW.quotes_role OR
+       OLD.converted_short_leaves_days IS DISTINCT FROM NEW.converted_short_leaves_days OR
+       OLD.converted_short_leaves_hours IS DISTINCT FROM NEW.converted_short_leaves_hours
+    THEN
+      RAISE EXCEPTION 'Users cannot modify access control, permissions, quotas, or supervisor assignments. These are managed by superadmin.';
+    END IF;
     RETURN NEW;
   END IF;
 

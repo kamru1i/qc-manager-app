@@ -2,11 +2,21 @@ import { NextRequest } from 'next/server';
 
 
 
+/** Trusted origins for CORS — only these are reflected back. */
+const ALLOWED_ORIGINS = [
+  'https://qc-manager-app.vercel.app',
+  'tauri://localhost',
+  'capacitor://localhost',
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
+
 export function getCorsHeaders(request: NextRequest): Record<string, string> {
-  const origin = request.headers.get('origin') || '*';
+  const origin = request.headers.get('origin') || '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
 
   return {
-    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
