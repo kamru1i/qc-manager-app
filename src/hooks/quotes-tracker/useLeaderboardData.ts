@@ -292,8 +292,20 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   }, [availableDates, archiveYears]);
 
   const availableMonthsForSelectedYear = useMemo(() => {
-    return monthsList;
-  }, []);
+    const months = availableDates
+      .filter(d => d.year === selectedYear)
+      .map(d => d.month);
+    const filteredList = monthsList.filter(m => months.includes(m.value));
+    return filteredList.length > 0 ? filteredList : monthsList;
+  }, [availableDates, selectedYear]);
+
+  // Adjust selectedMonth if it is not in availableMonthsForSelectedYear
+  useEffect(() => {
+    const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
+    if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
+      setSelectedMonth(monthValues[monthValues.length - 1]);
+    }
+  }, [availableMonthsForSelectedYear, selectedMonth]);
 
   // Period-adjusted ranking. Monthly = server order (RPC dense rank on
   // months_count). Yearly = re-ranked client-side by overall_score (the
