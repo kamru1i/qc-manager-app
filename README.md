@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.8.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,46 +135,21 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v6.8.0 — Minor Release (Settings Subtab Restructuring & Subtab UI Polish) (Current)
+### 🔒 v6.8.1 — Patch Release (Security Fixes, Dead Code Cleanup & Optimization) (Current)
+
+- **Critical Security Fix**: Fixed privilege escalation in `check_profile_updates()` — regular users could modify their own access flags (`has_chuti_access`, `can_manage_rules`, `supervisor_ids`, etc.). Now restricted to superadmin-controlled columns only.
+- **CORS Security Fix**: Replaced wildcard origin reflection with a trusted origin whitelist (`qc-manager-app.vercel.app`, `tauri://localhost`, `capacitor://localhost`, `localhost`).
+- **Rate Limiter Hardening**: Fixed `x-forwarded-for` header spoofing bypass on `/api/resolve-email` and `/api/forgot-password` rate limiters.
+- **Egress Optimization**: Eliminated full profiles table re-download on INSERT/DELETE realtime events — new profiles are now patched inline from the realtime payload (zero network cost).
+- **Dead Code Cleanup**: Removed unused files (`sanitize.ts`, `useAppReleaseLinks.ts`), dead exports (`validateCreateUserForm`, `validatePassword`), debug scripts (`scratch/`), old database exports (`supabase data/`), backup logs (`supabase/backups/`), and AI tool configs (~5.5MB total).
+- **Gitignore Cleanup**: Consolidated scattered entries and removed references to deleted files.
+
+### 🚀 v6.8.0 — Minor Release (Settings Subtab Restructuring & UI Polish)
 
 - **Consolidated Settings Subtabs**: Integrated `Security Logs` (Audit Logs) and `Users` (User Management) into Settings subtabs.
 - **Mobile & Small Screen Scrollable Subtabs**: Added responsive horizontal scrolling for subtabs on small displays.
 - **Subtab UI Polish & Renaming**: Updated subtab labels (`Profile`, `Security Logs`, `Users`) with vibrant icons and cleaned up redundant header cards across Menu, Sanitizer, VPN, and User Management.
 - **Reports Navigation**: Defaulted Reports workspace navigation to Leaderboard and added active subtab memory across navigation sessions.
-
-### 🩹 v6.7.7 — Patch Release (Database Health Settings Subtab & Interactive Metric Breakdowns)
-
-- **Dedicated Database Health Settings Subtab**: Added live Supabase Usage & Health dashboard widget to Settings under Database Health subtab with Granular Feature Flag Access Controls (`system_health_metrics`).
-- **Interactive Daily Trend Modals**: Interactive click handlers on all 8 metric cards displaying daily trend bar charts, usage breakdown tables, hover tooltips, and empty states.
-- **Clean Layout & 30-Day Sync Window**: Removed `Manage Database Size` button as requested and optimized quote initial sync window to 30 days.
-
-### 🩹 v6.8.4 — Patch Release (Clean Full-Width Usage Metrics Grid UI)
-
-- **Clean Layout Optimization**: Removed the redundant left summary description and external links column from `SupabaseUsageWidget.tsx` as requested.
-- **Full-Width Responsive Grid**: Expanded the 10 metric cards to span the full card width, giving a cleaner, focused, and high-density dashboard view.
-
-### 🩹 v6.8.3 — Patch Release (Billing Period Date Range Display in Usage Widget)
-
-- **Billing Cycle Date Range Badge**: Added active billing period date range badge (`02 Jul 2026 - 02 Aug 2026`) directly next to `Current plan • $0.00 / month` in the `Database Health` widget header.
-- **Dynamic Reset Countdown Calculation**: Updated `/api/admin/supabase-usage/route.ts` to compute current billing start and end reset dates dynamically.
-
-### 🩹 v6.8.2 — Patch Release (Full Supabase Console Usage Summary UI Replication)
-
-- **Exact Supabase Console Dashboard UI**: Redesigned `SupabaseUsageWidget` in `ProfileSettings.tsx` to match Supabase's exact dark-themed Usage Summary dashboard pixel-for-pixel.
-- **Full 10-Metric Suite**: Renders Egress (with SVG red ring gauge for 228%), Realtime Messages (80%), Peak Connections (20%), Database Size (8%), MAU, Edge Invocations, Cached Egress, Third-Party MAU, Storage Size, SSO MAU, and Image Transformations.
-- **Direct Navigation Links**: Included official Supabase documentation links for billing and pricing plans directly in the left summary panel.
-
-### 🩹 v6.8.1 — Patch Release (Database Health Settings Subtab & Granular Feature Flag Access Control)
-
-- **Dedicated Database Health Settings Subtab**: Moved `SupabaseUsageWidget` from User Management to Profile Settings under a dedicated `Database Health` subtab, positioned right after `Feature Flags`.
-- **Feature Flag Control & Governance**: Registered `system_health_metrics` feature flag in `featureFlagsRegistry.ts`, enabling Superadmins to toggle or delegate access globally, per role (Superadmin, Admin, Supervisor), or per user via Temporary Access Controls.
-- **Supervisor & Admin Default Access**: Granted default visibility to Superadmins, Admins, and Supervisors, with full Superadmin capability to grant/revoke access on demand.
-
-### 🚀 v6.8.0 — Feature Release (Live Supabase Infrastructure Health & Usage Dashboard Widget)
-
-- **Live Supabase Infrastructure Widget**: Integrated Supabase Management API (`/v1/projects/{ref}`) and custom PostgreSQL RPC metrics (`get_system_health_metrics()`) directly into the Admin User Management Dashboard.
-- **Real-Time Resource Monitoring**: Displays live Database Storage Size (MB & Limit %), Registered System Users (MAU Limit), Active System Records count, and Monthly Billing Reset countdown (August 2nd).
-- **Zero Console Dependence**: Enabled Admins and Superadmins to monitor system health and database limits directly inside the app without needing to log into the Supabase Web Console.
 
 ### 🩹 v6.7.8 — Patch Release (Smart Cache-First & Delta-Only Sync Egress Optimization)
 

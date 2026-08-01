@@ -1,8 +1,8 @@
 {
-  "version": "6.8.0",
-  "notes": "### 🚀 v6.8.0 — Minor Release (Settings Subtab Restructuring & UI Polish) (Current)\n\n- **Consolidated Settings Subtabs**: Integrated Security Logs (Audit Logs) and Users (User Management) into Settings subtabs.\n- **Mobile & Tablet Responsive Bar**: Added horizontal scrolling support for subtab bar on small displays.\n- **UI Polish**: Streamlined header boxes, inline VPN Management controls, and refined Reports workspace navigation.",
-  "pub_date": "2026-07-31T15:41:00.000Z",
-  "releaseDate": "July 31, 2026",
+  "version": "6.8.1",
+  "notes": "### 🔒 v6.8.1 — Patch (Security Fixes, Dead Code Cleanup & Optimization)\n\n- **Security**: Fixed critical privilege escalation in profile self-edit (users could modify access flags).\n- **Security**: Fixed CORS origin reflection vulnerability — now validates against trusted origin whitelist.\n- **Security**: Fixed rate limiter bypass via X-Forwarded-For header spoofing.\n- **Optimization**: Eliminated full profiles table re-download on INSERT/DELETE realtime events — now handled inline.\n- **Cleanup**: Removed dead code files, unused exports, debug scripts, and old audit artifacts (~5.5MB).\n- **Cleanup**: Cleaned .gitignore and removed stale entries.",
+  "pub_date": "2026-08-01T08:00:00.000Z",
+  "releaseDate": "August 1, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {
