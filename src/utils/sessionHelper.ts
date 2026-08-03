@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { Profile } from '@/types';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 

@@ -14,7 +14,7 @@ import {
   FileSpreadsheet,
   Target,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { isTauriApp } from "@/utils/apiUrlHelper";
 import { Modal } from "@/components/common/Modal";

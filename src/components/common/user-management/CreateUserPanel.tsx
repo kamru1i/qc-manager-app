@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Loader2, Check, X } from "lucide-react";
 import { StaffSettingsForm } from "@/components/leave-tracker/StaffSettingsForm";
 import { Profile } from "@/types";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface CreateUserPanelProps {
   isAdmin: boolean;

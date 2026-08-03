@@ -6,6 +6,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { NetworkProvider } from "@/providers/NetworkProvider";
 
+import { Toaster } from "sonner";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -69,6 +71,7 @@ export default function RootLayout({
         <PWARegister />
         <AppUpdater />
         <NetworkProvider>{children}</NetworkProvider>
+        <Toaster position="bottom-right" richColors theme="dark" closeButton />
         <SpeedInsights />
         <Analytics />
       </body>

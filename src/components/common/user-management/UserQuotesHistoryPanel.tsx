@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Profile, RecordItem, FileType } from '@/types';
 import { supabase } from '@/utils/supabase';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { StatsGrid } from '@/components/common/StatsGrid';
 import { RecordsTable } from '@/components/quotes-tracker/RecordsTable';

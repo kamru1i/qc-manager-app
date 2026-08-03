@@ -13,7 +13,7 @@ import {
   removeCacheItems
 } from '@/utils/offlineSync';
 import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError } from '@/utils/dashboardHelpers';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { isAdminRole } from '@/utils/permissionService';
 
 interface useChutiOperationsParams {

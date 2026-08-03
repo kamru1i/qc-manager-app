@@ -10,7 +10,7 @@ import { canAccessModule, canAccessUserProfileSubtab, isAdminRole, getDisplayRol
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
 import { Modal } from '@/components/common/Modal';
 import { UserManagementSkeleton } from '@/components/common/skeleton/UserManagementSkeleton';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import {

@@ -7,7 +7,7 @@ import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getSettlementLabel } from '@/utils/dashboardHelpers';
 import { AdminSettleUserModal } from '@/components/leave-tracker/modals/AdminSettleUserModal';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Modal } from '@/components/common/Modal';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { exportHelper } from '@/utils/exportHelper';

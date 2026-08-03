@@ -14,7 +14,7 @@ import {
   Edit2,
   X
 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { supabase } from "@/utils/supabase";
 import { Profile } from "@/types";
 import { AsitisCausalitySkeleton } from "@/components/common/skeleton/AsitisCausalitySkeleton";

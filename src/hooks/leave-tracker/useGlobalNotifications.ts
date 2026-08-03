@@ -5,7 +5,7 @@ import { supabase } from '@/utils/supabase';
 import { Profile, GovtHolidayResponse, ComplianceRule, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';

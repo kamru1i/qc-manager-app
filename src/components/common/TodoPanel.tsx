@@ -17,7 +17,7 @@ import {
   StickyNote,
   X,
 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
 import { createPortal } from "react-dom";
 import { TodoSkeleton } from "@/components/common/skeleton/TodoSkeleton";

@@ -8,7 +8,7 @@ import { Profile } from '@/types';
 import { isSuperadmin, isAdminRole, isTabVisibleForRole, isFeatureEnabled, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
 import { StaffSettingsForm } from '@/components/leave-tracker/StaffSettingsForm';
 import { supabase } from '@/utils/supabase';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { DateTimeInput } from '@/components/common/DateTimeInput';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
 import { TempAccessEntry, DEFAULT_VPN_LIST } from '@/utils/dashboardHelpers';

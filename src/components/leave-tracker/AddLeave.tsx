@@ -23,7 +23,7 @@ import {
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 
 import { getApiUrl } from '@/utils/apiUrlHelper';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { AddLeaveFormFields } from '@/components/leave-tracker/AddLeaveFormFields';
 import { LeaveUsageSummary } from '@/components/leave-tracker/LeaveUsageSummary';
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';

@@ -27,7 +27,7 @@ import {
 } from "@/utils/dashboardHelpers";
 import { Modal } from "@/components/common/Modal";
 import { supabase } from "@/utils/supabase";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { isAdminRole } from '@/utils/permissionService';
 
 interface TeamLeaveRecordsProps {

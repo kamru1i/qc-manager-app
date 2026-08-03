@@ -5,7 +5,7 @@ import {  Plus, Trash2, RefreshCw, Settings } from 'lucide-react';
 import { GlobalSettings, formatDate } from '@/utils/dashboardHelpers';
 import { DateInput } from '@/components/common/DateInput';
 import { supabase } from '@/utils/supabase';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { DeleteGovtHolidayModal } from '@/components/common/modals/DeleteGovtHolidayModal';
 
 interface AdminLeaveSettingsProps {

@@ -8,7 +8,7 @@ import { Profile, RecordItem, AuditLogItem } from '@/types';
 import { useQuotesTheme } from '@/hooks/quotes-tracker/useQuotesTheme';
 import { useRecordActions } from '@/hooks/leave-tracker/useRecordActions';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { fetchSubmittedAtRange, buildAvailableDates } from '@/utils/availableDatesHelper';
@@ -100,7 +100,7 @@ export const useQuotesDashboardData = () => {
   const [selectedYear, setSelectedYear] = useState<string>(() => new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
 
-  // Show a message using react-hot-toast
+  // Show a message using sonner
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
     if (type === 'success') {
       toast.success(text);

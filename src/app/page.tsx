@@ -24,7 +24,6 @@ import { Navbar } from "@/components/common/Navbar";
 import { AppLayout } from "@/components/common/AppLayout";
 import { SafeAreaTop } from "@/components/common/SafeAreaTop";
 import { StatusBar, Style } from "@capacitor/status-bar";
-import { Toaster } from "react-hot-toast";
 import { useGlobalNotifications } from "@/hooks/leave-tracker/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/common/modals/UserNotificationsModal";
 import { MandatoryGovtHolidayModal } from "@/components/common/modals/MandatoryGovtHolidayModal";
@@ -1194,30 +1193,6 @@ function AppPortalInner({
 
   return (
     <AppLayout>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-        containerStyle={{ zIndex: 99999 }}
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: "#0f172a",
-            color: "#f1f5f9",
-            border: "1px solid #1e293b",
-            borderRadius: "12px",
-            fontSize: "13px",
-            padding: "12px 16px",
-            boxShadow:
-              "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3)",
-          },
-          success: {
-            iconTheme: { primary: "#10b981", secondary: "#0f172a" },
-          },
-          error: {
-            iconTheme: { primary: "#ef4444", secondary: "#0f172a" },
-          },
-        }}
-      />
       {/* Glow background blobs */}
       <div className="absolute top-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-violet-900/10 blur-[120px] pointer-events-none" />

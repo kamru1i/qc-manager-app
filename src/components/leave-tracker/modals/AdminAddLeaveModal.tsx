@@ -20,7 +20,7 @@ import {
 } from "@/utils/dashboardHelpers";
 import { ChutiRecord, generateUUID } from "@/utils/offlineSync";
 
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { LeaveUsageSummary } from "@/components/leave-tracker/LeaveUsageSummary";
 
 import { Modal } from "@/components/common/Modal";
