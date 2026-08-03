@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,12 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.9.2 — Patch Release (Timezone Boundary Alignment & Offline Cache Sync Fix) (Current)
+### 🩹 v6.9.3 — Patch Release (Sonner Toast System Migration & Bottom Positioning) (Current)
+
+- **Sonner Toast Migration**: Replaced react-hot-toast with Sonner across the entire project for unified, accessible notifications.
+- **Bottom-Right Notification Setup**: Positioned the global Toaster at bottom-right in RootLayout for clean, non-intrusive alert delivery across desktop, web, and mobile.
+
+### 🩹 v6.9.2 — Patch Release (Timezone Boundary Alignment & Offline Cache Sync Fix)
 
 - **Timezone Boundary Alignment**: Fixed server fetch start/end date calculations to use local timezone boundaries (Asia/Dhaka) instead of UTC, preventing early-morning records on the 1st of the month from being omitted.
 - **Full Month Sync & Prune Fix**: Prevented false cache pruning by ensuring full paginated server fetches load complete month records into IndexedDB cache.

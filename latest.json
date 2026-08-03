@@ -1,8 +1,8 @@
 {
-  "version": "6.9.2",
-  "notes": "### 🩹 v6.9.2 — Patch Release (Timezone Boundary Alignment & Offline Cache Sync Fix)\n\n- **Timezone Boundary Alignment**: Fixed server fetch start/end date calculations to use local timezone boundaries (Asia/Dhaka) instead of UTC, preventing early-morning records on the 1st of the month from being omitted.\n- **Full Month Sync & Prune Fix**: Prevented false cache pruning by ensuring full paginated server fetches load complete month records into IndexedDB cache.",
-  "pub_date": "2026-08-01T16:03:00.000Z",
-  "releaseDate": "August 1, 2026",
+  "version": "6.9.3",
+  "notes": "### 🩹 v6.9.3 — Patch Release (Sonner Toast System Migration & Bottom Positioning)\n\n- **Sonner Toast Migration**: Replaced react-hot-toast with Sonner across the entire project for unified, accessible notifications.\n- **Bottom-Right Notification Setup**: Positioned the global Toaster at bottom-right in RootLayout for clean, non-intrusive alert delivery across desktop, web, and mobile.",
+  "pub_date": "2026-08-03T15:52:00.000Z",
+  "releaseDate": "August 3, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {
