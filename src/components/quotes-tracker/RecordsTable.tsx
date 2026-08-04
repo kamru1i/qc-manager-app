@@ -69,6 +69,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     id: string;
     field: string;
     time: number;
+    count: number;
   } | null>(null);
   const [tempValue, setTempValue] = useState("");
   const tempValueRef = useRef("");
@@ -97,25 +98,31 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     if (submitting || bulkSaving || savingRows[record.id]) return;
 
     const clickTime = e.timeStamp;
-    if (lastClick && lastClick.id === record.id && lastClick.field === field) {
-      const delay = clickTime - lastClick.time;
-      if (delay <= 1500) {
-        // Multi-click / Premiere Pro style double-click
-        const val = getCellValue(record, "submitted_at");
-        let initialVal = "";
-        if (field === "submitted_date") {
-          initialVal = formatDate(val);
-        } else if (field === "submitted_time") {
-          initialVal = formatTimeToHHMM(val);
-        }
-        setTempValue(initialVal);
-        tempValueRef.current = initialVal;
-        setEditingCell({ id: record.id, field });
-        setLastClick(null);
-        return;
+    const requiredClicks = (field === "submitted_date" || field === "submitted_time") ? 3 : 2;
+
+    const isMatch = lastClick && lastClick.id === record.id && lastClick.field === field && (clickTime - lastClick.time <= 1200);
+    const currentCount = isMatch ? lastClick.count + 1 : 1;
+
+    if (e.detail >= requiredClicks || currentCount >= requiredClicks) {
+      const val = getCellValue(record, "submitted_at");
+      let initialVal = "";
+      if (field === "submitted_date") {
+        initialVal = formatDate(val);
+      } else if (field === "submitted_time") {
+        initialVal = formatTimeToHHMM(val);
+      } else if (field === "file_name") {
+        initialVal = String(getCellValue(record, "file_name") || "");
+      } else if (field === "branch_name") {
+        initialVal = String(getCellValue(record, "branch_name") || "");
       }
+      setTempValue(initialVal);
+      tempValueRef.current = initialVal;
+      setEditingCell({ id: record.id, field });
+      setLastClick(null);
+      return;
     }
-    setLastClick({ id: record.id, field, time: clickTime });
+
+    setLastClick({ id: record.id, field, time: clickTime, count: currentCount });
   };
 
   const handleCellDoubleClick = (
@@ -814,9 +821,14 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                                   setEditingCell(null);
                                 }
                               }}
+                              onClick={(e) => {
+                                const parent = e.currentTarget.parentElement;
+                                const dateEl = parent?.querySelector('input[type="date"]') as HTMLInputElement;
+                                try { dateEl?.showPicker?.(); } catch {}
+                              }}
                               autoFocus
                               placeholder="DD-MM-YYYY"
-                              className="bg-theme-card-container border border-theme-border-active rounded px-1.5 py-0.5 text-theme-text-primary text-xs w-full text-left focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold font-mono tracking-wide"
+                              className="bg-theme-card-container border border-theme-border-active rounded px-1.5 py-0.5 text-theme-text-primary text-xs w-full text-left focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold font-mono tracking-wide cursor-pointer"
                             />
                             <input
                               type="date"
@@ -829,27 +841,11 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                                     const ddmmyyyy = `${parts[2]}-${parts[1]}-${parts[0]}`;
                                     tempValueRef.current = ddmmyyyy;
                                     setTempValue(ddmmyyyy);
+                                    handleCommitEdit(r.id, "submitted_date", ddmmyyyy);
                                   }
                                 }
                               }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter")
-                                  handleCommitEdit(r.id, "submitted_date", tempValueRef.current);
-                                if (e.key === "Escape") {
-                                  isCancelledRef.current = true;
-                                  setEditingCell(null);
-                                }
-                              }}
-                              ref={(el) => {
-                                if (el) {
-                                  try { el.showPicker?.(); } catch {}
-                                }
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                try { e.currentTarget.showPicker?.(); } catch {}
-                              }}
-                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                              className="sr-only"
                             />
                           </div>
                         ) : (
@@ -864,7 +860,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                             }`}
                             title={
                               isAdmin || r.user_id === currentUserId
-                                ? "Double-click to pick date"
+                                ? "Triple-click to edit date"
                                 : ""
                             }
                           >
@@ -899,9 +895,6 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           onClick={(e) => {
                             try { e.currentTarget.showPicker?.(); } catch {}
                           }}
-                          onFocus={(e) => {
-                            try { e.currentTarget.showPicker?.(); } catch {}
-                          }}
                           autoFocus
                           className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-[11px] w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mt-0.5 cursor-pointer"
                         />
@@ -917,7 +910,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           }`}
                           title={
                             isAdmin || r.user_id === currentUserId
-                              ? "Slow click twice to edit time"
+                              ? "Triple-click to edit time"
                               : ""
                           }
                         >
