@@ -312,15 +312,25 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       {/* Records Table */}
       <div className="bg-theme-card-bg/40 border border-theme-card-bg shadow-2xl rounded-2xl overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-theme-border-input/80 flex flex-col md:flex-row justify-between items-center gap-4">
-          {/* Title & Entry Count */}
+          {/* Title & Entry Count + Add Leave Button */}
           <div className="flex flex-col shrink-0">
-            <h3 className="text-base font-bold text-theme-text-primary">{title}</h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-base font-bold text-theme-text-primary">{title}</h3>
+              {showAddLeave && (
+                <button
+                  onClick={onAddLeaveClick}
+                  className="flex items-center gap-1.5 py-1 px-2.5 bg-transparent border border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500 hover:bg-blue-600/10 dark:hover:bg-blue-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Leave
+                </button>
+              )}
+            </div>
             <span className="text-xs text-theme-text-muted mt-0.5">
               Total: {filteredRecords.length} {filteredRecords.length === 1 ? 'entry' : 'entries'}
             </span>
           </div>
 
-          {/* Controls: Leave Type Filter + Search Box + Excel Export + Add Leave + Year Selector */}
+          {/* Controls: Leave Type Filter + Search Box + Excel Export + Year Selector */}
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
             {/* Leave Type Dropdown (Left of Search Box) */}
             <CustomSelect
@@ -362,16 +372,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
             >
               <Download className="h-3.5 w-3.5" /> Excel
             </button>
-
-            {/* Add Leave Button */}
-            {showAddLeave && (
-              <button
-                onClick={onAddLeaveClick}
-                className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500 hover:bg-blue-600/10 dark:hover:bg-blue-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm shrink-0"
-              >
-                <Plus className="h-3.5 w-3.5" /> Add Leave
-              </button>
-            )}
 
             {/* Year Selector */}
             {!hideYearSelect && (
