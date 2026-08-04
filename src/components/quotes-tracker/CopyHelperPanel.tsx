@@ -95,7 +95,7 @@ const EditableDateHeader: React.FC<EditableDateHeaderProps> = ({
     const val = e.target.value;
     if (val) {
       const [year, month, day] = val.split('-');
-      setSoldDate(`${day}/${month}/${year}`);
+      setSoldDate(`${day}-${month}-${year}`);
     }
     setIsEditing(false);
   };
@@ -481,7 +481,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
           <div className="flex items-center justify-between group/field py-0.5">
             <span className="text-theme-text-muted font-medium">Sold Date:</span>
             {editingSessionField === "soldDate" ? (
-              <input type="date" value={(() => { const parts = soldDate.split('/'); return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}` : ''; })()} onChange={(e) => { const val = e.target.value; if (val) { const [year, month, day] = val.split('-'); setSoldDate(`${day}/${month}/${year}`); } setEditingSessionField(null); }} onBlur={() => setEditingSessionField(null)} autoFocus className="w-32 px-2 py-1 bg-theme-page-bg border border-blue-500 rounded-lg text-theme-text-primary text-right text-xs focus:outline-none cursor-pointer" />
+              <input type="date" value={(() => { const parts = soldDate.split(/[\/-]/); return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}` : ''; })()} onChange={(e) => { const val = e.target.value; if (val) { const [year, month, day] = val.split('-'); setSoldDate(`${day}-${month}-${year}`); } setEditingSessionField(null); }} onBlur={() => setEditingSessionField(null)} autoFocus className="w-32 px-2 py-1 bg-theme-page-bg border border-blue-500 rounded-lg text-theme-text-primary text-right text-xs focus:outline-none cursor-pointer" />
             ) : (
               <div className="flex items-center gap-1.5 justify-end">
                 <button type="button" onClick={() => setEditingSessionField("soldDate")} className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0" title="Edit Sold Date"><Pencil className="h-3 w-3" /></button>

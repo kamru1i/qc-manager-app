@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { isTauriApp } from "@/utils/apiUrlHelper";
 import { Modal } from "@/components/common/Modal";
+import { DateInput } from "@/components/common/DateInput";
 import { KpiSkeleton } from "@/components/common/skeleton/KpiSkeleton";
 import { PROFILE_COLUMNS, KPI_ASSESSMENT_COLUMNS } from "@/utils/dbColumns";
 import { useProfiles } from "@/contexts/ProfilesContext";
@@ -3202,24 +3203,20 @@ USING (auth.uid() = user_id OR EXISTS (
               <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1.5">
                 From Date
               </label>
-              <input
-                type="date"
-                required
+              <DateInput
                 value={newCustomPeriodFrom}
-                onChange={(e) => setNewCustomPeriodFrom(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
+                onChange={setNewCustomPeriodFrom}
+                required
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1.5">
                 To Date
               </label>
-              <input
-                type="date"
-                required
+              <DateInput
                 value={newCustomPeriodTo}
-                onChange={(e) => setNewCustomPeriodTo(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
+                onChange={setNewCustomPeriodTo}
+                required
               />
             </div>
           </div>
