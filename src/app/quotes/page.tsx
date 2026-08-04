@@ -36,6 +36,7 @@ import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperP
 import { CustomSelect } from "@/components/common/CustomSelect";
 import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
 import { QuickImportView } from "@/components/quotes-tracker/QuickImportView";
+import { DEFAULT_BRANCHES } from "@/utils/bulkQuoteParser";
 import { CausalityPanel } from "@/components/quotes-tracker/CausalityPanel";
 import { validator } from "@/utils/quotesValidator";
 import {
@@ -702,6 +703,12 @@ export default function Dashboard({
     });
     return Array.from(branches).sort();
   }, [records]);
+
+  // Master branches list merging default system branches and existing dynamic branches
+  const allMasterBranches = useMemo(
+    () => Array.from(new Set([...DEFAULT_BRANCHES, ...uniqueBranches])),
+    [uniqueBranches],
+  );
 
   // Filtered records for Monthly Tab
   const monthlyFilteredRecords = useMemo(() => {
@@ -2005,7 +2012,7 @@ export default function Dashboard({
       {activeTab === "quick_import" && (
         <QuickImportView
           isInline={true}
-          allowedBranches={uniqueBranches}
+          allowedBranches={allMasterBranches}
           allowedTypes={allowedCategories}
           sanitizerWords={getSanitizerWords(globalSettings)}
           codename={ownCodename || profile?.username || ""}
@@ -2137,7 +2144,7 @@ export default function Dashboard({
               <QuickImportView
                 isOpen={isBulkModalOpen}
                 onClose={() => setIsBulkModalOpen(false)}
-                allowedBranches={uniqueBranches}
+                allowedBranches={allMasterBranches}
                 allowedTypes={allowedCategories}
                 sanitizerWords={getSanitizerWords(globalSettings)}
                 codename={ownCodename || profile?.username || ""}

@@ -69,14 +69,28 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
 
   if (!isOpen && !isInline) return null;
 
-  const branchesList =
-    allowedBranches.length > 0 ? allowedBranches : DEFAULT_BRANCHES;
+  // Master branches list: merge DEFAULT_BRANCHES with any user-provided branches to ensure all 19 master branches are included
+  const branchesList = Array.from(
+    new Set([...DEFAULT_BRANCHES, ...(allowedBranches || [])])
+  );
+
+  // File Types list: restrict strictly to allowedTypes permissions for this user (falls back to ALL_10_FILE_TYPES if empty)
+  const typesList =
+    allowedTypes && allowedTypes.length > 0
+      ? allowedTypes
+      : ALL_10_FILE_TYPES;
 
   // Handle parsing text from textarea
   const handleParseText = () => {
     if (!rawText.trim()) return;
     const parsed = parseBulkQuoteLines(rawText, sanitizerWords, branchesList);
-    setItems((prev) => [...prev, ...parsed]);
+    const sanitizedParsed = parsed.map((item) => ({
+      ...item,
+      file_type: typesList.includes(item.file_type)
+        ? item.file_type
+        : typesList[0] || item.file_type,
+    }));
+    setItems((prev) => [...prev, ...sanitizedParsed]);
     setRawText("");
   };
 
@@ -88,6 +102,9 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
     const newItems: ParsedQuoteItem[] = [];
     Array.from(files).forEach((file) => {
       const parsed = parseQuoteLine(file.name, sanitizerWords, branchesList);
+      if (!typesList.includes(parsed.file_type)) {
+        parsed.file_type = typesList[0] || parsed.file_type;
+      }
       newItems.push(parsed);
     });
 
@@ -128,7 +145,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
       id: Math.random().toString(36).substring(2, 11),
       file_name: "",
       branch_name: branchesList[0] || "PrideCompare",
-      file_type: "Quote",
+      file_type: typesList[0] || "Quote",
       entry_date: new Date().toISOString().split("T")[0],
       raw_line: "",
       status: "pending",
@@ -419,7 +436,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
                           disabled={isSubmitting}
                           className="w-full bg-theme-page-bg/80 border border-theme-border-input/70 rounded-lg px-2 py-1 text-xs text-theme-text-primary focus:outline-none focus:border-blue-500 cursor-pointer"
                         >
-                          {ALL_10_FILE_TYPES.map((t) => (
+                          {typesList.map((t) => (
                             <option key={t} value={t}>
                               {t}
                             </option>

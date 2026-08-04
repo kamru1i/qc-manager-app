@@ -13,7 +13,7 @@ export interface ParsedQuoteItem {
 }
 
 export const DEFAULT_BRANCHES = [
-  'PrideCompare', 'EazyCompare', 'SwanDrive', 'MiddleSure', 'IreSure',
+  'PRIDE COMPARE', 'EAZY COMPARE', 'SWANDRIVE', 'MIDDLESURE', 'IRESURE',
   'BRISTOL', 'SHEFFIELD', 'PRIDE', 'EAZY', 'NOTTS', 'RIDE', 'SORT',
   'GET', 'ADI', 'AQ', 'BC', 'MK', 'BI', 'NN'
 ];
@@ -24,11 +24,11 @@ export const ALL_10_FILE_TYPES = [
   'Van', 'Bike', 'Sale'
 ];
 const BRANCH_PATTERNS: Array<{ key: string; regex: RegExp }> = [
-  { key: 'PrideCompare', regex: /\bpride[\s-_]*compare\b/i },
-  { key: 'EazyCompare', regex: /\beazy[\s-_]*compare\b/i },
-  { key: 'SwanDrive', regex: /\bswan[\s-_]*drive\b/i },
-  { key: 'MiddleSure', regex: /\bmiddle[\s-_]*sure\b/i },
-  { key: 'IreSure', regex: /\bire[\s-_]*sure\b/i },
+  { key: 'PRIDE COMPARE', regex: /\bpride[\s-_]*compare\b/i },
+  { key: 'EAZY COMPARE', regex: /\beazy[\s-_]*compare\b/i },
+  { key: 'SWANDRIVE', regex: /\bswan[\s-_]*drive\b/i },
+  { key: 'MIDDLESURE', regex: /\bmiddle[\s-_]*sure\b/i },
+  { key: 'IRESURE', regex: /\bire[\s-_]*sure\b/i },
   { key: 'BRISTOL', regex: /\bbristol\b/i },
   { key: 'SHEFFIELD', regex: /\bsheffield\b/i },
   { key: 'PRIDE', regex: /\bpride\b/i },

@@ -63,16 +63,9 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
   useEffect(() => { profilesListRef.current = profilesList; }, [profilesList]);
 
   const refreshProfiles = useCallback(async (options?: { force?: boolean }) => {
-    if (fetchingRef.current) return;
+    if (fetchingRef.current && !options?.force) return;
     fetchingRef.current = true;
     try {
-      // E6 optimisation: when we already have a cached list, check if the
-      // profile count on the server has changed before downloading the full
-      // table.  The count query returns a single integer (≈50 bytes) vs the
-      // full list which returns 40+ columns × N rows (≈50 KB for 50 users).
-      // If counts match AND we're not force-refreshing (INSERT/DELETE event),
-      // the realtime UPDATE handler has already patched field-level changes
-      // inline, so the cached list is current and we can skip the full fetch.
       // Fetch fresh profiles from Supabase to guarantee global_settings, tab access & feature flags sync
       const { data, error } = await supabase
         .from('profiles')
@@ -128,7 +121,7 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
       }
 
       if (typeof window === 'undefined' || navigator.onLine) {
-        await refreshProfiles();
+        await refreshProfiles({ force: true });
       } else if (active) {
         setIsLoaded(true);
       }
