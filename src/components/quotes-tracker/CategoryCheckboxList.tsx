@@ -10,16 +10,16 @@ interface CategoryCheckboxListProps {
 }
 
 const ALL_FILE_TYPES: FileType[] = [
-  'Quote',
-  'Individual Review',
-  'Requote',
-  'Review',
-  'Requote Van',
-  'Requote Bike',
-  'Van',
   'Bike',
+  'Individual Review',
   'Other Site',
-  'Sale'
+  'Quote',
+  'Requote',
+  'Requote Bike',
+  'Requote Van',
+  'Review',
+  'Sale',
+  'Van'
 ];
 
 const getCategoryCheckboxStyle = (type: FileType, isChecked: boolean) => {

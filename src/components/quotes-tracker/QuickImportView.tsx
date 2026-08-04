@@ -19,8 +19,10 @@ import {
   ParsedQuoteItem,
   ALL_10_FILE_TYPES,
   DEFAULT_BRANCHES,
+  normalizeBranchName,
   getTodayYYYYMMDD,
 } from "@/utils/bulkQuoteParser";
+import { CustomSelect } from "@/components/common/CustomSelect";
 
 export const formatYYYYMMDDToDDMMYYYY = (isoDate?: string): string => {
   const dateStr = isoDate || getTodayYYYYMMDD();
@@ -69,16 +71,37 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
 
   if (!isOpen && !isInline) return null;
 
-  // Master branches list: merge DEFAULT_BRANCHES with any user-provided branches to ensure all 19 master branches are included
+  // Master branches list: merge DEFAULT_BRANCHES with allowedBranches and normalize to deduplicate unspaced variants
   const branchesList = Array.from(
-    new Set([...DEFAULT_BRANCHES, ...(allowedBranches || [])])
-  );
+    new Set([
+      ...DEFAULT_BRANCHES.map(normalizeBranchName),
+      ...(allowedBranches || []).map(normalizeBranchName),
+    ])
+  ).filter(Boolean);
 
   // File Types list: restrict strictly to allowedTypes permissions for this user (falls back to ALL_10_FILE_TYPES if empty)
   const typesList =
     allowedTypes && allowedTypes.length > 0
       ? allowedTypes
       : ALL_10_FILE_TYPES;
+
+  const branchSelectOptions = React.useMemo(
+    () => branchesList.map((b) => ({ value: b, label: b })),
+    [branchesList]
+  );
+
+  const typeSelectOptions = React.useMemo(
+    () => typesList.map((t) => ({ value: t, label: t })),
+    [typesList]
+  );
+
+  const saleStatusOptions = React.useMemo(
+    () => [
+      { value: "UNSOLD", label: "UNSOLD" },
+      { value: "SOLD", label: "SOLD" },
+    ],
+    []
+  );
 
   // Handle parsing text from textarea
   const handleParseText = () => {
@@ -330,7 +353,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
               </p>
             </div>
           ) : (
-            <div className="border border-theme-border-input/80 rounded-xl overflow-hidden bg-theme-page-bg/40 max-h-[350px] overflow-y-auto">
+            <div className="border border-theme-border-input/80 rounded-xl bg-theme-page-bg/40 min-h-[220px] max-h-[350px] overflow-y-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead className="bg-theme-card-container/80 sticky top-0 z-10 border-b border-theme-border-input/80 text-[10px] uppercase tracking-wider text-theme-text-muted font-bold">
                   <tr>
@@ -412,58 +435,45 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
                         />
                       </td>
                       <td className="py-2 px-3">
-                        <select
+                        <CustomSelect
                           value={item.branch_name}
-                          onChange={(e) =>
-                            handleItemChange(item.id, "branch_name", e.target.value)
+                          onChange={(val) =>
+                            handleItemChange(item.id, "branch_name", val)
                           }
+                          options={branchSelectOptions}
                           disabled={isSubmitting}
-                          className="w-full bg-theme-page-bg/80 border border-theme-border-input/70 rounded-lg px-2 py-1 text-xs text-theme-text-primary focus:outline-none focus:border-blue-500 cursor-pointer"
-                        >
-                          {branchesList.map((b) => (
-                            <option key={b} value={b}>
-                              {b}
-                            </option>
-                          ))}
-                        </select>
+                          className="w-full"
+                          buttonClassName="w-full flex items-center justify-between gap-1.5 bg-theme-page-bg/80 border border-theme-border-input/70 text-theme-text-primary rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-blue-500 cursor-pointer min-h-[30px] select-none"
+                        />
                       </td>
                       <td className="py-2 px-3">
-                        <select
+                        <CustomSelect
                           value={item.file_type}
-                          onChange={(e) =>
-                            handleItemChange(item.id, "file_type", e.target.value)
+                          onChange={(val) =>
+                            handleItemChange(item.id, "file_type", val)
                           }
+                          options={typeSelectOptions}
                           disabled={isSubmitting}
-                          className="w-full bg-theme-page-bg/80 border border-theme-border-input/70 rounded-lg px-2 py-1 text-xs text-theme-text-primary focus:outline-none focus:border-blue-500 cursor-pointer"
-                        >
-                          {typesList.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
+                          className="w-full"
+                          buttonClassName="w-full flex items-center justify-between gap-1.5 bg-theme-page-bg/80 border border-theme-border-input/70 text-theme-text-primary rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-blue-500 cursor-pointer min-h-[30px] select-none"
+                        />
                       </td>
                       <td className="py-2 px-3">
                         {item.file_type === "Sale" ? (
-                          <select
+                          <CustomSelect
                             value={item.sale_status || "UNSOLD"}
-                            onChange={(e) =>
-                              handleItemChange(item.id, "sale_status", e.target.value)
+                            onChange={(val) =>
+                              handleItemChange(item.id, "sale_status", val)
                             }
+                            options={saleStatusOptions}
                             disabled={isSubmitting}
-                            className={`w-full bg-theme-page-bg/80 border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none cursor-pointer ${
+                            className="w-full"
+                            buttonClassName={`w-full flex items-center justify-between gap-1.5 bg-theme-page-bg/80 border rounded-lg px-2.5 py-1 text-xs font-bold focus:outline-none cursor-pointer min-h-[30px] select-none ${
                               item.sale_status === "SOLD"
                                 ? "border-emerald-500/50 text-emerald-400 focus:border-emerald-400"
                                 : "border-red-500/50 text-red-400 focus:border-red-400"
                             }`}
-                          >
-                            <option value="UNSOLD" className="text-red-400 bg-theme-card-bg">
-                              UNSOLD
-                            </option>
-                            <option value="SOLD" className="text-emerald-400 bg-theme-card-bg">
-                              SOLD
-                            </option>
-                          </select>
+                          />
                         ) : (
                           <span className="text-theme-text-muted/40 text-[10px] font-mono">—</span>
                         )}

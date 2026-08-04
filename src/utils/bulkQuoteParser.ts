@@ -13,15 +13,26 @@ export interface ParsedQuoteItem {
 }
 
 export const DEFAULT_BRANCHES = [
-  'PRIDE COMPARE', 'EAZY COMPARE', 'SWANDRIVE', 'MIDDLESURE', 'IRESURE',
-  'BRISTOL', 'SHEFFIELD', 'PRIDE', 'EAZY', 'NOTTS', 'RIDE', 'SORT',
-  'GET', 'ADI', 'AQ', 'BC', 'MK', 'BI', 'NN'
+  'ADI', 'AQ', 'BC', 'BI', 'BRISTOL', 'EAZY', 'EAZY COMPARE',
+  'GET', 'IRESURE', 'MIDDLESURE', 'MK', 'NN', 'NOTTS', 'PRIDE',
+  'PRIDE COMPARE', 'RIDE', 'SHEFFIELD', 'SORT', 'SWANDRIVE'
 ];
 
+export const normalizeBranchName = (rawBranch: string): string => {
+  if (!rawBranch) return "";
+  const b = rawBranch.toUpperCase().trim().replace(/[\s-_]+/g, "");
+  if (b === "PRIDECOMPARE") return "PRIDE COMPARE";
+  if (b === "EAZYCOMPARE") return "EAZY COMPARE";
+  if (b === "SWANDRIVE" || b === "SWAN") return "SWANDRIVE";
+  if (b === "MIDDLESURE" || b === "MIDDLE") return "MIDDLESURE";
+  if (b === "IRESURE" || b === "IRE") return "IRESURE";
+  return rawBranch.toUpperCase().trim();
+};
+
 export const ALL_10_FILE_TYPES = [
-  'Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review',
-  'Review Van', 'Review Bike', 'Individual Review', 'Other Site',
-  'Van', 'Bike', 'Sale'
+  'Bike', 'Individual Review', 'Other Site', 'Quote', 'Requote',
+  'Requote Bike', 'Requote Van', 'Review', 'Review Bike', 'Review Van',
+  'Sale', 'Van'
 ];
 const BRANCH_PATTERNS: Array<{ key: string; regex: RegExp }> = [
   { key: 'PRIDE COMPARE', regex: /\bpride[\s-_]*compare\b/i },

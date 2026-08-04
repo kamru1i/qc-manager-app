@@ -20,21 +20,21 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
 
   const mainBranches = [
     'ADI',
-    'RIDE',
-    'PRIDE',
     'AQ',
     'BC',
-    'GET',
-    'SORT',
-    'BRISTOL',
-    'MK',
     'BI',
+    'BRISTOL',
     'EAZY',
-    'NOTTS',
-    'SHEFFIELD',
-    'NN',
-    'MIDDLESURE',
+    'GET',
     'IRESURE',
+    'MIDDLESURE',
+    'MK',
+    'NN',
+    'NOTTS',
+    'PRIDE',
+    'RIDE',
+    'SHEFFIELD',
+    'SORT',
     'SWANDRIVE'
   ];
 

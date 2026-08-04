@@ -36,7 +36,7 @@ import { SaveFileHelperPanel } from "@/components/quotes-tracker/SaveFileHelperP
 import { CustomSelect } from "@/components/common/CustomSelect";
 import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
 import { QuickImportView } from "@/components/quotes-tracker/QuickImportView";
-import { DEFAULT_BRANCHES } from "@/utils/bulkQuoteParser";
+import { DEFAULT_BRANCHES, normalizeBranchName } from "@/utils/bulkQuoteParser";
 import { CausalityPanel } from "@/components/quotes-tracker/CausalityPanel";
 import { validator } from "@/utils/quotesValidator";
 import {
@@ -693,12 +693,12 @@ export default function Dashboard({
     }
   }, [dynamicYears, selectedYear, setSelectedYear]);
 
-  // Unique branches extracted dynamically from all records
+  // Unique branches extracted dynamically from all records and normalized
   const uniqueBranches = useMemo(() => {
     const branches = new Set<string>();
     records.forEach((r) => {
       if (r.branch_name) {
-        branches.add(r.branch_name.toUpperCase().trim());
+        branches.add(normalizeBranchName(r.branch_name));
       }
     });
     return Array.from(branches).sort();
@@ -706,7 +706,13 @@ export default function Dashboard({
 
   // Master branches list merging default system branches and existing dynamic branches
   const allMasterBranches = useMemo(
-    () => Array.from(new Set([...DEFAULT_BRANCHES, ...uniqueBranches])),
+    () =>
+      Array.from(
+        new Set([
+          ...DEFAULT_BRANCHES.map(normalizeBranchName),
+          ...uniqueBranches,
+        ]),
+      ).filter(Boolean),
     [uniqueBranches],
   );
 

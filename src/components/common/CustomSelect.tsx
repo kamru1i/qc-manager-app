@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 interface Option {
   value: string;
@@ -29,21 +30,65 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [portalStyles, setPortalStyles] = useState<React.CSSProperties>({});
+  
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updatePosition = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const spaceBelowViewport = window.innerHeight - rect.bottom;
+    const spaceAboveViewport = rect.top;
+
+    const isUp = dropUp || (spaceBelowViewport < 200 && spaceAboveViewport > spaceBelowViewport);
+    setOpenUpward(isUp);
+
+    const style: React.CSSProperties = {
+      position: 'fixed',
+      left: `${rect.left}px`,
+      width: `${Math.max(rect.width, 140)}px`,
+      zIndex: 999999,
+    };
+
+    if (isUp) {
+      style.bottom = `${window.innerHeight - rect.top + 6}px`;
+    } else {
+      style.top = `${rect.bottom + 6}px`;
+    }
+
+    setPortalStyles(style);
+  }, [dropUp]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     }
     if (isOpen) {
+      updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   // Find matching option index (with float fallback for numeric strings like "6" vs "6.0")
   const getActiveOptionIndex = (opts: Option[], val: string) => {
@@ -56,33 +101,12 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     return idx;
   };
 
-  // Synchronize highlighted index & detect vertical placement when the dropdown is opened
   useEffect(() => {
     if (isOpen) {
       const activeIdx = getActiveOptionIndex(options, value);
       setHighlightedIndex(activeIdx >= 0 ? activeIdx : 0);
-
-      if (dropUp) {
-        setOpenUpward(true);
-        return;
-      }
-
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const spaceBelowViewport = window.innerHeight - rect.bottom;
-        
-        let spaceBelowContainer = spaceBelowViewport;
-        const scrollParent = containerRef.current.closest('.overflow-y-auto, .overflow-y-scroll');
-        if (scrollParent) {
-          const parentRect = scrollParent.getBoundingClientRect();
-          spaceBelowContainer = parentRect.bottom - rect.bottom;
-        }
-
-        const effectiveSpaceBelow = Math.min(spaceBelowViewport, spaceBelowContainer);
-        setOpenUpward(effectiveSpaceBelow < 180 && spaceBelowViewport < 180);
-      }
     }
-  }, [isOpen, options, value, dropUp]);
+  }, [isOpen, options, value]);
 
   const activeOptionIdx = getActiveOptionIndex(options, value);
   const activeOption = activeOptionIdx >= 0 ? options[activeOptionIdx] : options[0];
@@ -117,7 +141,6 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         break;
       case 'Escape':
       case 'Tab':
-        // Let Tab naturally cycle focus but close dropdown
         setIsOpen(false);
         break;
       default:
@@ -125,9 +148,47 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     }
   };
 
+  const dropdownContent = isOpen && mounted && typeof document !== 'undefined' ? (
+    <div
+      ref={dropdownRef}
+      style={{ ...portalStyles, overscrollBehavior: 'contain' }}
+      className={`bg-theme-card-bg border border-theme-border-input rounded-xl shadow-2xl py-1 max-h-64 overflow-y-auto custom-scrollbar ${
+        openUpward
+          ? 'animate-in fade-in slide-in-from-bottom-1 duration-150'
+          : 'animate-in fade-in slide-in-from-top-1 duration-150'
+      }`}
+    >
+      {options.map((option, idx) => {
+        const isSelected = idx === activeOptionIdx;
+        const isHighlighted = idx === highlightedIndex;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => {
+              onChange(option.value);
+              setIsOpen(false);
+            }}
+            onMouseEnter={() => setHighlightedIndex(idx)}
+            className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer select-none ${
+              isSelected
+                ? 'bg-indigo-650/15 text-indigo-400'
+                : isHighlighted
+                ? 'bg-theme-border-input text-theme-text-inverse'
+                : 'text-theme-text-secondary hover:text-theme-text-inverse'
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className={`relative inline-block font-sans ${className}`}
       onKeyDown={handleKeyDown}
     >
@@ -148,43 +209,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         </svg>
       </button>
 
-      {isOpen && (
-        <div 
-          className={`absolute right-0 sm:left-0 min-w-[140px] bg-theme-card-bg border border-theme-border-input rounded-xl shadow-2xl z-[9999] py-1 max-h-64 overflow-y-auto custom-scrollbar ${
-            openUpward
-              ? 'bottom-full mb-1.5 animate-in fade-in slide-in-from-bottom-1 duration-150'
-              : 'top-full mt-1.5 animate-in fade-in slide-in-from-top-1 duration-150'
-          }`}
-          style={{ overscrollBehavior: 'contain' }}
-        >
-          {options.map((option, idx) => {
-            const isSelected = idx === activeOptionIdx;
-            const isHighlighted = idx === highlightedIndex;
- 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                onMouseEnter={() => setHighlightedIndex(idx)}
-                className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer select-none ${
-                  isSelected
-                    ? 'bg-indigo-650/15 text-indigo-400'
-                    : isHighlighted
-                    ? 'bg-theme-border-input text-theme-text-inverse'
-                    : 'text-theme-text-secondary hover:text-theme-text-inverse'
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {dropdownContent && createPortal(dropdownContent, document.body)}
     </div>
   );
 };
-

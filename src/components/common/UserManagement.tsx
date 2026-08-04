@@ -58,7 +58,7 @@ interface UserManagementProps {
 }
 
 const ALL_FILE_TYPES = [
-  'Quote', 'Requote', 'Requote Van', 'Requote Bike', 'Review', 'Individual Review', 'Other Site', 'Van', 'Bike', 'Sale'
+  'Bike', 'Individual Review', 'Other Site', 'Quote', 'Requote', 'Requote Bike', 'Requote Van', 'Review', 'Sale', 'Van'
 ];
 
 export const UserManagement: React.FC<UserManagementProps> = ({
