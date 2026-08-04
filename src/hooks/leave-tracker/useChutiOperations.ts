@@ -12,7 +12,7 @@ import {
   generateUUID,
   removeCacheItems
 } from '@/utils/offlineSync';
-import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError } from '@/utils/dashboardHelpers';
+import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError, getMaxDaysInMonth } from '@/utils/dashboardHelpers';
 import { toast } from 'sonner';
 import { isAdminRole } from '@/utils/permissionService';
 
@@ -177,8 +177,9 @@ export const useChutiOperations = ({
   }, [revisionSignInTime, revisionSignOutTime, revisionLeaveType, revisionDate, profile, globalSettings]);
 
   const handleAddBulkDate = () => {
-    if (bulkDates.length + 1 >= 10) {
-      setMessage({ type: 'error', text: 'You can apply for a maximum of 10 days of leave at once!' });
+    const maxDays = getMaxDaysInMonth(date);
+    if (bulkDates.length + 1 >= maxDays) {
+      setMessage({ type: 'error', text: `You can apply for a maximum of ${maxDays} days of leave at once!` });
       return;
     }
     setBulkDates(prev => [...prev, '']);

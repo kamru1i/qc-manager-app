@@ -18,7 +18,8 @@ import {
   isBreakEligible,
   addBreakToShortLeave,
   applyBreakComment,
-  parseBreakMinutesFromComment
+  parseBreakMinutesFromComment,
+  getMaxDaysInMonth
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 
@@ -333,8 +334,9 @@ export function AddLeave({
   const isFullLeave = leaveType === 'Full Leave';
 
   const handleAddBulkDate = () => {
-    if (bulkDates.length + 1 >= 10) {
-      toast.error('You can enter up to 10 days of leaves at once!');
+    const maxDays = getMaxDaysInMonth(date);
+    if (bulkDates.length + 1 >= maxDays) {
+      toast.error(`You can enter up to ${maxDays} days of leaves at once!`);
       return;
     }
     setBulkDates(prev => [...prev, '']);

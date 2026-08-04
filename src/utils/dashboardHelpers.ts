@@ -983,3 +983,47 @@ export function sortChutiRecordsDescending<T extends { date?: string | null; cre
   });
 }
 
+/**
+ * Calculates total number of days in the running month (e.g. 28, 29, 30, or 31)
+ * based on the provided date string (YYYY-MM-DD or DD-MM-YYYY), or defaults to current month.
+ */
+export function getMaxDaysInMonth(dateString?: string): number {
+  if (!dateString) {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  }
+
+  const cleanDate = dateString.trim();
+  if (!cleanDate) {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  }
+
+  const parts = cleanDate.split(/[-/]/);
+  let year = new Date().getFullYear();
+  let month = new Date().getMonth(); // 0-indexed
+
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+    } else {
+      // DD-MM-YYYY
+      month = parseInt(parts[1], 10) - 1;
+      year = parseInt(parts[2], 10);
+    }
+  }
+
+  if (isNaN(year) || isNaN(month) || month < 0 || month > 11) {
+    const d = new Date(cleanDate);
+    if (!isNaN(d.getTime())) {
+      return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    }
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  }
+
+  return new Date(year, month + 1, 0).getDate();
+}
+

@@ -16,7 +16,8 @@ import {
   adjustShortLeaveForJummah,
   isBreakEligible,
   addBreakToShortLeave,
-  applyBreakComment
+  applyBreakComment,
+  getMaxDaysInMonth
 } from "@/utils/dashboardHelpers";
 import { ChutiRecord, generateUUID } from "@/utils/offlineSync";
 
@@ -306,8 +307,9 @@ export function AdminAddLeaveModal({
   const isFullLeave = leaveType === "Full Leave";
 
   const handleAddBulkDate = () => {
-    if (bulkDates.length + 1 >= 10) {
-      toast.error("You can enter up to 10 days of leaves at once!");
+    const maxDays = getMaxDaysInMonth(date);
+    if (bulkDates.length + 1 >= maxDays) {
+      toast.error(`You can enter up to ${maxDays} days of leaves at once!`);
       return;
     }
     setBulkDates((prev) => [...prev, ""]);
