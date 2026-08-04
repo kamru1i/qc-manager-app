@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, Trash2, Search, Plus } from 'lucide-react';
+import { Edit, Trash2, Search, Plus, Download } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { Profile } from '@/types';
-import { FilterPanel } from '@/components/leave-tracker/FilterPanel';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
@@ -16,13 +15,13 @@ interface LeavesRecordsTableProps {
   allowOvertime?: boolean;
   filterType: string;
   setFilterType: (val: string) => void;
-  filterStartDate: string;
-  setFilterStartDate: (val: string) => void;
-  filterEndDate: string;
-  setFilterEndDate: (val: string) => void;
-  onResetFilters: () => void;
+  filterStartDate?: string;
+  setFilterStartDate?: (val: string) => void;
+  filterEndDate?: string;
+  setFilterEndDate?: (val: string) => void;
+  onResetFilters?: () => void;
   onExportExcel: (filtered: ChutiRecord[], searchTerm: string) => void;
-  onExportPDF: (filtered: ChutiRecord[], searchTerm: string) => void;
+  onExportPDF?: (filtered: ChutiRecord[], searchTerm: string) => void;
   onToggleAdjustment: (r: ChutiRecord) => void;
   onDeleteClick: (r: ChutiRecord) => void;
   onEditClick?: (r: ChutiRecord) => void;
@@ -125,8 +124,18 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     ...availableYears.map((y) => ({ value: y, label: y })),
   ];
 
+  const leaveTypeOptions = useMemo(() => [
+    { value: 'all', label: 'All Categories' },
+    { value: 'Short Leave', label: 'Short Leave' },
+    { value: 'Full Leave', label: 'Full Leave' },
+    ...(allowOvertime ? [{ value: 'Overtime', label: 'Overtime' }] : []),
+  ], [allowOvertime]);
+
   const filteredRecords = React.useMemo(() => {
     const filtered = records.filter((r) => {
+      if (filterType && filterType !== 'all') {
+        if (r.leave_type !== filterType) return false;
+      }
       if (!searchTerm.trim()) return true;
       const term = searchTerm.toLowerCase();
       const commentMatch = (r.comment || '').toLowerCase().includes(term);
@@ -134,7 +143,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       return commentMatch || typeMatch;
     });
     return sortChutiRecordsDescending(filtered);
-  }, [records, searchTerm]);
+  }, [records, filterType, searchTerm]);
 
   const showActionColumn = isSelectionMode && !hideDelete;
 
@@ -295,69 +304,76 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
 
   const handleReset = () => {
     setSearchTerm('');
-    onResetFilters();
+    onResetFilters?.();
   };
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* Filtering Panel */}
-      {!hideFilterPanel && (
-        <FilterPanel
-          filterType={filterType}
-          setFilterType={setFilterType}
-          filterStartDate={filterStartDate}
-          setFilterStartDate={setFilterStartDate}
-          filterEndDate={filterEndDate}
-          setFilterEndDate={setFilterEndDate}
-          selectedYear={selectedYear}
-          allowOvertime={allowOvertime}
-          onExportExcel={() => onExportExcel(filteredRecords, searchTerm)}
-          onExportPDF={() => onExportPDF(filteredRecords, searchTerm)}
-          onResetFilters={handleReset}
-        />
-      )}
-
       {/* Records Table */}
       <div className="bg-theme-card-bg/40 border border-theme-card-bg shadow-2xl rounded-2xl overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-theme-border-input/80 flex flex-col lg:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col">
+        <div className="px-6 py-4 border-b border-theme-border-input/80 flex flex-col md:flex-row justify-between items-center gap-4">
+          {/* Title & Entry Count */}
+          <div className="flex flex-col shrink-0">
             <h3 className="text-base font-bold text-theme-text-primary">{title}</h3>
-            <span className="text-xs text-theme-text-muted mt-0.5">Total: {filteredRecords.length} {filteredRecords.length === 1 ? 'entry' : 'entries'}</span>
-          </div>
-          
-          {/* Quick Search */}
-          <div className="relative w-full lg:max-w-xs">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-text-muted dark:text-theme-text-muted">
-              <Search className="h-4 w-4" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search by comment or leave type..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-10 py-1.5 bg-white border border-theme-border-input rounded-lg text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all dark:bg-theme-page-bg/80 dark:border-theme-border-input dark:text-theme-text-primary dark:placeholder-theme-text-muted/50"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer text-sm font-semibold"
-                title="Clear search"
-              >
-                ✕
-              </button>
-            )}
+            <span className="text-xs text-theme-text-muted mt-0.5">
+              Total: {filteredRecords.length} {filteredRecords.length === 1 ? 'entry' : 'entries'}
+            </span>
           </div>
 
-          {/* Add Leave & Year Select */}
-          <div className="flex gap-2 shrink-0">
+          {/* Controls: Leave Type Filter + Search Box + Excel Export + Add Leave + Year Selector */}
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+            {/* Leave Type Dropdown (Left of Search Box) */}
+            <CustomSelect
+              value={filterType}
+              onChange={setFilterType}
+              options={leaveTypeOptions}
+              className="min-w-[130px]"
+            />
+
+            {/* Quick Search Box */}
+            <div className="relative flex-1 sm:w-64 max-w-xs">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-text-muted">
+                <Search className="h-4 w-4" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by comment or leave type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-1.5 bg-white border border-theme-border-input rounded-lg text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all dark:bg-theme-page-bg/80 dark:border-theme-border-input dark:text-theme-text-primary dark:placeholder-theme-text-muted/50"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer text-xs font-semibold"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Excel Export Button (Right of Search Box) */}
+            <button
+              onClick={() => onExportExcel(filteredRecords, searchTerm)}
+              className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-500 hover:bg-emerald-600/10 dark:hover:bg-emerald-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm shrink-0"
+              title="Excel Export"
+              type="button"
+            >
+              <Download className="h-3.5 w-3.5" /> Excel
+            </button>
+
+            {/* Add Leave Button */}
             {showAddLeave && (
               <button
                 onClick={onAddLeaveClick}
-                className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500 hover:bg-blue-600/10 dark:hover:bg-blue-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
+                className="flex items-center gap-1.5 py-1.5 px-3 bg-transparent border border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500 hover:bg-blue-600/10 dark:hover:bg-blue-500/10 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm shrink-0"
               >
                 <Plus className="h-3.5 w-3.5" /> Add Leave
               </button>
             )}
+
+            {/* Year Selector */}
             {!hideYearSelect && (
               <CustomSelect
                 value={selectedYear}
