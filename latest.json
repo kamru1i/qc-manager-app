@@ -1,8 +1,8 @@
 {
-  "version": "6.9.3",
-  "notes": "### 🩹 v6.9.3 — Patch Release (Sonner Toast System Migration & Bottom Positioning)\n\n- **Sonner Toast Migration**: Replaced react-hot-toast with Sonner across the entire project for unified, accessible notifications.\n- **Bottom-Right Notification Setup**: Positioned the global Toaster at bottom-right in RootLayout for clean, non-intrusive alert delivery across desktop, web, and mobile.",
-  "pub_date": "2026-08-03T15:52:00.000Z",
-  "releaseDate": "August 3, 2026",
+  "version": "6.9.4",
+  "notes": "### 🩹 v6.9.4 — Patch Release (Global Dropdown Keyboard Type-Ahead & Clean TimePicker Standardization)\n\n- **Global Dropdown Keyboard Type-Ahead**: Integrated letter-key search and auto-scrolling across all CustomSelect dropdown menus for fast keyboard filtering.\n- **Strict DD-MM-YYYY Date Format**: Standardized all dates to DD-MM-YYYY across Copy Helper, Leave Tracker, and Reports.\n- **Copy Helper & Records Table Interaction Polish**: Standardized double-click and triple-click edit triggers for dates and times, added reset indicators, removed pencil icons, and set cursor-text on hover.\n- **Dynamic Bulk Leave Days Limit**: Dynamic day limit for bulk leave entries matching exact days in the selected month (28, 29, 30, or 31 days).\n- **Custom TimeInput & Clock Icon Removal**: Built reusable `<TimeInput>` with 12-hour AM/PM formatting and top-right BD time badges, removing side clock icons globally across Leave Tracker, Settings, Profile Settings, and Table inline edits.\n- **Compact Inline Time Editor**: Streamlined inline time editing box width in Daily/Monthly Entry tables (w-[82px]).",
+  "pub_date": "2026-08-04T19:10:00.000Z",
+  "releaseDate": "August 4, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {

@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.4** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,16 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.9.3 — Patch Release (Sonner Toast System Migration & Bottom Positioning) (Current)
+### 🩹 v6.9.4 — Patch Release (Global Dropdown Keyboard Type-Ahead & Clean TimePicker Standardization) (Current)
+
+- **Global Dropdown Keyboard Type-Ahead**: Integrated letter-key search and auto-scrolling across all CustomSelect dropdown menus for fast keyboard filtering.
+- **Strict DD-MM-YYYY Date Format**: Standardized all dates to DD-MM-YYYY across Copy Helper, Leave Tracker, and Reports.
+- **Copy Helper & Records Table Interaction Polish**: Standardized double-click and triple-click edit triggers for dates and times, added reset indicators, removed pencil icons, and set cursor-text on hover.
+- **Dynamic Bulk Leave Days Limit**: Dynamic day limit for bulk leave entries matching exact days in the selected month (28, 29, 30, or 31 days).
+- **Custom TimeInput & Clock Icon Removal**: Built reusable `<TimeInput>` with 12-hour AM/PM formatting and top-right BD time badges, removing side clock icons globally across Leave Tracker, Settings, Profile Settings, and Table inline edits.
+- **Compact Inline Time Editor**: Streamlined inline time editing box width in Daily/Monthly Entry tables (`w-[82px]`).
+
+### 🩹 v6.9.3 — Patch Release (Sonner Toast System Migration & Bottom Positioning)
 
 - **Sonner Toast Migration**: Replaced react-hot-toast with Sonner across the entire project for unified, accessible notifications.
 - **Bottom-Right Notification Setup**: Positioned the global Toaster at bottom-right in RootLayout for clean, non-intrusive alert delivery across desktop, web, and mobile.
