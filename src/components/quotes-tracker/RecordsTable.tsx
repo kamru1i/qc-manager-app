@@ -226,6 +226,17 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
             ? updated.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "").trim()
             : origCleanName;
 
+        const origDate = new Date(originalRecord.submitted_at);
+        const updatedDate = updated.submitted_at ? new Date(updated.submitted_at) : null;
+        const submittedAtMatches = !updatedDate || (
+          !isNaN(origDate.getTime()) && !isNaN(updatedDate.getTime()) &&
+          origDate.getFullYear() === updatedDate.getFullYear() &&
+          origDate.getMonth() === updatedDate.getMonth() &&
+          origDate.getDate() === updatedDate.getDate() &&
+          origDate.getHours() === updatedDate.getHours() &&
+          origDate.getMinutes() === updatedDate.getMinutes()
+        );
+
         const matchesOriginal =
           (updated.file_name === undefined ||
             updatedCleanName === origCleanName) &&
@@ -236,7 +247,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
           (updated.file_type === undefined ||
             updated.file_type === originalRecord.file_type) &&
           (updated.submitted_at === undefined ||
-            updated.submitted_at === originalRecord.submitted_at);
+            submittedAtMatches);
 
         if (matchesOriginal) {
           const next = { ...prev };
