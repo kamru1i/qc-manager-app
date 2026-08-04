@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.4** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.5** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.9.4 — Patch Release (Global Dropdown Keyboard Type-Ahead & Clean TimePicker Standardization) (Current)
+### 🩹 v6.9.5 — Patch Release (Dropdown Flicker Elimination & Streamlined Leave History Controls) (Current)
+
+- **Dropdown Portal Positioning & Flicker Elimination**: Resolved split-second unpositioned layout shifts and dual-scroll jumps when opening `CustomSelect` dropdown menus for the first time across Quick Import queue and all dropdowns.
+- **Copy Helper Hyphenated Date Parsing Fix**: Fixed `parseDdMmYyyyToTargetStr` in Copy Helper to seamlessly support `DD-MM-YYYY` hyphens, restoring real submitted records display in Boxes 4, 5, and 6.
+- **Strict Date Element Editing Isolation**: Restricted double-click date editing in Copy Helper strictly to the date string itself (`soldDate`), preventing accidental edit triggers on label text.
+- **Streamlined Leave History UI & Excel Export Repositioning**: Embedded `Leave Type` dropdown filter on the left of the search box and `Excel` export button on the right of the search box in Leave History table, completely removing the redundant top filter panel, date inputs, and PDF export.
+- **Title-Adjacent `+ Add Leave` Button**: Positioned the `+ Add Leave` button directly beside the user leave records title for intuitive access.
+
+### 🩹 v6.9.4 — Patch Release (Global Dropdown Keyboard Type-Ahead & Clean TimePicker Standardization)
 
 - **Global Dropdown Keyboard Type-Ahead**: Integrated letter-key search and auto-scrolling across all CustomSelect dropdown menus for fast keyboard filtering.
 - **Strict DD-MM-YYYY Date Format**: Standardized all dates to DD-MM-YYYY across Copy Helper, Leave Tracker, and Reports.
