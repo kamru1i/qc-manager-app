@@ -284,7 +284,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
 
   const parseDdMmYyyyToTargetStr = useCallback((dStr: string) => {
     if (!dStr) return new Date().toDateString();
-    const parts = dStr.split("/");
+    const parts = dStr.trim().split(/[\/-]/);
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;
