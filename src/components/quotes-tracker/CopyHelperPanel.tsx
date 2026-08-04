@@ -125,13 +125,17 @@ const EditableDateHeader: React.FC<EditableDateHeaderProps> = ({
           </div>
         </div>
       ) : (
-        <div
-          className="flex items-center gap-1.5 cursor-text select-none"
-          onDoubleClick={() => setIsEditing(true)}
-          title="Double-click to change date"
-        >
+        <div className="flex items-center gap-1.5 select-none">
           <span className="text-theme-text-primary font-bold text-xs">
-            {prefix} | Date: {soldDate} {suffix || ''}
+            {prefix} | Date:{" "}
+            <span
+              className="cursor-text font-bold hover:text-blue-400 transition-colors"
+              onDoubleClick={() => setIsEditing(true)}
+              title="Double-click to change date"
+            >
+              {soldDate}
+            </span>{" "}
+            {suffix || ""}
           </span>
           {isChanged && (
             <button
