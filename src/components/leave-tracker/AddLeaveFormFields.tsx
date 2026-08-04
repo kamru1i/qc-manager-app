@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { TimeInput } from "@/components/common/TimeInput";
 import { DateInput } from "@/components/common/DateInput";
 import { ChutiRecord } from "@/utils/offlineSync";
 import {
@@ -666,44 +667,18 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
       {!isFullLeave && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="flex justify-between items-center">
-                <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
-                  Sign-in
-                </label>
-                {signInTime && (
-                  <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                    {formatTimeToAMPM(signInTime)}
-                  </span>
-                )}
-              </div>
-              <input
-                type="time"
-                required
-                value={signInTime}
-                onChange={(e) => setSignInTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <div className="flex justify-between items-center">
-                <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
-                  Sign-out
-                </label>
-                {signOutTime && (
-                  <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                    {formatTimeToAMPM(signOutTime)}
-                  </span>
-                )}
-              </div>
-              <input
-                type="time"
-                required
-                value={signOutTime}
-                onChange={(e) => setSignOutTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <TimeInput
+              label="Sign-in"
+              required
+              value={signInTime}
+              onChange={setSignInTime}
+            />
+            <TimeInput
+              label="Sign-out"
+              required
+              value={signOutTime}
+              onChange={setSignOutTime}
+            />
           </div>
 
           {/* Jummah Prayer Adjustment Toggle (Short Leave, Fridays only) */}

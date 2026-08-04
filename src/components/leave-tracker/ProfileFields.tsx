@@ -1,4 +1,4 @@
-import React from 'react';
+import { TimeInput } from '@/components/common/TimeInput';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { formatTimeToAMPM } from '@/utils/dashboardHelpers';
 import { WORKING_HOURS_OPTIONS } from '@/utils/workingHours';
@@ -102,46 +102,20 @@ export const ProfileFields: React.FC<ProfileFieldsProps> = ({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <div className="flex justify-between items-center">
-            <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
-              Sign-In
-            </label>
-            {signInTime && (
-              <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                {formatTimeToAMPM(signInTime)}
-              </span>
-            )}
-          </div>
-          <input
-            type="time"
-            required
-            value={signInTime}
-            onChange={(e) => setSignInTime(e.target.value)}
-            disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        </div>
-        <div>
-          <div className="flex justify-between items-center">
-            <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
-              Sign-Out
-            </label>
-            {signOutTime && (
-              <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                {formatTimeToAMPM(signOutTime)}
-              </span>
-            )}
-          </div>
-          <input
-            type="time"
-            required
-            value={signOutTime}
-            onChange={(e) => setSignOutTime(e.target.value)}
-            disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        </div>
+        <TimeInput
+          label="Sign-In"
+          required
+          disabled={disabled}
+          value={signInTime}
+          onChange={setSignInTime}
+        />
+        <TimeInput
+          label="Sign-Out"
+          required
+          disabled={disabled}
+          value={signOutTime}
+          onChange={setSignOutTime}
+        />
       </div>
     </>
   );

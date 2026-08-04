@@ -1,6 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { Check, Settings, AlertTriangle, UserCheck } from "lucide-react";
+import { TimeInput } from "@/components/common/TimeInput";
 import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
 import { Profile } from "@/types";
@@ -435,51 +436,39 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
-                Sign-In
-              </label>
-              {signInTime && (
-                <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                  {formatTimeToAMPM(signInTime)}
-                </span>
-              )}
-            </div>
             {canEditShift ? (
-              <input
-                type="time"
+              <TimeInput
+                label="Sign-In"
                 value={signInTime}
-                onChange={(e) => setSignInTime?.(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
+                onChange={(val) => setSignInTime?.(val)}
               />
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
-                {signInTime ? formatTimeToAMPM(signInTime) : "—"}
+              <div>
+                <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
+                  Sign-In
+                </label>
+                <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
+                  {signInTime ? formatTimeToAMPM(signInTime) : "—"}
+                </div>
               </div>
             )}
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
-                Sign-Out Time
-              </label>
-              {signOutTime && (
-                <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                  {formatTimeToAMPM(signOutTime)}
-                </span>
-              )}
-            </div>
             {canEditShift ? (
-              <input
-                type="time"
+              <TimeInput
+                label="Sign-Out"
                 value={signOutTime}
-                onChange={(e) => setSignOutTime?.(e.target.value)}
-                className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50"
+                onChange={(val) => setSignOutTime?.(val)}
               />
             ) : (
-              <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
-                {signOutTime ? formatTimeToAMPM(signOutTime) : "—"}
+              <div>
+                <label className="block text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
+                  Sign-Out
+                </label>
+                <div className="h-[36px] flex items-center px-3 bg-theme-page-bg/30 border border-theme-border-muted/40 rounded-lg text-theme-text-secondary text-xs font-semibold">
+                  {signOutTime ? formatTimeToAMPM(signOutTime) : "—"}
+                </div>
               </div>
             )}
           </div>

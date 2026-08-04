@@ -54,17 +54,36 @@ export const formatDateToYYYYMMDD = (val: string | null | undefined): string => 
 // Helper function to format ISO timestamp to 12-hour AM/PM format (e.g. 03:04 PM)
 export const formatTimeToAMPM = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '-';
-  try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  } catch {
-    return dateStr;
+  const str = String(dateStr).trim();
+  if (!str) return '-';
+
+  // 1. Check if it is a HH:mm or HH:mm:ss string e.g. "13:00" or "22:30"
+  const hhmmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (hhmmMatch) {
+    let hours = parseInt(hhmmMatch[1], 10);
+    const minutes = hhmmMatch[2];
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const strHours = String(hours).padStart(2, '0');
+    return `${strHours}:${minutes} ${ampm}`;
   }
+
+  // 2. Fallback to ISO timestamp Date parsing
+  try {
+    const d = new Date(str.includes('T') ? str : `1970-01-01T${str}`);
+    if (!isNaN(d.getTime())) {
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const strHours = String(hours).padStart(2, '0');
+      return `${strHours}:${minutes} ${ampm}`;
+    }
+  } catch {}
+
+  return str;
 };
 
 // Helper function to format timestamp/time string to 24-hour HH:MM format for HTML time inputs

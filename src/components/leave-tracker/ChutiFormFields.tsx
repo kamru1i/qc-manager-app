@@ -1,4 +1,4 @@
-import React from 'react';
+import { TimeInput } from '@/components/common/TimeInput';
 import { DateInput } from '@/components/common/DateInput';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { formatTimeToAMPM } from '@/utils/dashboardHelpers';
@@ -91,44 +91,18 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
       {isShortOrOvertime && (
         <>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="flex justify-between items-center">
-                <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
-                  Start Time
-                </label>
-                {signInTime && (
-                  <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                    {formatTimeToAMPM(signInTime)}
-                  </span>
-                )}
-              </div>
-              <input
-                type="time"
-                required
-                value={signInTime}
-                onChange={(e) => setSignInTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <div className="flex justify-between items-center">
-                <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider">
-                  End Time
-                </label>
-                {signOutTime && (
-                  <span className="text-[10px] font-bold text-blue-450 tracking-wider">
-                    {formatTimeToAMPM(signOutTime)}
-                  </span>
-                )}
-              </div>
-              <input
-                type="time"
-                required
-                value={signOutTime}
-                onChange={(e) => setSignOutTime(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <TimeInput
+              label="Start Time"
+              required
+              value={signInTime}
+              onChange={setSignInTime}
+            />
+            <TimeInput
+              label="End Time"
+              required
+              value={signOutTime}
+              onChange={setSignOutTime}
+            />
           </div>
 
           <div>

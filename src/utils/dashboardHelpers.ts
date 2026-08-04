@@ -577,17 +577,38 @@ export const formatWorkingHours = (hours: number | string) => {
 };
 
 // Time format to AM/PM style (e.g. 07:25 PM)
-export const formatTimeToAMPM = (timeStr: string | null) => {
+export const formatTimeToAMPM = (timeStr: string | null | undefined): string => {
   if (!timeStr) return '-';
-  const parts = timeStr.split(':');
-  if (parts.length < 2) return timeStr;
-  let hours = parseInt(parts[0], 10);
-  const minutes = parts[1];
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12; // 0 hour should be 12
-  const formattedHours = String(hours).padStart(2, '0');
-  return `${formattedHours}:${minutes} ${ampm}`;
+  const str = String(timeStr).trim();
+  if (!str) return '-';
+
+  // 1. Check if it is a HH:mm or HH:mm:ss string e.g. "13:00" or "22:30"
+  const hhmmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (hhmmMatch) {
+    let hours = parseInt(hhmmMatch[1], 10);
+    const minutes = hhmmMatch[2];
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const strHours = String(hours).padStart(2, '0');
+    return `${strHours}:${minutes} ${ampm}`;
+  }
+
+  // 2. Fallback to ISO timestamp Date parsing
+  try {
+    const d = new Date(str.includes('T') ? str : `1970-01-01T${str}`);
+    if (!isNaN(d.getTime())) {
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const strHours = String(hours).padStart(2, '0');
+      return `${strHours}:${minutes} ${ampm}`;
+    }
+  } catch {}
+
+  return str;
 };
 
 export const getDetailedLeaveLabel = (rec: { leave_type: string; reserve_holiday?: string | null }) => {
