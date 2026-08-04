@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 interface Option {
@@ -18,6 +18,8 @@ interface CustomSelectProps {
   dropUp?: boolean;
 }
 
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
 export const CustomSelect: React.FC<CustomSelectProps> = ({
   value,
   onChange,
@@ -32,7 +34,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [portalStyles, setPortalStyles] = useState<React.CSSProperties>({});
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -68,6 +70,12 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     setPortalStyles(style);
   }, [dropUp]);
 
+  useIsomorphicLayoutEffect(() => {
+    if (isOpen) {
+      updatePosition();
+    }
+  }, [isOpen, updatePosition]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
@@ -81,7 +89,6 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
       }
     }
     if (isOpen) {
-      updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
@@ -111,10 +118,23 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     }
   }, [isOpen, options, value, getActiveOptionIndex]);
 
-  // Auto-scroll highlighted item into view
+  // Auto-scroll highlighted item inside dropdown container WITHOUT triggering window/page scroll
   useEffect(() => {
-    if (isOpen && itemRefs.current[highlightedIndex]) {
-      itemRefs.current[highlightedIndex]?.scrollIntoView({ block: 'nearest' });
+    if (isOpen && dropdownRef.current && itemRefs.current[highlightedIndex]) {
+      const container = dropdownRef.current;
+      const item = itemRefs.current[highlightedIndex];
+      if (container && item) {
+        const containerTop = container.scrollTop;
+        const containerBottom = containerTop + container.clientHeight;
+        const itemTop = item.offsetTop;
+        const itemBottom = itemTop + item.offsetHeight;
+
+        if (itemTop < containerTop) {
+          container.scrollTop = itemTop;
+        } else if (itemBottom > containerBottom) {
+          container.scrollTop = itemBottom - container.clientHeight;
+        }
+      }
     }
   }, [isOpen, highlightedIndex]);
 
@@ -147,6 +167,14 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     }
   }, [options, onChange]);
 
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isOpen) {
+      updatePosition();
+    }
+    setIsOpen((prev) => !prev);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (disabled) return;
 
@@ -164,6 +192,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     if (!isOpen) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        updatePosition();
         setIsOpen(true);
       }
       return;
@@ -245,7 +274,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={buttonClassName || "w-full flex items-center justify-between gap-2 bg-theme-card-bg border border-theme-border-input text-theme-text-primary rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed text-left min-h-[32px] select-none"}
       >
         <span className="truncate">{activeOption ? activeOption.label : value}</span>
