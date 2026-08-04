@@ -35,6 +35,9 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchQueryRef = useRef<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -91,7 +94,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   }, [isOpen, updatePosition]);
 
   // Find matching option index (with float fallback for numeric strings like "6" vs "6.0")
-  const getActiveOptionIndex = (opts: Option[], val: string) => {
+  const getActiveOptionIndex = useCallback((opts: Option[], val: string) => {
     let idx = opts.findIndex((o) => o.value === val);
     if (idx >= 0) return idx;
     const numVal = parseFloat(val);
@@ -99,20 +102,64 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
       idx = opts.findIndex((o) => parseFloat(o.value) === numVal);
     }
     return idx;
-  };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       const activeIdx = getActiveOptionIndex(options, value);
       setHighlightedIndex(activeIdx >= 0 ? activeIdx : 0);
     }
-  }, [isOpen, options, value]);
+  }, [isOpen, options, value, getActiveOptionIndex]);
+
+  // Auto-scroll highlighted item into view
+  useEffect(() => {
+    if (isOpen && itemRefs.current[highlightedIndex]) {
+      itemRefs.current[highlightedIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [isOpen, highlightedIndex]);
 
   const activeOptionIdx = getActiveOptionIndex(options, value);
   const activeOption = activeOptionIdx >= 0 ? options[activeOptionIdx] : options[0];
 
+  const handleTypeAhead = useCallback((char: string, isMenuOpen: boolean) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchQueryRef.current += char.toLowerCase();
+    const query = searchQueryRef.current;
+
+    searchTimeoutRef.current = setTimeout(() => {
+      searchQueryRef.current = '';
+    }, 1000);
+
+    // Find first matching option starting with query
+    const matchIdx = options.findIndex((opt) =>
+      opt.label.toLowerCase().startsWith(query) || opt.value.toLowerCase().startsWith(query)
+    );
+
+    if (matchIdx !== -1) {
+      if (isMenuOpen) {
+        setHighlightedIndex(matchIdx);
+      } else {
+        onChange(options[matchIdx].value);
+      }
+    }
+  }, [options, onChange]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (disabled) return;
+
+    // Handle single character printable keys for type-ahead jump/filter
+    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (e.key === ' ' && !searchQueryRef.current) {
+        // Allow space to open or toggle when not typing query
+      } else {
+        e.preventDefault();
+        handleTypeAhead(e.key, isOpen);
+        return;
+      }
+    }
 
     if (!isOpen) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
@@ -165,6 +212,9 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         return (
           <button
             key={option.value}
+            ref={(el) => {
+              itemRefs.current[idx] = el;
+            }}
             type="button"
             onClick={() => {
               onChange(option.value);
