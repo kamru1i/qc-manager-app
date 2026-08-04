@@ -493,7 +493,7 @@ export default function Dashboard({
 
   const targetDateStr = useMemo(() => {
     if (!soldDate) return new Date().toDateString();
-    const parts = soldDate.split('/');
+    const parts = soldDate.split(/[\/-]/);
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;

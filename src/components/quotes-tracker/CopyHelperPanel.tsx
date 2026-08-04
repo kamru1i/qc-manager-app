@@ -280,7 +280,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${day}-${month}-${year}`;
   };
 
   const [box4Date, setBox4Date] = useState<string>(soldDate || getInitialDdMmYyyy());
