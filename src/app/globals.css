@@ -324,15 +324,13 @@ body, header, main, section, table, tr, td, th, button, input, select, textarea,
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, text-decoration-color 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
 }
 
-/* Make date and time picker calendar/clock icons inverted only in dark mode */
+/* Make date and time picker calendar icons inverted only in dark mode */
 .dark input[type="date"]::-webkit-calendar-picker-indicator,
-.dark input[type="time"]::-webkit-calendar-picker-indicator,
 .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.7;
@@ -340,9 +338,17 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator:hover,
-input[type="time"]::-webkit-calendar-picker-indicator:hover,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
+}
+
+/* Hide browser clock icon on time inputs globally */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Light mode overrides for text-white headings so they are readable on light background */

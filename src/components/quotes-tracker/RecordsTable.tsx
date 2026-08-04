@@ -907,7 +907,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                             try { e.currentTarget.showPicker?.(); } catch {}
                           }}
                           autoFocus
-                          className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-[11px] w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mt-0.5 cursor-pointer"
+                          className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-[11px] w-[82px] max-w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mt-0.5 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
                         />
                       ) : (
                         <span
