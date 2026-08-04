@@ -125,11 +125,15 @@ const EditableDateHeader: React.FC<EditableDateHeaderProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setIsEditing(true)}>
+        <div
+          className="flex items-center gap-1.5 cursor-text select-none"
+          onDoubleClick={() => setIsEditing(true)}
+          title="Double-click to change date"
+        >
           <span className="text-theme-text-primary font-bold text-xs">
             {prefix} | Date: {soldDate} {suffix || ''}
           </span>
-          {isChanged ? (
+          {isChanged && (
             <button
               type="button"
               onClick={(e) => {
@@ -140,18 +144,6 @@ const EditableDateHeader: React.FC<EditableDateHeaderProps> = ({
               title="Reset to current date"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-              className="opacity-0 group-hover/date:opacity-100 p-0.5 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
-              title="Change report date"
-            >
-              <Pencil className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
@@ -528,7 +520,7 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-1.5 justify-end">
-                {soldDate !== getTodayDdMmYyyy() ? (
+                {soldDate !== getTodayDdMmYyyy() && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -540,19 +532,11 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
                   >
                     <RotateCcw className="h-3 w-3" />
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setEditingSessionField("soldDate")}
-                    className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
-                    title="Edit Sold Date"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </button>
                 )}
                 <span
-                  className="text-theme-text-primary font-bold text-right cursor-pointer"
-                  onClick={() => setEditingSessionField("soldDate")}
+                  className="text-theme-text-primary font-bold text-right cursor-text select-none"
+                  onDoubleClick={() => setEditingSessionField("soldDate")}
+                  title="Double-click to edit date"
                 >
                   {soldDate}
                 </span>

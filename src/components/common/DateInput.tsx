@@ -190,7 +190,7 @@ export const DateInput: React.FC<DateInputProps> = ({
               // Ignore silent picker failures
             }
           }}
-          className={`block w-full px-2 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono tracking-wide placeholder-theme-text-muted cursor-pointer ${className}`}
+          className={`block w-full px-2 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono tracking-wide placeholder-theme-text-muted cursor-text ${className}`}
         />
         <input
           type="date"
