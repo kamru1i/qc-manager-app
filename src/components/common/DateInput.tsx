@@ -10,6 +10,8 @@ interface DateInputProps {
   className?: string;
   placeholder?: string;
   onErrorChange?: (hasError: boolean) => void;
+  onEscape?: () => void;
+  autoFocus?: boolean;
 }
 
 export const DateInput: React.FC<DateInputProps> = ({
@@ -22,6 +24,8 @@ export const DateInput: React.FC<DateInputProps> = ({
   className = '',
   placeholder = 'DD-MM-YYYY',
   onErrorChange,
+  onEscape,
+  autoFocus = false,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -167,11 +171,17 @@ export const DateInput: React.FC<DateInputProps> = ({
       <div className="relative w-full">
         <input
           type="text"
+          autoFocus={autoFocus}
           required={required}
           disabled={disabled}
           placeholder={placeholder}
           value={inputValue}
           onChange={handleTextChange}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && onEscape) {
+              onEscape();
+            }
+          }}
           onClick={() => {
             if (disabled) return;
             try {
@@ -180,7 +190,7 @@ export const DateInput: React.FC<DateInputProps> = ({
               // Ignore silent picker failures
             }
           }}
-          className={`block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wider placeholder-theme-text-muted cursor-pointer ${className}`}
+          className={`block w-full px-2 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono tracking-wide placeholder-theme-text-muted cursor-pointer ${className}`}
         />
         <input
           type="date"

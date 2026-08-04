@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { ScrollText, ArrowLeft, Copy, Check, Pencil, Globe } from "lucide-react";
+import { ScrollText, ArrowLeft, Copy, Check, Pencil, Globe, RotateCcw } from "lucide-react";
 import { RecordItem, Profile } from "@/types";
 import { AdminSalesSummary, getTodaySalesRecords, calculateAdminSalesSummary } from "@/utils/adminSalesSummary";
 import { isFeatureEnabled } from "@/utils/permissionService";
 import { DEFAULT_VPN_LIST } from "@/utils/dashboardHelpers";
 import { Modal } from "@/components/common/Modal";
+import { DateInput } from "@/components/common/DateInput";
 
 // ─── Reusable card chrome ────────────────────────────────────────────
 
@@ -73,6 +74,14 @@ interface EditableDateHeaderProps {
   setSoldDate: (val: string) => void;
 }
 
+const getTodayDdMmYyyy = (): string => {
+  const d = new Date();
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 const EditableDateHeader: React.FC<EditableDateHeaderProps> = ({
   prefix,
   suffix,
@@ -80,56 +89,71 @@ const EditableDateHeader: React.FC<EditableDateHeaderProps> = ({
   setSoldDate,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const todayDate = useMemo(() => getTodayDdMmYyyy(), []);
+  const isChanged = soldDate !== todayDate;
 
-  // Convert DD/MM/YYYY string to YYYY-MM-DD for native date input
+  // Convert DD-MM-YYYY or DD/MM/YYYY string to YYYY-MM-DD for DateInput
   const isoDate = useMemo(() => {
-    const parts = soldDate.split('/');
+    if (!soldDate) return '';
+    const parts = soldDate.split(/[\/-]/);
     if (parts.length === 3) {
+      if (parts[0].length === 4) return soldDate;
       const [day, month, year] = parts;
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
     return '';
   }, [soldDate]);
 
-  const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val) {
-      const [year, month, day] = val.split('-');
-      setSoldDate(`${day}-${month}-${year}`);
-    }
-    setIsEditing(false);
-  };
-
   return (
     <div className="flex items-center gap-1.5 group/date select-none">
       {isEditing ? (
         <div className="flex items-center gap-2">
           <span className="text-theme-text-primary font-bold text-xs">{prefix} | Date:</span>
-          <input
-            type="date"
-            value={isoDate}
-            onChange={handleDateInputChange}
-            onBlur={() => setIsEditing(false)}
-            autoFocus
-            className="px-2 py-0.5 bg-theme-page-bg border border-blue-500 rounded-md text-xs text-theme-text-primary focus:outline-none cursor-pointer font-sans"
-          />
+          <div className="w-[105px]">
+            <DateInput
+              autoFocus
+              onEscape={() => setIsEditing(false)}
+              value={isoDate}
+              onChange={(val) => {
+                if (val) {
+                  const [year, month, day] = val.split('-');
+                  setSoldDate(`${day}-${month}-${year}`);
+                }
+                setIsEditing(false);
+              }}
+            />
+          </div>
         </div>
       ) : (
         <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setIsEditing(true)}>
           <span className="text-theme-text-primary font-bold text-xs">
             {prefix} | Date: {soldDate} {suffix || ''}
           </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            className="opacity-0 group-hover/date:opacity-100 p-0.5 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
-            title="Change report date"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
+          {isChanged ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSoldDate(todayDate);
+              }}
+              className="p-0.5 text-blue-400 hover:text-blue-300 rounded transition-all cursor-pointer shrink-0"
+              title="Reset to current date"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              className="opacity-0 group-hover/date:opacity-100 p-0.5 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
+              title="Change report date"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -481,11 +505,57 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
           <div className="flex items-center justify-between group/field py-0.5">
             <span className="text-theme-text-muted font-medium">Sold Date:</span>
             {editingSessionField === "soldDate" ? (
-              <input type="date" value={(() => { const parts = soldDate.split(/[\/-]/); return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}` : ''; })()} onChange={(e) => { const val = e.target.value; if (val) { const [year, month, day] = val.split('-'); setSoldDate(`${day}-${month}-${year}`); } setEditingSessionField(null); }} onBlur={() => setEditingSessionField(null)} autoFocus className="w-32 px-2 py-1 bg-theme-page-bg border border-blue-500 rounded-lg text-theme-text-primary text-right text-xs focus:outline-none cursor-pointer" />
+              <div className="w-[105px]">
+                <DateInput
+                  autoFocus
+                  onEscape={() => setEditingSessionField(null)}
+                  value={(() => {
+                    const parts = soldDate.split(/[\/-]/);
+                    if (parts.length === 3) {
+                      if (parts[0].length === 4) return soldDate;
+                      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    }
+                    return '';
+                  })()}
+                  onChange={(val) => {
+                    if (val) {
+                      const [year, month, day] = val.split('-');
+                      setSoldDate(`${day}-${month}-${year}`);
+                    }
+                    setEditingSessionField(null);
+                  }}
+                />
+              </div>
             ) : (
               <div className="flex items-center gap-1.5 justify-end">
-                <button type="button" onClick={() => setEditingSessionField("soldDate")} className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0" title="Edit Sold Date"><Pencil className="h-3 w-3" /></button>
-                <span className="text-theme-text-primary font-bold text-right">{soldDate}</span>
+                {soldDate !== getTodayDdMmYyyy() ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSoldDate(getTodayDdMmYyyy());
+                    }}
+                    className="p-1 text-blue-400 hover:text-blue-300 rounded transition-all cursor-pointer shrink-0"
+                    title="Reset to current date"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setEditingSessionField("soldDate")}
+                    className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0"
+                    title="Edit Sold Date"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                )}
+                <span
+                  className="text-theme-text-primary font-bold text-right cursor-pointer"
+                  onClick={() => setEditingSessionField("soldDate")}
+                >
+                  {soldDate}
+                </span>
               </div>
             )}
           </div>
