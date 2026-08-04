@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Calendar } from 'lucide-react';
 
 interface DateInputProps {
   value: string; // YYYY-MM-DD
@@ -165,7 +164,7 @@ export const DateInput: React.FC<DateInputProps> = ({
 
   return (
     <div className="w-full flex flex-col gap-1">
-      <div className="flex gap-2 w-full relative">
+      <div className="relative w-full">
         <input
           type="text"
           required={required}
@@ -173,44 +172,26 @@ export const DateInput: React.FC<DateInputProps> = ({
           placeholder={placeholder}
           value={inputValue}
           onChange={handleTextChange}
-          className={`block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wider placeholder-theme-text-muted ${className}`}
+          onClick={() => {
+            if (disabled) return;
+            try {
+              datePickerRef.current?.showPicker?.();
+            } catch (err) {
+              // Ignore silent picker failures
+            }
+          }}
+          className={`block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wider placeholder-theme-text-muted cursor-pointer ${className}`}
         />
-        <div className="relative shrink-0 flex items-center justify-center">
-          {/* Hidden native picker covering the calendar button */}
-          <input
-            type="date"
-            ref={datePickerRef}
-            disabled={disabled}
-            min={min}
-            max={max}
-            value={value || ''}
-            onChange={handleNativeChange}
-            onClick={(e) => {
-              e.stopPropagation();
-              try {
-                (e.target as HTMLInputElement).showPicker?.();
-              } catch (err) {
-                // Ignore silent picker failures
-              }
-            }}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 disabled:cursor-not-allowed"
-          />
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => {
-              try {
-                datePickerRef.current?.showPicker?.();
-              } catch (err) {
-                // Ignore silent picker failures
-              }
-            }}
-            className="p-2 bg-theme-card-bg hover:bg-theme-border-input text-theme-text-secondary border border-theme-border-active rounded-lg cursor-pointer transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Open calendar"
-          >
-            <Calendar className="h-4 w-4" />
-          </button>
-        </div>
+        <input
+          type="date"
+          ref={datePickerRef}
+          disabled={disabled}
+          min={min}
+          max={max}
+          value={value || ''}
+          onChange={handleNativeChange}
+          className="absolute w-px h-px opacity-0 pointer-events-none select-none"
+        />
       </div>
       {errorMsg && (
         <span className="text-[10px] text-red-500 font-semibold select-none leading-none animate-fade-in pl-1">

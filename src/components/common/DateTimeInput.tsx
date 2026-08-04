@@ -79,19 +79,8 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
         value={displayValue}
         onClick={handleOpenPicker}
         placeholder={placeholder}
-        className="w-full h-9 px-3 pr-9 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500/50 cursor-pointer font-mono select-none"
+        className="w-full h-9 px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500/50 cursor-pointer font-mono select-none"
       />
-
-      {/* Calendar Icon Button */}
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={handleOpenPicker}
-        className="absolute right-2.5 p-0.5 text-theme-text-muted hover:text-blue-400 transition-colors cursor-pointer disabled:opacity-40"
-        title="Select Date & Time"
-      >
-        <Calendar className="h-4 w-4" />
-      </button>
 
       {/* Hidden Native Picker Input */}
       <input

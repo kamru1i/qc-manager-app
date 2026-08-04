@@ -298,15 +298,16 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
               <label className="flex text-xs font-semibold text-theme-text-secondary mb-1.5 items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-blue-500" /> Target Date
               </label>
-              <div className="flex gap-1.5 items-center">
+              <div className="relative w-full">
                 <input
                   type="text"
                   required
                   placeholder="DD-MM-YYYY"
                   value={modalDateInputVal}
                   onChange={(e) => handleModalDateInputChange(e.target.value)}
+                  onClick={handleOpenCustomDatePicker}
                   maxLength={10}
-                  className="block w-full px-3.5 py-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10.5"
+                  className="block w-full px-3.5 py-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10.5 cursor-pointer"
                 />
                 <input
                   type="date"
@@ -316,14 +317,6 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
                   onChange={(e) => setCustomDate(e.target.value)}
                   className="absolute w-px h-px opacity-0 pointer-events-none select-none"
                 />
-                <button
-                  type="button"
-                  onClick={handleOpenCustomDatePicker}
-                  className="p-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-xl transition-all duration-200 flex items-center justify-center shrink-0 w-10.5 h-10.5 cursor-pointer"
-                  title="Open Calendar"
-                >
-                  <Calendar className="h-4.5 w-4.5" />
-                </button>
               </div>
             </div>
 
