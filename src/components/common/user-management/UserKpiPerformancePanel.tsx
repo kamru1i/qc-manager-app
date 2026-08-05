@@ -1477,19 +1477,7 @@ export const UserKpiPerformancePanel: React.FC<
       toast.success("KPI sheet exported to Excel format!");
     }
 
-    if (currentUser?.id) {
-      try {
-        await supabase.from('audit_logs').insert({
-          actor_id: currentUser.id,
-          actor_codename: currentUser.username || 'SYSTEM',
-          action_type: 'EXPORT_EXCEL',
-          target_id: targetStaff.id,
-          details: `Exported KPI performance sheet for '${targetStaff.username}' (${fileName})`,
-        });
-      } catch (err) {
-        console.error('Failed to log KPI export:', err);
-      }
-    }
+
   };
 
   // Weightage adjustment triggers

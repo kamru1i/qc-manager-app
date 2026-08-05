@@ -283,15 +283,6 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         onClick: () => onQuotesTabChange?.("all_report" as any),
       });
     }
-  } else if (activeTab === "audit_logs") {
-    subTabs.push({
-      id: "activity",
-      label: "System Audit Logs",
-      icon: ShieldCheck,
-      iconColor: "text-orange-400",
-      active: true,
-      onClick: () => {},
-    });
   }
 
 const getSubTabColors = (id: string): { class: string; hex: string } => {

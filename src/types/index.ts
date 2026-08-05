@@ -118,15 +118,7 @@ export interface RecordItem {
   } | null;
 }
 
-export interface AuditLogItem {
-  id: string;
-  actor_id: string | null;
-  actor_codename: string;
-  action_type: string;
-  target_id: string | null;
-  details: string;
-  created_at: string;
-}
+
 
 export interface ComplianceRule {
   id: string;

@@ -111,10 +111,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Synchronize codename across all related databases/tables for data integrity
-    const [recordsRes, todosRes, auditLogsRes] = await Promise.all([
+    const [recordsRes, todosRes] = await Promise.all([
       supabaseServer.from('records').update({ codename: cleanUsername }).eq('user_id', userId),
       supabaseServer.from('todos').update({ codename: cleanUsername }).eq('user_id', userId),
-      supabaseServer.from('audit_logs').update({ actor_codename: cleanUsername }).eq('actor_id', userId)
     ]);
 
     if (recordsRes.error) {
@@ -122,9 +121,6 @@ export async function POST(request: NextRequest) {
     }
     if (todosRes.error) {
       console.error('[UpdateUserCodename] Warning: Failed to update todos codename:', todosRes.error.message);
-    }
-    if (auditLogsRes.error) {
-      console.error('[UpdateUserCodename] Warning: Failed to update audit logs actor_codename:', auditLogsRes.error.message);
     }
 
     return NextResponse.json({ success: true, newEmail }, { headers: getCorsHeaders(request) });

@@ -27,10 +27,11 @@ import {
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
-  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'audit_logs' | 'kpi' | 'profile_settings';
+  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings';
+  onSectionChange?: (section: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings') => void;
   profile: Profile | null;
-  activeQuotesTab?: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import';
-  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'audit_logs' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import') => void;
+  activeQuotesTab?: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import';
+  onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import') => void;
   activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
@@ -167,14 +168,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     onNavItemClick?.();
   };
 
-  const handleAuditLogsNav = () => {
-    localStorage.setItem('settings_active_subtab', 'audit_logs');
-    localStorage.setItem('last_active_dashboard', 'profile_settings');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'profile_settings' }));
-    window.dispatchEvent(new CustomEvent('settings-subtab-change', { detail: 'audit_logs' }));
-    router.push('/');
-    onNavItemClick?.();
-  };
+
 
   const handleProfileSettingsNav = () => {
     localStorage.setItem('last_active_dashboard', 'profile_settings');

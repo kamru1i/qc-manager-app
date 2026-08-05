@@ -104,11 +104,6 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     label: 'Todos & Task Management',
     description: 'Creating, assigning, and managing task todos in the Todos Panel.',
   },
-  {
-    key: 'audit_logs_inspection',
-    label: 'Security Audit Logs Inspection',
-    description: 'Inspecting system security, user activity, and admin audit log entries.',
-  },
 
   // User Profile Settings Components Features
   {
@@ -142,7 +137,6 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
 export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
   switch (flagKey) {
     case 'todo_management':
-    case 'audit_logs_inspection':
     case 'copy_helper_save_file':
     case 'copy_helper_user_summary':
     case 'copy_helper_important_notes':
@@ -155,7 +149,6 @@ export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
 /** Mapping between feature flags and corresponding Tab Access keys. */
 export const FLAG_TO_TAB_KEY: Record<string, string> = {
   todo_management: 'todo',
-  audit_logs_inspection: 'audit_logs',
   copy_helper_save_file: 'save_file',
   causality_generator: 'causality',
   yearly_leaderboard: 'leaderboard',

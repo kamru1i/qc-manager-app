@@ -631,21 +631,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     else toast.error(text);
   }, []);
 
-  const logActivity = async (actionType: string, targetId: string | null, details: string) => {
-    try {
-      await supabase.from('audit_logs').insert({
-        actor_id: sessionUser?.id,
-        actor_codename: profile?.username || 'SYSTEM',
-        action_type: actionType,
-        target_id: targetId,
-        details,
-      });
-
-
-    } catch (e) {
-      console.error('Audit logging failed:', e);
-    }
-  };
+  const logActivity = async (_actionType: string, _targetId: string | null, _details: string) => {};
 
   // Setup Admin Actions hook
   const { createUser, resetUserPassword, deleteUser, adminUpdateUserProfile, resetAllUserFeatureFlags } = useAdminActions({

@@ -16,7 +16,6 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'kpi', label: 'Reports Workspace (KPI & Leaderboard)', category: 'Main Workspace Sections' },
   { key: 'todo', label: 'Todos Panel', category: 'Main Workspace Sections' },
   { key: 'leaderboard', label: 'Leaderboard (Workspace)', category: 'Main Workspace Sections' },
-  { key: 'audit_logs', label: 'Audit Logs (Workspace)', category: 'Main Workspace Sections' },
   { key: 'user_management', label: 'User Management', category: 'Main Workspace Sections' },
   { key: 'bd_clock', label: 'Navbar BD Clock', category: 'Main Workspace Sections' },
   { key: 'uk_clock', label: 'Navbar UK Clock', category: 'Main Workspace Sections' },
@@ -79,7 +78,6 @@ export const getDefaultRoleVisibility = (
     case 'save_file':
       return false;
 
-    case 'audit_logs':
     case 'govt_responses':
     case 'settlement':
     case 'leave_settings':

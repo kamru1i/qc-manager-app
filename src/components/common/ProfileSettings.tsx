@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { User, AlertTriangle, RefreshCw, Settings, Key, Layout, Shield, FileText, Globe, Trash2, Users, Activity, ScrollText } from 'lucide-react';
 import { UserManagement } from '@/components/common/UserManagement';
-import { AuditLogsPanel } from '@/components/common/AuditLogsPanel';
+
 import { Profile } from '@/types';
 import { isSuperadmin, isAdminRole, isTabVisibleForRole, isFeatureEnabled, canAdminManageFeatureFlag, isAdminDelegatedFeature } from '@/utils/permissionService';
 import { StaffSettingsForm } from '@/components/leave-tracker/StaffSettingsForm';
@@ -161,7 +161,7 @@ export function ProfileSettings({
   // Dynamic access check for each Settings subtab (superadmin always sees everything, otherwise role_visibility / isTabVisibleForRole)
   const canSeeProfile = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_profile', profile?.global_settings), [profile]);
   const canSeeUserManagement = useMemo(() => isAdminRole(profile) || profile?.role === 'supervisor', [profile]);
-  const canSeeAuditLogs = useMemo(() => isAdminRole(profile), [profile]);
+
   const canSeeSanitizer = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_sanitizer', profile?.global_settings), [profile]);
   const canSeeAccess = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_access', profile?.global_settings), [profile]);
   const canSeeFeatureFlags = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_feature_flags', profile?.global_settings), [profile]);
@@ -206,11 +206,11 @@ export function ProfileSettings({
   const [newVpnInput, setNewVpnInput] = useState('');
   const [vpnSubmitting, setVpnSubmitting] = useState(false);
 
-  // Subtabs state (Profile / User Management / Audit Logs / Sanitizer / Access / Feature Flags / VPN)
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'user_management' | 'audit_logs' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list'>(() => {
+  // Subtabs state (Profile / User Management / Sanitizer / Access / Feature Flags / VPN)
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'user_management' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list'>(() => {
     try {
       const saved = localStorage.getItem('settings_active_subtab');
-      if (saved === 'profile' || saved === 'user_management' || saved === 'audit_logs' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'vpn_list') {
+      if (saved === 'profile' || saved === 'user_management' || saved === 'sanitizer' || saved === 'access_controls' || saved === 'feature_flags' || saved === 'vpn_list') {
         return saved as any;
       }
     } catch {}
@@ -247,7 +247,7 @@ export function ProfileSettings({
     }
   }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeVpn]);
 
-  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'audit_logs' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
+  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
     setActiveSubTab(tab);
     localStorage.setItem('settings_active_subtab', tab);
   };
@@ -1012,20 +1012,7 @@ export function ProfileSettings({
           </button>
         )}
 
-        {canSeeAuditLogs && (
-          <button
-            type="button"
-            onClick={() => handleSubTabChange('audit_logs')}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'audit_logs'
-                ? 'bg-orange-600/15 border border-orange-500/30 text-orange-400 shadow-sm'
-                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
-            }`}
-          >
-            <ScrollText className="h-4 w-4 text-orange-400" />
-            <span>Security Logs</span>
-          </button>
-        )}
+
 
         {canSeeUserManagement && (
           <button
@@ -1819,11 +1806,7 @@ export function ProfileSettings({
         </div>
       )}
 
-      {activeSubTab === 'audit_logs' && canSeeAuditLogs && (
-        <div className="space-y-6">
-          <AuditLogsPanel />
-        </div>
-      )}
+
 
       {/* Bottom Save Changes Bar (Profile subtab) */}
       {activeSubTab === 'profile' && profile?.profile_change_status !== 'pending' && (

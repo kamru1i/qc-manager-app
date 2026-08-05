@@ -4,7 +4,7 @@ import { DailyEntrySkeleton } from "@/components/common/skeleton/DailyEntrySkele
 import { MonthlyListSkeleton } from "@/components/common/skeleton/MonthlyListSkeleton";
 import { QuoteRulesSkeleton } from "@/components/common/skeleton/QuoteRulesSkeleton";
 import { LeaderboardSkeleton } from "@/components/common/skeleton/LeaderboardSkeleton";
-import { AuditLogsSkeleton } from "@/components/common/skeleton/AuditLogsSkeleton";
+
 import { LoginCodesSkeleton } from "@/components/common/skeleton/LoginCodesSkeleton";
 import { AsitisCausalitySkeleton } from "@/components/common/skeleton/AsitisCausalitySkeleton";
 import { CopyHelperSkeleton } from "@/components/common/skeleton/CopyHelperSkeleton";
@@ -162,9 +162,7 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
     return <LeaderboardSkeleton />;
   }
 
-  if (type === "audit-logs") {
-    return <AuditLogsSkeleton />;
-  }
+
 
   if (type === "login_codes") {
     return <LoginCodesSkeleton />;

@@ -366,18 +366,7 @@ export const useAdminStaffOperations = ({
 
           if (error) throw error;
 
-          // Log profile update in audit logs
-          try {
-            await supabase.from('audit_logs').insert({
-              actor_id: sessionUser.id,
-              actor_codename: profile?.username || 'SYSTEM',
-              action_type: 'UPDATE_PROFILE',
-              target_id: sessionUser.id,
-              details: `User updated their own profile properties. Name: "${editFullName}", Job Role: "${editJobRole}", Working Hours: ${editWorkingHours}, Break: ${editBreakTime}m, Sign In: ${profileSignInTime}, Sign Out: ${profileSignOutTime}`
-            });
-          } catch (logErr) {
-            console.error('Failed to log UPDATE_PROFILE:', logErr);
-          }
+
 
           setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
           setIsEditRequestMode(false);
@@ -403,18 +392,7 @@ export const useAdminStaffOperations = ({
 
           if (error) throw error;
 
-          // Log profile request submission in audit logs
-          try {
-            await supabase.from('audit_logs').insert({
-              actor_id: sessionUser.id,
-              actor_codename: profile?.username || 'SYSTEM',
-              action_type: 'SUBMIT_PROFILE_REQUEST',
-              target_id: sessionUser.id,
-              details: `User submitted a profile change request. Requested Name: "${editFullName}", Job Role: "${editJobRole}", Working Hours: ${editWorkingHours}, Break: ${editBreakTime}m, Sign In: ${profileSignInTime}, Sign Out: ${profileSignOutTime}`
-            });
-          } catch (logErr) {
-            console.error('Failed to log SUBMIT_PROFILE_REQUEST:', logErr);
-          }
+
 
 
 
@@ -731,28 +709,7 @@ export const useAdminStaffOperations = ({
 
       if (error) throw error;
 
-      // Log admin approval/rejection in audit logs
-      try {
-        if (approve && targetProfile) {
-          await supabase.from('audit_logs').insert({
-            actor_id: sessionUser?.id,
-            actor_codename: profile?.username || 'SYSTEM',
-            action_type: 'APPROVE_PROFILE_REQUEST',
-            target_id: profileId,
-            details: `Admin approved profile change request for user '${targetName}'. Changes: Name: "${targetProfile.requested_full_name || targetProfile.full_name}", Job Role: "${targetProfile.requested_job_role || targetProfile.job_role}", Working Hours: ${targetProfile.requested_working_hours || targetProfile.working_hours}, Break: ${targetProfile.requested_break_time || targetProfile.break_time}m, Sign In: ${targetProfile.requested_default_sign_in || targetProfile.default_sign_in}, Sign Out: ${targetProfile.requested_default_sign_out || targetProfile.default_sign_out}`
-          });
-        } else {
-          await supabase.from('audit_logs').insert({
-            actor_id: sessionUser?.id,
-            actor_codename: profile?.username || 'SYSTEM',
-            action_type: 'REJECT_PROFILE_REQUEST',
-            target_id: profileId,
-            details: `Admin rejected profile change request for user '${targetName}'.`
-          });
-        }
-      } catch (logErr) {
-        console.error('Failed to log profile change request response:', logErr);
-      }
+
 
 
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
-import { Profile, RecordItem, AuditLogItem } from '@/types';
+import { Profile, RecordItem } from '@/types';
 import { useQuotesTheme } from '@/hooks/quotes-tracker/useQuotesTheme';
 import { useRecordActions } from '@/hooks/leave-tracker/useRecordActions';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
@@ -89,9 +89,7 @@ export const useQuotesDashboardData = () => {
   );
   const [availableDates, setAvailableDates] = useState<{ year: string; month: string }[]>([]);
 
-  // Audit Logs
-  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
-  const [auditLogsLoading, setAuditLogsLoading] = useState(false);
+
 
   // Theme (extracted hook)
   const { theme, toggleTheme } = useQuotesTheme();
@@ -459,51 +457,8 @@ export const useQuotesDashboardData = () => {
     }
   }, [sessionUser, profile]);
 
-  // Fetch System Audit Logs (Admins Only)
-  const fetchAuditLogs = useCallback(async () => {
-    if (!sessionUser || !profile || !isAdminRole(profile)) return;
-    setAuditLogsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select(AUDIT_LOG_COLUMNS)
-        .order('created_at', { ascending: false })
-        .limit(150);
-      
-      if (error) {
-        console.error('Error fetching audit logs - Message:', error.message, 'Code:', error.code, 'Details:', error.details);
-        throw error;
-      }
-      setAuditLogs(data || []);
-    } catch (err: any) {
-      console.error('Error fetching audit logs:', err?.message || err);
-    } finally {
-      setAuditLogsLoading(false);
-    }
-  }, [sessionUser, profile]);
-
-  // Insert a new activity log
-  const logActivity = useCallback(async (actionType: string, targetId: string | null, details: string) => {
-    if (!sessionUser || !profile) return;
-    try {
-      await supabase.from('audit_logs').insert({
-        actor_id: sessionUser.id,
-        actor_codename: profile.username,
-        action_type: actionType,
-        target_id: targetId,
-        details: details
-      });
-
-
-
-      // Automatically refresh logs if active
-      if (navigator.onLine && (isAdminRole(profile) || profile.role === 'supervisor')) {
-        fetchAuditLogs();
-      }
-    } catch (err) {
-      console.error('Failed to log audit activity:', err);
-    }
-  }, [sessionUser, profile, fetchAuditLogs]);
+  // No-op activity logger (audit_logs removed)
+  const logActivity = useCallback(async (_actionType: string, _targetId: string | null, _details: string) => {}, []);
 
   // ── Record CRUD (extracted hook) ──────────────────────────────────
   const { addRecord, deleteRecord, deleteRecords, updateRecord, bulkUpdateRecords } = useRecordActions({
@@ -883,9 +838,9 @@ export const useQuotesDashboardData = () => {
     resetUserPassword,
     deleteUser,
     adminUpdateUserProfile,
-    auditLogs,
-    auditLogsLoading,
-    fetchAuditLogs,
+    auditLogs: [],
+    auditLogsLoading: false,
+    fetchAuditLogs: async () => {},
 
     completeFirstTimeSetup,
     handleLogout,

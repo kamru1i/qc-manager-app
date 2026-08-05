@@ -469,7 +469,6 @@ function AppPortalInner({
     | "my_report"
     | "all_report"
     | "reports"
-    | "audit_logs"
     | "kpi"
     | "profile_settings"
     | null
@@ -495,7 +494,6 @@ function AppPortalInner({
     | "monthly"
     | "leaderboard"
     | "reports"
-    | "audit_logs"
     | "rules"
     | "login_codes"
     | "causality"
@@ -518,7 +516,6 @@ function AppPortalInner({
         saved === "monthly" ||
         saved === "leaderboard" ||
         saved === "reports" ||
-        saved === "audit_logs" ||
         saved === "rules" ||
         saved === "login_codes" ||
         saved === "copy_helper" ||
@@ -563,7 +560,6 @@ function AppPortalInner({
       | "my_report"
       | "all_report"
       | "reports"
-      | "audit_logs"
       | "rules"
       | "login_codes"
       | "causality"
@@ -1181,9 +1177,7 @@ function AppPortalInner({
           ? "todo"
           : activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report"
             ? "leaderboard"
-            : activeTab === "audit_logs"
-              ? "audit_logs"
-              : activeTab === "quotes"
+            : activeTab === "quotes"
                 ? "quotes"
                 : activeTab === "kpi"
                   ? "kpi"
@@ -1544,8 +1538,6 @@ function AppPortalInner({
                               ? "rules"
                             : activeQuotesTab === "leaderboard"
                               ? "leaderboard"
-                              : activeQuotesTab === "audit_logs"
-                                ? "audit-logs"
                                 : activeQuotesTab === "login_codes"
                                   ? "login_codes"
                                   : activeQuotesTab === "copy_helper"
@@ -1561,8 +1553,6 @@ function AppPortalInner({
                   <SkeletonLoader variant="todo" />
                 ) : activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report" ? (
                   <SkeletonLoader variant="leaderboard" />
-                ) : activeTab === "audit_logs" ? (
-                  <SkeletonLoader variant="audit-logs" />
                 ) : activeTab === "kpi" ? (
                   <SkeletonLoader variant="kpi" />
                 ) : activeTab === "profile_settings" ? (
@@ -1580,8 +1570,7 @@ function AppPortalInner({
                 activeTab !== "leaderboard" &&
                 activeTab !== "my_report" &&
                 activeTab !== "all_report" &&
-                activeTab !== "reports" &&
-                activeTab !== "audit_logs"
+                activeTab !== "reports"
                   ? "hidden"
                   : undefined
               }

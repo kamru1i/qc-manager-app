@@ -401,14 +401,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         .insert(rowsToInsert);
       if (error) throw error;
 
-      // Log seeding activity
-      await supabase.from("audit_logs").insert({
-        actor_id: sessionUser?.id,
-        actor_codename: profile?.username || "SYSTEM",
-        action_type: "SEED_RULES",
-        target_id: null,
-        details: "Initialized compliance rules database with 83 default rules",
-      });
+
 
       showToast("success", "Quote rules database initialized successfully!");
       fetchRules();
@@ -620,14 +613,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         .single();
       if (error) throw error;
 
-      // Log activity
-      await supabase.from("audit_logs").insert({
-        actor_id: sessionUser?.id,
-        actor_codename: profile?.username || "SYSTEM",
-        action_type: "ADD_RULE",
-        target_id: data.id,
-        details: `Added new rule in category '${formCategory}' -> '${formSubCategory}'`,
-      });
+
 
 
 
@@ -676,38 +662,6 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         .eq("id", ruleToEdit.id);
 
       if (error) throw error;
-
-      // Log activity
-      const previousDetails = [
-        `Category: ${ruleToEdit.category}`,
-        `Sub-Category: ${ruleToEdit.sub_category}`,
-        ruleToEdit.title ? `Title: ${ruleToEdit.title}` : "",
-        ruleToEdit.company_name
-          ? `Company Name: ${ruleToEdit.company_name}`
-          : "",
-        ruleToEdit.company_tags && ruleToEdit.company_tags.length > 0
-          ? `Company Tags: ${ruleToEdit.company_tags.join(", ")}`
-          : "",
-        ruleToEdit.content ? `Content: ${ruleToEdit.content}` : "",
-        ruleToEdit.extra_info ? `Extra Info: ${ruleToEdit.extra_info}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n- ");
-
-      await supabase.from("audit_logs").insert({
-        actor_id: sessionUser?.id,
-        actor_codename: profile?.username || "SYSTEM",
-        action_type: "UPDATE_RULE",
-        target_id: ruleToEdit.id,
-        details: `Updated compliance rule.
-
-Previous Version:
-- ${previousDetails}
-
-Action by: ${profile?.full_name || "System"} (${profile?.username || "system"})`,
-      });
-
-
 
       showToast("success", "Rule updated successfully!");
       setIsEditModalOpen(false);

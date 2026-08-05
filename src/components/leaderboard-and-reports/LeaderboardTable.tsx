@@ -83,21 +83,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       `Leaderboard_${periodLabel}`,
     );
 
-    if (profile?.id) {
-      try {
-        supabase.from('audit_logs').insert({
-          actor_id: profile.id,
-          actor_codename: profile.username || 'SYSTEM',
-          action_type: 'EXPORT_CSV',
-          target_id: null,
-          details: `Exported Leaderboard data for ${periodLabel} (${leaderboardData.length} entries) to CSV/Excel`,
-        }).then(({ error }) => {
-          if (error) console.error('Failed to log Leaderboard export:', error);
-        });
-      } catch (err) {
-        console.error('Failed to log export:', err);
-      }
-    }
+
   };
 
   if (loading) {

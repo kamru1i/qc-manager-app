@@ -140,10 +140,9 @@ npm run tauri build
 - **Supervisor Authorization & Real-Time Profile Lookup**: Enhanced `useDerivedState.ts` to strictly cross-reference live `profilesList` supervisor assignments, ensuring only assigned or delegated supervisors receive team approval queue items.
 - **Approval Comment Tag Deduplication**: Updated `buildStatusUpdatePayload` in `useChutiOperations.ts` to prevent duplicate approval tags (e.g. `NZ720 Approved | YK920 Approved`) from prepending repeatedly when leave entries are updated or re-approved.
 - **Copy Helper Network & Admin Summary Box Cleanup**: Completely removed Box 2 (Network & VPN Info) and Box 6 (Sales Summary - Sales Report for Admin) along with all their IP/VPN detection state, network background polling, and modal UI components.
-- **Feature Flag Cleanup**: Removed `copy_helper_admin_summary` feature flag from system registry, default flag states, and Access Control / Feature Flags settings.
-- **Copy Helper & Govt Holiday Response Outer Border Removal**: Reorganized Copy Helper panel into a clean 3-column grid layout and removed outer wrapper box containers/borders from both Copy Helper and Leave Tracker > Govt Holiday Response for a sleek, modern UI.
+- **Feature Flag & System Cleanups**: Removed `copy_helper_admin_summary` and `audit_logs_inspection` feature flags from system registry, default flag states, and Access Control / Feature Flags settings.
+- **Complete Audit Logs / Security Logs Removal**: Removed `AuditLogsPanel.tsx`, `AuditLogsSkeleton.tsx`, `audit_logs` database queries, background activity logging calls, and Security Logs subtab from Profile Settings and navigation registries.
 - **Review & Settlements Table Center Alignment**: Updated `AdminSettlementsPanel.tsx` so Unused Balance, User Preference, Status, and Action column titles and data cells are center-aligned, keeping Staff Member left-aligned.
-- **Security Logs Center Alignment**: Updated `AuditLogsPanel.tsx` so Actor and Action Type column headers and data cells are center-aligned, keeping Timestamp and Description Details left-aligned.
 
 ### 🩹 v6.9.6 — Patch Release (Supervisor Authorization Hardening & Approval Comment Deduplication)
 

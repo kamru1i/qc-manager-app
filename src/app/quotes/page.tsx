@@ -20,7 +20,7 @@ import { AdminViewToggle } from "@/components/leave-tracker/AdminViewToggle";
 import { SkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
 import { LeaderboardTable } from "@/components/leaderboard-and-reports/LeaderboardTable";
 import { ReportsPanel } from "@/components/leaderboard-and-reports/ReportsPanel";
-import { AuditLogsPanel } from "@/components/common/AuditLogsPanel";
+
 import {
   isSuperadmin,
   isAdminRole,
@@ -82,7 +82,6 @@ interface DashboardProps {
     | "my_report"
     | "all_report"
     | "reports"
-    | "audit_logs"
     | "rules"
     | "login_codes"
     | "causality"
@@ -97,7 +96,6 @@ interface DashboardProps {
       | "my_report"
       | "all_report"
       | "reports"
-      | "audit_logs"
       | "rules"
       | "login_codes"
       | "causality"
@@ -135,7 +133,6 @@ export default function Dashboard({
         targetTab === "monthly" ||
         targetTab === "leaderboard" ||
         targetTab === "reports" ||
-        targetTab === "audit_logs" ||
         targetTab === "rules" ||
         targetTab === "login_codes" ||
         targetTab === "causality" ||
@@ -174,8 +171,7 @@ export default function Dashboard({
     bulkUpdateRecords,
     completeFirstTimeSetup,
     handleLogout,
-    auditLogs,
-    auditLogsLoading,
+
     fetchAuditLogs,
     logActivity,
     fetchRecords,
@@ -207,12 +203,7 @@ export default function Dashboard({
     [profile, globalSettings],
   );
 
-  // Fetch audit logs when activeTab becomes 'audit_logs'
-  useEffect(() => {
-    if (activeTab === "audit_logs" && isAdminRole(profile)) {
-      fetchAuditLogs();
-    }
-  }, [activeTab, profile, fetchAuditLogs]);
+
 
   // NOTE: the navbar rank cache is fed exclusively by the get_leaderboard_data
   // RPC in app/page.tsx (updateGlobalRankCacheDirect) — the previous local
@@ -1390,7 +1381,7 @@ export default function Dashboard({
     else if (activeTab === "monthly") loaderType = "table";
     else if (activeTab === "leaderboard" || activeTab === "reports")
       loaderType = "leaderboard";
-    else if (activeTab === "audit_logs") loaderType = "audit-logs";
+
     else if (activeTab === "rules") loaderType = "rules";
     else if (activeTab === "login_codes") loaderType = "login_codes";
     else if (activeTab === "copy_helper") loaderType = "copy_helper";
@@ -1915,16 +1906,7 @@ export default function Dashboard({
         </Suspense>
       )}
 
-      {/* TAB 5: SYSTEM AUDIT LOGS */}
-      {activeTab === "audit_logs" && isAdminRole(profile) && (
-        <Suspense fallback={<SkeletonLoader type="audit-logs" />}>
-          <AuditLogsPanel
-            logs={auditLogs}
-            isLoading={auditLogsLoading}
-            onRefresh={fetchAuditLogs}
-          />
-        </Suspense>
-      )}
+
 
       {/* TAB 6: QUOTE RULES */}
       {activeTab === "rules" && (

@@ -393,7 +393,7 @@ export const isDirectlySupervised = (
 export const canAccessModule = (
   currentUser: Profile | null,
   targetUser: Profile | null,
-  module: 'kpi' | 'leave' | 'profile_settings' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'audit_logs' | string,
+  module: 'kpi' | 'leave' | 'profile_settings' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | string,
   profilesList: Profile[] = [],
   globalSettings?: VisibilitySettings | null
 ): boolean => {
