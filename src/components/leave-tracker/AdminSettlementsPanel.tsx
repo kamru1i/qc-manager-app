@@ -453,10 +453,10 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
             <thead className="bg-theme-page-bg/60">
               <tr>
                 <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Staff member</th>
-                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Unused Balance</th>
-                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">User Preference</th>
-                <th className="px-6 py-3.5 text-left text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3.5 text-right text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Action</th>
+                <th className="px-6 py-3.5 text-center text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Unused Balance</th>
+                <th className="px-6 py-3.5 text-center text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">User Preference</th>
+                <th className="px-6 py-3.5 text-center text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3.5 text-center text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-theme-border-muted bg-theme-card-bg/10">
@@ -487,7 +487,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                           {staff.username} • {staff.job_role || (staff.role === 'supervisor' ? 'Supervisor' : 'Staff')}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         {(() => {
                           const totalMins = Math.round(remaining * (staff.working_hours || 9.5) * 60);
                           const isNegative = totalMins < 0;
@@ -506,7 +506,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                           const dayColor = isNegative ? 'text-red-500 font-extrabold' : 'text-blue-400';
                           
                           return (
-                            <div className="flex flex-col font-mono select-none">
+                            <div className="flex flex-col items-center font-mono select-none">
                               <span className={`text-sm font-bold ${dayColor}`}>
                                 {dayStr}
                               </span>
@@ -520,11 +520,11 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                         })()}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-center">
                         {!settlement || settlement.status === 'initiated' ? (
                           <span className="text-theme-text-muted italic text-[11px]">Not chosen yet</span>
                         ) : settlement.action_type === 'split' ? (
-                          <div className="flex flex-wrap gap-1.5 max-w-[240px]">
+                          <div className="flex flex-wrap justify-center gap-1.5 max-w-[240px] mx-auto">
                             {(settlement.carry_forward_days && settlement.carry_forward_days > 0) ? (
                               <span className="px-1.5 py-0.5 rounded border text-[9px] font-semibold flex items-center gap-1 bg-indigo-955/20 border-indigo-900/60 text-indigo-400">
                                 <FolderPlus className="h-2.5 w-2.5" /> {settlement.carry_forward_days}d Carry Forward
@@ -543,7 +543,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                           </div>
                         ) : (
                           <span
-                            className={`px-2 py-1 rounded border text-[10px] font-semibold flex items-center gap-1.5 w-fit ${settlement.remaining_days < 0
+                            className={`px-2 py-1 rounded border text-[10px] font-semibold flex items-center justify-center gap-1.5 w-fit mx-auto ${settlement.remaining_days < 0
                                 ? settlement.action_type === 'carry_forward'
                                   ? 'bg-indigo-955/20 border-indigo-900/60 text-indigo-400'
                                   : settlement.action_type === 'adjust_leave'
@@ -590,7 +590,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                         )}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         {!settlement ? (
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 border rounded font-semibold text-[10px] ${remaining < 0
                               ? 'bg-rose-955/25 border-rose-900/40 text-rose-455'
@@ -616,7 +616,7 @@ export const AdminSettlementsPanel: React.FC<AdminSettlementsPanelProps> = ({
                         )}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-2">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium flex justify-center items-center gap-2">
                         {!settlement ? (
                           <>
                             {Math.abs(remaining) > 0.01 && (
