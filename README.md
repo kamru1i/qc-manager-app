@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.5** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.6** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.9.5 — Patch Release (Dropdown Flicker Elimination & Streamlined Leave History Controls) (Current)
+### 🩹 v6.9.6 — Patch Release (Supervisor Authorization Hardening & Approval Comment Deduplication) (Current)
+
+- **Supervisor Pending Approval Authorization & Real-Time Profile Lookup**: Enhanced `useDerivedState.ts` to strictly cross-reference live `profilesList` supervisor assignments, ensuring only assigned or delegated supervisors receive team approval queue items.
+- **Approval Comment Tag Deduplication**: Updated `buildStatusUpdatePayload` in `useChutiOperations.ts` to prevent duplicate approval tags (e.g. `NZ720 Approved | YK920 Approved`) from prepending repeatedly when leave entries are updated or re-approved.
+- **2-Stage Approval Verification Audit**: Verified 2-stage approval workflow end-to-end for both supervised staff (Supervisor -> Admin) and direct/unsupervised staff (bypassing supervisor stage directly to Admin).
+
+### 🩹 v6.9.5 — Patch Release (Dropdown Flicker Elimination & Streamlined Leave History Controls)
 
 - **Dropdown Portal Positioning & Flicker Elimination**: Resolved split-second unpositioned layout shifts and dual-scroll jumps when opening `CustomSelect` dropdown menus for the first time across Quick Import queue and all dropdowns.
 - **Copy Helper Hyphenated Date Parsing Fix**: Fixed `parseDdMmYyyyToTargetStr` in Copy Helper to seamlessly support `DD-MM-YYYY` hyphens, restoring real submitted records display in Boxes 4, 5, and 6.

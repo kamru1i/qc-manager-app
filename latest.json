@@ -1,8 +1,8 @@
 {
-  "version": "6.9.5",
-  "notes": "### 🩹 v6.9.5 — Patch Release (Dropdown Flicker Elimination & Streamlined Leave History Controls)\n\n- **Dropdown Portal Positioning & Flicker Elimination**: Resolved split-second unpositioned layout shifts and dual-scroll jumps when opening CustomSelect dropdown menus for the first time across Quick Import queue and all dropdowns.\n- **Copy Helper Hyphenated Date Parsing Fix**: Fixed parseDdMmYyyyToTargetStr in Copy Helper to seamlessly support DD-MM-YYYY hyphens, restoring real submitted records display in Boxes 4, 5, and 6.\n- **Strict Date Element Editing Isolation**: Restricted double-click date editing in Copy Helper strictly to the date string itself (soldDate), preventing accidental edit triggers on label text.\n- **Streamlined Leave History UI & Excel Export Repositioning**: Embedded Leave Type dropdown filter on the left of the search box and Excel export button on the right of the search box in Leave History table, completely removing the redundant top filter panel, date inputs, and PDF export.\n- **Title-Adjacent + Add Leave Button**: Positioned the + Add Leave button directly beside the user leave records title for intuitive access.",
-  "pub_date": "2026-08-04T21:45:00.000Z",
-  "releaseDate": "August 4, 2026",
+  "version": "6.9.6",
+  "notes": "### 🩹 v6.9.6 — Patch Release (Supervisor Authorization Hardening & Approval Comment Deduplication)\n\n- **Supervisor Pending Approval Authorization & Real-Time Profile Lookup**: Enhanced useDerivedState.ts to strictly cross-reference live profilesList supervisor assignments, ensuring only assigned or delegated supervisors receive team approval queue items.\n- **Approval Comment Tag Deduplication**: Updated buildStatusUpdatePayload in useChutiOperations.ts to prevent duplicate approval tags (e.g. NZ720 Approved | YK920 Approved) from prepending repeatedly when leave entries are updated or re-approved.\n- **2-Stage Approval Verification Audit**: Verified 2-stage approval workflow end-to-end for both supervised staff (Supervisor -> Admin) and direct/unsupervised staff (bypassing supervisor stage directly to Admin).",
+  "pub_date": "2026-08-05T16:42:00.000Z",
+  "releaseDate": "August 5, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {
