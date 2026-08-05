@@ -701,7 +701,9 @@ export const useChutiOperations = ({
       extraFields?: Record<string, unknown>;
     }
   ) => {
-    const updatedComment = t.comment ? `${opts.commentPrefix} | ${t.comment}` : opts.commentPrefix;
+    const updatedComment = t.comment?.includes(opts.commentPrefix)
+      ? t.comment
+      : (t.comment ? `${opts.commentPrefix} | ${t.comment}` : opts.commentPrefix);
     const newNotification = createNotification(opts.notifType, opts.notifTitle, opts.notifBody);
     const existingNotifications = getExistingNotifications(t);
     return {

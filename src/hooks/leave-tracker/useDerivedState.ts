@@ -178,7 +178,8 @@ export function useDerivedState({
       if (r.user_id === sessionUser?.id) return false;
 
       // Restrict to team members supervised by this supervisor, or by someone who delegated to this supervisor
-      const userSupervisorIds = r.profiles?.supervisor_ids || [];
+      const targetProfile = profilesList.find(p => p.id === r.user_id);
+      const userSupervisorIds = targetProfile?.supervisor_ids || r.profiles?.supervisor_ids || [];
       const isSupervised = userSupervisorIds.includes(sessionUser?.id || '') ||
                            userSupervisorIds.some((id: string) => delegatedFromSupervisorIds.includes(id));
       if (!isSupervised) {
