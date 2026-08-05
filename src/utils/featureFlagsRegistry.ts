@@ -61,11 +61,6 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     description: 'The daily Sales Summary box (Box 4) in Copy Helper panel for individual users.',
   },
   {
-    key: 'copy_helper_admin_summary',
-    label: 'Copy Helper Admin Sales Summary',
-    description: 'The deduplicated daily Sales Report for Admin summary box in Copy Helper.',
-  },
-  {
     key: 'copy_helper_important_notes',
     label: 'Copy Helper Important Notes',
     description: 'The editable Important Notes box at the bottom of the Copy Helper panel.',
@@ -149,7 +144,6 @@ export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
     case 'todo_management':
     case 'audit_logs_inspection':
     case 'copy_helper_save_file':
-    case 'copy_helper_admin_summary':
     case 'copy_helper_user_summary':
     case 'copy_helper_important_notes':
       return false;

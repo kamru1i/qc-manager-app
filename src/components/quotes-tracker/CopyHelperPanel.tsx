@@ -1,12 +1,7 @@
-"use client";
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { ScrollText, ArrowLeft, Copy, Check, Pencil, Globe, RotateCcw } from "lucide-react";
+import { ScrollText, ArrowLeft, Copy, Check, Pencil, RotateCcw } from "lucide-react";
 import { RecordItem, Profile } from "@/types";
-import { AdminSalesSummary, getTodaySalesRecords, calculateAdminSalesSummary } from "@/utils/adminSalesSummary";
 import { isFeatureEnabled } from "@/utils/permissionService";
-import { DEFAULT_VPN_LIST } from "@/utils/dashboardHelpers";
-import { Modal } from "@/components/common/Modal";
 import { DateInput } from "@/components/common/DateInput";
 
 // ─── Reusable card chrome ────────────────────────────────────────────
@@ -14,6 +9,7 @@ import { DateInput } from "@/components/common/DateInput";
 interface CopyHelperCardProps {
   title: string;
   subtitle?: string;
+  titleClassName?: string;
   copied?: boolean;
   onCopy?: () => void;
   headerAction?: React.ReactNode;
@@ -25,6 +21,7 @@ interface CopyHelperCardProps {
 const CopyHelperCard: React.FC<CopyHelperCardProps> = ({
   title,
   subtitle,
+  titleClassName = "text-blue-400",
   copied,
   onCopy,
   headerAction,
@@ -53,7 +50,7 @@ const CopyHelperCard: React.FC<CopyHelperCardProps> = ({
         </button>
       )}
     </div>
-    <h5 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3 pr-20">
+    <h5 className={`text-xs font-bold uppercase tracking-wider mb-3 pr-20 ${titleClassName}`}>
       {title}
       {subtitle && (
         <span className="block text-[10px] font-semibold text-theme-text-muted opacity-65 normal-case tracking-normal mt-0.5">
@@ -226,12 +223,12 @@ interface CopyHelperPanelProps {
   allSales: boolean;
   hasSubmissions: boolean;
   todayUserRecords: RecordItem[];
-  adminSalesSummary: AdminSalesSummary;
+  adminSalesSummary?: any;
   records?: RecordItem[];
   copyBox1: () => void;
   copyBox2: () => void;
   copyBox4: () => void;
-  copyAdminSummary: () => void;
+  copyAdminSummary?: () => void;
   copyText1: () => void;
   copyText2: () => void;
   copyNotes: () => void;
@@ -281,7 +278,6 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
 
   const [box4Date, setBox4Date] = useState<string>(soldDate || getInitialDdMmYyyy());
   const [box5Date, setBox5Date] = useState<string>(soldDate || getInitialDdMmYyyy());
-  const [box6Date, setBox6Date] = useState<string>(soldDate || getInitialDdMmYyyy());
 
   const effectiveCodename = codenameInput || profile?.username || "";
   const allMonthRecords = useMemo(() => records || todayUserRecords || [], [records, todayUserRecords]);
@@ -329,24 +325,6 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
 
   const box5HasSubmissions = useMemo(() => box5UserRecords.length > 0, [box5UserRecords]);
 
-  const box6TargetDate = useMemo(() => parseDdMmYyyyToTargetStr(box6Date), [box6Date, parseDdMmYyyyToTargetStr]);
-  const box6AdminSummary = useMemo<AdminSalesSummary>(() => {
-    const saleRecords = getTodaySalesRecords(allMonthRecords, box6TargetDate);
-    return calculateAdminSalesSummary(saleRecords);
-  }, [allMonthRecords, box6TargetDate]);
-
-  const [ipAddress, setIpAddress] = useState<string>("Detecting...");
-  const [vpnName, setVpnName] = useState<string>("None");
-  const [isVpnConnected, setIsVpnConnected] = useState<boolean>(false);
-  const [editingNetworkField, setEditingNetworkField] = useState<'vpnName' | 'ipAddress' | null>(null);
-  const [isDetectingIp, setIsDetectingIp] = useState<boolean>(true);
-  const [showCustomVpnModal, setShowCustomVpnModal] = useState<boolean>(false);
-  const [customVpnInput, setCustomVpnInput] = useState<string>("");
-
-  const availableVpns = useMemo(() => {
-    return profile?.global_settings?.vpn_list || DEFAULT_VPN_LIST;
-  }, [profile]);
-
   const [quickText1, setQuickText1] = useState<string>("Online selling process done & updated.");
   const [quickText2, setQuickText2] = useState<string>("Saved & Updated.");
   const [editingQuickText1, setEditingQuickText1] = useState<boolean>(false);
@@ -385,68 +363,6 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
     } catch {
       copyBox4();
     }
-  };
-
-  const handleCopyBox6AdminSummary = async () => {
-    const { totalSold, totalUnsold, totalAttempts } = box6AdminSummary;
-    const text = `*Sales Report | Date: ${box6Date}*\n*Total Sale Attempt:* ${totalAttempts} Sale\n*Sold:* ${totalSold} Sale\n*Unsold:* ${totalUnsold} Sale`;
-    try {
-      await navigator.clipboard.writeText(text);
-      setLocalCopiedStates((prev) => ({ ...prev, boxAdmin: true }));
-      setTimeout(() => setLocalCopiedStates((prev) => ({ ...prev, boxAdmin: false })), 2000);
-    } catch {
-      copyAdminSummary();
-    }
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-    const detectNetwork = async () => {
-      try {
-        setIsDetectingIp(true);
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        if (isMounted && data?.ip) {
-          setIpAddress(data.ip);
-          try {
-            const geoRes = await fetch(`https://ipwho.is/${data.ip}`);
-            const geoData = await geoRes.json();
-            if (isMounted) {
-              const isProxyOrVpn = !!(geoData?.security?.vpn || geoData?.security?.proxy || geoData?.security?.tor);
-              const isp = geoData?.connection?.isp || "";
-              const matched = availableVpns.find((v: string) => isp.toLowerCase().includes(v.toLowerCase()));
-              if (isProxyOrVpn || matched) {
-                setIsVpnConnected(true);
-                setVpnName(matched || isp || "VPN Active");
-              } else {
-                setIsVpnConnected(false);
-                setVpnName("None");
-              }
-            }
-          } catch {
-            if (isMounted) {
-              setIsVpnConnected(false);
-              setVpnName("None");
-            }
-          }
-        }
-      } catch {
-        if (isMounted) setIpAddress("Unavailable");
-      } finally {
-        if (isMounted) setIsDetectingIp(false);
-      }
-    };
-    detectNetwork();
-    return () => { isMounted = false; };
-  }, [availableVpns]);
-
-  const copyNetworkBox = async () => {
-    const text = `VPN Connected: ${vpnName}\nIP Address: ${ipAddress}`;
-    try {
-      await navigator.clipboard.writeText(text);
-      setLocalCopiedStates((prev) => ({ ...prev, boxNetwork: true }));
-      setTimeout(() => setLocalCopiedStates((prev) => ({ ...prev, boxNetwork: false })), 2000);
-    } catch {}
   };
 
   const handleCopyQuickText1 = async () => {
@@ -562,51 +478,6 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
       ),
     },
     {
-      key: "network_info",
-      title: "Network & VPN Info",
-      visible: hasSalePermission,
-      copied: localCopiedStates["boxNetwork"],
-      onCopy: copyNetworkBox,
-      render: () => (
-        <div className="space-y-2.5 text-xs font-sans">
-          <div className="flex items-center justify-between group/field py-0.5">
-            <span className="text-theme-text-muted font-medium">VPN Name:</span>
-            {editingNetworkField === "vpnName" ? (
-              <select value={vpnName} onChange={(e) => { const val = e.target.value; if (val === "__custom__") { setCustomVpnInput(""); setShowCustomVpnModal(true); } else { setVpnName(val); setIsVpnConnected(val !== "None"); setEditingNetworkField(null); } }} onBlur={() => setEditingNetworkField(null)} autoFocus className="w-36 px-2 py-1 bg-theme-page-bg border border-blue-500 rounded-lg text-theme-text-primary text-right text-xs focus:outline-none cursor-pointer">
-                <option value="None">None (Disconnected)</option>
-                {availableVpns.map((v: string) => <option key={v} value={v}>{v}</option>)}
-                <option value="__custom__">+ Custom VPN Name...</option>
-              </select>
-            ) : (
-              <div className="flex items-center gap-1.5 justify-end">
-                <button type="button" onClick={() => setEditingNetworkField("vpnName")} className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0" title="Edit VPN Name"><Pencil className="h-3 w-3" /></button>
-                <span className={isVpnConnected ? "text-emerald-400 font-bold text-right" : "text-theme-text-secondary font-semibold text-right"}>{vpnName}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-between group/field py-0.5">
-            <span className="text-theme-text-muted font-medium">IP Address:</span>
-            {editingNetworkField === "ipAddress" ? (
-              <input type="text" value={ipAddress} onChange={(e) => setIpAddress(e.target.value)} onBlur={() => setEditingNetworkField(null)} onKeyDown={(e) => e.key === "Enter" && setEditingNetworkField(null)} autoFocus className="w-36 px-2 py-1 bg-theme-page-bg border border-blue-500 rounded-lg text-theme-text-primary text-right font-mono text-xs focus:outline-none" />
-            ) : (
-              <div className="flex items-center gap-1.5 justify-end">
-                <button type="button" onClick={() => setEditingNetworkField("ipAddress")} className="opacity-0 group-hover/field:opacity-100 p-1 text-theme-text-muted hover:text-blue-400 rounded transition-all cursor-pointer shrink-0" title="Edit IP Address"><Pencil className="h-3 w-3" /></button>
-                <span className="text-theme-text-primary font-bold font-mono text-right">{ipAddress} {isDetectingIp && "(detecting...)"}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-theme-border-muted/50">
-            <span className="text-theme-text-muted">Status:</span>
-            {isVpnConnected ? (
-              <span className="text-emerald-400 font-semibold flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> VPN Connected</span>
-            ) : (
-              <span className="text-theme-text-muted font-semibold flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-slate-500" /> VPN Off (Disconnected)</span>
-            )}
-          </div>
-        </div>
-      ),
-    },
-    {
       key: "quick_copy",
       title: "Quick Copy Actions",
       visible: hasSalePermission,
@@ -690,31 +561,14 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
         </div>
       ),
     },
-    {
-      key: "admin_sales_summary",
-      title: "Sales Summary",
-      subtitle: "(Sales Report for Admin)",
-      visible: hasSalePermission && isFeatureEnabled('copy_helper_admin_summary', profile?.global_settings, profile),
-      copied: localCopiedStates["boxAdmin"] || copiedStates["boxAdmin"],
-      onCopy: handleCopyBox6AdminSummary,
-      render: () => (
-        <SalesSummaryBody
-          soldDate={box6Date}
-          setSoldDate={setBox6Date}
-          totalLabel="Total Sale Attempt"
-          totalAttempt={box6AdminSummary.totalAttempts}
-          soldCount={box6AdminSummary.totalSold}
-          unsoldCount={box6AdminSummary.totalUnsold}
-        />
-      ),
-    },
   ];
 
   const visibleBoxes = boxes.filter((b) => b.visible);
 
   return (
-    <div className="bg-theme-page-bg/20 border border-theme-border-muted rounded-2xl p-5 space-y-6 animate-fade-in font-sans">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in font-sans">
+      {/* Left 2 Columns: 4 Boxes arranged in a 2x2 grid */}
+      <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
         {visibleBoxes.map((box, index) => (
           <CopyHelperCard
             key={box.key}
@@ -730,105 +584,22 @@ export const CopyHelperPanel: React.FC<CopyHelperPanelProps> = ({
         ))}
       </div>
 
-      {/* Comment/Important Notes Box */}
+      {/* Right 1 Column: Important Notes (Full Height Card matching Box 1-4 style) */}
       {isFeatureEnabled('copy_helper_important_notes', profile?.global_settings, profile) && (
-        <div className="bg-theme-card-bg/40 border border-theme-border-muted rounded-xl p-4 space-y-2.5">
-          <div className="flex justify-between items-center">
-            <h5 className="text-xs font-bold text-rose-500 uppercase tracking-wider">Important Notes</h5>
-            <button
-              type="button"
-              onClick={copyNotes}
-              className={`p-1 border rounded-md transition-all cursor-pointer ${
-                copiedStates["notes"]
-                  ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 hover:text-emerald-300"
-                  : "bg-theme-page-bg hover:bg-theme-border-input border-theme-border-input text-theme-text-muted hover:text-theme-text-primary"
-              }`}
-              title="Copy Notes"
-            >
-              {copiedStates["notes"] ? (
-                <Check className="h-3 w-3 text-emerald-400" />
-              ) : (
-                <Copy className="h-3 w-3" />
-              )}
-            </button>
-          </div>
+        <CopyHelperCard
+          title="Important Notes"
+          titleClassName="text-rose-500 font-bold"
+          copied={copiedStates["notes"]}
+          onCopy={copyNotes}
+          className="lg:col-span-1 h-full flex flex-col justify-between"
+        >
           <textarea
             value={reportNotes}
             onChange={(e) => handleNotesChange(e.target.value)}
-            className="w-full h-20 bg-theme-page-bg border border-theme-border-input rounded-lg text-rose-400 placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-rose-500/30 text-xs p-3 font-semibold resize-none"
+            className="w-full flex-1 min-h-[160px] bg-theme-page-bg border border-theme-border-input rounded-lg text-rose-400 placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-rose-500/30 text-xs p-3 font-semibold resize-none"
           />
-        </div>
+        </CopyHelperCard>
       )}
-
-      {/* Custom VPN Name Modal */}
-      <Modal
-        isOpen={showCustomVpnModal}
-        onClose={() => {
-          setShowCustomVpnModal(false);
-          setEditingNetworkField(null);
-        }}
-        title="Add Custom VPN Name"
-        icon={<Globe className="h-5 w-5 text-blue-400" />}
-      >
-        <div className="space-y-4 pt-1 font-sans">
-          <p className="text-xs text-theme-text-muted">
-            Enter the name of the custom VPN provider to use for this session.
-          </p>
-
-          <div>
-            <label className="block text-xs font-semibold text-theme-text-muted mb-1 uppercase tracking-wider">
-              VPN Provider Name
-            </label>
-            <input
-              type="text"
-              value={customVpnInput}
-              onChange={(e) => setCustomVpnInput(e.target.value)}
-              placeholder="e.g. ProtonVPN, Windscribe"
-              autoFocus
-              className="w-full bg-theme-page-bg border border-theme-border-input rounded-xl px-3.5 py-2.5 text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500 font-sans"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (customVpnInput.trim()) {
-                    setVpnName(customVpnInput.trim());
-                    setIsVpnConnected(true);
-                    setShowCustomVpnModal(false);
-                    setEditingNetworkField(null);
-                  }
-                }
-              }}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2.5 pt-2 border-t border-theme-border-muted">
-            <button
-              type="button"
-              onClick={() => {
-                setShowCustomVpnModal(false);
-                setEditingNetworkField(null);
-              }}
-              className="px-4 py-2 border border-theme-border-input bg-theme-card-bg hover:bg-theme-border-input text-theme-text-secondary rounded-xl text-xs font-semibold transition-all cursor-pointer font-sans"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={!customVpnInput.trim()}
-              onClick={() => {
-                if (customVpnInput.trim()) {
-                  setVpnName(customVpnInput.trim());
-                  setIsVpnConnected(true);
-                  setShowCustomVpnModal(false);
-                  setEditingNetworkField(null);
-                }
-              }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer font-sans shadow-md"
-            >
-              Set VPN Name
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

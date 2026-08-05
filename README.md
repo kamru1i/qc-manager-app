@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.9.6** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 6.9.7** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.9.6 — Patch Release (Supervisor Authorization Hardening & Approval Comment Deduplication) (Current)
+### 🩹 v6.9.7 — Patch Release (Supervisor Authorization Hardening, Copy Helper Box Cleanup & Grid Reorganization) (Current)
+
+- **Supervisor Authorization & Real-Time Profile Lookup**: Enhanced `useDerivedState.ts` to strictly cross-reference live `profilesList` supervisor assignments, ensuring only assigned or delegated supervisors receive team approval queue items.
+- **Approval Comment Tag Deduplication**: Updated `buildStatusUpdatePayload` in `useChutiOperations.ts` to prevent duplicate approval tags (e.g. `NZ720 Approved | YK920 Approved`) from prepending repeatedly when leave entries are updated or re-approved.
+- **Copy Helper Network & Admin Summary Box Cleanup**: Completely removed Box 2 (Network & VPN Info) and Box 6 (Sales Summary - Sales Report for Admin) along with all their IP/VPN detection state, network background polling, and modal UI components.
+- **Feature Flag Cleanup**: Removed `copy_helper_admin_summary` feature flag from system registry, default flag states, and Access Control / Feature Flags settings.
+- **Copy Helper Grid Layout & Outer Border Removal**: Reorganized Copy Helper panel into a clean 3-column grid layout where Boxes 1-4 occupy the left 2 columns in a 2x2 grid, while Important Notes occupies the right column in full height as a clean CopyHelperCard, removing outer wrapper borders.
+
+### 🩹 v6.9.6 — Patch Release (Supervisor Authorization Hardening & Approval Comment Deduplication)
 
 - **Supervisor Pending Approval Authorization & Real-Time Profile Lookup**: Enhanced `useDerivedState.ts` to strictly cross-reference live `profilesList` supervisor assignments, ensuring only assigned or delegated supervisors receive team approval queue items.
 - **Approval Comment Tag Deduplication**: Updated `buildStatusUpdatePayload` in `useChutiOperations.ts` to prevent duplicate approval tags (e.g. `NZ720 Approved | YK920 Approved`) from prepending repeatedly when leave entries are updated or re-approved.
