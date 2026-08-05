@@ -1,6 +1,6 @@
 -- Migration: Add role guards to SECURITY DEFINER functions
 -- Date: 2026-07-27
--- Issue: archive_and_prune_old_records and cleanup_old_audit_logs lack role checks,
+-- Issue: archive_and_prune_old_records lacked role checks,
 --        allowing any authenticated user to invoke data-destructive operations.
 
 -- Fix 1: archive_and_prune_old_records — restrict to service_role or admin
@@ -115,25 +115,3 @@ BEGIN
   );
 END;
 $$;
-
--- Fix 2: cleanup_old_audit_logs — restrict to service_role or admin
-CREATE OR REPLACE FUNCTION "public"."cleanup_old_audit_logs"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-BEGIN
-  -- ROLE GUARD: Only service_role (cron jobs) or admins may invoke this.
-  IF auth.role() != 'service_role' AND NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Permission denied: only admins or service_role can clean up audit logs.';
-  END IF;
-
-  DELETE FROM public.audit_logs
-  WHERE created_at < NOW() - INTERVAL '90 days';
-END;
-$$;
-
--- Fix 3: Lock down ACL for cleanup_old_audit_logs (was wide open to anon/authenticated)
-REVOKE ALL ON FUNCTION "public"."cleanup_old_audit_logs"() FROM PUBLIC;
-REVOKE ALL ON FUNCTION "public"."cleanup_old_audit_logs"() FROM "anon";
-REVOKE ALL ON FUNCTION "public"."cleanup_old_audit_logs"() FROM "authenticated";
-GRANT ALL ON FUNCTION "public"."cleanup_old_audit_logs"() TO "service_role";

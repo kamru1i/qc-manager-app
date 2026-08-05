@@ -391,27 +391,7 @@ $$;
 
 ALTER FUNCTION public.check_profile_updates() OWNER TO postgres;
 
---
--- Name: cleanup_old_audit_logs(); Type: FUNCTION; Schema: public; Owner: postgres
---
 
-CREATE FUNCTION public.cleanup_old_audit_logs() RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public', 'pg_temp'
-    AS $$
-BEGIN
-  -- ROLE GUARD: Only service_role (cron jobs) or admins may invoke this.
-  IF auth.role() != 'service_role' AND NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Permission denied: only admins or service_role can clean up audit logs.';
-  END IF;
-
-  DELETE FROM public.audit_logs
-  WHERE created_at < NOW() - INTERVAL '90 days';
-END;
-$$;
-
-
-ALTER FUNCTION public.cleanup_old_audit_logs() OWNER TO postgres;
 
 --
 -- Name: complete_profile_setup(text, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1459,22 +1439,7 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: audit_logs; Type: TABLE; Schema: public; Owner: postgres
---
 
-CREATE TABLE public.audit_logs (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    actor_id uuid,
-    actor_codename text NOT NULL,
-    action_type text NOT NULL,
-    target_id text,
-    details text NOT NULL,
-    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-
-ALTER TABLE public.audit_logs OWNER TO postgres;
 
 --
 -- Name: chuti; Type: TABLE; Schema: public; Owner: postgres
@@ -1812,12 +1777,7 @@ ALTER TABLE public.todos OWNER TO postgres;
 ALTER TABLE ONLY public.mobile_app_versions ALTER COLUMN id SET DEFAULT nextval('public.mobile_app_versions_id_seq'::regclass);
 
 
---
--- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
 
-ALTER TABLE ONLY public.audit_logs
-    ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
 
 
 --
@@ -1964,25 +1924,7 @@ ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT unique_user_year_period_category UNIQUE (user_id, year, period, leave_category);
 
 
---
--- Name: idx_audit_logs_actor_id; Type: INDEX; Schema: public; Owner: postgres
---
 
-CREATE INDEX idx_audit_logs_actor_id ON public.audit_logs USING btree (actor_id);
-
-
---
--- Name: idx_audit_logs_created; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_audit_logs_created ON public.audit_logs USING btree (created_at DESC);
-
-
---
--- Name: idx_audit_logs_created_at; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created_at);
 
 
 --
@@ -2132,12 +2074,7 @@ CREATE TRIGGER todos_set_last_activity BEFORE UPDATE ON public.todos FOR EACH RO
 CREATE TRIGGER trg_update_compliance_rules_updated_at BEFORE UPDATE ON public.compliance_rules FOR EACH ROW EXECUTE FUNCTION public.update_compliance_rules_updated_at();
 
 
---
--- Name: audit_logs audit_logs_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
 
-ALTER TABLE ONLY public.audit_logs
-    ADD CONSTRAINT audit_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
 
 --
@@ -2330,11 +2267,7 @@ CREATE POLICY "Allow admins to insert chuti for all users" ON public.chuti FOR I
 CREATE POLICY "Allow admins to insert profiles" ON public.profiles FOR INSERT WITH CHECK (public.is_admin());
 
 
---
--- Name: audit_logs Allow admins to read all audit logs; Type: POLICY; Schema: public; Owner: postgres
---
 
-CREATE POLICY "Allow admins to read all audit logs" ON public.audit_logs FOR SELECT TO authenticated USING (public.is_admin());
 
 
 --
@@ -2396,11 +2329,7 @@ CREATE POLICY "Allow authenticated to read compliance rules" ON public.complianc
 CREATE POLICY "Allow authenticated to read login codes" ON public.login_codes FOR SELECT TO authenticated USING (true);
 
 
---
--- Name: audit_logs Allow authenticated users to insert audit logs; Type: POLICY; Schema: public; Owner: postgres
---
 
-CREATE POLICY "Allow authenticated users to insert audit logs" ON public.audit_logs FOR INSERT TO authenticated WITH CHECK ((actor_id = auth.uid()));
 
 
 --
@@ -2627,11 +2556,7 @@ CREATE POLICY "Users can update own holiday responses" ON public.govt_holiday_re
 CREATE POLICY "Users can update own settlements" ON public.leave_settlements FOR UPDATE USING (((auth.uid() = user_id) AND (status <> 'processed'::text))) WITH CHECK (((auth.uid() = user_id) AND (status <> 'processed'::text)));
 
 
---
--- Name: audit_logs; Type: ROW SECURITY; Schema: public; Owner: postgres
---
 
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: chuti; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -2759,12 +2684,7 @@ GRANT ALL ON FUNCTION public.check_profile_updates() TO authenticated;
 GRANT ALL ON FUNCTION public.check_profile_updates() TO service_role;
 
 
---
--- Name: FUNCTION cleanup_old_audit_logs(); Type: ACL; Schema: public; Owner: postgres
---
 
-REVOKE ALL ON FUNCTION public.cleanup_old_audit_logs() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.cleanup_old_audit_logs() TO service_role;
 
 
 --
@@ -3038,13 +2958,7 @@ GRANT ALL ON FUNCTION public.update_todos_last_activity() TO authenticated;
 GRANT ALL ON FUNCTION public.update_todos_last_activity() TO service_role;
 
 
---
--- Name: TABLE audit_logs; Type: ACL; Schema: public; Owner: postgres
---
 
-GRANT ALL ON TABLE public.audit_logs TO anon;
-GRANT ALL ON TABLE public.audit_logs TO authenticated;
-GRANT ALL ON TABLE public.audit_logs TO service_role;
 
 
 --
