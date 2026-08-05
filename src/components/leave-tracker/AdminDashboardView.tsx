@@ -467,7 +467,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         <div className="flex flex-col gap-6">
           {activeTab === 'govt_responses' ? (
             /* ================= GOVT HOLIDAY RESPONSES TABLE REPORT ================= */
-            <div className="bg-theme-card-bg/40 backdrop-blur-xl shadow-2xl rounded-2xl p-6 flex flex-col gap-4 animate-fade-in">
+            <div className="flex flex-col gap-4 animate-fade-in">
               {/* Search Filters & Excel Export */}
               <div className="flex flex-col sm:flex-row items-end gap-3 w-full bg-theme-card-container/40 p-3 rounded-xl border border-theme-border-muted">
                 <div className="flex-1 relative w-full">
