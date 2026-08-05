@@ -53,12 +53,12 @@ export const AuditLogsSkeleton: React.FC<AuditLogsSkeletonProps> = ({ className 
                 <div className={`h-3 w-28 ${bar}`} />
               </div>
               {/* Actor: person icon + codename */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-slate-800/50 shrink-0" />
                 <div className={`h-3 w-16 ${bar}`} />
               </div>
               {/* Action type badge */}
-              <div>
+              <div className="flex justify-center">
                 <div
                   className={`h-5 rounded-full ${bar}`}
                   style={{ width: `${70 + (i % 3) * 20}px` }}

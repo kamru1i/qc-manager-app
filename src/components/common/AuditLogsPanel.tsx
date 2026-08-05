@@ -247,10 +247,10 @@ export const AuditLogsPanel: React.FC<AuditLogsPanelProps> = ({
         <table className="w-full text-left text-xs border-collapse min-w-[700px]">
           <thead>
             <tr className="bg-theme-page-bg border-b border-theme-border-muted text-theme-text-muted font-semibold uppercase">
-              <th className="px-4 py-3 w-48">Timestamp</th>
-              <th className="px-4 py-3 w-32">Actor</th>
-              <th className="px-4 py-3 w-40">Action Type</th>
-              <th className="px-4 py-3">Description Details</th>
+              <th className="px-4 py-3 w-48 text-left">Timestamp</th>
+              <th className="px-4 py-3 w-32 text-center">Actor</th>
+              <th className="px-4 py-3 w-40 text-center">Action Type</th>
+              <th className="px-4 py-3 text-left">Description Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-theme-border-muted text-theme-text-secondary">
@@ -258,8 +258,8 @@ export const AuditLogsPanel: React.FC<AuditLogsPanelProps> = ({
               Array.from({ length: 5 }).map((_, idx) => (
                 <tr key={idx} className="hover:bg-theme-card-bg/10 border-b border-theme-border-muted/40">
                   <td className="px-4 py-3.5"><div className="h-4 w-36 bg-theme-border-input rounded animate-pulse" /></td>
-                  <td className="px-4 py-3.5"><div className="h-4 w-16 bg-theme-border-input rounded animate-pulse" /></td>
-                  <td className="px-4 py-3.5"><div className="h-5 w-24 bg-theme-border-input/80 rounded-full animate-pulse" /></td>
+                  <td className="px-4 py-3.5 text-center"><div className="h-4 w-16 bg-theme-border-input rounded animate-pulse mx-auto" /></td>
+                  <td className="px-4 py-3.5 text-center"><div className="h-5 w-24 bg-theme-border-input/80 rounded-full animate-pulse mx-auto" /></td>
                   <td className="px-4 py-3.5"><div className="h-4 w-96 bg-theme-border-input rounded animate-pulse" /></td>
                 </tr>
               ))
@@ -277,13 +277,13 @@ export const AuditLogsPanel: React.FC<AuditLogsPanelProps> = ({
                     <Clock className="h-3.5 w-3.5 text-theme-text-muted" />
                     {formatLogTime(log.created_at)}
                   </td>
-                  <td className="px-4 py-3 font-bold text-theme-text-primary">
-                    <span className="inline-flex items-center gap-1">
+                  <td className="px-4 py-3 font-bold text-theme-text-primary text-center">
+                    <span className="inline-flex items-center justify-center gap-1">
                       <User className="h-3.5 w-3.5 text-theme-text-muted" />
                       {log.actor_codename}
                     </span>
                   </td>
-                  <td className="px-4 py-3">{getActionBadge(log.action_type)}</td>
+                  <td className="px-4 py-3 text-center">{getActionBadge(log.action_type)}</td>
                   <td className="px-4 py-3 font-medium text-theme-text-secondary text-xs max-w-lg whitespace-pre-wrap break-words">{log.details}</td>
                 </tr>
               ))

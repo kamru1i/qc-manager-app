@@ -143,6 +143,7 @@ npm run tauri build
 - **Feature Flag Cleanup**: Removed `copy_helper_admin_summary` feature flag from system registry, default flag states, and Access Control / Feature Flags settings.
 - **Copy Helper & Govt Holiday Response Outer Border Removal**: Reorganized Copy Helper panel into a clean 3-column grid layout and removed outer wrapper box containers/borders from both Copy Helper and Leave Tracker > Govt Holiday Response for a sleek, modern UI.
 - **Review & Settlements Table Center Alignment**: Updated `AdminSettlementsPanel.tsx` so Unused Balance, User Preference, Status, and Action column titles and data cells are center-aligned, keeping Staff Member left-aligned.
+- **Security Logs Center Alignment**: Updated `AuditLogsPanel.tsx` so Actor and Action Type column headers and data cells are center-aligned, keeping Timestamp and Description Details left-aligned.
 
 ### 🩹 v6.9.6 — Patch Release (Supervisor Authorization Hardening & Approval Comment Deduplication)
 
