@@ -455,6 +455,7 @@ export const useDashboardData = () => {
         // E1 fix: All roles read global settings from the admin profile
         const adminForCache = profilesData.find(p => p.role === 'superadmin' && p.global_settings) || profilesData.find(p => isAdminRole(p)) || profile;
         const currentGlobalSettings = getGlobalSettingsFromProfile(adminForCache);
+        setGlobalSettings(currentGlobalSettings);
         await setGlobalSettingsCache(currentGlobalSettings);
 
         // TTL: Purge chuti records older than 2 years from cache
