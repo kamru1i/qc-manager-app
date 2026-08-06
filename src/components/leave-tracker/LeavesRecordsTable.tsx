@@ -83,7 +83,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   hideFilterPanel = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'yearly' | 'monthly'>('yearly');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [isMounted, setIsMounted] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -171,6 +170,9 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     const monthCounts: { [key: string]: number } = {};
     records.forEach((r) => {
       if (r.date) {
+        if (selectedYear !== 'all' && r.date.substring(0, 4) !== selectedYear) {
+          return;
+        }
         const m = getRecordMonth(r.date);
         if (m) {
           monthCounts[m] = (monthCounts[m] || 0) + 1;
@@ -189,14 +191,16 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       }
     });
     return options;
-  }, [records, getRecordMonth, monthNames]);
+  }, [records, selectedYear, getRecordMonth, monthNames]);
 
-  // Reset selectedMonth if selected month has no records anymore
+  // Reset selectedMonth to 'all' if selectedYear is 'all' or selected month has no records
   useEffect(() => {
-    if (selectedMonth !== 'all' && !monthOptions.some(o => o.value === selectedMonth)) {
+    if (selectedYear === 'all') {
+      setSelectedMonth('all');
+    } else if (selectedMonth !== 'all' && !monthOptions.some(o => o.value === selectedMonth)) {
       setSelectedMonth('all');
     }
-  }, [monthOptions, selectedMonth]);
+  }, [selectedYear, monthOptions, selectedMonth]);
 
   const leaveTypeOptions = useMemo(() => [
     { value: 'all', label: 'All Categories' },
@@ -210,7 +214,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       if (filterType && filterType !== 'all') {
         if (r.leave_type !== filterType) return false;
       }
-      if (viewMode === 'monthly' && selectedMonth && selectedMonth !== 'all') {
+      if (selectedYear !== 'all' && selectedMonth && selectedMonth !== 'all') {
         const rMonth = getRecordMonth(r.date);
         if (rMonth !== selectedMonth) return false;
       }
@@ -221,7 +225,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       return commentMatch || typeMatch;
     });
     return sortChutiRecordsDescending(filtered);
-  }, [records, filterType, viewMode, selectedMonth, searchTerm, getRecordMonth]);
+  }, [records, filterType, selectedYear, selectedMonth, searchTerm, getRecordMonth]);
 
   const showActionColumn = isSelectionMode && !hideDelete;
 
@@ -390,9 +394,9 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       {/* Records Table */}
       <div className="bg-theme-card-bg/40 border border-theme-card-bg shadow-2xl rounded-2xl overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-theme-border-input/80 flex flex-col md:flex-row justify-between items-center gap-4">
-          {/* Title & Entry Count + Add Leave Button + View Mode Tabs */}
+          {/* Title & Entry Count + Add Leave Button */}
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
               <h3 className="text-base font-bold text-theme-text-primary">{title}</h3>
               {showAddLeave && (
                 <button
@@ -402,35 +406,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                   <Plus className="h-3.5 w-3.5" /> Add Leave
                 </button>
               )}
-
-              {/* View Mode Switcher: Yearly / Monthly Tabs (Positioned right after Add Leave) */}
-              <div className="flex items-center bg-theme-page-bg/80 border border-theme-border-input p-0.5 rounded-lg text-xs shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewMode('yearly');
-                    setSelectedMonth('all');
-                  }}
-                  className={`px-2.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                    viewMode === 'yearly'
-                      ? 'bg-blue-600 text-white shadow-sm font-bold'
-                      : 'text-theme-text-muted hover:text-theme-text-primary'
-                  }`}
-                >
-                  Yearly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('monthly')}
-                  className={`px-2.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                    viewMode === 'monthly'
-                      ? 'bg-blue-600 text-white shadow-sm font-bold'
-                      : 'text-theme-text-muted hover:text-theme-text-primary'
-                  }`}
-                >
-                  Monthly
-                </button>
-              </div>
             </div>
             <span className="text-xs text-theme-text-muted mt-0.5">
               Total: {filteredRecords.length} {filteredRecords.length === 1 ? 'entry' : 'entries'}
@@ -491,18 +466,15 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               />
             )}
 
-            {/* Month Selector (Always Visible) */}
-            <CustomSelect
-              value={selectedMonth}
-              onChange={(val) => {
-                setSelectedMonth(val);
-                if (val !== 'all') {
-                  setViewMode('monthly');
-                }
-              }}
-              options={monthOptions}
-              className="min-w-[125px]"
-            />
+            {/* Month Selector (Active when an individual year is selected and has month data) */}
+            {selectedYear !== 'all' && monthOptions.length > 1 && (
+              <CustomSelect
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                options={monthOptions}
+                className="min-w-[125px]"
+              />
+            )}
           </div>
         </div>
 
