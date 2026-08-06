@@ -491,15 +491,18 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               />
             )}
 
-            {/* Month Selector (Visible in Monthly mode) */}
-            {viewMode === 'monthly' && (
-              <CustomSelect
-                value={selectedMonth}
-                onChange={setSelectedMonth}
-                options={monthOptions}
-                className="min-w-[130px]"
-              />
-            )}
+            {/* Month Selector (Always Visible) */}
+            <CustomSelect
+              value={selectedMonth}
+              onChange={(val) => {
+                setSelectedMonth(val);
+                if (val !== 'all') {
+                  setViewMode('monthly');
+                }
+              }}
+              options={monthOptions}
+              className="min-w-[125px]"
+            />
           </div>
         </div>
 
