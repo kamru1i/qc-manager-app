@@ -310,7 +310,6 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 : "Allocated Office Leave"
             }
             value={officeRemainingDisplay}
-            subtitle={officeSubtitle}
             action={
               halfYearlyStats ? (
                 <button
