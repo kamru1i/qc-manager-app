@@ -763,12 +763,20 @@ export default function Dashboard({
   }, [
     records,
     adminViewMode,
-    selectedDate,
-    searchQuery,
-    selectedBranch,
     profile,
-    sessionUser,
+    sessionUser?.id,
+    selectedDate,
+    selectedBranch,
+    searchQuery,
+    uniqueBranches,
+    selectedYear,
+    selectedMonth,
   ]);
+
+  // Filtered records for Sale Summary Tab (Strictly file_type === "Sale")
+  const saleSummaryRecords = useMemo(() => {
+    return monthlyFilteredRecords.filter((r) => r.file_type === "Sale");
+  }, [monthlyFilteredRecords]);
 
   // Today's entries (submitted on the current local day)
   const todayRecords = useMemo(() => {
@@ -927,6 +935,23 @@ export default function Dashboard({
       "EXPORT_EXCEL",
       null,
       `Exported monthly records for ${monthName} ${selectedYear} (Count: ${monthlyFilteredRecords.length}) to Excel`,
+    );
+  };
+
+  const handleExportSaleSummaryExcel = () => {
+    const monthName = new Date(
+      parseInt(selectedYear),
+      parseInt(selectedMonth) - 1,
+      1,
+    ).toLocaleString("en-US", { month: "long" });
+    exportToCSV(
+      saleSummaryRecords,
+      `Sale_Summary_${monthName}_${selectedYear}`,
+    );
+    logActivity(
+      "EXPORT_EXCEL",
+      null,
+      `Exported sale summary records for ${monthName} ${selectedYear} (Count: ${saleSummaryRecords.length}) to Excel`,
     );
   };
 
@@ -2009,7 +2034,7 @@ export default function Dashboard({
               {/* 6. Excel Export & Admin View Toggle Controls */}
               <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                 <button
-                  onClick={handleExportMonthlyExcel}
+                  onClick={handleExportSaleSummaryExcel}
                   className="flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md h-9"
                   title="Export to Excel"
                 >
@@ -2030,8 +2055,8 @@ export default function Dashboard({
           {/* Sale Summary Table Component */}
           <Suspense fallback={<SkeletonLoader type="table" />}>
             <RecordsTable
-              records={monthlyFilteredRecords}
-              emptyMessage="No file records found matching the filters."
+              records={saleSummaryRecords}
+              emptyMessage="No sale records found matching the filters."
               showDate={true}
               isSaleSummaryView={true}
               onEdit={(record) => handleOpenEditRecord(record, true)}
