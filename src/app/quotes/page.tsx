@@ -378,6 +378,104 @@ export default function Dashboard({
     setSelectedDate("");
   };
 
+  // Sale Summary Independent Filters State
+  const [saleSearchQuery, setSaleSearchQuery] = useState("");
+  const [saleSelectedBranch, setSaleSelectedBranch] = useState("");
+  const [saleSelectedYear, setSaleSelectedYear] = useState<string>(
+    () => new Date().getFullYear().toString(),
+  );
+  const [saleSelectedMonth, setSaleSelectedMonth] = useState<string>(
+    () => String(new Date().getMonth() + 1).padStart(2, "0"),
+  );
+  const [saleSelectedDate, setSaleSelectedDate] = useState("");
+  const [saleDateInputVal, setSaleDateInputVal] = useState("");
+  const [saleAdminViewMode, setSaleAdminViewMode] = useState<"all" | "mine">("mine");
+  const specificSaleDateRef = useRef<HTMLInputElement>(null);
+
+  // Sync text input with saleSelectedDate
+  useEffect(() => {
+    if (saleSelectedDate) {
+      const parts = saleSelectedDate.split("-");
+      if (parts.length === 3) {
+        setSaleDateInputVal(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      } else {
+        setSaleDateInputVal(formatDate(saleSelectedDate));
+      }
+    } else {
+      setSaleDateInputVal("");
+    }
+  }, [saleSelectedDate]);
+
+  const handleSaleDateInputChange = (val: string) => {
+    const clean = val.replace(/\D/g, "");
+    let formatted = "";
+    if (clean.length > 0) {
+      formatted += clean.substring(0, 2);
+    }
+    if (clean.length > 2) {
+      formatted += "-" + clean.substring(2, 4);
+    }
+    if (clean.length > 4) {
+      formatted += "-" + clean.substring(4, 8);
+    }
+
+    setSaleDateInputVal(formatted);
+
+    if (formatted.length === 10) {
+      const parts = formatted.split("-");
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+
+      if (
+        day >= 1 &&
+        day <= 31 &&
+        month >= 1 &&
+        month <= 12 &&
+        year >= 1900 &&
+        year <= 2100
+      ) {
+        const dateObj = new Date(year, month - 1, day);
+        if (
+          dateObj.getFullYear() === year &&
+          dateObj.getMonth() === month - 1 &&
+          dateObj.getDate() === day
+        ) {
+          const yyyy = String(year);
+          const mm = String(month).padStart(2, "0");
+          const dd = String(day).padStart(2, "0");
+          const dateValue = `${yyyy}-${mm}-${dd}`;
+          setSaleSelectedDate(dateValue);
+          setSaleSelectedYear(yyyy);
+          setSaleSelectedMonth(mm);
+          return;
+        }
+      }
+    }
+    setSaleSelectedDate("");
+  };
+
+  const handleSaleDateFilterChange = (dateStr: string) => {
+    setSaleSelectedDate(dateStr);
+    if (dateStr) {
+      const parts = dateStr.split("-");
+      if (parts.length === 3) {
+        setSaleSelectedYear(parts[0]);
+        setSaleSelectedMonth(parts[1]);
+      }
+    }
+  };
+
+  const handleOpenSpecificSaleDatePicker = () => {
+    if (specificSaleDateRef.current) {
+      try {
+        specificSaleDateRef.current.showPicker();
+      } catch {
+        specificSaleDateRef.current.click();
+      }
+    }
+  };
+
   // Admin Backdated Entry Modal State
   const [isCustomEntryModalOpen, setIsCustomEntryModalOpen] = useState(false);
 
@@ -773,10 +871,66 @@ export default function Dashboard({
     selectedMonth,
   ]);
 
-  // Filtered records for Sale Summary Tab (Strictly file_type === "Sale")
+  // Filtered records for Sale Summary Tab (Strictly file_type === "Sale" and using independent Sale Summary filters)
   const saleSummaryRecords = useMemo(() => {
-    return monthlyFilteredRecords.filter((r) => r.file_type === "Sale");
-  }, [monthlyFilteredRecords]);
+    return records.filter((r) => {
+      // Must be Sale file type
+      if (r.file_type !== "Sale") {
+        return false;
+      }
+      // Admin filter mode
+      if (
+        (isAdminRole(profile) || profile?.role === "supervisor") &&
+        saleAdminViewMode === "mine" &&
+        r.user_id !== sessionUser?.id
+      ) {
+        return false;
+      }
+      // Specific Date filter
+      if (saleSelectedDate) {
+        const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
+        if (recordDate !== saleSelectedDate) {
+          return false;
+        }
+      } else {
+        // Year & Month filter
+        const recordYear = String(new Date(r.submitted_at).getFullYear());
+        const recordMonth = String(new Date(r.submitted_at).getMonth() + 1).padStart(2, "0");
+        if (recordYear !== saleSelectedYear || recordMonth !== saleSelectedMonth) {
+          return false;
+        }
+      }
+      // Branch Dropdown filter
+      if (saleSelectedBranch) {
+        if (
+          r.branch_name.toUpperCase().trim() !==
+          saleSelectedBranch.toUpperCase().trim()
+        ) {
+          return false;
+        }
+      }
+      // Search Query filter
+      if (saleSearchQuery) {
+        const q = saleSearchQuery.toLowerCase().trim();
+        const matchFileName = r.file_name.toLowerCase().includes(q);
+        const matchCodename = r.codename.toLowerCase().includes(q);
+        if (!matchFileName && !matchCodename) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [
+    records,
+    saleAdminViewMode,
+    profile,
+    sessionUser?.id,
+    saleSelectedDate,
+    saleSelectedBranch,
+    saleSearchQuery,
+    saleSelectedYear,
+    saleSelectedMonth,
+  ]);
 
 
 
@@ -1934,15 +2088,15 @@ export default function Dashboard({
                   <input
                     type="text"
                     placeholder="Search name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={saleSearchQuery}
+                    onChange={(e) => setSaleSearchQuery(e.target.value)}
                     className="block w-full pl-7 pr-6 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
                   />
                   <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-theme-text-muted" />
-                  {searchQuery && (
+                  {saleSearchQuery && (
                     <button
                       type="button"
-                      onClick={() => setSearchQuery("")}
+                      onClick={() => setSaleSearchQuery("")}
                       className="absolute right-1.5 top-2 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
                       title="Clear search"
                     >
@@ -1958,8 +2112,8 @@ export default function Dashboard({
                   Branch
                 </label>
                 <CustomSelect
-                  value={selectedBranch}
-                  onChange={setSelectedBranch}
+                  value={saleSelectedBranch}
+                  onChange={setSaleSelectedBranch}
                   options={[
                     { value: "", label: "All Branches" },
                     ...uniqueBranches.map((b) => ({ value: b, label: b })),
@@ -1975,11 +2129,11 @@ export default function Dashboard({
                   Year
                 </label>
                 <CustomSelect
-                  value={selectedYear}
-                  disabled={!!selectedDate}
+                  value={saleSelectedYear}
+                  disabled={!!saleSelectedDate}
                   onChange={(val) => {
-                    setSelectedYear(val);
-                    setSelectedDate(""); // Reset specific date filter
+                    setSaleSelectedYear(val);
+                    setSaleSelectedDate(""); // Reset specific date filter
                   }}
                   options={dynamicYears.map((year) => ({
                     value: year,
@@ -1996,11 +2150,11 @@ export default function Dashboard({
                   Month
                 </label>
                 <CustomSelect
-                  value={selectedMonth}
-                  disabled={!!selectedDate}
+                  value={saleSelectedMonth}
+                  disabled={!!saleSelectedDate}
                   onChange={(val) => {
-                    setSelectedMonth(val);
-                    setSelectedDate(""); // Reset specific date filter
+                    setSaleSelectedMonth(val);
+                    setSaleSelectedDate(""); // Reset specific date filter
                   }}
                   options={dynamicMonths.map((m) => ({
                     value: m.val,
@@ -2021,31 +2175,31 @@ export default function Dashboard({
                     <input
                       type="text"
                       placeholder="DD-MM-YYYY"
-                      value={dateInputVal}
-                      onChange={(e) => handleDateInputChange(e.target.value)}
-                      onClick={handleOpenSpecificDatePicker}
+                      value={saleDateInputVal}
+                      onChange={(e) => handleSaleDateInputChange(e.target.value)}
+                      onClick={handleOpenSpecificSaleDatePicker}
                       maxLength={10}
                       className="block w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9 cursor-pointer"
                     />
                     <input
                       type="date"
-                      ref={specificDateRef}
-                      value={selectedDate}
-                      onChange={(e) => handleDateFilterChange(e.target.value)}
+                      ref={specificSaleDateRef}
+                      value={saleSelectedDate}
+                      onChange={(e) => handleSaleDateFilterChange(e.target.value)}
                       className="absolute w-px h-px opacity-0 pointer-events-none select-none"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      setSearchQuery("");
-                      setSelectedBranch("");
-                      setSelectedYear(new Date().getFullYear().toString());
-                      setSelectedMonth(
+                      setSaleSearchQuery("");
+                      setSaleSelectedBranch("");
+                      setSaleSelectedYear(new Date().getFullYear().toString());
+                      setSaleSelectedMonth(
                         String(new Date().getMonth() + 1).padStart(2, "0"),
                       );
-                      setSelectedDate("");
-                      setDateInputVal("");
+                      setSaleSelectedDate("");
+                      setSaleDateInputVal("");
                     }}
                     className="p-1.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-8 h-9 cursor-pointer"
                     title="Reset all filters"
@@ -2068,8 +2222,8 @@ export default function Dashboard({
 
                 {(isAdminRole(profile) || profile?.role === "supervisor") && (
                   <AdminViewToggle
-                    viewMode={adminViewMode}
-                    onChange={handleAdminViewModeChange}
+                    viewMode={saleAdminViewMode}
+                    onChange={setSaleAdminViewMode}
                   />
                 )}
               </div>
