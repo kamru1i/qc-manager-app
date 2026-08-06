@@ -310,6 +310,7 @@ export default function Dashboard({
   // Branch Selection Filters
   const [selectedBranch, setSelectedBranch] = useState("");
   const [todaySelectedBranch, setTodaySelectedBranch] = useState("");
+  const [todayAdminViewMode, setTodayAdminViewMode] = useState<"all" | "mine">("mine");
 
   // Monthly Table Date filter state
   const [selectedDate, setSelectedDate] = useState("");
@@ -963,7 +964,7 @@ export default function Dashboard({
       // Admin filter mode
       if (
         (isAdminRole(profile) || profile?.role === "supervisor") &&
-        adminViewMode === "mine" &&
+        todayAdminViewMode === "mine" &&
         r.user_id !== sessionUser?.id
       ) {
         return false;
@@ -971,7 +972,7 @@ export default function Dashboard({
       const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
       return recordDate === todayStr;
     });
-  }, [records, adminViewMode, profile, sessionUser]);
+  }, [records, todayAdminViewMode, profile, sessionUser]);
 
   // Filtered entries for Today's list table
   const todayFilteredRecords = useMemo(() => {
@@ -1854,8 +1855,8 @@ export default function Dashboard({
 
                 {(isAdminRole(profile) || profile?.role === "supervisor") && (
                   <AdminViewToggle
-                    viewMode={adminViewMode}
-                    onChange={handleAdminViewModeChange}
+                    viewMode={todayAdminViewMode}
+                    onChange={setTodayAdminViewMode}
                   />
                 )}
               </div>
