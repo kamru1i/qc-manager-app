@@ -225,20 +225,14 @@ export function AdminLeaveSettings({
     try {
       const dateToRemove = holidayToDelete.date;
       const updatedHolidays = govtHolidays.filter(h => h.date !== dateToRemove);
-      const activeDates = updatedHolidays.map(h => h.date);
 
-      if (activeDates.length === 0) {
-        const { error: deleteError } = await supabase
-          .from('govt_holiday_responses')
-          .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
-        if (deleteError) throw deleteError;
-      } else {
-        const { error: deleteError } = await supabase
-          .from('govt_holiday_responses')
-          .delete()
-          .not('holiday_date', 'in', `(${activeDates.join(',')})`);
-        if (deleteError) throw deleteError;
+      // Explicitly delete any response/adjustment records for this specific date in database
+      const { error: deleteError } = await supabase
+        .from('govt_holiday_responses')
+        .delete()
+        .eq('holiday_date', dateToRemove);
+      if (deleteError) {
+        console.error('Error deleting holiday responses:', deleteError);
       }
 
       const success = await onSaveGlobalSettings({

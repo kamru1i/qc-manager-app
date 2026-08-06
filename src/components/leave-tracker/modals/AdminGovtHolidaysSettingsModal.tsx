@@ -86,22 +86,16 @@ export function AdminGovtHolidaysSettingsModal({
   const handleSave = async () => {
     setSubmitting(true);
     try {
+      const oldDates = (globalSettings.govt_holidays || []).map((h: any) => (typeof h === 'object' ? h.date : String(h)));
       const activeDates = govtHolidays.map(h => h.date);
-      if (activeDates.length === 0) {
-        const { error: deleteError } = await supabase
-          .from('govt_holiday_responses')
-          .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
-        if (deleteError) {
-          console.error('Failed to delete all responses:', deleteError);
-        }
-      } else {
-        const { error: deleteError } = await supabase
-          .from('govt_holiday_responses')
-          .delete()
-          .not('holiday_date', 'in', `(${activeDates.join(',')})`);
-        if (deleteError) {
-          console.error('Failed to delete removed responses:', deleteError);
+      const removedDates = oldDates.filter(d => !activeDates.includes(d));
+
+      if (removedDates.length > 0) {
+        for (const dateStr of removedDates) {
+          await supabase
+            .from('govt_holiday_responses')
+            .delete()
+            .eq('holiday_date', dateStr);
         }
       }
 
