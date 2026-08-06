@@ -492,6 +492,7 @@ function AppPortalInner({
   const [activeQuotesTab, setActiveQuotesTab] = useState<
     | "entry"
     | "monthly"
+    | "sale_summary"
     | "leaderboard"
     | "reports"
     | "rules"
@@ -514,6 +515,7 @@ function AppPortalInner({
       if (
         saved === "entry" ||
         saved === "monthly" ||
+        saved === "sale_summary" ||
         saved === "leaderboard" ||
         saved === "reports" ||
         saved === "rules" ||
@@ -556,6 +558,7 @@ function AppPortalInner({
     tab:
       | "entry"
       | "monthly"
+      | "sale_summary"
       | "leaderboard"
       | "my_report"
       | "all_report"
@@ -1532,7 +1535,7 @@ function AppPortalInner({
                         ? "form"
                         : activeQuotesTab === "causality"
                           ? "causality"
-                          : activeQuotesTab === "monthly"
+                          : activeQuotesTab === "monthly" || activeQuotesTab === "sale_summary"
                             ? "table"
                             : activeQuotesTab === "rules"
                               ? "rules"

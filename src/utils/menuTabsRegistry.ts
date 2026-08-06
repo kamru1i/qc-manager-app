@@ -23,7 +23,8 @@ export const MENU_TABS: MenuTabDef[] = [
   // Quotes Tracker Subtabs
   { key: 'copy_helper', label: 'Copy Helper Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'save_file', label: 'Save File Subtab', category: 'Quotes Tracker Subtabs' },
-  { key: 'monthly', label: 'Monthly List Subtab', category: 'Quotes Tracker Subtabs' },
+  { key: 'monthly', label: 'Monthly Summary Subtab', category: 'Quotes Tracker Subtabs' },
+  { key: 'sale_summary', label: 'Sale Summary Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'rules', label: 'Quote Rules Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'login_codes', label: 'Login Codes Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'causality', label: 'Causality Subtab', category: 'Quotes Tracker Subtabs' },
@@ -101,6 +102,7 @@ export const getDefaultRoleVisibility = (
     case 'leaderboard':
     case 'copy_helper':
     case 'monthly':
+    case 'sale_summary':
     case 'rules':
     case 'login_codes':
     case 'causality':

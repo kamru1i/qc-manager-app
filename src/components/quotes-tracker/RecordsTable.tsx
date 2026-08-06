@@ -29,6 +29,7 @@ interface RecordsTableProps {
   ) => Promise<boolean>;
   allowedCategories?: string[];
   submitting?: boolean;
+  isSaleSummaryView?: boolean;
 }
 
 export const RecordsTable: React.FC<RecordsTableProps> = ({
@@ -45,6 +46,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
   onBulkSaveInline,
   allowedCategories,
   submitting = false,
+  isSaleSummaryView = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
@@ -1109,7 +1111,19 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
 
                   {/* File Type Cell */}
                   <td className="px-4 py-1.5 min-w-32 text-center">
-                    {editingCell &&
+                    {isSaleSummaryView ? (
+                      <div className="flex items-center justify-center">
+                        {getCellValue(r, "file_type") === "Sale" ? (
+                          <span className="inline-flex items-center whitespace-nowrap text-[11px] font-bold px-3 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/40 shadow-xs">
+                            Sold
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center whitespace-nowrap text-[11px] font-bold px-3 py-0.5 rounded-full bg-slate-900/80 text-slate-400 border border-slate-700/50 shadow-xs">
+                            Unsold
+                          </span>
+                        )}
+                      </div>
+                    ) : editingCell &&
                     editingCell.id === r.id &&
                     editingCell.field === "file_type" ? (
                       <select
