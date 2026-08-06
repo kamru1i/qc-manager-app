@@ -455,7 +455,17 @@ export const useDashboardData = () => {
         // E1 fix: All roles read global settings from the admin profile
         const adminForCache = profilesData.find(p => p.role === 'superadmin' && p.global_settings) || profilesData.find(p => isAdminRole(p)) || profile;
         const currentGlobalSettings = getGlobalSettingsFromProfile(adminForCache);
-        setGlobalSettings(currentGlobalSettings);
+        setGlobalSettings(prev => {
+          const prevHolidays = prev.govt_holidays || [];
+          const currentHolidays = currentGlobalSettings.govt_holidays || [];
+          if (prevHolidays.length > currentHolidays.length && currentHolidays.length === 0) {
+            return {
+              ...currentGlobalSettings,
+              govt_holidays: prevHolidays
+            };
+          }
+          return currentGlobalSettings;
+        });
         await setGlobalSettingsCache(currentGlobalSettings);
 
         // TTL: Purge chuti records older than 2 years from cache
@@ -474,14 +484,11 @@ export const useDashboardData = () => {
   }, [sessionUser, profile]);
 
   const handleSaveGlobalSettings = useCallback(async (newSettings: GlobalSettings, options?: { silent?: boolean }) => {
-    if (!profile) return false;
-    const hasGlobalSettingsColumn = 'global_settings' in profile;
-    const updates: Record<string, unknown> = {};
-    if (hasGlobalSettingsColumn) {
-      updates.global_settings = newSettings;
-    } else {
-      updates.requested_default_sign_in = JSON.stringify(newSettings);
-    }
+    if (!profile || !sessionUser) return false;
+    const updates: Record<string, unknown> = {
+      global_settings: newSettings,
+      requested_default_sign_in: JSON.stringify(newSettings),
+    };
 
     // Compare old and new government holidays to detect newly added ones
     const oldHolidays = (globalSettings.govt_holidays || []).map((h: string) => parseHolidayItem(h));
@@ -493,13 +500,23 @@ export const useDashboardData = () => {
     const { error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('id', sessionUser!.id); // E1 fix: Only update admin's own profile (not ALL profiles)
+      .eq('id', sessionUser.id);
 
     if (error) {
       setMessage({ type: 'error', text: 'Failed to save settings: ' + error.message });
       setLoading(false);
       return false;
     }
+
+    // Immediately reflect in profile & profilesList in memory
+    (profile as any).global_settings = newSettings;
+    (profile as any).requested_default_sign_in = JSON.stringify(newSettings);
+
+    setProfilesList(prev => prev.map(p => p.id === sessionUser.id ? {
+      ...p,
+      global_settings: newSettings,
+      requested_default_sign_in: JSON.stringify(newSettings)
+    } : p));
 
     setGlobalSettings(newSettings);
     if (typeof window !== 'undefined') {
