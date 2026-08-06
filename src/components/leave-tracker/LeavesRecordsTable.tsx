@@ -148,7 +148,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     const sorted = Array.from(yearSet).sort((a, b) => Number(b) - Number(a));
     return [
       ...sorted.map((y) => ({ value: y, label: y })),
-      { value: 'all', label: 'All Years' },
+      { value: 'all', label: 'ALL' },
     ];
   }, [availableYears, currentYear, records]);
 
@@ -178,16 +178,25 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       }
     });
 
-    const options = [{ value: 'all', label: 'All Months' }];
+    const options = [{ value: 'all', label: 'ALL' }];
     Object.keys(monthNames).sort().forEach((mKey) => {
       const count = monthCounts[mKey] || 0;
-      options.push({
-        value: mKey,
-        label: count > 0 ? `${monthNames[mKey]} (${count})` : monthNames[mKey],
-      });
+      if (count > 0) {
+        options.push({
+          value: mKey,
+          label: `${monthNames[mKey]} (${count})`,
+        });
+      }
     });
     return options;
   }, [records, getRecordMonth, monthNames]);
+
+  // Reset selectedMonth if selected month has no records anymore
+  useEffect(() => {
+    if (selectedMonth !== 'all' && !monthOptions.some(o => o.value === selectedMonth)) {
+      setSelectedMonth('all');
+    }
+  }, [monthOptions, selectedMonth]);
 
   const leaveTypeOptions = useMemo(() => [
     { value: 'all', label: 'All Categories' },
