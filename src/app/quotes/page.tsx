@@ -378,6 +378,9 @@ export default function Dashboard({
     setSelectedDate("");
   };
 
+  // Sale Summary Filter State
+  const [saleStatusFilter, setSaleStatusFilter] = useState<"all" | "sold" | "unsold">("all");
+
   // Admin Backdated Entry Modal State
   const [isCustomEntryModalOpen, setIsCustomEntryModalOpen] = useState(false);
 
@@ -778,6 +781,39 @@ export default function Dashboard({
     return monthlyFilteredRecords.filter((r) => r.file_type === "Sale");
   }, [monthlyFilteredRecords]);
 
+  // Sale Summary Records after applying Sold/Unsold dropdown filter
+  const finalSaleSummaryRecords = useMemo(() => {
+    if (saleStatusFilter === "sold") {
+      return saleSummaryRecords.filter((r) => r.file_name.endsWith(" [SOLD]"));
+    }
+    if (saleStatusFilter === "unsold") {
+      return saleSummaryRecords.filter((r) => !r.file_name.endsWith(" [SOLD]"));
+    }
+    return saleSummaryRecords;
+  }, [saleSummaryRecords, saleStatusFilter]);
+
+  // Sale Summary Stats (Total Sales, Sold Count & %, Unsold Count & %)
+  const saleSummaryStats = useMemo(() => {
+    const total = saleSummaryRecords.length;
+    const sold = saleSummaryRecords.filter((r) => r.file_name.endsWith(" [SOLD]")).length;
+    const unsold = saleSummaryRecords.filter((r) => !r.file_name.endsWith(" [SOLD]")).length;
+
+    const formatStat = (count: number) => {
+      const padded = String(count).padStart(2, "0");
+      if (total === 0) return `${padded} (0%)`;
+      const pct = ((count / total) * 100).toFixed(2);
+      return `${padded} (${pct}%)`;
+    };
+
+    return {
+      total,
+      sold,
+      soldFormatted: formatStat(sold),
+      unsold,
+      unsoldFormatted: formatStat(unsold),
+    };
+  }, [saleSummaryRecords]);
+
   // Today's entries (submitted on the current local day)
   const todayRecords = useMemo(() => {
     const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local format
@@ -945,13 +981,13 @@ export default function Dashboard({
       1,
     ).toLocaleString("en-US", { month: "long" });
     exportToCSV(
-      saleSummaryRecords,
+      finalSaleSummaryRecords,
       `Sale_Summary_${monthName}_${selectedYear}`,
     );
     logActivity(
       "EXPORT_EXCEL",
       null,
-      `Exported sale summary records for ${monthName} ${selectedYear} (Count: ${saleSummaryRecords.length}) to Excel`,
+      `Exported sale summary records for ${monthName} ${selectedYear} (Count: ${finalSaleSummaryRecords.length}) to Excel`,
     );
   };
 
@@ -1945,6 +1981,24 @@ export default function Dashboard({
                 />
               </div>
 
+              {/* 2b. Sale Status Selector (All, Sold, Unsold) */}
+              <div className="w-full sm:w-28 lg:w-32 shrink-0">
+                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
+                  Status
+                </label>
+                <CustomSelect
+                  value={saleStatusFilter}
+                  onChange={(val) => setSaleStatusFilter(val as any)}
+                  options={[
+                    { value: "all", label: "All Statuses" },
+                    { value: "sold", label: "Sold Only" },
+                    { value: "unsold", label: "Unsold Only" },
+                  ]}
+                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
+                  className="w-full"
+                />
+              </div>
+
               {/* 3. Year Selection */}
               <div className="w-full sm:w-16 lg:w-20 shrink-0">
                 <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
@@ -2016,6 +2070,7 @@ export default function Dashboard({
                     onClick={() => {
                       setSearchQuery("");
                       setSelectedBranch("");
+                      setSaleStatusFilter("all");
                       setSelectedYear(new Date().getFullYear().toString());
                       setSelectedMonth(
                         String(new Date().getMonth() + 1).padStart(2, "0"),
@@ -2052,10 +2107,23 @@ export default function Dashboard({
             </div>
           </div>
 
+          {/* Dedicated Sale Summary Stats Grid (Total Sales, Sold, Unsold) */}
+          <div className="flex flex-wrap gap-2.5">
+            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
+              Total Sales: <strong className="text-theme-text-primary text-sm">{saleSummaryStats.total}</strong>
+            </div>
+            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
+              Sold: <strong className="text-emerald-400 text-sm">{saleSummaryStats.soldFormatted}</strong>
+            </div>
+            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
+              Unsold: <strong className="text-red-400 text-sm">{saleSummaryStats.unsoldFormatted}</strong>
+            </div>
+          </div>
+
           {/* Sale Summary Table Component */}
           <Suspense fallback={<SkeletonLoader type="table" />}>
             <RecordsTable
-              records={saleSummaryRecords}
+              records={finalSaleSummaryRecords}
               emptyMessage="No sale records found matching the filters."
               showDate={true}
               isSaleSummaryView={true}
