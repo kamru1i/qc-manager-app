@@ -135,8 +135,9 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🩹 v6.9.8 — Patch Release (Supervisor Authorization Hardening, Copy Helper Cleanup & Security Audit Logs Removal) (Current)
+### 🩹 v6.9.8 — Patch Release (Leave History Monthly Filter, Supervisor Authorization Hardening, Copy Helper Cleanup & Security Audit Logs Removal) (Current)
 
+- **Leave History Monthly & Yearly Filter Tabs**: Added Leaderboard-style Yearly & Monthly view tabs with interactive month selector dropdown in `LeavesRecordsTable.tsx`. Works seamlessly across `Chuti > Leave History` and `Settings > Users > Staff Profile > Leave History`.
 - **Supervisor Authorization & Real-Time Profile Lookup**: Enhanced `useDerivedState.ts` to strictly cross-reference live `profilesList` supervisor assignments, ensuring only assigned or delegated supervisors receive team approval queue items.
 - **Approval Comment Tag Deduplication**: Updated `buildStatusUpdatePayload` in `useChutiOperations.ts` to prevent duplicate approval tags (e.g. `NZ720 Approved | YK920 Approved`) from prepending repeatedly when leave entries are updated or re-approved.
 - **Copy Helper Network & Admin Summary Box Cleanup**: Completely removed Box 2 (Network & VPN Info) and Box 6 (Sales Summary - Sales Report for Admin) along with all their IP/VPN detection state, network background polling, and modal UI components.

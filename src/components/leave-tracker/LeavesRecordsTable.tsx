@@ -83,6 +83,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   hideFilterPanel = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'yearly' | 'monthly'>('yearly');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [isMounted, setIsMounted] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -118,11 +120,74 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     };
   }, []);
 
+  const getRecordMonth = useCallback((dateStr?: string | null) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split(/[\/-]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return parts[1].padStart(2, '0');
+      } else if (parts[2].length === 4) {
+        return parts[1].padStart(2, '0');
+      }
+    }
+    return dateStr.length >= 7 ? dateStr.substring(5, 7) : '';
+  }, []);
 
-  const yearOptions = [
-    { value: 'all', label: 'All' },
-    ...availableYears.map((y) => ({ value: y, label: y })),
-  ];
+  const currentYear = useMemo(() => new Date().getFullYear().toString(), []);
+
+  const yearOptions = useMemo(() => {
+    const yearSet = new Set<string>([currentYear, ...(availableYears || [])]);
+    records.forEach((r) => {
+      if (r.date) {
+        const y = r.date.substring(0, 4);
+        if (y && y.length === 4 && !isNaN(Number(y))) {
+          yearSet.add(y);
+        }
+      }
+    });
+    const sorted = Array.from(yearSet).sort((a, b) => Number(b) - Number(a));
+    return [
+      ...sorted.map((y) => ({ value: y, label: y })),
+      { value: 'all', label: 'All Years' },
+    ];
+  }, [availableYears, currentYear, records]);
+
+  const monthNames: { [key: string]: string } = useMemo(() => ({
+    '01': 'January',
+    '02': 'February',
+    '03': 'March',
+    '04': 'April',
+    '05': 'May',
+    '06': 'June',
+    '07': 'July',
+    '08': 'August',
+    '09': 'September',
+    '10': 'October',
+    '11': 'November',
+    '12': 'December',
+  }), []);
+
+  const monthOptions = useMemo(() => {
+    const monthCounts: { [key: string]: number } = {};
+    records.forEach((r) => {
+      if (r.date) {
+        const m = getRecordMonth(r.date);
+        if (m) {
+          monthCounts[m] = (monthCounts[m] || 0) + 1;
+        }
+      }
+    });
+
+    const options = [{ value: 'all', label: 'All Months' }];
+    Object.keys(monthNames).sort().forEach((mKey) => {
+      const count = monthCounts[mKey] || 0;
+      options.push({
+        value: mKey,
+        label: count > 0 ? `${monthNames[mKey]} (${count})` : monthNames[mKey],
+      });
+    });
+    return options;
+  }, [records, getRecordMonth, monthNames]);
 
   const leaveTypeOptions = useMemo(() => [
     { value: 'all', label: 'All Categories' },
@@ -136,6 +201,10 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       if (filterType && filterType !== 'all') {
         if (r.leave_type !== filterType) return false;
       }
+      if (viewMode === 'monthly' && selectedMonth && selectedMonth !== 'all') {
+        const rMonth = getRecordMonth(r.date);
+        if (rMonth !== selectedMonth) return false;
+      }
       if (!searchTerm.trim()) return true;
       const term = searchTerm.toLowerCase();
       const commentMatch = (r.comment || '').toLowerCase().includes(term);
@@ -143,7 +212,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       return commentMatch || typeMatch;
     });
     return sortChutiRecordsDescending(filtered);
-  }, [records, filterType, searchTerm]);
+  }, [records, filterType, viewMode, selectedMonth, searchTerm, getRecordMonth]);
 
   const showActionColumn = isSelectionMode && !hideDelete;
 
@@ -330,8 +399,37 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
             </span>
           </div>
 
-          {/* Controls: Leave Type Filter + Search Box + Excel Export + Year Selector */}
+          {/* Controls: View Mode Tabs + Leave Type Filter + Search Box + Excel Export + Year Selector + Month Selector */}
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+            {/* View Mode Switcher: Yearly / Monthly Tabs */}
+            <div className="flex items-center bg-theme-page-bg/80 border border-theme-border-input p-0.5 rounded-lg text-xs shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode('yearly');
+                  setSelectedMonth('all');
+                }}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                  viewMode === 'yearly'
+                    ? 'bg-blue-600 text-white shadow-sm font-bold'
+                    : 'text-theme-text-muted hover:text-theme-text-primary'
+                }`}
+              >
+                Yearly
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('monthly')}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                  viewMode === 'monthly'
+                    ? 'bg-blue-600 text-white shadow-sm font-bold'
+                    : 'text-theme-text-muted hover:text-theme-text-primary'
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+
             {/* Leave Type Dropdown (Left of Search Box) */}
             <CustomSelect
               value={filterType}
@@ -379,7 +477,17 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 value={selectedYear}
                 onChange={setSelectedYear}
                 options={yearOptions}
-                className="min-w-[80px]"
+                className="min-w-[85px]"
+              />
+            )}
+
+            {/* Month Selector (Visible in Monthly mode) */}
+            {viewMode === 'monthly' && (
+              <CustomSelect
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                options={monthOptions}
+                className="min-w-[130px]"
               />
             )}
           </div>
