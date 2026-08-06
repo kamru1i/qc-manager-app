@@ -533,7 +533,6 @@ function AppPortalInner({
   const [activeChutiTab, setActiveChutiTab] = useState<
     | "add_leave"
     | "leave_history"
-    | "govt_responses"
     | "settlement"
     | "leave_settings"
     | "team_leaves"
@@ -543,7 +542,6 @@ function AppPortalInner({
       if (
         saved === "add_leave" ||
         saved === "leave_history" ||
-        saved === "govt_responses" ||
         saved === "settlement" ||
         saved === "leave_settings" ||
         saved === "team_leaves"
@@ -599,7 +597,6 @@ function AppPortalInner({
     tab:
       | "add_leave"
       | "leave_history"
-      | "govt_responses"
       | "settlement"
       | "leave_settings"
       | "team_leaves",
@@ -880,7 +877,6 @@ function AppPortalInner({
     if (
       activeTab !== "chuti" ||
       (activeChutiTab !== "leave_history" &&
-        activeChutiTab !== "govt_responses" &&
         activeChutiTab !== "settlement" &&
         activeChutiTab !== "team_leaves")
     )
@@ -1516,15 +1512,13 @@ function AppPortalInner({
                       variant={
                         activeChutiTab === "add_leave"
                           ? "chuti-form"
-                          : activeChutiTab === "govt_responses"
-                            ? "responses-table"
-                            : activeChutiTab === "settlement"
-                              ? "settlements-table"
-                              : activeChutiTab === "leave_settings"
-                                ? "leave-settings"
-                                : activeChutiTab === "team_leaves"
-                                  ? "leaves-table"
-                                  : "leaves-table"
+                          : activeChutiTab === "settlement"
+                            ? "settlements-table"
+                            : activeChutiTab === "leave_settings"
+                              ? "leave-settings"
+                              : activeChutiTab === "team_leaves"
+                                ? "leaves-table"
+                                : "leaves-table"
                       }
                     />
                   )

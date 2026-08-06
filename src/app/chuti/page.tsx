@@ -27,8 +27,8 @@ import { isAdminRole } from '@/utils/permissionService';
 
 
 interface DashboardProps {
-  activeChutiTab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
-  onChutiTabChange: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
+  activeChutiTab: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves';
+  onChutiTabChange: (tab: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   /** R2: Callback to share data upward so useGlobalNotifications doesn't duplicate fetches */
   onDataReady?: (data: { userRecords: any[]; holidayResponses: any[]; initialFetchDone?: boolean }) => void;
 }
@@ -108,7 +108,7 @@ export default function Dashboard({
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdminAddLeaveModal, setShowAdminAddLeaveModal] = useState(false);
 
-  const handleChutiTabChange = (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings') => {
+  const handleChutiTabChange = (tab: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves') => {
     onChutiTabChange(tab);
     if (tab !== 'add_leave') {
       setEditingRecord(null);
@@ -767,7 +767,6 @@ export default function Dashboard({
         <div className="w-full">
           <SkeletonLoader variant={
             activeChutiTab === 'add_leave' ? 'chuti-form' :
-            activeChutiTab === 'govt_responses' ? 'responses-table' :
             activeChutiTab === 'settlement' ? 'settlements-table' :
             activeChutiTab === 'leave_settings' ? 'leave-settings' :
             activeChutiTab === 'team_leaves' ? 'team-leaves-report' :
@@ -796,7 +795,6 @@ export default function Dashboard({
     if (activeChutiTab !== 'leave_history') {
       let loaderVariant: 'chuti-form' | 'leaves-table' | 'responses-table' | 'settlements-table' | 'leave-history' | 'leave-settings' | 'team-leaves-report' = 'leaves-table';
       if (activeChutiTab === 'add_leave') loaderVariant = 'chuti-form';
-      else if (activeChutiTab === 'govt_responses') loaderVariant = 'responses-table';
       else if (activeChutiTab === 'settlement') loaderVariant = 'settlements-table';
       else if (activeChutiTab === 'leave_settings') loaderVariant = 'leave-settings';
       else if (activeChutiTab === 'team_leaves') loaderVariant = 'team-leaves-report';
@@ -907,10 +905,10 @@ export default function Dashboard({
 
         {/* ================= ADMIN STAFF VIEW (Leave Dashboard) ================= */}
         {profile?.has_changed_password !== false && !!profile?.is_setup_completed && isAdminRole(profile) &&
-          (activeChutiTab === 'govt_responses' || activeChutiTab === 'settlement') && (
+          activeChutiTab === 'settlement' && (
           <AdminDashboardView
-            activeTab={activeChutiTab}
-            setActiveTab={(tab) => handleChutiTabChange(tab)}
+            activeTab="settlement"
+            setActiveTab={(tab) => handleChutiTabChange(tab as any)}
             profilesList={profilesList}
             viewingStaffId={viewingStaffId}
             setViewingStaffId={setViewingStaffId}

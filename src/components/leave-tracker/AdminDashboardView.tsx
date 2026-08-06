@@ -415,6 +415,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 officeLeaveStats={officeLeaveStats}
                 govtHolidayStats={adjustedGovtHolidayStats}
                 allowOvertime={staffProfile?.allow_overtime}
+                allowReserve={staffProfile?.allow_reserve}
+                userLeaves={unfilteredStaffRecords}
                 respondedHolidays={respondedHolidays}
                 convertedDays={convertedDays}
                 convertedHours={convertedHours}
@@ -465,138 +467,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {activeTab === 'govt_responses' ? (
-            /* ================= GOVT HOLIDAY RESPONSES TABLE REPORT ================= */
-            <div className="flex flex-col gap-4 animate-fade-in">
-              {/* Search Filters & Excel Export */}
-              <div className="flex flex-col sm:flex-row items-end gap-3 w-full bg-theme-card-container/40 p-3 rounded-xl border border-theme-border-muted">
-                <div className="flex-1 relative w-full">
-                  <label className="text-[10px] uppercase tracking-wider text-theme-text-muted font-bold block mb-1">Search by holiday name or Name (codename)</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search name or codename..."
-                      value={holidaySearchQuery}
-                      onChange={(e) => setHolidaySearchQuery(e.target.value)}
-                      className="w-full bg-theme-card-bg border border-theme-border-input rounded-lg pl-3 pr-10 py-2 text-xs text-theme-text-primary focus:outline-none focus:border-teal-500/50 transition-all placeholder-theme-text-muted/50"
-                    />
-                    {holidaySearchQuery && (
-                      <button
-                        onClick={() => setHolidaySearchQuery('')}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer text-sm font-semibold"
-                        title="Clear search"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="w-full sm:w-48">
-                  <label className="text-[10px] uppercase tracking-wider text-theme-text-muted font-bold block mb-1">Filter by holiday date</label>
-                  <DateInput
-                    value={holidaySearchDate}
-                    onChange={(val) => setHolidaySearchDate(val)}
-                    className="bg-theme-card-bg border border-theme-border-input"
-                  />
-                </div>
-                <div className="flex items-end gap-2">
-                  <button
-                    onClick={() => {
-                      setHolidaySearchQuery('');
-                      setHolidaySearchDate('');
-                    }}
-                    className="px-3 py-2 bg-theme-card-container hover:bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-bold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-sm h-[38px]"
-                    title="Reset search"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-
-                  {/* Excel Export Button */}
-                  <button
-                    onClick={() => onExportHolidayResponsesExcel(filteredResponses)}
-                    disabled={filteredResponses.length === 0}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-40 shadow-sm h-[38px] shrink-0"
-                    title="Export Excel Report"
-                  >
-                    <Download className="h-3.5 w-3.5" /> Excel
-                  </button>
-                </div>
-              </div>
-
-              {/* Table Container */}
-              {!initialFetchDone ? (
-                <SkeletonLoader variant="responses-table" rows={5} />
-              ) : (
-                <div className="overflow-x-auto rounded-xl border border-theme-card-bg bg-theme-page-bg/20">
-                  <table className="min-w-full divide-y divide-theme-border-input text-left text-xs text-theme-text-secondary">
-                    <thead className="bg-theme-page-bg/60 text-theme-text-muted font-semibold uppercase tracking-wider">
-                      <tr>
-                        <th className="px-4 py-3">Holiday Date</th>
-                        <th className="px-4 py-3">Holiday Name</th>
-                        <th className="px-4 py-3">Name (Codename)</th>
-                        <th className="px-4 py-3">Preference/Response</th>
-                        <th className="px-4 py-3 text-right">Response Time</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-theme-border-input bg-theme-card-bg/10">
-                      {filteredResponses.length > 0 ? (
-                        filteredResponses.map((resp) => {
-                          const fullName = resp.profiles?.full_name || 'Staff';
-                          const codeName = resp.profiles?.username ? resp.profiles.username.toUpperCase() : 'N/A';
-
-                          return (
-                            <tr key={resp.id} className="hover:bg-theme-border-input/40 transition-colors">
-                              <td className="px-4 py-3 font-semibold text-theme-text-primary">
-                                {formatDate(resp.holiday_date)}
-                              </td>
-                              <td className="px-4 py-3 text-theme-text-secondary">
-                                {resp.holiday_name}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-teal-400">
-                                {fullName} ({codeName})
-                              </td>
-                              <td className="px-4 py-3">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${resp.response === 'paid'
-                                  ? 'bg-emerald-955/60 border-emerald-800 text-emerald-300'
-                                  : 'bg-teal-955/60 border-teal-800 text-teal-300'
-                                  }`}>
-                                  {resp.response === 'paid' ? 'Get Paid' : 'Reserve'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-right text-theme-text-muted">
-                                {resp.created_at ? new Date(resp.created_at).toLocaleString('en-US', { hour12: true }) : '-'}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      ) : (
-                        <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-theme-text-muted">
-                            No holiday response records found.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* ================= Staff Leave SETTLEMENTS TAB ================= */
-            <AdminSettlementsPanel
-              profilesList={profilesList}
-              selectedYear={selectedYear}
-              records={adminRecords}
-              globalSettings={globalSettings}
-              onSaveGlobalSettings={onSaveGlobalSettings}
-              leaveSettlements={leaveSettlements}
-              holidayResponses={holidayResponses}
-              onSaveSettlementsBulk={onSaveLeaveSettlementsBulk}
-              onDeleteSettlement={onDeleteSettlement}
-              currentUserProfile={currentUserProfile}
-              initialFetchDone={initialFetchDone}
-            />
-          )}
+          <AdminSettlementsPanel
+            profilesList={profilesList}
+            selectedYear={selectedYear}
+            records={adminRecords}
+            globalSettings={globalSettings}
+            onSaveGlobalSettings={onSaveGlobalSettings}
+            leaveSettlements={leaveSettlements}
+            holidayResponses={holidayResponses}
+            onSaveSettlementsBulk={onSaveLeaveSettlementsBulk}
+            onDeleteSettlement={onDeleteSettlement}
+            currentUserProfile={currentUserProfile}
+            initialFetchDone={initialFetchDone}
+          />
         </div>
       )}
 

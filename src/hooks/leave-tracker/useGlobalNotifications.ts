@@ -496,39 +496,27 @@ export function useGlobalNotifications(
     const list: NotificationItem[] = [];
 
     // 1. Govt Holiday Notifications
-    if (profile.eligible_govt_holiday !== false) {
+    if (profile.eligible_govt_holiday !== false && profile.allow_reserve !== false) {
       const activeHolidays = (globalSettings.govt_holidays || []).map((h: unknown) => parseHolidayItem(h));
 
       activeHolidays.forEach((holiday: { date: string; name: string }) => {
         const response = holidayResponses.find(r => r.user_id === profile.id && r.holiday_date === holiday.date);
         
-        if (response) {
-          if (profile.allow_reserve === false) {
-            list.push({
-              id: `govt-holiday-choice-${holiday.date}`,
-              type: 'govt_holiday_choice',
-              timestamp: response.created_at || currentSessionTime,
-              title: 'Govt Holiday Payment Notification 💸',
-              body: `${holiday.name} (${holiday.date}) government holiday payment will be added to your salary.`
-            });
-          } else {
-            list.push({
-              id: `govt-holiday-choice-${holiday.date}`,
-              type: 'govt_holiday_choice',
-              timestamp: response.created_at || currentSessionTime,
-              title: 'Govt Holiday Choice Updated By Admin 💸',
-              body: `Admin has updated your preference for ${holiday.name} (${holiday.date}) to ${response.response === 'reserve' ? 'Reserve' : 'Get Paid'}.`
-            });
-          }
-        } else if (profile.allow_reserve !== false) {
+        if (response && response.response === 'paid') {
           list.push({
-            id: `govt-holiday-prompt-${holiday.date}`,
-            type: 'govt_holiday_prompt',
-            timestamp: currentSessionTime,
-            title: 'Select Govt Holiday Preference 🔔',
-            body: `What would you like to do for this government holiday: ${holiday.name} (${holiday.date})?`,
-            holidayDate: holiday.date,
-            holidayName: holiday.name
+            id: `govt-holiday-paid-${holiday.date}`,
+            type: 'govt_holiday_choice',
+            timestamp: response.created_at || currentSessionTime,
+            title: 'Reserve Holiday Payment Adjustment 💸',
+            body: `Reserve holiday ${holiday.date} (${holiday.name}) payment er sathe adjust kore deya hoyeche.`
+          });
+        } else {
+          list.push({
+            id: `govt-holiday-reserve-${holiday.date}`,
+            type: 'govt_holiday_choice',
+            timestamp: response?.created_at || currentSessionTime,
+            title: 'Govt Holiday Reserved 📅',
+            body: `Je ${holiday.date} (${holiday.name}) er govt holiday eta reserve rakha hoyeche.`
           });
         }
       });

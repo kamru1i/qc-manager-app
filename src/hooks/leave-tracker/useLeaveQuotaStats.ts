@@ -36,36 +36,39 @@ export function useGovtHolidayStats(
   isGovtHolidayEligible: boolean,
   reserveLeavesTaken: number
 ): UseGovtHolidayStatsResult {
+  const activeHolidays = useMemo(() => {
+    return (globalSettings.govt_holidays || []).map(h => parseHolidayItem(h));
+  }, [globalSettings.govt_holidays]);
+
   const userResponses = useMemo(() => {
-    const activeHolidayDates = new Set(
-      (globalSettings.govt_holidays || []).map(h => parseHolidayItem(h).date)
-    );
-    return holidayResponses.filter(
-      r => r.user_id === userId && activeHolidayDates.has(r.holiday_date)
-    );
-  }, [holidayResponses, userId, globalSettings.govt_holidays]);
+    if (!userId) return [];
+    return holidayResponses.filter(r => r.user_id === userId);
+  }, [holidayResponses, userId]);
+
+  const respondedHolidays = useMemo(() => {
+    if (!isGovtHolidayEligible) return [];
+    return activeHolidays.map(h => {
+      const resp = userResponses.find(r => r.holiday_date === h.date);
+      return {
+        date: h.date,
+        name: h.name,
+        response: resp?.response === 'paid' ? 'paid' : 'reserve',
+      };
+    });
+  }, [activeHolidays, userResponses, isGovtHolidayEligible]);
 
   const paidCount = useMemo(
-    () => userResponses.filter(r => r.response === 'paid').length,
-    [userResponses]
+    () => respondedHolidays.filter(r => r.response === 'paid').length,
+    [respondedHolidays]
   );
 
   const reservedCount = useMemo(
-    () => userResponses.filter(r => r.response === 'reserve').length,
-    [userResponses]
-  );
-
-  const respondedHolidays = useMemo(
-    () => userResponses.map(r => ({
-      date: r.holiday_date,
-      name: r.holiday_name,
-      response: r.response,
-    })),
-    [userResponses]
+    () => respondedHolidays.filter(r => r.response === 'reserve').length,
+    [respondedHolidays]
   );
 
   const govtHolidayTotal = isGovtHolidayEligible
-    ? (globalSettings.govt_holidays?.length ?? 0)
+    ? activeHolidays.length
     : 0;
 
   const govtHolidayStats: GovtHolidayStats = useMemo(() => ({

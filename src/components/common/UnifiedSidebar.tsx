@@ -32,8 +32,8 @@ interface UnifiedSidebarProps {
   profile: Profile | null;
   activeQuotesTab?: 'entry' | 'monthly' | 'sale_summary' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import';
   onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import') => void;
-  activeChutiTab?: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves';
-  onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'govt_responses' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
+  activeChutiTab?: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves';
+  onChutiTabChange?: (tab: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
   hideCollapseButton?: boolean;

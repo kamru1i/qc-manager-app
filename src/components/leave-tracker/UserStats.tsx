@@ -46,7 +46,8 @@ interface UserStatsProps {
   onConvertToFullLeave?: () => void;
   hasConvertibleHours?: boolean;
 
-  // Admin Response Update props
+  allowReserve?: boolean;
+  userLeaves?: any[];
   isAdmin?: boolean;
   userId?: string;
   onUpdateHolidayResponse?: (
@@ -107,6 +108,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
   officeLeaveStats,
   govtHolidayStats,
   allowOvertime,
+  allowReserve = true,
+  userLeaves = [],
   respondedHolidays = [],
   eligibleGovtHoliday = true,
   halfYearlyStats,
@@ -208,7 +211,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
   // Office leave display determinations based on half-yearly split
   const showOfficeCard = !!officeLeaveStats;
-  const showGovtCard = eligibleGovtHoliday !== false && govtHolidayStats;
+  const showGovtCard = allowReserve !== false && eligibleGovtHoliday !== false && govtHolidayStats;
 
   const h1Carryover = halfYearlyStats
     ? halfYearlyStats.h1Total - halfYearlyStats.h1Base
@@ -333,7 +336,6 @@ export const UserStats: React.FC<UserStatsProps> = ({
             iconBorderClass="border-teal-500/20"
             title="Govt Holiday (Reserve)"
             value={`${govtHolidayStats.remaining} days`}
-            subtitle={`Total Govt Holiday: ${govtHolidayStats.total} days | Paid: ${govtHolidayStats.paid} days | Reserve: ${govtHolidayStats.reserved} days | Taken: ${govtHolidayStats.taken} days`}
             action={
               respondedHolidays && respondedHolidays.length > 0 ? (
                 <button
@@ -466,61 +468,76 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         <tr className="bg-theme-card-bg/60 border-b border-theme-border-muted text-theme-text-muted font-semibold text-[10px] uppercase tracking-wider">
                           <th className="py-2 px-3 text-left">Date</th>
                           <th className="py-2 px-3 text-left">Holiday Name</th>
-                          <th className="py-2 px-3 text-right">Response</th>
+                          <th className="py-2 px-3 text-left">Status</th>
+                          {isAdmin && <th className="py-2 px-3 text-right">Adjustment</th>}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-theme-border-muted">
-                        {respondedHolidays.map((h, i) => (
-                          <tr
-                            key={i}
-                            className="hover:bg-theme-card-bg/20 transition-colors"
-                          >
-                            <td className="py-2.5 px-3 font-mono font-bold text-teal-400">
-                              {formatDate(h.date)}
-                            </td>
-                            <td className="py-2.5 px-3 text-theme-text-primary">
-                              {h.name}
-                            </td>
-                            <td className="py-2.5 px-3 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <span
-                                  className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                    h.response === "reserve"
-                                      ? "bg-teal-955/60 border border-teal-900 text-teal-400"
-                                      : "bg-emerald-955/60 border border-emerald-900 text-emerald-400"
-                                  }`}
-                                >
-                                  {h.response === "reserve"
-                                    ? "Reserve"
-                                    : "Paid"}
-                                </span>
-                                {isAdmin &&
-                                  onUpdateHolidayResponse &&
-                                  userId && (
-                                    <button
-                                      type="button"
-                                      disabled={updatingHolidayDate === h.date}
-                                      onClick={() =>
-                                        handleEditHolidayResponse(
-                                          h.date,
-                                          h.name,
-                                          h.response,
-                                        )
-                                      }
-                                      className="p-1 hover:bg-theme-border-input text-theme-text-muted hover:text-theme-text-primary rounded transition-all cursor-pointer flex items-center justify-center disabled:opacity-50"
-                                      title="Change Response Preference"
-                                    >
-                                      {updatingHolidayDate === h.date ? (
-                                        <RefreshCw className="h-3 w-3 animate-spin" />
-                                      ) : (
-                                        <Edit className="h-3 w-3" />
-                                      )}
-                                    </button>
-                                  )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {respondedHolidays.map((h, i) => {
+                          const matchingLeave = (userLeaves || []).find(
+                            (r: any) =>
+                              r.adjustment &&
+                              (r.comment?.includes(h.name) ||
+                                r.comment?.includes(h.date) ||
+                                r.reserve_holiday === "Govt Holiday")
+                          );
+
+                          return (
+                            <tr
+                              key={i}
+                              className="hover:bg-theme-card-bg/20 transition-colors"
+                            >
+                              <td className="py-2.5 px-3 font-mono font-bold text-teal-400">
+                                {formatDate(h.date)}
+                              </td>
+                              <td className="py-2.5 px-3 text-theme-text-primary">
+                                {h.name}
+                              </td>
+                              <td className="py-2.5 px-3">
+                                {matchingLeave ? (
+                                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-955/60 border border-blue-800 text-blue-300">
+                                    Adjusted with Leave on {formatDate(matchingLeave.date)}
+                                  </span>
+                                ) : h.response === "paid" ? (
+                                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-amber-955/60 border border-amber-800 text-amber-300">
+                                    Payment Adjusted (Yes)
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-teal-955/60 border border-teal-800 text-teal-400">
+                                    Reserved
+                                  </span>
+                                )}
+                              </td>
+                              {isAdmin && onUpdateHolidayResponse && userId && (
+                                <td className="py-2.5 px-3 text-right">
+                                  <button
+                                    type="button"
+                                    disabled={updatingHolidayDate === h.date}
+                                    onClick={() =>
+                                      handleEditHolidayResponse(
+                                        h.date,
+                                        h.name,
+                                        h.response === "paid" ? "reserve" : "paid"
+                                      )
+                                    }
+                                    className={`px-2 py-1 rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1 ${
+                                      h.response === "paid"
+                                        ? "bg-emerald-955/80 hover:bg-emerald-900 border border-emerald-500/60 text-emerald-300"
+                                        : "bg-theme-border-input hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary"
+                                    }`}
+                                    title="Toggle Payment Adjustment"
+                                  >
+                                    {updatingHolidayDate === h.date ? (
+                                      <RefreshCw className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      `Adjustment: ${h.response === "paid" ? "Yes" : "No"}`
+                                    )}
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

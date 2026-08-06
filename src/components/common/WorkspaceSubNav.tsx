@@ -107,16 +107,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
 
-    if (!tabHidden("govt_responses")) {
-      subTabs.push({
-        id: "govt_responses",
-        label: "Govt Holiday Response",
-        icon: Calendar,
-        iconColor: "text-emerald-400",
-        active: activeChutiTab === "govt_responses",
-        onClick: () => onChutiTabChange("govt_responses"),
-      });
-    }
+
 
     if (!tabHidden("settlement")) {
       subTabs.push({

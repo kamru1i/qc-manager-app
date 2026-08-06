@@ -33,7 +33,6 @@ export const MENU_TABS: MenuTabDef[] = [
 
   // Leave Tracker Subtabs
   { key: 'leave_history', label: 'My History Subtab', category: 'Leave Tracker Subtabs' },
-  { key: 'govt_responses', label: 'Govt Responses Subtab', category: 'Leave Tracker Subtabs' },
   { key: 'settlement', label: 'Settlement Subtab', category: 'Leave Tracker Subtabs' },
   { key: 'leave_settings', label: 'Leave Settings Subtab', category: 'Leave Tracker Subtabs' },
   { key: 'team_leaves', label: 'Staff Leaves Subtab', category: 'Leave Tracker Subtabs' },
@@ -79,7 +78,6 @@ export const getDefaultRoleVisibility = (
     case 'save_file':
       return false;
 
-    case 'govt_responses':
     case 'settlement':
     case 'leave_settings':
     case 'settings_sanitizer':

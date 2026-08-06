@@ -260,46 +260,7 @@ export function UserNotificationsModal({
                 {n.body || n.text}
               </div>
 
-              {/* Govt Holiday Prompt - Get Paid / Reserve */}
-              {n.type === "govt_holiday_prompt" &&
-                n.holidayDate &&
-                n.holidayName && (
-                  <div className="flex gap-2 justify-end mt-1">
-                    <button
-                      type="button"
-                      disabled={submittingId !== null}
-                      onClick={() =>
-                        handleChoice(n.holidayDate, n.holidayName, "paid", n.id)
-                      }
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-555 text-white border border-emerald-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
-                    >
-                      {submittingId === n.id ? (
-                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        "Get Paid"
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={submittingId !== null}
-                      onClick={() =>
-                        handleChoice(
-                          n.holidayDate,
-                          n.holidayName,
-                          "reserve",
-                          n.id,
-                        )
-                      }
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 hover:bg-teal-555 text-white border border-teal-500 shadow-md transition-all cursor-pointer disabled:opacity-50 h-8 flex items-center justify-center font-sans min-w-[75px]"
-                    >
-                      {submittingId === n.id ? (
-                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        "Reserve"
-                      )}
-                    </button>
-                  </div>
-                )}
+
 
               {/* Admin: Leave Approval - Approve / Reject */}
               {n.type === "pending_admin_chuti_request" &&
