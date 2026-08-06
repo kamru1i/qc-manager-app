@@ -381,9 +381,9 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       {/* Records Table */}
       <div className="bg-theme-card-bg/40 border border-theme-card-bg shadow-2xl rounded-2xl overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-theme-border-input/80 flex flex-col md:flex-row justify-between items-center gap-4">
-          {/* Title & Entry Count + Add Leave Button */}
+          {/* Title & Entry Count + Add Leave Button + View Mode Tabs */}
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h3 className="text-base font-bold text-theme-text-primary">{title}</h3>
               {showAddLeave && (
                 <button
@@ -393,42 +393,43 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                   <Plus className="h-3.5 w-3.5" /> Add Leave
                 </button>
               )}
+
+              {/* View Mode Switcher: Yearly / Monthly Tabs (Positioned right after Add Leave) */}
+              <div className="flex items-center bg-theme-page-bg/80 border border-theme-border-input p-0.5 rounded-lg text-xs shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('yearly');
+                    setSelectedMonth('all');
+                  }}
+                  className={`px-2.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
+                    viewMode === 'yearly'
+                      ? 'bg-blue-600 text-white shadow-sm font-bold'
+                      : 'text-theme-text-muted hover:text-theme-text-primary'
+                  }`}
+                >
+                  Yearly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('monthly')}
+                  className={`px-2.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
+                    viewMode === 'monthly'
+                      ? 'bg-blue-600 text-white shadow-sm font-bold'
+                      : 'text-theme-text-muted hover:text-theme-text-primary'
+                  }`}
+                >
+                  Monthly
+                </button>
+              </div>
             </div>
             <span className="text-xs text-theme-text-muted mt-0.5">
               Total: {filteredRecords.length} {filteredRecords.length === 1 ? 'entry' : 'entries'}
             </span>
           </div>
 
-          {/* Controls: View Mode Tabs + Leave Type Filter + Search Box + Excel Export + Year Selector + Month Selector */}
+          {/* Controls: Leave Type Filter + Search Box + Excel Export + Year Selector + Month Selector */}
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-            {/* View Mode Switcher: Yearly / Monthly Tabs */}
-            <div className="flex items-center bg-theme-page-bg/80 border border-theme-border-input p-0.5 rounded-lg text-xs shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('yearly');
-                  setSelectedMonth('all');
-                }}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
-                  viewMode === 'yearly'
-                    ? 'bg-blue-600 text-white shadow-sm font-bold'
-                    : 'text-theme-text-muted hover:text-theme-text-primary'
-                }`}
-              >
-                Yearly
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('monthly')}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
-                  viewMode === 'monthly'
-                    ? 'bg-blue-600 text-white shadow-sm font-bold'
-                    : 'text-theme-text-muted hover:text-theme-text-primary'
-                }`}
-              >
-                Monthly
-              </button>
-            </div>
 
             {/* Leave Type Dropdown (Left of Search Box) */}
             <CustomSelect
