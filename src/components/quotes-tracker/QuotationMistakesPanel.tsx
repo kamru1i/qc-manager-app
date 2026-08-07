@@ -149,6 +149,26 @@ export function QuotationMistakesPanel({
     []
   );
 
+  const showActionColumn = isSelectionMode;
+
+  const cellStyle = useMemo(
+    () => ({
+      width: showActionColumn ? "80px" : "0px",
+      minWidth: showActionColumn ? "80px" : "0px",
+      maxWidth: showActionColumn ? "80px" : "0px",
+      opacity: showActionColumn ? 1 : 0,
+      transition:
+        "width 300ms ease-out, min-width 300ms ease-out, max-width 300ms ease-out, opacity 300ms ease-out",
+    }),
+    [showActionColumn]
+  );
+
+  const getInnerStyle = (paddingX: string, paddingY: string) => ({
+    padding: showActionColumn ? `${paddingY} ${paddingX}` : "0px",
+    opacity: showActionColumn ? 1 : 0,
+    transition: "padding 300ms ease-out, opacity 300ms ease-out",
+  });
+
   const handleOpenEdit = (item: QuotationMistake) => {
     setEditingMistake(item);
     setIsAddEditOpen(true);
@@ -202,8 +222,8 @@ export function QuotationMistakesPanel({
     if (!canWrite) return;
     e.preventDefault();
 
-    const menuWidth = 144; // w-36 = 144px
-    const menuHeight = 120; // estimated height
+    const menuWidth = 144;
+    const menuHeight = 120;
     const x =
       e.clientX + menuWidth > window.innerWidth
         ? e.clientX - menuWidth
@@ -220,9 +240,17 @@ export function QuotationMistakesPanel({
     });
   };
 
-  const handleContextSelect = (id: string) => {
-    setSelectedIds([id]);
+  const handleContextSelect = (record: QuotationMistake) => {
     setIsSelectionMode(true);
+    setSelectedIds((prev) => {
+      if (prev.includes(record.id)) return prev;
+      return [...prev, record.id];
+    });
+    setContextMenu(null);
+  };
+
+  const handleContextDeselect = (record: QuotationMistake) => {
+    setSelectedIds((prev) => prev.filter((id) => id !== record.id));
     setContextMenu(null);
   };
 
@@ -260,6 +288,16 @@ export function QuotationMistakesPanel({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleRowClick = (e: React.MouseEvent, record: QuotationMistake) => {
+    if (isSelectionMode && canWrite) {
+      const target = e.target as HTMLElement;
+      if (target.closest("button")) {
+        return;
+      }
+      toggleSelection(record.id);
+    }
+  };
 
   // If user has no read permission for module
   if (!canRead && !isLoading) {
@@ -376,31 +414,6 @@ export function QuotationMistakesPanel({
 
       {/* Table & Data Container */}
       <div className="bg-theme-card-bg/60 border border-theme-border-input/60 rounded-2xl overflow-hidden shadow-sm">
-        {/* Bulk Action Bar */}
-        {isSelectionMode && selectedIds.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-2.5 bg-rose-500/10 border-b border-rose-500/20 text-rose-400 font-sans">
-            <span className="text-xs font-bold">{selectedIds.length} records selected</span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleBulkDelete}
-                disabled={isSubmitting}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-xs font-bold transition-all cursor-pointer shadow-md"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete Selected
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedIds([]);
-                  setIsSelectionMode(false);
-                }}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-theme-card-bg hover:bg-theme-border-input border border-theme-border-input text-theme-text-primary rounded text-xs font-bold transition-all cursor-pointer shadow-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
         {isLoading ? (
           <div className="py-16 text-center text-theme-text-muted flex flex-col items-center justify-center gap-3">
             <RefreshCw className="h-6 w-6 animate-spin text-rose-500" />
@@ -423,22 +436,57 @@ export function QuotationMistakesPanel({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-theme-border-input/40 bg-theme-page-bg text-[10px] uppercase tracking-wider text-theme-text-muted font-bold">
-                  {isSelectionMode && (
-                    <th className="py-4 px-4 w-12">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.length === mistakes.length && mistakes.length > 0}
-                        onChange={toggleAllSelection}
-                        className="w-4 h-4 rounded border-theme-border-active text-blue-500 focus:ring-blue-500 bg-theme-card-bg cursor-pointer"
-                      />
-                    </th>
-                  )}
                   <th className="py-4 px-4 w-28">Date</th>
                   <th className="py-4 px-4 w-48">Filename</th>
                   <th className="py-4 px-4 w-28">Branch</th>
                   <th className="py-4 px-4 w-36">Codename</th>
                   <th className="py-4 px-4">Details</th>
                   <th className="py-4 px-4 w-48">Penalty</th>
+                  
+                  {/* Sticky Action Column Header */}
+                  <th
+                    className={`py-3 px-4 text-center sticky right-0 bg-theme-page-bg/95 backdrop-blur-sm z-10 overflow-hidden ${
+                      showActionColumn ? "border-l border-theme-border-input/40 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)]" : "border-0"
+                    }`}
+                    style={cellStyle}
+                  >
+                    <div
+                      className="flex justify-center items-center overflow-hidden"
+                      style={getInnerStyle("16px", "16px")}
+                    >
+                      <div className="flex items-center justify-center gap-3">
+                        <button
+                          onClick={handleBulkDelete}
+                          className={`p-1.5 rounded-lg transition-all duration-300 ${
+                            selectedIds.length > 0
+                              ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer opacity-100"
+                              : "text-theme-border-input opacity-30 cursor-not-allowed"
+                          }`}
+                          disabled={selectedIds.length === 0 || isSubmitting}
+                          title="Delete Selected"
+                        >
+                          <Trash2 className="h-4 w-4 stroke-[2.5]" />
+                        </button>
+                        
+                        <button
+                          onClick={toggleAllSelection}
+                          className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                            mistakes.length > 0 && mistakes.every((r) => selectedIds.includes(r.id))
+                              ? "bg-blue-500 border-blue-500"
+                              : ""
+                          } ${
+                            isSelectionMode
+                              ? "scale-100 opacity-100"
+                              : "scale-0 opacity-0"
+                          }`}
+                        >
+                          {mistakes.length > 0 && mistakes.every((r) => selectedIds.includes(r.id)) && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-theme-border-input/40 text-xs">
@@ -446,23 +494,11 @@ export function QuotationMistakesPanel({
                   <tr
                     key={item.id}
                     onContextMenu={(e) => handleRowContextMenu(e, item)}
-                    onClick={() => {
-                      if (isSelectionMode) toggleSelection(item.id);
-                    }}
-                    className={`hover:bg-theme-card-bg/60 transition-colors duration-150 group ${
+                    onClick={(e) => handleRowClick(e, item)}
+                    className={`hover:bg-theme-card-bg/60 transition-colors duration-150 group select-none ${
                       selectedIds.includes(item.id) ? "bg-theme-card-bg/80" : ""
-                    } ${isSelectionMode ? "cursor-pointer" : ""}`}
+                    } ${isSelectionMode && canWrite ? "cursor-pointer" : ""}`}
                   >
-                    {isSelectionMode && (
-                      <td className="py-3 px-4 w-12" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(item.id)}
-                          onChange={() => toggleSelection(item.id)}
-                          className="w-4 h-4 rounded border-theme-border-active text-blue-500 focus:ring-blue-500 bg-theme-card-bg cursor-pointer"
-                        />
-                      </td>
-                    )}
                     {/* Date */}
                     <td className="py-3 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
@@ -513,6 +549,39 @@ export function QuotationMistakesPanel({
                         <p className="line-clamp-2" title={item.penalty}>
                           {item.penalty}
                         </p>
+                      </div>
+                    </td>
+
+                    {/* Sliding Action Column */}
+                    <td
+                      className={`p-0 text-right overflow-hidden ${
+                        showActionColumn ? "border-l border-theme-border-input/40 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)]" : "border-0"
+                      }`}
+                      style={cellStyle}
+                    >
+                      <div
+                        className="flex justify-end items-center overflow-hidden"
+                        style={getInnerStyle("24px", "12px")}
+                      >
+                        <button
+                          type="button"
+                          disabled={!canWrite}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSelection(item.id);
+                          }}
+                          className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 disabled:opacity-20 disabled:cursor-not-allowed ${
+                            selectedIds.includes(item.id) ? 'bg-blue-500 border-blue-500' : ''
+                          } ${
+                            isSelectionMode
+                              ? "scale-100 opacity-100"
+                              : "scale-0 opacity-0"
+                          }`}
+                        >
+                          {selectedIds.includes(item.id) && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -586,38 +655,37 @@ export function QuotationMistakesPanel({
         require("react-dom").createPortal(
           <div
             style={{ top: contextMenu.y, left: contextMenu.x }}
-            className="fixed z-50 w-36 bg-theme-page-bg border border-theme-border-input/80 rounded-xl shadow-2xl p-1.5 flex flex-col gap-0.5 font-sans animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-36 select-none animate-in fade-in zoom-in-95 duration-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-2 pt-1.5 pb-2 border-b border-theme-border-input/50 mb-0.5">
-              <span className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider block">
-                Actions
-              </span>
-              <span className="text-xs text-theme-text-primary truncate block mt-0.5 font-medium">
-                {contextMenu.record.filename}
-              </span>
-            </div>
-
-            {!isSelectionMode && (
+            {selectedIds.includes(contextMenu.record.id) ? (
               <button
-                onClick={() => handleContextSelect(contextMenu.record.id)}
-                className="w-full text-left px-3 py-2 text-xs font-bold text-theme-text-primary hover:bg-theme-card-bg rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                onClick={() => handleContextDeselect(contextMenu.record)}
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
               >
-                <CheckSquare className="h-3.5 w-3.5 text-blue-400" />
+                <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
+                Deselect
+              </button>
+            ) : (
+              <button
+                onClick={() => handleContextSelect(contextMenu.record)}
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              >
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
                 Select
               </button>
             )}
 
             <button
               onClick={() => handleOpenEdit(contextMenu.record)}
-              className="w-full text-left px-3 py-2 text-xs font-bold text-theme-text-primary hover:bg-theme-card-bg rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
               <Edit2 className="h-3.5 w-3.5 text-theme-text-muted" />
               Edit
             </button>
             <button
               onClick={() => handleOpenDelete(contextMenu.record)}
-              className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
             >
               <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2" />
               Delete
