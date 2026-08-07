@@ -70,6 +70,13 @@ export function useDerivedState({
       if (filterType !== 'all' && r.leave_type !== filterType) return false;
       if (filterStartDate && r.date < filterStartDate) return false;
       if (filterEndDate && r.date > filterEndDate) return false;
+
+      // Only keep Govt Holiday records if they are an adjustment
+      const isGovtHolidayRecord = r.leave_type === 'Govt Holiday' || r.reserve_holiday === 'Govt Holiday' || (r.comment && r.comment.includes('Govt Holiday'));
+      if (isGovtHolidayRecord && !r.adjustment) {
+        return false;
+      }
+
       return true;
     });
   }, [selectedYear, filterType, filterStartDate, filterEndDate]);

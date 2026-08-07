@@ -111,7 +111,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
   officeLeaveStats,
   govtHolidayStats,
   allowOvertime,
-  allowReserve = true,
+  allowReserve = false,
   userLeaves = [],
   respondedHolidays = [],
   eligibleGovtHoliday = true,
@@ -272,29 +272,14 @@ export const UserStats: React.FC<UserStatsProps> = ({
   let officeRemainingDisplay: React.ReactNode = officeLeaveStats
     ? formatDaysAndHoursNode(officeLeaveStats.remaining, workingHours)
     : "0 Days";
-  let officeSubtitle = officeLeaveStats
-    ? `Total Allocated: ${formatDaysAndHours(officeLeaveStats.total, workingHours)} (Taken: ${formatDaysAndHours(officeLeaveStats.taken, workingHours)})`
-    : "";
-
   if (halfYearlyStats) {
     if (halfYearlyStats.isMergedMode) {
       officeRemainingDisplay = formatDaysAndHoursNode(halfYearlyStats.h1Remaining, workingHours);
-      officeSubtitle = hasH1Carryover
-        ? `Full Year (Jan-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
-        : `Full Year (Jan-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`;
     } else {
       const isH1 = halfYearlyStats.currentHalf === 1;
       officeRemainingDisplay = isH1
         ? formatDaysAndHoursNode(halfYearlyStats.h1Remaining, workingHours)
         : formatDaysAndHoursNode(halfYearlyStats.h2Remaining, workingHours);
-
-      officeSubtitle = isH1
-        ? hasH1Carryover
-          ? `H1 (Jan-Jun) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
-          : `H1 (Jan-Jun) Allocated: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h1Taken, workingHours)}`
-        : hasH2Carryover
-          ? `H2 (Jul-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h2Base, workingHours)} + ${formatDaysAndHours(halfYearlyStats.carryForward, workingHours)} Carryover | Taken: ${formatDaysAndHours(halfYearlyStats.h2Taken, workingHours)}`
-          : `H2 (Jul-Dec) Allocated: ${formatDaysAndHours(halfYearlyStats.h2Total, workingHours)} | Taken: ${formatDaysAndHours(halfYearlyStats.h2Taken, workingHours)}`;
     }
   }
 
@@ -312,9 +297,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
             title={
               halfYearlyStats
                 ? halfYearlyStats.isMergedMode
-                  ? "Allocated Office Leave (Full Year)"
-                  : `Allocated Office Leave (H${halfYearlyStats.currentHalf})`
-                : "Allocated Office Leave"
+                  ? "Office Leave (Full Year)"
+                  : `Office Leave (H${halfYearlyStats.currentHalf})`
+                : "Office Leave"
             }
             value={officeRemainingDisplay}
             action={
@@ -367,7 +352,6 @@ export const UserStats: React.FC<UserStatsProps> = ({
             iconBorderClass="border-purple-500/20"
             title="Eid-ul-Fitr Holiday (Remaining)"
             value={`${eidFitrRemaining} days`}
-            subtitle={`Total Eid-ul-Fitr Holiday: ${eidFitrTotal} days`}
             loading={!initialFetchDone}
           />
         )}
@@ -381,7 +365,6 @@ export const UserStats: React.FC<UserStatsProps> = ({
             iconBorderClass="border-purple-500/20"
             title="Eid-ul-Adha Holiday (Remaining)"
             value={`${eidAdhaRemaining} days`}
-            subtitle={`Total Eid-ul-Adha Holiday: ${eidAdhaTotal} days`}
             loading={!initialFetchDone}
           />
         )}

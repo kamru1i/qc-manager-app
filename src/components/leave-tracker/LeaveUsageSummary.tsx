@@ -42,34 +42,18 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
   eidFitrDeduction = 0,
   eidAdhaDeduction = 0,
   workingHours = 9.5,
+  eligibleGovtHoliday = true,
 }) => {
   let officeRemainingVal = officeLeaveRemaining;
-  let officeSubtext = '';
 
   if (halfYearlyStats) {
     if (halfYearlyStats.isMergedMode) {
       officeRemainingVal = halfYearlyStats.h1Remaining;
-      const h1Carryover = halfYearlyStats.h1Total - halfYearlyStats.h1Base;
-      const hasH1Carryover = h1Carryover > 0;
-      officeSubtext = hasH1Carryover
-        ? `Full Year Allowance: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} carryover`
-        : `Full Year Allowance: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)}`;
     } else {
       const isH1 = halfYearlyStats.currentHalf === 1;
       officeRemainingVal = isH1
         ? halfYearlyStats.h1Remaining
         : halfYearlyStats.h2Remaining;
-      const h1Carryover = halfYearlyStats.h1Total - halfYearlyStats.h1Base;
-      const hasH1Carryover = h1Carryover > 0;
-      const hasH2Carryover = halfYearlyStats.carryForward > 0;
-
-      officeSubtext = isH1
-        ? (hasH1Carryover
-            ? `H1 (Jan-Jun) Allowance: ${formatDaysAndHours(halfYearlyStats.h1Base, workingHours)} + ${formatDaysAndHours(h1Carryover, workingHours)} carryover`
-            : `H1 (Jan-Jun) Allowance: ${formatDaysAndHours(halfYearlyStats.h1Total, workingHours)}`)
-        : (hasH2Carryover
-            ? `H2 (Jul-Dec) Allowance: ${formatDaysAndHours(halfYearlyStats.h2Base, workingHours)} + ${formatDaysAndHours(halfYearlyStats.carryForward, workingHours)} carryover`
-            : `H2 (Jul-Dec) Allowance: ${formatDaysAndHours(halfYearlyStats.h2Total, workingHours)}`);
     }
   }
 
@@ -109,7 +93,7 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
       const ded = formatParts(deduction);
       return (
         <div className="flex flex-col select-none animate-pulse">
-          <span className="text-blue-400 text-xs font-bold font-mono">
+          <span className="text-theme-text-primary text-xs font-bold font-mono">
             Remaining: {rem.isNegative ? '-' : ''}{rem.dayStr} (-{ded.isNegative ? '-' : ''}{ded.dayStr})
           </span>
           {(rem.timeParts || ded.timeParts) && (
@@ -144,11 +128,11 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
       <div className="space-y-3">
         {/* Office Leave Balance */}
         <div className="bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-          <span className="text-blue-400 block text-[9px] uppercase font-semibold">Allocated Office Leave</span>
+          <span className="text-blue-400 block text-[9px] uppercase font-semibold">Office Leave</span>
           <div className="flex justify-between items-start mt-1">
             {renderRemainingNode(finalOfficeRemaining, officeDeduction)}
           </div>
-          {officeSubtext && <span className="text-[9px] text-theme-text-muted block mt-1">{officeSubtext}</span>}
+
           {finalOfficeRemaining < 0 && (
             <div className="text-[9px] text-red-400 font-semibold font-sans mt-1.5 pt-1 border-t border-theme-border-muted/50 animate-pulse">
               ⚠️ Limit exceeded. Extra hours will be adjusted with salary.
@@ -157,7 +141,7 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
         </div>
 
         {/* Govt Holiday Balance */}
-        {govtHolidayTotal > 0 && (
+        {eligibleGovtHoliday && govtHolidayTotal > 0 && (
           <div className="bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
             <span className="text-teal-400 block text-[9px] uppercase font-semibold">Govt Holiday</span>
             <div className="flex justify-between items-center mt-1">

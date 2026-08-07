@@ -105,6 +105,13 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         const typeMatch = (r.leave_type || '').toLowerCase().includes(q);
         if (!commentMatch && !typeMatch) return false;
       }
+
+      // Only keep Govt Holiday records if they are an adjustment
+      const isGovtHolidayRecord = r.leave_type === 'Govt Holiday' || r.reserve_holiday === 'Govt Holiday' || (r.comment && r.comment.includes('Govt Holiday'));
+      if (isGovtHolidayRecord && !r.adjustment) {
+        return false;
+      }
+
       return true;
     });
 

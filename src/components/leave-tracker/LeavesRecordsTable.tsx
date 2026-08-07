@@ -615,7 +615,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                             ? 'bg-emerald-955/50 border border-emerald-800 text-emerald-300'
                             : 'bg-blue-955/50 border border-blue-800 text-blue-300'
                         }`}>
-                          {r.leave_type}
+                          {(r.adjustment || r.adjusted_hour) && (r.comment?.includes('Govt Holiday') || r.reserve_holiday === 'Govt Holiday') ? 'Adjusted Leave' : r.leave_type}
                         </span>
                       </td>
                       {!hideAdjustmentAndOvertime && (
