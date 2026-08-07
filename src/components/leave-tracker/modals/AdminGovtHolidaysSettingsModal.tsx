@@ -63,7 +63,11 @@ export function AdminGovtHolidaysSettingsModal({
 
   const handleAddDate = () => {
     if (!newDate) return;
-    const nameVal = newName.trim() || 'Govt Public Holiday';
+    if (!newName.trim()) {
+      toast.error('Holiday name is required!');
+      return;
+    }
+    const nameVal = newName.trim();
     if (govtHolidays.some(h => h.date === newDate)) {
       toast.error('This date is already added!');
       return;
