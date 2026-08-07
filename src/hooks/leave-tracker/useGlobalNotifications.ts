@@ -313,14 +313,15 @@ export function useGlobalNotifications(
         'role',
         'supervisor_ids',
         'has_quotes_access',
-        'has_chuti_access'
+        'has_chuti_access',
+        'global_settings',
       ];
 
       const hasCriticalChange = !prevRow || criticalFields.some(field => {
         const prevVal = prevRow[field];
         const newVal = newRow[field];
-        // supervisor_ids is an array — compare by value, not reference
-        if (Array.isArray(prevVal) || Array.isArray(newVal)) {
+        // supervisor_ids or global_settings — compare by value, not reference
+        if (typeof prevVal === 'object' || typeof newVal === 'object') {
           return JSON.stringify(prevVal ?? null) !== JSON.stringify(newVal ?? null);
         }
         return prevVal !== newVal;
@@ -336,17 +337,14 @@ export function useGlobalNotifications(
     'govt_holiday_responses',
     useCallback(
       (payload) => {
-        if (payload.eventType === 'INSERT') {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const newResp = payload.new as unknown as GovtHolidayResponse;
           setHolidayResponses((prev) => {
-            if (prev.some((r) => r.id === newResp.id)) return prev;
-            return [newResp, ...prev];
+            const filtered = prev.filter(
+              (r) => !(r.id === newResp.id || (r.user_id === newResp.user_id && r.holiday_date === newResp.holiday_date))
+            );
+            return [newResp, ...filtered];
           });
-        } else if (payload.eventType === 'UPDATE') {
-          const updatedResp = payload.new as unknown as GovtHolidayResponse;
-          setHolidayResponses((prev) =>
-            prev.map((r) => (r.id === updatedResp.id ? updatedResp : r))
-          );
         } else if (payload.eventType === 'DELETE') {
           const oldRespId = payload.old.id as string;
           setHolidayResponses((prev) => prev.filter((r) => r.id !== oldRespId));
