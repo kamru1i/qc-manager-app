@@ -277,6 +277,59 @@ export const getSanitizerRules = (globalSettings: GlobalSettings): SanitizerRule
 export const getSanitizerWords = (globalSettings: GlobalSettings): string[] =>
   enabledSanitizerWords(getSanitizerRules(globalSettings));
 
+// Add the shared filter logic
+export const applyLeaveFilters = <T extends ChutiRecord>(
+  records: T[],
+  selectedYear: string,
+  filterType: string,
+  filterStartDate: string,
+  filterEndDate: string,
+  searchQuery?: string
+): T[] => {
+  const filtered = records.filter(r => {
+    const isApproved = r.status === 'approved';
+    if (isApproved && selectedYear !== 'all' && r.date && r.date.substring(0, 4) !== selectedYear) return false;
+    if (filterType !== 'all') {
+      if (filterType === 'adjustment' && !r.adjustment) return false;
+      if (filterType !== 'adjustment' && r.leave_type !== filterType) return false;
+    }
+    if (filterStartDate && r.date && r.date < filterStartDate) return false;
+    if (filterEndDate && r.date && r.date > filterEndDate) return false;
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const commentMatch = (r.comment || '').toLowerCase().includes(q);
+      const typeMatch = (r.leave_type || '').toLowerCase().includes(q);
+      if (!commentMatch && !typeMatch) return false;
+    }
+
+    // Only keep Govt Holiday records if they are an adjustment
+    const isGovtHolidayRecord = r.leave_type === 'Govt Holiday' || r.reserve_holiday === 'Govt Holiday' || (r.comment && r.comment.includes('Govt Holiday'));
+    if (isGovtHolidayRecord && !r.adjustment) {
+      return false;
+    }
+
+    return true;
+  });
+
+  return sortChutiRecordsDescending(filtered);
+};
+
+export const getAdjustedLeaveStats = (
+  rawShortHours: string,
+  rawFullLeaves: number,
+  convertedHours: number = 0,
+  convertedDays: number = 0
+) => {
+  const totalShortMins = parseIntervalToMinutes(rawShortHours);
+  const netShortMins = Math.max(0, totalShortMins - convertedHours * 60);
+  
+  return {
+    displayShortHours: formatDuration(netShortMins),
+    displayFullLeaves: rawFullLeaves + convertedDays,
+    netShortMins
+  };
+};
+
 // Helper function to clean supervisor/admin approval prefix and adjustments from comment for table display
 export const getCleanComment = (comment: string | null | undefined): string => {
   if (!comment) return '';
@@ -645,9 +698,39 @@ export interface HalfYearlyOfficeLeaveStats {
 
 export const getSettlementSplits = (s: LeaveSettlement) => {
   const carry_forward = s.carry_forward_days ?? (s.action_type === 'carry_forward' ? s.remaining_days : 0);
-      const payment = s.payment_days ?? (s.action_type === 'payment' ? s.remaining_days : 0);
+  const payment = s.payment_days ?? (s.action_type === 'payment' ? s.remaining_days : 0);
   const adjust_leave = s.adjust_leave_days ?? (s.action_type === 'adjust_leave' ? s.remaining_days : 0);
-  return { carry_forward, payment, adjust_leave };
+  const totalDeducted = carry_forward + payment + adjust_leave;
+  return { carry_forward, payment, adjust_leave, deducted_from_allowance: totalDeducted };
+};
+
+export const getCarriedBalances = (userId: string | undefined, selectedYear: string, leaveSettlements: LeaveSettlement[]) => {
+  const prevYear = (Number(selectedYear) - 1).toString();
+  const getCarriedForCategory = (category: string) => 
+    leaveSettlements
+      .filter((s) => s.user_id === userId && s.year === prevYear && s.leave_category === category)
+      .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
+
+  return {
+    carriedOffice: getCarriedForCategory('Office Leave'),
+    carriedGovt: getCarriedForCategory('Govt Holiday'),
+    carriedEidFitr: getCarriedForCategory('Eid-ul-Fitr'),
+    carriedEidAdha: getCarriedForCategory('Eid-ul-Adha'),
+  };
+};
+
+export const getActiveSettlements = (userId: string | undefined, selectedYear: string, leaveSettlements: LeaveSettlement[]) => {
+  const getActiveForCategory = (category: string) =>
+    leaveSettlements
+      .filter(s => s.user_id === userId && s.year === selectedYear && s.leave_category === category && (s.status === 'processed' || s.status === 'responded'))
+      .reduce((acc, s) => acc + getSettlementSplits(s).deducted_from_allowance, 0);
+
+  return {
+    activeOfficeSettled: getActiveForCategory('Office Leave'),
+    activeGovtSettled: getActiveForCategory('Govt Holiday'),
+    activeEidFitrSettled: getActiveForCategory('Eid-ul-Fitr'),
+    activeEidAdhaSettled: getActiveForCategory('Eid-ul-Adha'),
+  };
 };
 
 export const getSettlementLabel = (s: LeaveSettlement, workingHours: number = 9.5): string => {

@@ -12,7 +12,10 @@ import {
   formatDuration,
   parseHolidayItem,
   getSettlementSplits,
-  getSettlementLabel
+  getSettlementLabel,
+  getCarriedBalances,
+  getActiveSettlements,
+  getAdjustedLeaveStats
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 import {  RotateCcw, ArrowLeft } from 'lucide-react';
@@ -109,22 +112,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   const isGovtHolidayEligible = profile?.eligible_govt_holiday !== false;
 
   // Previous year carried balances
-  const prevYear = (Number(selectedYear) - 1).toString();
-  const carriedOffice = leaveSettlements
-    .filter((s) => s.user_id === profile?.id && s.year === prevYear && s.leave_category === 'Office Leave')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
-
-  const carriedGovt = leaveSettlements
-    .filter((s) => s.user_id === profile?.id && s.year === prevYear && s.leave_category === 'Govt Holiday')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
-
-  const carriedEidFitr = leaveSettlements
-    .filter((s) => s.user_id === profile?.id && s.year === prevYear && s.leave_category === 'Eid-ul-Fitr')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
-
-  const carriedEidAdha = leaveSettlements
-    .filter((s) => s.user_id === profile?.id && s.year === prevYear && s.leave_category === 'Eid-ul-Adha')
-    .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
+  const { carriedOffice, carriedGovt, carriedEidFitr, carriedEidAdha } = getCarriedBalances(profile?.id, selectedYear, leaveSettlements);
 
   // Government Holiday calculations using shared hook
   const { respondedHolidays, govtHolidayStats } = useGovtHolidayStats(
@@ -136,17 +124,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   );
 
   // Current Year settled amounts (processed or responded) to prevent double counting
-  const activeGovtSettled = leaveSettlements
-    .filter(s => s.user_id === profile?.id && s.year === selectedYear && s.leave_category === 'Govt Holiday' && (s.status === 'processed' || s.status === 'responded'))
-    .reduce((acc, s) => acc + s.remaining_days, 0);
-
-  const activeEidFitrSettled = leaveSettlements
-    .filter(s => s.user_id === profile?.id && s.year === selectedYear && s.leave_category === 'Eid-ul-Fitr' && (s.status === 'processed' || s.status === 'responded'))
-    .reduce((acc, s) => acc + s.remaining_days, 0);
-
-  const activeEidAdhaSettled = leaveSettlements
-    .filter(s => s.user_id === profile?.id && s.year === selectedYear && s.leave_category === 'Eid-ul-Adha' && (s.status === 'processed' || s.status === 'responded'))
-    .reduce((acc, s) => acc + s.remaining_days, 0);
+  const { activeOfficeSettled, activeGovtSettled, activeEidFitrSettled, activeEidAdhaSettled } = getActiveSettlements(profile?.id, selectedYear, leaveSettlements);
 
   const adjustedGovtHolidayStats = {
     ...govtHolidayStats,
@@ -248,15 +226,15 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
 
   const [showUserSettleModal, setShowUserSettleModal] = React.useState(false);
 
-  // Identify government holidays that the user has not responded to yet
   // Short to Full Leave Conversion Adjustments
   const convertedHours = profile?.converted_short_leaves_hours ?? 0;
 
-  const totalShortMins = parseIntervalToMinutes(userStats.shortHours);
-  const netShortMins = Math.max(0, totalShortMins - convertedHours * 60);
-  const displayShortHours = formatDuration(netShortMins);
-
-  const displayFullLeaves = userStats.fullLeaves + convertedDays;
+  const { displayShortHours, displayFullLeaves, netShortMins } = getAdjustedLeaveStats(
+    userStats.shortHours,
+    userStats.fullLeaves,
+    convertedHours,
+    convertedDays
+  );
 
   const workingHours = profile?.working_hours ?? 9.5;
   const hasConvertibleHours = netShortMins >= workingHours * 60;

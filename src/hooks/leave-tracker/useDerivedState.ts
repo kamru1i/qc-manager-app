@@ -2,7 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile, ChutiRecordWithProfile, BulkRepresentative, LeaveSettlement } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
-import { formatDate, calculateStats, parseHolidayItem, GlobalSettings } from '@/utils/dashboardHelpers';
+import { formatDate, calculateStats, parseHolidayItem, GlobalSettings, applyLeaveFilters } from '@/utils/dashboardHelpers';
 import { isAdminRole } from '@/utils/permissionService';
 
 // Notification item type (shared across the app)
@@ -64,21 +64,7 @@ export function useDerivedState({
 
   // --- Record Filtering ---
   const applyFilters = useCallback(<T extends ChutiRecord>(records: T[]): T[] => {
-    return records.filter(r => {
-      const isApproved = r.status === 'approved';
-      if (isApproved && selectedYear !== 'all' && r.date && r.date.substring(0, 4) !== selectedYear) return false;
-      if (filterType !== 'all' && r.leave_type !== filterType) return false;
-      if (filterStartDate && r.date < filterStartDate) return false;
-      if (filterEndDate && r.date > filterEndDate) return false;
-
-      // Only keep Govt Holiday records if they are an adjustment
-      const isGovtHolidayRecord = r.leave_type === 'Govt Holiday' || r.reserve_holiday === 'Govt Holiday' || (r.comment && r.comment.includes('Govt Holiday'));
-      if (isGovtHolidayRecord && !r.adjustment) {
-        return false;
-      }
-
-      return true;
-    });
+    return applyLeaveFilters(records, selectedYear, filterType, filterStartDate, filterEndDate);
   }, [selectedYear, filterType, filterStartDate, filterEndDate]);
 
   const filteredUserRecords = useMemo(() => applyFilters(userRecords), [applyFilters, userRecords]);

@@ -10,7 +10,7 @@ import {
   GlobalSettings,
   formatDuration,
   parseIntervalToMinutes,
-  sortChutiRecordsDescending
+  applyLeaveFilters
 } from '@/utils/dashboardHelpers';
 
 interface UserLeaveHistoryPanelProps {
@@ -76,46 +76,19 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   // Staff Stats and Quota calculations for the Leave History sub-tab
   const staffStatsData = React.useMemo(() => {
     const yearlyRecords = viewingStaffRecords.filter(r => selectedYear === 'all' || (r.date && r.date.substring(0, 4) === selectedYear));
-    const baseStats = calculateStats(yearlyRecords, viewingStaff.working_hours || 9.5);
-    const totalShortMins = parseIntervalToMinutes(baseStats.shortHours);
-    const netShortMins = Math.max(0, totalShortMins - (viewingStaff.converted_short_leaves_hours ?? 0) * 60);
-    const displayShortHours = formatDuration(netShortMins);
-    const displayFullLeaves = baseStats.fullLeaves + (viewingStaff.converted_short_leaves_days ?? 0);
-    return {
-      ...baseStats,
-      shortHours: displayShortHours,
-      fullLeaves: displayFullLeaves
-    };
+    return calculateStats(yearlyRecords, viewingStaff.working_hours || 9.5);
   }, [viewingStaff, viewingStaffRecords, selectedYear]);
 
   // Filtered records for Leave History list
   const filteredStaffRecords = React.useMemo(() => {
-    const filtered = viewingStaffRecords.filter(r => {
-      const isApproved = r.status === 'approved';
-      if (isApproved && selectedYear !== 'all' && r.date && r.date.substring(0, 4) !== selectedYear) return false;
-      if (leaveFilterType !== 'all') {
-        if (leaveFilterType === 'adjustment' && !r.adjustment) return false;
-        if (leaveFilterType !== 'adjustment' && r.leave_type !== leaveFilterType) return false;
-      }
-      if (leaveFilterStartDate && r.date && r.date < leaveFilterStartDate) return false;
-      if (leaveFilterEndDate && r.date && r.date > leaveFilterEndDate) return false;
-      if (leaveSearchQuery.trim()) {
-        const q = leaveSearchQuery.toLowerCase().trim();
-        const commentMatch = (r.comment || '').toLowerCase().includes(q);
-        const typeMatch = (r.leave_type || '').toLowerCase().includes(q);
-        if (!commentMatch && !typeMatch) return false;
-      }
-
-      // Only keep Govt Holiday records if they are an adjustment
-      const isGovtHolidayRecord = r.leave_type === 'Govt Holiday' || r.reserve_holiday === 'Govt Holiday' || (r.comment && r.comment.includes('Govt Holiday'));
-      if (isGovtHolidayRecord && !r.adjustment) {
-        return false;
-      }
-
-      return true;
-    });
-
-    return sortChutiRecordsDescending(filtered);
+    return applyLeaveFilters(
+      viewingStaffRecords,
+      selectedYear,
+      leaveFilterType,
+      leaveFilterStartDate,
+      leaveFilterEndDate,
+      leaveSearchQuery
+    );
   }, [viewingStaffRecords, selectedYear, leaveFilterType, leaveFilterStartDate, leaveFilterEndDate, leaveSearchQuery]);
 
   if (loadingLeaveData && viewingStaffRecords.length === 0) {
