@@ -364,30 +364,7 @@ export function useDerivedState({
 
     const list: NotificationItem[] = [];
 
-    // 1. Govt Holiday Responses
-    holidayResponses.forEach((r: any) => {
-      // Find the staff profile to check if they have allow_reserve enabled
-      const staff = profilesList.find(p => p.id === r.user_id);
-      const isReserveEnabled = staff ? staff.allow_reserve !== false : true;
-
-      // Only notify admin if the staff member has reserve option ON
-      if (isReserveEnabled) {
-        const staffName = r.profiles?.full_name || 'Staff';
-        const staffCode = r.profiles?.username?.toUpperCase() || 'N/A';
-        const title = r.response === 'reserve' ? 'Govt Holiday Reserve Request 🔔' : 'Govt Holiday Payment Request 🔔';
-        const body = `${staffName} (${staffCode}) ${r.holiday_name} (${formatDate(r.holiday_date)}) ${
-          r.response === 'reserve' ? 'has requested to reserve the leave.' : 'has requested to get paid for the holiday.'
-        }`;
-        
-        list.push({
-          id: `admin-holiday-resp-${r.id}`,
-          type: 'admin_holiday_response',
-          timestamp: r.created_at || currentSessionTime,
-          title,
-          body
-        });
-      }
-    });
+    // 1. Leave Settlement Responses (Govt Holiday Responses notification removed as admin manages payments directly)
 
     // 2. Leave Settlement Responses
     leaveSettlements.forEach((s: any) => {

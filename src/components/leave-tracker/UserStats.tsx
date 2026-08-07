@@ -527,13 +527,13 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                       onClick={() =>
                                         setPendingVerbalAgreement({ date: h.date, name: h.name })
                                       }
-                                      className="h-7 px-2 text-[10px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"
-                                      title="Convert to Payment"
+                                      className="h-7 px-3 text-[11px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"
+                                      title="Pay"
                                     >
                                       {updatingHolidayDate === h.date ? (
                                         <RefreshCw className="h-3 w-3 animate-spin" />
                                       ) : (
-                                        "Convert to Payment"
+                                        "Pay"
                                       )}
                                     </Button>
                                   </td>
@@ -617,9 +617,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       setUpdatingHolidayDate(null);
                     }
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
                 >
-                  Yes, Convert to Payment
+                  Yes, Pay
                 </Button>
               </div>
             </div>

@@ -516,7 +516,7 @@ export function useGlobalNotifications(
             type: 'govt_holiday_choice',
             timestamp: response?.created_at || currentSessionTime,
             title: 'Govt Holiday Reserved 📅',
-            body: `Je ${holiday.date} (${holiday.name}) er govt holiday eta reserve rakha hoyeche.`
+            body: `The Government Holiday on ${holiday.date} (${holiday.name}) has been reserved for you.`
           });
         }
       });
