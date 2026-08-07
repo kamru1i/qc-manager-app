@@ -173,7 +173,11 @@ export function AdminLeaveSettings({
       toast.error('Please select a date first!');
       return;
     }
-    const nameVal = newName.trim() || 'Govt Public Holiday';
+    const nameVal = newName.trim();
+    if (!nameVal) {
+      toast.error('Please enter a holiday name!');
+      return;
+    }
     if (govtHolidays.some(h => h.date === newDate)) {
       toast.error('This date has already been added!');
       return;
@@ -468,6 +472,7 @@ export function AdminLeaveSettings({
                 <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mb-1">Holiday Name</label>
                 <input
                   type="text"
+                  required
                   placeholder="e.g. Shab-e-Barat, Victory Day"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}

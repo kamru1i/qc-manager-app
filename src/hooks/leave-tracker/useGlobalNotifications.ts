@@ -507,8 +507,8 @@ export function useGlobalNotifications(
             id: `govt-holiday-paid-${holiday.date}`,
             type: 'govt_holiday_choice',
             timestamp: response.created_at || currentSessionTime,
-            title: 'Reserve Holiday Payment Adjustment 💸',
-            body: `Reserve holiday ${holiday.date} (${holiday.name}) payment er sathe adjust kore deya hoyeche.`
+            title: 'Reserve Holiday Converted to Payment 💸',
+            body: `Your Govt Holiday reserve for ${holiday.date} (${holiday.name}) has been converted to payment based on verbal agreement.`
           });
         } else {
           list.push({

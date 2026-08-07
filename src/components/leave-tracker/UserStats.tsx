@@ -15,6 +15,7 @@ import {
   HalfYearlyOfficeLeaveStats,
   formatDaysAndHours,
 } from "@/utils/dashboardHelpers";
+import { toast } from "sonner";
 
 interface UserStatsProps {
   stats: {
@@ -140,6 +141,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
   // Edit preference modal states
   const [showEditPrefModal, setShowEditPrefModal] = useState(false);
+  const [pendingVerbalAgreement, setPendingVerbalAgreement] = useState<{
+    date: string;
+    name: string;
+  } | null>(null);
   const [editPrefHoliday, setEditPrefHoliday] = useState<{
     date: string;
     name: string;
@@ -341,7 +346,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   type="button"
                   onClick={() => setShowHistoryModal(true)}
                   className="p-1.5 bg-theme-border-input hover:bg-theme-border-active text-teal-400 border border-theme-border-active rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
-                  title="Govt Holiday Response History"
+                  title="Govt Holiday History"
                 >
                   <History className="h-3.5 w-3.5" />
                 </button>
@@ -448,8 +453,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
                 <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
-                  <History className="h-4 w-4 text-teal-400" /> Govt Holiday
-                  Response History
+                  <History className="h-4 w-4 text-teal-400" /> Govt Holiday History
                 </h3>
                 <button
                   onClick={() => setShowHistoryModal(false)}
@@ -460,91 +464,85 @@ export const UserStats: React.FC<UserStatsProps> = ({
               </div>
 
               <div className="max-h-[300px] overflow-y-auto pr-1">
-                {respondedHolidays && respondedHolidays.length > 0 ? (
-                  <div className="border border-theme-border-muted rounded-xl overflow-hidden bg-theme-page-bg/40">
-                    <table className="w-full text-xs text-theme-text-secondary">
-                      <thead>
-                        <tr className="bg-theme-card-bg/60 border-b border-theme-border-muted text-theme-text-muted font-semibold text-[10px] uppercase tracking-wider">
-                          <th className="py-2 px-3 text-left">Date</th>
-                          <th className="py-2 px-3 text-left">Holiday Name</th>
-                          <th className="py-2 px-3 text-left">Status</th>
-                          {isAdmin && <th className="py-2 px-3 text-right">Adjustment</th>}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-theme-border-muted">
-                        {respondedHolidays.map((h, i) => {
-                          const matchingLeave = (userLeaves || []).find(
-                            (r: any) =>
-                              r.adjustment &&
-                              (r.comment?.includes(h.name) ||
-                                r.comment?.includes(h.date) ||
-                                r.reserve_holiday === "Govt Holiday")
-                          );
+                {(() => {
+                  const activeReserveList = (respondedHolidays || []).filter(h => h.response !== "paid");
+                  if (activeReserveList.length === 0) {
+                    return (
+                      <p className="text-center py-6 text-xs text-theme-text-muted font-medium">
+                        No active reserve govt holidays.
+                      </p>
+                    );
+                  }
+                  return (
+                    <div className="border border-theme-border-muted rounded-xl overflow-hidden bg-theme-page-bg/40">
+                      <table className="w-full text-xs text-theme-text-secondary">
+                        <thead>
+                          <tr className="bg-theme-card-bg/60 border-b border-theme-border-muted text-theme-text-muted font-semibold text-[10px] uppercase tracking-wider">
+                            <th className="py-2 px-3 text-left">Date</th>
+                            <th className="py-2 px-3 text-left">Holiday Name</th>
+                            <th className="py-2 px-3 text-left">Status</th>
+                            {isAdmin && <th className="py-2 px-3 text-right">Action</th>}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-theme-border-muted">
+                          {activeReserveList.map((h, i) => {
+                            const matchingLeave = (userLeaves || []).find(
+                              (r: any) =>
+                                r.adjustment &&
+                                (r.comment?.includes(h.name) ||
+                                  r.comment?.includes(h.date) ||
+                                  r.reserve_holiday === "Govt Holiday")
+                            );
 
-                          return (
-                            <tr
-                              key={i}
-                              className="hover:bg-theme-card-bg/20 transition-colors"
-                            >
-                              <td className="py-2.5 px-3 font-mono font-bold text-teal-400">
-                                {formatDate(h.date)}
-                              </td>
-                              <td className="py-2.5 px-3 text-theme-text-primary">
-                                {h.name}
-                              </td>
-                              <td className="py-2.5 px-3">
-                                {matchingLeave ? (
-                                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-955/60 border border-blue-800 text-blue-300">
-                                    Adjusted with Leave on {formatDate(matchingLeave.date)}
-                                  </span>
-                                ) : h.response === "paid" ? (
-                                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-amber-955/60 border border-amber-800 text-amber-300">
-                                    Payment Adjusted (Yes)
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-teal-955/60 border border-teal-800 text-teal-400">
-                                    Reserved
-                                  </span>
-                                )}
-                              </td>
-                              {isAdmin && onUpdateHolidayResponse && userId && (
-                                <td className="py-2.5 px-3 text-right">
-                                  <button
-                                    type="button"
-                                    disabled={updatingHolidayDate === h.date}
-                                    onClick={() =>
-                                      handleEditHolidayResponse(
-                                        h.date,
-                                        h.name,
-                                        h.response === "paid" ? "reserve" : "paid"
-                                      )
-                                    }
-                                    className={`px-2 py-1 rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1 ${
-                                      h.response === "paid"
-                                        ? "bg-emerald-955/80 hover:bg-emerald-900 border border-emerald-500/60 text-emerald-300"
-                                        : "bg-theme-border-input hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary"
-                                    }`}
-                                    title="Toggle Payment Adjustment"
-                                  >
-                                    {updatingHolidayDate === h.date ? (
-                                      <RefreshCw className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      `Adjustment: ${h.response === "paid" ? "Yes" : "No"}`
-                                    )}
-                                  </button>
+                            return (
+                              <tr
+                                key={i}
+                                className="hover:bg-theme-card-bg/20 transition-colors"
+                              >
+                                <td className="py-2.5 px-3 font-mono font-bold text-teal-400">
+                                  {formatDate(h.date)}
                                 </td>
-                              )}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-center py-6 text-xs text-theme-text-muted font-medium">
-                    No govt holiday response records.
-                  </p>
-                )}
+                                <td className="py-2.5 px-3 text-theme-text-primary">
+                                  {h.name}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  {matchingLeave ? (
+                                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-955/60 border border-blue-800 text-blue-300">
+                                      Adjusted with Leave on {formatDate(matchingLeave.date)}
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-teal-955/60 border border-teal-800 text-teal-400">
+                                      Reserved
+                                    </span>
+                                  )}
+                                </td>
+                                {isAdmin && onUpdateHolidayResponse && userId && (
+                                  <td className="py-2.5 px-3 text-right">
+                                    <button
+                                      type="button"
+                                      disabled={updatingHolidayDate === h.date}
+                                      onClick={() =>
+                                        setPendingVerbalAgreement({ date: h.date, name: h.name })
+                                      }
+                                      className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs"
+                                      title="Convert to Payment"
+                                    >
+                                      {updatingHolidayDate === h.date ? (
+                                        <RefreshCw className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        "Convert to Payment"
+                                      )}
+                                    </button>
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="mt-5 pt-4 border-t border-theme-border-input/80 flex justify-end">
@@ -554,6 +552,70 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs font-semibold cursor-pointer transition-all"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* Verbal Agreement Confirmation Modal for Admin */}
+      {pendingVerbalAgreement &&
+        isMounted &&
+        createPortal(
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-amber-900/10 blur-[80px] pointer-events-none" />
+
+              <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
+                <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
+                  <AlertTriangle className="h-4.5 w-4.5 text-amber-400" /> Confirm Verbal Agreement
+                </h3>
+                <button
+                  onClick={() => setPendingVerbalAgreement(null)}
+                  className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-xs text-theme-text-secondary mb-4 leading-relaxed font-medium">
+                Has a verbal agreement been made with the user to convert this reserved holiday date to payment?
+              </p>
+
+              <div className="bg-theme-page-bg/60 border border-theme-border-muted p-3.5 rounded-xl mb-5 space-y-1.5 font-mono text-xs">
+                <div>Date: <strong className="text-teal-400">{formatDate(pendingVerbalAgreement.date)}</strong></div>
+                <div>Holiday Name: <strong className="text-theme-text-primary">{pendingVerbalAgreement.name}</strong></div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPendingVerbalAgreement(null)}
+                  className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!userId || !onUpdateHolidayResponse || !pendingVerbalAgreement) return;
+                    const { date, name } = pendingVerbalAgreement;
+                    setPendingVerbalAgreement(null);
+                    setUpdatingHolidayDate(date);
+                    try {
+                      await onUpdateHolidayResponse(userId, date, name, "paid");
+                      toast.success("Converted reserve holiday to payment based on verbal agreement!");
+                    } catch (err) {
+                      console.error("Failed to convert holiday response:", err);
+                      toast.error("Failed to convert holiday response.");
+                    } finally {
+                      setUpdatingHolidayDate(null);
+                    }
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md border border-emerald-700"
+                >
+                  Yes, Convert to Payment
                 </button>
               </div>
             </div>
