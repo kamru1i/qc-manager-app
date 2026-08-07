@@ -55,6 +55,7 @@ interface UserManagementProps {
   onSidebarToggle: () => void;
   topPerformerBadges?: Record<string, BadgeInfo>;
   onViewStateChange?: (isFullView: boolean) => void;
+  globalSettings?: GlobalSettings;
 }
 
 const ALL_FILE_TYPES = [
@@ -66,6 +67,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   profile,
   topPerformerBadges = {},
   onViewStateChange,
+  globalSettings: propsGlobalSettings,
 }) => {
   // R1/R2: shared profiles list from ProfilesContext (was a local duplicate copy)
   const { profilesList: profiles, setProfilesList: setProfiles, refreshProfiles, isLoaded: profilesLoaded } = useProfiles();
@@ -457,12 +459,20 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
   }, []);
 
-  // Load admin global_settings once per mount (they rarely change). Previously this ran on
-  // every fetchStaffLeaveData call, issuing a profiles query per realtime event.
-  const adminSettingsFetchedRef = React.useRef(false);
+  // Keep global_settings in sync with props or real-time admin profiles
   useEffect(() => {
-    if (!profile || adminSettingsFetchedRef.current) return;
-    adminSettingsFetchedRef.current = true;
+    if (propsGlobalSettings) {
+      setGlobalSettings(propsGlobalSettings);
+      return;
+    }
+
+    if (profiles && profiles.length > 0) {
+      const adminProf = profiles.find((p: any) => p.global_settings && (p.role === 'admin' || p.role === 'superadmin')) || profiles.find((p: any) => p.global_settings);
+      if (adminProf?.global_settings) {
+        setGlobalSettings(adminProf.global_settings);
+        return;
+      }
+    }
 
     let cancelled = false;
     (async () => {
@@ -475,12 +485,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       if (!apError && adminProfiles && adminProfiles.length > 0) {
         const target = adminProfiles.find((p: any) => p.global_settings?.supervisor_access_overrides || p.global_settings?.role_visibility) || adminProfiles[0];
         setGlobalSettings(target.global_settings);
-      } else {
+      } else if (profile) {
         setGlobalSettings(getGlobalSettingsFromProfile(profile));
       }
     })();
     return () => { cancelled = true; };
-  }, [profile]);
+  }, [propsGlobalSettings, profile, profiles]);
 
   // Debounced + throttled wrapper to prevent cascading refetches from rapid realtime events
   const fetchTimerRef = React.useRef<NodeJS.Timeout | null>(null);

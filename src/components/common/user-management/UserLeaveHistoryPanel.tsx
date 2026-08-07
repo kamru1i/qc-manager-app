@@ -134,6 +134,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         profile={viewingStaff}
         userStats={dashboardStats}
         globalSettings={globalSettings}
+        holidayResponses={viewingStaffHolidayResponses}
         filteredUserRecords={filteredStaffRecords}
         userRecords={viewingStaffRecords}
         title={`${viewingStaff.username || viewingStaff.full_name}'s Leave Records`}
@@ -161,7 +162,6 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         onEditClick={onEditClick}
         onRevisionClick={() => {}}
         onConvertShortLeaveToFullLeave={() => {}}
-        holidayResponses={viewingStaffHolidayResponses}
         onSaveHolidayResponse={async () => true}
         initialFetchDone={true}
         leaveSettlements={viewingStaffSettlements}

@@ -16,6 +16,8 @@ import {
   formatDaysAndHours,
 } from "@/utils/dashboardHelpers";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface UserStatsProps {
   stats: {
@@ -507,24 +509,25 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                 </td>
                                 <td className="py-2.5 px-3">
                                   {matchingLeave ? (
-                                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-955/60 border border-blue-800 text-blue-300">
+                                    <Badge variant="default" className="text-[10px] bg-blue-955/60 border-blue-800 text-blue-300">
                                       Adjusted with Leave on {formatDate(matchingLeave.date)}
-                                    </span>
+                                    </Badge>
                                   ) : (
-                                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-teal-955/60 border border-teal-800 text-teal-400">
+                                    <Badge variant="success" className="text-[10px]">
                                       Reserved
-                                    </span>
+                                    </Badge>
                                   )}
                                 </td>
                                 {isAdmin && onUpdateHolidayResponse && userId && (
                                   <td className="py-2.5 px-3 text-right">
-                                    <button
-                                      type="button"
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       disabled={updatingHolidayDate === h.date}
                                       onClick={() =>
                                         setPendingVerbalAgreement({ date: h.date, name: h.name })
                                       }
-                                      className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs"
+                                      className="h-7 px-2 text-[10px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"
                                       title="Convert to Payment"
                                     >
                                       {updatingHolidayDate === h.date ? (
@@ -532,7 +535,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                       ) : (
                                         "Convert to Payment"
                                       )}
-                                    </button>
+                                    </Button>
                                   </td>
                                 )}
                               </tr>
@@ -546,13 +549,13 @@ export const UserStats: React.FC<UserStatsProps> = ({
               </div>
 
               <div className="mt-5 pt-4 border-t border-theme-border-input/80 flex justify-end">
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowHistoryModal(false)}
-                  className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs font-semibold cursor-pointer transition-all"
                 >
                   Close
-                </button>
+                </Button>
               </div>
             </div>
           </div>,
@@ -589,15 +592,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
               </div>
 
               <div className="flex justify-end gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setPendingVerbalAgreement(null)}
-                  className="px-4 py-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-active rounded-lg text-xs font-semibold cursor-pointer transition-all"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
                   onClick={async () => {
                     if (!userId || !onUpdateHolidayResponse || !pendingVerbalAgreement) return;
                     const { date, name } = pendingVerbalAgreement;
@@ -613,10 +617,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       setUpdatingHolidayDate(null);
                     }
                   }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-md border border-emerald-700"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white"
                 >
                   Yes, Convert to Payment
-                </button>
+                </Button>
               </div>
             </div>
           </div>,

@@ -11,7 +11,7 @@ import { supabase } from '@/utils/supabase';
 import { toast } from 'sonner';
 import { DateTimeInput } from '@/components/common/DateTimeInput';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
-import { TempAccessEntry, DEFAULT_VPN_LIST } from '@/utils/dashboardHelpers';
+import { TempAccessEntry, DEFAULT_VPN_LIST, GlobalSettings } from '@/utils/dashboardHelpers';
 import {
   MENU_TABS,
   getDefaultRoleVisibility,
@@ -43,12 +43,14 @@ interface ProfileSettingsProps {
   setProfile: (profile: Profile | null) => void;
   sessionUser: any;
   onBack?: () => void;
+  globalSettings?: GlobalSettings;
 }
 
 export function ProfileSettings({
   profile,
   setProfile,
   sessionUser,
+  globalSettings,
 }: ProfileSettingsProps) {
   // Input fields state (seeded synchronously from profile to prevent initial render flicker)
   const [editUsername, setEditUsername] = useState(() => profile?.username || '');
@@ -1802,6 +1804,7 @@ export function ProfileSettings({
             onThemeToggle={() => {}}
             isSidebarCollapsed={false}
             onSidebarToggle={() => {}}
+            globalSettings={globalSettings}
           />
         </div>
       )}
