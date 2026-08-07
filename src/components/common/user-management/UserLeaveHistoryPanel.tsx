@@ -42,6 +42,8 @@ interface UserLeaveHistoryPanelProps {
   hideDelete?: boolean;
   /** When false, hides Add Leave button */
   showAddLeave?: boolean;
+  onAdminUpdateHolidayResponse?: (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => Promise<boolean>;
+  isAdmin?: boolean;
 }
 
 export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
@@ -68,6 +70,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   onEditClick,
   hideDelete = false,
   showAddLeave = true,
+  onAdminUpdateHolidayResponse,
+  isAdmin = true,
 }) => {
   // Staff Stats and Quota calculations for the Leave History sub-tab
   const staffStatsData = React.useMemo(() => {
@@ -168,6 +172,8 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         onSaveLeaveSettlementsBulk={async () => true}
         hideDelete={hideDelete}
         showAddLeave={showAddLeave}
+        isAdmin={isAdmin}
+        onAdminUpdateHolidayResponse={onAdminUpdateHolidayResponse}
       />
     </div>
   );

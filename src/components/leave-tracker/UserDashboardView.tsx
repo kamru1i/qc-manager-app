@@ -53,6 +53,8 @@ interface UserDashboardViewProps {
   onConvertShortLeaveToFullLeave: (userId: string, workingHours: number, shortMins: number) => void;
   holidayResponses: GovtHolidayResponse[];
   onSaveHolidayResponse: (holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => Promise<boolean>;
+  onAdminUpdateHolidayResponse?: (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => Promise<boolean>;
+  isAdmin?: boolean;
   initialFetchDone: boolean;
   leaveSettlements: LeaveSettlement[];
   onSaveLeaveSettlementsBulk: (settlementsList: any[]) => Promise<boolean>;
@@ -91,6 +93,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   onConvertShortLeaveToFullLeave,
   holidayResponses,
   onSaveHolidayResponse,
+  onAdminUpdateHolidayResponse,
+  isAdmin,
   initialFetchDone,
   leaveSettlements,
   onSaveLeaveSettlementsBulk,
@@ -368,6 +372,14 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         eidAdhaRemaining={Math.max(0, (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha - (userStats.eidAdhaTaken ?? 0) - activeEidAdhaSettled)}
         eidAdhaTotal={(globalSettings.eid_adha_leave ?? 0) + carriedEidAdha}
         initialFetchDone={initialFetchDone}
+        isAdmin={isAdmin !== undefined ? isAdmin : !!profile && (profile.role === 'admin' || profile.role === 'superadmin')}
+        userId={profile?.id}
+        onUpdateHolidayResponse={
+          onAdminUpdateHolidayResponse ||
+          (async (uid: string, hDate: string, hName: string, resp: 'paid' | 'reserve') => {
+            return onSaveHolidayResponse(hDate, hName, resp);
+          })
+        }
       />
 
       <LeavesRecordsTable

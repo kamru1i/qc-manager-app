@@ -564,6 +564,32 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     };
   }, [viewingStaff, debouncedFetchStaffLeaveData, profile, hasStaffAccess]);
 
+  const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
+    if (!profile || !isAdminRole(profile)) return false;
+
+    const { error } = await supabase
+      .from('govt_holiday_responses')
+      .upsert({
+        user_id: targetUserId,
+        holiday_date: holidayDate,
+        holiday_name: holidayName,
+        response: response,
+        updated_by_admin: true,
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,holiday_date'
+      });
+
+    if (error) {
+      toast.error('Failed to update holiday response: ' + error.message);
+      return false;
+    }
+
+    toast.success('Updated holiday response!');
+    debouncedFetchStaffLeaveData(targetUserId);
+    return true;
+  }, [profile, debouncedFetchStaffLeaveData]);
+
   // Toggle adjustment handler for leaves in details view
   const handleToggleAdjustment = async (record: ChutiRecord) => {
     const isAdmin = isAdminRole(profile);
@@ -1194,6 +1220,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     onEditClick={(record) => setEditingLeaveRecord(record)}
                     hideDelete={profile?.role === 'supervisor'}
                     showAddLeave={isAdminRole(profile) || profile?.role === 'supervisor'}
+                    isAdmin={isAdminRole(profile)}
+                    onAdminUpdateHolidayResponse={handleAdminUpdateHolidayResponse}
                   />
                 )
               )}
