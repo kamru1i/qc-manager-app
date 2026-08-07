@@ -163,6 +163,17 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
 
+    if (!tabHidden("mistakes")) {
+      subTabs.push({
+        id: "mistakes",
+        label: "Mistakes",
+        icon: AlertTriangle,
+        iconColor: "text-rose-400",
+        active: activeQuotesTab === "mistakes",
+        onClick: () => onQuotesTabChange("mistakes"),
+      });
+    }
+
     if (!tabHidden("quick_import")) {
       subTabs.push({
         id: "quick_import",
@@ -204,17 +215,6 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         iconColor: "text-amber-400",
         active: activeQuotesTab === "copy_helper",
         onClick: () => onQuotesTabChange("copy_helper"),
-      });
-    }
-
-    if (!tabHidden("mistakes")) {
-      subTabs.push({
-        id: "mistakes",
-        label: "Mistakes",
-        icon: AlertTriangle,
-        iconColor: "text-rose-400",
-        active: activeQuotesTab === "mistakes",
-        onClick: () => onQuotesTabChange("mistakes"),
       });
     }
 

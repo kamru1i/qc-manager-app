@@ -413,7 +413,7 @@ export function QuotationMistakesPanel({
       </div>
 
       {/* Table & Data Container */}
-      <div className="bg-theme-card-bg/60 border border-theme-border-input/60 rounded-2xl overflow-hidden shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-theme-border-input bg-theme-card-bg/20">
         {isLoading ? (
           <div className="py-16 text-center text-theme-text-muted flex flex-col items-center justify-center gap-3">
             <RefreshCw className="h-6 w-6 animate-spin text-rose-500" />
@@ -432,163 +432,157 @@ export function QuotationMistakesPanel({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-theme-border-input/40 bg-theme-page-bg text-[10px] uppercase tracking-wider text-theme-text-muted font-bold">
-                  <th className="py-4 px-4 w-28">Date</th>
-                  <th className="py-4 px-4 w-48">Filename</th>
-                  <th className="py-4 px-4 w-28">Branch</th>
-                  <th className="py-4 px-4 w-36">Codename</th>
-                  <th className="py-4 px-4">Details</th>
-                  <th className="py-4 px-4 w-48">Penalty</th>
-                  
-                  {/* Sticky Action Column Header */}
-                  <th
-                    className={`py-3 px-4 text-center sticky right-0 bg-theme-page-bg/95 backdrop-blur-sm z-10 overflow-hidden ${
-                      showActionColumn ? "border-l border-theme-border-input/40 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)]" : "border-0"
-                    }`}
+          <table className="min-w-full divide-y divide-theme-border-input text-left text-sm">
+            <thead className="bg-theme-card-bg/50 text-[10px] font-bold uppercase tracking-wider text-theme-text-muted">
+              <tr>
+                <th className="px-4 py-2 w-28">Date</th>
+                <th className="px-4 py-2 w-48">Filename</th>
+                <th className="px-4 py-2 w-28">Branch</th>
+                <th className="px-4 py-2 w-36">Codename</th>
+                <th className="px-4 py-2">Details</th>
+                <th className="px-4 py-2 w-48">Penalty</th>
+                
+                {/* Action Column Header */}
+                <th
+                  className="p-0 text-center overflow-hidden border-0"
+                  style={cellStyle}
+                >
+                  <div
+                    className="flex justify-center items-center overflow-hidden"
+                    style={getInnerStyle("16px", "16px")}
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={handleBulkDelete}
+                        className={`p-1.5 rounded-lg transition-all duration-300 ${
+                          selectedIds.length > 0
+                            ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer opacity-100"
+                            : "text-theme-border-input opacity-30 cursor-not-allowed"
+                        }`}
+                        disabled={selectedIds.length === 0 || isSubmitting}
+                        title="Delete Selected"
+                      >
+                        <Trash2 className="h-4 w-4 stroke-[2.5]" />
+                      </button>
+                      
+                      <button
+                        onClick={toggleAllSelection}
+                        className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                          mistakes.length > 0 && mistakes.every((r) => selectedIds.includes(r.id))
+                            ? "bg-blue-500 border-blue-500"
+                            : ""
+                        } ${
+                          isSelectionMode
+                            ? "scale-100 opacity-100"
+                            : "scale-0 opacity-0"
+                        }`}
+                      >
+                        {mistakes.length > 0 && mistakes.every((r) => selectedIds.includes(r.id)) && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-theme-border-muted text-theme-text-secondary">
+              {mistakes.map((item) => (
+                <tr
+                  key={item.id}
+                  onContextMenu={(e) => handleRowContextMenu(e, item)}
+                  onClick={(e) => handleRowClick(e, item)}
+                  className={`hover:bg-theme-card-bg/60 transition-colors duration-150 group select-none ${
+                    selectedIds.includes(item.id) ? "bg-theme-card-bg/80" : ""
+                  } ${isSelectionMode && canWrite ? "cursor-pointer" : ""}`}
+                >
+                  {/* Date */}
+                  <td className="py-2.5 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                      {formatDateDDMMYYYY(item.date)}
+                    </div>
+                  </td>
+
+                  {/* Filename */}
+                  <td className="py-2.5 px-4 text-theme-text-primary font-medium max-w-[200px] truncate" title={item.filename}>
+                    <div className="flex items-center gap-1.5">
+                      <FileCode className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                      {item.filename}
+                    </div>
+                  </td>
+
+                  {/* Branch */}
+                  <td className="py-2.5 px-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      {item.branch}
+                    </span>
+                  </td>
+
+                  {/* Codename */}
+                  <td className="py-2.5 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                      {(() => {
+                        const profileMatch = profilesList.find((p) => p.id === item.user_id);
+                        return profileMatch
+                          ? profileMatch.codename || profileMatch.username
+                          : item.codename;
+                      })()}
+                    </div>
+                  </td>
+
+                  {/* Details */}
+                  <td className="py-2.5 px-4 text-theme-text-muted leading-relaxed max-w-[300px]">
+                    <p className="line-clamp-2" title={item.mistake_details}>
+                      {item.mistake_details}
+                    </p>
+                  </td>
+
+                  {/* Penalty */}
+                  <td className="py-2.5 px-4 font-medium text-rose-400 max-w-[250px]">
+                    <div className="flex items-start gap-1.5">
+                      <Gavel className="h-3.5 w-3.5 text-rose-400 shrink-0 mt-0.5" />
+                      <p className="line-clamp-2" title={item.penalty}>
+                        {item.penalty}
+                      </p>
+                    </div>
+                  </td>
+
+                  {/* Sliding Action Column */}
+                  <td
+                    className="p-0 text-center overflow-hidden border-0"
                     style={cellStyle}
                   >
                     <div
                       className="flex justify-center items-center overflow-hidden"
-                      style={getInnerStyle("16px", "16px")}
+                      style={getInnerStyle("24px", "12px")}
                     >
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          onClick={handleBulkDelete}
-                          className={`p-1.5 rounded-lg transition-all duration-300 ${
-                            selectedIds.length > 0
-                              ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer opacity-100"
-                              : "text-theme-border-input opacity-30 cursor-not-allowed"
-                          }`}
-                          disabled={selectedIds.length === 0 || isSubmitting}
-                          title="Delete Selected"
-                        >
-                          <Trash2 className="h-4 w-4 stroke-[2.5]" />
-                        </button>
-                        
-                        <button
-                          onClick={toggleAllSelection}
-                          className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
-                            mistakes.length > 0 && mistakes.every((r) => selectedIds.includes(r.id))
-                              ? "bg-blue-500 border-blue-500"
-                              : ""
-                          } ${
-                            isSelectionMode
-                              ? "scale-100 opacity-100"
-                              : "scale-0 opacity-0"
-                          }`}
-                        >
-                          {mistakes.length > 0 && mistakes.every((r) => selectedIds.includes(r.id)) && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-theme-border-input/40 text-xs">
-                {mistakes.map((item) => (
-                  <tr
-                    key={item.id}
-                    onContextMenu={(e) => handleRowContextMenu(e, item)}
-                    onClick={(e) => handleRowClick(e, item)}
-                    className={`hover:bg-theme-card-bg/60 transition-colors duration-150 group select-none ${
-                      selectedIds.includes(item.id) ? "bg-theme-card-bg/80" : ""
-                    } ${isSelectionMode && canWrite ? "cursor-pointer" : ""}`}
-                  >
-                    {/* Date */}
-                    <td className="py-3 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                        {formatDateDDMMYYYY(item.date)}
-                      </div>
-                    </td>
-
-                    {/* Filename */}
-                    <td className="py-3 px-4 font-medium text-theme-text-primary max-w-[220px] truncate" title={item.filename}>
-                      <div className="flex items-center gap-1.5">
-                        <FileCode className="h-3.5 w-3.5 text-purple-400 shrink-0" />
-                        <span className="truncate">{item.filename}</span>
-                      </div>
-                    </td>
-
-                    {/* Branch */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {item.branch}
-                      </span>
-                    </td>
-
-                    {/* Codename */}
-                    <td className="py-3 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                        {(() => {
-                          const profileMatch = profilesList.find((p) => p.id === item.user_id);
-                          return profileMatch
-                            ? profileMatch.codename || profileMatch.username
-                            : item.codename;
-                        })()}
-                      </div>
-                    </td>
-
-                    {/* Details */}
-                    <td className="py-3 px-4 text-theme-text-muted leading-relaxed max-w-[300px]">
-                      <p className="line-clamp-2" title={item.mistake_details}>
-                        {item.mistake_details}
-                      </p>
-                    </td>
-
-                    {/* Penalty */}
-                    <td className="py-3 px-4 font-medium text-rose-400 max-w-[250px]">
-                      <div className="flex items-start gap-1.5">
-                        <Gavel className="h-3.5 w-3.5 text-rose-400 shrink-0 mt-0.5" />
-                        <p className="line-clamp-2" title={item.penalty}>
-                          {item.penalty}
-                        </p>
-                      </div>
-                    </td>
-
-                    {/* Sliding Action Column */}
-                    <td
-                      className={`p-0 text-right overflow-hidden ${
-                        showActionColumn ? "border-l border-theme-border-input/40 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)]" : "border-0"
-                      }`}
-                      style={cellStyle}
-                    >
-                      <div
-                        className="flex justify-end items-center overflow-hidden"
-                        style={getInnerStyle("24px", "12px")}
+                      <button
+                        type="button"
+                        disabled={!canWrite}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSelection(item.id);
+                        }}
+                        className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 disabled:opacity-20 disabled:cursor-not-allowed ${
+                          selectedIds.includes(item.id) ? 'bg-blue-500 border-blue-500' : ''
+                        } ${
+                          isSelectionMode
+                            ? "scale-100 opacity-100"
+                            : "scale-0 opacity-0"
+                        }`}
                       >
-                        <button
-                          type="button"
-                          disabled={!canWrite}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleSelection(item.id);
-                          }}
-                          className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 disabled:opacity-20 disabled:cursor-not-allowed ${
-                            selectedIds.includes(item.id) ? 'bg-blue-500 border-blue-500' : ''
-                          } ${
-                            isSelectionMode
-                              ? "scale-100 opacity-100"
-                              : "scale-0 opacity-0"
-                          }`}
-                        >
-                          {selectedIds.includes(item.id) && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {selectedIds.includes(item.id) && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
 
         {/* Footer / Pagination */}
