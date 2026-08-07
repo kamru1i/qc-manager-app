@@ -8,7 +8,7 @@ import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse }
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 
-import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, parseHolidayItem, sortChutiRecordsDescending } from '@/utils/dashboardHelpers';
+import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, parseHolidayItem, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { CHUTI_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS, LEAVE_SETTLEMENT_COLUMNS } from '@/utils/dbColumns';
@@ -812,20 +812,10 @@ export const useDashboardData = () => {
 
   useEffect(() => {
     if (profile) {
-      // Find the superadmin or admin profile in profilesList with custom settings, or fall back to the first superadmin/admin profile
-      const adminProfile = profilesList.find(p => p.role === 'superadmin' && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings))
-        || profilesList.find(p => isAdminRole(p) && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings))
-        || profilesList.find(p => p.role === 'superadmin')
-        || profilesList.find(p => isAdminRole(p));
-
-      // E1 fix: ALL roles derive global settings from the admin profile.
-      // Non-admin users no longer have global_settings written to their own row,
-      // so they must read from the admin profile in the shared profilesList.
+      const adminProfile = findAdminProfileWithGlobalSettings(profilesList, profile);
       if (adminProfile) {
         const derived = getGlobalSettingsFromProfile(adminProfile);
         setGlobalSettings(derived);
-        // Keep the offline cache aligned — fetchRecords may have run before the
-        // shared profiles list loaded and cached profile-derived settings.
         setGlobalSettingsCache(derived).catch(() => {});
       } else {
         setGlobalSettings(getGlobalSettingsFromProfile(profile));

@@ -42,7 +42,7 @@ import { UserKpiPerformancePanel } from '@/components/common/user-management/Use
 import { AddLeave } from '@/components/leave-tracker/AddLeave';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
-import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending } from '@/utils/dashboardHelpers';
+import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
 import { PROFILE_COLUMNS, CHUTI_COLUMNS, LEAVE_SETTLEMENT_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS } from '@/utils/dbColumns';
 
 interface UserManagementProps {
@@ -467,9 +467,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
 
     if (profiles && profiles.length > 0) {
-      const adminProf = profiles.find((p: any) => p.global_settings && (p.role === 'admin' || p.role === 'superadmin')) || profiles.find((p: any) => p.global_settings);
+      const adminProf = findAdminProfileWithGlobalSettings(profiles, profile);
       if (adminProf?.global_settings) {
-        setGlobalSettings(adminProf.global_settings);
+        setGlobalSettings(getGlobalSettingsFromProfile(adminProf));
         return;
       }
     }

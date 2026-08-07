@@ -177,6 +177,42 @@ export const parseHolidayItem = (item: any): { date: string; name: string } => {
   return { date: String(item), name: 'Government Holiday' };
 };
 
+export const findAdminProfileWithGlobalSettings = (profilesList: any[], currentProfile?: any): any => {
+  if (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin') && currentProfile.global_settings) {
+    try {
+      const gs = typeof currentProfile.global_settings === 'string' ? JSON.parse(currentProfile.global_settings) : currentProfile.global_settings;
+      if (gs && typeof gs === 'object' && Array.isArray(gs.govt_holidays) && gs.govt_holidays.length > 0) {
+        return currentProfile;
+      }
+    } catch (e) {}
+  }
+
+  const adminWithHolidays = (profilesList || []).find((p) => {
+    if (!p || (p.role !== 'admin' && p.role !== 'superadmin') || !p.global_settings) return false;
+    try {
+      const gs = typeof p.global_settings === 'string' ? JSON.parse(p.global_settings) : p.global_settings;
+      return gs && typeof gs === 'object' && Array.isArray(gs.govt_holidays) && gs.govt_holidays.length > 0;
+    } catch (e) {
+      return false;
+    }
+  });
+  if (adminWithHolidays) return adminWithHolidays;
+
+  const adminWithSettings = (profilesList || []).find((p) => {
+    if (!p || (p.role !== 'admin' && p.role !== 'superadmin') || !p.global_settings) return false;
+    try {
+      const gs = typeof p.global_settings === 'string' ? JSON.parse(p.global_settings) : p.global_settings;
+      return gs && typeof gs === 'object' && Object.keys(gs).length > 0;
+    } catch (e) {
+      return false;
+    }
+  });
+  if (adminWithSettings) return adminWithSettings;
+
+  if (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin')) return currentProfile;
+  return (profilesList || []).find((p) => p && (p.role === 'admin' || p.role === 'superadmin')) || currentProfile || null;
+};
+
 export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
   if (!profile) return defaultGlobalSettings;
   

@@ -6,7 +6,7 @@ import { Profile, GovtHolidayResponse, ComplianceRule, ChutiRecordWithProfile } 
 import { ChutiRecord } from '@/utils/offlineSync';
 import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
 import { toast } from 'sonner';
-import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings } from '@/utils/dashboardHelpers';
+import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
@@ -474,12 +474,7 @@ export function useGlobalNotifications(
   // Compute global settings (needed for govt holidays list)
   const globalSettings = useMemo(() => {
     if (!profile) return defaultGlobalSettings;
-    const adminProfile = profilesList.find(
-      p => p.role === 'superadmin' && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings)
-    ) || profilesList.find(
-      p => isAdminRole(p) && p.global_settings && JSON.stringify(p.global_settings) !== JSON.stringify(defaultGlobalSettings)
-    ) || profilesList.find(p => p.role === 'superadmin')
-      || profilesList.find(p => isAdminRole(p));
+    const adminProfile = findAdminProfileWithGlobalSettings(profilesList, profile);
 
     if (adminProfile) {
       return getGlobalSettingsFromProfile(adminProfile);
