@@ -185,115 +185,100 @@ export function QuotationMistakesPanel({
   }
 
   return (
-    <div className="space-y-5">
-      {/* Header Banner & Title */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-theme-card-bg/50 border border-theme-border-input/60 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <div>
-          <h2 className="text-lg font-bold text-theme-text-primary flex items-center gap-2.5">
-            <div className="p-2 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            Quotation Mistakes
-          </h2>
-          <p className="text-xs text-theme-text-muted mt-1">
-            {isUserRole
-              ? 'View your registered quotation mistake records and penalties.'
-              : 'Maintain and audit employee quotation mistakes, branch records, and penalty entries.'}
-          </p>
-        </div>
-
-        {/* Add Mistake Button (Only for Write Permitted Admin / Supervisor / Superadmin) */}
-        {canWrite && (
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer transition-all duration-200"
-          >
-            <Plus className="h-4 w-4" />
-            Add Mistake
-          </button>
-        )}
-      </div>
-
-      {/* Filter Bar (Matching user design / uploaded image) */}
+    <div className="space-y-4">
+      {/* Filter Bar with Add Mistake Button */}
       <div className="bg-theme-card-bg/60 border border-theme-border-input/60 rounded-2xl p-4 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-          {/* 1. Search (Filename, Codename) */}
-          <div>
-            <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Search</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-8 pr-8 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-rose-500 text-xs h-9"
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end flex-1 w-full">
+            {/* 1. Search (Filename, Codename) */}
+            <div>
+              <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Search</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="block w-full pl-8 pr-8 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-rose-500 text-xs h-9"
+                />
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-theme-text-muted" />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-2 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 2. Branch Filter */}
+            <div>
+              <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Branch</label>
+              <CustomSelect
+                value={selectedBranch}
+                onChange={setSelectedBranch}
+                options={branchOptions}
               />
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-theme-text-muted" />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-2 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 cursor-pointer"
-                  title="Clear search"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
+            </div>
+
+            {/* 3. Year Filter */}
+            <div>
+              <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Year</label>
+              <CustomSelect
+                value={selectedYear}
+                onChange={setSelectedYear}
+                options={yearOptions}
+              />
+            </div>
+
+            {/* 4. Month Filter */}
+            <div>
+              <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Month</label>
+              <CustomSelect
+                value={selectedMonth}
+                onChange={setSelectedMonth}
+                options={monthOptions}
+              />
+            </div>
+
+            {/* 5. Specific Date & Reset Button */}
+            <div>
+              <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Specific Date</label>
+              <div className="flex items-center gap-2">
+                <DateInput
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  placeholder="DD-MM-YYYY"
+                />
+                {isFilterActive && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="p-2 border border-theme-border-input/80 rounded-xl bg-theme-page-bg hover:bg-theme-card-bg text-theme-text-muted hover:text-rose-400 hover:scale-105 active:scale-95 cursor-pointer transition-all duration-200 shrink-0 h-9 w-9 flex items-center justify-center"
+                    title="Reset all filters"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* 2. Branch Filter */}
-          <div>
-            <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Branch</label>
-            <CustomSelect
-              value={selectedBranch}
-              onChange={setSelectedBranch}
-              options={branchOptions}
-            />
-          </div>
-
-          {/* 3. Year Filter */}
-          <div>
-            <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Year</label>
-            <CustomSelect
-              value={selectedYear}
-              onChange={setSelectedYear}
-              options={yearOptions}
-            />
-          </div>
-
-          {/* 4. Month Filter */}
-          <div>
-            <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Month</label>
-            <CustomSelect
-              value={selectedMonth}
-              onChange={setSelectedMonth}
-              options={monthOptions}
-            />
-          </div>
-
-          {/* 5. Specific Date & Reset Button */}
-          <div>
-            <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Specific Date</label>
-            <div className="flex items-center gap-2">
-              <DateInput
-                value={selectedDate}
-                onChange={setSelectedDate}
-                placeholder="DD-MM-YYYY"
-              />
-              {isFilterActive && (
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="p-2 border border-theme-border-input/80 rounded-xl bg-theme-page-bg hover:bg-theme-card-bg text-theme-text-muted hover:text-rose-400 hover:scale-105 active:scale-95 cursor-pointer transition-all duration-200 shrink-0 h-9 w-9 flex items-center justify-center"
-                  title="Reset all filters"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
+          {/* Add Mistake Button (Only for Write Permitted Admin / Supervisor / Superadmin) */}
+          {canWrite && (
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer transition-all duration-200 h-9 shrink-0 w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" />
+              Add Mistake
+            </button>
+          )}
         </div>
       </div>
 

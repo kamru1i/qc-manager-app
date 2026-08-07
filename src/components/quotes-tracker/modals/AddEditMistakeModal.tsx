@@ -45,10 +45,10 @@ export function AddEditMistakeModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [dateInputHasError, setDateInputHasError] = useState<boolean>(false);
 
-  // User Options for Codename Dropdown
+  // User Options for Codename Dropdown (Only users with Quotes workspace enabled)
   const userOptions = useMemo(() => {
     return profilesList
-      .filter((p) => p.role !== 'admin' && p.role !== 'superadmin')
+      .filter((p) => p.role !== 'admin' && p.role !== 'superadmin' && p.has_quotes_access !== false)
       .map((p) => ({
         value: p.id,
         label: `${p.codename || p.full_name || p.username} (${p.username})`,
