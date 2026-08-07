@@ -20,6 +20,7 @@ import {
   ShieldAlert,
   Inbox,
   RefreshCw,
+  CheckSquare,
 } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile, QuotationMistake } from '@/types';
@@ -86,6 +87,7 @@ export function QuotationMistakesPanel({
     addMistake,
     updateMistake,
     deleteMistake,
+    bulkDeleteMistakes,
   } = useQuotationMistakes({
     sessionUser,
     profile,
@@ -99,6 +101,15 @@ export function QuotationMistakesPanel({
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [mistakeToDelete, setMistakeToDelete] = useState<QuotationMistake | null>(null);
+
+  // Context Menu & Selection
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    record: QuotationMistake;
+  } | null>(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Branch options
   const branchOptions = useMemo(() => {
@@ -138,45 +149,117 @@ export function QuotationMistakesPanel({
     []
   );
 
-  const handleOpenAdd = () => {
-    setEditingMistake(null);
-    setIsAddEditOpen(true);
-  };
-
   const handleOpenEdit = (item: QuotationMistake) => {
     setEditingMistake(item);
     setIsAddEditOpen(true);
+    setContextMenu(null);
   };
 
   const handleOpenDelete = (item: QuotationMistake) => {
     setMistakeToDelete(item);
     setShowDeleteModal(true);
+    setContextMenu(null);
+  };
+
+  const handleSaveModal = async (payload: any) => {
+    let success = false;
+    if (editingMistake) {
+      success = await updateMistake(editingMistake.id, payload);
+    } else {
+      success = await addMistake(payload);
+    }
+    if (success) {
+      setIsAddEditOpen(false);
+      setEditingMistake(null);
+    }
+    return success;
   };
 
   const handleConfirmDelete = async () => {
-    if (!mistakeToDelete) return;
-    const ok = await deleteMistake(mistakeToDelete);
-    if (ok) {
-      setShowDeleteModal(false);
-      setMistakeToDelete(null);
+    if (mistakeToDelete) {
+      const success = await deleteMistake(mistakeToDelete);
+      if (success) {
+        setShowDeleteModal(false);
+        setMistakeToDelete(null);
+        setSelectedIds(prev => prev.filter(id => id !== mistakeToDelete.id));
+      }
     }
   };
 
-  const handleSaveModal = async (payload: {
-    date: string;
-    filename: string;
-    branch: string;
-    user_id: string;
-    codename: string;
-    mistake_details: string;
-    penalty: string;
-  }) => {
-    if (editingMistake) {
-      return await updateMistake(editingMistake.id, payload);
-    } else {
-      return await addMistake(payload);
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected mistakes?`)) {
+      const success = await bulkDeleteMistakes(selectedIds);
+      if (success) {
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+      }
     }
   };
+
+  // Context Menu Handlers
+  const handleRowContextMenu = (e: React.MouseEvent, record: QuotationMistake) => {
+    if (!canWrite) return;
+    e.preventDefault();
+
+    const menuWidth = 144; // w-36 = 144px
+    const menuHeight = 120; // estimated height
+    const x =
+      e.clientX + menuWidth > window.innerWidth
+        ? e.clientX - menuWidth
+        : e.clientX;
+    const y =
+      e.clientY + menuHeight > window.innerHeight
+        ? e.clientY - menuHeight
+        : e.clientY;
+
+    setContextMenu({
+      x,
+      y,
+      record,
+    });
+  };
+
+  const handleContextSelect = (id: string) => {
+    setSelectedIds([id]);
+    setIsSelectionMode(true);
+    setContextMenu(null);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((selectedId) => selectedId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAllSelection = () => {
+    if (selectedIds.length === mistakes.length) {
+      setSelectedIds([]);
+      setIsSelectionMode(false);
+    } else {
+      setSelectedIds(mistakes.map((r) => r.id));
+      setIsSelectionMode(true);
+    }
+  };
+
+  // Dismiss context menu on outside click
+  React.useEffect(() => {
+    const handleOutsideClick = () => setContextMenu(null);
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, []);
+
+  // Keyboard escape
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // If user has no read permission for module
   if (!canRead && !isLoading) {
@@ -281,7 +364,7 @@ export function QuotationMistakesPanel({
           {canWrite && (
             <button
               type="button"
-              onClick={handleOpenAdd}
+              onClick={() => { setEditingMistake(null); setIsAddEditOpen(true); }}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer transition-all duration-200 h-9 shrink-0 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
@@ -293,6 +376,31 @@ export function QuotationMistakesPanel({
 
       {/* Table & Data Container */}
       <div className="bg-theme-card-bg/60 border border-theme-border-input/60 rounded-2xl overflow-hidden shadow-sm">
+        {/* Bulk Action Bar */}
+        {isSelectionMode && selectedIds.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-2.5 bg-rose-500/10 border-b border-rose-500/20 text-rose-400 font-sans">
+            <span className="text-xs font-bold">{selectedIds.length} records selected</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleBulkDelete}
+                disabled={isSubmitting}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-xs font-bold transition-all cursor-pointer shadow-md"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete Selected
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedIds([]);
+                  setIsSelectionMode(false);
+                }}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-theme-card-bg hover:bg-theme-border-input border border-theme-border-input text-theme-text-primary rounded text-xs font-bold transition-all cursor-pointer shadow-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="py-16 text-center text-theme-text-muted flex flex-col items-center justify-center gap-3">
             <RefreshCw className="h-6 w-6 animate-spin text-rose-500" />
@@ -314,22 +422,47 @@ export function QuotationMistakesPanel({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-theme-page-bg/70 border-b border-theme-border-input/60 text-[11px] font-bold text-theme-text-muted uppercase tracking-wider">
-                  <th className="py-3 px-4 min-w-[110px]">Date</th>
-                  <th className="py-3 px-4 min-w-[160px]">Filename</th>
-                  <th className="py-3 px-4 min-w-[100px]">Branch</th>
-                  <th className="py-3 px-4 min-w-[130px]">Codename</th>
-                  <th className="py-3 px-4 min-w-[240px]">Details</th>
-                  <th className="py-3 px-4 min-w-[200px]">Penalty</th>
-                  {canWrite && <th className="py-3 px-4 text-right min-w-[100px]">Actions</th>}
+                <tr className="border-b border-theme-border-input/40 bg-theme-page-bg text-[10px] uppercase tracking-wider text-theme-text-muted font-bold">
+                  {isSelectionMode && (
+                    <th className="py-4 px-4 w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.length === mistakes.length && mistakes.length > 0}
+                        onChange={toggleAllSelection}
+                        className="w-4 h-4 rounded border-theme-border-active text-blue-500 focus:ring-blue-500 bg-theme-card-bg cursor-pointer"
+                      />
+                    </th>
+                  )}
+                  <th className="py-4 px-4 w-28">Date</th>
+                  <th className="py-4 px-4 w-48">Filename</th>
+                  <th className="py-4 px-4 w-28">Branch</th>
+                  <th className="py-4 px-4 w-36">Codename</th>
+                  <th className="py-4 px-4">Details</th>
+                  <th className="py-4 px-4 w-48">Penalty</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-theme-border-input/40 text-xs">
                 {mistakes.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-theme-page-bg/40 transition-colors duration-150 group"
+                    onContextMenu={(e) => handleRowContextMenu(e, item)}
+                    onClick={() => {
+                      if (isSelectionMode) toggleSelection(item.id);
+                    }}
+                    className={`hover:bg-theme-card-bg/60 transition-colors duration-150 group ${
+                      selectedIds.includes(item.id) ? "bg-theme-card-bg/80" : ""
+                    } ${isSelectionMode ? "cursor-pointer" : ""}`}
                   >
+                    {isSelectionMode && (
+                      <td className="py-3 px-4 w-12" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(item.id)}
+                          onChange={() => toggleSelection(item.id)}
+                          className="w-4 h-4 rounded border-theme-border-active text-blue-500 focus:ring-blue-500 bg-theme-card-bg cursor-pointer"
+                        />
+                      </td>
+                    )}
                     {/* Date */}
                     <td className="py-3 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
@@ -382,30 +515,6 @@ export function QuotationMistakesPanel({
                         </p>
                       </div>
                     </td>
-
-                    {/* Actions (Only visible for permitted roles) */}
-                    {canWrite && (
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(item)}
-                            className="p-1.5 text-theme-text-muted hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-150 cursor-pointer"
-                            title="Edit Record"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenDelete(item)}
-                            className="p-1.5 text-theme-text-muted hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all duration-150 cursor-pointer"
-                            title="Delete Record"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>
@@ -470,6 +579,52 @@ export function QuotationMistakesPanel({
         deletingRecord={isSubmitting}
         handleConfirmDelete={handleConfirmDelete}
       />
+
+      {/* Context Menu */}
+      {contextMenu &&
+        typeof window !== "undefined" &&
+        require("react-dom").createPortal(
+          <div
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            className="fixed z-50 w-36 bg-theme-page-bg border border-theme-border-input/80 rounded-xl shadow-2xl p-1.5 flex flex-col gap-0.5 font-sans animate-in fade-in zoom-in-95 duration-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-2 pt-1.5 pb-2 border-b border-theme-border-input/50 mb-0.5">
+              <span className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider block">
+                Actions
+              </span>
+              <span className="text-xs text-theme-text-primary truncate block mt-0.5 font-medium">
+                {contextMenu.record.filename}
+              </span>
+            </div>
+
+            {!isSelectionMode && (
+              <button
+                onClick={() => handleContextSelect(contextMenu.record.id)}
+                className="w-full text-left px-3 py-2 text-xs font-bold text-theme-text-primary hover:bg-theme-card-bg rounded-lg transition-all cursor-pointer flex items-center gap-2"
+              >
+                <CheckSquare className="h-3.5 w-3.5 text-blue-400" />
+                Select
+              </button>
+            )}
+
+            <button
+              onClick={() => handleOpenEdit(contextMenu.record)}
+              className="w-full text-left px-3 py-2 text-xs font-bold text-theme-text-primary hover:bg-theme-card-bg rounded-lg transition-all cursor-pointer flex items-center gap-2"
+            >
+              <Edit2 className="h-3.5 w-3.5 text-theme-text-muted" />
+              Edit
+            </button>
+            <button
+              onClick={() => handleOpenDelete(contextMenu.record)}
+              className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2" />
+              Delete
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

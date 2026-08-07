@@ -358,6 +358,49 @@ export function useQuotationMistakes({
     [canWrite, profile, fetchMistakes]
   );
 
+  // BULK DELETE MISTAKES
+  const bulkDeleteMistakes = useCallback(
+    async (ids: string[]) => {
+      if (!canWrite) {
+        toast.error('You do not have permission to delete mistakes.');
+        return false;
+      }
+      if (ids.length === 0) return true;
+
+      try {
+        setIsSubmitting(true);
+        const { error: deleteErr } = await supabase
+          .from('quotation_mistakes')
+          .delete()
+          .in('id', ids);
+
+        if (deleteErr) {
+          console.error('Failed to bulk delete quotation mistakes:', deleteErr);
+          toast.error(`Failed to bulk delete: ${deleteErr.message}`);
+          return false;
+        }
+
+        // Audit Log
+        await logAuditEvent({
+          actor: profile,
+          actionType: 'DELETE_MISTAKE',
+          details: `Bulk deleted ${ids.length} quotation mistakes`,
+        });
+
+        toast.success(`Successfully deleted ${ids.length} mistakes!`);
+        await fetchMistakes();
+        return true;
+      } catch (err: any) {
+        console.error('Error bulk deleting mistakes:', err);
+        toast.error(`Error: ${err?.message || err}`);
+        return false;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [canWrite, profile, fetchMistakes]
+  );
+
   return {
     mistakes: paginatedMistakes,
     allFilteredCount: filteredMistakes.length,
@@ -394,5 +437,6 @@ export function useQuotationMistakes({
     addMistake,
     updateMistake,
     deleteMistake,
+    bulkDeleteMistakes,
   };
 }
