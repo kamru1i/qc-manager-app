@@ -22,6 +22,7 @@ import {
   User,
   UserPlus,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 import { Profile } from "@/types";
 import { isSuperadmin, isTabVisibleForRole, isAdminRole } from "@/utils/permissionService";
@@ -203,6 +204,17 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         iconColor: "text-amber-400",
         active: activeQuotesTab === "copy_helper",
         onClick: () => onQuotesTabChange("copy_helper"),
+      });
+    }
+
+    if (!tabHidden("mistakes")) {
+      subTabs.push({
+        id: "mistakes",
+        label: "Mistakes",
+        icon: AlertTriangle,
+        iconColor: "text-rose-400",
+        active: activeQuotesTab === "mistakes",
+        onClick: () => onQuotesTabChange("mistakes"),
       });
     }
 

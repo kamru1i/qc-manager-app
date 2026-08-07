@@ -70,6 +70,16 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     label: 'Causality Document Generator',
     description: 'Generating causality breakdown and compliance text templates.',
   },
+  {
+    key: 'quote_mistakes_read',
+    label: 'Quotation Mistakes: Read Permission',
+    description: 'Controls visibility of the Quotation Mistakes subtab module.',
+  },
+  {
+    key: 'quote_mistakes_write',
+    label: 'Quotation Mistakes: Write Permission',
+    description: 'Controls Add, Edit, and Delete actions for Admin and Supervisor in Quotation Mistakes.',
+  },
 
   // Leaderboard & Reports Features
   {
@@ -156,6 +166,7 @@ export const FLAG_TO_TAB_KEY: Record<string, string> = {
   custom_entry: 'custom_entry',
   bd_clock: 'bd_clock',
   uk_clock: 'uk_clock',
+  quote_mistakes_read: 'mistakes',
   profile_component_leave_workspace: 'profile_component_leave_workspace',
   profile_component_quotes_workspace: 'profile_component_quotes_workspace',
   profile_component_kpi_settings: 'profile_component_kpi_settings',

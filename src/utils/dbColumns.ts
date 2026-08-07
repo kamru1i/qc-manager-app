@@ -46,3 +46,7 @@ export const COMPLIANCE_RULE_COLUMNS =
 
 export const LEADERBOARD_ARCHIVE_COLUMNS =
   'user_id, username, full_name, job_role, branch, year, quotes_count, requotes_count, reviews_count, sales_count, total_submitted, rank';
+
+export const QUOTATION_MISTAKE_COLUMNS =
+  'id, date, filename, branch, user_id, codename, mistake_details, penalty, created_by, updated_by, created_at, updated_at';
+

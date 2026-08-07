@@ -15,7 +15,8 @@ export type RealtimeTable =
   | 'records'
   | 'govt_holiday_responses'
   | 'dismissed_notifications'
-  | 'todos';
+  | 'todos'
+  | 'quotation_mistakes';
 
 /** Minimal interface for Supabase postgres_changes payloads */
 export interface RealtimePayload {
@@ -173,6 +174,16 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             filter: `user_id=eq.${sessionUser.id}`,
           },
           (payload) => dispatch('dismissed_notifications', payload as unknown as RealtimePayload)
+        )
+        // ── quotation_mistakes ──
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quotation_mistakes',
+          },
+          (payload) => dispatch('quotation_mistakes', payload as unknown as RealtimePayload)
         );
 
       // ── todos (superadmin-only) — always user-scoped ──

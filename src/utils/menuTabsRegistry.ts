@@ -28,6 +28,7 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'rules', label: 'Quote Rules Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'login_codes', label: 'Login Codes Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'causality', label: 'Causality Subtab', category: 'Quotes Tracker Subtabs' },
+  { key: 'mistakes', label: 'Quotation Mistakes Subtab', category: 'Quotes Tracker Subtabs' },
   { key: 'quick_import', label: 'Quick Import Feature', category: 'Quotes Tracker Subtabs' },
   { key: 'custom_entry', label: 'Custom Entry Feature', category: 'Quotes Tracker Subtabs' },
 

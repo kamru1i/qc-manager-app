@@ -38,6 +38,7 @@ import { LoginCodesPanel } from "@/components/quotes-tracker/LoginCodesPanel";
 import { QuickImportView } from "@/components/quotes-tracker/QuickImportView";
 import { DEFAULT_BRANCHES, normalizeBranchName } from "@/utils/bulkQuoteParser";
 import { CausalityPanel } from "@/components/quotes-tracker/CausalityPanel";
+import { QuotationMistakesPanel } from "@/components/quotes-tracker/QuotationMistakesPanel";
 import { validator } from "@/utils/quotesValidator";
 import {
   calculateSummaryStats,
@@ -88,7 +89,8 @@ interface DashboardProps {
     | "causality"
     | "copy_helper"
     | "save_file"
-    | "quick_import";
+    | "quick_import"
+    | "mistakes";
   onTabChange: (
     tab:
       | "entry"
@@ -103,7 +105,8 @@ interface DashboardProps {
       | "causality"
       | "copy_helper"
       | "save_file"
-      | "quick_import",
+      | "quick_import"
+      | "mistakes",
   ) => void;
   onBackToSidebarTab?: () => void;
 }
@@ -2391,6 +2394,18 @@ export default function Dashboard({
             setShowSaveFileHelper={() => onTabChange("entry")}
             permissionModal={permissionModal}
             setPermissionModal={setPermissionModal}
+          />
+        </Suspense>
+      )}
+
+      {/* TAB 12b: QUOTATION MISTAKES */}
+      {activeTab === "mistakes" && (
+        <Suspense fallback={<SkeletonLoader type="table" />}>
+          <QuotationMistakesPanel
+            sessionUser={sessionUser}
+            profile={profile}
+            globalSettings={globalSettings}
+            profilesList={profilesList}
           />
         </Suspense>
       )}

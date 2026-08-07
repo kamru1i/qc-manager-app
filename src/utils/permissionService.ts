@@ -127,6 +127,30 @@ export const canAdminManageFeatureFlag = (
   return false;
 };
 
+/**
+ * True if the user has write permission for Quotation Mistakes (Add, Edit, Delete).
+ * Super Admin: always true.
+ * User: always false.
+ * Admin / Supervisor: true only if quote_mistakes_write feature flag is enabled.
+ */
+export const canWriteQuotationMistakes = (
+  user: Profile | null,
+  globalSettings?: VisibilitySettings | null,
+  profilesList: Profile[] = []
+): boolean => {
+  if (!user) return false;
+  if (isSuperadmin(user)) return true;
+  if (user.role === 'user') return false;
+
+  if (user.role === 'admin' || user.role === 'supervisor') {
+    const gs = getEffectiveGlobalSettings(user, globalSettings, profilesList);
+    return isFeatureEnabled('quote_mistakes_write', gs, user);
+  }
+
+  return false;
+};
+
+
 interface VisibilitySettings {
   feature_flags?: Record<string, boolean>;
   role_visibility?: Record<string, Record<string, boolean>>;

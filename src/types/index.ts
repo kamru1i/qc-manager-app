@@ -168,3 +168,24 @@ export interface TodoItem {
   created_at: string;
   last_activity_at: string; // Bumped by DB trigger on every update; drives "recently active" ordering
 }
+
+export interface QuotationMistake {
+  id: string;
+  date: string;
+  filename: string;
+  branch: string;
+  user_id: string;
+  codename: string;
+  mistake_details: string;
+  penalty: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  profiles?: {
+    username: string;
+    full_name: string | null;
+    codename?: string | null;
+  } | null;
+}
+

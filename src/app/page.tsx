@@ -501,6 +501,7 @@ function AppPortalInner({
     | "copy_helper"
     | "save_file"
     | "quick_import"
+    | "mistakes"
   >(() => {
     if (typeof window !== "undefined") {
       let saved = localStorage.getItem("quotes_sales_active_tab");
@@ -522,7 +523,8 @@ function AppPortalInner({
         saved === "login_codes" ||
         saved === "copy_helper" ||
         saved === "save_file" ||
-        saved === "quick_import"
+        saved === "quick_import" ||
+        saved === "mistakes"
       ) {
         return saved as any;
       }
@@ -567,6 +569,7 @@ function AppPortalInner({
       | "copy_helper"
       | "save_file"
       | "quick_import"
+      | "mistakes"
       | "kpi",
   ) => {
     if (
