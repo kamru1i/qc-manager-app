@@ -1,6 +1,8 @@
 -- Migration: Fix check_profile_updates() to prevent user self-service privilege escalation
 -- Date: 2026-08-01
 -- Severity: CRITICAL
+-- Updated: 2026-08-07 — AUDIT FIX C1: Added global_settings key-level restrictions
+--          for regular users to prevent privilege escalation via JSON injection.
 --
 -- Problem: The default fallback for regular users editing their own profile
 -- had zero column restrictions — users could set has_chuti_access, can_manage_rules,
@@ -8,9 +10,14 @@
 --
 -- Fix: Add column-level restrictions so regular users can only modify safe
 -- profile fields (username request, full name request, working hours request,
--- break time request, sign-in/out request, global_settings for personal prefs,
--- has_edited_profile, has_changed_password, is_setup_completed, default_sign_in/out).
--- All access-control columns are locked to admin/superadmin only.
+-- break time request, sign-in/out request, has_edited_profile, has_changed_password,
+-- is_setup_completed, default_sign_in/out).
+--
+-- AUDIT FIX C1: global_settings is now restricted at the key level for regular users.
+-- Users may update safe keys (e.g. active_sessions) but NOT privileged keys
+-- (temp_access, role_visibility, admin_delegated_flags, feature_flags,
+-- supervisor_access_overrides, user_feature_flags, password_reset_status,
+-- office_leave_default, eid_fitr_leave, eid_adha_leave, govt_holidays, vpn_list).
 
 CREATE OR REPLACE FUNCTION public.check_profile_updates() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
@@ -81,6 +88,7 @@ BEGIN
   -- Default fallback: regular users editing their own profile
   -- ONLY allow safe, non-privileged columns to be modified
   IF auth.uid() = NEW.id THEN
+    -- Block privileged column modifications
     IF OLD.role IS DISTINCT FROM NEW.role OR
        OLD.has_chuti_access IS DISTINCT FROM NEW.has_chuti_access OR
        OLD.has_quotes_access IS DISTINCT FROM NEW.has_quotes_access OR
@@ -102,9 +110,33 @@ BEGIN
     THEN
       RAISE EXCEPTION 'Users cannot modify access control, permissions, quotas, or supervisor assignments. These are managed by superadmin.';
     END IF;
+
+    -- AUDIT FIX C1: Block privilege-escalation via global_settings JSON keys.
+    -- Regular users may still update safe keys (e.g. active_sessions for session
+    -- tracking), but must NOT modify any key that controls access, features,
+    -- role visibility, or admin-level configuration.
+    IF OLD.global_settings IS DISTINCT FROM NEW.global_settings THEN
+      IF (NEW.global_settings->>'temp_access') IS DISTINCT FROM (OLD.global_settings->>'temp_access') OR
+         (NEW.global_settings->>'role_visibility') IS DISTINCT FROM (OLD.global_settings->>'role_visibility') OR
+         (NEW.global_settings->>'supervisor_access_overrides') IS DISTINCT FROM (OLD.global_settings->>'supervisor_access_overrides') OR
+         (NEW.global_settings->>'admin_delegated_flags') IS DISTINCT FROM (OLD.global_settings->>'admin_delegated_flags') OR
+         (NEW.global_settings->>'user_feature_flags') IS DISTINCT FROM (OLD.global_settings->>'user_feature_flags') OR
+         (NEW.global_settings->>'feature_flags') IS DISTINCT FROM (OLD.global_settings->>'feature_flags') OR
+         (NEW.global_settings->>'password_reset_status') IS DISTINCT FROM (OLD.global_settings->>'password_reset_status') OR
+         (NEW.global_settings->>'office_leave_default') IS DISTINCT FROM (OLD.global_settings->>'office_leave_default') OR
+         (NEW.global_settings->>'eid_fitr_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_fitr_leave') OR
+         (NEW.global_settings->>'eid_adha_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_adha_leave') OR
+         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays') OR
+         (NEW.global_settings->>'vpn_list') IS DISTINCT FROM (OLD.global_settings->>'vpn_list')
+      THEN
+        RAISE EXCEPTION 'Users cannot modify privileged global_settings keys (access controls, feature flags, leave settings, VPN). These are managed by superadmin.';
+      END IF;
+    END IF;
+
     RETURN NEW;
   END IF;
 
   RAISE EXCEPTION 'Unauthorized profile modification.';
 END;
 $$;
+

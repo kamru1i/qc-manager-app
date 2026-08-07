@@ -2746,8 +2746,10 @@ GRANT ALL ON FUNCTION public.get_my_role() TO service_role;
 --
 
 REVOKE ALL ON FUNCTION public.get_user_email_by_username(p_username text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_user_email_by_username(p_username text) TO anon;
-GRANT ALL ON FUNCTION public.get_user_email_by_username(p_username text) TO authenticated;
+-- AUDIT FIX C4: Revoked anon and authenticated grants to prevent direct email enumeration.
+-- This SECURITY DEFINER function queries auth.users and must only be callable by
+-- service_role via the rate-limited /api/resolve-email backend route.
+-- Previously granted to anon and authenticated (removed 2026-08-07).
 GRANT ALL ON FUNCTION public.get_user_email_by_username(p_username text) TO service_role;
 
 
