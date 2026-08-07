@@ -120,14 +120,13 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
           },
           (payload) => dispatch('chuti', payload as unknown as RealtimePayload)
         )
-        // ── profiles (always user-scoped to prevent approver broadcast fanout) ──
+        // ── profiles (global, required for global_settings propagation to all users) ──
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'profiles',
-            filter: `id=eq.${sessionUser.id}`,
           },
           (payload) => dispatch('profiles', payload as unknown as RealtimePayload)
         )

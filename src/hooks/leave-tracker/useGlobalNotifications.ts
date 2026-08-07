@@ -275,15 +275,15 @@ export function useGlobalNotifications(
     }
   }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses, isChutiLoaded]);
 
-  const handleRealtimeDataChanged = useCallback(() => {
-    const now = Date.now();
-    if (now - lastNotifFetchRef.current < NOTIF_THROTTLE_MS) return; // Throttle
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-    realtimeDebounceRef.current = setTimeout(() => {
-      lastNotifFetchRef.current = Date.now();
+  const handleRealtimeDataChanged = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
       fetchNotificationsData();
-    }, 2000);
+    }, 500);
   }, [fetchNotificationsData]);
 
   // Sync with standard custom DOM event

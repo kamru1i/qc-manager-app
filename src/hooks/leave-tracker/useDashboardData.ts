@@ -451,16 +451,6 @@ export const useDashboardData = () => {
           await setSyncTimestamp('leave_settlements', syncStartedAt);
         }
 
-        // Store current globalSettings to cache if they are derived
-        // E1 fix: All roles read global settings from the admin profile
-        const adminForCache = (profile && isAdminRole(profile) && profile.global_settings)
-          || profilesData.find(p => p.role === 'superadmin' && p.global_settings)
-          || profilesData.find(p => isAdminRole(p) && p.global_settings)
-          || profile;
-        const currentGlobalSettings = getGlobalSettingsFromProfile(adminForCache);
-        setGlobalSettings(currentGlobalSettings);
-        await setGlobalSettingsCache(currentGlobalSettings);
-
         // TTL: Purge chuti records older than 2 years from cache
         try {
           await purgeStaleCacheData('chuti_cache', 'date', 90);
@@ -956,19 +946,15 @@ export const useDashboardData = () => {
   const REALTIME_THROTTLE_MS = 3000;
 
   const handleRealtimeChange = useCallback(() => {
-    // Notify useGlobalNotifications via DOM event (replaces its duplicate subscription)
+    // Notify useGlobalNotifications via DOM event
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('realtime-data-changed'));
     }
 
-    const now = Date.now();
-    if (now - lastRealtimeFetchRef.current < REALTIME_THROTTLE_MS) return; // Throttle
-
     if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
     realtimeDebounceRef.current = setTimeout(() => {
-      lastRealtimeFetchRef.current = Date.now();
       fetchRecords();
-    }, 800);
+    }, 1000); // 1-second debounce, no dropped events
   }, [fetchRecords]);
 
   // ── chuti handler ──
@@ -1049,6 +1035,16 @@ export const useDashboardData = () => {
   useRealtimeHandler('chuti', handleChutiRealtime);
   useRealtimeHandler('profiles', handleProfilesRealtime);
   useRealtimeHandler('leave_settlements', handleSettlementsRealtime);
+
+  // ── govt_holiday_responses handler ──
+  const handleHolidayResponseRealtime = useCallback((payload: RealtimePayload) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'govt_holiday_responses', payload } }));
+    }
+    handleRealtimeChange();
+  }, [handleRealtimeChange]);
+
+  useRealtimeHandler('govt_holiday_responses', handleHolidayResponseRealtime);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
