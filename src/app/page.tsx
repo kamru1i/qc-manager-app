@@ -26,7 +26,7 @@ import { SafeAreaTop } from "@/components/common/SafeAreaTop";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { useGlobalNotifications } from "@/hooks/leave-tracker/useGlobalNotifications";
 import { UserNotificationsModal } from "@/components/common/modals/UserNotificationsModal";
-import { MandatoryGovtHolidayModal } from "@/components/common/modals/MandatoryGovtHolidayModal";
+
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
 import {
@@ -1628,20 +1628,7 @@ function AppPortalInner({
           </Suspense>
         </section>
       </main>
-      {sessionUser &&
-        profile &&
-        isProfileFresh &&
-        isInitialNotifFetchDone &&
-        profile.eligible_govt_holiday !== false &&
-        profile.allow_reserve !== false &&
-        pendingHolidays &&
-        pendingHolidays.length > 0 && (
-          <MandatoryGovtHolidayModal
-            isOpen={true}
-            holiday={pendingHolidays[0]}
-            onSaveHolidayResponse={handleSaveHolidayResponse}
-          />
-        )}
+
 
       {/* Pull to Refresh Spinner Overlay */}
       {pullDistance > 0 && (

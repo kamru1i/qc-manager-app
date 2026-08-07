@@ -458,7 +458,7 @@ export const useDashboardData = () => {
         setGlobalSettings(prev => {
           const prevHolidays = prev.govt_holidays || [];
           const currentHolidays = currentGlobalSettings.govt_holidays || [];
-          if (prevHolidays.length > currentHolidays.length && currentHolidays.length === 0) {
+          if (prevHolidays.length > currentHolidays.length) {
             return {
               ...currentGlobalSettings,
               govt_holidays: prevHolidays
