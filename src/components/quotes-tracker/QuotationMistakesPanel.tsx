@@ -101,6 +101,7 @@ export function QuotationMistakesPanel({
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [mistakeToDelete, setMistakeToDelete] = useState<QuotationMistake | null>(null);
+  const [isBulkDeleteMode, setIsBulkDeleteMode] = useState<boolean>(false);
 
   // Context Menu & Selection
   const [contextMenu, setContextMenu] = useState<{
@@ -196,7 +197,15 @@ export function QuotationMistakesPanel({
   };
 
   const handleConfirmDelete = async () => {
-    if (mistakeToDelete) {
+    if (isBulkDeleteMode) {
+      const success = await bulkDeleteMistakes(selectedIds);
+      if (success) {
+        setShowDeleteModal(false);
+        setIsBulkDeleteMode(false);
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+      }
+    } else if (mistakeToDelete) {
       const success = await deleteMistake(mistakeToDelete);
       if (success) {
         setShowDeleteModal(false);
@@ -206,15 +215,10 @@ export function QuotationMistakesPanel({
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected mistakes?`)) {
-      const success = await bulkDeleteMistakes(selectedIds);
-      if (success) {
-        setSelectedIds([]);
-        setIsSelectionMode(false);
-      }
-    }
+    setIsBulkDeleteMode(true);
+    setShowDeleteModal(true);
   };
 
   // Context Menu Handlers
@@ -636,11 +640,16 @@ export function QuotationMistakesPanel({
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         showDeleteModal={showDeleteModal}
-        setShowDeleteModal={setShowDeleteModal}
-        recordToDelete={mistakeToDelete as any}
-        setRecordToDelete={setMistakeToDelete as any}
+        setShowDeleteModal={(val) => {
+          setShowDeleteModal(val);
+          if (!val) {
+            setIsBulkDeleteMode(false);
+            setMistakeToDelete(null);
+          }
+        }}
         deletingRecord={isSubmitting}
         handleConfirmDelete={handleConfirmDelete}
+        bulkCount={isBulkDeleteMode ? selectedIds.length : undefined}
       />
 
       {/* Context Menu */}
