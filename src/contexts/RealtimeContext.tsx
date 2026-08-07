@@ -175,13 +175,14 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
           },
           (payload) => dispatch('dismissed_notifications', payload as unknown as RealtimePayload)
         )
-        // ── quotation_mistakes ──
+        // ── quotation_mistakes (AUDIT FIX H8: scope to own records for regular users) ──
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'quotation_mistakes',
+            ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('quotation_mistakes', payload as unknown as RealtimePayload)
         );

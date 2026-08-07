@@ -33,7 +33,8 @@ export function useGlobalNotifications(
   const [syncedApprovalsCount, setSyncedApprovalsCount] = useState<number | null>(null);
   const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const lastNotifFetchRef = useRef<number>(0);
-  const NOTIF_THROTTLE_MS = 5000; // Minimum 5s between notification refetches
+  // AUDIT FIX H8: Increased throttle from 5s→10s to reduce egress amplification
+  const NOTIF_THROTTLE_MS = 10000; // Minimum 10s between notification refetches
 
   const [isChutiLoaded, setIsChutiLoaded] = useState(false);
 
@@ -277,13 +278,16 @@ export function useGlobalNotifications(
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // AUDIT FIX H8: Add random jitter (0-2s) to debounce to desynchronize
+  // concurrent refetch storms across all connected approver clients.
   const handleRealtimeDataChanged = useCallback(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+    const jitter = Math.floor(Math.random() * 2000);
     debounceTimerRef.current = setTimeout(() => {
       fetchNotificationsData();
-    }, 500);
+    }, 500 + jitter);
   }, [fetchNotificationsData]);
 
   // Sync with standard custom DOM event

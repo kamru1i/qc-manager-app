@@ -64,6 +64,12 @@ BEGIN
       RETURN NEW;
     END IF;
 
+    -- AUDIT FIX H3: Block supervisors from modifying admin/superadmin profiles entirely.
+    -- Supervisors should never modify any field on an admin or superadmin account.
+    IF OLD.role IN ('admin', 'superadmin') THEN
+      RAISE EXCEPTION 'Supervisors cannot modify admin or superadmin profiles.';
+    END IF;
+
     -- If editing an employee they do NOT supervise, enforce column constraints
     IF OLD.role IS DISTINCT FROM NEW.role OR
        OLD.has_chuti_access IS DISTINCT FROM NEW.has_chuti_access OR

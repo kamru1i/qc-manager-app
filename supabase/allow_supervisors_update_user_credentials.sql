@@ -19,6 +19,13 @@ BEGIN
     RAISE EXCEPTION 'Permission denied: Only admins or assigned supervisors can update user credentials.';
   END IF;
 
+  -- AUDIT FIX H1: Prevent supervisors from modifying admin/superadmin credentials
+  IF NOT public.is_admin() THEN
+    IF EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'superadmin')) THEN
+      RAISE EXCEPTION 'Permission denied: Cannot modify admin or superadmin credentials.';
+    END IF;
+  END IF;
+
   -- Update username in profiles if provided
   IF p_new_username IS NOT NULL AND p_new_username != '' THEN
     UPDATE public.profiles SET username = UPPER(p_new_username) WHERE id = p_user_id;
