@@ -1240,7 +1240,6 @@ function AppPortalInner({
           setShowUserNotificationsModal={setShowNotificationsModal}
           userNotificationsList={globalNotificationsList}
           profile={profile}
-          onSaveHolidayResponse={handleSaveHolidayResponse}
           onDismiss={handleDismissNotification}
           onDismissAll={handleDismissAllNotifications}
           approvalsCount={globalApprovalsCount}

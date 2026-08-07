@@ -166,7 +166,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         onEditClick={onEditClick}
         onRevisionClick={() => {}}
         onConvertShortLeaveToFullLeave={() => {}}
-        onSaveHolidayResponse={async () => true}
+
         initialFetchDone={true}
         leaveSettlements={viewingStaffSettlements}
         onSaveLeaveSettlementsBulk={async () => true}

@@ -250,7 +250,7 @@ export function LeaveApprovalPanel({
     }
 
     if (role === "admin") {
-      // 2. Govt Holiday Responses
+      // 2. Govt Holiday History
       if (
         notificationTypeFilter === "all" ||
         notificationTypeFilter === "holiday_response"
@@ -482,7 +482,7 @@ export function LeaveApprovalPanel({
                     ? 'bg-indigo-950/60 border-indigo-900/60 text-indigo-400' 
                     : 'bg-teal-950/60 border-teal-900/60 text-teal-400'
                 }`}>
-                  {isSettlement ? 'Settlement Response' : 'Holiday Response'}
+                  {isSettlement ? 'Settlement Response' : 'Holiday History'}
                 </span>
                 {n.timestamp && (
                   <span className="text-[9px] text-theme-text-muted font-mono">

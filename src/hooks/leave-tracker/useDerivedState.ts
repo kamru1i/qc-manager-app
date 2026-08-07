@@ -232,7 +232,7 @@ export function useDerivedState({
           if (profile.allow_reserve === false) {
             list.push({
               id: `govt-holiday-choice-${holiday.date}`,
-              type: 'govt_holiday_choice',
+              type: 'govt_holiday_history',
               timestamp: response.created_at || currentSessionTime,
               title: 'Govt Holiday Payment Notification 💸',
               body: `${holiday.name} (${formatDate(holiday.date)}) government holiday payment will be added to your salary.`
@@ -241,23 +241,19 @@ export function useDerivedState({
             // If the preference was updated by the admin, notify the user.
             list.push({
               id: `govt-holiday-admin-update-${holiday.date}`,
-              type: 'govt_holiday_choice',
+              type: 'govt_holiday_history',
               timestamp: response.created_at || currentSessionTime,
               title: 'Govt Holiday Choice Updated By Admin 💸',
               body: `Admin has updated your preference for ${holiday.name} (${formatDate(holiday.date)}) to ${response.response === 'reserve' ? 'Reserve' : 'Get Paid'}.`
             });
           }
-          // If reserve option is on and not updated by admin, they made the choice themselves, so NO user notification is needed.
         } else if (profile.allow_reserve !== false) {
-          // Actionable prompt: only show if the user is allowed to reserve
           list.push({
-            id: `govt-holiday-prompt-${holiday.date}`,
-            type: 'govt_holiday_prompt',
-            timestamp: currentSessionTime,
-            title: 'Select Govt Holiday Preference 🔔',
-            body: `What would you like to do for this government holiday: ${holiday.name} (${formatDate(holiday.date)})?`,
-            holidayDate: holiday.date,
-            holidayName: holiday.name
+            id: `govt-holiday-reserve-${holiday.date}`,
+            type: 'govt_holiday_history',
+            timestamp: holiday.created_at || currentSessionTime,
+            title: 'Govt Holiday Reserved 📅',
+            body: `The Government Holiday on ${holiday.date} (${holiday.name}) has been reserved for you.`
           });
         }
       });

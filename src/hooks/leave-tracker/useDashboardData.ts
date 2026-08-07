@@ -493,7 +493,7 @@ export const useDashboardData = () => {
     const { error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('id', sessionUser.id);
+      .in('role', ['admin', 'superadmin']);
 
     if (error) {
       setMessage({ type: 'error', text: 'Failed to save settings: ' + error.message });
@@ -502,16 +502,18 @@ export const useDashboardData = () => {
     }
 
     // Immediately reflect in profile & profilesList in memory
-    (profile as any).global_settings = newSettings;
-    (profile as any).requested_default_sign_in = JSON.stringify(newSettings);
+    if (profile && (profile.role === 'admin' || profile.role === 'superadmin')) {
+      (profile as any).global_settings = newSettings;
+      (profile as any).requested_default_sign_in = JSON.stringify(newSettings);
+    }
 
-    setProfilesList(prev => prev.map(p => p.id === sessionUser.id ? {
+    setProfilesList(prev => prev.map(p => (p.role === 'admin' || p.role === 'superadmin') ? {
       ...p,
       global_settings: newSettings,
       requested_default_sign_in: JSON.stringify(newSettings)
     } : p));
 
-    profilesListRef.current = profilesListRef.current.map(p => p.id === sessionUser.id ? {
+    profilesListRef.current = profilesListRef.current.map(p => (p.role === 'admin' || p.role === 'superadmin') ? {
       ...p,
       global_settings: newSettings,
       requested_default_sign_in: JSON.stringify(newSettings)

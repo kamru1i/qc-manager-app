@@ -498,7 +498,7 @@ export function useGlobalNotifications(
         if (response && response.response === 'paid') {
           list.push({
             id: `govt-holiday-paid-${holiday.date}`,
-            type: 'govt_holiday_choice',
+            type: 'govt_holiday_history',
             timestamp: response.created_at || currentSessionTime,
             title: 'Reserve Holiday Converted to Payment 💸',
             body: `Your Govt Holiday reserve for ${holiday.date} (${holiday.name}) has been converted to payment based on verbal agreement.`
@@ -506,7 +506,7 @@ export function useGlobalNotifications(
         } else {
           list.push({
             id: `govt-holiday-reserve-${holiday.date}`,
-            type: 'govt_holiday_choice',
+            type: 'govt_holiday_history',
             timestamp: response?.created_at || currentSessionTime,
             title: 'Govt Holiday Reserved 📅',
             body: `The Government Holiday on ${holiday.date} (${holiday.name}) has been reserved for you.`

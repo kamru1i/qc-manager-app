@@ -312,7 +312,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     }
   };
 
-  // Filtered responses for Govt Holiday Response table report
+  // Filtered responses for Govt Holiday History table report
   const filteredResponses = React.useMemo(() => {
     const activeHolidayDates = new Set((globalSettings.govt_holidays || []).map(h => parseHolidayItem(h).date));
     return holidayResponses.filter(r => {

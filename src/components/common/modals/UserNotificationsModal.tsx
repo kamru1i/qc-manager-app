@@ -10,11 +10,7 @@ interface UserNotificationsModalProps {
   setShowUserNotificationsModal: (val: boolean) => void;
   userNotificationsList: any[];
   profile: Profile | null;
-  onSaveHolidayResponse: (
-    holidayDate: string,
-    holidayName: string,
-    response: "paid" | "reserve",
-  ) => Promise<boolean>;
+
   onRevisionClick?: (record: ChutiRecord) => void;
   // Approval handlers (for admin/supervisor)
   onApproveChutiRequest?: (id: string, approve: boolean) => void;
@@ -41,7 +37,7 @@ export function UserNotificationsModal({
   setShowUserNotificationsModal,
   userNotificationsList,
   profile,
-  onSaveHolidayResponse,
+
   onRevisionClick,
   onApproveChutiRequest,
   onApproveReserveAdjustment,
@@ -59,16 +55,7 @@ export function UserNotificationsModal({
 }: UserNotificationsModalProps) {
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
-  const handleChoice = async (
-    holidayDate: string,
-    holidayName: string,
-    choice: "paid" | "reserve",
-    notifId: string,
-  ) => {
-    setSubmittingId(notifId);
-    await onSaveHolidayResponse(holidayDate, holidayName, choice);
-    setSubmittingId(null);
-  };
+
 
   const isProcessing = (id: string) =>
     approvingIds.has(id) || reviewingIds.has(id);
@@ -163,7 +150,7 @@ export function UserNotificationsModal({
                         ? "bg-blue-955 border border-blue-900/50 text-blue-300"
                         : n.type === "govt_holiday_prompt"
                           ? "bg-purple-955 border border-purple-900/50 text-purple-300"
-                          : n.type === "govt_holiday_choice"
+                          : n.type === "govt_holiday_history"
                             ? "bg-teal-955 border border-teal-900/50 text-teal-300"
                             : n.type === "admin_holiday_response"
                               ? "bg-blue-955 border border-blue-900/50 text-blue-300"
@@ -202,10 +189,10 @@ export function UserNotificationsModal({
                       ? "Compliance Rule"
                       : n.type === "govt_holiday_prompt"
                         ? "Govt Holiday (Choice)"
-                        : n.type === "govt_holiday_choice"
-                          ? "Govt Holiday (Response)"
+                        : n.type === "govt_holiday_history"
+                          ? "Govt Holiday (History)"
                           : n.type === "admin_holiday_response"
-                            ? "Govt Holiday Response (Staff)"
+                            ? "Govt Holiday History (Staff)"
                             : n.type === "admin_settlement_response"
                               ? "Settle Response (Staff)"
                               : n.type === "settlement_processed"

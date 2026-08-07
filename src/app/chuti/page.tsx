@@ -894,7 +894,6 @@ export default function Dashboard({
             onRevisionClick={handleOpenRevisionModal}
             onConvertShortLeaveToFullLeave={handleConvertShortLeaveToFullLeave}
             holidayResponses={holidayResponses}
-            onSaveHolidayResponse={handleSaveHolidayResponse}
             initialFetchDone={initialFetchDone}
             leaveSettlements={leaveSettlements}
             onSaveLeaveSettlementsBulk={handleSaveLeaveSettlementsBulk}

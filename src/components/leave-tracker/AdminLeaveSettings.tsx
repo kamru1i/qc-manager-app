@@ -182,7 +182,7 @@ export function AdminLeaveSettings({
       toast.error('This date has already been added!');
       return;
     }
-    const updatedHolidays = [...govtHolidays, { date: newDate, name: nameVal }].sort((a, b) => a.date.localeCompare(b.date));
+    const updatedHolidays = [...govtHolidays, { date: newDate, name: nameVal, created_at: new Date().toISOString() }].sort((a, b) => a.date.localeCompare(b.date));
 
     setSubmittingGovt(true);
     try {

@@ -52,8 +52,8 @@ interface UserDashboardViewProps {
   onRevisionClick: (r: ChutiRecord) => void;
   onConvertShortLeaveToFullLeave: (userId: string, workingHours: number, shortMins: number) => void;
   holidayResponses: GovtHolidayResponse[];
-  onSaveHolidayResponse: (holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => Promise<boolean>;
   onAdminUpdateHolidayResponse?: (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => Promise<boolean>;
+
   isAdmin?: boolean;
   initialFetchDone: boolean;
   leaveSettlements: LeaveSettlement[];
@@ -92,8 +92,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   onRevisionClick,
   onConvertShortLeaveToFullLeave,
   holidayResponses,
-  onSaveHolidayResponse,
   onAdminUpdateHolidayResponse,
+
   isAdmin,
   initialFetchDone,
   leaveSettlements,
@@ -249,24 +249,6 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   const [showUserSettleModal, setShowUserSettleModal] = React.useState(false);
 
   // Identify government holidays that the user has not responded to yet
-  const pendingHolidays = React.useMemo(() => {
-    return (globalSettings.govt_holidays || [])
-      .map(h => parseHolidayItem(h))
-      .filter(h => {
-        const responded = holidayResponses.some(r => r.user_id === profile?.id && r.holiday_date === h.date);
-        return !responded;
-      });
-  }, [globalSettings.govt_holidays, holidayResponses, profile?.id]);
-
-  // Auto-approve as 'paid' if allow_reserve is false, initial fetch is done, and there are pending holidays
-  React.useEffect(() => {
-    if (initialFetchDone && profile && profile.eligible_govt_holiday !== false && profile.allow_reserve === false && pendingHolidays.length > 0) {
-      pendingHolidays.forEach((holiday) => {
-        onSaveHolidayResponse(holiday.date, holiday.name, 'paid');
-      });
-    }
-  }, [initialFetchDone, profile, pendingHolidays, onSaveHolidayResponse]);
-
   // Short to Full Leave Conversion Adjustments
   const convertedHours = profile?.converted_short_leaves_hours ?? 0;
 
@@ -374,12 +356,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         initialFetchDone={initialFetchDone}
         isAdmin={isAdmin !== undefined ? isAdmin : !!profile && (profile.role === 'admin' || profile.role === 'superadmin')}
         userId={profile?.id}
-        onUpdateHolidayResponse={
-          onAdminUpdateHolidayResponse ||
-          (async (uid: string, hDate: string, hName: string, resp: 'paid' | 'reserve') => {
-            return onSaveHolidayResponse(hDate, hName, resp);
-          })
-        }
+        onUpdateHolidayResponse={onAdminUpdateHolidayResponse}
       />
 
       <LeavesRecordsTable
