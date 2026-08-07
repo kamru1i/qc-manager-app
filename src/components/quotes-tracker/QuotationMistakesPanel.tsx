@@ -37,6 +37,15 @@ interface QuotationMistakesPanelProps {
   profilesList?: Profile[];
 }
 
+const formatDateDDMMYYYY = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+  return dateStr;
+};
+
 export function QuotationMistakesPanel({
   sessionUser,
   profile,
@@ -325,7 +334,7 @@ export function QuotationMistakesPanel({
                     <td className="py-3 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                        {item.date}
+                        {formatDateDDMMYYYY(item.date)}
                       </div>
                     </td>
 
@@ -348,7 +357,12 @@ export function QuotationMistakesPanel({
                     <td className="py-3 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                        {item.codename}
+                        {(() => {
+                          const profileMatch = profilesList.find((p) => p.id === item.user_id);
+                          return profileMatch
+                            ? profileMatch.codename || profileMatch.username
+                            : item.codename;
+                        })()}
                       </div>
                     </td>
 
