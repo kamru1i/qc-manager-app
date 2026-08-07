@@ -902,6 +902,49 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     history.
                   </p>
                 </div>
+
+                {/* Quotation Mistakes Write Permission (Admin/Supervisor Only) */}
+                {(role === "admin" || role === "supervisor") && userFeatureFlags && setUserFeatureFlags && (
+                  <div className="border-t border-theme-border-muted/70 pt-3">
+                    <label
+                      className={`flex items-center gap-2.5 select-none ${
+                        isAdmin ? "cursor-pointer group" : "opacity-70 pointer-events-none"
+                      }`}
+                    >
+                      <div className="relative flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={userFeatureFlags["quote_mistakes_write"] !== false}
+                          disabled={!isAdmin}
+                          onChange={(e) => {
+                            setUserFeatureFlags({
+                              ...userFeatureFlags,
+                              quote_mistakes_write: e.target.checked,
+                            });
+                          }}
+                          className="sr-only"
+                        />
+                        <div
+                          className={`h-4 w-4 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                            userFeatureFlags["quote_mistakes_write"] !== false
+                              ? "bg-theme-accent-bg border-theme-accent-border text-theme-accent-text font-bold"
+                              : "border-theme-border-active bg-theme-page-bg text-transparent"
+                          }`}
+                        >
+                          {userFeatureFlags["quote_mistakes_write"] !== false && (
+                            <Check className="h-2.5 w-2.5 stroke-3" />
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors">
+                        Mistakes Module Write Access
+                      </span>
+                    </label>
+                    <p className="text-[10px] text-theme-text-muted mt-1 ml-6.5">
+                      Allows user to add, edit, or delete quotation mistakes.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-xs text-theme-text-muted italic py-4 text-center">
