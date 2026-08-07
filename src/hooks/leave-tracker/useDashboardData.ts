@@ -453,7 +453,10 @@ export const useDashboardData = () => {
 
         // Store current globalSettings to cache if they are derived
         // E1 fix: All roles read global settings from the admin profile
-        const adminForCache = profilesData.find(p => p.role === 'superadmin' && p.global_settings) || profilesData.find(p => isAdminRole(p)) || profile;
+        const adminForCache = (profile && isAdminRole(profile) && profile.global_settings)
+          || profilesData.find(p => p.role === 'superadmin' && p.global_settings)
+          || profilesData.find(p => isAdminRole(p) && p.global_settings)
+          || profile;
         const currentGlobalSettings = getGlobalSettingsFromProfile(adminForCache);
         setGlobalSettings(currentGlobalSettings);
         await setGlobalSettingsCache(currentGlobalSettings);
@@ -507,6 +510,12 @@ export const useDashboardData = () => {
       global_settings: newSettings,
       requested_default_sign_in: JSON.stringify(newSettings)
     } : p));
+
+    profilesListRef.current = profilesListRef.current.map(p => p.id === sessionUser.id ? {
+      ...p,
+      global_settings: newSettings,
+      requested_default_sign_in: JSON.stringify(newSettings)
+    } : p);
 
     setGlobalSettings(newSettings);
     if (typeof window !== 'undefined') {
