@@ -11,9 +11,14 @@ import { useAdminSalesSummary } from "@/hooks/quotes-tracker/useAdminSalesSummar
 import { useEditRecordModal } from "@/hooks/quotes-tracker/useEditRecordModal";
 import { useOnboarding } from "@/hooks/quotes-tracker/useOnboarding";
 import { useDateFilter } from "@/hooks/quotes-tracker/useDateFilter";
-
+import { useQuotesPageFilters } from "@/hooks/quotes-tracker/useQuotesPageFilters";
+import { useQuotesPageModals } from "@/hooks/quotes-tracker/useQuotesPageModals";
+import { useQuotesPageHandlers } from "@/hooks/quotes-tracker/useQuotesPageHandlers";
+import { DailyEntryTab } from "@/components/quotes-tracker/tabs/DailyEntryTab";
+import { MonthlyTab } from "@/components/quotes-tracker/tabs/MonthlyTab";
+import { SaleSummaryTab } from "@/components/quotes-tracker/tabs/SaleSummaryTab";
+import { QuotesModalsGroup } from "@/components/quotes-tracker/tabs/QuotesModalsGroup";
 import { StatsGrid } from "@/components/common/StatsGrid";
-import { RecordsTable } from "@/components/quotes-tracker/RecordsTable";
 import { DailyEntryForm } from "@/components/leave-tracker/DailyEntryForm";
 import { EditRecordModal } from "@/components/quotes-tracker/modals/EditRecordModal";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
@@ -218,8 +223,28 @@ export default function Dashboard({
   // recomputation here used month-scoped records (own-records-only for regular
   // users) and briefly overwrote the correct rank with a bogus one.
 
+  const {
+    isBulkModalOpen,
+    setIsBulkModalOpen,
+    isCustomEntryModalOpen,
+    setIsCustomEntryModalOpen,
+    viewingReports,
+    updateViewingReports,
+    showSaleModal,
+    setShowSaleModal,
+    saleFormDetails,
+    setSaleFormDetails,
+    customSaleDetails,
+    setCustomSaleDetails,
+    deletingRecordId,
+    setDeletingRecordId,
+    bulkDeletingRecordIds,
+    setBulkDeletingRecordIds,
+    isBulkDeletingInProgress,
+    setIsBulkDeletingInProgress,
+  } = useQuotesPageModals(activeTab);
+
   // Daily Entry Form State
-  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [fileName, setFileName] = useState("");
   const [branchName, setBranchName] = useState("");
   const [codenameInput, setCodenameInput] = useState(
@@ -242,29 +267,6 @@ export default function Dashboard({
     setAdminViewMode(mode);
     localStorage.setItem("quotes_sales_admin_view_mode", mode);
   };
-
-  // Viewing Reports state: toggled from Leaderboard's "View Report" button
-  const [viewingReports, setViewingReports] = useState(false);
-
-  const updateViewingReports = (val: boolean) => {
-    setViewingReports(val);
-    localStorage.setItem("quotes_viewing_reports", String(val));
-  };
-
-  // Load saved viewingReports on client mount to prevent Next.js hydration mismatch
-  useEffect(() => {
-    const saved = localStorage.getItem("quotes_viewing_reports") === "true";
-    if (saved) {
-      setViewingReports(true);
-    }
-  }, []);
-
-  // Reset viewingReports when tab changes away from leaderboard
-  useEffect(() => {
-    if (activeTab !== "leaderboard") {
-      updateViewingReports(false);
-    }
-  }, [activeTab]);
 
   // Backspace key navigation for Leaderboard and Reports dashboard views
   useEffect(() => {
@@ -306,18 +308,32 @@ export default function Dashboard({
     };
   }, [activeTab, viewingReports, onTabChange, onBackToSidebarTab]);
 
-  // Monthly Table Search Query
-  const [searchQuery, setSearchQuery] = useState("");
+  const {
+    searchQuery,
+    setSearchQuery,
+    todaySearchQuery,
+    setTodaySearchQuery,
+    selectedBranch,
+    setSelectedBranch,
+    todaySelectedBranch,
+    setTodaySelectedBranch,
+    todayAdminViewMode,
+    setTodayAdminViewMode,
+    dateFilter,
+    saleSearchQuery,
+    setSaleSearchQuery,
+    saleSelectedBranch,
+    setSaleSelectedBranch,
+    saleSelectedYear,
+    setSaleSelectedYear,
+    saleSelectedMonth,
+    setSaleSelectedMonth,
+    saleDateFilter,
+    saleAdminViewMode,
+    setSaleAdminViewMode,
+    handleClearTodayFilters,
+  } = useQuotesPageFilters(setSelectedYear, setSelectedMonth);
 
-  // Today's Table Search Query
-  const [todaySearchQuery, setTodaySearchQuery] = useState("");
-
-  // Branch Selection Filters
-  const [selectedBranch, setSelectedBranch] = useState("");
-  const [todaySelectedBranch, setTodaySelectedBranch] = useState("");
-  const [todayAdminViewMode, setTodayAdminViewMode] = useState<"all" | "mine">("mine");
-
-  // Monthly Table Date filter state
   const {
     selectedDate,
     setSelectedDate,
@@ -327,24 +343,8 @@ export default function Dashboard({
     handleDateInputChange,
     handleDateFilterChange,
     handleOpenSpecificDatePicker,
-  } = useDateFilter({
-    onYearChange: setSelectedYear,
-    onMonthChange: setSelectedMonth,
-  });
+  } = dateFilter;
 
-  // Sale Summary Independent Filters State
-  const [saleSearchQuery, setSaleSearchQuery] = useState("");
-  const [saleSelectedBranch, setSaleSelectedBranch] = useState("");
-  const [saleSelectedYear, setSaleSelectedYear] = useState<string>(
-    () => new Date().getFullYear().toString(),
-  );
-  const [saleSelectedMonth, setSaleSelectedMonth] = useState<string>(
-    () => String(new Date().getMonth() + 1).padStart(2, "0"),
-  );
-  const saleDateFilter = useDateFilter({
-    onYearChange: setSaleSelectedYear,
-    onMonthChange: setSaleSelectedMonth,
-  });
   const saleSelectedDate = saleDateFilter.selectedDate;
   const setSaleSelectedDate = saleDateFilter.setSelectedDate;
   const saleDateInputVal = saleDateFilter.dateInputVal;
@@ -354,10 +354,6 @@ export default function Dashboard({
   const handleSaleDateFilterChange = saleDateFilter.handleDateFilterChange;
   const handleOpenSpecificSaleDatePicker = saleDateFilter.handleOpenSpecificDatePicker;
 
-  const [saleAdminViewMode, setSaleAdminViewMode] = useState<"all" | "mine">("mine");
-
-  // Admin Backdated Entry Modal State
-  const [isCustomEntryModalOpen, setIsCustomEntryModalOpen] = useState(false);
 
   // Edit Record Modal Hook
   const {
@@ -424,21 +420,6 @@ export default function Dashboard({
     }
   }, [showSaveFileHelper]);
 
-  const [showSaleModal, setShowSaleModal] = useState(false);
-  const [saleFormDetails, setSaleFormDetails] = useState<{
-    fileName: string;
-    branchName: string;
-    codename: string;
-    fileType: FileType;
-  } | null>(null);
-  const [customSaleDetails, setCustomSaleDetails] = useState<{
-    fileName: string;
-    branchName: string;
-    codename: string;
-    fileType: FileType;
-    userId: string;
-    submittedAtDate: string;
-  } | null>(null);
 
   // ── Copy Helper Hook ───────────────────────────────────────────────
   // Box visibility is driven by the "Sale" file type permission
@@ -533,15 +514,6 @@ export default function Dashboard({
   // Wrap handleSaveAsWord to pass todayUserRecords (component expects no-arg version)
   const handleSaveAsWord = () => handleSaveAsWordRaw(todayUserRecords);
 
-  // Record deletion state for confirmation modal
-  const [deletingRecordId, setDeletingRecordId] = useState<string | null>(null);
-
-  // Bulk record deletion state for confirmation modal
-  const [bulkDeletingRecordIds, setBulkDeletingRecordIds] = useState<
-    string[] | null
-  >(null);
-  const [isBulkDeletingInProgress, setIsBulkDeletingInProgress] =
-    useState(false);
 
   // Force Change Password / Onboarding Customization Modal Hook
   const {
@@ -978,227 +950,40 @@ export default function Dashboard({
     sessionUser,
   ]);
 
-  // Export handlers
-  const handleExportTodayExcel = () => {
-    const todayStr = new Date().toLocaleDateString("en-CA");
-    exportToCSV(todayFilteredRecords, `Today_Logs_${todayStr}`);
-    logActivity(
-      "EXPORT_EXCEL",
-      null,
-      `Exported today's records (Count: ${todayFilteredRecords.length}) to Excel`,
-    );
-  };
-
-  const handleExportMonthlyExcel = () => {
-    const monthName = new Date(
-      parseInt(selectedYear),
-      parseInt(selectedMonth) - 1,
-      1,
-    ).toLocaleString("en-US", { month: "long" });
-    exportToCSV(
-      monthlyFilteredRecords,
-      `Monthly_Logs_${monthName}_${selectedYear}`,
-    );
-    logActivity(
-      "EXPORT_EXCEL",
-      null,
-      `Exported monthly records for ${monthName} ${selectedYear} (Count: ${monthlyFilteredRecords.length}) to Excel`,
-    );
-  };
-
-  const handleExportSaleSummaryExcel = () => {
-    const monthName = new Date(
-      parseInt(selectedYear),
-      parseInt(selectedMonth) - 1,
-      1,
-    ).toLocaleString("en-US", { month: "long" });
-    exportToCSV(
-      saleSummaryRecords,
-      `Sale_Summary_${monthName}_${selectedYear}`,
-    );
-    logActivity(
-      "EXPORT_EXCEL",
-      null,
-      `Exported sale summary records for ${monthName} ${selectedYear} (Count: ${saleSummaryRecords.length}) to Excel`,
-    );
-  };
-
-
-  // Submit Admin Backdated / Custom Date Entry from Modal
-  const handleAdminCustomEntrySubmit = async (
-    fileName: string,
-    branchName: string,
-    fileType: FileType,
-    userId: string,
-    submittedAtDate: string,
-  ): Promise<boolean> => {
-    if (!userId) {
-      showToast("error", "Please select a user.");
-      return false;
-    }
-    if (!submittedAtDate) {
-      showToast("error", "Please select a submission date.");
-      return false;
-    }
-
-    // For non-admin mode, use currentUserProfile; for admin/supervisor mode, look up in profilesList
-    const targetProfile =
-      isAdminRole(profile) || profile?.role === "supervisor"
-        ? profilesList.find((p) => p.id === userId)
-        : userId === profile?.id
-          ? profile
-          : null;
-
-    if (!targetProfile) {
-      showToast("error", "Selected user not found.");
-      return false;
-    }
-
-    const formValidation = validator.validateRecordForm({
-      file_name: fileName,
-      branch_name: branchName,
-      codename: targetProfile.username,
-      file_type: fileType,
-    });
-
-    if (!formValidation.isValid) {
-      showToast("error", formValidation.errors[0]);
-      return false;
-    }
-
-    // If File Type is "Sale", ask for Sold / Unsold confirmation via SaleStatusModal like Daily Entry
-    if (fileType === "Sale") {
-      setCustomSaleDetails({
-        fileName,
-        branchName,
-        codename: targetProfile.username,
-        fileType,
-        userId,
-        submittedAtDate,
-      });
-      setShowSaleModal(true);
-      return true;
-    }
-
-    const now = new Date();
-    const timePart = now.toTimeString().split(" ")[0]; // HH:MM:SS
-    const customSubmittedAt = new Date(
-      `${submittedAtDate}T${timePart}`,
-    ).toISOString();
-
-    const success = await addRecord(
-      fileName,
-      branchName,
-      targetProfile.username,
-      fileType,
-      userId,
-      customSubmittedAt,
-    );
-
-    return success;
-  };
-
-  const handleClearTodayFilters = () => {
-    setTodaySearchQuery("");
-    setTodaySelectedBranch("");
-  };
-
-  const submitNewEntry = async (
-    fName: string,
-    bName: string,
-    cName: string,
-    fType: FileType,
-  ) => {
-    if (submitting) return;
-    const success = await addRecord(fName, bName, cName, fType);
-    if (success) {
-      setFileName("");
-      setBranchName("");
-      // Keep codename, but reset type to default first allowed type
-      if (profile?.allowed_types && profile.allowed_types.length > 0) {
-        setFileType(profile.allowed_types[0] as FileType);
-      } else {
-        setFileType("Quote");
-      }
-    }
-  };
-
-  const handleConfirmSaleStatus = async (status: "SOLD" | "UNSOLD") => {
-    if (submitting) return;
-
-    if (customSaleDetails) {
-      const finalFileName = `${customSaleDetails.fileName} [${status}]`;
-      setShowSaleModal(false);
-
-      const now = new Date();
-      const timePart = now.toTimeString().split(" ")[0]; // HH:MM:SS
-      const customSubmittedAt = new Date(
-        `${customSaleDetails.submittedAtDate}T${timePart}`,
-      ).toISOString();
-
-      await addRecord(
-        finalFileName,
-        customSaleDetails.branchName,
-        customSaleDetails.codename,
-        customSaleDetails.fileType,
-        customSaleDetails.userId,
-        customSubmittedAt,
-      );
-      setCustomSaleDetails(null);
-      return;
-    }
-
-    if (saleFormDetails) {
-      const finalFileName = `${saleFormDetails.fileName} [${status}]`;
-      setShowSaleModal(false);
-      await submitNewEntry(
-        finalFileName,
-        saleFormDetails.branchName,
-        saleFormDetails.codename,
-        saleFormDetails.fileType,
-      );
-      setSaleFormDetails(null);
-    }
-  };
-
-  // Submit Daily Entry
-  const handleAddEntry = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-
-    const cleanedFileName = cleanFileName(fileName);
-    setFileName(cleanedFileName);
-
-    const formValidation = validator.validateRecordForm({
-      file_name: cleanedFileName,
-      branch_name: branchName,
-      codename: codenameInput,
-      file_type: fileType,
-    });
-
-    if (!formValidation.isValid) {
-      showToast("error", formValidation.errors[0]);
-      return;
-    }
-
-    if (fileType === "Sale") {
-      setSaleFormDetails({
-        fileName: cleanedFileName,
-        branchName,
-        codename: codenameInput,
-        fileType,
-      });
-      setShowSaleModal(true);
-    } else {
-      await submitNewEntry(
-        cleanedFileName,
-        branchName,
-        codenameInput,
-        fileType,
-      );
-    }
-  };
-
+  const {
+    handleExportTodayExcel,
+    handleExportMonthlyExcel,
+    handleExportSaleSummaryExcel,
+    handleAdminCustomEntrySubmit,
+    submitNewEntry,
+    handleConfirmSaleStatus,
+    handleAddEntry,
+  } = useQuotesPageHandlers({
+    todayFilteredRecords,
+    monthlyFilteredRecords,
+    saleSummaryRecords,
+    selectedYear,
+    selectedMonth,
+    logActivity,
+    showToast,
+    addRecord,
+    profile,
+    profilesList,
+    submitting,
+    cleanFileName,
+    fileName,
+    setFileName,
+    branchName,
+    setBranchName,
+    codenameInput,
+    fileType,
+    setFileType,
+    saleFormDetails,
+    setSaleFormDetails,
+    customSaleDetails,
+    setCustomSaleDetails,
+    setShowSaleModal,
+  });
 
   // Admin reset password handled inline inside EditProfileModal
 
@@ -1390,513 +1175,125 @@ export default function Dashboard({
   // Filter allowed categories for the daily form
   const allowedCategories = profile?.allowed_types || ALL_10_FILE_TYPES;
 
+  const isAdmin = isAdminRole(profile) || profile?.role === "supervisor";
+
   return (
     <>
       {/* TAB 1: DAILY ENTRY */}
       {activeTab === "entry" && (
-        <div className="space-y-6">
-          {/* Data Entry Form Component */}
-          <Suspense fallback={<SkeletonLoader type="form" />}>
-            <DailyEntryForm
-              fileName={fileName}
-              setFileName={setFileName}
-              branchName={branchName}
-              setBranchName={setBranchName}
-              codenameInput={codenameInput}
-              setCodenameInput={setCodenameInput}
-              fileType={fileType}
-              setFileType={setFileType}
-              allowedCategories={allowedCategories}
-              submitting={submitting}
-              onSubmit={handleAddEntry}
-              isAdmin={false}
-              cleanFileName={cleanFileName}
-            />
-          </Suspense>
-
-          {/* Today's Data Title, Search Filters, and Action Controls */}
-          <div className="border-t border-theme-border-input/80 pt-6 space-y-4">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-              <div className="shrink-0">
-                <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
-                  <Clock className="h-4.5 w-4.5 text-blue-500" />
-                  Today's File Entry List
-                </h3>
-                <p className="text-[11px] text-theme-text-muted mt-0.5">
-                  Date:{" "}
-                  {new Date().toLocaleDateString("en-US", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-
-              {/* Search, Branch Filter & Action Controls */}
-              <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto flex-1 lg:justify-end">
-                <div className="relative flex-1 min-w-[200px] max-w-full lg:max-w-md">
-                  <input
-                    type="text"
-                    placeholder="Search name, codename..."
-                    value={todaySearchQuery}
-                    onChange={(e) => setTodaySearchQuery(e.target.value)}
-                    className="block w-full pl-8 pr-8 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-8"
-                  />
-                  <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-theme-text-muted" />
-                  {todaySearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setTodaySearchQuery("")}
-                      className="absolute right-2.5 top-1.5 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
-                      title="Clear search"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                <CustomSelect
-                  value={todaySelectedBranch}
-                  onChange={setTodaySelectedBranch}
-                  options={[
-                    { value: "", label: "All Branches" },
-                    ...uniqueBranches.map((b) => ({ value: b, label: b })),
-                  ]}
-                  buttonClassName="w-full sm:w-40 px-3 py-1 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-8 flex items-center justify-between gap-2 text-left font-semibold select-none"
-                  className="w-full sm:w-40 shrink-0"
-                />
-
-                {(todaySearchQuery || todaySelectedBranch) && (
-                  <button
-                    type="button"
-                    onClick={handleClearTodayFilters}
-                    className="px-3 py-1 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-[10px] text-theme-text-muted hover:text-theme-text-primary font-semibold rounded-lg transition-all h-8 cursor-pointer flex items-center gap-1 shrink-0"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    Clear
-                  </button>
-                )}
-
-                <button
-                  onClick={handleExportTodayExcel}
-                  className="flex items-center gap-1.5 py-1 px-3 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md h-8 shrink-0"
-                  title="Export to Excel"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  <span>Excel</span>
-                </button>
-
-                {(isAdminRole(profile) || profile?.role === "supervisor") && (
-                  <AdminViewToggle
-                    viewMode={todayAdminViewMode}
-                    onChange={setTodayAdminViewMode}
-                  />
-                )}
-              </div>
-            </div>
-
-              {/* Stat pills summary Component */}
-              <Suspense fallback={<SkeletonLoader type="stats" />}>
-                <StatsGrid stats={todayStats} isLoading={recordsLoading} />
-              </Suspense>
-
-              {/* Today's Records Table Component */}
-              <Suspense fallback={<SkeletonLoader type="table" />}>
-                <RecordsTable
-                  records={todayFilteredRecords}
-                  emptyMessage="No file entries for today matching the filters."
-                  showDate={false}
-                  onEdit={(record) => handleOpenEditRecord(record, false)}
-                  onDelete={setDeletingRecordId}
-                  isLoading={recordsLoading}
-                  currentUserId={sessionUser?.id}
-                  isAdmin={
-                    isAdminRole(profile) || profile?.role === "supervisor"
-                  }
-                  onBulkDelete={setBulkDeletingRecordIds}
-                  onSaveInline={handleSaveInline}
-                  onBulkSaveInline={handleBulkSaveInline}
-                  allowedCategories={allowedCategories}
-                  submitting={submitting}
-                />
-              </Suspense>
-          </div>
-        </div>
+        <DailyEntryTab
+          fileName={fileName}
+          setFileName={setFileName}
+          branchName={branchName}
+          setBranchName={setBranchName}
+          codenameInput={codenameInput}
+          setCodenameInput={setCodenameInput}
+          fileType={fileType}
+          setFileType={setFileType}
+          allowedCategories={allowedCategories}
+          submitting={submitting}
+          handleAddEntry={handleAddEntry}
+          cleanFileName={cleanFileName}
+          todaySearchQuery={todaySearchQuery}
+          setTodaySearchQuery={setTodaySearchQuery}
+          todaySelectedBranch={todaySelectedBranch}
+          setTodaySelectedBranch={setTodaySelectedBranch}
+          uniqueBranches={uniqueBranches}
+          handleClearTodayFilters={handleClearTodayFilters}
+          handleExportTodayExcel={handleExportTodayExcel}
+          isAdmin={isAdmin}
+          todayAdminViewMode={todayAdminViewMode}
+          setTodayAdminViewMode={setTodayAdminViewMode}
+          todayStats={todayStats}
+          recordsLoading={recordsLoading}
+          todayFilteredRecords={todayFilteredRecords}
+          handleOpenEditRecord={handleOpenEditRecord}
+          setDeletingRecordId={setDeletingRecordId}
+          sessionUser={sessionUser}
+          setBulkDeletingRecordIds={setBulkDeletingRecordIds}
+          handleSaveInline={handleSaveInline}
+          handleBulkSaveInline={handleBulkSaveInline}
+        />
       )}
 
       {/* TAB 2: MONTHLY LIST */}
       {activeTab === "monthly" && (
-        <div className="space-y-6">
-          {/* Date selection row & Filters */}
-          <div className="space-y-4">
-            <div className="bg-theme-page-bg/40 p-3.5 rounded-2xl border border-theme-border-muted flex flex-wrap lg:flex-nowrap items-end gap-2 w-full">
-              {/* 1. Search Box */}
-              <div className="w-full sm:w-36 md:w-40 lg:w-44 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Search
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-7 pr-6 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
-                  />
-                  <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-theme-text-muted" />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-1.5 top-2 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
-                      title="Clear search"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Branch Selector */}
-              <div className="w-full sm:w-28 lg:w-32 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Branch
-                </label>
-                <CustomSelect
-                  value={selectedBranch}
-                  onChange={setSelectedBranch}
-                  options={[
-                    { value: "", label: "All Branches" },
-                    ...uniqueBranches.map((b) => ({ value: b, label: b })),
-                  ]}
-                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
-                  className="w-full"
-                />
-              </div>
-
-              {/* 3. Year Selection */}
-              <div className="w-full sm:w-16 lg:w-20 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Year
-                </label>
-                <CustomSelect
-                  value={selectedYear}
-                  disabled={!!selectedDate}
-                  onChange={(val) => {
-                    setSelectedYear(val);
-                    setSelectedDate(""); // Reset specific date filter
-                  }}
-                  options={dynamicYears.map((year) => ({
-                    value: year,
-                    label: year,
-                  }))}
-                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
-                  className="w-full"
-                />
-              </div>
-
-              {/* 4. Month Selection */}
-              <div className="w-full sm:w-20 lg:w-24 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Month
-                </label>
-                <CustomSelect
-                  value={selectedMonth}
-                  disabled={!!selectedDate}
-                  onChange={(val) => {
-                    setSelectedMonth(val);
-                    setSelectedDate(""); // Reset specific date filter
-                  }}
-                  options={dynamicMonths.map((m) => ({
-                    value: m.val,
-                    label: m.name,
-                  }))}
-                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
-                  className="w-full"
-                />
-              </div>
-
-              {/* 5. Specific Date Input */}
-              <div className="w-full sm:w-28 lg:w-32 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Specific Date
-                </label>
-                <div className="flex gap-1 items-center">
-                  <div className="relative w-full">
-                    <input
-                      type="text"
-                      placeholder="DD-MM-YYYY"
-                      value={dateInputVal}
-                      onChange={(e) => handleDateInputChange(e.target.value)}
-                      onClick={handleOpenSpecificDatePicker}
-                      maxLength={10}
-                      className="block w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9 cursor-pointer"
-                    />
-                    <input
-                      type="date"
-                      ref={specificDateRef}
-                      value={selectedDate}
-                      onChange={(e) => handleDateFilterChange(e.target.value)}
-                      className="absolute w-px h-px opacity-0 pointer-events-none select-none"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSelectedBranch("");
-                      setSelectedYear(new Date().getFullYear().toString());
-                      setSelectedMonth(
-                        String(new Date().getMonth() + 1).padStart(2, "0"),
-                      );
-                      setSelectedDate("");
-                      setDateInputVal("");
-                    }}
-                    className="p-1.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-8 h-9 cursor-pointer"
-                    title="Reset all filters"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 6. Excel Export & Admin View Toggle Controls (Inline with zero overflow) */}
-              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                <button
-                  onClick={handleExportMonthlyExcel}
-                  className="flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md h-9"
-                  title="Export to Excel"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  <span>Excel</span>
-                </button>
-
-                {(isAdminRole(profile) || profile?.role === "supervisor") && (
-                  <AdminViewToggle
-                    viewMode={adminViewMode}
-                    onChange={handleAdminViewModeChange}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Monthly Stats summary grid */}
-          <Suspense fallback={<SkeletonLoader type="stats" />}>
-            <StatsGrid stats={monthlyStats} isLoading={recordsLoading} />
-          </Suspense>
-
-          {/* Monthly Table Component */}
-          <Suspense fallback={<SkeletonLoader type="table" />}>
-            <RecordsTable
-              records={monthlyFilteredRecords}
-              emptyMessage="No file records found matching the filters."
-              showDate={true}
-              onEdit={(record) => handleOpenEditRecord(record, true)}
-              onDelete={setDeletingRecordId}
-              isLoading={recordsLoading}
-              currentUserId={sessionUser?.id}
-              isAdmin={isAdminRole(profile) || profile?.role === "supervisor"}
-              onBulkDelete={setBulkDeletingRecordIds}
-              onSaveInline={handleSaveInline}
-              onBulkSaveInline={handleBulkSaveInline}
-              allowedCategories={allowedCategories}
-              submitting={submitting}
-            />
-          </Suspense>
-        </div>
+        <MonthlyTab
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedBranch={selectedBranch}
+          setSelectedBranch={setSelectedBranch}
+          uniqueBranches={uniqueBranches}
+          selectedYear={selectedYear}
+          setSelectedYear={setSelectedYear}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          dynamicYears={dynamicYears}
+          selectedMonth={selectedMonth}
+          setSelectedMonth={setSelectedMonth}
+          dynamicMonths={dynamicMonths}
+          dateInputVal={dateInputVal}
+          setDateInputVal={setDateInputVal}
+          handleDateInputChange={handleDateInputChange}
+          handleOpenSpecificDatePicker={handleOpenSpecificDatePicker}
+          specificDateRef={specificDateRef}
+          handleDateFilterChange={handleDateFilterChange}
+          handleExportMonthlyExcel={handleExportMonthlyExcel}
+          isAdmin={isAdmin}
+          adminViewMode={adminViewMode}
+          handleAdminViewModeChange={handleAdminViewModeChange}
+          monthlyStats={monthlyStats}
+          recordsLoading={recordsLoading}
+          monthlyFilteredRecords={monthlyFilteredRecords}
+          handleOpenEditRecord={handleOpenEditRecord}
+          setDeletingRecordId={setDeletingRecordId}
+          sessionUser={sessionUser}
+          setBulkDeletingRecordIds={setBulkDeletingRecordIds}
+          handleSaveInline={handleSaveInline}
+          handleBulkSaveInline={handleBulkSaveInline}
+          allowedCategories={allowedCategories}
+          submitting={submitting}
+        />
       )}
 
       {/* TAB 3: SALE SUMMARY */}
       {activeTab === "sale_summary" && (
-        <div className="space-y-6">
-          {/* Date selection row & Filters */}
-          <div className="space-y-4">
-            <div className="bg-theme-page-bg/40 p-3.5 rounded-2xl border border-theme-border-muted flex flex-wrap lg:flex-nowrap items-end gap-2 w-full">
-              {/* 1. Search Box */}
-              <div className="w-full sm:w-36 md:w-40 lg:w-44 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Search
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search name..."
-                    value={saleSearchQuery}
-                    onChange={(e) => setSaleSearchQuery(e.target.value)}
-                    className="block w-full pl-7 pr-6 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs h-9"
-                  />
-                  <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-theme-text-muted" />
-                  {saleSearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSaleSearchQuery("")}
-                      className="absolute right-1.5 top-2 flex items-center justify-center p-0.5 hover:bg-theme-border-input rounded-full text-theme-text-muted hover:text-theme-text-primary transition-all duration-200 hover:scale-110 active:scale-90 cursor-pointer"
-                      title="Clear search"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Branch Selector */}
-              <div className="w-full sm:w-28 lg:w-32 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Branch
-                </label>
-                <CustomSelect
-                  value={saleSelectedBranch}
-                  onChange={setSaleSelectedBranch}
-                  options={[
-                    { value: "", label: "All Branches" },
-                    ...uniqueBranches.map((b) => ({ value: b, label: b })),
-                  ]}
-                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
-                  className="w-full"
-                />
-              </div>
-
-              {/* 3. Year Selection */}
-              <div className="w-full sm:w-16 lg:w-20 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Year
-                </label>
-                <CustomSelect
-                  value={saleSelectedYear}
-                  disabled={!!saleSelectedDate}
-                  onChange={(val) => {
-                    setSaleSelectedYear(val);
-                    setSaleSelectedDate(""); // Reset specific date filter
-                  }}
-                  options={dynamicYears.map((year) => ({
-                    value: year,
-                    label: year,
-                  }))}
-                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
-                  className="w-full"
-                />
-              </div>
-
-              {/* 4. Month Selection */}
-              <div className="w-full sm:w-20 lg:w-24 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Month
-                </label>
-                <CustomSelect
-                  value={saleSelectedMonth}
-                  disabled={!!saleSelectedDate}
-                  onChange={(val) => {
-                    setSaleSelectedMonth(val);
-                    setSaleSelectedDate(""); // Reset specific date filter
-                  }}
-                  options={dynamicMonths.map((m) => ({
-                    value: m.val,
-                    label: m.name,
-                  }))}
-                  buttonClassName="w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-theme-card-bg/30 h-9 flex items-center justify-between gap-1 text-left font-semibold select-none"
-                  className="w-full"
-                />
-              </div>
-
-              {/* 5. Specific Date Input */}
-              <div className="w-full sm:w-28 lg:w-32 shrink-0">
-                <label className="block text-[11px] font-semibold text-theme-text-secondary mb-1">
-                  Specific Date
-                </label>
-                <div className="flex gap-1 items-center">
-                  <div className="relative w-full">
-                    <input
-                      type="text"
-                      placeholder="DD-MM-YYYY"
-                      value={saleDateInputVal}
-                      onChange={(e) => handleSaleDateInputChange(e.target.value)}
-                      onClick={handleOpenSpecificSaleDatePicker}
-                      maxLength={10}
-                      className="block w-full px-2 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9 cursor-pointer"
-                    />
-                    <input
-                      type="date"
-                      ref={specificSaleDateRef}
-                      value={saleSelectedDate}
-                      onChange={(e) => handleSaleDateFilterChange(e.target.value)}
-                      className="absolute w-px h-px opacity-0 pointer-events-none select-none"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSaleSearchQuery("");
-                      setSaleSelectedBranch("");
-                      setSaleSelectedYear(new Date().getFullYear().toString());
-                      setSaleSelectedMonth(
-                        String(new Date().getMonth() + 1).padStart(2, "0"),
-                      );
-                      setSaleSelectedDate("");
-                      setSaleDateInputVal("");
-                    }}
-                    className="p-1.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active hover:text-theme-text-primary text-theme-text-muted rounded-lg transition-all duration-200 flex items-center justify-center shrink-0 w-8 h-9 cursor-pointer"
-                    title="Reset all filters"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 6. Excel Export & Admin View Toggle Controls */}
-              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                <button
-                  onClick={handleExportSaleSummaryExcel}
-                  className="flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-theme-border-input bg-theme-card-bg/60 hover:bg-theme-border-input text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-all cursor-pointer shadow-md h-9"
-                  title="Export to Excel"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  <span>Excel</span>
-                </button>
-
-                {(isAdminRole(profile) || profile?.role === "supervisor") && (
-                  <AdminViewToggle
-                    viewMode={saleAdminViewMode}
-                    onChange={setSaleAdminViewMode}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Dedicated Sale Summary Stats Grid (Total Sales, Sold, Unsold) */}
-          <div className="flex flex-wrap gap-2.5">
-            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
-              Total Sales: <strong className="text-theme-text-primary text-sm">{saleSummaryStats.total}</strong>
-            </div>
-            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
-              Sold: <strong className="text-emerald-400 text-sm">{saleSummaryStats.soldFormatted}</strong>
-            </div>
-            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
-              Unsold: <strong className="text-red-400 text-sm">{saleSummaryStats.unsoldFormatted}</strong>
-            </div>
-          </div>
-
-          {/* Sale Summary Table Component */}
-          <Suspense fallback={<SkeletonLoader type="table" />}>
-            <RecordsTable
-              records={saleSummaryRecords}
-              emptyMessage="No sale records found matching the filters."
-              showDate={true}
-              isSaleSummaryView={true}
-              onEdit={(record) => handleOpenEditRecord(record, true)}
-              onDelete={setDeletingRecordId}
-              isLoading={recordsLoading}
-              currentUserId={sessionUser?.id}
-              isAdmin={isAdminRole(profile) || profile?.role === "supervisor"}
-              onBulkDelete={setBulkDeletingRecordIds}
-              onSaveInline={handleSaveInline}
-              onBulkSaveInline={handleBulkSaveInline}
-              allowedCategories={allowedCategories}
-              submitting={submitting}
-            />
-          </Suspense>
-        </div>
+        <SaleSummaryTab
+          saleSearchQuery={saleSearchQuery}
+          setSaleSearchQuery={setSaleSearchQuery}
+          saleSelectedBranch={saleSelectedBranch}
+          setSaleSelectedBranch={setSaleSelectedBranch}
+          uniqueBranches={uniqueBranches}
+          saleSelectedYear={saleSelectedYear}
+          setSaleSelectedYear={setSaleSelectedYear}
+          saleSelectedDate={saleSelectedDate}
+          setSaleSelectedDate={setSaleSelectedDate}
+          dynamicYears={dynamicYears}
+          saleSelectedMonth={saleSelectedMonth}
+          setSaleSelectedMonth={setSaleSelectedMonth}
+          dynamicMonths={dynamicMonths}
+          saleDateInputVal={saleDateInputVal}
+          setSaleDateInputVal={setSaleDateInputVal}
+          handleSaleDateInputChange={handleSaleDateInputChange}
+          handleOpenSpecificSaleDatePicker={handleOpenSpecificSaleDatePicker}
+          specificSaleDateRef={specificSaleDateRef}
+          handleSaleDateFilterChange={handleSaleDateFilterChange}
+          handleExportSaleSummaryExcel={handleExportSaleSummaryExcel}
+          isAdmin={isAdmin}
+          saleAdminViewMode={saleAdminViewMode}
+          setSaleAdminViewMode={setSaleAdminViewMode}
+          saleSummaryStats={saleSummaryStats}
+          recordsLoading={recordsLoading}
+          saleSummaryRecords={saleSummaryRecords}
+          handleOpenEditRecord={handleOpenEditRecord}
+          setDeletingRecordId={setDeletingRecordId}
+          sessionUser={sessionUser}
+          setBulkDeletingRecordIds={setBulkDeletingRecordIds}
+          handleSaveInline={handleSaveInline}
+          handleBulkSaveInline={handleBulkSaveInline}
+          allowedCategories={allowedCategories}
+          submitting={submitting}
+        />
       )}
 
       {activeTab === "leaderboard" && (
@@ -2072,161 +1469,58 @@ export default function Dashboard({
         />
       )}
 
-      {mounted &&
-      typeof window !== "undefined" &&
-      document.getElementById("root-modals-portal")
-        ? createPortal(
-            <>
-              {/* MODAL 0: SOLD/UNSOLD CHOICE */}
-              <SaleStatusModal
-                isOpen={showSaleModal}
-                fileName={
-                  customSaleDetails?.fileName || saleFormDetails?.fileName || ""
-                }
-                onConfirm={handleConfirmSaleStatus}
-                onClose={() => {
-                  setShowSaleModal(false);
-                  setSaleFormDetails(null);
-                  setCustomSaleDetails(null);
-                }}
-              />
-
-              {/* MODAL 1: EDIT RECORD */}
-              {editingRecord && (
-                <EditRecordModal
-                  editFileName={editFileName}
-                  setEditFileName={setEditFileName}
-                  editBranchName={editBranchName}
-                  setEditBranchName={setEditBranchName}
-                  editCodename={editCodename}
-                  setEditCodename={setEditCodename}
-                  editFileType={editFileType}
-                  setEditFileType={setEditFileType}
-                  canEditSubmittedAt={editCanChangeSubmittedAt}
-                  editSubmittedDate={editSubmittedDate}
-                  setEditSubmittedDate={setEditSubmittedDate}
-                  editSubmittedTime={editSubmittedTime}
-                  setEditSubmittedTime={setEditSubmittedTime}
-                  allowedCategories={allowedCategories}
-                  onClose={() => setEditingRecord(null)}
-                  onSave={handleSaveEdit}
-                  editSaleStatus={editSaleStatus}
-                  setEditSaleStatus={setEditSaleStatus}
-                  submitting={submitting}
-                />
-              )}
-
-              {/* MODAL 6: DELETE RECORD CONFIRMATION */}
-              <ConfirmModal
-                isOpen={!!deletingRecordId}
-                onClose={() => setDeletingRecordId(null)}
-                onConfirm={() => {
-                  if (deletingRecordId) {
-                    deleteRecord(deletingRecordId);
-                    setDeletingRecordId(null);
-                  }
-                }}
-                title="Delete File Record"
-                message="Are you sure you want to permanently delete this file record? This action cannot be undone."
-                confirmText="Delete Record"
-                cancelText="Cancel"
-                isDanger={true}
-              />
-
-              {/* MODAL 6b: BULK DELETE RECORD CONFIRMATION */}
-              <ConfirmModal
-                isOpen={!!bulkDeletingRecordIds}
-                onClose={() => setBulkDeletingRecordIds(null)}
-                onConfirm={async () => {
-                  if (bulkDeletingRecordIds) {
-                    const idsToDelete = [...bulkDeletingRecordIds];
-                    setBulkDeletingRecordIds(null);
-                    setIsBulkDeletingInProgress(true);
-                    try {
-                      await deleteRecords(idsToDelete);
-                    } catch (err) {
-                      console.error("Bulk delete failed:", err);
-                    } finally {
-                      setIsBulkDeletingInProgress(false);
-                    }
-                  }
-                }}
-                title="Delete Selected Records"
-                message={`Are you sure you want to permanently delete the ${bulkDeletingRecordIds?.length} selected file records? This action cannot be undone.`}
-                confirmText="Delete Records"
-                cancelText="Cancel"
-                isDanger={true}
-              />
-
-              {/* MODAL 7: CUSTOM DATE ENTRY */}
-              <CustomEntryModal
-                isOpen={isCustomEntryModalOpen}
-                onClose={() => setIsCustomEntryModalOpen(false)}
-                profilesList={profilesList}
-                currentUserProfile={profile}
-                submitting={submitting}
-                adminMode={
-                  (isAdminRole(profile) || profile?.role === "supervisor") &&
-                  adminViewMode === "all"
-                }
-                onSubmit={handleAdminCustomEntrySubmit}
-              />
-
-              {/* MODAL 8: IMPORT MODAL */}
-              <QuickImportView
-                isOpen={isBulkModalOpen}
-                onClose={() => setIsBulkModalOpen(false)}
-                allowedBranches={allMasterBranches}
-                allowedTypes={allowedCategories}
-                sanitizerWords={getSanitizerWords(globalSettings)}
-                codename={ownCodename || profile?.username || ""}
-                onSubmitRecord={async (data) => {
-                  const customSubmittedAt = data.entry_date
-                    ? new Date(`${data.entry_date}T12:00:00`).toISOString()
-                    : undefined;
-                  return await addRecord(
-                    data.file_name,
-                    data.branch_name,
-                    data.codename,
-                    data.file_type as FileType,
-                    undefined,
-                    customSubmittedAt,
-                    { skipToast: true, skipFetch: true },
-                  );
-                }}
-                onCompleteSuccess={(count) => {
-                  showToast(
-                    "success",
-                    `Successfully submitted ${count} Files!`,
-                  );
-                  fetchRecords();
-                }}
-              />
-
-              {/* BULK DELETING OVERLAY */}
-              {isBulkDeletingInProgress && (
-                <div className="fixed inset-0 bg-theme-page-bg/70 backdrop-blur-xs z-9999 flex flex-col items-center justify-center select-none">
-                  <div className="flex flex-col items-center p-6 bg-theme-card-bg border border-theme-border-input rounded-2xl shadow-2xl animate-fade-in max-w-sm w-full mx-4 text-center">
-                    <div className="relative w-12 h-12 flex items-center justify-center">
-                      <div className="w-10 h-10 border-4 border-theme-border-input border-t-blue-500 rounded-full animate-spin"></div>
-                    </div>
-                    <h4 className="text-sm font-bold text-theme-text-primary mt-4 uppercase tracking-wider">
-                      Deleting Records...
-                    </h4>
-                    <p className="text-xs text-theme-text-muted mt-2">
-                      Please wait while the selected entries are being
-                      permanently removed from the database.
-                    </p>
-                    <p className="text-[10px] text-theme-text-muted mt-4 italic">
-                      You can reload the page if it hangs.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </>,
-            document.getElementById("root-modals-portal")!,
-          )
-        : null}
+      <QuotesModalsGroup
+        showSaleModal={showSaleModal}
+        setShowSaleModal={setShowSaleModal}
+        saleFormDetails={saleFormDetails}
+        setSaleFormDetails={setSaleFormDetails}
+        customSaleDetails={customSaleDetails}
+        setCustomSaleDetails={setCustomSaleDetails}
+        handleConfirmSaleStatus={handleConfirmSaleStatus}
+        editingRecord={editingRecord}
+        setEditingRecord={setEditingRecord}
+        editFileName={editFileName}
+        setEditFileName={setEditFileName}
+        editBranchName={editBranchName}
+        setEditBranchName={setEditBranchName}
+        editCodename={editCodename}
+        setEditCodename={setEditCodename}
+        editFileType={editFileType}
+        setEditFileType={setEditFileType}
+        editCanChangeSubmittedAt={editCanChangeSubmittedAt}
+        editSubmittedDate={editSubmittedDate}
+        setEditSubmittedDate={setEditSubmittedDate}
+        editSubmittedTime={editSubmittedTime}
+        setEditSubmittedTime={setEditSubmittedTime}
+        editSaleStatus={editSaleStatus}
+        setEditSaleStatus={setEditSaleStatus}
+        handleSaveEdit={handleSaveEdit}
+        deletingRecordId={deletingRecordId}
+        setDeletingRecordId={setDeletingRecordId}
+        deleteRecord={deleteRecord}
+        bulkDeletingRecordIds={bulkDeletingRecordIds}
+        setBulkDeletingRecordIds={setBulkDeletingRecordIds}
+        isBulkDeletingInProgress={isBulkDeletingInProgress}
+        setIsBulkDeletingInProgress={setIsBulkDeletingInProgress}
+        deleteRecords={deleteRecords}
+        isCustomEntryModalOpen={isCustomEntryModalOpen}
+        setIsCustomEntryModalOpen={setIsCustomEntryModalOpen}
+        handleAdminCustomEntrySubmit={handleAdminCustomEntrySubmit}
+        isBulkModalOpen={isBulkModalOpen}
+        setIsBulkModalOpen={setIsBulkModalOpen}
+        allMasterBranches={allMasterBranches}
+        allowedCategories={allowedCategories}
+        profilesList={profilesList}
+        profile={profile}
+        globalSettings={globalSettings}
+        submitting={submitting}
+        isAdmin={isAdmin}
+        adminViewMode={adminViewMode}
+        ownCodename={ownCodename as any}
+        addRecord={addRecord}
+        showToast={showToast}
+        fetchRecords={fetchRecords}
+      />
     </>
   );
 }
