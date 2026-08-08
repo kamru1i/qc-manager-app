@@ -169,66 +169,6 @@ export function ProfileSettings({
     currentTimestamp,
     setCurrentTimestamp,
   } = stateHook;
-  // Input fields state (seeded synchronously from profile to prevent initial render flicker)
-  /* removed editUsername */
-  /* removed editFullName */
-  /* removed editJobRole */
-  /* removed editWorkingHours */
-  /* removed editBreakTime */
-  /* removed profileSignInTime */
-  /* removed profileSignOutTime */
-
-  // Workspace & KPI settings state
-  /* removed editHasChutiAccess */
-  /* removed editNeedsApproval */
-  /* removed editSupervisorIds */
-  /* removed editEligibleOfficeLeave */
-  /* removed editEligibleGovtHoliday */
-  /* removed editAllowOvertime */
-  /* removed editAllowReserve */
-  /* removed editHasQuotesAccess */
-  /* removed editAllowedTypes */
-  /* removed editCanManageRules */
-  /* removed editKpiSkills */
-  /* removed editKpiDeptIndicators */
-  /* removed editKpiOtherDeptIndicators */
-  /* removed editPerformsDataEntry */
-  /* removed editDepartment */
-  /* removed editPerformsOtherDeptTasks */
-  /* removed editOtherDepartment */
-  /* removed editDelegatedLeaveSupervisorId */
-  /* removed editDelegatedKpiSupervisorId */
-
-  // Password fields state
-  /* removed newPassword */
-  /* removed confirmNewPassword */
-  /* removed passwordSubmitting */
-  /* removed showPasswordFields */
-
-  // Tracking profile synchronization state to prevent brief hasChanges flicker on reload
-  /* removed syncedProfileId */
-
-  // Sanitizer rules (superadmin-only filename cleaner config; word + enabled).
-  // Seeded from the built-in defaults so the list is never empty.
-  /* removed sanitizerRules */
-  /* removed sanitizerInput */
-  /* removed sanitizerSubmitting */
-
-  // Per-role tab visibility (superadmin-only Tab Access matrix).
-  // Shape: { [role]: { [tabKey]: boolean } } — false = hidden for that role.
-  /* removed roleVis */
-  /* removed activeRoleVisKey */
-
-  // Per-supervisor specific access overrides
-  /* removed supervisorOverrides */
-  /* removed selectedSupervisorId */
-
-
-  // Feature flags (superadmin-only by default, delegated operational flags available to admins).
-  /* removed featureFlags */
-  /* removed userFeatureFlags */
-  /* removed adminDelegatedFlags */
-  /* removed activeFlagKey */
 
   const { profilesList, refreshProfiles } = useProfiles();
   const superadminProfile = useMemo(() => profilesList.find((p) => p.role === 'superadmin'), [profilesList]);
@@ -274,24 +214,6 @@ export function ProfileSettings({
     handleRemoveTempAccess,
   } = handlersObj;
 
-
-  // Temporary access controls (superadmin-only, time-boxed per-role overrides).
-  /* removed tempAccess */
-  /* removed tempSubmitting */
-  /* removed tempForm */
-
-  // Setup submissions state
-  /* removed submitting */
-  /* removed isCodenameEditable */
-
-  // VPN List state (managed for Quotes Copy Helper)
-  /* removed vpnList */
-  /* removed newVpnInput */
-  /* removed vpnSubmitting */
-
-  // Subtabs state (Profile / User Management / Sanitizer / Access / Feature Flags / VPN)
-  /* removed activeSubTab */
-
   useEffect(() => {
     const handleSubTabEvent = (e: Event) => {
       const tab = (e as CustomEvent).detail;
@@ -322,12 +244,7 @@ export function ProfileSettings({
     }
   }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeVpn]);
 
-
-
-
-
   const isSuperAdmin = isSuperadmin(profile);
-  // Removed init useEffect
 
   // Determine if there are changes
   const hasChanges = useMemo(() => {
@@ -381,25 +298,6 @@ export function ProfileSettings({
     editPerformsDataEntry, editDepartment, editPerformsOtherDeptTasks, editOtherDepartment,
     editDelegatedLeaveSupervisorId, editDelegatedKpiSupervisorId, userFeatureFlags
   ]);
-
-
-
-
-
-
-
-
-
-  // Toggle per-role tab visibility (superadmin). Sets explicit boolean (true/false).
-
-  // Toggle a feature flag (superadmin or admin with delegated permission). Syncs with per-role Tab Access if mapped to a tab.
-
-  // Toggle admin delegation for a feature flag (superadmin only)
-
-
-
-
-  // Removed currentTimestamp useEffect
 
   return (
     <div className="w-full space-y-6 font-sans">
