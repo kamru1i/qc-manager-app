@@ -8,6 +8,9 @@ import { useSaveFileHelper } from "@/hooks/quotes-tracker/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/quotes-tracker/useCopyHelper";
 import { useCopyHelperPermissions } from "@/hooks/quotes-tracker/useCopyHelperPermissions";
 import { useAdminSalesSummary } from "@/hooks/quotes-tracker/useAdminSalesSummary";
+import { useEditRecordModal } from "@/hooks/quotes-tracker/useEditRecordModal";
+import { useOnboarding } from "@/hooks/quotes-tracker/useOnboarding";
+import { useDateFilter } from "@/hooks/quotes-tracker/useDateFilter";
 
 import { StatsGrid } from "@/components/common/StatsGrid";
 import { RecordsTable } from "@/components/quotes-tracker/RecordsTable";
@@ -153,7 +156,6 @@ export default function Dashboard({
       window.removeEventListener("quotes-tab-change", handleTabChange);
   }, [onTabChange]);
 
-  const specificDateRef = useRef<HTMLInputElement>(null);
   const dashboardData = useQuotesDashboardData();
   const {
     sessionUser,
@@ -316,71 +318,19 @@ export default function Dashboard({
   const [todayAdminViewMode, setTodayAdminViewMode] = useState<"all" | "mine">("mine");
 
   // Monthly Table Date filter state
-  const [selectedDate, setSelectedDate] = useState("");
-  const [dateInputVal, setDateInputVal] = useState("");
-
-  // Sync text input with selectedDate
-  useEffect(() => {
-    if (selectedDate) {
-      const parts = selectedDate.split("-");
-      if (parts.length === 3) {
-        setDateInputVal(`${parts[2]}-${parts[1]}-${parts[0]}`);
-      } else {
-        setDateInputVal(formatDate(selectedDate));
-      }
-    } else {
-      setDateInputVal("");
-    }
-  }, [selectedDate]);
-
-  const handleDateInputChange = (val: string) => {
-    const clean = val.replace(/\D/g, "");
-    let formatted = "";
-    if (clean.length > 0) {
-      formatted += clean.substring(0, 2);
-    }
-    if (clean.length > 2) {
-      formatted += "-" + clean.substring(2, 4);
-    }
-    if (clean.length > 4) {
-      formatted += "-" + clean.substring(4, 8);
-    }
-
-    setDateInputVal(formatted);
-
-    if (formatted.length === 10) {
-      const parts = formatted.split("-");
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10);
-      const year = parseInt(parts[2], 10);
-
-      if (
-        day >= 1 &&
-        day <= 31 &&
-        month >= 1 &&
-        month <= 12 &&
-        year >= 1900 &&
-        year <= 2100
-      ) {
-        const dateObj = new Date(year, month - 1, day);
-        if (
-          dateObj.getFullYear() === year &&
-          dateObj.getMonth() === month - 1 &&
-          dateObj.getDate() === day
-        ) {
-          const yyyy = String(year);
-          const mm = String(month).padStart(2, "0");
-          const dd = String(day).padStart(2, "0");
-          const dateValue = `${yyyy}-${mm}-${dd}`;
-          setSelectedDate(dateValue);
-          setSelectedYear(yyyy);
-          setSelectedMonth(mm);
-          return;
-        }
-      }
-    }
-    setSelectedDate("");
-  };
+  const {
+    selectedDate,
+    setSelectedDate,
+    dateInputVal,
+    setDateInputVal,
+    specificDateRef,
+    handleDateInputChange,
+    handleDateFilterChange,
+    handleOpenSpecificDatePicker,
+  } = useDateFilter({
+    onYearChange: setSelectedYear,
+    onMonthChange: setSelectedMonth,
+  });
 
   // Sale Summary Independent Filters State
   const [saleSearchQuery, setSaleSearchQuery] = useState("");
@@ -391,111 +341,53 @@ export default function Dashboard({
   const [saleSelectedMonth, setSaleSelectedMonth] = useState<string>(
     () => String(new Date().getMonth() + 1).padStart(2, "0"),
   );
-  const [saleSelectedDate, setSaleSelectedDate] = useState("");
-  const [saleDateInputVal, setSaleDateInputVal] = useState("");
+  const saleDateFilter = useDateFilter({
+    onYearChange: setSaleSelectedYear,
+    onMonthChange: setSaleSelectedMonth,
+  });
+  const saleSelectedDate = saleDateFilter.selectedDate;
+  const setSaleSelectedDate = saleDateFilter.setSelectedDate;
+  const saleDateInputVal = saleDateFilter.dateInputVal;
+  const setSaleDateInputVal = saleDateFilter.setDateInputVal;
+  const specificSaleDateRef = saleDateFilter.specificDateRef;
+  const handleSaleDateInputChange = saleDateFilter.handleDateInputChange;
+  const handleSaleDateFilterChange = saleDateFilter.handleDateFilterChange;
+  const handleOpenSpecificSaleDatePicker = saleDateFilter.handleOpenSpecificDatePicker;
+
   const [saleAdminViewMode, setSaleAdminViewMode] = useState<"all" | "mine">("mine");
-  const specificSaleDateRef = useRef<HTMLInputElement>(null);
-
-  // Sync text input with saleSelectedDate
-  useEffect(() => {
-    if (saleSelectedDate) {
-      const parts = saleSelectedDate.split("-");
-      if (parts.length === 3) {
-        setSaleDateInputVal(`${parts[2]}-${parts[1]}-${parts[0]}`);
-      } else {
-        setSaleDateInputVal(formatDate(saleSelectedDate));
-      }
-    } else {
-      setSaleDateInputVal("");
-    }
-  }, [saleSelectedDate]);
-
-  const handleSaleDateInputChange = (val: string) => {
-    const clean = val.replace(/\D/g, "");
-    let formatted = "";
-    if (clean.length > 0) {
-      formatted += clean.substring(0, 2);
-    }
-    if (clean.length > 2) {
-      formatted += "-" + clean.substring(2, 4);
-    }
-    if (clean.length > 4) {
-      formatted += "-" + clean.substring(4, 8);
-    }
-
-    setSaleDateInputVal(formatted);
-
-    if (formatted.length === 10) {
-      const parts = formatted.split("-");
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10);
-      const year = parseInt(parts[2], 10);
-
-      if (
-        day >= 1 &&
-        day <= 31 &&
-        month >= 1 &&
-        month <= 12 &&
-        year >= 1900 &&
-        year <= 2100
-      ) {
-        const dateObj = new Date(year, month - 1, day);
-        if (
-          dateObj.getFullYear() === year &&
-          dateObj.getMonth() === month - 1 &&
-          dateObj.getDate() === day
-        ) {
-          const yyyy = String(year);
-          const mm = String(month).padStart(2, "0");
-          const dd = String(day).padStart(2, "0");
-          const dateValue = `${yyyy}-${mm}-${dd}`;
-          setSaleSelectedDate(dateValue);
-          setSaleSelectedYear(yyyy);
-          setSaleSelectedMonth(mm);
-          return;
-        }
-      }
-    }
-    setSaleSelectedDate("");
-  };
-
-  const handleSaleDateFilterChange = (dateStr: string) => {
-    setSaleSelectedDate(dateStr);
-    if (dateStr) {
-      const parts = dateStr.split("-");
-      if (parts.length === 3) {
-        setSaleSelectedYear(parts[0]);
-        setSaleSelectedMonth(parts[1]);
-      }
-    }
-  };
-
-  const handleOpenSpecificSaleDatePicker = () => {
-    if (specificSaleDateRef.current) {
-      try {
-        specificSaleDateRef.current.showPicker();
-      } catch {
-        specificSaleDateRef.current.click();
-      }
-    }
-  };
 
   // Admin Backdated Entry Modal State
   const [isCustomEntryModalOpen, setIsCustomEntryModalOpen] = useState(false);
 
-  // Edit Record Modal State
-  const [editingRecord, setEditingRecord] = useState<RecordItem | null>(null);
-  const [editFileName, setEditFileName] = useState("");
-  const [editBranchName, setEditBranchName] = useState("");
-  const [editCodename, setEditCodename] = useState("");
-  const [editFileType, setEditFileType] = useState<FileType>("Quote");
-  const [editSaleStatus, setEditSaleStatus] = useState<"SOLD" | "UNSOLD">(
-    "SOLD",
-  );
-  const [editSubmittedDate, setEditSubmittedDate] = useState("");
-  const [editSubmittedTime, setEditSubmittedTime] = useState("");
-  const [editCanChangeSubmittedAt, setEditCanChangeSubmittedAt] =
-    useState(false);
+  // Edit Record Modal Hook
+  const {
+    editingRecord,
+    editFileName,
+    editBranchName,
+    editCodename,
+    editFileType,
+    editSaleStatus,
+    editSubmittedDate,
+    editSubmittedTime,
+    editCanChangeSubmittedAt,
+    setEditingRecord,
+    setEditFileName,
+    setEditBranchName,
+    setEditCodename,
+    setEditFileType,
+    setEditSaleStatus,
+    setEditSubmittedDate,
+    setEditSubmittedTime,
+    handleOpenEditRecord,
+    handleSaveEdit,
+    handleSaveInline,
+    handleBulkSaveInline,
+  } = useEditRecordModal({
+    records,
+    updateRecord,
+    bulkUpdateRecords,
+    showToast,
+  });
 
   // Copy Helper States
   const [showReportHelper] = useState<boolean>(() => {
@@ -651,33 +543,27 @@ export default function Dashboard({
   const [isBulkDeletingInProgress, setIsBulkDeletingInProgress] =
     useState(false);
 
-  // Force Change Password / Onboarding Customization Modal State
-  const [ownFullName, setOwnFullName] = useState(
-    () => profile?.full_name || "",
-  );
-  const [ownCodename, setOwnCodename] = useState(() => profile?.username || "");
-  const [ownPassword, setOwnPassword] = useState("");
-  const [ownConfirmPassword, setOwnConfirmPassword] = useState("");
-  const [showOwnPass, setShowOwnPass] = useState(false);
-  const [showOwnConfirmPass, setShowOwnConfirmPass] = useState(false);
-
-  // Real-time password feedback (6 to 12 characters, matching check)
-  const passwordFeedback = useMemo(() => {
-    if (!ownPassword) return null;
-    if (ownPassword.length < 6 || ownPassword.length > 12) {
-      return {
-        text: "Password must be 6 to 12 characters long",
-        isError: true,
-      };
-    }
-    if (!ownConfirmPassword) {
-      return { text: "Please confirm password", isError: true };
-    }
-    if (ownPassword !== ownConfirmPassword) {
-      return { text: "Passwords do not match", isError: true };
-    }
-    return { text: "Passwords match", isError: false };
-  }, [ownPassword, ownConfirmPassword]);
+  // Force Change Password / Onboarding Customization Modal Hook
+  const {
+    ownFullName,
+    setOwnFullName,
+    ownCodename,
+    setOwnCodename,
+    ownPassword,
+    setOwnPassword,
+    ownConfirmPassword,
+    setOwnConfirmPassword,
+    showOwnPass,
+    setShowOwnPass,
+    showOwnConfirmPass,
+    setShowOwnConfirmPass,
+    passwordFeedback,
+    handleFirstTimeSetup,
+  } = useOnboarding({
+    profile,
+    completeFirstTimeSetup,
+    showToast,
+  });
 
   // Local helper: Set codename inputs when profile loads
   useEffect(() => {
@@ -1137,28 +1023,6 @@ export default function Dashboard({
     );
   };
 
-  // Open native picker for specific date
-  const handleOpenSpecificDatePicker = () => {
-    if (specificDateRef.current) {
-      try {
-        specificDateRef.current.showPicker();
-      } catch {
-        specificDateRef.current.click();
-      }
-    }
-  };
-
-  // Specific Date filter change handler
-  const handleDateFilterChange = (dateValue: string) => {
-    setSelectedDate(dateValue);
-    if (dateValue) {
-      const [year, month] = dateValue.split("-");
-      if (year && month) {
-        setSelectedYear(year);
-        setSelectedMonth(month);
-      }
-    }
-  };
 
   // Submit Admin Backdated / Custom Date Entry from Modal
   const handleAdminCustomEntrySubmit = async (
@@ -1335,243 +1199,9 @@ export default function Dashboard({
     }
   };
 
-  // Save Record Edits
-  const handleSaveEdit = async () => {
-    if (!editingRecord) return;
-
-    const validation = validator.validateRecordForm({
-      file_name: editFileName,
-      branch_name: editBranchName,
-      codename: editCodename,
-      file_type: editFileType,
-    });
-
-    if (!validation.isValid) {
-      showToast("error", validation.errors[0]);
-      return;
-    }
-
-    let editedSubmittedAt: string | undefined;
-
-    if (editCanChangeSubmittedAt) {
-      const [dayText, monthText, yearText] = editSubmittedDate.split("-");
-      const day = Number(dayText);
-      const month = Number(monthText);
-      const year = Number(yearText);
-      const parsedDate = new Date(year, month - 1, day);
-
-      if (
-        !dayText ||
-        !monthText ||
-        !yearText ||
-        dayText.length !== 2 ||
-        monthText.length !== 2 ||
-        yearText.length !== 4 ||
-        isNaN(parsedDate.getTime()) ||
-        parsedDate.getFullYear() !== year ||
-        parsedDate.getMonth() !== month - 1 ||
-        parsedDate.getDate() !== day
-      ) {
-        showToast("error", "Please enter the date as DD-MM-YYYY.");
-        return;
-      }
-
-      const timeMatch = editSubmittedTime
-        .trim()
-        .match(/^(0[1-9]|1[0-2]):([0-5]\d)\s?(AM|PM)$/i);
-
-      if (!timeMatch) {
-        showToast("error", "Please enter the time as 09:21 PM/AM.");
-        return;
-      }
-
-      let hours = Number(timeMatch[1]);
-      const minutes = Number(timeMatch[2]);
-      const meridiem = timeMatch[3].toUpperCase();
-
-      if (meridiem === "PM" && hours !== 12) hours += 12;
-      if (meridiem === "AM" && hours === 12) hours = 0;
-
-      parsedDate.setHours(hours, minutes, 0, 0);
-      editedSubmittedAt = parsedDate.toISOString();
-    }
-
-    const finalFileName =
-      editFileType === "Sale"
-        ? `${editFileName} [${editSaleStatus}]`
-        : editFileName;
-    const success = await updateRecord(
-      editingRecord.id,
-      finalFileName,
-      editBranchName,
-      editCodename,
-      editFileType,
-      editedSubmittedAt,
-    );
-
-    if (success) {
-      setEditingRecord(null);
-    }
-  };
-
-  const handleSaveInline = async (
-    id: string,
-    updates: Partial<RecordItem>,
-  ): Promise<boolean> => {
-    if (updates.file_name !== undefined && !updates.file_name.trim()) {
-      showToast("error", "File name cannot be empty.");
-      return false;
-    }
-    if (updates.branch_name !== undefined && !updates.branch_name.trim()) {
-      showToast("error", "Branch name cannot be empty.");
-      return false;
-    }
-    if (updates.codename !== undefined && !updates.codename.trim()) {
-      showToast("error", "Codename cannot be empty.");
-      return false;
-    }
-
-    const originalRecord = records.find((r) => r.id === id);
-    if (!originalRecord) return false;
-
-    const finalFileName =
-      updates.file_name !== undefined
-        ? updates.file_name
-        : originalRecord.file_name;
-    const finalBranchName =
-      updates.branch_name !== undefined
-        ? updates.branch_name
-        : originalRecord.branch_name;
-    const finalCodename =
-      updates.codename !== undefined
-        ? updates.codename
-        : originalRecord.codename;
-    const finalFileType =
-      updates.file_type !== undefined
-        ? updates.file_type
-        : originalRecord.file_type;
-    const finalSubmittedAt =
-      updates.submitted_at !== undefined
-        ? updates.submitted_at
-        : originalRecord.submitted_at;
-
-    const success = await updateRecord(
-      id,
-      finalFileName,
-      finalBranchName,
-      finalCodename,
-      finalFileType,
-      finalSubmittedAt,
-    );
-
-    return success;
-  };
-
-  const handleBulkSaveInline = async (
-    updatesMap: Record<string, Partial<RecordItem>>,
-  ): Promise<boolean> => {
-    for (const id of Object.keys(updatesMap)) {
-      const updates = updatesMap[id];
-      if (updates.file_name !== undefined && !updates.file_name.trim()) {
-        showToast("error", "File name cannot be empty.");
-        return false;
-      }
-      if (updates.branch_name !== undefined && !updates.branch_name.trim()) {
-        showToast("error", "Branch name cannot be empty.");
-        return false;
-      }
-      if (updates.codename !== undefined && !updates.codename.trim()) {
-        showToast("error", "Codename cannot be empty.");
-        return false;
-      }
-    }
-
-    const success = await bulkUpdateRecords(updatesMap);
-    return success;
-  };
-
-  const handleOpenEditRecord = (
-    record: RecordItem,
-    canChangeSubmittedAt = false,
-  ) => {
-    const submittedAt = new Date(record.submitted_at);
-
-    setEditingRecord(record);
-    const cleanName = record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "");
-    setEditFileName(cleanName);
-    setEditBranchName(record.branch_name);
-    setEditCodename(record.codename);
-    setEditFileType(record.file_type);
-    setEditCanChangeSubmittedAt(canChangeSubmittedAt);
-
-    if (record.file_name.endsWith(" [SOLD]")) {
-      setEditSaleStatus("SOLD");
-    } else {
-      setEditSaleStatus("UNSOLD");
-    }
-
-    if (!isNaN(submittedAt.getTime())) {
-      setEditSubmittedDate(
-        `${String(submittedAt.getDate()).padStart(2, "0")}-${String(
-          submittedAt.getMonth() + 1,
-        ).padStart(2, "0")}-${submittedAt.getFullYear()}`,
-      );
-      const hour24 = submittedAt.getHours();
-      const hour12 = hour24 % 12 || 12;
-      const meridiem = hour24 >= 12 ? "PM" : "AM";
-      setEditSubmittedTime(
-        `${String(hour12).padStart(2, "0")}:${String(
-          submittedAt.getMinutes(),
-        ).padStart(2, "0")} ${meridiem}`,
-      );
-    } else {
-      setEditSubmittedDate("");
-      setEditSubmittedTime("");
-    }
-  };
 
   // Admin reset password handled inline inside EditProfileModal
 
-  // Logged-in user complete first-time setup (Customizes username, full name, password)
-  const handleFirstTimeSetup = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!ownFullName.trim()) {
-      showToast("error", "Please enter your full name.");
-      return;
-    }
-    if (!ownCodename.trim() || ownCodename.trim().length < 3) {
-      showToast("error", "Codename must be at least 3 characters long.");
-      return;
-    }
-    if (!/^[a-zA-Z0-9_-]+$/.test(ownCodename.trim())) {
-      showToast(
-        "error",
-        "Codename can only contain English letters, numbers, - and _.",
-      );
-      return;
-    }
-
-    const validation = validator.validateOnboardingPassword(ownPassword);
-    if (!validation.isValid) {
-      showToast("error", validation.errors[0]);
-      return;
-    }
-    if (ownPassword !== ownConfirmPassword) {
-      showToast("error", "Password confirmation does not match.");
-      return;
-    }
-
-    const success = await completeFirstTimeSetup(
-      ownCodename,
-      ownFullName,
-      ownPassword,
-    );
-    if (success) {
-      setOwnPassword("");
-      setOwnConfirmPassword("");
-    }
-  };
 
   // Loading Screen
   if (loading) {
