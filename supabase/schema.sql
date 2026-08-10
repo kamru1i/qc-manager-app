@@ -590,9 +590,15 @@ ALTER FUNCTION public.delete_user_by_id(p_user_id uuid) OWNER TO postgres;
 --
 
 CREATE FUNCTION public.get_admin_sales_summary(p_today text, p_tz text DEFAULT 'UTC'::text) RETURNS TABLE(total_sold integer, total_unsold integer, total_attempts integer)
-    LANGUAGE sql STABLE SECURITY DEFINER
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
-    AS $_$
+    AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Permission denied: Only admins can view sales summary.';
+  END IF;
+
+  RETURN QUERY
   WITH todays_sales AS (
     SELECT
       -- Group key: file name without its sold-status suffix, case/space-insensitive
@@ -622,7 +628,8 @@ CREATE FUNCTION public.get_admin_sales_summary(p_today text, p_tz text DEFAULT '
     COALESCE(SUM(unsold_count), 0)::INT               AS total_unsold,
     COALESCE(SUM(sold_count + unsold_count), 0)::INT  AS total_attempts
   FROM per_file;
-$_$;
+END;
+$$;
 
 
 ALTER FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) OWNER TO postgres;
@@ -2426,7 +2433,7 @@ CREATE POLICY "Allow supervisors to update profiles" ON public.profiles FOR UPDA
 -- Name: records Allow users to delete own records, admins/supervisors delete al; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Allow users to delete own records, admins/supervisors delete al" ON public.records FOR DELETE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR public.is_supervisor()));
+CREATE POLICY "Allow users to delete own records, admins/supervisors delete al" ON public.records FOR DELETE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id))));
 
 
 --
@@ -2447,7 +2454,7 @@ CREATE POLICY "Allow users to delete their own chuti" ON public.chuti FOR DELETE
 -- Name: records Allow users to insert own records, admins/supervisors insert al; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Allow users to insert own records, admins/supervisors insert al" ON public.records FOR INSERT TO authenticated WITH CHECK (((auth.uid() = user_id) OR public.is_admin() OR public.is_supervisor()));
+CREATE POLICY "Allow users to insert own records, admins/supervisors insert al" ON public.records FOR INSERT TO authenticated WITH CHECK (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id))));
 
 
 --
@@ -2489,7 +2496,7 @@ CREATE POLICY "Allow users to read their own chuti" ON public.chuti FOR SELECT U
 -- Name: records Allow users to update own records, admins/supervisors update al; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Allow users to update own records, admins/supervisors update al" ON public.records FOR UPDATE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR public.is_supervisor())) WITH CHECK (((auth.uid() = user_id) OR public.is_admin() OR public.is_supervisor()));
+CREATE POLICY "Allow users to update own records, admins/supervisors update al" ON public.records FOR UPDATE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id)))) WITH CHECK (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id))));
 
 
 --
