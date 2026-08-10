@@ -13,6 +13,8 @@ import { Profile, ChutiRecordWithProfile, GovtHolidayResponse, LeaveSettlement }
 import { getDisplayRole, getRoleLabel } from '@/utils/permissionService';
 import { AdminSettlementsPanel } from '@/components/leave-tracker/AdminSettlementsPanel';
 import { ChutiRecord } from '@/utils/offlineSync';
+import { LeaveTypeSummaryProps } from '@/types/components';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { LeavesRecordsTable } from '@/components/leave-tracker/LeavesRecordsTable';
 import {
   formatDate,
@@ -183,7 +185,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           sessionStorage.removeItem('viewingStaffFromUserManagement');
           sessionStorage.removeItem('viewingStaffId');
           setViewingStaffId(null);
-          window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'user_management' }));
+          emit('workspace-change', 'user_management');
         } else {
           setViewingStaffId(null);
         }

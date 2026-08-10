@@ -16,6 +16,7 @@ import { useQuotesPageModals } from "@/hooks/quotes-tracker/useQuotesPageModals"
 import { useQuotesPageHandlers } from "@/hooks/quotes-tracker/useQuotesPageHandlers";
 import { DailyEntryTab } from "@/components/quotes-tracker/tabs/DailyEntryTab";
 import { MonthlyTab } from "@/components/quotes-tracker/tabs/MonthlyTab";
+import { useAppEvent } from '@/contexts/AppEventBusContext';
 import { SaleSummaryTab } from "@/components/quotes-tracker/tabs/SaleSummaryTab";
 import { QuotesModalsGroup } from "@/components/quotes-tracker/tabs/QuotesModalsGroup";
 import { StatsGrid } from "@/components/common/StatsGrid";
@@ -153,27 +154,24 @@ export default function Dashboard({
   }, []);
 
   // Listen for custom quotes-tab-change event to update subtab navigation dynamically
-  useEffect(() => {
-    const handleTabChange = (e: Event) => {
-      const targetTab = (e as CustomEvent).detail;
-      if (
-        targetTab === "entry" ||
-        targetTab === "monthly" ||
-        targetTab === "sale_summary" ||
-        targetTab === "leaderboard" ||
-        targetTab === "reports" ||
-        targetTab === "rules" ||
-        targetTab === "login_codes" ||
-        targetTab === "causality" ||
-        targetTab === "copy_helper" ||
-        targetTab === "save_file"
-      ) {
-        onTabChange(targetTab);
-      }
-    };
-    window.addEventListener("quotes-tab-change", handleTabChange);
-    return () =>
-      window.removeEventListener("quotes-tab-change", handleTabChange);
+  useAppEvent('quotes-tab-change', (payload) => {
+    const targetTab = typeof payload === 'string' ? payload : payload?.tab;
+    if (
+      targetTab === "entry" ||
+      targetTab === "monthly" ||
+      targetTab === "sale_summary" ||
+      targetTab === "leaderboard" ||
+      targetTab === "my_report" ||
+      targetTab === "all_report" ||
+      targetTab === "reports" ||
+      targetTab === "rules" ||
+      targetTab === "login_codes" ||
+      targetTab === "causality" ||
+      targetTab === "copy_helper" ||
+      targetTab === "save_file"
+    ) {
+      onTabChange(targetTab);
+    }
   }, [onTabChange]);
 
   const dashboardData = useQuotesDashboardData();

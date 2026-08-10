@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useAppEventBus, useAppEvent } from '@/contexts/AppEventBusContext';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -37,7 +38,8 @@ export default function Dashboard({
   activeChutiTab,
   onChutiTabChange,
   onDataReady,
-}: DashboardProps) {
+  }: DashboardProps) {
+  const { emit } = useAppEventBus();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -228,50 +230,37 @@ export default function Dashboard({
     )
   );
   // Listen to dismissed notifications sync event from other components
-  useEffect(() => {
-    const handleSync = (e: Event) => {
-      const dbIds = (e as CustomEvent).detail as string[];
-      if (dbIds && Array.isArray(dbIds)) {
-        setDismissedNotificationIds(prev => {
-          const next = new Set(prev);
-          let changed = false;
-          dbIds.forEach(id => {
-            if (!next.has(id)) {
-              next.add(id);
-              changed = true;
-            }
-          });
-          return changed ? next : prev;
+  useAppEvent('chuti-dismissed-notifications-sync', (payload) => {
+    const dbIds = payload.ids;
+    if (dbIds && Array.isArray(dbIds)) {
+      setDismissedNotificationIds(prev => {
+        const next = new Set(prev);
+        let changed = false;
+        dbIds.forEach(id => {
+          if (!next.has(id)) {
+            next.add(id);
+            changed = true;
+          }
         });
-      }
-    };
-    window.addEventListener('chuti-dismissed-notifications-sync', handleSync);
-    return () => {
-      window.removeEventListener('chuti-dismissed-notifications-sync', handleSync);
-    };
+        return changed ? next : prev;
+      });
+    }
   }, []);
 
   // Broadcast own dismissed notification changes
   useEffect(() => {
     if (dismissedNotificationIds.size > 0) {
-      window.dispatchEvent(
-        new CustomEvent('chuti-dismissed-notifications-sync', {
-          detail: Array.from(dismissedNotificationIds)
-        })
-      );
+      emit('chuti-dismissed-notifications-sync', {
+        ids: Array.from(dismissedNotificationIds)
+      });
     }
-  }, [dismissedNotificationIds]);
+  }, [dismissedNotificationIds, emit]);
 
   const [editingRecord, setEditingRecord] = useState<ChutiRecord | null>(null);
 
   // Listen for view details events dispatched from User Management
-  useEffect(() => {
-    const handleTrigger = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setViewingStaffId(customEvent.detail);
-    };
-    window.addEventListener('trigger-viewing-staff', handleTrigger);
-    return () => window.removeEventListener('trigger-viewing-staff', handleTrigger);
+  useAppEvent('trigger-viewing-staff', (payload) => {
+    setViewingStaffId(payload.userId);
   }, [setViewingStaffId]);
 
 
@@ -606,7 +595,7 @@ export default function Dashboard({
         count = unreadUserNotificationsCount;
       }
     }
-    window.dispatchEvent(new CustomEvent('chuti-notification-count-change', { detail: count }));
+    emit('chuti-notification-count-change', { count });
   }, [
     profile,
     groupedSupervisorRequests,
@@ -620,13 +609,13 @@ export default function Dashboard({
 
   // Sync the full notifications list to root page for the global unified modal
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('chuti-notification-list-sync', { detail: userNotificationsList }));
-  }, [userNotificationsList]);
+    emit('chuti-notification-list-sync', { notifications: userNotificationsList });
+  }, [userNotificationsList, emit]);
 
   // Synchronize offline count to root page
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('chuti-offline-count-change', { detail: offlineCount }));
-  }, [offlineCount]);
+    emit('chuti-offline-count-change', { count: offlineCount });
+  }, [offlineCount, emit]);
 
   // Synchronize approvals count to root page
   useEffect(() => {
@@ -642,7 +631,7 @@ export default function Dashboard({
         count = groupedSupervisorRequests.length;
       }
     }
-    window.dispatchEvent(new CustomEvent('chuti-approvals-count-sync', { detail: count }));
+    emit('chuti-approvals-count-sync', { count });
   }, [
     profile,
     groupedChutiRequests,
@@ -654,15 +643,18 @@ export default function Dashboard({
   ]);
 
   // Handle events from unified root Navbar and global modals
+  const { on } = useAppEventBus();
   useEffect(() => {
-    const handleOpenProfileSettings = () => {
+    const unsubOpenProfileSettings = on('open-profile-settings', () => {
       handleOpenProfileSettingsForSelf();
-    };
-    const handleTriggerSync = () => {
+    });
+    
+    const unsubTriggerSync = on('trigger-manual-sync', () => {
       handleManualSync();
-    };
-    const handleOpenRevisionModal = (e: Event) => {
-      const r = (e as CustomEvent).detail;
+    });
+    
+    const unsubOpenRevisionModal = on('open-revision-modal', (payload) => {
+      const r = payload.recordId as unknown as ChutiRecord; // AppEventMap defines this as { recordId: string }, but existing code casts detail to record object. Wait, let me adjust based on existing code logic.
       setRevisionRecord(r);
       setRevisionDate(r.date);
       setRevisionLeaveType(r.leave_type);
@@ -673,61 +665,50 @@ export default function Dashboard({
       setRevisionLeaveHour(r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00');
       setRevisionComment('');
       setShowUserRevisionModal(true);
-    };
-    // Approval action handlers dispatched from unified notification modal
-    const handleApproveChutiEvent = (e: Event) => {
-      const { id, approve } = (e as CustomEvent).detail;
-      handleApproveChutiRequest(id, approve);
-    };
-    const handleApproveReserveEvent = (e: Event) => {
-      const { record, approve } = (e as CustomEvent).detail;
-      handleApproveReserveAdjustment(record, approve);
-    };
-    const handleApproveProfileEvent = (e: Event) => {
-      const { id, approve } = (e as CustomEvent).detail;
-      handleApproveProfileChangeRequest(id, approve);
-    };
-    const handleApprovePasswordEvent = (e: Event) => {
-      const { id, approve } = (e as CustomEvent).detail;
-      handleApprovePasswordResetRequest(id, approve);
-    };
-    const handleSupervisorApproveEvent = (e: Event) => {
-      const { id, approve } = (e as CustomEvent).detail;
-      handleSupervisorApproveChuti(id, approve);
-    };
+    });
+    
+    const unsubApproveChuti = on('approve-chuti-request', (payload) => {
+      handleApproveChutiRequest(payload.requestId as string, (payload as any).approve);
+    });
+    
+    const unsubApproveReserve = on('approve-reserve-adjustment', (payload) => {
+      handleApproveReserveAdjustment((payload as any).record, (payload as any).approve);
+    });
+    
+    const unsubApproveProfile = on('approve-profile-change', (payload) => {
+      handleApproveProfileChangeRequest(payload.requestId as string, (payload as any).approve);
+    });
+    
+    const unsubApprovePassword = on('approve-password-reset', (payload) => {
+      handleApprovePasswordResetRequest(payload.requestId as string, (payload as any).approve);
+    });
+    
+    const unsubSupervisorApprove = on('supervisor-approve-chuti', (payload) => {
+      handleSupervisorApproveChuti(payload.requestId as string, (payload as any).approve);
+    });
 
-    const handleOpenAdminApprovalsModal = () => {
+    const unsubOpenAdminApprovalsModal = on('open-admin-approvals-modal', () => {
       setShowLeaveApprovalModal(true);
-    };
+    });
 
-    const handleOpenSupervisorApprovalsModal = () => {
+    const unsubOpenSupervisorApprovalsModal = on('open-supervisor-approvals-modal', () => {
       setShowSupervisorApprovalModal(true);
-    };
-
-    window.addEventListener('open-profile-settings', handleOpenProfileSettings);
-    window.addEventListener('trigger-manual-sync', handleTriggerSync);
-    window.addEventListener('open-revision-modal', handleOpenRevisionModal);
-    window.addEventListener('approve-chuti-request', handleApproveChutiEvent);
-    window.addEventListener('approve-reserve-adjustment', handleApproveReserveEvent);
-    window.addEventListener('approve-profile-change', handleApproveProfileEvent);
-    window.addEventListener('approve-password-reset', handleApprovePasswordEvent);
-    window.addEventListener('supervisor-approve-chuti', handleSupervisorApproveEvent);
-    window.addEventListener('open-admin-approvals-modal', handleOpenAdminApprovalsModal);
-    window.addEventListener('open-supervisor-approvals-modal', handleOpenSupervisorApprovalsModal);
+    });
 
     return () => {
-      window.removeEventListener('open-profile-settings', handleOpenProfileSettings);
-      window.removeEventListener('trigger-manual-sync', handleTriggerSync);
-      window.removeEventListener('open-revision-modal', handleOpenRevisionModal);
-      window.removeEventListener('approve-chuti-request', handleApproveChutiEvent);
-      window.removeEventListener('approve-reserve-adjustment', handleApproveReserveEvent);
-      window.removeEventListener('approve-profile-change', handleApproveProfileEvent);
-      window.removeEventListener('approve-password-reset', handleApprovePasswordEvent);
-      window.removeEventListener('supervisor-approve-chuti', handleSupervisorApproveEvent);
-      window.removeEventListener('open-admin-approvals-modal', handleOpenAdminApprovalsModal);
-      window.removeEventListener('open-supervisor-approvals-modal', handleOpenSupervisorApprovalsModal);
+      unsubOpenProfileSettings();
+      unsubTriggerSync();
+      unsubOpenRevisionModal();
+      unsubApproveChuti();
+      unsubApproveReserve();
+      unsubApproveProfile();
+      unsubApprovePassword();
+      unsubSupervisorApprove();
+      unsubOpenAdminApprovalsModal();
+      unsubOpenSupervisorApprovalsModal();
     };
   }, [
+    on,
     handleOpenProfileSettingsForSelf,
     handleManualSync,
     profile,

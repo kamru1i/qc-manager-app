@@ -16,6 +16,7 @@ import { SanitizerTab } from '@/components/settings/SanitizerTab';
 import { VpnListTab } from '@/components/settings/VpnListTab';
 import { DateTimeInput } from '@/components/common/DateTimeInput';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
+import { useAppEvent } from '@/contexts/AppEventBusContext';
 import { TempAccessEntry, DEFAULT_VPN_LIST, GlobalSettings } from '@/utils/dashboardHelpers';
 import {
   MENU_TABS,
@@ -214,16 +215,12 @@ export function ProfileSettings({
     handleRemoveTempAccess,
   } = handlersObj;
 
-  useEffect(() => {
-    const handleSubTabEvent = (e: Event) => {
-      const tab = (e as CustomEvent).detail;
-      if (tab) {
-        setActiveSubTab(tab as any);
-        localStorage.setItem('settings_active_subtab', tab);
-      }
-    };
-    window.addEventListener('settings-subtab-change', handleSubTabEvent);
-    return () => window.removeEventListener('settings-subtab-change', handleSubTabEvent);
+  useAppEvent('settings-subtab-change', (payload) => {
+    const tab = typeof payload === 'string' ? payload : payload?.subtab;
+    if (tab) {
+      setActiveSubTab(tab as any);
+      localStorage.setItem('settings_active_subtab', tab);
+    }
   }, []);
 
   // Fallback check: if saved subtab is restricted for current role, revert to profile

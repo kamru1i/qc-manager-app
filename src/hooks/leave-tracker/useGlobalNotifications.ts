@@ -11,6 +11,7 @@ import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
+import { useAppEvent } from '@/contexts/AppEventBusContext';
 
 export function useGlobalNotifications(
   sessionUser: SupabaseUser | null,
@@ -67,17 +68,10 @@ export function useGlobalNotifications(
   }, [sharedHolidayResponses]);
 
   // Sync approvals count from dashboard event in real-time
-  useEffect(() => {
-    const handleSync = (e: Event) => {
-      const customEvent = e as CustomEvent<number>;
-      if (typeof customEvent.detail === 'number') {
-        setSyncedApprovalsCount(customEvent.detail);
-      }
-    };
-    window.addEventListener('chuti-approvals-count-sync', handleSync);
-    return () => {
-      window.removeEventListener('chuti-approvals-count-sync', handleSync);
-    };
+  useAppEvent('chuti-approvals-count-sync', (payload) => {
+    if (typeof payload.count === 'number') {
+      setSyncedApprovalsCount(payload.count);
+    }
   }, []);
 
   // Get stable session time for notification timestamp fallback
@@ -291,14 +285,9 @@ export function useGlobalNotifications(
   }, [fetchNotificationsData]);
 
   // Sync with standard custom DOM event
-  useEffect(() => {
-    if (!sessionUser) return;
-    window.addEventListener('realtime-data-changed', handleRealtimeDataChanged);
-    return () => {
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      window.removeEventListener('realtime-data-changed', handleRealtimeDataChanged);
-    };
-  }, [sessionUser, handleRealtimeDataChanged]);
+  useAppEvent('realtime-data-changed', () => {
+    handleRealtimeDataChanged();
+  }, [handleRealtimeDataChanged]);
 
   const handleProfileRealtimeChange = useCallback((payload: RealtimePayload) => {
     if (payload.eventType === 'UPDATE') {
@@ -420,27 +409,21 @@ export function useGlobalNotifications(
   }, []);
 
   // Listen to dismissed notifications sync event from other components
-  useEffect(() => {
-    const handleSync = (e: Event) => {
-      const dbIds = (e as CustomEvent).detail as string[];
-      if (dbIds && Array.isArray(dbIds)) {
-        setDismissedNotificationIds(prev => {
-          const next = new Set(prev);
-          let changed = false;
-          dbIds.forEach(id => {
-            if (!next.has(id)) {
-              next.add(id);
-              changed = true;
-            }
-          });
-          return changed ? next : prev;
+  useAppEvent('chuti-dismissed-notifications-sync', (payload) => {
+    const dbIds = payload.ids;
+    if (dbIds && Array.isArray(dbIds)) {
+      setDismissedNotificationIds(prev => {
+        const next = new Set(prev);
+        let changed = false;
+        dbIds.forEach(id => {
+          if (!next.has(id)) {
+            next.add(id);
+            changed = true;
+          }
         });
-      }
-    };
-    window.addEventListener('chuti-dismissed-notifications-sync', handleSync);
-    return () => {
-      window.removeEventListener('chuti-dismissed-notifications-sync', handleSync);
-    };
+        return changed ? next : prev;
+      });
+    }
   }, []);
 
   // Broadcast own dismissed notification changes
@@ -455,15 +438,9 @@ export function useGlobalNotifications(
   }, [dismissedNotificationIds]);
 
   // Listen to last viewed time sync event from other components
-  useEffect(() => {
-    const handleSync = (e: Event) => {
-      const time = (e as CustomEvent).detail as string;
-      if (time) setLastViewedTime(time);
-    };
-    window.addEventListener('chuti-last-viewed-time-sync', handleSync);
-    return () => {
-      window.removeEventListener('chuti-last-viewed-time-sync', handleSync);
-    };
+  useAppEvent('chuti-last-viewed-time-sync', (payload) => {
+    const time = payload.timestamp as unknown as string;
+    if (time) setLastViewedTime(time);
   }, []);
 
   // Run fetch on mount / session change / loading status change

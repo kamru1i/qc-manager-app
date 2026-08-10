@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
+import { useAppEventBus, useAppEvent } from '@/contexts/AppEventBusContext';
 import { supabase } from "@/utils/supabase";
 import { Profile } from "@/types";
 import { mapProfilePasswordResetStatus } from "@/utils/profileHelpers";
@@ -106,6 +107,7 @@ let _cachedInitialState =
   typeof window !== "undefined" ? getInitialState() : null;
 
 export default function AppPortal() {
+  const { emit } = useAppEventBus();
   const [mounted, setMounted] = useState(false);
   const [sessionUser, setSessionUser] = useState<any>(
     () => _cachedInitialState?.sessionUser ?? null,
@@ -466,6 +468,7 @@ function AppPortalInner({
   handleLogout: () => Promise<void>;
   isProfileFresh: boolean;
 }) {
+  const { emit } = useAppEventBus();
   const [activeTab, setActiveTab] = useState<
     | "chuti"
     | "quotes"
@@ -855,31 +858,12 @@ function AppPortalInner({
     isProfileFresh,
   );
 
-  useEffect(() => {
-    const handleOfflineCountChange = (e: Event) => {
-      setChutiOfflineCount((e as CustomEvent).detail || 0);
-    };
-    const handleOpenUserNotif = () => {
-      setShowNotificationsModal(true);
-    };
-    window.addEventListener(
-      "chuti-offline-count-change",
-      handleOfflineCountChange,
-    );
-    window.addEventListener(
-      "open-user-notifications-modal",
-      handleOpenUserNotif,
-    );
-    return () => {
-      window.removeEventListener(
-        "chuti-offline-count-change",
-        handleOfflineCountChange,
-      );
-      window.removeEventListener(
-        "open-user-notifications-modal",
-        handleOpenUserNotif,
-      );
-    };
+  useAppEvent('chuti-offline-count-change', (payload) => {
+    setChutiOfflineCount(typeof payload === 'number' ? payload : (payload?.count ?? 0));
+  }, []);
+
+  useAppEvent('open-user-notifications-modal', () => {
+    setShowNotificationsModal(true);
   }, [setShowNotificationsModal]);
 
   useEffect(() => {
@@ -978,7 +962,7 @@ function AppPortalInner({
       } else {
         document.documentElement.classList.add("dark");
       }
-      window.dispatchEvent(new CustomEvent("theme-change", { detail: theme }));
+      emit('theme-change', { theme: theme as 'dark' | 'light' });
 
       if (isNativeApp()) {
         try {
@@ -1012,50 +996,47 @@ function AppPortalInner({
     });
   };
 
-  useEffect(() => {
-    const handleWorkspaceChange = (e: Event) => {
-      const targetWorkspace = (e as CustomEvent).detail as any;
+  useAppEvent('workspace-change', (payload) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("viewingStaffFromUserManagement");
+    }
+    let targetWorkspace = typeof payload === 'string' ? payload : payload?.workspace;
+    if (!targetWorkspace) return;
 
-      if (typeof window !== "undefined") {
-        sessionStorage.removeItem("viewingStaffFromUserManagement");
-        sessionStorage.removeItem("viewingStaffId");
-        window.dispatchEvent(
-          new CustomEvent("trigger-viewing-staff", { detail: null }),
-        );
-      }
+    if (targetWorkspace === "user_management" && !canAccessModule(profile, null, "user_management")) {
+      targetWorkspace = "chuti";
+    }
+    if (targetWorkspace === "todo" && !canAccessModule(profile, null, "todo")) {
+      targetWorkspace = "chuti";
+    }
 
-      if (profile) {
-        const checkModule =
-          targetWorkspace === "chuti"
-            ? "leave"
-            : targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report"
-              ? "kpi"
-              : targetWorkspace;
-        if (!canAccessModule(profile, null, checkModule)) return;
-      }
+    if (
+      targetWorkspace !== "chuti" &&
+      targetWorkspace !== "quotes" &&
+      targetWorkspace !== "user_management" &&
+      targetWorkspace !== "todo" &&
+      targetWorkspace !== "profile_settings"
+    ) {
+      const checkModule =
+        targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report" || targetWorkspace === "reports"
+          ? "quotes"
+          : targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report"
+            ? "kpi"
+            : targetWorkspace;
+      if (!canAccessModule(profile, null, checkModule)) return;
+    }
 
-      if (targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report") {
-        localStorage.setItem("last_active_reports_subtab", targetWorkspace);
-      }
+    if (targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report") {
+      localStorage.setItem("last_active_reports_subtab", targetWorkspace);
+    }
 
-      setActiveTab(targetWorkspace);
-    };
-
-    window.addEventListener("workspace-change", handleWorkspaceChange);
-    return () =>
-      window.removeEventListener("workspace-change", handleWorkspaceChange);
+    setActiveTab(targetWorkspace);
   }, [profile]);
 
-  useEffect(() => {
-    const handleProfileUpdated = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
-        setProfile(customEvent.detail);
-      }
-    };
-    window.addEventListener("profile-updated", handleProfileUpdated);
-    return () =>
-      window.removeEventListener("profile-updated", handleProfileUpdated);
+  useAppEvent('profile-updated', (payload) => {
+    if (payload) {
+      setProfile(payload);
+    }
   }, [setProfile]);
 
   const fetchAndCacheGlobalRankings = useCallback(async () => {
@@ -1212,9 +1193,7 @@ function AppPortalInner({
             const mode =
               sessionStorage.getItem("adminNotificationMode") || "user";
             if (mode === "admin") {
-              window.dispatchEvent(
-                new CustomEvent("open-admin-approvals-modal"),
-              );
+              emit('open-admin-approvals-modal');
             } else {
               setShowNotificationsModal(true);
             }
@@ -1222,9 +1201,7 @@ function AppPortalInner({
             const mode =
               sessionStorage.getItem("supervisorNotificationMode") || "user";
             if (mode === "supervisor") {
-              window.dispatchEvent(
-                new CustomEvent("open-supervisor-approvals-modal"),
-              );
+              emit('open-supervisor-approvals-modal');
             } else {
               setShowNotificationsModal(true);
             }
@@ -1233,7 +1210,7 @@ function AppPortalInner({
           }
         }}
         onManualSync={() =>
-          window.dispatchEvent(new CustomEvent("trigger-manual-sync"))
+          emit('trigger-manual-sync')
         }
         notificationCount={globalUnreadCount}
         offlineCount={activeTab === "chuti" ? chutiOfflineCount : 0}
@@ -1253,56 +1230,32 @@ function AppPortalInner({
           onDismissAll={handleDismissAllNotifications}
           approvalsCount={globalApprovalsCount}
           onRevisionClick={(record) => {
-            window.dispatchEvent(
-              new CustomEvent("open-revision-modal", { detail: record }),
-            );
+            emit('open-revision-modal', { recordId: record as any });
           }}
           onApproveChutiRequest={(id, approve) => {
-            window.dispatchEvent(
-              new CustomEvent("approve-chuti-request", {
-                detail: { id, approve },
-              }),
-            );
+            emit('approve-chuti-request', { requestId: id, approve });
           }}
           onApproveReserveAdjustment={(record, approve) => {
-            window.dispatchEvent(
-              new CustomEvent("approve-reserve-adjustment", {
-                detail: { record, approve },
-              }),
-            );
+            emit('approve-reserve-adjustment', { requestId: '', record, approve });
           }}
           onApproveProfileChangeRequest={(id, approve) => {
-            window.dispatchEvent(
-              new CustomEvent("approve-profile-change", {
-                detail: { id, approve },
-              }),
-            );
+            emit('approve-profile-change', { requestId: id, approve });
           }}
           onApprovePasswordResetRequest={(id, approve) => {
-            window.dispatchEvent(
-              new CustomEvent("approve-password-reset", {
-                detail: { id, approve },
-              }),
-            );
+            emit('approve-password-reset', { requestId: id, approve });
           }}
           onSupervisorApproveChuti={(id, approve) => {
-            window.dispatchEvent(
-              new CustomEvent("supervisor-approve-chuti", {
-                detail: { id, approve },
-              }),
-            );
+            emit('supervisor-approve-chuti', { requestId: id, approve });
           }}
           onSwitchToAdminPanel={() => {
             sessionStorage.setItem("adminNotificationMode", "admin");
             setShowNotificationsModal(false);
-            window.dispatchEvent(new CustomEvent("open-admin-approvals-modal"));
+            emit('open-admin-approvals-modal');
           }}
           onSwitchToSupervisorPanel={() => {
             sessionStorage.setItem("supervisorNotificationMode", "supervisor");
             setShowNotificationsModal(false);
-            window.dispatchEvent(
-              new CustomEvent("open-supervisor-approvals-modal"),
-            );
+            emit('open-supervisor-approvals-modal');
           }}
         />
       )}
@@ -1362,9 +1315,7 @@ function AppPortalInner({
                         sessionStorage.getItem("adminNotificationMode") ||
                         "user";
                       if (mode === "admin") {
-                        window.dispatchEvent(
-                          new CustomEvent("open-admin-approvals-modal"),
-                        );
+                        emit('open-admin-approvals-modal');
                       } else {
                         setShowNotificationsModal(true);
                       }
@@ -1373,9 +1324,7 @@ function AppPortalInner({
                         sessionStorage.getItem("supervisorNotificationMode") ||
                         "user";
                       if (mode === "supervisor") {
-                        window.dispatchEvent(
-                          new CustomEvent("open-supervisor-approvals-modal"),
-                        );
+                        emit('open-supervisor-approvals-modal');
                       } else {
                         setShowNotificationsModal(true);
                       }
@@ -1451,7 +1400,7 @@ function AppPortalInner({
             {chutiOfflineCount > 0 && (
               <button
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent("trigger-manual-sync"));
+                  emit('trigger-manual-sync');
                 }}
                 className="w-full flex items-center justify-between px-3.5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl cursor-pointer transition-all shadow-lg shadow-purple-900/20 border border-purple-700"
               >

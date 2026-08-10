@@ -5,6 +5,7 @@ import AppUpdater from "@/components/common/AppUpdater";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { NetworkProvider } from "@/providers/NetworkProvider";
+import { AppEventBusProvider } from "@/contexts/AppEventBusContext";
 
 import { Toaster } from "sonner";
 
@@ -70,7 +71,11 @@ export default function RootLayout({
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-theme-page-bg text-theme-text-primary">
         <PWARegister />
         <AppUpdater />
-        <NetworkProvider>{children}</NetworkProvider>
+        <NetworkProvider>
+          <AppEventBusProvider>
+            {children}
+          </AppEventBusProvider>
+        </NetworkProvider>
         <Toaster position="bottom-right" richColors theme="dark" closeButton />
         <SpeedInsights />
         <Analytics />

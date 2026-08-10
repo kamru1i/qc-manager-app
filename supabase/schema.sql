@@ -1435,6 +1435,33 @@ $$;
 
 ALTER FUNCTION public.update_todos_last_activity() OWNER TO postgres;
 
+
+--
+-- Name: update_global_settings_key(uuid, text, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- AUDIT FIX M9: Atomic JSONB key-level update to prevent race conditions
+-- when multiple components update global_settings concurrently.
+--
+
+CREATE OR REPLACE FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  UPDATE profiles
+  SET global_settings = jsonb_set(
+    COALESCE(global_settings, '{}'::jsonb),
+    ARRAY[p_key],
+    p_value
+  )
+  WHERE id = p_user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_global_settings_key(uuid, text, jsonb) OWNER TO postgres;
+
+GRANT EXECUTE ON FUNCTION public.update_global_settings_key(uuid, text, jsonb) TO authenticated;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;

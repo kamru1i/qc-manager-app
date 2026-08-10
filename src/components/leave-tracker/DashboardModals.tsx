@@ -5,6 +5,7 @@ import { ChutiRecordWithProfile, GovtHolidayResponse } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 
 import { WelcomeModals } from '@/components/common/modals/WelcomeModals';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { AdminAddLeaveModal } from '@/components/leave-tracker/modals/AdminAddLeaveModal';
 import { UserRevisionModal } from '@/components/leave-tracker/modals/UserRevisionModal';
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
@@ -20,6 +21,7 @@ import { AdminDeleteUserModal } from '@/components/leave-tracker/modals/AdminDel
 
 export const DashboardModals = () => {
   const { dashboardData, derivedState, chutiOps, adjustmentOps, adminStaffOps } = useDashboardContext();
+  const { emit } = useAppEventBus();
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -348,7 +350,7 @@ export const DashboardModals = () => {
           sessionStorage.setItem('supervisorNotificationMode', 'user');
           setShowSupervisorApprovalModal(false);
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('open-user-notifications-modal'));
+            emit('open-user-notifications-modal');
           }, 50);
         }}
         userNotificationsCount={unreadUserNotificationsCount}
@@ -393,7 +395,7 @@ export const DashboardModals = () => {
           sessionStorage.setItem('adminNotificationMode', 'user');
           setShowLeaveApprovalModal(false);
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('open-user-notifications-modal'));
+            emit('open-user-notifications-modal');
           }, 50);
         }}
         userNotificationsCount={unreadUserNotificationsCount}

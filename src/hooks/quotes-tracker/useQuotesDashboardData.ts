@@ -5,6 +5,8 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import { Profile, RecordItem } from '@/types';
+import { useAppEvent } from '@/contexts/AppEventBusContext';
+import { RealtimePayload } from '@/contexts/RealtimeContext';
 import { useQuotesTheme } from '@/hooks/quotes-tracker/useQuotesTheme';
 import { useRecordActions } from '@/hooks/leave-tracker/useRecordActions';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
@@ -749,50 +751,42 @@ export const useQuotesDashboardData = () => {
 
   useRealtimeHandler('records', handleRecordsRealtime);
 
-  // Consume profile changes forwarded by the shared (leave-dashboard) profiles handler.
-  // Same handling as before — only the event source changed, not the logic.
-  useEffect(() => {
-    if (!sessionUser) return;
-
-    const handleProfilePayload = (e: Event) => {
-      const payload = (e as CustomEvent).detail;
-      if (!payload) return;
-
-      if (payload.eventType === 'DELETE' && payload.old && payload.old.id === sessionUser.id) {
+  useAppEvent('realtime-profile-payload', (payloadData) => {
+    const payload = payloadData.payload as RealtimePayload;
+    if (payload.eventType === 'INSERT') {
+      // Force refresh on new profile
+      handleRecordsRealtime();
+      return;
+    }
+    if (payload.eventType === 'DELETE') {
+      const deletedId = payload.old.id as string;
+      if (sessionUser && deletedId === sessionUser.id) {
+        // User deleted themselves or was deleted by admin
+        toast.error('Your account has been deactivated.');
         if (typeof window !== 'undefined') {
           localStorage.removeItem('quotes_sales_profile');
         }
-        supabase.auth.signOut().then(() => {
-          setSessionUser(null);
-          setProfile(null);
-          router.push('/login');
-          router.refresh();
-        });
-        return;
+        router.replace('/login');
+      } else {
+        handleRecordsRealtime();
       }
-      if (payload.eventType === 'UPDATE' && payload.new) {
-        if (payload.new.id === sessionUser.id) {
-          setProfile(payload.new as Profile);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('quotes_sales_profile', JSON.stringify(payload.new));
-          }
-        }
-        // R1/R2: the shared profiles list (UPDATE patch and INSERT/DELETE
-        // refetch) is handled by ProfilesProvider — nothing else to do here.
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('realtime-profile-payload', handleProfilePayload);
+      return;
     }
+    if (payload.eventType === 'UPDATE' && payload.new) {
+      if (payload.new.id === sessionUser?.id) {
+        setProfile(payload.new as unknown as Profile);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('quotes_sales_profile', JSON.stringify(payload.new));
+        }
+      }
+    }
+  }, [sessionUser, profile, fetchRecords, fetchAvailableDates, router, setProfile]);
 
+  useEffect(() => {
     return () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('realtime-profile-payload', handleProfilePayload);
-      }
     };
-  }, [sessionUser, profile, fetchRecords, fetchAvailableDates, router, setProfile]);
+  }, []);
 
   const handleLogout = async () => {
     lastFetchedKeyRef.current = '';

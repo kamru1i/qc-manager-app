@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAppEvent, useAppEventBus } from '@/contexts/AppEventBusContext';
 import { toast } from 'sonner';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
@@ -16,7 +17,7 @@ import { fetchOwnProfileRow } from '@/utils/profileFetcher';
 import { isAdminRole } from '@/utils/permissionService';
 
 export const useDashboardData = () => {
-
+  const { emit } = useAppEventBus();
   const fetchingRef = useRef<boolean>(false);
   const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
   const sessionUserRef = useRef<SupabaseUser | null>(null);
@@ -85,15 +86,9 @@ export const useDashboardData = () => {
   // Notification last viewed
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
 
-  useEffect(() => {
-    const handleSync = (e: Event) => {
-      const time = (e as CustomEvent).detail as string;
-      if (time) setLastViewedTime(time);
-    };
-    window.addEventListener('chuti-last-viewed-time-sync', handleSync);
-    return () => {
-      window.removeEventListener('chuti-last-viewed-time-sync', handleSync);
-    };
+  useAppEvent('chuti-last-viewed-time-sync', (payload) => {
+    const time = payload.timestamp as unknown as string;
+    if (time) setLastViewedTime(time);
   }, []);
 
   // Theme Toggle state
@@ -828,17 +823,9 @@ export const useDashboardData = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const handleGlobalThemeChange = (e: Event) => {
-        const nextTheme = (e as CustomEvent).detail;
-        setTheme(nextTheme);
-      };
-      window.addEventListener('theme-change', handleGlobalThemeChange);
-      return () => {
-        window.removeEventListener('theme-change', handleGlobalThemeChange);
-      };
-    }
+  useAppEvent('theme-change', (payload) => {
+    const nextTheme = payload.theme;
+    setTheme(nextTheme);
   }, []);
 
   // Theme toggle handler
@@ -947,9 +934,7 @@ export const useDashboardData = () => {
 
   const handleRealtimeChange = useCallback(() => {
     // Notify useGlobalNotifications via DOM event
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('realtime-data-changed'));
-    }
+    emit('realtime-data-changed');
 
     if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
     realtimeDebounceRef.current = setTimeout(() => {
@@ -960,11 +945,9 @@ export const useDashboardData = () => {
   // ── chuti handler ──
   const handleChutiRealtime = useCallback((payload: RealtimePayload) => {
     // Forward so UserManagementDashboard can react without its own chuti subscription
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'chuti', payload } }));
-    }
+    emit('realtime-table-payload', { table: 'chuti', payload });
     handleRealtimeChange();
-  }, [handleRealtimeChange]);
+  }, [handleRealtimeChange, emit]);
 
   // ── profiles handler ──
   const handleProfilesRealtime = useCallback((payload: RealtimePayload) => {
@@ -972,9 +955,7 @@ export const useDashboardData = () => {
     const newRow = payload.new as Partial<Profile>;
     const oldRow = payload.old as Partial<Profile>;
     // Forward for quotes workspace
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('realtime-profile-payload', { detail: payload }));
-    }
+    emit('realtime-profile-payload', { payload });
     if (payload.eventType === 'DELETE' && oldRow?.id === sessionUser.id) {
       const handleForceLogout = async () => {
         try {
@@ -1009,9 +990,7 @@ export const useDashboardData = () => {
       const isApprover = isAdminRole(profile) || profile?.role === 'supervisor';
       if (hasSubstantialChange && isApprover) {
         // Notify notification hook
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('realtime-data-changed'));
-        }
+        emit('realtime-data-changed');
       }
     } else {
       // INSERT or DELETE — ProfilesProvider refetches the list; refresh chuti
@@ -1025,11 +1004,9 @@ export const useDashboardData = () => {
 
   // ── leave_settlements handler ──
   const handleSettlementsRealtime = useCallback((payload: RealtimePayload) => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'leave_settlements', payload } }));
-    }
+    emit('realtime-table-payload', { table: 'leave_settlements', payload });
     handleRealtimeChange();
-  }, [handleRealtimeChange]);
+  }, [handleRealtimeChange, emit]);
 
   // Register handlers with the centralized RealtimeProvider
   useRealtimeHandler('chuti', handleChutiRealtime);
@@ -1038,11 +1015,9 @@ export const useDashboardData = () => {
 
   // ── govt_holiday_responses handler ──
   const handleHolidayResponseRealtime = useCallback((payload: RealtimePayload) => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('realtime-table-payload', { detail: { table: 'govt_holiday_responses', payload } }));
-    }
+    emit('realtime-table-payload', { table: 'govt_holiday_responses', payload });
     handleRealtimeChange();
-  }, [handleRealtimeChange]);
+  }, [handleRealtimeChange, emit]);
 
   useRealtimeHandler('govt_holiday_responses', handleHolidayResponseRealtime);
 

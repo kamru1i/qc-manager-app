@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
@@ -38,6 +39,7 @@ import { CreateUserPanel } from '@/components/common/user-management/CreateUserP
 import { UserProfileSettingsPanel } from '@/components/common/user-management/UserProfileSettingsPanel';
 import { UserLeaveHistoryPanel } from '@/components/common/user-management/UserLeaveHistoryPanel';
 import { UserQuotesHistoryPanel } from '@/components/common/user-management/UserQuotesHistoryPanel';
+import { useAppEvent } from '@/contexts/AppEventBusContext';
 import { UserKpiPerformancePanel } from '@/components/common/user-management/UserKpiPerformancePanel';
 import { AddLeave } from '@/components/leave-tracker/AddLeave';
 import { ChutiRecord } from '@/utils/offlineSync';
@@ -69,6 +71,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   onViewStateChange,
   globalSettings: propsGlobalSettings,
 }) => {
+  const { emit } = useAppEventBus();
   // R1/R2: shared profiles list from ProfilesContext (was a local duplicate copy)
   const { profilesList: profiles, setProfilesList: setProfiles, refreshProfiles, isLoaded: profilesLoaded } = useProfiles();
   const [isLoading, setIsLoading] = useState(true);
@@ -543,26 +546,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   useRealtimeHandler('govt_holiday_responses', handleHolidayResponseRealtime);
 
   // ── chuti + leave_settlements (via DOM events from dashboard) ──
-  useEffect(() => {
+  useAppEvent('realtime-table-payload', (payloadData) => {
     if (!viewingStaff) return;
-
     const isSupervisedByMe = hasStaffAccess(viewingStaff);
     if (!isSupervisedByMe) return;
 
-    const handleTablePayload = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { table?: string; payload?: RealtimePayload } | undefined;
-      if (!detail || (detail.table !== 'chuti' && detail.table !== 'leave_settlements')) return;
-      const rec = detail.payload?.new || detail.payload?.old;
-      if (rec?.user_id === viewingStaff.id) {
-        debouncedFetchStaffLeaveData(viewingStaff.id);
-      }
-    };
-    window.addEventListener('realtime-table-payload', handleTablePayload);
-
-    return () => {
-      window.removeEventListener('realtime-table-payload', handleTablePayload);
-    };
-  }, [viewingStaff, debouncedFetchStaffLeaveData, profile, hasStaffAccess]);
+    const detail = payloadData as { table?: string; payload?: RealtimePayload } | undefined;
+    if (!detail || (detail.table !== 'chuti' && detail.table !== 'leave_settlements')) return;
+    const rec = detail.payload?.new || detail.payload?.old;
+    if (rec?.user_id === viewingStaff.id) {
+      debouncedFetchStaffLeaveData(viewingStaff.id);
+    }
+  }, [viewingStaff, debouncedFetchStaffLeaveData, hasStaffAccess]);
 
   const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
     if (!profile || !isAdminRole(profile)) return false;
@@ -879,7 +874,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         updateViewingStaff(updated);
         if (updated.id === profile?.id) {
           localStorage.setItem(`cached_profile_${profile.id}`, JSON.stringify(updated));
-          window.dispatchEvent(new CustomEvent("profile-updated", { detail: updated }));
+          emit('profile-updated', updated);
         }
       }
     }

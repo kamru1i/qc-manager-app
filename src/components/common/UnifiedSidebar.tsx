@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { useRouter } from 'next/navigation';
 import { Profile } from '@/types';
 import { canAccessModule, isSuperadmin, isAdminRole, isTabVisibleForRole } from '@/utils/permissionService';
@@ -52,6 +53,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   hideCollapseButton = false,
   onNavItemClick,
 }) => {
+  const { emit } = useAppEventBus();
   const router = useRouter();
   const { profilesList } = useProfiles();
 
@@ -101,7 +103,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   // Navigation handlers
   const handleChutiNav = () => {
     localStorage.setItem('last_active_dashboard', 'chuti');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'chuti' }));
+    emit('workspace-change', 'chuti');
     router.push('/');
     onNavItemClick?.();
   };
@@ -122,7 +124,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   const handleQuotesNav = () => {
     localStorage.setItem('last_active_dashboard', 'quotes');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'quotes' }));
+    emit('workspace-change', 'quotes');
     router.push('/');
     onNavItemClick?.();
   };
@@ -147,7 +149,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
       ? savedSubtab
       : 'leaderboard';
     localStorage.setItem('last_active_dashboard', target);
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: target }));
+    emit('workspace-change', target);
     router.push('/');
     onNavItemClick?.();
   };
@@ -155,15 +157,15 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   const handleUserManagementNav = () => {
     localStorage.setItem('settings_active_subtab', 'user_management');
     localStorage.setItem('last_active_dashboard', 'profile_settings');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'profile_settings' }));
-    window.dispatchEvent(new CustomEvent('settings-subtab-change', { detail: 'user_management' }));
+    emit('workspace-change', 'profile_settings');
+    emit('settings-subtab-change', { subtab: 'user_management' });
     router.push('/');
     onNavItemClick?.();
   };
 
   const handleTodoNav = () => {
     localStorage.setItem('last_active_dashboard', 'todo');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'todo' }));
+    emit('workspace-change', 'todo');
     router.push('/');
     onNavItemClick?.();
   };
@@ -172,7 +174,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
   const handleProfileSettingsNav = () => {
     localStorage.setItem('last_active_dashboard', 'profile_settings');
-    window.dispatchEvent(new CustomEvent('workspace-change', { detail: 'profile_settings' }));
+    emit('workspace-change', 'profile_settings');
     router.push('/');
     onNavItemClick?.();
   };
