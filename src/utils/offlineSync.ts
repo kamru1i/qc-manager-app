@@ -1,6 +1,8 @@
-// TODO: AUDIT FIX M6 — Consolidate with quotesOfflineSync.ts into a generic OfflineSyncManager<T> factory.
+// Chuti offline sync module — uses shared offlineSyncFactory for IDB operations
 import { supabase } from './supabase';
-import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID } from './offlineSyncFactory';
+import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID, SyncConflict } from './offlineSyncFactory';
+
+export type { SyncConflict };
 
 export { generateUUID };
 
@@ -109,13 +111,7 @@ export const saveOfflineDelete = async (id: string): Promise<string> => {
   return manager.saveOfflineDelete(id, dummyData as any);
 };
 
-// Conflict info returned to the caller for UI notification
-export interface SyncConflict {
-  localId: string;
-  recordId: string;
-  action: 'update' | 'delete';
-  reason: string; // Human-readable reason
-}
+
 
 // Sync all local records to Supabase with conflict resolution
 export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => void): Promise<{ success: boolean; syncedCount: number; conflicts: SyncConflict[]; error?: string }> => {

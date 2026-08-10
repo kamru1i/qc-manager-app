@@ -4,6 +4,14 @@ export { generateUUID };
 
 export const MAX_SYNC_RETRIES = 3;
 
+/** Conflict info returned to the caller for UI notification */
+export interface SyncConflict {
+  localId: string;
+  recordId: string;
+  action: 'update' | 'delete';
+  reason: string; // Human-readable reason
+}
+
 export function logDeadLetter(module: string, action: string, record: { localId?: string; id?: string; _retryCount?: number }, error: unknown) {
   console.error(`[${module}] Dead-letter: permanently dropping ${action} after ${record._retryCount ?? 0} retries`, {
     localId: record.localId,

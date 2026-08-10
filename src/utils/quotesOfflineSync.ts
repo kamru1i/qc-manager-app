@@ -1,7 +1,9 @@
-// TODO: AUDIT FIX M6 — Consolidate with offlineSync.ts into a generic OfflineSyncManager<T> factory.
+// Quotes offline sync module — uses shared offlineSyncFactory for IDB operations
 import { supabase } from './supabase';
 import { RecordItem, FileType } from '@/types';
-import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID } from './offlineSyncFactory';
+import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID, SyncConflict } from './offlineSyncFactory';
+
+export type { SyncConflict };
 
 export { generateUUID };
 
@@ -83,12 +85,7 @@ export const deleteCacheItem = async (storeName: string, id: string): Promise<vo
   return manager.idb.deleteItem(storeName, id);
 };
 
-export interface SyncConflict {
-  localId: string;
-  recordId: string;
-  action: 'update' | 'delete';
-  reason: string;
-}
+
 
 let isSyncing = false;
 
