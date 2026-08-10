@@ -70,8 +70,9 @@ export function useGlobalNotifications(
 
   // Sync approvals count from dashboard event in real-time
   useAppEvent('chuti-approvals-count-sync', (payload) => {
-    if (typeof payload.count === 'number') {
-      setSyncedApprovalsCount(payload.count);
+    const count = typeof payload === 'number' ? payload : payload.count;
+    if (typeof count === 'number') {
+      setSyncedApprovalsCount(count);
     }
   }, []);
 
@@ -411,7 +412,7 @@ export function useGlobalNotifications(
 
   // Listen to dismissed notifications sync event from other components
   useAppEvent('chuti-dismissed-notifications-sync', (payload) => {
-    const dbIds = payload.ids;
+    const dbIds = Array.isArray(payload) ? payload : payload.ids;
     if (dbIds && Array.isArray(dbIds)) {
       setDismissedNotificationIds(prev => {
         const next = new Set(prev);
@@ -436,7 +437,7 @@ export function useGlobalNotifications(
 
   // Listen to last viewed time sync event from other components
   useAppEvent('chuti-last-viewed-time-sync', (payload) => {
-    const time = payload.timestamp as unknown as string;
+    const time = typeof payload === 'string' ? payload : String(payload.timestamp);
     if (time) setLastViewedTime(time);
   }, []);
 

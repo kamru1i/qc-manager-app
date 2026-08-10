@@ -752,7 +752,7 @@ export const useQuotesDashboardData = () => {
   useRealtimeHandler('records', handleRecordsRealtime);
 
   useAppEvent('realtime-profile-payload', (payloadData) => {
-    const payload = payloadData.payload as RealtimePayload;
+    const payload = (payloadData && typeof payloadData === 'object' && 'payload' in payloadData ? (payloadData as { payload: unknown }).payload : payloadData) as RealtimePayload;
     if (payload.eventType === 'INSERT') {
       // Force refresh on new profile
       handleRecordsRealtime();

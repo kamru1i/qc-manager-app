@@ -1000,7 +1000,7 @@ function AppPortalInner({
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("viewingStaffFromUserManagement");
     }
-    let targetWorkspace = typeof payload === 'string' ? payload : payload?.workspace;
+    let targetWorkspace = typeof payload === 'string' ? payload : payload?.target;
     if (!targetWorkspace) return;
 
     if (targetWorkspace === "user_management" && !canAccessModule(profile, null, "user_management")) {
@@ -1030,12 +1030,12 @@ function AppPortalInner({
       localStorage.setItem("last_active_reports_subtab", targetWorkspace);
     }
 
-    setActiveTab(targetWorkspace);
+    setActiveTab(targetWorkspace as typeof activeTab);
   }, [profile]);
 
   useAppEvent('profile-updated', (payload) => {
     if (payload) {
-      setProfile(payload);
+      setProfile(payload as unknown as Profile);
     }
   }, [setProfile]);
 
@@ -1233,19 +1233,19 @@ function AppPortalInner({
             emit('open-revision-modal', { recordId: record as any });
           }}
           onApproveChutiRequest={(id, approve) => {
-            emit('approve-chuti-request', { requestId: id, approve });
+            emit('approve-chuti-request', { id, approve });
           }}
           onApproveReserveAdjustment={(record, approve) => {
-            emit('approve-reserve-adjustment', { requestId: '', record, approve });
+            emit('approve-reserve-adjustment', { record, approve });
           }}
           onApproveProfileChangeRequest={(id, approve) => {
-            emit('approve-profile-change', { requestId: id, approve });
+            emit('approve-profile-change', { id, approve });
           }}
           onApprovePasswordResetRequest={(id, approve) => {
-            emit('approve-password-reset', { requestId: id, approve });
+            emit('approve-password-reset', { id, approve });
           }}
           onSupervisorApproveChuti={(id, approve) => {
-            emit('supervisor-approve-chuti', { requestId: id, approve });
+            emit('supervisor-approve-chuti', { id, approve });
           }}
           onSwitchToAdminPanel={() => {
             sessionStorage.setItem("adminNotificationMode", "admin");

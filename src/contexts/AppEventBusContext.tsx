@@ -1,38 +1,47 @@
 'use client';
 
-import React, { createContext, useContext, useRef, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useRef, useCallback, useEffect, useMemo } from 'react';
 
-// Event type map
+// Event type map — all custom app events with their typed payloads
 export interface AppEventMap {
-  'chuti-notification-count-change': { count: number };
-  'chuti-notification-list-sync': { notifications: unknown[] };
-  'chuti-dismissed-notifications-sync': { ids: string[] };
-  'chuti-offline-count-change': { count: number };
-  'chuti-approvals-count-sync': { count: number };
-  'chuti-tab-change': { tab: string } | string | any;
-  'quotes-tab-change': { tab: string } | string | any;
-  'settings-subtab-change': { subtab: string } | string | any;
-  'chuti-settings-changed': { subtab: string } | string | any;
-  'workspace-change': string | any;
-  'chuti-last-viewed-time-sync': { timestamp: number | string };
+  // NOTIFICATION_SYNC
+  'chuti-notification-count-change': { count: number } | number;
+  'chuti-notification-list-sync': { notifications: unknown[] } | unknown[];
+  'chuti-dismissed-notifications-sync': { ids: string[] } | string[];
+  'chuti-offline-count-change': { count: number } | number;
+  'chuti-approvals-count-sync': { count: number } | number;
+
+  // NAVIGATION
+  'chuti-tab-change': { tab: string } | string;
+  'quotes-tab-change': { tab: string } | string;
+  'settings-subtab-change': { subtab: string } | string;
+  'chuti-settings-changed': { subtab: string } | string;
+  'workspace-change': { target: string } | string;
+  'chuti-last-viewed-time-sync': { timestamp: number | string } | string;
+
+  // REALTIME
   'realtime-data-changed': void;
   'realtime-table-payload': { table: string; payload: unknown };
-  'realtime-profile-payload': { payload: unknown };
-  'realtime-connection-status': { status: string };
-  'profile-updated': any;
+  'realtime-profile-payload': { payload: unknown } | unknown;
+  'realtime-connection-status': { status: 'connected' | 'disconnected' } | string;
+
+  // ACTION
   'open-profile-settings': void;
   'trigger-manual-sync': void;
-  'trigger-viewing-staff': { userId: string };
-  'open-revision-modal': { recordId: string | any };
-  'approve-chuti-request': { requestId: string; approve?: boolean } | any;
-  'approve-reserve-adjustment': { requestId?: string; record?: any; approve?: boolean } | any;
-  'approve-profile-change': { requestId: string; approve?: boolean } | any;
-  'approve-password-reset': { requestId: string; approve?: boolean } | any;
-  'supervisor-approve-chuti': { requestId: string; approve?: boolean } | any;
+  'trigger-viewing-staff': { userId: string | null } | string | null;
+  'open-revision-modal': { recordId: string } | unknown;
+  'approve-chuti-request': { id: string; approve: boolean };
+  'approve-reserve-adjustment': { record: unknown; approve: boolean };
+  'approve-profile-change': { id: string; approve: boolean };
+  'approve-password-reset': { id: string; approve: boolean };
+  'supervisor-approve-chuti': { id: string; approve: boolean };
   'open-admin-approvals-modal': void;
   'open-supervisor-approvals-modal': void;
   'open-user-notifications-modal': void;
-  'theme-change': { theme: 'dark' | 'light' };
+  'profile-updated': object;
+
+  // THEME
+  'theme-change': { theme: 'dark' | 'light' } | string;
 }
 
 export type AppEventName = keyof AppEventMap;
@@ -72,8 +81,10 @@ export function AppEventBusProvider({ children }: { children: React.ReactNode })
     });
   }, []);
 
+  const value = useMemo(() => ({ emit, on }), [emit, on]);
+
   return (
-    <AppEventBusContext.Provider value={{ emit, on }}>
+    <AppEventBusContext.Provider value={value}>
       {children}
     </AppEventBusContext.Provider>
   );

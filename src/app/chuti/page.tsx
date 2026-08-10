@@ -231,7 +231,7 @@ export default function Dashboard({
   );
   // Listen to dismissed notifications sync event from other components
   useAppEvent('chuti-dismissed-notifications-sync', (payload) => {
-    const dbIds = payload.ids;
+    const dbIds = Array.isArray(payload) ? payload : payload.ids;
     if (dbIds && Array.isArray(dbIds)) {
       setDismissedNotificationIds(prev => {
         const next = new Set(prev);
@@ -260,7 +260,8 @@ export default function Dashboard({
 
   // Listen for view details events dispatched from User Management
   useAppEvent('trigger-viewing-staff', (payload) => {
-    setViewingStaffId(payload.userId);
+    const staffId = payload && typeof payload === 'object' && 'userId' in payload ? payload.userId : (payload as string | null);
+    setViewingStaffId(staffId);
   }, [setViewingStaffId]);
 
 
@@ -654,7 +655,7 @@ export default function Dashboard({
     });
     
     const unsubOpenRevisionModal = on('open-revision-modal', (payload) => {
-      const r = payload.recordId as unknown as ChutiRecord; // AppEventMap defines this as { recordId: string }, but existing code casts detail to record object. Wait, let me adjust based on existing code logic.
+      const r = (payload && typeof payload === 'object' && 'recordId' in payload ? payload.recordId : payload) as ChutiRecord;
       setRevisionRecord(r);
       setRevisionDate(r.date);
       setRevisionLeaveType(r.leave_type);
@@ -668,23 +669,23 @@ export default function Dashboard({
     });
     
     const unsubApproveChuti = on('approve-chuti-request', (payload) => {
-      handleApproveChutiRequest(payload.requestId as string, (payload as any).approve);
+      handleApproveChutiRequest(payload.id, payload.approve);
     });
     
     const unsubApproveReserve = on('approve-reserve-adjustment', (payload) => {
-      handleApproveReserveAdjustment((payload as any).record, (payload as any).approve);
+      handleApproveReserveAdjustment(payload.record as Parameters<typeof handleApproveReserveAdjustment>[0], payload.approve);
     });
     
     const unsubApproveProfile = on('approve-profile-change', (payload) => {
-      handleApproveProfileChangeRequest(payload.requestId as string, (payload as any).approve);
+      handleApproveProfileChangeRequest(payload.id, payload.approve);
     });
     
     const unsubApprovePassword = on('approve-password-reset', (payload) => {
-      handleApprovePasswordResetRequest(payload.requestId as string, (payload as any).approve);
+      handleApprovePasswordResetRequest(payload.id, payload.approve);
     });
     
     const unsubSupervisorApprove = on('supervisor-approve-chuti', (payload) => {
-      handleSupervisorApproveChuti(payload.requestId as string, (payload as any).approve);
+      handleSupervisorApproveChuti(payload.id, payload.approve);
     });
 
     const unsubOpenAdminApprovalsModal = on('open-admin-approvals-modal', () => {

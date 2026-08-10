@@ -87,7 +87,7 @@ export const useDashboardData = () => {
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
 
   useAppEvent('chuti-last-viewed-time-sync', (payload) => {
-    const time = payload.timestamp as unknown as string;
+    const time = typeof payload === 'string' ? payload : String(payload.timestamp);
     if (time) setLastViewedTime(time);
   }, []);
 
@@ -824,7 +824,7 @@ export const useDashboardData = () => {
   }, []);
 
   useAppEvent('theme-change', (payload) => {
-    const nextTheme = payload.theme;
+    const nextTheme = (typeof payload === 'string' ? payload : payload.theme) as 'dark' | 'light';
     setTheme(nextTheme);
   }, []);
 
