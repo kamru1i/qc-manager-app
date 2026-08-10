@@ -1,7 +1,7 @@
 import { useReducer, useEffect, useMemo, useState } from 'react';
 import { Profile } from '@/types';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
-import { TempAccessEntry, DEFAULT_VPN_LIST } from '@/utils/dashboardHelpers';
+import { TempAccessEntry } from '@/utils/dashboardHelpers';
 import { MENU_TABS, getDefaultRoleVisibility, CONFIGURABLE_ROLES } from '@/utils/menuTabsRegistry';
 import { FEATURE_FLAGS, getDefaultFeatureFlagState, FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
 
@@ -54,9 +54,6 @@ export function useProfileSettingsState(profile: Profile | null, sessionUser: an
     tempForm: { target_type: 'role', user_id: '', user_codename: '', role: 'user', tabKey: '', action: 'revoke', expires_at: '', comment: '' },
     submitting: false,
     isCodenameEditable: false,
-    vpnList: profile?.global_settings?.vpn_list || DEFAULT_VPN_LIST,
-    newVpnInput: '',
-    vpnSubmitting: false,
     activeSubTab: 'profile',
     currentTimestamp: Date.now(),
   });
@@ -149,9 +146,6 @@ export function useProfileSettingsState(profile: Profile | null, sessionUser: an
   const setTempForm = (val: any) => dispatch({ tempForm: typeof val === 'function' ? val(state.tempForm) : val });
   const setSubmitting = (val: any) => dispatch({ submitting: typeof val === 'function' ? val(state.submitting) : val });
   const setIsCodenameEditable = (val: any) => dispatch({ isCodenameEditable: typeof val === 'function' ? val(state.isCodenameEditable) : val });
-  const setVpnList = (val: any) => dispatch({ vpnList: typeof val === 'function' ? val(state.vpnList) : val });
-  const setNewVpnInput = (val: any) => dispatch({ newVpnInput: typeof val === 'function' ? val(state.newVpnInput) : val });
-  const setVpnSubmitting = (val: any) => dispatch({ vpnSubmitting: typeof val === 'function' ? val(state.vpnSubmitting) : val });
   const setActiveSubTab = (val: any) => dispatch({ activeSubTab: typeof val === 'function' ? val(state.activeSubTab) : val });
   const setCurrentTimestamp = (val: any) => dispatch({ currentTimestamp: typeof val === 'function' ? val(state.currentTimestamp) : val });
 
@@ -250,12 +244,6 @@ export function useProfileSettingsState(profile: Profile | null, sessionUser: an
     setSubmitting,
     isCodenameEditable: state.isCodenameEditable,
     setIsCodenameEditable,
-    vpnList: state.vpnList as string[],
-    setVpnList,
-    newVpnInput: state.newVpnInput,
-    setNewVpnInput,
-    vpnSubmitting: state.vpnSubmitting,
-    setVpnSubmitting,
     activeSubTab: state.activeSubTab,
     setActiveSubTab,
     currentTimestamp: state.currentTimestamp,

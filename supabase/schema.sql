@@ -400,8 +400,7 @@ BEGIN
          (NEW.global_settings->>'office_leave_default') IS DISTINCT FROM (OLD.global_settings->>'office_leave_default') OR
          (NEW.global_settings->>'eid_fitr_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_fitr_leave') OR
          (NEW.global_settings->>'eid_adha_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_adha_leave') OR
-         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays') OR
-         (NEW.global_settings->>'vpn_list') IS DISTINCT FROM (OLD.global_settings->>'vpn_list')
+         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays')
       THEN
         RAISE EXCEPTION 'Users cannot modify privileged global_settings keys (feature flags, temp access, admin settings). These are managed by admin.';
       END IF;
@@ -1279,33 +1278,6 @@ $$;
 
 
 ALTER FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) OWNER TO postgres;
-
---
--- Name: set_user_vpn_list(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.set_user_vpn_list(p_vpn_list jsonb) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public', 'pg_temp'
-    AS $$
-BEGIN
-  IF NOT public.is_supervisor() AND NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Access denied: Only supervisor or admin can configure VPN list.';
-  END IF;
-
-  UPDATE public.profiles
-  SET global_settings = jsonb_set(
-        COALESCE(global_settings, '{}'::jsonb),
-        '{vpn_list}',
-        COALESCE(p_vpn_list, '[]'::jsonb),
-        true
-      )
-  WHERE true;
-END;
-$$;
-
-
-ALTER FUNCTION public.set_user_vpn_list(p_vpn_list jsonb) OWNER TO postgres;
 
 --
 -- Name: sync_top_performer_badges(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -2970,16 +2942,6 @@ GRANT ALL ON FUNCTION public.set_temp_access(p_entries jsonb) TO service_role;
 REVOKE ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) TO service_role;
-
-
---
--- Name: FUNCTION set_user_vpn_list(p_vpn_list jsonb); Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON FUNCTION public.set_user_vpn_list(p_vpn_list jsonb) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.set_user_vpn_list(p_vpn_list jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public.set_user_vpn_list(p_vpn_list jsonb) TO service_role;
-
 
 --
 -- Name: FUNCTION sync_top_performer_badges(); Type: ACL; Schema: public; Owner: postgres

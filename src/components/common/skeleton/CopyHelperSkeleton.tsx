@@ -40,7 +40,7 @@ export const CopyHelperSkeleton: React.FC<CopyHelperSkeletonProps> = ({
           </div>
         </div>
 
-        {/* Box 2: Network & VPN Info */}
+        {/* Box 2: Network Info */}
         <div className="bg-theme-card-bg/50 border border-theme-border-input/80 rounded-xl p-4.5 space-y-3">
           <div className="flex justify-between items-center">
             <div className="h-3.5 w-44 bg-blue-500/20 rounded-md animate-pulse" />

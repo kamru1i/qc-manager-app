@@ -105,12 +105,6 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
     setSubmitting,
     isCodenameEditable,
     setIsCodenameEditable,
-    vpnList,
-    setVpnList,
-    newVpnInput,
-    setNewVpnInput,
-    vpnSubmitting,
-    setVpnSubmitting,
     activeSubTab,
     setActiveSubTab,
     currentTimestamp,
@@ -162,75 +156,9 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
     }
   };
 
-  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'sanitizer' | 'access_controls' | 'feature_flags' | 'vpn_list') => {
+  const handleSubTabChange = (tab: 'profile' | 'user_management' | 'sanitizer' | 'access_controls' | 'feature_flags') => {
     setActiveSubTab(tab);
     localStorage.setItem('settings_active_subtab', tab);
-  };
-
-  const handleSaveVpnList = async (nextVpnList: string[]) => {
-    if (!profile) return;
-    setVpnSubmitting(true);
-    try {
-      // 1. Attempt atomic jsonb_set RPC across all profiles
-      const { error: rpcError } = await supabase.rpc('set_user_vpn_list' as any, {
-        p_vpn_list: nextVpnList
-      });
-
-      let updatedGs = {
-        ...(profile.global_settings || {}),
-        vpn_list: nextVpnList,
-      };
-
-      if (rpcError) {
-        // Fallback: fetch fresh global_settings from DB to avoid overwriting concurrent changes
-        const { data: fresh } = await supabase
-          .from('profiles')
-          .select('global_settings')
-          .eq('id', sessionUser?.id || profile.id)
-          .maybeSingle();
-
-        updatedGs = {
-          ...((fresh?.global_settings as Record<string, any>) || profile.global_settings || {}),
-          vpn_list: nextVpnList,
-        };
-
-        const { error } = await supabase
-          .from('profiles')
-          .update({ global_settings: updatedGs })
-          .eq('id', sessionUser?.id || profile.id);
-        if (error) throw error;
-      }
-
-      setVpnList(nextVpnList);
-      const updatedProfile = { ...profile, global_settings: updatedGs };
-      setProfile(updatedProfile);
-      if (sessionUser) {
-        localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
-      }
-      emit('profile-updated', updatedProfile);
-      toast.success('VPN List updated successfully!');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update VPN List');
-    } finally {
-      setVpnSubmitting(false);
-    }
-  };
-
-  const handleAddVpnName = () => {
-    const val = newVpnInput.trim();
-    if (!val) return;
-    if (vpnList.some(v => v.toLowerCase() === val.toLowerCase())) {
-      toast.error('VPN name already exists in list');
-      return;
-    }
-    const nextList = [...vpnList, val];
-    setNewVpnInput('');
-    handleSaveVpnList(nextList);
-  };
-
-  const handleRemoveVpnName = (nameToRemove: string) => {
-    const nextList = vpnList.filter(v => v !== nameToRemove);
-    handleSaveVpnList(nextList);
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -707,9 +635,6 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
   return {
     handleToggleSupervisorOverride,
     handleSubTabChange,
-    handleSaveVpnList,
-    handleAddVpnName,
-    handleRemoveVpnName,
     handleUpdatePassword,
     handleSaveSettings,
     handleSaveSanitizerRules,

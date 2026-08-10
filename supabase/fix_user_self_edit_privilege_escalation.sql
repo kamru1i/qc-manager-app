@@ -132,8 +132,7 @@ BEGIN
          (NEW.global_settings->>'office_leave_default') IS DISTINCT FROM (OLD.global_settings->>'office_leave_default') OR
          (NEW.global_settings->>'eid_fitr_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_fitr_leave') OR
          (NEW.global_settings->>'eid_adha_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_adha_leave') OR
-         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays') OR
-         (NEW.global_settings->>'vpn_list') IS DISTINCT FROM (OLD.global_settings->>'vpn_list')
+         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays')
       THEN
         RAISE EXCEPTION 'Users cannot modify privileged global_settings keys (access controls, feature flags, leave settings, VPN). These are managed by superadmin.';
       END IF;

@@ -874,7 +874,6 @@ export type Database = {
         Args: { p_hidden_tabs: Json; p_user_id: string }
         Returns: undefined
       }
-      set_user_vpn_list: { Args: { p_vpn_list: Json }; Returns: undefined }
       sync_top_performer_badges: { Args: never; Returns: undefined }
     }
     Enums: {

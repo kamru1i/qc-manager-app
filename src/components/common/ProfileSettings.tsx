@@ -13,11 +13,10 @@ import { ProfileTab } from '@/components/settings/ProfileTab';
 import { AccessControlsTab } from '@/components/settings/AccessControlsTab';
 import { FeatureFlagsTab } from '@/components/settings/FeatureFlagsTab';
 import { SanitizerTab } from '@/components/settings/SanitizerTab';
-import { VpnListTab } from '@/components/settings/VpnListTab';
 import { DateTimeInput } from '@/components/common/DateTimeInput';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
 import { useAppEvent } from '@/contexts/AppEventBusContext';
-import { TempAccessEntry, DEFAULT_VPN_LIST, GlobalSettings } from '@/utils/dashboardHelpers';
+import { TempAccessEntry, GlobalSettings } from '@/utils/dashboardHelpers';
 import {
   MENU_TABS,
   getDefaultRoleVisibility,
@@ -159,12 +158,6 @@ export function ProfileSettings({
     setSubmitting,
     isCodenameEditable,
     setIsCodenameEditable,
-    vpnList,
-    setVpnList,
-    newVpnInput,
-    setNewVpnInput,
-    vpnSubmitting,
-    setVpnSubmitting,
     activeSubTab,
     setActiveSubTab,
     currentTimestamp,
@@ -181,7 +174,6 @@ export function ProfileSettings({
   const canSeeSanitizer = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_sanitizer', profile?.global_settings), [profile]);
   const canSeeAccess = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_access', profile?.global_settings), [profile]);
   const canSeeFeatureFlags = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_feature_flags', profile?.global_settings), [profile]);
-  const canSeeVpn = useMemo(() => isSuperadmin(profile) || isTabVisibleForRole(profile, 'settings_vpn', profile?.global_settings), [profile]);
 
   // Derived effective admin delegated flags (combines superadmin profile settings with local state and current profile)
   const effectiveAdminDelegatedFlags = useMemo(() => {
@@ -197,9 +189,6 @@ export function ProfileSettings({
   const {
     handleToggleSupervisorOverride,
     handleSubTabChange,
-    handleSaveVpnList,
-    handleAddVpnName,
-    handleRemoveVpnName,
     handleUpdatePassword,
     handleSaveSettings,
     handleSaveSanitizerRules,
@@ -235,11 +224,8 @@ export function ProfileSettings({
     } else if (activeSubTab === 'feature_flags' && !canSeeFeatureFlags) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
-    } else if (activeSubTab === 'vpn_list' && !canSeeVpn) {
-      setActiveSubTab('profile');
-      localStorage.setItem('settings_active_subtab', 'profile');
     }
-  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags, canSeeVpn]);
+  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags]);
 
   const isSuperAdmin = isSuperadmin(profile);
 
@@ -367,23 +353,6 @@ export function ProfileSettings({
           </button>
         )}
 
-        {canSeeVpn && (
-          <button
-            type="button"
-            onClick={() => handleSubTabChange('vpn_list')}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'vpn_list'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
-                : 'text-theme-text-secondary hover:bg-theme-card-bg/60 border border-transparent'
-            }`}
-          >
-            <Globe className="h-4 w-4 text-blue-400" />
-            <span>VPN</span>
-          </button>
-        )}
-
-
-
         {canSeeUserManagement && (
           <button
             type="button"
@@ -500,18 +469,6 @@ export function ProfileSettings({
           isSuperAdmin={isSuperAdmin}
           handleToggleFeatureFlag={handleToggleFeatureFlag}
           handleToggleAdminDelegation={handleToggleAdminDelegation}
-        />
-      )}
-
-      {/* VPN List Subtab */}
-      {activeSubTab === 'vpn_list' && (isSuperAdmin || canSeeVpn) && (
-        <VpnListTab
-          vpnList={vpnList}
-          newVpnInput={newVpnInput}
-          setNewVpnInput={setNewVpnInput}
-          handleAddVpnName={handleAddVpnName}
-          handleRemoveVpnName={handleRemoveVpnName}
-          vpnSubmitting={vpnSubmitting}
         />
       )}
 

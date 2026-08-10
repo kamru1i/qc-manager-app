@@ -43,7 +43,6 @@ export const MENU_TABS: MenuTabDef[] = [
   { key: 'settings_sanitizer', label: 'Settings > Sanitizer', category: 'Settings Subtabs' },
   { key: 'settings_access', label: 'Settings > Access', category: 'Settings Subtabs' },
   { key: 'settings_feature_flags', label: 'Settings > Feature Flags', category: 'Settings Subtabs' },
-  { key: 'settings_vpn', label: 'Settings > VPN', category: 'Settings Subtabs' },
 
   // User Profile View Subtabs (Supervisor Access)
   { key: 'user_profile_leave', label: 'User Management > User Profile > Leave History', category: 'User Profile View Subtabs' },
@@ -88,7 +87,6 @@ export const getDefaultRoleVisibility = (
 
     case 'user_management':
     case 'team_leaves':
-    case 'settings_vpn':
     case 'user_profile_leave':
     case 'user_profile_quotes':
     case 'user_profile_analytics':
