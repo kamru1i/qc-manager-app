@@ -76,11 +76,12 @@ export async function registerAndCheckSession(
       active_sessions: activeSessions
     };
 
-    // Update DB
-    const { error } = await supabase
-      .from('profiles')
-      .update({ global_settings: updatedSettings })
-      .eq('id', userId);
+    // AUDIT FIX M9: Use atomic jsonb_set via RPC to prevent race conditions
+    const { error } = await supabase.rpc('update_global_settings_key', {
+      p_user_id: userId,
+      p_key: 'active_sessions',
+      p_value: JSON.stringify(activeSessions),
+    });
 
     if (!error) {
       userProfile.global_settings = updatedSettings;

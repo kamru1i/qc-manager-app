@@ -74,7 +74,7 @@ export function useDerivedState({
       ? adminRecords.filter(r => r.user_id === userId) 
       : userRecords;
     return applyFilters(baseRecords);
-  }, [profile, sessionUser, adminRecords, userRecords, applyFilters]);
+  }, [profile, sessionUser?.id, adminRecords, userRecords, applyFilters]);
 
   // --- Stats ---
   const userYearlyRecords = useMemo(() => {
@@ -190,7 +190,7 @@ export function useDerivedState({
 
       return true;
     });
-  }, [adminRecords, sessionUser, profilesList]);
+  }, [adminRecords, sessionUser?.id, profilesList]);
 
   const groupedSupervisorRequests = useMemo(() => 
     groupPendingRequests(pendingSupervisorRequests as ChutiRecordWithProfile[]), 
@@ -341,8 +341,7 @@ export function useDerivedState({
       initialFetchDone,
       profilesList,
       dismissedNotificationIds,
-      leaveSettlements,
-      groupedSupervisorRequests
+      leaveSettlements
   ]);
 
   // --- Admin/Supervisor Holiday & Settlement Notifications ---

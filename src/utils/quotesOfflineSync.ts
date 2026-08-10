@@ -1,3 +1,4 @@
+// TODO: AUDIT FIX M6 — Consolidate with offlineSync.ts into a generic OfflineSyncManager<T> factory.
 import { supabase } from './supabase';
 import { RecordItem, FileType } from '@/types';
 import { createIdbStore, generateUUID } from './idbStoreFactory';

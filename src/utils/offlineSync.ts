@@ -1,3 +1,4 @@
+// TODO: AUDIT FIX M6 — Consolidate with quotesOfflineSync.ts into a generic OfflineSyncManager<T> factory.
 import { supabase } from './supabase';
 import { createIdbStore, generateUUID } from './idbStoreFactory';
 

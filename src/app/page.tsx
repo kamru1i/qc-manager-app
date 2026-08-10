@@ -25,7 +25,13 @@ import { AppLayout } from "@/components/common/AppLayout";
 import { SafeAreaTop } from "@/components/common/SafeAreaTop";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { useGlobalNotifications } from "@/hooks/leave-tracker/useGlobalNotifications";
-import { UserNotificationsModal } from "@/components/common/modals/UserNotificationsModal";
+import dynamic from "next/dynamic";
+
+// AUDIT FIX M5: Lazy-load heavy modals to reduce initial bundle size
+const UserNotificationsModal = dynamic(
+  () => import("@/components/common/modals/UserNotificationsModal").then((m) => m.UserNotificationsModal),
+  { ssr: false }
+);
 
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import { SkeletonLoader as QuotesSkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
@@ -52,16 +58,16 @@ function getInitialState() {
     return { sessionUser: null, profile: null, initialTab: null };
   }
   try {
+    // AUDIT FIX M3: Use Object.keys instead of index-based localStorage iteration
     let authUser: any = null;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
-        const val = localStorage.getItem(key);
-        if (val) {
-          const parsed = JSON.parse(val);
-          authUser = parsed?.user || parsed?.currentSession?.user;
-          break;
-        }
+    const authKey = Object.keys(localStorage).find(
+      (key) => key.startsWith("sb-") && key.endsWith("-auth-token")
+    );
+    if (authKey) {
+      const val = localStorage.getItem(authKey);
+      if (val) {
+        const parsed = JSON.parse(val);
+        authUser = parsed?.user || parsed?.currentSession?.user;
       }
     }
     if (!authUser)

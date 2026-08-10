@@ -20,10 +20,25 @@ import { SaleSummaryTab } from "@/components/quotes-tracker/tabs/SaleSummaryTab"
 import { QuotesModalsGroup } from "@/components/quotes-tracker/tabs/QuotesModalsGroup";
 import { StatsGrid } from "@/components/common/StatsGrid";
 import { DailyEntryForm } from "@/components/leave-tracker/DailyEntryForm";
-import { EditRecordModal } from "@/components/quotes-tracker/modals/EditRecordModal";
-import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
-import { CustomEntryModal } from "@/components/quotes-tracker/modals/CustomEntryModal";
-import { SaleStatusModal } from "@/components/quotes-tracker/modals/SaleStatusModal";
+import dynamic from "next/dynamic";
+
+// AUDIT FIX M5: Lazy-load heavy modals to reduce initial bundle size
+const EditRecordModal = dynamic(
+  () => import("@/components/quotes-tracker/modals/EditRecordModal").then((m) => m.EditRecordModal),
+  { ssr: false }
+);
+const ConfirmModal = dynamic(
+  () => import("@/components/common/modals/ConfirmModal").then((m) => m.ConfirmModal),
+  { ssr: false }
+);
+const CustomEntryModal = dynamic(
+  () => import("@/components/quotes-tracker/modals/CustomEntryModal").then((m) => m.CustomEntryModal),
+  { ssr: false }
+);
+const SaleStatusModal = dynamic(
+  () => import("@/components/quotes-tracker/modals/SaleStatusModal").then((m) => m.SaleStatusModal),
+  { ssr: false }
+);
 import { AdminViewToggle } from "@/components/leave-tracker/AdminViewToggle";
 import { SkeletonLoader } from "@/components/quotes-tracker/QuotesSkeletonLoader";
 import { LeaderboardTable } from "@/components/leaderboard-and-reports/LeaderboardTable";
@@ -386,22 +401,20 @@ export default function Dashboard({
   });
 
   // Copy Helper States
-  const [showReportHelper] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("quotes_sales_show_report_helper") === "true";
-    }
-    return false;
-  });
+  const [showReportHelper, setShowReportHelper] = useState<boolean>(false);
 
   // Save File States
-  const [showSaveFileHelper] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return (
-        localStorage.getItem("quotes_sales_show_save_file_helper") === "true"
-      );
+  const [showSaveFileHelper, setShowSaveFileHelper] = useState<boolean>(false);
+
+  // AUDIT FIX M1: Read localStorage in useEffect to prevent SSR hydration mismatch
+  useEffect(() => {
+    if (localStorage.getItem("quotes_sales_show_report_helper") === "true") {
+      setShowReportHelper(true);
     }
-    return false;
-  });
+    if (localStorage.getItem("quotes_sales_show_save_file_helper") === "true") {
+      setShowSaveFileHelper(true);
+    }
+  }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(

@@ -2,6 +2,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile, GovtHolidayResponse } from '../types';
 import { ChutiRecord } from './offlineSync';
 import { calculateStats } from './dashboardHelpers';
+import { formatDate, escapeHtml } from './formatters';
 import { isTauriApp } from './apiUrlHelper';
 import { isAdminRole } from '@/utils/permissionService';
 
@@ -90,16 +91,6 @@ const printHtml = (
   }
 };
 
-// Helper function to format date from YYYY-MM-DD to DD-MM-YYYY
-const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
-  const parts = dateString.split('-');
-  if (parts.length === 3) {
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-  }
-  return dateString;
-};
-
 // Helper function to format time in HH:MM to 12-hour AM/PM format
 const formatTimeToAMPM = (timeStr: string | null | undefined): string => {
   if (!timeStr) return '-';
@@ -125,17 +116,6 @@ const getCleanComment = (comment: string | null | undefined): string => {
     clean = clean.replace(regex, '');
   }
   return clean.trim();
-};
-
-const escapeHtml = (unsafeStr: unknown): string => {
-  if (unsafeStr === null || unsafeStr === undefined) return '';
-  return unsafeStr
-    .toString()
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 };
 
 const buildTeamWiseTablesHtml = (

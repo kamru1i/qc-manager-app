@@ -66,6 +66,21 @@ export async function POST(request: NextRequest) {
 
     const cleanUsername = newUsername.trim().toUpperCase();
 
+    // AUDIT FIX M10: Block admins from modifying admin/superadmin codenames
+    const { data: targetProfile } = await supabaseServer
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (callerProfile.role === 'admin' && targetProfile?.role && 
+        (targetProfile.role === 'admin' || targetProfile.role === 'superadmin')) {
+      return NextResponse.json(
+        { error: 'Admins cannot modify admin or superadmin accounts' },
+        { status: 403, headers: getCorsHeaders(request) }
+      );
+    }
+
     // 4. Update profiles table
     const { error: profileError } = await supabaseServer
       .from('profiles')
@@ -87,7 +102,8 @@ export async function POST(request: NextRequest) {
     if (currentEmail.includes('@')) {
       suffix = currentEmail.split('@')[1];
     } else {
-      suffix = (role === 'admin' || role === 'superadmin') ? 'admin.local' : role === 'supervisor' ? 'supervisor.local' : 'user.local';
+      const targetRole = targetProfile?.role || 'user';
+      suffix = (targetRole === 'admin' || targetRole === 'superadmin') ? 'admin.local' : targetRole === 'supervisor' ? 'supervisor.local' : 'user.local';
     }
 
     const newEmail = `${cleanUsername.toLowerCase()}@${suffix}`;

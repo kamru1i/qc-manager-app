@@ -2,6 +2,9 @@ import { RecordItem } from '@/types';
 import { toast } from 'sonner';
 
 // Helper function to format date from ISO string (or YYYY-MM-DD) to DD-MM-YYYY format
+// AUDIT FIX M7: Kept local `formatDate` instead of importing from `formatters.ts`
+// because callers here (e.g., RecordsTable) pass ISO timestamp strings like `submitted_at`,
+// which require `new Date()` parsing, unlike the simple split('-') in formatters.ts.
 export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
   try {
