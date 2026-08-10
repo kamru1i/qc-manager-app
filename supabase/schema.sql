@@ -110,6 +110,13 @@ BEGIN
     RAISE EXCEPTION 'Permission denied: Only admins or assigned supervisors can update user credentials.';
   END IF;
 
+  -- AUDIT FIX H1: Prevent supervisors from modifying admin/superadmin credentials
+  IF NOT public.is_admin() THEN
+    IF EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'superadmin')) THEN
+      RAISE EXCEPTION 'Permission denied: Cannot modify admin or superadmin credentials.';
+    END IF;
+  END IF;
+
   -- Update username in profiles if provided
   IF p_new_username IS NOT NULL AND p_new_username != '' THEN
     UPDATE public.profiles SET username = UPPER(p_new_username) WHERE id = p_user_id;
@@ -381,6 +388,25 @@ BEGIN
     THEN
       RAISE EXCEPTION 'Users cannot modify access control, permissions, quotas, or supervisor assignments. These are managed by superadmin.';
     END IF;
+    -- AUDIT FIX C1: Block privilege-escalation via global_settings JSON keys.
+    IF OLD.global_settings IS DISTINCT FROM NEW.global_settings THEN
+      IF (NEW.global_settings->>'temp_access') IS DISTINCT FROM (OLD.global_settings->>'temp_access') OR
+         (NEW.global_settings->>'role_visibility') IS DISTINCT FROM (OLD.global_settings->>'role_visibility') OR
+         (NEW.global_settings->>'supervisor_access_overrides') IS DISTINCT FROM (OLD.global_settings->>'supervisor_access_overrides') OR
+         (NEW.global_settings->>'admin_delegated_flags') IS DISTINCT FROM (OLD.global_settings->>'admin_delegated_flags') OR
+         (NEW.global_settings->>'user_feature_flags') IS DISTINCT FROM (OLD.global_settings->>'user_feature_flags') OR
+         (NEW.global_settings->>'feature_flags') IS DISTINCT FROM (OLD.global_settings->>'feature_flags') OR
+         (NEW.global_settings->>'password_reset_status') IS DISTINCT FROM (OLD.global_settings->>'password_reset_status') OR
+         (NEW.global_settings->>'office_leave_default') IS DISTINCT FROM (OLD.global_settings->>'office_leave_default') OR
+         (NEW.global_settings->>'eid_fitr_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_fitr_leave') OR
+         (NEW.global_settings->>'eid_adha_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_adha_leave') OR
+         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays') OR
+         (NEW.global_settings->>'vpn_list') IS DISTINCT FROM (OLD.global_settings->>'vpn_list')
+      THEN
+        RAISE EXCEPTION 'Users cannot modify privileged global_settings keys (feature flags, temp access, admin settings). These are managed by admin.';
+      END IF;
+    END IF;
+
     RETURN NEW;
   END IF;
 
@@ -642,47 +668,53 @@ CREATE FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_period 
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
+DECLARE
+  v_month_start timestamptz;
+  v_month_end   timestamptz;
+  v_year_start  timestamptz;
+  v_year_end    timestamptz;
+  v_today_start timestamptz;
+  v_today_end   timestamptz;
 BEGIN
+  -- Compute UTC timestamp boundaries for target month, year, and day
+  v_month_start := (make_date(p_year::int, p_month::int, 1)::timestamp AT TIME ZONE p_tz);
+  v_month_end   := ((make_date(p_year::int, p_month::int, 1) + interval '1 month')::timestamp AT TIME ZONE p_tz);
+
+  v_year_start  := (make_date(p_year::int, 1, 1)::timestamp AT TIME ZONE p_tz);
+  v_year_end    := ((make_date(p_year::int, 1, 1) + interval '1 year')::timestamp AT TIME ZONE p_tz);
+
+  v_today_start := ((p_today::date)::timestamp AT TIME ZONE p_tz);
+  v_today_end   := (((p_today::date + 1))::timestamp AT TIME ZONE p_tz);
+
   RETURN QUERY
-  WITH localized AS (
+  WITH selected_month_stats AS (
     SELECT
       r.user_id,
-      r.file_type,
-      r.submitted_at,
-      timezone(p_tz, r.submitted_at) AS local_ts
-    FROM public.records r
-  ),
-  selected_month_stats AS (
-    SELECT
-      l.user_id,
       COUNT(*)::INT AS months_count,
-      COUNT(*) FILTER (WHERE l.file_type = 'Quote')::INT AS quotes_count,
-      COUNT(*) FILTER (WHERE l.file_type IN ('Requote', 'Requote Van', 'Requote Bike'))::INT AS requotes_count,
-      COUNT(*) FILTER (WHERE l.file_type LIKE '%Review%')::INT AS reviews_count,
-      COUNT(*) FILTER (WHERE l.file_type = 'Sale')::INT AS sales_count,
-      MAX(l.submitted_at) AS earliest_achievement_timestamp
-    FROM localized l
-    WHERE
-      EXTRACT(YEAR FROM l.local_ts)::INT = p_year::INT
-      AND EXTRACT(MONTH FROM l.local_ts)::INT = p_month::INT
-    GROUP BY l.user_id
+      COUNT(*) FILTER (WHERE r.file_type = 'Quote')::INT AS quotes_count,
+      COUNT(*) FILTER (WHERE r.file_type IN ('Requote', 'Requote Van', 'Requote Bike'))::INT AS requotes_count,
+      COUNT(*) FILTER (WHERE r.file_type LIKE '%Review%')::INT AS reviews_count,
+      COUNT(*) FILTER (WHERE r.file_type = 'Sale')::INT AS sales_count,
+      MAX(r.submitted_at) AS earliest_achievement_timestamp
+    FROM public.records r
+    WHERE r.submitted_at >= v_month_start AND r.submitted_at < v_month_end
+    GROUP BY r.user_id
   ),
   selected_year_stats AS (
     SELECT
-      l.user_id,
+      r.user_id,
       COUNT(*)::INT AS years_count
-    FROM localized l
-    WHERE
-      EXTRACT(YEAR FROM l.local_ts)::INT = p_year::INT
-    GROUP BY l.user_id
+    FROM public.records r
+    WHERE r.submitted_at >= v_year_start AND r.submitted_at < v_year_end
+    GROUP BY r.user_id
   ),
   today_stats AS (
     SELECT
-      l.user_id,
+      r.user_id,
       COUNT(*)::INT AS todays_count
-    FROM localized l
-    WHERE l.local_ts::DATE = p_today::DATE
-    GROUP BY l.user_id
+    FROM public.records r
+    WHERE r.submitted_at >= v_today_start AND r.submitted_at < v_today_end
+    GROUP BY r.user_id
   ),
   -- Profiles carry no branch column; derive each user's primary branch from
   -- their most frequent (latest-active on ties) records.branch_name.
