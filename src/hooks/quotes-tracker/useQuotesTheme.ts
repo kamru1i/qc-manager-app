@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAppEvent } from '@/contexts/AppEventBusContext';
 
 export const useQuotesTheme = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -59,17 +60,12 @@ export const useQuotesTheme = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const handleGlobalThemeChange = (e: Event) => {
-        const nextTheme = (e as CustomEvent).detail;
-        setTheme(nextTheme);
-      };
-      window.addEventListener('theme-change', handleGlobalThemeChange);
-      return () => {
-        window.removeEventListener('theme-change', handleGlobalThemeChange);
-      };
-    }
+  useAppEvent('theme-change', (payload) => {
+    // If payload is object, it has { theme: ... }, else if passed as string directly in some dispatches
+    const nextTheme = (typeof payload === 'object' && payload !== null && 'theme' in payload) 
+      ? payload.theme 
+      : (payload as unknown as 'dark' | 'light');
+    setTheme(nextTheme);
   }, []);
 
   const toggleTheme = useCallback(() => {

@@ -11,7 +11,7 @@ import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
-import { useAppEvent } from '@/contexts/AppEventBusContext';
+import { useAppEventBus, useAppEvent } from '@/contexts/AppEventBusContext';
 
 export function useGlobalNotifications(
   sessionUser: SupabaseUser | null,
@@ -22,6 +22,7 @@ export function useGlobalNotifications(
   initialFetchDone?: boolean,
   isProfileFresh: boolean = true
 ) {
+  const { emit } = useAppEventBus();
   const [userRecords, setUserRecords] = useState<ChutiRecord[]>([]);
   const [holidayResponses, setHolidayResponses] = useState<GovtHolidayResponse[]>([]);
   const [rulesRecords, setRulesRecords] = useState<Pick<ComplianceRule, 'id' | 'updated_at' | 'created_at' | 'category' | 'sub_category' | 'content'>[]>([]);
@@ -429,13 +430,9 @@ export function useGlobalNotifications(
   // Broadcast own dismissed notification changes
   useEffect(() => {
     if (dismissedNotificationIds.size > 0) {
-      window.dispatchEvent(
-        new CustomEvent('chuti-dismissed-notifications-sync', {
-          detail: Array.from(dismissedNotificationIds)
-        })
-      );
+      emit('chuti-dismissed-notifications-sync', { ids: Array.from(dismissedNotificationIds) });
     }
-  }, [dismissedNotificationIds]);
+  }, [dismissedNotificationIds, emit]);
 
   // Listen to last viewed time sync event from other components
   useAppEvent('chuti-last-viewed-time-sync', (payload) => {
@@ -636,10 +633,10 @@ export function useGlobalNotifications(
     const now = new Date().toISOString();
     localStorage.setItem('last_viewed_notifications_time', now);
     setLastViewedTime(now);
-    window.dispatchEvent(new CustomEvent('chuti-last-viewed-time-sync', { detail: now }));
+    emit('chuti-last-viewed-time-sync', { timestamp: now });
     // Propagate event so other components know it is read
-    window.dispatchEvent(new CustomEvent('chuti-notification-count-change', { detail: 0 }));
-  }, []);
+    emit('chuti-notification-count-change', { count: 0 });
+  }, [emit]);
 
   const handleCloseNotifications = useCallback(() => {
     setShowNotificationsModal(false);

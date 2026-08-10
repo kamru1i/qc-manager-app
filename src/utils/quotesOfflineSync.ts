@@ -1,23 +1,9 @@
 // TODO: AUDIT FIX M6 — Consolidate with offlineSync.ts into a generic OfflineSyncManager<T> factory.
 import { supabase } from './supabase';
 import { RecordItem, FileType } from '@/types';
-import { createIdbStore, generateUUID } from './idbStoreFactory';
+import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID } from './offlineSyncFactory';
 
 export { generateUUID };
-
-/** Maximum number of sync retries before a record is permanently dropped from the queue. */
-const MAX_SYNC_RETRIES = 3;
-
-/** Log a permanently failed record for observability (dead-letter). */
-function logDeadLetter(module: string, action: string, record: { localId?: string; id?: string; _retryCount?: number }, error: unknown) {
-  console.error(`[${module}] Dead-letter: permanently dropping ${action} after ${record._retryCount ?? 0} retries`, {
-    localId: record.localId,
-    remoteId: record.id,
-    action,
-    error: error instanceof Error ? error.message : String(error),
-    timestamp: new Date().toISOString(),
-  });
-}
 
 export interface PendingRecordAction {
   localId?: string; // local temporary UUID key
@@ -36,9 +22,10 @@ export interface PendingRecordAction {
 
 const STORE_NAME = 'pending_records';
 
-const idb = createIdbStore({
+export const manager = createOfflineSyncManager<PendingRecordAction>({
   dbName: 'QuotesOfflineDB',
   dbVersion: 1,
+  storeName: STORE_NAME,
   stores: {
     [STORE_NAME]: 'localId',
     records_cache: 'id',
@@ -48,83 +35,52 @@ const idb = createIdbStore({
   },
 });
 
+export const getOfflineRecords = manager.getOfflineRecords;
+export const deleteOfflineRecord = manager.deleteOfflineRecord;
+export const setCacheData = manager.setCacheData;
+export const getCacheData = manager.getCacheData;
+export const upsertCacheItem = manager.upsertCacheItem;
+export const mergeCacheData = manager.mergeCacheData;
+export const removeCacheItems = manager.removeCacheItems;
+export const getSyncTimestamp = manager.getSyncTimestamp;
+export const setSyncTimestamp = manager.setSyncTimestamp;
+export const purgeStaleCacheData = manager.purgeStaleCacheData;
+
 // Save a record creation to IndexedDB
 export const saveOfflineRecord = async (record: Omit<PendingRecordAction, 'localId' | 'synced' | 'action'>): Promise<string> => {
-  const localId = generateUUID();
-  const newRecord: PendingRecordAction = {
-    ...record,
-    localId,
-    synced: false,
-    action: 'insert',
-  };
-  await idb.addItem(STORE_NAME, newRecord);
-  return localId;
+  return manager.saveOfflineRecord(record as any);
 };
 
 // Save a record update to IndexedDB
 export const saveOfflineUpdate = async (id: string, userId: string, updates: Partial<Omit<RecordItem, 'id' | 'profiles'>>): Promise<string> => {
-  const localId = generateUUID();
-  const newRecord: PendingRecordAction = {
-    localId,
-    id,
+  const dummyData = {
     user_id: userId,
     file_name: updates.file_name || '',
     branch_name: updates.branch_name || '',
     codename: updates.codename || '',
     file_type: updates.file_type || 'Quote',
     submitted_at: updates.submitted_at || new Date().toISOString(),
-    synced: false,
-    action: 'update',
     data: updates,
   };
-  await idb.addItem(STORE_NAME, newRecord);
-  return localId;
+  return manager.saveOfflineUpdate(id, dummyData as any);
 };
 
 // Save a delete action to IndexedDB (and clean up pending updates)
 export const saveOfflineDelete = async (id: string, userId: string): Promise<string> => {
-  try {
-    const allRecords = await getOfflineRecords();
-    const pendingUpdates = allRecords.filter(r => r.id === id && r.action === 'update');
-    for (const r of pendingUpdates) {
-      if (r.localId) {
-        await deleteOfflineRecord(r.localId);
-      }
-    }
-  } catch (err) {
-    console.error('Failed to clean up pending updates before offline delete:', err);
-  }
-
-  const localId = generateUUID();
-  const newRecord: PendingRecordAction = {
-    localId,
-    id,
+  const dummyData = {
     user_id: userId,
     file_name: '',
     branch_name: '',
     codename: '',
-    file_type: 'Quote',
+    file_type: 'Quote' as FileType,
     submitted_at: new Date().toISOString(),
-    synced: false,
-    action: 'delete',
   };
-  await idb.addItem(STORE_NAME, newRecord);
-  return localId;
-};
-
-// Retrieve all unsynced local records
-export const getOfflineRecords = async (): Promise<PendingRecordAction[]> => {
-  return idb.getAllItems<PendingRecordAction>(STORE_NAME);
-};
-
-// Delete a single record from the pending outbox database
-export const deleteOfflineRecord = async (localId: string): Promise<void> => {
-  return idb.deleteItem(STORE_NAME, localId);
+  return manager.saveOfflineDelete(id, dummyData as any);
 };
 
 // Delete a single key from a specific cache store
 export const deleteCacheItem = async (storeName: string, id: string): Promise<void> => {
-  return idb.deleteItem(storeName, id);
+  return manager.idb.deleteItem(storeName, id);
 };
 
 export interface SyncConflict {
@@ -184,7 +140,7 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
             logDeadLetter('QuotesOfflineSync', 'delete', { ...record, _retryCount: retries }, deleteError);
             await deleteOfflineRecord(record.localId);
           } else if (record.localId) {
-            await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+            await manager.idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
           }
           continue;
         }
@@ -221,7 +177,7 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
             logDeadLetter('QuotesOfflineSync', 'update', { ...record, _retryCount: retries }, updateError);
             await deleteOfflineRecord(record.localId);
           } else if (record.localId) {
-            await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+            await manager.idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
           }
           continue;
         }
@@ -251,7 +207,7 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
               logDeadLetter('QuotesOfflineSync', 'insert', { ...record, _retryCount: retries }, insertError);
               await deleteOfflineRecord(record.localId);
             } else if (record.localId) {
-              await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+              await manager.idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
             }
             continue;
           }
@@ -283,33 +239,9 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
   }
 };
 
-// Clear and save list to cache store
-export const setCacheData = async <T>(storeName: string, data: T[]): Promise<void> => {
-  return idb.setCacheData(storeName, data);
-};
-
-// Retrieve cached data list
-export const getCacheData = async <T>(storeName: string): Promise<T[]> => {
-  return idb.getAllItems<T>(storeName);
-};
-
-// Merge delta values into the cache
-export const mergeCacheData = async <T>(storeName: string, data: T[]): Promise<void> => {
-  return idb.mergeCacheData(storeName, data);
-};
-
-// Sync metadata timestamp helpers
-export const getSyncTimestamp = async (tableName: string): Promise<string | null> => {
-  return idb.getSyncTimestamp(tableName);
-};
-
-export const setSyncTimestamp = async (tableName: string, timestamp: string): Promise<void> => {
-  return idb.setSyncTimestamp(tableName, timestamp);
-};
-
 // Update an offline pending action in-place
 export const updateOfflineRecordAction = async (localId: string, updates: Partial<Omit<PendingRecordAction, 'localId'>>): Promise<void> => {
-  const item = await idb.getItem<PendingRecordAction>(STORE_NAME, localId);
+  const item = await manager.idb.getItem<PendingRecordAction>(STORE_NAME, localId);
   if (!item) return;
 
   const updatedItem = { ...item, ...updates };
@@ -317,15 +249,10 @@ export const updateOfflineRecordAction = async (localId: string, updates: Partia
   if (item.action === 'update' && item.data && updates.data) {
     updatedItem.data = { ...item.data, ...updates.data };
   }
-  await idb.putItem(STORE_NAME, updatedItem);
-};
-
-// TTL Cache Purging
-export const purgeStaleCacheData = async (storeName: string, dateField: string, maxAgeDays: number = 730): Promise<number> => {
-  return idb.purgeStaleCacheData(storeName, dateField, maxAgeDays);
+  await manager.idb.putItem(STORE_NAME, updatedItem);
 };
 
 // Clear all data from all cache stores and metadata
 export const clearAllCache = async (): Promise<void> => {
-  return idb.clearStores(['records_cache', 'profiles_cache', 'user_profile_cache', 'sync_metadata', 'pending_records']);
+  return manager.idb.clearStores(['records_cache', 'profiles_cache', 'user_profile_cache', 'sync_metadata', 'pending_records']);
 };

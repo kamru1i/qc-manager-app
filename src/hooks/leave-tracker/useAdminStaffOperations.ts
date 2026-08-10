@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { isAdminRole } from '@/utils/permissionService';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 
 
 interface useAdminStaffOperationsParams {
@@ -14,7 +15,7 @@ interface useAdminStaffOperationsParams {
   profilesList: Profile[];
   setProfilesList: React.Dispatch<React.SetStateAction<Profile[]>>;
   setViewingStaffId: React.Dispatch<React.SetStateAction<string | null>>;
-  setMessage: (msg: { type: 'success' | 'error'; text: string } | null) => void;
+  setMessage: (msg: { type: 'success' | 'error', text: string } | null) => void;
   router: any;
   setApprovingIds?: React.Dispatch<React.SetStateAction<Set<string>>>;
   setApprovedIds?: React.Dispatch<React.SetStateAction<Set<string>>>;
@@ -33,6 +34,7 @@ export const useAdminStaffOperations = ({
   setApprovingIds,
   setApprovedIds,
 }: useAdminStaffOperationsParams) => {
+  const { emit } = useAppEventBus();
   // --- Welcome Onboarding Popup ---
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const [welcomePopupType, setWelcomePopupType] = useState<'onboarding' | 'password_reset'>('onboarding');
@@ -341,7 +343,7 @@ export const useAdminStaffOperations = ({
 
         setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
-        window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+        emit("profile-updated", { ...profile, ...updatedProfile });
         setMessage({ type: 'success', text: 'Your profile successfully updated!' });
         setShowProfileSettingsModal(false);
       } else {
@@ -443,7 +445,7 @@ export const useAdminStaffOperations = ({
 
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
-      window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+      emit("profile-updated", { ...profile, ...updatedProfile });
       setEditFullName(updatedProfile.full_name || '');
       setEditWorkingHours(Number(updatedProfile.working_hours || 9.5).toFixed(1));
       setEditBreakTime(String(updatedProfile.break_time || 0));
@@ -504,7 +506,7 @@ export const useAdminStaffOperations = ({
       const mergedProfile = { ...profile, ...updatedProfile } as Profile;
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(mergedProfile));
-      window.dispatchEvent(new CustomEvent("profile-updated", { detail: mergedProfile }));
+      emit("profile-updated", mergedProfile);
       setEditFullName(mergedProfile.full_name || '');
       setEditWorkingHours(Number(mergedProfile.working_hours || 9.5).toFixed(1));
       setEditBreakTime(String(mergedProfile.break_time || 0));

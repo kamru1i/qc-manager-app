@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import { MENU_TABS, CONFIGURABLE_ROLES } from '@/utils/menuTabsRegistry';
 import { isSuperadmin, isAdminRole, canAdminManageFeatureFlag } from '@/utils/permissionService';
 import { FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 
 export function useProfileSettingsHandlers(props: any, stateHook: any) {
+  const { emit } = useAppEventBus();
   const { profile, setProfile, sessionUser, profilesList, refreshProfiles } = props;
   const { state, dispatch, hasChanges, ...setters } = stateHook;
   const {
@@ -153,7 +155,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       if (sessionUser) {
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
       }
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
       toast.success('Supervisor access override updated!');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update supervisor access override');
@@ -205,7 +207,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       if (sessionUser) {
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
       }
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
       toast.success('VPN List updated successfully!');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update VPN List');
@@ -328,7 +330,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
 
         setProfile({ ...profile, ...updatedProfile });
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
-        window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+        emit("profile-updated", { ...profile, ...updatedProfile });
         await refreshProfiles({ force: true });
         toast.success('Your profile settings successfully updated!');
       } else {
@@ -355,7 +357,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
 
           setProfile({ ...profile, ...updatedProfile });
           localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
-          window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+          emit("profile-updated", { ...profile, ...updatedProfile });
           toast.success('Your profile settings successfully updated!');
         } else {
           // Check if profile fields (that require approval) changed
@@ -392,7 +394,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
 
           setProfile({ ...profile, ...updatedProfile });
           localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
-          window.dispatchEvent(new CustomEvent("profile-updated", { detail: { ...profile, ...updatedProfile } }));
+          emit("profile-updated", { ...profile, ...updatedProfile });
           await refreshProfiles({ force: true });
 
           if (hasProfileFieldChanges) {
@@ -430,7 +432,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       };
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
       toast.success('Sanitizer list updated.');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update sanitizer list.');
@@ -482,7 +484,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       };
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
     } catch (err: any) {
       toast.error(err.message || 'Failed to update tab access.');
     } finally {
@@ -533,7 +535,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       };
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
       await refreshProfiles({ force: true });
     } catch (err: any) {
       toast.error(err.message || 'Failed to update feature flag.');
@@ -575,7 +577,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       };
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
       toast.success(nextDelegated ? `Admin allowed to manage ${flagKey}` : `Admin access revoked for ${flagKey}`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to update admin delegation.');
@@ -611,7 +613,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       if (sessionUser?.id) {
         localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
       }
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
 
       // Refresh shared profiles context across app
       await refreshProfiles({ force: true });
@@ -637,7 +639,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       };
       setProfile(updatedProfile);
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify(updatedProfile));
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: updatedProfile }));
+      emit('profile-updated', updatedProfile);
     } catch (err: any) {
       toast.error(err.message || 'Failed to update temporary access.');
     } finally {

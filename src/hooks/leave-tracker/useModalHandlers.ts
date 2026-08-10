@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Profile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { isAdminRole } from '@/utils/permissionService';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 
 interface UseModalHandlersParams {
   profile: Profile | null;
@@ -132,6 +133,7 @@ export function useModalHandlers({
   setLastViewedTime,
   unreadUserNotificationsCount,
 }: UseModalHandlersParams) {
+  const { emit } = useAppEventBus();
 
   // Open "Add Leave" modal with default values
   const handleOpenAddLeaveModal = useCallback(() => {
@@ -176,15 +178,15 @@ export function useModalHandlers({
 
   // Open Profile Settings for self (from Navbar)
   const handleOpenProfileSettingsForSelf = useCallback(() => {
-    window.dispatchEvent(new CustomEvent("workspace-change", { detail: "profile_settings" }));
-  }, []);
+    emit("workspace-change", "profile_settings");
+  }, [emit]);
 
   // Open Profile Settings for a specific staff member (admin)
   const handleOpenProfileSettingsForStaff = useCallback((staff: Profile) => {
     sessionStorage.setItem("viewingStaffId", staff.id);
     sessionStorage.setItem("viewingStaffFromUserManagement", "true");
-    window.dispatchEvent(new CustomEvent("workspace-change", { detail: "user_management" }));
-  }, []);
+    emit("workspace-change", "user_management");
+  }, [emit]);
 
   // Open Credentials modal
   const handleOpenCredentialsModal = useCallback((userId: string, username: string) => {
@@ -206,8 +208,8 @@ export function useModalHandlers({
     const now = new Date().toISOString();
     localStorage.setItem('last_viewed_notifications_time', now);
     setLastViewedTime(now);
-    window.dispatchEvent(new CustomEvent('chuti-last-viewed-time-sync', { detail: now }));
-  }, [setShowUserNotificationsModal, setLastViewedTime]);
+    emit('chuti-last-viewed-time-sync', { timestamp: now });
+  }, [setShowUserNotificationsModal, setLastViewedTime, emit]);
 
   // Notification bell click (role-aware routing)
   const handleNotificationClick = useCallback(() => {

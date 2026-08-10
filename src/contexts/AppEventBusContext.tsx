@@ -14,10 +14,11 @@ export interface AppEventMap {
   'settings-subtab-change': { subtab: string } | string | any;
   'chuti-settings-changed': { subtab: string } | string | any;
   'workspace-change': string | any;
-  'chuti-last-viewed-time-sync': { timestamp: number };
+  'chuti-last-viewed-time-sync': { timestamp: number | string };
   'realtime-data-changed': void;
   'realtime-table-payload': { table: string; payload: unknown };
   'realtime-profile-payload': { payload: unknown };
+  'realtime-connection-status': { status: string };
   'profile-updated': any;
   'open-profile-settings': void;
   'trigger-manual-sync': void;

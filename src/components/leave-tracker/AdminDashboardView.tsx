@@ -13,7 +13,6 @@ import { Profile, ChutiRecordWithProfile, GovtHolidayResponse, LeaveSettlement }
 import { getDisplayRole, getRoleLabel } from '@/utils/permissionService';
 import { AdminSettlementsPanel } from '@/components/leave-tracker/AdminSettlementsPanel';
 import { ChutiRecord } from '@/utils/offlineSync';
-import { LeaveTypeSummaryProps } from '@/types/components';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { LeavesRecordsTable } from '@/components/leave-tracker/LeavesRecordsTable';
 import {
@@ -141,8 +140,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   setActiveTab: propSetActiveTab,
 }) => {
 
+  const { emit } = useAppEventBus();
 
-  
   const [localActiveTab, setLocalActiveTab] = React.useState<'govt_responses' | 'settlement'>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('adminActiveTab');

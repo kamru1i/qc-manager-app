@@ -1,23 +1,8 @@
 // TODO: AUDIT FIX M6 — Consolidate with quotesOfflineSync.ts into a generic OfflineSyncManager<T> factory.
 import { supabase } from './supabase';
-import { createIdbStore, generateUUID } from './idbStoreFactory';
+import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID } from './offlineSyncFactory';
 
 export { generateUUID };
-
-/** Maximum number of sync retries before a record is permanently dropped from the queue. */
-const MAX_SYNC_RETRIES = 3;
-
-/** Log a permanently failed record for observability (dead-letter). */
-function logDeadLetter(module: string, action: string, record: { localId?: string; id?: string; _retryCount?: number }, error: unknown) {
-  console.error(`[${module}] Dead-letter: permanently dropping ${action} after ${record._retryCount ?? 0} retries`, {
-    localId: record.localId,
-    remoteId: record.id,
-    action,
-    error: error instanceof Error ? error.message : String(error),
-    timestamp: new Date().toISOString(),
-  });
-}
-
 
 export interface AdminEditRequest {
   adjusted_hour?: string | null;
@@ -58,9 +43,10 @@ export interface ChutiRecord {
 
 const STORE_NAME = 'pending_chuti';
 
-const idb = createIdbStore({
+export const manager = createOfflineSyncManager<ChutiRecord>({
   dbName: 'ChutiOfflineDB',
   dbVersion: 3,
+  storeName: STORE_NAME,
   stores: {
     [STORE_NAME]: 'localId',
     profiles_cache: 'id',
@@ -72,28 +58,28 @@ const idb = createIdbStore({
   },
 });
 
+export const getOfflineRecords = manager.getOfflineRecords;
+export const deleteOfflineRecord = manager.deleteOfflineRecord;
+export const setCacheData = manager.setCacheData;
+export const getCacheData = manager.getCacheData;
+export const upsertCacheItem = manager.upsertCacheItem;
+export const mergeCacheData = manager.mergeCacheData;
+export const removeCacheItems = manager.removeCacheItems;
+export const getSyncTimestamp = manager.getSyncTimestamp;
+export const setSyncTimestamp = manager.setSyncTimestamp;
+export const purgeStaleCacheData = manager.purgeStaleCacheData;
+
 let isSyncing = false;
 
 // Save a record to IndexedDB
 export const saveOfflineRecord = async (record: Omit<ChutiRecord, 'localId' | 'synced'>): Promise<string> => {
-  const localId = generateUUID();
-  const newRecord: ChutiRecord = {
-    ...record,
-    localId,
-    synced: false,
-    action: 'insert',
-  };
-  await idb.addItem(STORE_NAME, newRecord);
-  return localId;
+  return manager.saveOfflineRecord(record as any);
 };
 
 // Save an update record to IndexedDB
 export const saveOfflineUpdate = async (id: string, updates: Partial<Omit<ChutiRecord, 'localId' | 'synced'>>): Promise<string> => {
-  const localId = generateUUID();
-  const newRecord: ChutiRecord = {
-    localId,
-    id,
-    user_id: '', // Dummy values to satisfy required fields
+  const dummyData = {
+    user_id: '',
     date: '',
     leave_type: '',
     adjustment: false,
@@ -102,34 +88,15 @@ export const saveOfflineUpdate = async (id: string, updates: Partial<Omit<ChutiR
     leave_hour: null,
     reserve_holiday: null,
     comment: null,
-    synced: false,
-    action: 'update',
     data: updates,
   };
-  await idb.addItem(STORE_NAME, newRecord);
-  return localId;
+  return manager.saveOfflineUpdate(id, dummyData as any);
 };
 
 // Save a delete action to IndexedDB (and clean up any pending updates for this ID)
 export const saveOfflineDelete = async (id: string): Promise<string> => {
-  // First, clean up any pending offline updates for this record to prevent redundant sync attempts
-  try {
-    const allRecords = await getOfflineRecords();
-    const pendingUpdates = allRecords.filter(r => r.id === id && r.action === 'update');
-    for (const r of pendingUpdates) {
-      if (r.localId) {
-        await deleteOfflineRecord(r.localId);
-      }
-    }
-  } catch (err) {
-    console.error('Failed to clean up pending updates before offline delete:', err);
-  }
-
-  const localId = generateUUID();
-  const newRecord: ChutiRecord = {
-    localId,
-    id,
-    user_id: '', // Dummy values to satisfy required fields
+  const dummyData = {
+    user_id: '',
     date: '',
     leave_type: '',
     adjustment: false,
@@ -138,21 +105,8 @@ export const saveOfflineDelete = async (id: string): Promise<string> => {
     leave_hour: null,
     reserve_holiday: null,
     comment: null,
-    synced: false,
-    action: 'delete',
   };
-  await idb.addItem(STORE_NAME, newRecord);
-  return localId;
-};
-
-// Retrieve all unsynced local records
-export const getOfflineRecords = async (): Promise<ChutiRecord[]> => {
-  return idb.getAllItems<ChutiRecord>(STORE_NAME);
-};
-
-// Delete a single record from IndexedDB
-export const deleteOfflineRecord = async (localId: string): Promise<void> => {
-  return idb.deleteItem(STORE_NAME, localId);
+  return manager.saveOfflineDelete(id, dummyData as any);
 };
 
 // Conflict info returned to the caller for UI notification
@@ -227,7 +181,7 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
             logDeadLetter('OfflineSync', 'delete', { ...record, _retryCount: retries }, deleteError);
             await deleteOfflineRecord(record.localId);
           } else if (record.localId) {
-            await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+            await manager.idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
           }
           continue;
         }
@@ -278,7 +232,7 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
             logDeadLetter('OfflineSync', 'update', { ...record, _retryCount: retries }, updateError);
             await deleteOfflineRecord(record.localId);
           } else if (record.localId) {
-            await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+            await manager.idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
           }
           continue;
         }
@@ -318,7 +272,7 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
               logDeadLetter('OfflineSync', 'insert', { ...record, _retryCount: retries }, insertError);
               await deleteOfflineRecord(record.localId);
             } else if (record.localId) {
-              await idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
+              await manager.idb.putItem(STORE_NAME, { ...record, _retryCount: retries });
             }
             continue;
           }
@@ -354,52 +308,12 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
   }
 };
 
-// Clear and save list to cache
-export const setCacheData = async (storeName: string, data: any[]): Promise<void> => {
-  return idb.setCacheData(storeName, data);
-};
-
-// Retrieve list from cache
-export const getCacheData = async (storeName: string): Promise<any[]> => {
-  return idb.getAllItems(storeName);
-};
-
-// Upsert a single item into a cache store without clearing existing data
-export const upsertCacheItem = async (storeName: string, item: any): Promise<void> => {
-  return idb.putItem(storeName, item);
-};
-
-// Merge new data into cache without clearing — upserts each item individually
-export const mergeCacheData = async (storeName: string, data: any[]): Promise<void> => {
-  return idb.mergeCacheData(storeName, data);
-};
-
-// Remove a set of items (by key) from a cache store. Used to purge rows that
-// were soft-deleted on the server (deleted_at is set) from the local cache.
-export const removeCacheItems = async (storeName: string, keys: string[]): Promise<void> => {
-  return idb.removeCacheItems(storeName, keys);
-};
-
-// Delta Sync metadata helpers
-export const getSyncTimestamp = async (tableName: string): Promise<string | null> => {
-  return idb.getSyncTimestamp(tableName);
-};
-
-export const setSyncTimestamp = async (tableName: string, timestamp: string): Promise<void> => {
-  return idb.setSyncTimestamp(tableName, timestamp);
-};
-
-// TTL Cache Purge — remove records older than maxAgeDays from a cache store
-export const purgeStaleCacheData = async (storeName: string, dateField: string, maxAgeDays: number = 730): Promise<number> => {
-  return idb.purgeStaleCacheData(storeName, dateField, maxAgeDays);
-};
-
 // Global Settings cache helpers
 export const setGlobalSettingsCache = async (settings: any): Promise<void> => {
-  return idb.putItem('global_settings_cache', { key: 'settings', value: settings });
+  return manager.idb.putItem('global_settings_cache', { key: 'settings', value: settings });
 };
 
 export const getGlobalSettingsCache = async (): Promise<any | null> => {
-  const result = await idb.getItem<{ value: any }>('global_settings_cache', 'settings');
+  const result = await manager.idb.getItem<{ value: any }>('global_settings_cache', 'settings');
   return result ? result.value : null;
 };

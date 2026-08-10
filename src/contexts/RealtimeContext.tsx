@@ -5,6 +5,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 import { canAccessModule, isAdminRole } from '@/utils/permissionService';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ interface RealtimeProviderProps {
  * created.
  */
 export function RealtimeProvider({ children, sessionUser, profile }: RealtimeProviderProps) {
+  const { emit } = useAppEventBus();
   // Map<table, Set<handler>> — mutable ref so the channel callback always
   // reads the latest set of handlers without re-creating the channel.
   const handlersRef = useRef<Map<RealtimeTable, Set<RealtimeHandler>>>(new Map());
@@ -207,13 +209,13 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
 
           if (status === 'SUBSCRIBED') {
             resubscribeAttempt = 0;
-            window.dispatchEvent(new CustomEvent('realtime-connection-status', { detail: 'connected' }));
+            emit('realtime-connection-status', { status: 'connected' });
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             // Socket-level drops surface here; phoenix auto-rejoins errored
             // channels with its own backoff once the socket reconnects, so no
             // manual action — just report. err is only populated for these.
             console.warn(`[RealtimeProvider] unified channel connection status changed: ${status}`, err);
-            window.dispatchEvent(new CustomEvent('realtime-connection-status', { detail: 'disconnected' }));
+            emit('realtime-connection-status', { status: 'disconnected' });
           } else if (status === 'CLOSED') {
             // CLOSED with active still true = the server/service closed the
             // channel (restart, auth expiry), NOT our own cleanup (which flips
@@ -221,7 +223,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             // socket and never rejoins them, so without this the app would
             // silently lose realtime until remount. Note: the library passes
             // no error argument for CLOSED — nothing useful to log there.
-            window.dispatchEvent(new CustomEvent('realtime-connection-status', { detail: 'disconnected' }));
+            emit('realtime-connection-status', { status: 'disconnected' });
 
             const delay = Math.min(3000 * 2 ** resubscribeAttempt, 60000);
             resubscribeAttempt += 1;
