@@ -9,9 +9,9 @@ import {
   getOfflineRecords, 
   saveOfflineDelete, 
   deleteOfflineRecord,
-  generateUUID,
   removeCacheItems
 } from '@/utils/offlineSync';
+import { generateUUID } from '@/utils/idbStoreFactory';
 import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError, getMaxDaysInMonth } from '@/utils/dashboardHelpers';
 import { toast } from 'sonner';
 import { isAdminRole } from '@/utils/permissionService';

@@ -19,7 +19,8 @@ import {
   applyBreakComment,
   getMaxDaysInMonth
 } from "@/utils/dashboardHelpers";
-import { ChutiRecord, generateUUID } from "@/utils/offlineSync";
+import { ChutiRecord } from "@/utils/offlineSync";
+import { generateUUID } from '@/utils/idbStoreFactory';
 
 import { toast } from "sonner";
 import { LeaveUsageSummary } from "@/components/leave-tracker/LeaveUsageSummary";

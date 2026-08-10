@@ -1,10 +1,8 @@
 // Chuti offline sync module — uses shared offlineSyncFactory for IDB operations
 import { supabase } from './supabase';
-import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID, SyncConflict } from './offlineSyncFactory';
+import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, SyncConflict } from './offlineSyncFactory';
 
 export type { SyncConflict };
-
-export { generateUUID };
 
 export interface AdminEditRequest {
   adjusted_hour?: string | null;

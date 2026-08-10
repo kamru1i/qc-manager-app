@@ -1,0 +1,121 @@
+▲ Next.js 16.2.11 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 4 errors:
+./src/utils/excelExporters.ts:20:6
+Expected ',', got ';'
+  [90m18 |[0m       filterEndDate?: string;
+  [90m19 |[0m       searchTerm?: string;
+[31m[1m>[0m [90m20 |[0m     };
+  [90m   |[0m      [31m[1m^[0m
+  [90m21 |[0m     onSuccess: () => [36mvoid[0m,
+  [90m22 |[0m     onError: (msg: string) => [36mvoid[0m
+  [90m23 |[0m   ) => {
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/utils/excelExporters.ts [Client Component Browser]
+    ./src/utils/exportHelper.ts [Client Component Browser]
+    ./src/hooks/leave-tracker/useExportOperations.ts [Client Component Browser]
+    ./src/app/chuti/page.tsx [Client Component Browser]
+    ./src/app/chuti/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/utils/excelExporters.ts [Client Component SSR]
+    ./src/utils/exportHelper.ts [Client Component SSR]
+    ./src/hooks/leave-tracker/useExportOperations.ts [Client Component SSR]
+    ./src/app/chuti/page.tsx [Client Component SSR]
+    ./src/app/chuti/page.tsx [Server Component]
+
+
+./src/utils/pdfExporters.ts:19:6
+Expected ',', got ';'
+  [90m17 |[0m       filterEndDate?: string;
+  [90m18 |[0m       searchTerm?: string;
+[31m[1m>[0m [90m19 |[0m     };
+  [90m   |[0m      [31m[1m^[0m
+  [90m20 |[0m     onSuccess: () => [36mvoid[0m,
+  [90m21 |[0m     onError: (msg: string) => [36mvoid[0m
+  [90m22 |[0m   ) => {
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/utils/pdfExporters.ts [Client Component Browser]
+    ./src/utils/exportHelper.ts [Client Component Browser]
+    ./src/hooks/leave-tracker/useExportOperations.ts [Client Component Browser]
+    ./src/app/chuti/page.tsx [Client Component Browser]
+    ./src/app/chuti/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/utils/pdfExporters.ts [Client Component SSR]
+    ./src/utils/exportHelper.ts [Client Component SSR]
+    ./src/hooks/leave-tracker/useExportOperations.ts [Client Component SSR]
+    ./src/app/chuti/page.tsx [Client Component SSR]
+    ./src/app/chuti/page.tsx [Server Component]
+
+
+./src/utils/settlementHelpers.ts:1:1
+Export generateUUID doesn't exist in target module
+[31m[1m>[0m [90m1 |[0m [36mimport[0m { [33mChutiRecord[0m, generateUUID } [36mfrom[0m [32m'@/utils/offlineSync'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m2 |[0m [36mimport[0m { [33mLeaveSettlement[0m } [36mfrom[0m [32m'@/types'[0m;
+  [90m3 |[0m [36mimport[0m { formatDaysAndHours, parseIntervalToMinutes } [36mfrom[0m [32m'./leaveCalculations'[0m;
+  [90m4 |[0m
+
+The export generateUUID was not found in module [project]/src/utils/offlineSync.ts [app-client] (ecmascript).
+Did you mean to import mergeCacheData?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/utils/settlementHelpers.ts [Client Component Browser]
+    ./src/hooks/leave-tracker/useAdjustmentOperations.ts [Client Component Browser]
+    ./src/app/chuti/page.tsx [Client Component Browser]
+    ./src/app/chuti/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/utils/settlementHelpers.ts [Client Component SSR]
+    ./src/hooks/leave-tracker/useAdjustmentOperations.ts [Client Component SSR]
+    ./src/app/chuti/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+
+
+./src/utils/settlementHelpers.ts:1:1
+Export generateUUID doesn't exist in target module
+[31m[1m>[0m [90m1 |[0m [36mimport[0m { [33mChutiRecord[0m, generateUUID } [36mfrom[0m [32m'@/utils/offlineSync'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m2 |[0m [36mimport[0m { [33mLeaveSettlement[0m } [36mfrom[0m [32m'@/types'[0m;
+  [90m3 |[0m [36mimport[0m { formatDaysAndHours, parseIntervalToMinutes } [36mfrom[0m [32m'./leaveCalculations'[0m;
+  [90m4 |[0m
+
+The export generateUUID was not found in module [project]/src/utils/offlineSync.ts [app-ssr] (ecmascript).
+Did you mean to import mergeCacheData?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/utils/settlementHelpers.ts [Client Component Browser]
+    ./src/hooks/leave-tracker/useAdjustmentOperations.ts [Client Component Browser]
+    ./src/app/chuti/page.tsx [Client Component Browser]
+    ./src/app/chuti/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/utils/settlementHelpers.ts [Client Component SSR]
+    ./src/hooks/leave-tracker/useAdjustmentOperations.ts [Client Component SSR]
+    ./src/app/chuti/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (./src/utils/excelExporters.ts:20:6)
+    at <unknown> (./src/utils/pdfExporters.ts:19:6)
+    at <unknown> (./src/utils/settlementHelpers.ts:1:1)
+    at <unknown> (./src/utils/settlementHelpers.ts:1:1)

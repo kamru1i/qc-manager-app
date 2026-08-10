@@ -1,11 +1,9 @@
 // Quotes offline sync module — uses shared offlineSyncFactory for IDB operations
 import { supabase } from './supabase';
 import { RecordItem, FileType } from '@/types';
-import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, generateUUID, SyncConflict } from './offlineSyncFactory';
+import { createOfflineSyncManager, logDeadLetter, MAX_SYNC_RETRIES, SyncConflict } from './offlineSyncFactory';
 
 export type { SyncConflict };
-
-export { generateUUID };
 
 export interface PendingRecordAction {
   localId?: string; // local temporary UUID key

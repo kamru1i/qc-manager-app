@@ -1,7 +1,5 @@
 import { createIdbStore, generateUUID } from './idbStoreFactory';
 
-export { generateUUID };
-
 export const MAX_SYNC_RETRIES = 3;
 
 /** Conflict info returned to the caller for UI notification */

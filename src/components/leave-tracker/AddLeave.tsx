@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, AlertTriangle, User, Calendar } from 'lucide-react';
 import { Profile, GovtHolidayResponse, LeaveSettlement } from '@/types';
-import { ChutiRecord, generateUUID, AdminEditRequest } from '@/utils/offlineSync';
+import { ChutiRecord, AdminEditRequest } from '@/utils/offlineSync';
+import { generateUUID } from '@/utils/idbStoreFactory';
 import { supabase } from '@/utils/supabase';
 import {
   calculateStats,

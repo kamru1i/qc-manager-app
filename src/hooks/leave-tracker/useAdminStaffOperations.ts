@@ -113,24 +113,26 @@ export const useAdminStaffOperations = ({
 
   const lastInitializedProfileIdRef = useRef<string | null>(null);
 
-  // Synchronize first-time setup modal states during render to prevent 1-frame flashes
-  const [prevProfileState, setPrevProfileState] = useState<Profile | null>(null);
+  // Synchronize first-time setup modal states when profile changes
+  const prevProfileRef = useRef<Profile | null>(null);
 
-  if (profile !== prevProfileState) {
-    setPrevProfileState(profile);
-    if (profile) {
-      if (profile.has_changed_password === false) {
-        setShowFirstTimePasswordModal(true);
-        setShowOnboardingModal(false);
-      } else if (!profile.is_setup_completed) {
-        setShowFirstTimePasswordModal(false);
-        setShowOnboardingModal(true);
-      } else {
-        setShowFirstTimePasswordModal(false);
-        setShowOnboardingModal(false);
+  useEffect(() => {
+    if (profile !== prevProfileRef.current) {
+      prevProfileRef.current = profile;
+      if (profile) {
+        if (profile.has_changed_password === false) {
+          setShowFirstTimePasswordModal(true);
+          setShowOnboardingModal(false);
+        } else if (!profile.is_setup_completed) {
+          setShowFirstTimePasswordModal(false);
+          setShowOnboardingModal(true);
+        } else {
+          setShowFirstTimePasswordModal(false);
+          setShowOnboardingModal(false);
+        }
       }
     }
-  }
+  }, [profile]);
 
   // Sync state values on profile change
   useEffect(() => {
