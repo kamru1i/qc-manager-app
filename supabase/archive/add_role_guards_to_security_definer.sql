@@ -1,0 +1,23 @@
+-- ============================================================================
+-- DEPRECATED — DO NOT RUN
+-- ============================================================================
+--
+-- This migration has been SUPERSEDED by the baseline migration:
+--   supabase/migrations/20260811074118_remote_schema.sql
+--
+-- Original purpose: Add role guards to SECURITY DEFINER functions
+--   (archive_and_prune_old_records, get_leaderboard_data)
+--
+-- Why deprecated: All changes from this file have been incorporated into
+-- the production database and captured in the baseline migration.
+-- Running this file could conflict with later migrations that modify
+-- the same functions (e.g., fix_leaderboard_sargable.sql for H6).
+--
+-- The canonical versions of all functions are now tracked via the
+-- Supabase migration framework in supabase/migrations/.
+--
+-- ARCHIVED: 2026-08-11 during migration framework setup.
+-- ============================================================================
+
+-- No-op: All objects are managed via supabase/migrations/ now.
+-- DO NOT add any CREATE OR REPLACE statements to this file.

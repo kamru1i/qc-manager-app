@@ -1,0 +1,47 @@
+-- ============================================================================
+-- BASELINE MIGRATION — QC Manager App
+-- ============================================================================
+--
+-- Date: 2026-08-11
+-- Purpose: This is the initial baseline migration that captures the current
+--          production database state. All tables, functions, policies, indexes,
+--          triggers, and grants that exist in the live database are considered
+--          part of this baseline.
+--
+-- This file is intentionally a NO-OP because all database objects already
+-- exist in the production database. Its purpose is to:
+--   1. Establish a starting point for the Supabase migration history
+--   2. Mark the "migration zero" timestamp so future migrations are tracked
+--   3. Prevent `db push` from trying to re-apply already-deployed changes
+--
+-- The full schema reference is maintained in: supabase/schema.sql (pg_dump)
+--
+-- Objects included in this baseline (already live):
+--   Tables:   profiles, records, chuti, holidays, govt_holiday_responses,
+--             leave_settlements, todos, dismissed_notifications,
+--             quotation_mistakes
+--   Functions: check_profile_updates(), is_admin(), is_supervisor(),
+--             is_superadmin(), has_leave_access(),
+--             admin_update_user_credentials(), get_leaderboard_data(),
+--             get_admin_sales_summary(), get_user_email_by_username(),
+--             archive_and_prune_old_records(), update_global_settings_key()
+--   Indexes:  idx_records_submitted_at, idx_records_sale_submitted,
+--             idx_records_user_submitted, uq_records_user_file_submitted
+--   RLS:      All role-based policies on all tables (audit-hardened)
+--   Triggers: check_profile_updates on profiles (BEFORE UPDATE)
+--
+-- Audit fixes included in this baseline:
+--   C1: global_settings key-level restrictions
+--   C2: quotation_mistakes role-based RLS
+--   C3: Deprecated conflicting migration file
+--   C4: get_user_email_by_username REVOKE from anon/authenticated
+--   H1: Supervisor admin password reset hierarchy guard
+--   H2: Records RLS team-scoping via has_leave_access()
+--   H3: Supervisor blocked from modifying admin/superadmin profiles
+--   H6: Sargable get_leaderboard_data() with UTC timestamp boundaries
+--   H7: Admin role guard on get_admin_sales_summary()
+--   M9: Atomic JSONB update via update_global_settings_key()
+-- ============================================================================
+
+-- No-op: All objects already exist in the production database.
+-- This migration exists solely to establish the migration history baseline.
