@@ -26,6 +26,11 @@ export interface LeaderboardUser {
   rank: number;
 }
 
+let _leaderboardCache: {
+  key: string;
+  data: LeaderboardUser[];
+} | null = null;
+
 const REALTIME_THROTTLE_MS = 2000;
 
 const monthsList = [
@@ -46,12 +51,25 @@ const monthsList = [
 export const useLeaderboardData = (currentProfile: Profile | null) => {
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<'monthly' | 'yearly'>('monthly');
   
+  const currentYearStr = new Date().getFullYear().toString();
+  
   // Default strictly to current month and current year
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear().toString());
+  const [selectedYear, setSelectedYear] = useState(() => currentYearStr);
   const [selectedMonth, setSelectedMonth] = useState(() => String(new Date().getMonth() + 1).padStart(2, '0'));
 
-  const [rawLeaderboardData, setRawLeaderboardData] = useState<LeaderboardUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const getCacheKey = useCallback(() => {
+    return `${leaderboardPeriod}_${selectedYear}_${leaderboardPeriod === 'monthly' ? selectedMonth : 'all'}`;
+  }, [leaderboardPeriod, selectedYear, selectedMonth]);
+
+  const [rawLeaderboardData, setRawLeaderboardData] = useState<LeaderboardUser[]>(() => {
+    const key = `${leaderboardPeriod}_${currentYearStr}_${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    return _leaderboardCache?.key === key ? _leaderboardCache.data : [];
+  });
+  
+  const [loading, setLoading] = useState(() => {
+    const key = `${leaderboardPeriod}_${currentYearStr}_${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    return _leaderboardCache?.key !== key;
+  });
   const [error, setError] = useState<string | null>(null);
 
   // Search filter
@@ -65,8 +83,6 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // table instead of the live RPC.
   const [archiveYears, setArchiveYears] = useState<string[]>([]);
 
-  const currentYearStr = new Date().getFullYear().toString();
-  // Yearly mode + a year older than the 2-year live window = archived path.
   const isArchivedYear =
     leaderboardPeriod === 'yearly' &&
     selectedYear !== currentYearStr &&
@@ -126,6 +142,10 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       }));
 
       setRawLeaderboardData(mappedData);
+      _leaderboardCache = {
+        key: getCacheKey(),
+        data: mappedData,
+      };
       setError(null);
     } catch (err: any) {
       console.error('Error fetching leaderboard data:', err);
@@ -134,7 +154,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [selectedYear, selectedMonth, currentProfile]);
+  }, [selectedYear, selectedMonth, currentProfile?.id]);
 
   // Fetch unique month/year dates that contain submitted records
   const fetchAvailableDates = useCallback(async () => {
@@ -164,8 +184,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // Load a pruned year's leaderboard from the archive snapshot table. Ranks
   // are already frozen at prune time; today's/monthly counts don't exist for
   // archived years, so they surface as 0 (yearly total is the ranking basis).
-  const fetchArchivedYearData = useCallback(async (year: string) => {
-    setLoading(true);
+  const fetchArchivedYearData = useCallback(async (year: string, isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const { data, error: archErr } = await recordsService.getLeaderboardArchive(Number(year));
       if (archErr) throw archErr;
@@ -191,6 +211,10 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       }));
 
       setRawLeaderboardData(mappedData);
+      _leaderboardCache = {
+        key: getCacheKey(),
+        data: mappedData,
+      };
       setError(null);
     } catch (err: any) {
       console.error('Error fetching archived leaderboard data:', err);
@@ -198,17 +222,18 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getCacheKey]);
 
   // Load leaderboard: archived years read the snapshot table, everything else
   // hits the live RPC. Re-runs when the year/period selection changes.
   useEffect(() => {
+    const isCached = _leaderboardCache?.key === getCacheKey();
     if (isArchivedYear) {
-      fetchArchivedYearData(selectedYear);
+      fetchArchivedYearData(selectedYear, isCached);
     } else {
-      fetchLeaderboard();
+      fetchLeaderboard(isCached);
     }
-  }, [isArchivedYear, selectedYear, fetchArchivedYearData, fetchLeaderboard]);
+  }, [isArchivedYear, selectedYear, fetchArchivedYearData, fetchLeaderboard, getCacheKey]);
 
   useEffect(() => {
     fetchAvailableDates();
