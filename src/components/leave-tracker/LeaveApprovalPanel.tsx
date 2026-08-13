@@ -20,7 +20,7 @@ interface LeaveApprovalPanelProps {
 
   // Leave Request Handlers (used for both admin and supervisor)
   groupedChutiRequests: BulkRepresentative[];
-  handleApproveChutiRequest: (id: string, approve: boolean) => void;
+  handleApproveChutiRequest: (id: string, approve: boolean, allBulkIds?: string[]) => void;
 
   // Admin-only Props & Handlers
   pendingReserveRequests?: ChutiRecordWithProfile[];
@@ -424,7 +424,7 @@ export function LeaveApprovalPanel({
 
             <div className="flex md:flex-col justify-end items-end gap-2 shrink-0 font-sans pl-2">
               <button
-                onClick={() => handleApproveChutiRequest(r.id, false)}
+                onClick={() => handleApproveChutiRequest(r.id, false, r.all_bulk_ids)}
                 disabled={reviewingIds.has(r.id) || approvedIds.has(r.id)}
                 className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
@@ -436,7 +436,7 @@ export function LeaveApprovalPanel({
                   : "Needs Review"}
               </button>
               <button
-                onClick={() => handleApproveChutiRequest(r.id, true)}
+                onClick={() => handleApproveChutiRequest(r.id, true, r.all_bulk_ids)}
                 disabled={approvingIds.has(r.id) || approvedIds.has(r.id)}
                 className="px-3 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
               >
@@ -657,7 +657,7 @@ export function LeaveApprovalPanel({
               ) : (
                 <>
                   <button
-                    onClick={() => handleApproveChutiRequest(r.id, false)}
+                    onClick={() => handleApproveChutiRequest(r.id, false, r.all_bulk_ids)}
                     disabled={reviewingIds.has(r.id) || approvedIds.has(r.id)}
                     className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   >
@@ -669,7 +669,7 @@ export function LeaveApprovalPanel({
                       : "Needs Review"}
                   </button>
                   <button
-                    onClick={() => handleApproveChutiRequest(r.id, true)}
+                    onClick={() => handleApproveChutiRequest(r.id, true, r.all_bulk_ids)}
                     disabled={approvingIds.has(r.id) || approvedIds.has(r.id)}
                     className="px-3 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
                   >

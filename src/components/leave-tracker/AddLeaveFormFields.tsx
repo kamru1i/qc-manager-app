@@ -134,6 +134,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
   const leaveTypeOptions = [
     { value: "Short Leave", label: "Short Leave" },
+    { value: "Early Leave", label: "Early Leave" },
     { value: "Full Leave", label: "Full Leave" },
     ...(allowOvertime ? [{ value: "Overtime", label: "Overtime" }] : []),
   ];
@@ -307,21 +308,18 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               <button
                 type="button"
                 onClick={handleAddBulkDate}
-                className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer shrink-0 border border-blue-700 shadow-md"
+                className="px-3 py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 border border-blue-500/20 shadow-sm"
                 title="Add more dates"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3.5 w-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Add Date</span>
               </button>
             )}
           </div>
           {duplicateRecord && (
             <p className="text-red-500 font-semibold text-[10px] mt-1.5 leading-snug">
               ⚠️ Duplicate! {formatDate(date)} is already added as{" "}
-              {duplicateRecord.leave_type === "Full Leave"
-                ? "Full Leave"
-                : duplicateRecord.leave_type === "Short Leave"
-                  ? "Short Leave"
-                  : "Overtime"}
+              {duplicateRecord.leave_type}
             </p>
           )}
         </div>
@@ -383,11 +381,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                   {bulkDup && (
                     <p className="text-red-500 font-semibold text-[10px] ml-6 leading-snug">
                       ⚠️ Duplicate! {formatDate(bulkDate)} is already added as{" "}
-                      {bulkDup.leave_type === "Full Leave"
-                        ? "Full Leave"
-                        : bulkDup.leave_type === "Short Leave"
-                          ? "Short Leave"
-                          : "Overtime"}
+                      {bulkDup.leave_type}
                     </p>
                   )}
                 </div>
@@ -522,7 +516,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         )}
 
         {/* Short Leave Adjustment toggles */}
-        {leaveType === "Short Leave" &&
+        {["Short Leave", "Early Leave"].includes(leaveType) &&
           reserveClaimingEnabled &&
           (govtHolidayRemaining > 0 ||
             eidFitrRemaining > 0 ||
@@ -668,13 +662,13 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TimeInput
-              label="Sign-in"
+              label={leaveType === "Short Leave" ? "Leave Start Time" : "Sign-in"}
               required
               value={signInTime}
               onChange={setSignInTime}
             />
             <TimeInput
-              label="Sign-out"
+              label={leaveType === "Short Leave" ? "Leave End Time" : leaveType === "Early Leave" ? "Leave Time" : "Sign-out"}
               required
               value={signOutTime}
               onChange={setSignOutTime}
@@ -682,7 +676,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           </div>
 
           {/* Jummah Prayer Adjustment Toggle (Short Leave, Fridays only) */}
-          {leaveType === "Short Leave" && isFriday(date) && jummahEnabled && (
+          {["Short Leave", "Early Leave"].includes(leaveType) && isFriday(date) && jummahEnabled && (
             <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
               <div>
                 <span className="block text-xs font-semibold text-theme-text-primary font-sans">
@@ -710,7 +704,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
           {/* Break Time (Short Leave only, when signed in more than 1 hour late).
               Break counts as short leave, so it is added to the calculated hours. */}
-          {leaveType === "Short Leave" && breakEligible && (
+          {["Short Leave", "Early Leave"].includes(leaveType) && breakEligible && (
             <div className="space-y-2 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted">
               <div className="flex items-center justify-between">
                 <div>
@@ -779,9 +773,10 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
             <input
               type="text"
               required
+              readOnly
+              disabled
               value={leaveHour}
-              onChange={(e) => setLeaveHour(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-blue-400 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-theme-page-bg/50 border border-theme-border-input rounded-lg text-blue-400 font-mono text-xs focus:outline-none cursor-not-allowed opacity-80"
             />
             {validationError && (
               <div className="mt-1 text-xs text-rose-500 font-semibold font-sans">

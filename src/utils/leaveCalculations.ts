@@ -282,6 +282,12 @@ export const calculateLeaveOrOvertime = (
   const actualEndMins = getShiftRelativeMins(actualEnd);
 
   if (type === 'Short Leave') {
+    let leaveDuration = actualEndMins - actualStartMins;
+    if (leaveDuration < 0) {
+      leaveDuration += 24 * 60;
+    }
+    return formatDuration(leaveDuration);
+  } else if (type === 'Early Leave') {
     let worked = actualEndMins - actualStartMins;
     if (worked < 0) {
       worked += 24 * 60;

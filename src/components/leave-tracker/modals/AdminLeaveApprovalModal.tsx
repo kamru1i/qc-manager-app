@@ -15,7 +15,7 @@ interface AdminLeaveApprovalModalProps {
   reviewingIds: Set<string>;
   approvedIds: Set<string>;
   approvingIds: Set<string>;
-  handleApproveChutiRequest: (id: string, approve: boolean) => void;
+  handleApproveChutiRequest: (id: string, approve: boolean, allBulkIds?: string[]) => void;
   pendingReserveRequests: ChutiRecordWithProfile[];
   handleApproveReserveAdjustment: (
     record: ChutiRecordWithProfile,

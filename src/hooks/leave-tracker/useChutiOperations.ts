@@ -107,9 +107,10 @@ export const useChutiOperations = ({
 
   // --- Supervisor Revision Prompt States ---
   const [showRevisionPromptModal, setShowRevisionPromptModal] = useState(false);
-  const [revisionPromptText, setRevisionPromptText] = useState('');
   const [revisionPromptChutiId, setRevisionPromptChutiId] = useState<string | null>(null);
+  const [revisionPromptAllBulkIds, setRevisionPromptAllBulkIds] = useState<string[] | undefined>(undefined);
   const [revisionPromptIsSupervisor, setRevisionPromptIsSupervisor] = useState(false);
+  const [revisionPromptText, setRevisionPromptText] = useState('');
   const [submittingRevision, setSubmittingRevision] = useState(false);
 
 
@@ -742,15 +743,20 @@ export const useChutiOperations = ({
     setReviewingIds(prev => new Set(prev).add(chutiId));
 
     try {
-      const isBulk = chutiId.startsWith('bulk-');
-      const bulkId = isBulk ? chutiId.replace('bulk-', '') : null;
-
       let targets: ChutiRecordWithProfile[] = [];
-      if (isBulk) {
-        targets = adminRecords.filter(r => r.bulk_id === bulkId);
+      const allBulkIds = revisionPromptAllBulkIds;
+      if (allBulkIds && allBulkIds.length > 0) {
+        targets = adminRecords.filter(r => allBulkIds.includes(r.id)) as ChutiRecordWithProfile[];
       } else {
-        const target = (adminRecords.find(r => r.id === chutiId) || userRecords.find(r => r.id === chutiId)) as ChutiRecordWithProfile | undefined;
-        if (target) targets = [target];
+        const isBulk = chutiId.startsWith('bulk-');
+        const bulkId = isBulk ? chutiId.replace('bulk-', '') : null;
+
+        if (isBulk) {
+          targets = adminRecords.filter(r => r.bulk_id === bulkId);
+        } else {
+          const target = (adminRecords.find(r => r.id === chutiId) || userRecords.find(r => r.id === chutiId)) as ChutiRecordWithProfile | undefined;
+          if (target) targets = [target];
+        }
       }
 
       if (targets.length === 0) throw new Error('Record not found.');
@@ -803,11 +809,12 @@ export const useChutiOperations = ({
   };
 
   // Supervisor Approvals
-  const handleSupervisorApproveChuti = async (chutiId: string, approve: boolean) => {
+  const handleSupervisorApproveChuti = async (chutiId: string, approve: boolean, allBulkIds?: string[]) => {
     if (approve) {
       setApprovingIds(prev => new Set(prev).add(chutiId));
     } else {
       setRevisionPromptChutiId(chutiId);
+      setRevisionPromptAllBulkIds(allBulkIds);
       setRevisionPromptIsSupervisor(true);
       setRevisionPromptText('');
       setShowRevisionPromptModal(true);
@@ -815,15 +822,20 @@ export const useChutiOperations = ({
     }
 
     try {
-      const isBulk = chutiId.startsWith('bulk-');
-      const bulkId = isBulk ? chutiId.replace('bulk-', '') : null;
-
       let targets: ChutiRecordWithProfile[] = [];
-      if (isBulk) {
-        targets = adminRecords.filter(r => r.bulk_id === bulkId);
+      
+      if (allBulkIds && allBulkIds.length > 0) {
+        targets = adminRecords.filter(r => allBulkIds.includes(r.id)) as ChutiRecordWithProfile[];
       } else {
-        const target = (adminRecords.find(r => r.id === chutiId) || userRecords.find(r => r.id === chutiId)) as ChutiRecordWithProfile | undefined;
-        if (target) targets = [target];
+        const isBulk = chutiId.startsWith('bulk-');
+        const bulkId = isBulk ? chutiId.replace('bulk-', '') : null;
+
+        if (isBulk) {
+          targets = adminRecords.filter(r => r.bulk_id === bulkId);
+        } else {
+          const target = (adminRecords.find(r => r.id === chutiId) || userRecords.find(r => r.id === chutiId)) as ChutiRecordWithProfile | undefined;
+          if (target) targets = [target];
+        }
       }
 
       if (targets.length === 0) throw new Error('Record not found.');
@@ -869,7 +881,7 @@ export const useChutiOperations = ({
         updateLocalState();
       }, 1500);
 
-      setMessage({ type: 'success', text: 'The leave request has been successfully approved by the supervisor.' });
+      setMessage({ type: 'success', text: 'Leave verified and forwarded to Admin successfully.' });
     } catch (err) {
       setApprovingIds(prev => { const s = new Set(prev); s.delete(chutiId); return s; });
       setMessage({ type: 'error', text: 'Failed to approve: ' + (err as Error).message });
@@ -877,11 +889,12 @@ export const useChutiOperations = ({
   };
 
   // Admin Approvals
-  const handleApproveChutiRequest = async (chutiId: string, approve: boolean) => {
+  const handleApproveChutiRequest = async (chutiId: string, approve: boolean, allBulkIds?: string[]) => {
     if (approve) {
       setApprovingIds(prev => new Set(prev).add(chutiId));
     } else {
       setRevisionPromptChutiId(chutiId);
+      setRevisionPromptAllBulkIds(allBulkIds);
       setRevisionPromptIsSupervisor(false);
       setRevisionPromptText('');
       setShowRevisionPromptModal(true);
@@ -889,15 +902,20 @@ export const useChutiOperations = ({
     }
 
     try {
-      const isBulk = chutiId.startsWith('bulk-');
-      const bulkId = isBulk ? chutiId.replace('bulk-', '') : null;
-
       let targets: ChutiRecordWithProfile[] = [];
-      if (isBulk) {
-        targets = adminRecords.filter(r => r.bulk_id === bulkId);
+      
+      if (allBulkIds && allBulkIds.length > 0) {
+         targets = adminRecords.filter(r => allBulkIds.includes(r.id)) as ChutiRecordWithProfile[];
       } else {
-        const target = (adminRecords.find(r => r.id === chutiId) || userRecords.find(r => r.id === chutiId)) as ChutiRecordWithProfile | undefined;
-        if (target) targets = [target];
+        const isBulk = chutiId.startsWith('bulk-');
+        const bulkId = isBulk ? chutiId.replace('bulk-', '') : null;
+
+        if (isBulk) {
+          targets = adminRecords.filter(r => r.bulk_id === bulkId);
+        } else {
+          const target = (adminRecords.find(r => r.id === chutiId) || userRecords.find(r => r.id === chutiId)) as ChutiRecordWithProfile | undefined;
+          if (target) targets = [target];
+        }
       }
 
       if (targets.length === 0) throw new Error('Record not found.');

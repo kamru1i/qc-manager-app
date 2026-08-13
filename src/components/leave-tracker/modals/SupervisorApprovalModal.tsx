@@ -15,7 +15,7 @@ interface SupervisorApprovalModalProps {
   reviewingIds: Set<string>;
   approvedIds: Set<string>;
   approvingIds: Set<string>;
-  handleSupervisorApproveChuti: (id: string, approve: boolean) => void;
+  handleSupervisorApproveChuti: (id: string, approve: boolean, allBulkIds?: string[]) => void;
   profile: Profile | null;
   onSwitchToUserPanel?: () => void;
   userNotificationsCount?: number;

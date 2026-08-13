@@ -144,7 +144,7 @@ export function AddLeave({
   // Jummah is opt-in (never auto-enabled). Only clear a stale ON state when the
   // date is no longer a Friday or the type is no longer Short Leave.
   useEffect(() => {
-    if (adjustJummah && (leaveType !== 'Short Leave' || !isFriday(date))) {
+    if (adjustJummah && (!['Short Leave', 'Early Leave'].includes(leaveType) || !isFriday(date))) {
       setAdjustJummah(false);
     }
   }, [date, leaveType, adjustJummah]);
@@ -165,11 +165,11 @@ export function AddLeave({
     const workingHours = targetWorkingHours ?? 9.5;
     const isHoliday = checkIfHolidayOrWeekend(date, globalSettings);
     const calc = calculateLeaveOrOvertime(leaveType, signInTime, signOutTime, shiftStart, shiftEnd, workingHours, isHoliday);
-    const jummahApplied = (leaveType === 'Short Leave' && isFriday(date) && jummahFeatureOn)
+    const jummahApplied = (['Short Leave', 'Early Leave'].includes(leaveType) && isFriday(date) && jummahFeatureOn)
       ? adjustShortLeaveForJummah(calc, adjustJummah)
       : calc;
     // Break time counts as short leave, added on top of the (Jummah-adjusted) hours.
-    const finalCalc = (leaveType === 'Short Leave' && breakEligible)
+    const finalCalc = (['Short Leave', 'Early Leave'].includes(leaveType) && breakEligible)
       ? addBreakToShortLeave(jummahApplied, breakMinutes, breakEnabled)
       : jummahApplied;
     setLeaveHour(finalCalc);
@@ -302,7 +302,7 @@ export function AddLeave({
     } else if (adjustmentCategory === 'Eid-ul-Adha') {
       eidAdhaDeduction = adjustedDays;
     }
-  } else if (leaveType === 'Short Leave') {
+  } else if (['Short Leave', 'Early Leave'].includes(leaveType)) {
     const mins = parseHHMMToMinutes(leaveHour);
     const dayEquivalent = mins / ((targetProfile?.working_hours || 9.5) * 60);
     if (!adjustment || adjustmentCategory === 'Office Leave') {
@@ -394,7 +394,7 @@ export function AddLeave({
       const jummahMsg = '20 Min Adjusted with Jummah Prayer';
 
       // Pre-process form comment for Jummah adjustment
-      if (leaveType === 'Short Leave' && isFriday(date) && adjustJummah) {
+      if (['Short Leave', 'Early Leave'].includes(leaveType) && isFriday(date) && adjustJummah) {
         if (!commentWithCategory.includes(jummahMsg)) {
           commentWithCategory = commentWithCategory ? `${commentWithCategory} | ${jummahMsg}` : jummahMsg;
         }
@@ -409,7 +409,7 @@ export function AddLeave({
       commentWithCategory = applyBreakComment(
         commentWithCategory,
         breakMinutes,
-        leaveType === 'Short Leave' && breakEligible && breakEnabled,
+        ['Short Leave', 'Early Leave'].includes(leaveType) && breakEligible && breakEnabled,
       );
 
       let finalStatus = editingRecord.status;
@@ -417,7 +417,7 @@ export function AddLeave({
       if (adminDirectEdit) {
         // ─── ADMIN DIRECT EDIT — no re-approval, status stays as-is ───
         let baseComment = editingRecord.comment || '';
-        if (leaveType === 'Short Leave' && isFriday(date) && adjustJummah) {
+        if (['Short Leave', 'Early Leave'].includes(leaveType) && isFriday(date) && adjustJummah) {
           if (!baseComment.includes(jummahMsg)) {
             baseComment = baseComment ? `${baseComment} | ${jummahMsg}` : jummahMsg;
           }
@@ -430,7 +430,7 @@ export function AddLeave({
         baseComment = applyBreakComment(
           baseComment,
           breakMinutes,
-          leaveType === 'Short Leave' && breakEligible && breakEnabled,
+          ['Short Leave', 'Early Leave'].includes(leaveType) && breakEligible && breakEnabled,
         );
 
         // Build a change log for audit trail
@@ -453,7 +453,7 @@ export function AddLeave({
       } else if (needsReapproval) {
         // ─── SUPERVISOR / USER re-approval flow ───
         let baseComment = editingRecord.comment || '';
-        if (leaveType === 'Short Leave' && isFriday(date) && adjustJummah) {
+        if (['Short Leave', 'Early Leave'].includes(leaveType) && isFriday(date) && adjustJummah) {
           if (!baseComment.includes(jummahMsg)) {
             baseComment = baseComment ? `${baseComment} | ${jummahMsg}` : jummahMsg;
           }
@@ -466,7 +466,7 @@ export function AddLeave({
         baseComment = applyBreakComment(
           baseComment,
           breakMinutes,
-          leaveType === 'Short Leave' && breakEligible && breakEnabled,
+          ['Short Leave', 'Early Leave'].includes(leaveType) && breakEligible && breakEnabled,
         );
 
         let changeDescription = '';
@@ -523,7 +523,7 @@ export function AddLeave({
         finalAdjustment = adjustmentCategory !== 'None';
         finalAdjustedHour = null;
         finalAdjustShortLeave = false;
-      } else if (leaveType === 'Short Leave') {
+      } else if (['Short Leave', 'Early Leave'].includes(leaveType)) {
         finalAdjustment = adjustment;
         finalAdjustedHour = null;
         finalAdjustShortLeave = false;
@@ -557,7 +557,7 @@ export function AddLeave({
         adjustment: leaveType === 'Full Leave' ? (adjustmentCategory !== 'None') : finalAdjustment,
         adjusted_hour: finalAdjustedHour,
         adjust_short_leave: finalAdjustShortLeave,
-        reserve_holiday: leaveType === 'Short Leave' && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null),
+        reserve_holiday: ['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null),
       };
 
       try {
@@ -653,7 +653,7 @@ export function AddLeave({
       finalAdjustment = adjustmentCategory !== 'None';
       finalAdjustedHour = null;
       finalAdjustShortLeave = false;
-    } else if (leaveType === 'Short Leave') {
+    } else if (['Short Leave', 'Early Leave'].includes(leaveType)) {
       finalAdjustment = adjustment;
       finalAdjustedHour = null;
       finalAdjustShortLeave = false;
@@ -684,9 +684,9 @@ export function AddLeave({
         commentWithCategory = (item.adjustment && adjustmentCategory !== 'None')
           ? `Adjusted: ${adjustmentCategory} | ${comment.trim()}`
           : comment.trim();
-      } else if (leaveType === 'Short Leave' && finalAdjustment) {
+      } else if (['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment) {
         commentWithCategory = `Adjusted: ${adjustmentCategory} | ${comment.trim()}`;
-      } else if (leaveType === 'Short Leave' && finalAdjustedHour) {
+      } else if (['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustedHour) {
         commentWithCategory = `Partially Adjusted with Overtime (${finalAdjustedHour.substring(0, 5)}) | ${comment.trim()}`;
       } else if (leaveType === 'Overtime' && finalAdjustment) {
         commentWithCategory = `Adjusted with Short Leave | ${comment.trim()}`;
@@ -695,7 +695,7 @@ export function AddLeave({
       }
 
       // Jummah Prayer Adjustment comment update for insert
-      if (leaveType === 'Short Leave' && isFriday(item.date) && adjustJummah) {
+      if (['Short Leave', 'Early Leave'].includes(leaveType) && isFriday(item.date) && adjustJummah) {
         const jummahMsg = '20 Min Adjusted with Jummah Prayer';
         if (!commentWithCategory) {
           commentWithCategory = jummahMsg;
@@ -705,7 +705,7 @@ export function AddLeave({
       }
 
       // Break time counts as short leave — record the marker so it round-trips on edit.
-      if (leaveType === 'Short Leave' && breakEligible && breakEnabled) {
+      if (['Short Leave', 'Early Leave'].includes(leaveType) && breakEligible && breakEnabled) {
         commentWithCategory = applyBreakComment(commentWithCategory, breakMinutes, true);
       }
 
@@ -754,7 +754,7 @@ export function AddLeave({
         adjusted_hour: finalAdjustedHour,
         adjust_short_leave: finalAdjustShortLeave,
         bulk_id: bulkId,
-        reserve_holiday: leaveType === 'Short Leave' && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && item.adjustment && adjustmentCategory !== 'None' ? adjustmentCategory : null),
+        reserve_holiday: ['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && item.adjustment && adjustmentCategory !== 'None' ? adjustmentCategory : null),
         reserve_adjustment_status: 'none',
         admin_edit_request: adminEditRequest
       });

@@ -107,29 +107,36 @@ export function useDerivedState({
     const bulkMap = new Map<string, ChutiRecordWithProfile[]>();
 
     for (const req of requests) {
-      if (req.bulk_id) {
-        if (!bulkMap.has(req.bulk_id)) {
-          bulkMap.set(req.bulk_id, []);
-        }
-        bulkMap.get(req.bulk_id)!.push(req);
-      } else {
-        grouped.push(req);
+      let groupKey = req.bulk_id;
+      if (!groupKey) {
+        // Create a pseudo bulk group key for identically-shaped requests from the same user
+        groupKey = `pseudo-${req.user_id}-${req.leave_type}-${req.status}-${req.adjustment}-${req.reserve_holiday || ''}`;
       }
+      
+      if (!bulkMap.has(groupKey)) {
+        bulkMap.set(groupKey, []);
+      }
+      bulkMap.get(groupKey)!.push(req);
     }
 
-    bulkMap.forEach((subRequests, bulkId) => {
+    bulkMap.forEach((subRequests, groupKey) => {
       subRequests.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      const representative = {
-        ...subRequests[0],
-        id: `bulk-${bulkId}`,
-        is_bulk: true,
-        bulk_id: bulkId,
-        all_bulk_dates: subRequests.map(s => s.date),
-        all_bulk_ids: subRequests.map(s => s.id),
-        all_bulk_records: subRequests,
-        formatted_bulk_dates: subRequests.map(s => formatDate(s.date)).join(', '),
-      };
-      grouped.push(representative);
+      if (subRequests.length === 1 && groupKey.startsWith('pseudo-')) {
+        // Just a single standalone request
+        grouped.push(subRequests[0]);
+      } else {
+        const representative = {
+          ...subRequests[0],
+          id: groupKey.startsWith('pseudo-') ? `pseudobulk-${groupKey}` : `bulk-${groupKey}`,
+          is_bulk: true,
+          bulk_id: groupKey.startsWith('pseudo-') ? undefined : groupKey,
+          all_bulk_dates: subRequests.map(s => s.date),
+          all_bulk_ids: subRequests.map(s => s.id),
+          all_bulk_records: subRequests,
+          formatted_bulk_dates: subRequests.map(s => formatDate(s.date)).join(', '),
+        };
+        grouped.push(representative);
+      }
     });
 
     return grouped.sort((a, b) => {
