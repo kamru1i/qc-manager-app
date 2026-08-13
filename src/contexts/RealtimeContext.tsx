@@ -17,7 +17,8 @@ export type RealtimeTable =
   | 'govt_holiday_responses'
   | 'dismissed_notifications'
   | 'todos'
-  | 'quotation_mistakes';
+  | 'quotation_mistakes'
+  | 'compliance_rules';
 
 /** Minimal interface for Supabase postgres_changes payloads */
 export interface RealtimePayload {
@@ -85,9 +86,12 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
     if (!sessionUser?.id || !profile) return;
 
     const isApprover = isAdminRole(profile) || profile.role === 'supervisor';
+    const isHolidayAdmin = isAdminRole(profile);
     // Todos are superadmin-only — skip the listener entirely for everyone else
     // so the extra postgres_changes subscription adds zero cost fleet-wide.
     const hasTodoAccess = canAccessModule(profile, null, 'todo');
+    const hasChutiAccess = canAccessModule(profile, null, 'leave');
+    const hasQuotesAccess = canAccessModule(profile, null, 'quotes');
 
     let active = true;
     let resubscribeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -110,64 +114,21 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
       // Per-instance staleness: our own removeChannel fires CLOSED
       // synchronously, which must not be mistaken for a server-side close.
       let stale = false;
-      const channel = supabase
-        .channel(`realtime-unified-${sessionUser.id}`)
-        // ── chuti (always user-scoped to prevent approver broadcast fanout) ──
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'chuti',
-            filter: `user_id=eq.${sessionUser.id}`,
-          },
-          (payload) => dispatch('chuti', payload as unknown as RealtimePayload)
-        )
-        // ── profiles (global, required for global_settings propagation to all users) ──
-        .on(
+      const channel = supabase.channel(`realtime-unified-${sessionUser.id}`);
+
+      // Profiles keep role/workspace revocation and shared settings current.
+      channel.on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'profiles',
+            ...(isApprover ? {} : { filter: `id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('profiles', payload as unknown as RealtimePayload)
-        )
-        // ── leave_settlements ──
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'leave_settlements',
-            ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
-          },
-          (payload) => dispatch('leave_settlements', payload as unknown as RealtimePayload)
-        )
-        // ── records (quotes) — always user-scoped ──
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'records',
-            filter: `user_id=eq.${sessionUser.id}`,
-          },
-          (payload) => dispatch('records', payload as unknown as RealtimePayload)
-        )
-        // ── govt_holiday_responses ──
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'govt_holiday_responses',
-            ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
-          },
-          (payload) => dispatch('govt_holiday_responses', payload as unknown as RealtimePayload)
-        )
-        // ── dismissed_notifications ──
-        .on(
+        );
+
+      channel.on(
           'postgres_changes',
           {
             event: '*',
@@ -176,9 +137,54 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             filter: `user_id=eq.${sessionUser.id}`,
           },
           (payload) => dispatch('dismissed_notifications', payload as unknown as RealtimePayload)
-        )
-        // ── quotation_mistakes (AUDIT FIX H8: scope to own records for regular users) ──
-        .on(
+        );
+
+      if (hasChutiAccess) {
+        // Users receive only their own leave rows; RLS scopes approvers.
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'chuti',
+            ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
+          },
+          (payload) => dispatch('chuti', payload as unknown as RealtimePayload)
+        );
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'leave_settlements',
+            ...(isApprover ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
+          },
+          (payload) => dispatch('leave_settlements', payload as unknown as RealtimePayload)
+        );
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'govt_holiday_responses',
+            ...(isHolidayAdmin ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
+          },
+          (payload) => dispatch('govt_holiday_responses', payload as unknown as RealtimePayload)
+        );
+      }
+
+      if (hasQuotesAccess) {
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'records',
+            filter: `user_id=eq.${sessionUser.id}`,
+          },
+          (payload) => dispatch('records', payload as unknown as RealtimePayload)
+        );
+        channel.on(
           'postgres_changes',
           {
             event: '*',
@@ -188,6 +194,13 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
           },
           (payload) => dispatch('quotation_mistakes', payload as unknown as RealtimePayload)
         );
+        // Compliance-rule payloads are consumed directly; no full-table refetch.
+        channel.on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'compliance_rules' },
+          (payload) => dispatch('compliance_rules', payload as unknown as RealtimePayload)
+        );
+      }
 
       // ── todos (superadmin-only) — always user-scoped ──
       if (hasTodoAccess) {
@@ -254,7 +267,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
     };
     // Only re-create when user identity or role changes — not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionUser?.id, profile?.role]);
+  }, [sessionUser?.id, profile?.role, profile?.has_chuti_access, profile?.has_quotes_access]);
 
   const value = React.useMemo(() => ({ registerHandler }), [registerHandler]);
 

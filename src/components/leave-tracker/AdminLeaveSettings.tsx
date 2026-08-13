@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {  Plus, Trash2, RefreshCw, Settings } from 'lucide-react';
 import { GlobalSettings, formatDate } from '@/utils/dashboardHelpers';
 import { DateInput } from '@/components/common/DateInput';
-import { supabase } from '@/utils/supabase';
 import { toast } from 'sonner';
 import { DeleteGovtHolidayModal } from '@/components/common/modals/DeleteGovtHolidayModal';
 
@@ -230,15 +229,6 @@ export function AdminLeaveSettings({
       const dateToRemove = holidayToDelete.date;
       const updatedHolidays = govtHolidays.filter(h => h.date !== dateToRemove);
 
-      // Explicitly delete any response/adjustment records for this specific date in database
-      const { error: deleteError } = await supabase
-        .from('govt_holiday_responses')
-        .delete()
-        .eq('holiday_date', dateToRemove);
-      if (deleteError) {
-        console.error('Error deleting holiday responses:', deleteError);
-      }
-
       const success = await onSaveGlobalSettings({
         ...globalSettings,
         govt_holidays: updatedHolidays,
@@ -263,25 +253,6 @@ export function AdminLeaveSettings({
   const handleSaveGovt = async () => {
     setSubmittingGovt(true);
     try {
-      const activeDates = govtHolidays.map(h => h.date);
-      if (activeDates.length === 0) {
-        const { error: deleteError } = await supabase
-          .from('govt_holiday_responses')
-          .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
-        if (deleteError) {
-          console.error('Failed to delete all responses:', deleteError);
-        }
-      } else {
-        const { error: deleteError } = await supabase
-          .from('govt_holiday_responses')
-          .delete()
-          .not('holiday_date', 'in', `(${activeDates.join(',')})`);
-        if (deleteError) {
-          console.error('Failed to delete removed responses:', deleteError);
-        }
-      }
-
       const success = await onSaveGlobalSettings({
         ...globalSettings,
         govt_holidays: govtHolidays,

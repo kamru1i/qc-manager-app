@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import pg from "pg";
 
 function getEnvValue(name) {
@@ -20,6 +21,23 @@ const client = new pg.Client({
   ssl: { rejectUnauthorized: false },
   application_name: "qc-manager-read-only-forensic-audit",
 });
+
+if (process.argv.includes("--dump-schema")) {
+  const output = "/private/tmp/qc-manager-final-schema.sql";
+  execFileSync(
+    "/opt/homebrew/Cellar/libpq/18.4/bin/pg_dump",
+    [
+      "--schema-only",
+      "--schema=public",
+      "--no-owner",
+      `--file=${output}`,
+      getEnvValue("SUPABASE_DB_URL"),
+    ],
+    { stdio: ["ignore", "inherit", "inherit"] },
+  );
+  console.log(JSON.stringify({ schema_dump: output }));
+  process.exit(0);
+}
 
 const queries = {
   metadata: `
@@ -254,7 +272,7 @@ const queries = {
     limit 60
   `,
   cron_jobs: `
-    select jobid, schedule, command, nodename, database, active
+    select jobid, jobname, schedule, command, nodename, database, active
     from cron.job
     order by jobid
   `,
@@ -263,6 +281,441 @@ const queries = {
 await client.connect();
 
 try {
+  if (process.argv.includes("--probe-runtime-functions")) {
+    const probes = [
+      {
+        name: "sync_top_performer_badges",
+        sql: "select public.sync_top_performer_badges()",
+        params: [],
+      },
+      {
+        name: "archive_and_prune_old_records",
+        sql: "select public.archive_and_prune_old_records('Asia/Dhaka')",
+        params: [],
+      },
+      {
+        name: "create_configured_user",
+        sql: `select public.create_configured_user(
+          $1, 'Forensic-Test-Password-2026!', $2, 'user', 'Rollback Fixture',
+          '{"default_sign_in":"09:30","default_sign_out":"18:00"}'::jsonb
+        )`,
+        params: [
+          `forensic.rollback.${Date.now()}@example.invalid`,
+          `ROLLBACK_${Date.now()}`,
+        ],
+      },
+    ];
+    const results = [];
+
+    for (const probe of probes) {
+      await client.query("begin");
+      try {
+        await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+        await client.query(probe.sql, probe.params);
+        results.push({ name: probe.name, passed: true });
+      } catch (error) {
+        results.push({
+          name: probe.name,
+          passed: false,
+          code: error.code ?? null,
+          message: error.message,
+        });
+      } finally {
+        await client.query("rollback");
+      }
+    }
+
+    console.log(JSON.stringify({ runtime_function_probes: results }, null, 2));
+    await client.end();
+    process.exit(results.every(({ passed }) => passed) ? 0 : 1);
+  }
+
+  if (process.argv.includes("--security-tests") || process.argv.includes("--security-tests-live")) {
+    const migrationSql = [
+      "supabase/migrations/20260813090000_final_forensic_hardening.sql",
+      "supabase/migrations/20260813170000_workspace_and_kpi_integrity.sql",
+    ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
+    const assertions = [];
+
+    const assert = (condition, name, evidence) => {
+      if (!condition) {
+        throw new Error(`${name} failed: ${JSON.stringify(evidence)}`);
+      }
+      assertions.push({ name, evidence });
+    };
+    const asActor = async (actor) => {
+      await client.query("reset role");
+      await client.query("set local role authenticated");
+      await client.query(
+        "select set_config('request.jwt.claims', $1, true)",
+        [JSON.stringify({ sub: actor.id, role: "authenticated", email: actor.email ?? "audit@example.invalid" })],
+      );
+      await client.query(`
+        select set_config('app.user_role', '', true),
+               set_config('app.bypass_profile_security', '', true),
+               set_config('app.bypass_chuti_security', '', true),
+               set_config('app.bypass_settlement_security', '', true)
+      `);
+    };
+    let savepointCounter = 0;
+    const expectDenied = async (name, operation) => {
+      const savepoint = `forensic_${++savepointCounter}`;
+      await client.query(`savepoint ${savepoint}`);
+      let result;
+      let operationError;
+      try {
+        result = await operation();
+      } catch (error) {
+        operationError = error;
+      }
+      await client.query(`rollback to savepoint ${savepoint}`);
+      if (!operationError) {
+        assert(false, name, { unexpectedly_allowed: true, rowCount: result?.rowCount });
+      }
+      assertions.push({ name, evidence: { denied: true, code: operationError.code ?? null } });
+    };
+    const expectDeniedOrNoRows = async (name, operation) => {
+      const savepoint = `forensic_${++savepointCounter}`;
+      await client.query(`savepoint ${savepoint}`);
+      let result;
+      let operationError;
+      try {
+        result = await operation();
+      } catch (error) {
+        operationError = error;
+      }
+      await client.query(`rollback to savepoint ${savepoint}`);
+      if (!operationError && result?.rowCount !== 0) {
+        throw new Error(`${name} failed: ${JSON.stringify({
+          unexpectedly_allowed: true,
+          rowCount: result?.rowCount,
+        })}`);
+      }
+      assertions.push({
+        name,
+        evidence: operationError
+          ? { denied: true, code: operationError.code ?? null }
+          : { denied: true, rowCount: 0 },
+      });
+    };
+
+    await client.query("begin");
+    if (!process.argv.includes("--security-tests-live")) {
+      await client.query(migrationSql);
+    }
+
+    const { rows: actors } = await client.query(`
+      select p.id, p.username, p.role, p.supervisor_ids,
+             p.delegated_supervisor_id, p.delegated_leave_supervisor_id, u.email,
+             (select count(*) from public.records r where r.user_id = p.id) as record_count,
+             (select count(*) from public.chuti c where c.user_id = p.id) as leave_count
+      from public.profiles p
+      left join auth.users u on u.id = p.id
+      where p.role in ('user', 'supervisor', 'admin', 'superadmin')
+      order by
+        case p.role when 'user' then 1 when 'supervisor' then 2 when 'admin' then 3 else 4 end,
+        ((select count(*) from public.records r where r.user_id = p.id)
+          + (select count(*) from public.chuti c where c.user_id = p.id)) desc
+    `);
+    const user = actors.find((actor) => actor.role === "user");
+    const supervisor = actors.find((actor) => actor.role === "supervisor");
+    const admin = actors.find((actor) => actor.role === "admin");
+    const superadmin = actors.find((actor) => actor.role === "superadmin");
+    assert(Boolean(user && supervisor && admin && superadmin), "role fixtures exist", {
+      user: Boolean(user), supervisor: Boolean(supervisor), admin: Boolean(admin), superadmin: Boolean(superadmin),
+    });
+
+    const tableOwnerIds = {};
+    for (const table of ["records", "chuti", "quotation_mistakes", "leave_settlements"]) {
+      const { rows } = await client.query(`select distinct user_id from public.${table}`);
+      tableOwnerIds[table] = new Set(rows.map((row) => row.user_id));
+    }
+    const directSupervisors = new Set(user.supervisor_ids ?? []);
+    const expectedNormalProfileIds = new Set([user.id, ...directSupervisors]);
+    for (const candidate of actors) {
+      if (directSupervisors.has(candidate.id) && candidate.delegated_supervisor_id) {
+        expectedNormalProfileIds.add(candidate.delegated_supervisor_id);
+      }
+    }
+
+    await asActor(user);
+    const { rows: visibleProfiles } = await client.query("select id from public.profiles order by id");
+    const expectedProfiles = [...expectedNormalProfileIds]
+      .sort()
+      .map((id) => ({ id }));
+    assert(
+      JSON.stringify(visibleProfiles) === JSON.stringify(expectedProfiles),
+      "normal user profile reads are scoped",
+      { visible: visibleProfiles.length, expected: expectedProfiles.length },
+    );
+
+    for (const table of ["records", "chuti", "quotation_mistakes", "leave_settlements"]) {
+      const { rows } = await client.query(`select distinct user_id from public.${table} order by user_id`);
+      assert(
+        JSON.stringify(rows.map((row) => row.user_id))
+          === JSON.stringify(tableOwnerIds[table].has(user.id) ? [user.id] : []),
+        `normal user ${table} reads are own-only`,
+        { visible_user_ids: rows.map((row) => row.user_id) },
+      );
+    }
+
+    await expectDenied("normal user cannot forge audit rows", () => client.query(`
+      insert into public.audit_logs (actor_id, actor_codename, action_type, details)
+      values (auth.uid(), 'forged', 'APPROVE_LEAVE', 'forged')
+    `));
+    await expectDenied("normal user cannot insert quotation mistakes", () => client.query(`
+      insert into public.quotation_mistakes
+        (date, filename, branch, user_id, codename, mistake_details, penalty)
+      values (current_date, 'forensic', 'forensic', auth.uid(), 'forged', 'forensic', '0')
+    `));
+    await expectDenied("normal user cannot elevate profile role", () => client.query(
+      "update public.profiles set role = 'admin' where id = auth.uid()",
+    ));
+    await expectDenied("normal user cannot alter global feature flags", () => client.query(`
+      update public.profiles
+      set global_settings = jsonb_set(coalesce(global_settings, '{}'::jsonb), '{feature_flags}', '{"quote_mistakes_write":true}'::jsonb)
+      where id = auth.uid()
+    `));
+    await expectDenied("normal user cannot call badge synchronization", () => client.query(
+      "select public.sync_top_performer_badges()",
+    ));
+    await expectDenied("normal user cannot call password-reset request RPC", () => client.query(
+      "select public.request_password_reset('nobody@example.invalid')",
+    ));
+    await expectDenied("normal user cannot create approved leave", () => client.query(`
+      insert into public.chuti (user_id, date, leave_type, status)
+      values (auth.uid(), current_date, 'Full Leave', 'approved')
+    `));
+
+    const { rows: approvedLeaves } = await client.query(`
+      select id from public.chuti
+      where user_id = auth.uid() and status = 'approved' and deleted_at is null
+      limit 1
+    `);
+    if (approvedLeaves[0]) {
+      await expectDenied("normal user cannot edit approved leave details", () => client.query(
+        "update public.chuti set comment = coalesce(comment, '') || ' forensic' where id = $1",
+        [approvedLeaves[0].id],
+      ));
+      await expectDeniedOrNoRows("normal user cannot delete approved leave", () => client.query(
+        "delete from public.chuti where id = $1",
+        [approvedLeaves[0].id],
+      ));
+    } else {
+      assertions.push({ name: "normal user approved-leave mutation fixture", evidence: { skipped: true } });
+    }
+
+    const { rows: ownRecords } = await client.query("select id from public.records where user_id = auth.uid() limit 1");
+    if (ownRecords[0]) {
+      await expectDeniedOrNoRows("normal user cannot reassign own record", () => client.query(
+        "update public.records set user_id = $1 where id = $2",
+        [supervisor.id, ownRecords[0].id],
+      ));
+    }
+
+    const insertedKpi = await client.query(`
+      insert into public.kpi_assessments (
+        user_id, month_year, appraiser_name, appraiser_signed,
+        appraiser_sign_date, kpis
+      ) values (
+        auth.uid(), 'forensic-' || gen_random_uuid()::text,
+        'forged-appraiser', true, '01-01-2000',
+        '{"weightages":{"quality":100},"supervisorScores":{"quality":100},"selfScores":{"quality":10},"comments":{"quality":"self"}}'::jsonb
+      )
+      returning id, appraiser_name, appraiser_signed, appraiser_sign_date, kpis
+    `);
+    const kpiRow = insertedKpi.rows[0];
+    assert(
+      !Object.hasOwn(kpiRow.kpis, "weightages")
+        && !Object.hasOwn(kpiRow.kpis, "supervisorScores")
+        && kpiRow.kpis.selfScores?.quality === 10
+        && kpiRow.appraiser_name !== "forged-appraiser"
+        && kpiRow.appraiser_signed === false
+        && kpiRow.appraiser_sign_date === null,
+      "employee KPI insert strips appraiser-controlled values",
+      kpiRow,
+    );
+    const updatedKpi = await client.query(`
+      update public.kpi_assessments
+      set appraiser_name = 'forged-again',
+          appraiser_signed = true,
+          appraiser_sign_date = '01-01-2000',
+          kpis = kpis || '{"weightages":{"quality":100},"supervisorScores":{"quality":100}}'::jsonb
+      where id = $1
+      returning appraiser_name, appraiser_signed, appraiser_sign_date, kpis
+    `, [kpiRow.id]);
+    assert(
+      !Object.hasOwn(updatedKpi.rows[0].kpis, "weightages")
+        && !Object.hasOwn(updatedKpi.rows[0].kpis, "supervisorScores")
+        && updatedKpi.rows[0].appraiser_name === kpiRow.appraiser_name
+        && updatedKpi.rows[0].appraiser_signed === false,
+      "employee KPI update preserves appraiser-controlled values",
+      updatedKpi.rows[0],
+    );
+    await expectDeniedOrNoRows("employee cannot delete authoritative KPI history", () =>
+      client.query("delete from public.kpi_assessments where id = $1", [kpiRow.id])
+    );
+
+    const relationshipProbe = await client.query(
+      "select public.has_leave_access($1, $2) as allowed",
+      [supervisor.id, user.id],
+    );
+    assert(
+      relationshipProbe.rows[0].allowed === false,
+      "authenticated users cannot probe arbitrary supervisory relationships",
+      relationshipProbe.rows[0],
+    );
+
+    // Simulate revocation without committing it, then prove every detailed
+    // workspace path closes for the affected account.
+    await client.query("reset role");
+    await client.query("select set_config('request.jwt.claims', $1, true)", [
+      JSON.stringify({ sub: user.id, role: "service_role" }),
+    ]);
+    await client.query("select set_config('app.bypass_profile_security', 'true', true)");
+    await client.query(`
+      update public.profiles
+      set has_chuti_access = false, has_quotes_access = false
+      where id = $1
+    `, [user.id]);
+    await asActor(user);
+    const workspaceState = await client.query(`
+      select public.current_user_has_workspace('chuti') as chuti,
+             public.current_user_has_workspace('quotes') as quotes
+    `);
+    assert(
+      workspaceState.rows[0].chuti === false && workspaceState.rows[0].quotes === false,
+      "workspace revocation resolves at the database boundary",
+      workspaceState.rows[0],
+    );
+    for (const table of [
+      "records", "chuti", "quotation_mistakes", "leave_settlements",
+      "govt_holiday_responses", "compliance_rules", "login_codes",
+    ]) {
+      const result = await client.query(`select count(*)::int as count from public.${table}`);
+      assert(
+        result.rows[0].count === 0,
+        `revoked account cannot read ${table}`,
+        result.rows[0],
+      );
+    }
+    await expectDeniedOrNoRows("revoked quotes account cannot insert records", () => client.query(`
+      insert into public.records (user_id, file_name, branch_name, codename, file_type, submitted_at)
+      values (auth.uid(), 'forensic', 'forensic', 'forensic', 'Quote', now())
+    `));
+    await expectDeniedOrNoRows("revoked leave account cannot insert leave", () => client.query(`
+      insert into public.chuti (user_id, date, leave_type, status)
+      values (auth.uid(), current_date, 'Full Leave', 'pending_supervisor')
+    `));
+    await expectDenied("revoked leave account cannot call conversion RPC", () => client.query(
+      "select public.convert_short_leave_to_full_leave(auth.uid(), 'Office Leave')",
+    ));
+
+    await asActor(supervisor);
+    for (const table of ["records", "chuti", "leave_settlements"]) {
+      const { rows: visible } = await client.query(`select distinct user_id from public.${table} order by user_id`);
+      const visibleIds = visible.map((row) => row.user_id);
+      const expectedIds = actors
+        .filter((candidate) => {
+          const supervisors = candidate.supervisor_ids ?? [];
+          const delegatedViaSupervisor = actors.some(
+            (possibleSupervisor) => supervisors.includes(possibleSupervisor.id)
+              && possibleSupervisor.delegated_supervisor_id === supervisor.id,
+          );
+          return candidate.id === supervisor.id
+            || supervisors.includes(supervisor.id)
+            || candidate.delegated_leave_supervisor_id === supervisor.id
+            || delegatedViaSupervisor;
+        })
+        .map((candidate) => candidate.id)
+        .filter((id) => tableOwnerIds[table].has(id))
+        .sort();
+      assert(
+        JSON.stringify(visibleIds) === JSON.stringify(expectedIds),
+        `supervisor ${table} reads exclude other teams`,
+        { visible_user_ids: visibleIds, allowed_user_ids: expectedIds },
+      );
+    }
+
+    await asActor(admin);
+    await expectDenied("admin cannot reset a superadmin credential", () => client.query(
+      "select public.admin_update_user_credentials($1, null, 'Forensic-Only-1234')",
+      [superadmin.id],
+    ));
+    await expectDenied("admin cannot delete a superadmin account", () => client.query(
+      "select public.delete_user_by_id($1)",
+      [superadmin.id],
+    ));
+
+    await asActor(superadmin);
+    const { rows: superadminContext } = await client.query(`
+      select auth.uid() as uid, public.get_my_role() as role,
+             public.can_write_quotation_mistakes() as can_write
+    `);
+    assert(
+      superadminContext[0]?.uid === superadmin.id
+        && superadminContext[0]?.role === "superadmin"
+        && superadminContext[0]?.can_write === true,
+      "superadmin role context resolves inside RLS",
+      superadminContext[0],
+    );
+    const auditBefore = await client.query("select count(*)::int as count from public.audit_logs");
+    const insertedMistake = await client.query(`
+      insert into public.quotation_mistakes
+        (date, filename, branch, user_id, codename, mistake_details, penalty)
+      values (current_date, 'forensic-test', 'forensic-test', $1, 'forged-value', 'forensic-test', '0')
+      returning id, codename, created_by, updated_by
+    `, [user.id]);
+    const mistakeAudit = await client.query(`
+      select actor_id, target_user_id, action_type, metadata
+      from public.audit_logs
+      where target_id = $1
+    `, [insertedMistake.rows[0].id]);
+    assert(
+      insertedMistake.rows[0].codename === user.username
+        && insertedMistake.rows[0].created_by === superadmin.id
+        && insertedMistake.rows[0].updated_by === superadmin.id,
+      "mistake metadata is server-derived",
+      insertedMistake.rows[0],
+    );
+    assert(
+      mistakeAudit.rows.length === 1
+        && mistakeAudit.rows[0].actor_id === superadmin.id
+        && mistakeAudit.rows[0].target_user_id === user.id
+        && mistakeAudit.rows[0].action_type === "CREATE_MISTAKE",
+      "mistake audit row is single, actor-bound, and target-bound",
+      mistakeAudit.rows,
+    );
+    const auditAfter = await client.query("select count(*)::int as count from public.audit_logs");
+    assert(
+      auditAfter.rows[0].count === auditBefore.rows[0].count + 1,
+      "audited mutation emits exactly one audit row",
+      { before: auditBefore.rows[0].count, after: auditAfter.rows[0].count },
+    );
+
+    await client.query("reset role");
+    await client.query("rollback");
+    console.log(JSON.stringify({
+      security_tests_passed: assertions.length,
+      assertion_names: assertions.map(({ name }) => name),
+    }, null, 2));
+    await client.end();
+    process.exit(0);
+  }
+
+  if (process.argv.includes("--validate-migration")) {
+    const migrationSql = [
+      "supabase/migrations/20260813090000_final_forensic_hardening.sql",
+      "supabase/migrations/20260813170000_workspace_and_kpi_integrity.sql",
+    ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
+    await client.query("begin");
+    await client.query(migrationSql);
+    await client.query("rollback");
+    console.log(JSON.stringify({ migration_validated_in_rolled_back_transaction: true }));
+    await client.end();
+    process.exit(0);
+  }
+
   await client.query("begin read only");
   const audit = {};
 

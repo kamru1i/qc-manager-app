@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   Plus,
@@ -59,6 +60,7 @@ export function QuotationMistakesPanel({
     totalCount,
     isLoading,
     isSubmitting,
+    error,
     canWrite,
     canRead,
     isUserRole,
@@ -374,7 +376,10 @@ export function QuotationMistakesPanel({
               <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Month</label>
               <CustomSelect
                 value={selectedMonth}
-                onChange={setSelectedMonth}
+                onChange={(month) => {
+                  setSelectedMonth(month);
+                  if (month && !selectedYear) setSelectedYear(String(new Date().getFullYear()));
+                }}
                 options={monthOptions}
               />
             </div>
@@ -422,6 +427,12 @@ export function QuotationMistakesPanel({
           <div className="py-16 text-center text-theme-text-muted flex flex-col items-center justify-center gap-3">
             <RefreshCw className="h-6 w-6 animate-spin text-rose-500" />
             <p className="text-xs font-semibold">Loading quotation mistakes...</p>
+          </div>
+        ) : error ? (
+          <div className="py-16 text-center text-red-400 flex flex-col items-center justify-center gap-3">
+            <ShieldAlert className="h-7 w-7" />
+            <p className="text-xs font-semibold">Failed to load quotation mistakes.</p>
+            <p className="max-w-lg text-[11px] text-theme-text-muted">{error}</p>
           </div>
         ) : mistakes.length === 0 ? (
           <div className="py-16 text-center text-theme-text-muted flex flex-col items-center justify-center gap-3">
@@ -655,7 +666,7 @@ export function QuotationMistakesPanel({
       {/* Context Menu */}
       {contextMenu &&
         typeof window !== "undefined" &&
-        require("react-dom").createPortal(
+        createPortal(
           <div
             style={{ top: contextMenu.y, left: contextMenu.x }}
             className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-36 select-none animate-in fade-in zoom-in-95 duration-100"

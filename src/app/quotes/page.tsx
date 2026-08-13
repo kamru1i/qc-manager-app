@@ -71,6 +71,9 @@ import {
   buildCleanFileName,
 } from "@/utils/quotesDashboardHelpers";
 import { FileType, RecordItem } from "@/types";
+import type { Profile } from '@/types';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Dispatch, SetStateAction } from 'react';
 import {
   Loader2,
   Calendar,
@@ -100,6 +103,9 @@ const ALL_10_FILE_TYPES = [
 ];
 
 interface DashboardProps {
+  sessionUser: SupabaseUser;
+  profile: Profile;
+  setProfile: Dispatch<SetStateAction<Profile | null>>;
   activeTab:
     | "entry"
     | "monthly"
@@ -136,6 +142,9 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
+  sessionUser: rootSessionUser,
+  profile: rootProfile,
+  setProfile: setRootProfile,
   activeTab,
   onTabChange,
   onBackToSidebarTab,
@@ -174,7 +183,7 @@ export default function Dashboard({
     }
   }, [onTabChange]);
 
-  const dashboardData = useQuotesDashboardData();
+  const dashboardData = useQuotesDashboardData(rootSessionUser, rootProfile, setRootProfile);
   const {
     sessionUser,
     profile,

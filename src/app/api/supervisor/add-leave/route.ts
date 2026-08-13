@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCorsHeaders } from '@/utils/apiHelpers';
+import { CHUTI_COLUMNS } from '@/utils/dbColumns';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -13,9 +14,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
         { error: 'Server configuration error: missing credentials' },
         { status: 500, headers: getCorsHeaders(request) }
@@ -36,30 +36,7 @@ export async function POST(request: NextRequest) {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
 
-    let user = null;
-    let authError = null;
-
-    try {
-      const { data: { user: u }, error: err } = await supabaseWithAuth.auth.getUser();
-      user = u;
-      authError = err;
-    } catch (e) {
-      console.error('[AddLeave Route] auth.getUser() error:', e);
-    }
-
-    if (authError || !user) {
-      try {
-        const { data: { user: u }, error: err } = await supabaseWithAuth.auth.getUser(token);
-        if (u && !err) {
-          user = u;
-          authError = null;
-        } else {
-          authError = err || authError;
-        }
-      } catch (e) {
-        console.error('[AddLeave Route] auth.getUser(token) error:', e);
-      }
-    }
+    const { data: { user }, error: authError } = await supabaseWithAuth.auth.getUser(token);
 
     if (authError || !user) {
       console.error('[AddLeave Route] Auth verification failed:', authError?.message || 'No user session', 'Token parts count:', token ? token.split('.').length : 0);
@@ -69,9 +46,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch requester's profile using service role to check role
-    const supabaseServer = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: requesterProfile, error: rpError } = await supabaseServer
+    // Fetch through the caller-scoped client so RLS remains part of enforcement.
+    const { data: requesterProfile, error: rpError } = await supabaseWithAuth
       .from('profiles')
       .select('id, role')
       .eq('id', user.id)
@@ -97,42 +73,14 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse payload
     const { insertData } = await request.json();
-    if (!insertData || !Array.isArray(insertData) || insertData.length === 0) {
+    if (!insertData || !Array.isArray(insertData) || insertData.length === 0 || insertData.length > 100) {
       return NextResponse.json(
-        { error: 'Bad Request: Missing or empty insertData' },
+        { error: 'Bad Request: insertData must contain between 1 and 100 records' },
         { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
-    // 3. For supervisor, verify authorization for each user_id in insertData
-    if (isSupervisor) {
-      const targetUserIds = Array.from(new Set(insertData.map(item => item.user_id)));
-      
-      for (const targetUserId of targetUserIds) {
-        const { data: targetProfile, error: tpError } = await supabaseServer
-          .from('profiles')
-          .select('supervisor_ids')
-          .eq('id', targetUserId)
-          .single();
-
-        if (tpError || !targetProfile) {
-          return NextResponse.json(
-            { error: `Forbidden: Target staff profile not found for ${targetUserId}` },
-            { status: 403, headers: getCorsHeaders(request) }
-          );
-        }
-
-        const isSupervisedByMe = targetUserId === user.id || (Array.isArray(targetProfile.supervisor_ids) && targetProfile.supervisor_ids.includes(user.id));
-        if (!isSupervisedByMe) {
-          return NextResponse.json(
-            { error: `Forbidden: You do not supervise the user ${targetUserId}` },
-            { status: 403, headers: getCorsHeaders(request) }
-          );
-        }
-      }
-    }
-
-    // 4. Sanitize payload: whitelist only allowed fields to prevent injection
+    // 3. Sanitize payload: whitelist only allowed fields to prevent injection
     //    of security-sensitive values (status, admin_edit_status, is_edited, etc.)
     const sanitizedRecords = insertData.map((item: Record<string, unknown>) => ({
       user_id: item.user_id,
@@ -154,11 +102,12 @@ export async function POST(request: NextRequest) {
       is_edited: false,
     }));
 
-    // 5. Perform the insertion using service role client to bypass RLS
-    const { data: insertedData, error: insertError } = await supabaseServer
+    // 4. Insert as the authenticated caller. RLS and the write-validation
+    // trigger enforce every target row; a bad row rolls back the full batch.
+    const { data: insertedData, error: insertError } = await supabaseWithAuth
       .from('chuti')
       .insert(sanitizedRecords)
-      .select();
+      .select(CHUTI_COLUMNS);
 
     if (insertError) {
       console.error('Database insert error:', insertError);
@@ -166,19 +115,6 @@ export async function POST(request: NextRequest) {
         { error: insertError.message || 'Failed to insert leave records' },
         { status: 500, headers: getCorsHeaders(request) }
       );
-    }
-
-    // 6. Audit Log
-    try {
-      await supabaseServer.from('audit_logs').insert({
-        actor_id: user.id,
-        actor_codename: requesterProfile.role || 'Supervisor/Admin',
-        action_type: 'CREATE_LEAVE',
-        details: `${requesterProfile.role} created ${sanitizedRecords.length} leave record(s)`,
-        created_at: new Date().toISOString(),
-      });
-    } catch (auditErr) {
-      console.error('Audit logging failed in supervisor add-leave route:', auditErr);
     }
 
     return NextResponse.json(

@@ -15,7 +15,6 @@ import { generateUUID } from '@/utils/idbStoreFactory';
 import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError, getMaxDaysInMonth } from '@/utils/dashboardHelpers';
 import { toast } from 'sonner';
 import { isAdminRole } from '@/utils/permissionService';
-import { logAuditEvent } from '@/utils/auditLogger';
 
 interface useChutiOperationsParams {
   sessionUser: any;
@@ -409,12 +408,6 @@ export const useChutiOperations = ({
       const { error: insertError } = await supabase.from('chuti').insert(recordsToInsert);
       if (insertError) throw insertError;
 
-      await logAuditEvent({
-        actor: profile,
-        actionType: 'CREATE_LEAVE',
-        details: `Submitted ${leaveType} application for date(s): ${datesWithAdjustment.map(d => formatDate(d.date)).join(', ')}`,
-      });
-
       setMessage({ type: 'success', text: 'Your leave application has been successfully submitted!' });
       fetchRecords();
 
@@ -527,13 +520,6 @@ export const useChutiOperations = ({
         throw new Error('You do not have permission to delete this record or it was not found in the database.');
       }
       
-      await logAuditEvent({
-        actor: profile,
-        actionType: 'DELETE_LEAVE',
-        targetId: record.id || null,
-        details: `Deleted leave record (${record.leave_type} on ${record.date})`,
-      });
-
       setUserRecords(prev => prev.filter(r => r.id !== record.id));
       setAdminRecords(prev => prev.filter(r => r.id !== record.id));
       
@@ -867,15 +853,6 @@ export const useChutiOperations = ({
         }
       }));
 
-      await logAuditEvent({
-        actor: profile,
-        actionType: 'APPROVE_LEAVE',
-        targetId: chutiId,
-        details: `Supervisor approved leave request for ${targets.map(t => (t.profiles?.username || t.user_id) + ' (' + t.leave_type + ' on ' + formatDate(t.date) + ')').join(', ')}`,
-      });
-
-
-
       const updateLocalState = () => {
         targets.forEach(t => {
           const updates = buildApprovalUpdates(t);
@@ -949,15 +926,6 @@ export const useChutiOperations = ({
           await pruneMissingRecord(t);
         }
       }));
-
-      await logAuditEvent({
-        actor: profile,
-        actionType: 'APPROVE_LEAVE',
-        targetId: chutiId,
-        details: `Admin approved leave request for ${targets.map(t => (t.profiles?.username || t.user_id) + ' (' + t.leave_type + ' on ' + formatDate(t.date) + ')').join(', ')}`,
-      });
-
-
 
       const updateLocalState = () => {
         targets.forEach(t => {

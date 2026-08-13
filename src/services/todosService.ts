@@ -13,13 +13,12 @@ export const todosService = {
     gteDate?: string;
     lteDate?: string;
     status?: string;
+    excludeStatus?: string;
     isAllTime?: boolean;
     limit?: number;
+    orderBy?: 'activity' | 'date' | 'created';
   }) {
-    let query = supabase
-      .from('todos')
-      .select(TODO_COLUMNS)
-      .order('last_activity_at', { ascending: false });
+    let query = supabase.from('todos').select(TODO_COLUMNS);
 
     if (options?.userId) {
       query = query.eq('user_id', options.userId);
@@ -39,6 +38,9 @@ export const todosService = {
     if (options?.status) {
       query = query.eq('status', options.status);
     }
+    if (options?.excludeStatus) {
+      query = query.neq('status', options.excludeStatus);
+    }
     if (options?.isAllTime !== undefined) {
       query = query.eq('is_all_time', options.isAllTime);
     }
@@ -46,8 +48,31 @@ export const todosService = {
       query = query.limit(options.limit);
     }
 
+    if (options?.orderBy === 'date') {
+      query = query
+        .order('todo_date', { ascending: false })
+        .order('created_at', { ascending: false });
+    } else if (options?.orderBy === 'created') {
+      query = query.order('created_at', { ascending: false });
+    } else {
+      query = query.order('last_activity_at', { ascending: false });
+    }
+
     const { data, error } = await query;
     return { data: (data || []) as unknown as TodoItem[], error };
+  },
+
+  /** Fetch only the latest earlier todo date for carry-over. */
+  async getLatestTodoDateBefore(userId: string, beforeDate: string) {
+    const { data, error } = await supabase
+      .from('todos')
+      .select('todo_date')
+      .eq('user_id', userId)
+      .lt('todo_date', beforeDate)
+      .order('todo_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { data: data?.todo_date ?? null, error };
   },
 
   /**

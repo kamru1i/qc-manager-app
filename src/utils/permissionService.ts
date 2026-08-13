@@ -424,6 +424,12 @@ export const canAccessModule = (
   if (!currentUser) return false;
   if (isSuperadmin(currentUser)) return true;
 
+  // Workspace assignment is an authorization boundary, not merely a menu
+  // preference. Keep this check aligned with database RLS so revoked access
+  // takes effect both in the UI and for direct Supabase requests.
+  if (module === 'leave' && currentUser.has_chuti_access !== true) return false;
+  if (module === 'quotes' && currentUser.has_quotes_access !== true) return false;
+
   // Single source of truth: Tab Access (per role) configuration in global_settings
   const gs = globalSettings || currentUser.global_settings;
   const isVisible = isTabVisibleForRole(currentUser, module, gs);

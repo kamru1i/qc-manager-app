@@ -41,6 +41,9 @@ interface LeavesRecordsTableProps {
   hideDelete?: boolean;
   /** When false, hides Add Leave button (normal user view) */
   showAddLeave?: boolean;
+  /** Optional row-level guards used when only unapproved requests are mutable. */
+  canDeleteRecord?: (record: ChutiRecord) => boolean;
+  canEditRecord?: (record: ChutiRecord) => boolean;
   showNameColumn?: boolean;
   hideAdjustmentAndOvertime?: boolean;
   hideYearSelect?: boolean;
@@ -76,6 +79,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   initialFetchDone = true,
   hideDelete = false,
   showAddLeave = true,
+  canDeleteRecord,
+  canEditRecord,
   showNameColumn = false,
   hideAdjustmentAndOvertime = false,
   hideYearSelect = false,
@@ -227,6 +232,16 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     return sortChutiRecordsDescending(filtered);
   }, [records, filterType, selectedYear, selectedMonth, searchTerm, getRecordMonth]);
 
+  const deletableRecords = useMemo(
+    () => filteredRecords.filter((record) => !canDeleteRecord || canDeleteRecord(record)),
+    [filteredRecords, canDeleteRecord]
+  );
+
+  const isRecordDeletable = useCallback(
+    (record: ChutiRecord) => !hideDelete && (!canDeleteRecord || canDeleteRecord(record)),
+    [hideDelete, canDeleteRecord]
+  );
+
   const showActionColumn = isSelectionMode && !hideDelete;
 
   const cellStyle = useMemo(
@@ -256,15 +271,15 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   };
 
   const handleSelectAllToggle = () => {
-    if (selectedIds.length === filteredRecords.length) {
+    if (selectedIds.length === deletableRecords.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredRecords.map((r) => r.id || ''));
+      setSelectedIds(deletableRecords.map((r) => r.id || '').filter(Boolean));
     }
   };
 
   const handleRowClick = (record: ChutiRecord) => {
-    if (hideDelete) return;
+    if (!isRecordDeletable(record)) return;
     if (isSelectionMode && record.id) {
       const rid = record.id;
       setSelectedIds((prev) =>
@@ -305,7 +320,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   };
 
   const handleContextSelect = (record: ChutiRecord) => {
-    if (!record.id) return;
+    if (!record.id || !isRecordDeletable(record)) return;
     const rid = record.id;
     setIsSelectionMode(true);
     setSelectedIds((prev) => {
@@ -330,6 +345,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   };
 
   const handleContextDelete = (record: ChutiRecord) => {
+    if (!isRecordDeletable(record)) return;
     setContextMenu(null);
     setDeleteConfirmTitle("Delete Leave Entry");
     setDeleteConfirmMessage("Are you sure you want to permanently delete this leave entry? This action cannot be undone.");
@@ -344,7 +360,10 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
     setDeleteConfirmTitle("Delete Selected Leaves");
     setDeleteConfirmMessage(`Are you sure you want to delete ${selectedIds.length} selected records? This action cannot be undone.`);
     setOnConfirmDeleteAction(() => async () => {
-      const idsToDelete = [...selectedIds];
+      const idsToDelete = selectedIds.filter((id) => {
+        const record = records.find((item) => item.id === id);
+        return record ? isRecordDeletable(record) : false;
+      });
       setSelectedIds([]);
       setIsSelectionMode(false);
       setDeleteConfirmOpen(false);
@@ -357,7 +376,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       }
     });
     setDeleteConfirmOpen(true);
-  }, [selectedIds, records, onDeleteClick]);
+  }, [selectedIds, records, onDeleteClick, isRecordDeletable]);
 
   // Keyboard handlers: Escape to exit/clear selection, Delete to bulk delete
   useEffect(() => {
@@ -541,7 +560,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         type="button"
                         onClick={handleSelectAllToggle}
                         className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
-                          filteredRecords.length > 0 && filteredRecords.every((r) => selectedIds.includes(r.id || ''))
+                          deletableRecords.length > 0 && deletableRecords.every((r) => selectedIds.includes(r.id || ''))
                             ? 'bg-blue-500 border-blue-500'
                             : ''
                         } ${
@@ -550,7 +569,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                             : "scale-0 opacity-0"
                         }`}
                       >
-                        {filteredRecords.length > 0 && filteredRecords.every((r) => selectedIds.includes(r.id || '')) && (
+                        {deletableRecords.length > 0 && deletableRecords.every((r) => selectedIds.includes(r.id || '')) && (
                           <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
                         )}
                       </button>
@@ -680,21 +699,22 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         >
                           <button
                             type="button"
+                            disabled={!isRecordDeletable(r)}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!r.id) return;
+                              if (!r.id || !isRecordDeletable(r)) return;
                               const rid = r.id;
                               setSelectedIds((prev) =>
                                 prev.includes(rid) ? prev.filter((x) => x !== rid) : [...prev, rid]
                               );
                             }}
-                            className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                            className={`rounded-full border border-theme-border-active bg-theme-page-bg h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
                               selectedIds.includes(r.id || '') ? 'bg-blue-500 border-blue-500' : ''
                             } ${
                               isSelectionMode
                                 ? "scale-100 opacity-100"
                                 : "scale-0 opacity-0"
-                            }`}
+                            } ${isRecordDeletable(r) ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
                           >
                             {selectedIds.includes(r.id || '') && (
                               <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
@@ -729,7 +749,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
             className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
           >
-            {!hideDelete && (
+            {isRecordDeletable(contextMenu.record) && (
               selectedIds.includes(contextMenu.record.id || '') ? (
                 <button
                   type="button"
@@ -750,7 +770,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 </button>
               )
             )}
-            {onEditClick && (
+            {onEditClick && (!canEditRecord || canEditRecord(contextMenu.record)) && (
               <button
                 type="button"
                 onClick={() => handleContextEdit(contextMenu.record)}
@@ -760,7 +780,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 Edit
               </button>
             )}
-            {!hideDelete && (
+            {isRecordDeletable(contextMenu.record) && (
               <button
                 type="button"
                 onClick={() => handleContextDelete(contextMenu.record)}

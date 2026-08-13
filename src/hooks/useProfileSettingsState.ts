@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useMemo, useState } from 'react';
+import { useReducer, useEffect, useMemo } from 'react';
 import { Profile } from '@/types';
 import { SanitizerRule, resolveSanitizerRules } from '@/utils/fileNameSanitizer';
 import { TempAccessEntry } from '@/utils/dashboardHelpers';
@@ -55,8 +55,15 @@ export function useProfileSettingsState(profile: Profile | null, sessionUser: an
     submitting: false,
     isCodenameEditable: false,
     activeSubTab: 'profile',
-    currentTimestamp: Date.now(),
+    currentTimestamp: 0,
   });
+
+  useEffect(() => {
+    const updateTimestamp = () => dispatch({ currentTimestamp: Date.now() });
+    updateTimestamp();
+    const interval = window.setInterval(updateTimestamp, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (profile) {

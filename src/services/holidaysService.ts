@@ -3,6 +3,28 @@ import { GOVT_HOLIDAY_RESPONSE_COLUMNS, COMPLIANCE_RULE_COLUMNS } from '@/utils/
 import type { GovtHolidayResponse, ComplianceRule } from '@/types';
 
 export const holidaysService = {
+  /** Save leave settings and synchronize holiday entitlements atomically. */
+  async saveGlobalLeaveSettings(settings: Record<string, unknown>) {
+    const { data, error } = await supabase.rpc('save_global_leave_settings' as any, {
+      p_settings: settings,
+    });
+    return { data, error };
+  },
+
+  /** Admin-only reserve/payment conversion with leave reconciliation. */
+  async convertGovtHolidayResponse(
+    userId: string,
+    holidayDate: string,
+    response: 'paid' | 'reserve',
+  ) {
+    const { data, error } = await supabase.rpc('convert_govt_holiday_response' as any, {
+      p_user_id: userId,
+      p_holiday_date: holidayDate,
+      p_response: response,
+    });
+    return { data, error };
+  },
+
   /**
    * Fetch govt holiday responses (bounded with limit 1000 for egress protection)
    */

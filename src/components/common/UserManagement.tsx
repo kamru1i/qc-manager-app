@@ -46,6 +46,7 @@ import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
 import { PROFILE_COLUMNS, CHUTI_COLUMNS, LEAVE_SETTLEMENT_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS } from '@/utils/dbColumns';
+import { holidaysService } from '@/services/holidaysService';
 
 interface UserManagementProps {
   sessionUser: { id: string } | null;
@@ -559,21 +560,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
   }, [viewingStaff, debouncedFetchStaffLeaveData, hasStaffAccess]);
 
-  const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
+  const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, _holidayName: string, response: 'paid' | 'reserve') => {
     if (!profile || !isAdminRole(profile)) return false;
 
-    const { error } = await supabase
-      .from('govt_holiday_responses')
-      .upsert({
-        user_id: targetUserId,
-        holiday_date: holidayDate,
-        holiday_name: holidayName,
-        response: response,
-        updated_by_admin: true,
-        created_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,holiday_date'
-      });
+    const { error } = await holidaysService.convertGovtHolidayResponse(
+      targetUserId,
+      holidayDate,
+      response,
+    );
 
     if (error) {
       toast.error('Failed to update holiday response: ' + error.message);
@@ -690,12 +684,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     const success = await resetUserPassword(viewingStaff.id, credNewPassword);
     setUpdatingCredentials(false);
     if (success) {
-      // Also update has_changed_password to true since admin updated it to a custom one
-      await supabase
-        .from('profiles')
-        .update({ has_changed_password: true, is_setup_completed: true })
-        .eq('id', viewingStaff.id);
-
       toast.success('Password updated successfully.');
       setShowCredentialsModal(false);
       setCredNewPassword('');
@@ -709,17 +697,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     setSubmitting(true);
     const success = await resetUserPassword(viewingStaff.id, '1234');
     if (success) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ has_changed_password: false, is_setup_completed: false })
-        .eq('id', viewingStaff.id);
-      
-      if (error) {
-        console.error('Error updating profiles has_changed_password flag:', error);
-      } else {
-        toast.success('Password reset to default (1234). User must change it next login.');
-        fetchProfiles();
-      }
+      toast.success('Password reset to default (1234). User must change it next login.');
+      fetchProfiles();
       setShowResetConfirmModal(false);
     }
     setSubmitting(false);

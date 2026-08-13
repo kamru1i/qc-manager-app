@@ -4,29 +4,15 @@ export const adminService = {
   /**
    * RPC: Create new user via admin RPC
    */
-  async createNewUser(params: {
+  async createConfiguredUser(params: {
+    p_email: string;
+    p_password: string;
     p_username: string;
     p_full_name: string;
     p_role: string;
-    p_job_role: string;
-    p_password?: string;
-    p_working_hours?: string;
-    p_break_time?: string;
-    p_default_sign_in?: string;
-    p_default_sign_out?: string;
-    p_supervisor_ids?: string[];
-    p_has_chuti_access?: boolean;
-    p_has_quotes_access?: boolean;
-    p_can_manage_rules?: boolean;
-    p_eligible_govt_holiday?: boolean;
-    p_eligible_office_leave?: boolean;
-    p_allow_overtime?: boolean;
-    p_allow_reserve?: boolean;
-    p_needs_supervisor_approval?: boolean;
-    p_max_full_leaves?: number;
-    p_max_short_leaves?: number;
+    p_profile_options: Record<string, unknown>;
   }) {
-    const { data, error } = await supabase.rpc('create_new_user' as any, params);
+    const { data, error } = await supabase.rpc('create_configured_user' as any, params);
     return { data, error };
   },
 
@@ -50,7 +36,7 @@ export const adminService = {
    */
   async deleteUserById(userId: string) {
     const { data, error } = await supabase.rpc('delete_user_by_id' as any, {
-      p_target_user_id: userId,
+      p_user_id: userId,
     });
     return { data, error };
   },

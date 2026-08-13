@@ -1,32 +1,30 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { useAppEvent, useAppEventBus } from '@/contexts/AppEventBusContext';
 import { toast } from 'sonner';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse } from '@/types';
-import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
-import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, upsertCacheItem, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
+import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 
-import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, parseHolidayItem, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
+import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { CHUTI_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS, LEAVE_SETTLEMENT_COLUMNS } from '@/utils/dbColumns';
-import { fetchOwnProfileRow } from '@/utils/profileFetcher';
 import { isAdminRole } from '@/utils/permissionService';
+import { holidaysService } from '@/services/holidaysService';
 
-export const useDashboardData = () => {
+export const useDashboardData = (
+  sessionUser: SupabaseUser,
+  profile: Profile,
+  setProfile: Dispatch<SetStateAction<Profile | null>>,
+) => {
   const { emit } = useAppEventBus();
   const fetchingRef = useRef<boolean>(false);
-  const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
-  const sessionUserRef = useRef<SupabaseUser | null>(null);
-  useEffect(() => {
-    sessionUserRef.current = sessionUser;
-  }, [sessionUser]);
-  const [profile, setProfile] = useState<Profile | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [initialFetchDone, setInitialFetchDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -57,8 +55,6 @@ export const useDashboardData = () => {
   useEffect(() => {
     profilesListRef.current = profilesList;
   }, [profilesList]);
-
-  const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Navigation / Tab states
   const [adminActiveTab, setAdminActiveTab] = useState<'user' | 'admin'>('admin');
@@ -463,22 +459,11 @@ export const useDashboardData = () => {
 
   const handleSaveGlobalSettings = useCallback(async (newSettings: GlobalSettings, options?: { silent?: boolean }) => {
     if (!profile || !sessionUser) return false;
-    const updates: Record<string, unknown> = {
-      global_settings: newSettings,
-      requested_default_sign_in: JSON.stringify(newSettings),
-    };
-
-    // Compare old and new government holidays to detect newly added ones
-    const oldHolidays = (globalSettings.govt_holidays || []).map((h: string) => parseHolidayItem(h));
-    const newHolidays = (newSettings.govt_holidays || []).map((h: string) => parseHolidayItem(h));
-    const oldDates = new Set(oldHolidays.map(h => h.date));
-    const addedHolidays = newHolidays.filter(h => h.date && !oldDates.has(h.date));
 
     setLoading(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .in('role', ['admin', 'superadmin']);
+    const { error } = await holidaysService.saveGlobalLeaveSettings(
+      newSettings as unknown as Record<string, unknown>,
+    );
 
     if (error) {
       setMessage({ type: 'error', text: 'Failed to save settings: ' + error.message });
@@ -486,23 +471,20 @@ export const useDashboardData = () => {
       return false;
     }
 
-    // Immediately reflect in profile & profilesList in memory
-    if (profile && (profile.role === 'admin' || profile.role === 'superadmin')) {
-      (profile as any).global_settings = newSettings;
-      (profile as any).requested_default_sign_in = JSON.stringify(newSettings);
-    }
-
-    setProfilesList(prev => prev.map(p => (p.role === 'admin' || p.role === 'superadmin') ? {
+    const updatedProfile: Profile = {
+      ...profile,
+      global_settings: { ...(profile.global_settings || {}), ...newSettings },
+    };
+    setProfile(updatedProfile);
+    setProfilesList(prev => prev.map(p => ({
       ...p,
-      global_settings: newSettings,
-      requested_default_sign_in: JSON.stringify(newSettings)
-    } : p));
+      global_settings: { ...(p.global_settings || {}), ...newSettings },
+    })));
 
-    profilesListRef.current = profilesListRef.current.map(p => (p.role === 'admin' || p.role === 'superadmin') ? {
+    profilesListRef.current = profilesListRef.current.map(p => ({
       ...p,
-      global_settings: newSettings,
-      requested_default_sign_in: JSON.stringify(newSettings)
-    } : p);
+      global_settings: { ...(p.global_settings || {}), ...newSettings },
+    }));
 
     setGlobalSettings(newSettings);
     if (typeof window !== 'undefined') {
@@ -513,7 +495,7 @@ export const useDashboardData = () => {
           const raw = localStorage.getItem(cacheKey);
           if (raw) {
             const p = JSON.parse(raw);
-            p.global_settings = newSettings;
+            p.global_settings = { ...(p.global_settings || {}), ...newSettings };
             localStorage.setItem(cacheKey, JSON.stringify(p));
           }
         }
@@ -525,153 +507,25 @@ export const useDashboardData = () => {
       setMessage({ type: 'success', text: 'Leave quota settings successfully updated!' });
     }
     setLoading(false);
-    fetchRecords();
-
-    // Auto-respond 'paid' for eligible reserve-disabled users for newly added holidays
-    if (addedHolidays.length > 0) {
-      addedHolidays.forEach((h) => {
-        const reserveFalseIds = profilesList
-          .filter(p => p.eligible_govt_holiday !== false && p.allow_reserve === false)
-          .map(p => p.id);
-
-        if (reserveFalseIds.length > 0) {
-          // Auto-save 'paid' response in govt_holiday_responses for reserve-disabled users
-          const autoResponses = reserveFalseIds.map(userId => ({
-            user_id: userId,
-            holiday_date: h.date,
-            holiday_name: h.name,
-            response: 'paid'
-          }));
-
-          supabase
-            .from('govt_holiday_responses')
-            .upsert(autoResponses, { onConflict: 'user_id,holiday_date' })
-            .then(() => {
-            });
-        }
-      });
-    }
+    await fetchRecords();
 
     return true;
-  }, [profile, globalSettings.govt_holidays, profilesList, fetchRecords, setMessage]);
+  }, [profile, sessionUser, fetchRecords, setMessage, setProfile, setProfilesList]);
 
-  const handleSaveHolidayResponse = useCallback(async (holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
-    if (!sessionUser) return false;
-
-    setLoading(true);
-    const { error } = await supabase
-      .from('govt_holiday_responses')
-      .upsert({
-        user_id: sessionUser.id,
-        holiday_date: holidayDate,
-        holiday_name: holidayName,
-        response: response
-      }, {
-        onConflict: 'user_id,holiday_date'
-      });
-
-    if (error) {
-      setMessage({ type: 'error', text: 'Failed to save response: ' + error.message });
-      setLoading(false);
-      return false;
-    }
-    setMessage({ type: 'success', text: 'Your preference has been successfully saved!' });
-    setLoading(false);
-    fetchRecords();
-    return true;
-  }, [sessionUser, fetchRecords, setMessage]);
-
-  const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, holidayName: string, response: 'paid' | 'reserve') => {
+  const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, _holidayName: string, response: 'paid' | 'reserve') => {
     if (!profile || !isAdminRole(profile)) return false;
 
     setLoading(true);
-
-    // 1. Check existing preference
-    const { data: existingResponse } = await supabase
-      .from('govt_holiday_responses')
-      .select('response')
-      .eq('user_id', targetUserId)
-      .eq('holiday_date', holidayDate)
-      .maybeSingle();
-
-    const wasReserved = existingResponse?.response === 'reserve';
-    const isNowPaid = response === 'paid';
-
-    // 2. Perform the update
-    const { error } = await supabase
-      .from('govt_holiday_responses')
-      .upsert({
-        user_id: targetUserId,
-        holiday_date: holidayDate,
-        holiday_name: holidayName,
-        response: response,
-        updated_by_admin: true,
-        created_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,holiday_date'
-      });
+    const { error } = await holidaysService.convertGovtHolidayResponse(
+      targetUserId,
+      holidayDate,
+      response,
+    );
 
     if (error) {
       setMessage({ type: 'error', text: 'Failed to update response: ' + error.message });
       setLoading(false);
       return false;
-    }
-
-    // 3. If preference was reserve and is now paid, automatically unadjust excess leaves
-    if (wasReserved && isNowPaid) {
-      try {
-        const selectedYear = holidayDate.substring(0, 4);
-
-        // Fetch new reserved count (only the date is needed for the year filter)
-        const { data: activeReserveResponses } = await supabase
-          .from('govt_holiday_responses')
-          .select('holiday_date')
-          .eq('user_id', targetUserId)
-          .eq('response', 'reserve');
-
-        const newReservedCount = (activeReserveResponses || []).filter(
-          r => r.holiday_date.substring(0, 4) === selectedYear
-        ).length;
-
-        // Fetch user's adjusted full leaves in the same year
-        const { data: userLeaves } = await supabase
-          .from('chuti')
-          .select('id, date, comment, reserve_holiday')
-          .eq('user_id', targetUserId)
-          .eq('leave_type', 'Full Leave')
-          .eq('adjustment', true)
-          .gte('date', `${selectedYear}-01-01`)
-          .lte('date', `${selectedYear}-12-31`)
-          .is('deleted_at', null);
-
-        const govtHolidayLeaves = (userLeaves || []).filter(r =>
-          r.comment?.includes("Govt Holiday") || r.reserve_holiday === "Govt Holiday"
-        );
-
-        // If taken adjusted leaves exceed reserve count, unadjust the excess
-        if (govtHolidayLeaves.length > newReservedCount) {
-          const excessCount = govtHolidayLeaves.length - newReservedCount;
-          // Sort by date descending (unadjust most recent first)
-          govtHolidayLeaves.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          const leavesToUnadjust = govtHolidayLeaves.slice(0, excessCount);
-
-          for (const leaf of leavesToUnadjust) {
-            let cleanComment = leaf.comment || '';
-            // Clean prefix "Adjusted: Govt Holiday | "
-            cleanComment = cleanComment.replace(/Adjusted:\s*Govt Holiday(?:\s*\|\s*)?/g, '').trim();
-
-            await supabase
-              .from('chuti')
-              .update({
-                adjustment: false,
-                reserve_holiday: null,
-                comment: cleanComment || null
-              })
-              .eq('id', leaf.id);
-          }
-        }
-      } catch (unadjustErr) {
-      }
     }
 
     setMessage({ type: 'success', text: 'Holiday response updated successfully!' });
@@ -927,35 +781,49 @@ export const useDashboardData = () => {
     }
   }, [triggerAutoSync]);
 
-  // Listen for real-time updates via the centralized RealtimeProvider.
-  // Throttle: prevent rapid cascading refetches — minimum 3s between full fetches
-  const lastRealtimeFetchRef = useRef<number>(0);
-  const REALTIME_THROTTLE_MS = 3000;
-
-  const handleRealtimeChange = useCallback(() => {
-    // Notify useGlobalNotifications via DOM event
-    emit('realtime-data-changed');
-
-    if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-    realtimeDebounceRef.current = setTimeout(() => {
-      fetchRecords();
-    }, 1000); // 1-second debounce, no dropped events
-  }, [fetchRecords]);
-
   // ── chuti handler ──
   const handleChutiRealtime = useCallback((payload: RealtimePayload) => {
-    // Forward so UserManagementDashboard can react without its own chuti subscription
     emit('realtime-table-payload', { table: 'chuti', payload });
-    handleRealtimeChange();
-  }, [handleRealtimeChange, emit]);
+
+    const id = String(payload.eventType === 'DELETE' ? payload.old.id ?? '' : payload.new.id ?? '');
+    if (!id) return;
+    const incoming = payload.new as unknown as ChutiRecord;
+    const remove = payload.eventType === 'DELETE' || Boolean(incoming.deleted_at);
+
+    setUserRecords((prev) => {
+      const without = prev.filter((row) => row.id !== id);
+      if (remove || incoming.user_id !== sessionUser.id) return without;
+      return sortChutiRecordsDescending([{ ...incoming, synced: true }, ...without]);
+    });
+
+    if (isAdminRole(profile) || profile.role === 'supervisor') {
+      setAdminRecords((prev) => {
+        const without = prev.filter((row) => row.id !== id);
+        if (remove) return without;
+        const target = profilesListRef.current.find((p) => p.id === incoming.user_id);
+        const hydrated: ChutiRecordWithProfile = {
+          ...incoming,
+          id,
+          synced: true,
+          profiles: target ? {
+            username: target.username,
+            full_name: target.full_name,
+            role: target.role,
+            supervisor_ids: target.supervisor_ids,
+          } : null,
+        };
+        return sortChutiRecordsDescending([hydrated, ...without]);
+      });
+    }
+  }, [emit, profile, sessionUser.id]);
 
   // ── profiles handler ──
   const handleProfilesRealtime = useCallback((payload: RealtimePayload) => {
     if (!sessionUser) return;
     const newRow = payload.new as Partial<Profile>;
     const oldRow = payload.old as Partial<Profile>;
-    // Forward for quotes workspace
-    emit('realtime-profile-payload', { payload });
+      // Forward for quotes workspace.
+      emit('realtime-profile-payload', { payload });
     if (payload.eventType === 'DELETE' && oldRow?.id === sessionUser.id) {
       const handleForceLogout = async () => {
         try {
@@ -964,7 +832,6 @@ export const useDashboardData = () => {
         }
         localStorage.removeItem(`session_start_time_${sessionUser.id}`);
         localStorage.removeItem(`last_access_time_${sessionUser.id}`);
-        setSessionUser(null);
         setProfile(null);
       };
       handleForceLogout();
@@ -975,38 +842,26 @@ export const useDashboardData = () => {
         setProfile(prev => prev ? { ...prev, ...newRow } : (newRow as Profile));
       }
 
-      // R1/R2: the shared profilesList is patched inline by ProfilesProvider —
-      // here we only detect substantial changes to notify the notification hook.
-      const oldUser = profilesListRef.current.find(p => p.id === newRow.id);
-      const hasSubstantialChange = !oldUser ||
-        oldUser.username !== newRow.username ||
-        oldUser.role !== newRow.role ||
-        oldUser.full_name !== newRow.full_name ||
-        oldUser.job_role !== newRow.job_role ||
-        oldUser.working_hours !== newRow.working_hours ||
-        oldUser.break_time !== newRow.break_time ||
-        oldUser.is_setup_completed !== newRow.is_setup_completed;
-
-      const isApprover = isAdminRole(profile) || profile?.role === 'supervisor';
-      if (hasSubstantialChange && isApprover) {
-        // Notify notification hook
-        emit('realtime-data-changed');
-      }
-    } else {
-      // INSERT or DELETE — ProfilesProvider refetches the list; refresh chuti
-      // records here since approver views join profile data
-      const isApprover = isAdminRole(profile) || profile?.role === 'supervisor';
-      if (isApprover) {
-        handleRealtimeChange();
-      }
     }
-  }, [sessionUser, profile, handleRealtimeChange]);
+  }, [sessionUser, setProfile, emit]);
 
   // ── leave_settlements handler ──
   const handleSettlementsRealtime = useCallback((payload: RealtimePayload) => {
     emit('realtime-table-payload', { table: 'leave_settlements', payload });
-    handleRealtimeChange();
-  }, [handleRealtimeChange, emit]);
+    const id = String(payload.eventType === 'DELETE' ? payload.old.id ?? '' : payload.new.id ?? '');
+    if (!id) return;
+    setLeaveSettlements((prev) => {
+      const without = prev.filter((row) => row.id !== id);
+      if (payload.eventType === 'DELETE') return without;
+      const incoming = payload.new as unknown as LeaveSettlement;
+      const target = profilesListRef.current.find((p) => p.id === incoming.user_id);
+      return [{
+        ...incoming,
+        id,
+        profiles: target ? { full_name: target.full_name ?? null, username: target.username } : null,
+      }, ...without];
+    });
+  }, [emit]);
 
   // Register handlers with the centralized RealtimeProvider
   useRealtimeHandler('chuti', handleChutiRealtime);
@@ -1016,252 +871,22 @@ export const useDashboardData = () => {
   // ── govt_holiday_responses handler ──
   const handleHolidayResponseRealtime = useCallback((payload: RealtimePayload) => {
     emit('realtime-table-payload', { table: 'govt_holiday_responses', payload });
-    handleRealtimeChange();
-  }, [handleRealtimeChange, emit]);
+    const id = String(payload.eventType === 'DELETE' ? payload.old.id ?? '' : payload.new.id ?? '');
+    if (!id) return;
+    setHolidayResponses((prev) => {
+      const without = prev.filter((row) => row.id !== id);
+      if (payload.eventType === 'DELETE') return without;
+      const incoming = payload.new as unknown as GovtHolidayResponse;
+      const target = profilesListRef.current.find((p) => p.id === incoming.user_id);
+      return [{
+        ...incoming,
+        id,
+        profiles: target ? { full_name: target.full_name ?? null, username: target.username } : null,
+      }, ...without];
+    });
+  }, [emit]);
 
   useRealtimeHandler('govt_holiday_responses', handleHolidayResponseRealtime);
-
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-    };
-  }, []);
-
-  // Check Authentication and Fetch Profile on Mount and Auth Changes
-  useEffect(() => {
-    const fetchSession = async (sessionParam?: Session | null) => {
-      try {
-        setLoading(true);
-        let session = sessionParam;
-        if (session === undefined) {
-          const { data, error: sessionError } = await supabase.auth.getSession();
-
-          if (sessionError) {
-            console.error('Supabase session fetch error:', sessionError);
-            
-            // Clear any stale local storage auth keys to prevent loop console warnings
-            if (typeof window !== 'undefined') {
-              for (const key of Object.keys(localStorage)) {
-                if (key.startsWith('sb-')) {
-                  localStorage.removeItem(key);
-                }
-              }
-            }
-            try {
-              // Local: only clear this device's stale session
-              await supabase.auth.signOut({ scope: 'local' });
-            } catch (signOutErr) {
-              console.warn('Failed to clear stale auth session:', signOutErr);
-            }
-
-            // If offline, try to continue with cached profile instead of redirecting to login
-            if (typeof window !== 'undefined' && !navigator.onLine) {
-              try {
-                const cachedProfiles = await getCacheData('profiles_cache');
-                // Find any cached profile to use as the session user
-                if (cachedProfiles.length > 0) {
-                  const cachedProfile = cachedProfiles[0];
-                  setSessionUser({ id: cachedProfile.id } as unknown as SupabaseUser);
-                  setProfile(cachedProfile);
-                  setLoading(false);
-                  return;
-                }
-              } catch (cacheErr) {
-                console.error('Failed to recover from cache:', cacheErr);
-              }
-            }
-            setInitialFetchDone(false);
-            setSessionUser(null);
-            setProfile(null);
-            setLoading(false);
-            return;
-          }
-          session = data?.session;
-        }
-
-        if (!session) {
-          // If offline and no session, try cache recovery
-          if (typeof window !== 'undefined' && !navigator.onLine) {
-            try {
-              const cachedProfiles = await getCacheData('profiles_cache');
-              if (cachedProfiles.length > 0) {
-                const cachedProfile = cachedProfiles[0];
-                setSessionUser({ id: cachedProfile.id } as unknown as SupabaseUser);
-                setProfile(cachedProfile);
-                setLoading(false);
-                return;
-              }
-            } catch (cacheErr) {
-              console.error('Failed to recover from cache:', cacheErr);
-            }
-          }
-          setInitialFetchDone(false);
-          setSessionUser(null);
-          setProfile(null);
-          setLoading(false);
-          return;
-        }
-
-        const userId = session.user.id;
-        const now = Date.now();
-        const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
-
-        const sessionStart = localStorage.getItem(`session_start_time_${userId}`);
-        const lastAccess = localStorage.getItem(`last_access_time_${userId}`);
-
-        if (sessionStart || lastAccess) {
-          const startAge = sessionStart ? now - parseInt(sessionStart, 10) : 0;
-          const accessAge = lastAccess ? now - parseInt(lastAccess, 10) : 0;
-
-          if (startAge > oneWeekMs || accessAge > oneWeekMs) {
-            localStorage.removeItem(`session_start_time_${userId}`);
-            localStorage.removeItem(`last_access_time_${userId}`);
-            try {
-              // Local: this device's session expired — don't log out other devices
-              await supabase.auth.signOut({ scope: 'local' });
-            } catch (signOutError) {
-              console.error('Error signing out expired session:', signOutError);
-            }
-            setSessionUser(null);
-            setProfile(null);
-            setLoading(false);
-            return;
-          }
-        }
-
-        if (!sessionStart) {
-          localStorage.setItem(`session_start_time_${userId}`, now.toString());
-        }
-        localStorage.setItem(`last_access_time_${userId}`, now.toString());
-
-        setSessionUser(session.user);
-
-        const savedMode = localStorage.getItem('admin_mode_' + userId);
-        if (savedMode === 'user' || savedMode === 'admin') {
-          setAdminActiveTab(savedMode as 'user' | 'admin');
-        }
-
-        // Fetch user profile
-        let userProfile = null;
-        let profileError = null;
-
-        if (typeof window !== 'undefined' && navigator.onLine) {
-          try {
-            // Deduped with AppPortal's SIGNED_IN fetch (page.tsx) — both auth
-            // listeners share one in-flight single-row query per login.
-            const { data, error } = await fetchOwnProfileRow(session.user.id);
-            userProfile = data;
-            profileError = error;
-
-            if (!profileError && userProfile) {
-              userProfile = mapProfilePasswordResetStatus(userProfile);
-              // Asynchronously update profile cache
-              try {
-                await upsertCacheItem('profiles_cache', userProfile);
-              } catch (cacheErr) {
-                console.error('Failed to cache user profile:', cacheErr);
-              }
-            }
-          } catch (netErr) {
-            console.error('Network error during profile fetch:', netErr);
-          }
-        }
-
-        // Fallback to cache if offline or query failed
-        if (!userProfile) {
-          try {
-            const cachedProfiles = await getCacheData('profiles_cache');
-            userProfile = cachedProfiles.find(p => p.id === session.user.id) || null;
-            if (userProfile) {
-              profileError = null; // Clear error since we got it from cache
-            }
-          } catch (cacheErr) {
-            console.error('Failed to load profile from cache:', cacheErr);
-          }
-        }
-
-        if (profileError || !userProfile) {
-          console.error('User profile not found. Logging out.', profileError);
-          localStorage.removeItem(`session_start_time_${userId}`);
-          localStorage.removeItem(`last_access_time_${userId}`);
-          try {
-            // Local: profile fetch failed on this device only
-            await supabase.auth.signOut({ scope: 'local' });
-          } catch (e) {
-            console.error(e);
-          }
-          setSessionUser(null);
-          setProfile(null);
-          setLoading(false);
-          return;
-        }
-
-        setProfile(userProfile as Profile);
-
-
-
-        setLoading(false);
-      } catch (err) {
-        console.error('Fatal exception in fetchSession:', err);
-        // If offline, attempt to recover from cached profile instead of redirecting
-        if (typeof window !== 'undefined' && !navigator.onLine) {
-          try {
-            const cachedProfiles = await getCacheData('profiles_cache');
-            if (cachedProfiles.length > 0) {
-              const cachedProfile = cachedProfiles[0];
-              setSessionUser({ id: cachedProfile.id } as unknown as SupabaseUser);
-              setProfile(cachedProfile);
-              setLoading(false);
-              return;
-            }
-          } catch (cacheErr) {
-            console.error('Cache recovery failed:', cacheErr);
-          }
-        }
-        setInitialFetchDone(false);
-        setSessionUser(null);
-        setProfile(null);
-        setLoading(false);
-      }
-    };
-
-    fetchSession();
-
-    // Subscribe to auth state changes to detect login/logout in real-time
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        const currentUserId = sessionUserRef.current?.id;
-        if (currentUserId === session?.user?.id) {
-          if (session) {
-            setSessionUser(session.user);
-            sessionUserRef.current = session.user;
-          }
-          return;
-        }
-
-        if (session) {
-          setSessionUser(session.user);
-          sessionUserRef.current = session.user;
-          fetchSession(session);
-        }
-      } else if (event === 'TOKEN_REFRESHED') {
-        if (session) {
-          setSessionUser(session.user);
-          sessionUserRef.current = session.user;
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setSessionUser(null);
-        sessionUserRef.current = null;
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
 
   // Manual Sync Button Handler
   const handleManualSync = async () => {
@@ -1288,30 +913,6 @@ export const useDashboardData = () => {
     } else {
       setMessage({ type: 'error', text: res.error || 'Sync failed.' });
     }
-  };
-
-  // Logout Handler
-  const handleLogout = async () => {
-    if (sessionUser) {
-      localStorage.removeItem(`session_start_time_${sessionUser.id}`);
-      localStorage.removeItem(`last_access_time_${sessionUser.id}`);
-    }
-    // Clear cache/sessionStorage items
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('selectedYear');
-      sessionStorage.removeItem('viewingStaffId');
-    }
-    // Local scope: log out this device only — other devices stay signed in
-    await supabase.auth.signOut({ scope: 'local' });
-    setSessionUser(null);
-    setProfile(null);
-    setInitialFetchDone(false);
-    setUserRecords([]);
-    setAdminRecords([]);
-    setProfilesList([]);
-    setHolidayResponses([]);
-    setLeaveSettlements([]);
-    setViewingStaffIdState(null);
   };
 
   return {
@@ -1358,12 +959,10 @@ export const useDashboardData = () => {
     fetchRecords,
     checkOfflineQueue,
     handleManualSync,
-    handleLogout,
     globalSettings,
     handleSaveGlobalSettings,
     holidayResponses,
     setHolidayResponses,
-    handleSaveHolidayResponse,
     handleAdminUpdateHolidayResponse,
     leaveSettlements,
     setLeaveSettlements,

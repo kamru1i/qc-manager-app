@@ -10,12 +10,11 @@ import React, {
   useMemo,
 } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
-import { PROFILE_COLUMNS } from '@/utils/dbColumns';
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { getCacheData, setCacheData } from '@/utils/offlineSync';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
+import { profilesService } from '@/services';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -39,6 +38,7 @@ const ProfilesContext = createContext<ProfilesContextValue | null>(null);
 interface ProfilesProviderProps {
   children: React.ReactNode;
   sessionUser: SupabaseUser | null;
+  profile: Profile | null;
 }
 
 /**
@@ -52,26 +52,41 @@ interface ProfilesProviderProps {
  *
  * Must be mounted inside RealtimeProvider.
  */
-export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProps) {
+export function ProfilesProvider({ children, sessionUser, profile }: ProfilesProviderProps) {
   const [profilesList, setProfilesList] = useState<Profile[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const fetchingRef = useRef(false);
+  const requestSequenceRef = useRef(0);
+  const requestControllerRef = useRef<AbortController | null>(null);
   const loadedUserIdRef = useRef<string | null>(null);
   // Stable ref so the count-check inside refreshProfiles reads the latest list
   // without creating a new closure (which would recreate the channel).
   const profilesListRef = useRef<Profile[]>([]);
   useEffect(() => { profilesListRef.current = profilesList; }, [profilesList]);
 
+  const sessionUserId = sessionUser?.id;
+
   const refreshProfiles = useCallback(async (options?: { force?: boolean }) => {
+    if (!sessionUserId) return;
     if (fetchingRef.current && !options?.force) return;
+
+    // A forced post-mutation refresh supersedes an older in-flight result.
+    // This also prevents a response belonging to a previous account from
+    // populating the provider after a rapid logout/login transition.
+    requestControllerRef.current?.abort();
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+    const requestSequence = ++requestSequenceRef.current;
     fetchingRef.current = true;
     try {
       // Fetch fresh profiles from Supabase to guarantee global_settings, tab access & feature flags sync
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(PROFILE_COLUMNS)
-        .order('username', { ascending: true });
-      if (!error && data) {
+      const { data, error } = await profilesService.getAllProfiles(controller.signal);
+      if (
+        !controller.signal.aborted
+        && requestSequence === requestSequenceRef.current
+        && loadedUserIdRef.current === sessionUserId
+        && !error
+      ) {
         const mapped = data
           .map((p) => mapProfilePasswordResetStatus(p as unknown as Profile) as Profile)
           .sort((a, b) => (a.username || '').localeCompare(b.username || ''));
@@ -84,18 +99,27 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
         }
       }
     } catch (err) {
+      if (controller.signal.aborted) return;
       console.error('ProfilesProvider: failed to fetch profiles:', err);
     } finally {
-      fetchingRef.current = false;
-      setIsLoaded(true);
+      if (requestSequence === requestSequenceRef.current) {
+        fetchingRef.current = false;
+        requestControllerRef.current = null;
+        if (!controller.signal.aborted) setIsLoaded(true);
+      }
     }
-  }, []);
+  }, [sessionUserId]);
 
   // Initial load: cache-first for instant paint/offline, then network
-  const sessionUserId = sessionUser?.id;
+  const profileRole = profile?.role;
+  const supervisorIdsKey = (profile?.supervisor_ids || []).join(',');
 
   useEffect(() => {
     if (!sessionUserId) {
+      requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
+      requestSequenceRef.current += 1;
+      fetchingRef.current = false;
       setProfilesList([]);
       setIsLoaded(false);
       loadedUserIdRef.current = null;
@@ -108,7 +132,17 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
         try {
           const cached = (await getCacheData('profiles_cache')) as Profile[];
           if (active && cached.length > 0) {
-            const mappedAndSorted = cached
+            const visibleSupervisorIds = supervisorIdsKey ? supervisorIdsKey.split(',') : [];
+            const visibleCached = profileRole === 'user'
+              ? cached.filter((candidate) =>
+                  candidate.id === sessionUserId
+                  || visibleSupervisorIds.includes(candidate.id)
+                  || visibleSupervisorIds.some((supervisorId) =>
+                    cached.find((row) => row.id === supervisorId)?.delegated_supervisor_id === candidate.id
+                  )
+                )
+              : cached;
+            const mappedAndSorted = visibleCached
               .map((p) => mapProfilePasswordResetStatus(p) as Profile)
               .sort((a, b) => (a.username || '').localeCompare(b.username || ''));
             setProfilesList(mappedAndSorted);
@@ -129,8 +163,9 @@ export function ProfilesProvider({ children, sessionUser }: ProfilesProviderProp
 
     return () => {
       active = false;
+      requestControllerRef.current?.abort();
     };
-  }, [sessionUserId, refreshProfiles]);
+  }, [sessionUserId, profileRole, supervisorIdsKey, refreshProfiles]);
 
   // Single realtime patcher for the whole app
   const handleProfilesRealtime = useCallback(

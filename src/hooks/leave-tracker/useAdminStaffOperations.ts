@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
-import { Profile } from '@/types';
+import { GovtHolidayResponse, Profile } from '@/types';
 import { isAdminRole } from '@/utils/permissionService';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import { chutiService } from '@/services/chutiService';
+import { adminService } from '@/services/adminService';
 
 
 interface useAdminStaffOperationsParams {
@@ -19,6 +21,7 @@ interface useAdminStaffOperationsParams {
   router: any;
   setApprovingIds?: React.Dispatch<React.SetStateAction<Set<string>>>;
   setApprovedIds?: React.Dispatch<React.SetStateAction<Set<string>>>;
+  holidayResponses: GovtHolidayResponse[];
 }
 
 export const useAdminStaffOperations = ({
@@ -33,6 +36,7 @@ export const useAdminStaffOperations = ({
   router,
   setApprovingIds,
   setApprovedIds,
+  holidayResponses,
 }: useAdminStaffOperationsParams) => {
   const { emit } = useAppEventBus();
   // --- Welcome Onboarding Popup ---
@@ -186,7 +190,7 @@ export const useAdminStaffOperations = ({
     const TEN_MINUTES_MS = 10 * 60 * 1050; // slightly padded 10m
 
     let timer: NodeJS.Timeout;
-    let interval: NodeJS.Timeout;
+    let cancelled = false;
 
     const checkAndLogout = async () => {
       const elapsed = Date.now() - startTime;
@@ -208,21 +212,18 @@ export const useAdminStaffOperations = ({
     };
 
     checkAndLogout().then((loggedOut) => {
-      if (loggedOut) return;
+      if (loggedOut || cancelled) return;
 
       const remainingDelay = Math.max(0, TEN_MINUTES_MS - (Date.now() - startTime));
       timer = setTimeout(async () => {
         await checkAndLogout();
       }, remainingDelay);
 
-      interval = setInterval(async () => {
-        await checkAndLogout();
-      }, 5000);
     });
 
     return () => {
+      cancelled = true;
       if (timer) clearTimeout(timer);
-      if (interval) clearInterval(interval);
     };
   }, [showFirstTimePasswordModal, sessionUser, router]);
 
@@ -425,25 +426,21 @@ export const useAdminStaffOperations = ({
     setSetupError('');
 
     try {
-      const updates = {
-        full_name: setupFullName,
-        working_hours: parseFloat(setupWorkingHours) || 9.5,
-        break_time: parseInt(setupBreakTime) || 0,
-        job_role: setupJobRole,
-        default_sign_in: setupSignInTime,
-        default_sign_out: setupSignOutTime,
-        is_setup_completed: true,
-        has_edited_profile: true,
-      };
-
-      const { data: updatedProfile, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', sessionUser.id)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.rpc('complete_leave_profile_setup' as any, {
+        p_full_name: setupFullName.trim(),
+        p_working_hours: parseFloat(setupWorkingHours) || 9.5,
+        p_break_time: parseInt(setupBreakTime, 10) || 0,
+        p_job_role: setupJobRole,
+        p_default_sign_in: setupSignInTime,
+        p_default_sign_out: setupSignOutTime,
+      } as any);
       if (error) throw error;
+
+      const result = data as unknown as { success?: boolean; message?: string; profile?: Profile } | null;
+      if (!result?.success || !result.profile) {
+        throw new Error(result?.message || 'Failed to complete profile setup.');
+      }
+      const updatedProfile = result.profile;
 
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
       localStorage.setItem(`cached_profile_${sessionUser.id}`, JSON.stringify({ ...profile, ...updatedProfile }));
@@ -485,25 +482,17 @@ export const useAdminStaffOperations = ({
     setFirstTimePasswordError('');
 
     try {
-      const { error: authError } = await supabase.auth.updateUser({
-        password: firstTimePassword,
-      });
-      if (authError) throw authError;
-
       const isAlreadyCompleted = profile.is_setup_completed || false;
-      const updates: Record<string, unknown> = {
-        has_changed_password: true,
-        is_setup_completed: isAlreadyCompleted,
-      };
+      const { data, error } = await supabase.rpc('change_default_password' as any, {
+        p_new_password: firstTimePassword,
+      } as any);
+      if (error) throw error;
 
-      const { data: updatedProfile, error: profileError } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', sessionUser.id)
-        .select()
-        .single();
-
-      if (profileError) throw profileError;
+      const result = data as unknown as { success?: boolean; message?: string; profile?: Profile } | null;
+      if (!result?.success || !result.profile) {
+        throw new Error(result?.message || 'Failed to update password.');
+      }
+      const updatedProfile = result.profile;
 
       const mergedProfile = { ...profile, ...updatedProfile } as Profile;
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : (updatedProfile as Profile));
@@ -549,36 +538,25 @@ export const useAdminStaffOperations = ({
     setCreatingUser(true);
     try {
       const derivedEmail = `${newStaffUsername.toLowerCase().trim()}@office.local`;
-      const { data: newUserId, error } = await supabase.rpc('create_new_user', {
+      const { data: newUserId, error } = await adminService.createConfiguredUser({
         p_email: derivedEmail,
         p_password: newStaffPassword || '1234',
-        p_username: newStaffUsername.toUpperCase(),
+        p_username: newStaffUsername.toUpperCase().trim(),
         p_role: newStaffRole,
-        p_full_name: '', // Blank
-        p_needs_supervisor_approval: newStaffNeedsApproval,
-        p_allow_reserve: newStaffAllowReserve,
-        p_allow_overtime: newStaffAllowOvertime,
-        p_supervisor_ids: newStaffNeedsApproval ? newStaffSupervisorIds : null,
+        p_full_name: '',
+        p_profile_options: {
+          needs_supervisor_approval: newStaffNeedsApproval,
+          allow_reserve: newStaffAllowReserve,
+          allow_overtime: newStaffAllowOvertime,
+          supervisor_ids: newStaffNeedsApproval ? newStaffSupervisorIds : [],
+          eligible_office_leave: newStaffEligibleOfficeLeave,
+          eligible_govt_holiday: newStaffEligibleGovtHoliday,
+          working_hours: 9.5,
+          break_time: 0,
+        },
       });
       if (error) throw error;
-
-      if (newUserId) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            job_role: null,
-            working_hours: null,
-            break_time: null,
-            default_sign_in: null,
-            default_sign_out: null,
-            eligible_office_leave: newStaffEligibleOfficeLeave,
-            eligible_govt_holiday: newStaffEligibleGovtHoliday,
-          })
-          .eq('id', newUserId);
-        if (updateError) {
-          console.error('Error setting profile defaults:', updateError);
-        }
-      }
+      if (!newUserId) throw new Error('User account was not created.');
 
       setMessage({ type: 'success', text: `New staff "${newStaffUsername.toUpperCase()}" successfully created! Please set their password via credentials.` });
       setShowCreateUserModal(false);
@@ -801,47 +779,11 @@ export const useAdminStaffOperations = ({
       setApprovingIds(prev => new Set(prev).add(profileId));
     }
     try {
-      if (approve) {
-        // Reset password to 1234 in auth
-        const { error: rpcError } = await supabase.rpc('admin_update_user_credentials', {
-          p_user_id: profileId,
-          p_new_password: '1234'
-        });
-        if (rpcError) throw rpcError;
-
-        // Reset fields in profiles
-        const targetProfile = profilesList.find(p => p.id === profileId);
-        const currentSettings = targetProfile?.global_settings || {};
-        const updatedSettings = {
-          ...currentSettings,
-          password_reset_status: 'none'
-        };
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            has_changed_password: false,
-            global_settings: updatedSettings
-          })
-          .eq('id', profileId);
-        if (profileError) throw profileError;
-      } else {
-        // Just reject
-        const targetProfile = profilesList.find(p => p.id === profileId);
-        const currentSettings = targetProfile?.global_settings || {};
-        const updatedSettings = {
-          ...currentSettings,
-          password_reset_status: 'none'
-        };
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            global_settings: updatedSettings
-          })
-          .eq('id', profileId);
-        if (profileError) throw profileError;
-      }
+      const { error: rpcError } = await supabase.rpc('resolve_password_reset' as any, {
+        p_user_id: profileId,
+        p_approve: approve,
+      } as any);
+      if (rpcError) throw rpcError;
 
 
 
@@ -910,22 +852,13 @@ export const useAdminStaffOperations = ({
       const staff = profilesList.find(p => p.id === targetUserId) || (profile && profile.id === targetUserId ? profile : null);
       if (!staff) throw new Error('Staff not found');
 
-      const currentDays = staff.converted_short_leaves_days || 0;
-      const currentHours = staff.converted_short_leaves_hours || 0;
-
       const daysToConvert = Math.floor(shortMins / workingMins);
-      const hoursToConvert = daysToConvert * workingHours;
 
-      // Ask for adjustment category if they are eligible for govt holiday and have reserve entries
-      let adjustCategory = 'Office Leave';
+      let adjustCategory: 'Office Leave' | 'Govt Holiday' = 'Office Leave';
       if (staff.eligible_govt_holiday !== false) {
-        const { data: userResps } = await supabase
-          .from('govt_holiday_responses')
-          .select('id')
-          .eq('user_id', targetUserId)
-          .eq('response', 'reserve');
-
-        const reserveCount = userResps ? userResps.length : 0;
+        const reserveCount = holidayResponses.filter(
+          (response) => response.user_id === targetUserId && response.response === 'reserve',
+        ).length;
         if (reserveCount > 0) {
           const choice = prompt(
             `Which category do you want to adjust the converted ${daysToConvert} days of leave from?\n\n` +
@@ -939,56 +872,20 @@ export const useAdminStaffOperations = ({
         }
       }
 
-      // Find free dates starting from today and going backward
-      const datesToInsert: string[] = [];
-      const currentDate = new Date();
-      while (datesToInsert.length < daysToConvert) {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const { data: existingEntry } = await supabase
-          .from('chuti')
-          .select('id')
-          .eq('user_id', targetUserId)
-          .eq('date', dateStr)
-          .is('deleted_at', null)
-          .maybeSingle();
+      const { data, error } = await chutiService.convertShortLeaveToFullLeave(
+        targetUserId,
+        adjustCategory,
+      );
+      if (error) throw error;
 
-        if (!existingEntry) {
-          datesToInsert.push(dateStr);
-        }
-        currentDate.setDate(currentDate.getDate() - 1);
-      }
-
-      // Insert chuti records for the converted days
-      const recordsToInsert = datesToInsert.map(d => ({
-        user_id: targetUserId,
-        date: d,
-        leave_type: 'Full Leave',
-        adjustment: true,
-        status: 'approved',
-        comment: `Adjusted: ${adjustCategory} | Converted from Short Leave`
-      }));
-
-      const { error: insertError } = await supabase
-        .from('chuti')
-        .insert(recordsToInsert);
-
-      if (insertError) throw insertError;
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          converted_short_leaves_days: currentDays + daysToConvert,
-          converted_short_leaves_hours: currentHours + hoursToConvert
-        })
-        .eq('id', targetUserId);
-
-      if (profileError) throw profileError;
+      const convertedDays = Number(data?.days_converted ?? daysToConvert);
+      const convertedHours = Number(data?.hours_converted ?? convertedDays * workingHours);
 
       setMessage({
         type: 'success',
-        text: `Successfully converted ${hoursToConvert} hours of short leave to ${daysToConvert} days of full leave, and adjusted with ${adjustCategory === 'Govt Holiday' ? 'Reserved Govt Holiday' : 'Allocated Office Leave'}!`
+        text: `Successfully converted ${convertedHours} hours of short leave to ${convertedDays} days of full leave, and adjusted with ${adjustCategory === 'Govt Holiday' ? 'Reserved Govt Holiday' : 'Allocated Office Leave'}!`
       });
-      fetchRecords();
+      await fetchRecords();
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to convert: ' + (err as Error).message });
     } finally {

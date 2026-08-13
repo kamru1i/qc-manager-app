@@ -262,3 +262,5 @@ export const SaleSummaryTab = React.memo(
     );
   }
 );
+
+SaleSummaryTab.displayName = "SaleSummaryTab";

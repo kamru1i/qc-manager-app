@@ -69,21 +69,22 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
   const [totalToSubmit, setTotalToSubmit] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen && !isInline) return null;
-
   // Master branches list: merge DEFAULT_BRANCHES with allowedBranches and normalize to deduplicate unspaced variants
-  const branchesList = Array.from(
-    new Set([
-      ...DEFAULT_BRANCHES.map(normalizeBranchName),
-      ...(allowedBranches || []).map(normalizeBranchName),
-    ])
-  ).filter(Boolean);
+  const branchesList = React.useMemo(
+    () => Array.from(
+      new Set([
+        ...DEFAULT_BRANCHES.map(normalizeBranchName),
+        ...(allowedBranches || []).map(normalizeBranchName),
+      ])
+    ).filter(Boolean),
+    [allowedBranches],
+  );
 
   // File Types list: restrict strictly to allowedTypes permissions for this user (falls back to ALL_10_FILE_TYPES if empty)
-  const typesList =
-    allowedTypes && allowedTypes.length > 0
-      ? allowedTypes
-      : ALL_10_FILE_TYPES;
+  const typesList = React.useMemo(
+    () => allowedTypes && allowedTypes.length > 0 ? allowedTypes : ALL_10_FILE_TYPES,
+    [allowedTypes],
+  );
 
   const branchSelectOptions = React.useMemo(
     () => branchesList.map((b) => ({ value: b, label: b })),
@@ -102,6 +103,8 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
     ],
     []
   );
+
+  if (!isOpen && !isInline) return null;
 
   // Handle parsing text from textarea
   const handleParseText = () => {

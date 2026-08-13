@@ -201,3 +201,5 @@ export const DailyEntryTab = React.memo(
     );
   }
 );
+
+DailyEntryTab.displayName = "DailyEntryTab";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { supabase } from '@/utils/supabase';
 import { profilesService, adminService } from '@/services';
 import { toast } from 'sonner';
@@ -6,6 +5,8 @@ import { MENU_TABS, CONFIGURABLE_ROLES } from '@/utils/menuTabsRegistry';
 import { isSuperadmin, isAdminRole, canAdminManageFeatureFlag } from '@/utils/permissionService';
 import { FLAG_TO_TAB_KEY } from '@/utils/featureFlagsRegistry';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import type { SanitizerRule } from '@/utils/fileNameSanitizer';
+import type { TempAccessEntry } from '@/utils/dashboardHelpers';
 
 export function useProfileSettingsHandlers(props: any, stateHook: any) {
   const { emit } = useAppEventBus();
@@ -128,23 +129,14 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
         [supervisorId]: currentOverrides,
       };
 
-      const baseGs = (profile.global_settings && typeof profile.global_settings === 'object')
-        ? profile.global_settings
-        : {};
-
-      const updatedGs = {
-        ...baseGs,
-        supervisor_access_overrides: nextAllOverrides,
-      };
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ global_settings: updatedGs })
-        .eq('id', sessionUser?.id || profile.id);
-
+      const { error } = await profilesService.setSupervisorAccessOverrides(nextAllOverrides);
       if (error) throw error;
 
       setSupervisorAccessOverrides(nextAllOverrides);
+      const updatedGs = {
+        ...(profile.global_settings || {}),
+        supervisor_access_overrides: nextAllOverrides,
+      };
       const updatedProfile = { ...profile, global_settings: updatedGs };
       setProfile(updatedProfile);
       if (sessionUser) {
@@ -373,7 +365,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
   const handleAddSanitizerWord = () => {
     const word = sanitizerInput.trim();
     if (!word) return;
-    if (sanitizerRules.some((r) => r.word.toLowerCase() === word.toLowerCase())) {
+    if (sanitizerRules.some((r: SanitizerRule) => r.word.toLowerCase() === word.toLowerCase())) {
       toast.error('That word is already in the list.');
       return;
     }
@@ -383,12 +375,12 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
 
   const handleToggleSanitizerWord = (word: string) => {
     handleSaveSanitizerRules(
-      sanitizerRules.map((r) => (r.word === word ? { ...r, enabled: !r.enabled } : r))
+      sanitizerRules.map((r: SanitizerRule) => (r.word === word ? { ...r, enabled: !r.enabled } : r))
     );
   };
 
   const handleRemoveSanitizerWord = (word: string) => {
-    handleSaveSanitizerRules(sanitizerRules.filter((r) => r.word !== word));
+    handleSaveSanitizerRules(sanitizerRules.filter((r: SanitizerRule) => r.word !== word));
   };
 
   const handleToggleRoleVisibility = async (
@@ -479,21 +471,8 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
     const nextDelegatedFlags = { ...(effectiveAdminDelegatedFlags || {}), [flagKey]: nextDelegated };
     setActiveFlagKey(`delegate:${flagKey}`);
     try {
-      // 1. Try set_admin_delegated_flags RPC first to replicate across all rows
       const { error: rpcErr } = await profilesService.setAdminDelegatedFlags(sessionUser.id, nextDelegatedFlags);
-
-      // 2. Fallback: update across all profiles if RPC function isn't created in DB yet
-      if (rpcErr) {
-        console.warn('set_admin_delegated_flags RPC fallback:', rpcErr.message);
-        const updatedGs = {
-          ...(profile.global_settings || {}),
-          admin_delegated_flags: nextDelegatedFlags
-        };
-        const { error: updateErr } = await profilesService.updateProfile(sessionUser?.id || profile.id, {
-          global_settings: updatedGs,
-        });
-        if (updateErr) throw updateErr;
-      }
+      if (rpcErr) throw rpcErr;
 
       setAdminDelegatedFlags(nextDelegatedFlags);
       const updatedProfile = {
@@ -519,19 +498,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
     setSubmitting(true);
     try {
       const { error: rpcErr } = await adminService.resetAllUserFeatureFlags();
-      if (rpcErr) {
-        console.warn('reset_all_user_feature_flags RPC fallback:', rpcErr.message);
-        const { data: allProfiles } = await supabase.from('profiles').select('id, global_settings');
-        if (allProfiles) {
-          for (const p of allProfiles) {
-            if (p.global_settings && typeof p.global_settings === 'object' && 'user_feature_flags' in p.global_settings) {
-              const updatedGs = { ...(p.global_settings as Record<string, any>) };
-              delete updatedGs.user_feature_flags;
-              await supabase.from('profiles').update({ global_settings: updatedGs }).eq('id', p.id);
-            }
-          }
-        }
-      }
+      if (rpcErr) throw rpcErr;
 
       // Update local profile state
       const cleanedGs = { ...(profile.global_settings || {}) };
@@ -589,7 +556,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       return;
     }
     const now = Date.now();
-    const kept = tempAccess.filter((t) => {
+    const kept = tempAccess.filter((t: TempAccessEntry) => {
       if (new Date(t.expires_at).getTime() <= now) return false;
       if (tempForm.target_type === 'user') {
         return !(t.target_type === 'user' && (t.user_id === tempForm.user_id || t.user_codename === tempForm.user_codename) && t.tabKey === tempForm.tabKey);
@@ -598,7 +565,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
       }
     });
 
-    const targetUserObj = profilesList.find((p) => p.id === tempForm.user_id);
+    const targetUserObj = profilesList.find((p: import('@/types').Profile) => p.id === tempForm.user_id);
     const targetUserRole = targetUserObj?.role || 'user';
     const targetCodename = targetUserObj
       ? (targetUserObj.codename || targetUserObj.username || 'User')
@@ -626,7 +593,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
   const handleRemoveTempAccess = (entry: TempAccessEntry) => {
     handleSaveTempAccess(
       tempAccess.filter(
-        (t) =>
+        (t: TempAccessEntry) =>
           !(t.role === entry.role && t.tabKey === entry.tabKey && t.expires_at === entry.expires_at)
       )
     );

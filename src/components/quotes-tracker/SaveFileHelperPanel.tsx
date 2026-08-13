@@ -5,6 +5,7 @@ import { Save, ArrowLeft, Check, X, Edit3, Trash2 } from "lucide-react";
 import { RecordItem, SavedDocument } from "@/types";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
 import { isTauriApp } from "@/utils/apiUrlHelper";
+import { plainTextToHtml, sanitizeRichTextHtml } from "@/utils/htmlSanitizer";
 
 interface SaveFileHelperPanelProps {
   editorRef: React.RefObject<HTMLDivElement | null>;
@@ -98,6 +99,14 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
               <div
                 contentEditable
                 ref={editorRef}
+                onPaste={(event) => {
+                  event.preventDefault();
+                  const clipboardHtml = event.clipboardData.getData("text/html");
+                  const safeHtml = clipboardHtml
+                    ? sanitizeRichTextHtml(clipboardHtml)
+                    : plainTextToHtml(event.clipboardData.getData("text/plain"));
+                  document.execCommand("insertHTML", false, safeHtml);
+                }}
                 className="w-full min-h-[300px] max-h-[500px] overflow-auto p-4 bg-theme-card-bg/50 border border-theme-border-input rounded-xl text-theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-sans shadow-inner leading-relaxed outlook-rich-editor"
                 style={{ outline: "none" }}
               />

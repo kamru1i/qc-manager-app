@@ -246,6 +246,7 @@ export type Database = {
           holiday_name: string
           id: string
           response: string
+          updated_at: string | null
           updated_by_admin: boolean | null
           user_id: string
         }
@@ -255,6 +256,7 @@ export type Database = {
           holiday_name: string
           id?: string
           response: string
+          updated_at?: string | null
           updated_by_admin?: boolean | null
           user_id: string
         }
@@ -264,6 +266,7 @@ export type Database = {
           holiday_name?: string
           id?: string
           response?: string
+          updated_at?: string | null
           updated_by_admin?: boolean | null
           user_id?: string
         }

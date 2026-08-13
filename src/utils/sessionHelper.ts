@@ -57,37 +57,30 @@ export async function registerAndCheckSession(
   const sessionExists = activeSessions.some((s: ActiveSession) => s.sessionId === currentSessionId);
 
   if (!sessionExists) {
-    // New login session
-    activeSessions.push({ sessionId: currentSessionId!, lastActive: now });
+    // The RPC locks the profile and merges the new device with the current DB
+    // value, preventing simultaneous logins from overwriting each other.
+    const { data, error } = await supabase.rpc('register_active_session' as any, {
+      p_session_id: currentSessionId,
+    } as any);
 
-    // Enforce max sessions limit: Sort oldest first (ascending).
-    // Limit is generous (10) so a user can stay signed in on Web, Desktop,
-    // Android and multiple browsers simultaneously — it only guards against
-    // unbounded growth of the tracking array.
-    const MAX_SESSIONS = 10;
-    activeSessions.sort((a: ActiveSession, b: ActiveSession) => (a.lastActive || 0) - (b.lastActive || 0));
-
-    if (activeSessions.length > MAX_SESSIONS) {
-      activeSessions = activeSessions.slice(activeSessions.length - MAX_SESSIONS);
-    }
-
-    const updatedSettings = {
-      ...settings,
-      active_sessions: activeSessions
-    };
-
-    // AUDIT FIX M9: Use atomic jsonb_set via RPC to prevent race conditions
-    const { error } = await supabase.rpc('update_global_settings_key', {
-      p_user_id: userId,
-      p_key: 'active_sessions',
-      p_value: JSON.stringify(activeSessions),
-    });
-
-    if (!error) {
+    if (!error && Array.isArray(data)) {
+      activeSessions = data as unknown as ActiveSession[];
+      const updatedSettings = {
+        ...settings,
+        active_sessions: activeSessions
+      };
       userProfile.global_settings = updatedSettings;
       setProfileState(userProfile);
-      // Update cache too
-      localStorage.setItem('profiles_cache_' + userId, JSON.stringify(userProfile));
+      localStorage.setItem(`cached_profile_${userId}`, JSON.stringify(userProfile));
+    } else if (error) {
+      // Session tracking is an availability guard, not the authentication
+      // source of truth. Keep the valid Supabase session usable during a
+      // transient RPC failure and retry registration on the next cold load.
+      console.warn('[Session] Active-session registration failed:', error.message);
+      activeSessions.push({ sessionId: currentSessionId, lastActive: now });
+      activeSessions = activeSessions
+        .sort((a, b) => (a.lastActive || 0) - (b.lastActive || 0))
+        .slice(-10);
     }
   }
   // No heartbeat needed for existing sessions. The lastActive timestamp
@@ -110,4 +103,3 @@ export async function registerAndCheckSession(
 
   return true;
 }
-

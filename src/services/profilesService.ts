@@ -26,11 +26,13 @@ export const profilesService = {
   /**
    * Fetch all profiles ordered by username
    */
-  async getAllProfiles() {
-    const { data, error } = await supabase
+  async getAllProfiles(signal?: AbortSignal) {
+    let query = supabase
       .from('profiles')
       .select(PROFILE_COLUMNS)
       .order('username', { ascending: true });
+    if (signal) query = query.abortSignal(signal);
+    const { data, error } = await query;
     return { data: (data || []) as unknown as Profile[], error };
   },
 
@@ -50,10 +52,9 @@ export const profilesService = {
   /**
    * RPC: Set sanitizer rules for a target user
    */
-  async setSanitizerRules(targetUserId: string, words: string[]) {
+  async setSanitizerRules(_targetUserId: string, rules: unknown[]) {
     const { data, error } = await supabase.rpc('set_sanitizer_rules' as any, {
-      p_target_user_id: targetUserId,
-      p_words: words,
+      p_rules: rules,
     });
     return { data, error };
   },
@@ -61,10 +62,17 @@ export const profilesService = {
   /**
    * RPC: Set role visibility for a target user
    */
-  async setRoleVisibility(targetUserId: string, visibility: Record<string, boolean>) {
+  async setRoleVisibility(_targetUserId: string, visibility: Record<string, Record<string, boolean>>) {
     const { data, error } = await supabase.rpc('set_role_visibility' as any, {
-      p_target_user_id: targetUserId,
       p_visibility: visibility,
+    });
+    return { data, error };
+  },
+
+  /** RPC: Set supervisor profile-subtab access overrides globally. */
+  async setSupervisorAccessOverrides(overrides: Record<string, Record<string, boolean>>) {
+    const { data, error } = await supabase.rpc('set_supervisor_access_overrides' as any, {
+      p_overrides: overrides,
     });
     return { data, error };
   },
@@ -72,9 +80,8 @@ export const profilesService = {
   /**
    * RPC: Set feature flags for a target user
    */
-  async setFeatureFlags(targetUserId: string, flags: Record<string, boolean>) {
+  async setFeatureFlags(_targetUserId: string, flags: Record<string, boolean>) {
     const { data, error } = await supabase.rpc('set_feature_flags' as any, {
-      p_target_user_id: targetUserId,
       p_flags: flags,
     });
     return { data, error };
@@ -83,9 +90,8 @@ export const profilesService = {
   /**
    * RPC: Set admin delegated flags for a target user
    */
-  async setAdminDelegatedFlags(targetUserId: string, flags: Record<string, boolean>) {
+  async setAdminDelegatedFlags(_targetUserId: string, flags: Record<string, boolean>) {
     const { data, error } = await supabase.rpc('set_admin_delegated_flags' as any, {
-      p_target_user_id: targetUserId,
       p_flags: flags,
     });
     return { data, error };
@@ -94,19 +100,10 @@ export const profilesService = {
   /**
    * RPC: Set temporary access for a target user
    */
-  async setTempAccess(targetUserId: string, accessConfig: Record<string, any>) {
+  async setTempAccess(_targetUserId: string, accessConfig: unknown[]) {
     const { data, error } = await supabase.rpc('set_temp_access' as any, {
-      p_target_user_id: targetUserId,
-      p_access: accessConfig,
+      p_entries: accessConfig,
     });
-    return { data, error };
-  },
-
-  /**
-   * RPC: Sync top performer badges
-   */
-  async syncTopPerformerBadges() {
-    const { data, error } = await supabase.rpc('sync_top_performer_badges' as any);
     return { data, error };
   },
 
@@ -117,7 +114,7 @@ export const profilesService = {
     const { data, error } = await supabase.rpc('update_global_settings_key' as any, {
       p_user_id: userId,
       p_key: key,
-      p_value: typeof value === 'string' ? value : JSON.stringify(value),
+      p_value: value,
     });
     return { data, error };
   },

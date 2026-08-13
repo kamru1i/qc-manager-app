@@ -161,25 +161,21 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build Android Release APK (Attempt Release)
+      - name: Verify Android signing secrets and build release APK
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
-            echo "Release signing secrets are configured. Proceeding with release build..."
-            cd android
-            ./gradlew assembleRelease
-            echo "SHOULD_SIGN_RELEASE=true" >> $GITHUB_ENV
-          else
-            echo "WARNING: Release signing secrets are NOT configured. Skipping release build to fallback to debug build..."
-            echo "SHOULD_SIGN_RELEASE=false" >> $GITHUB_ENV
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "Error: Android release signing secrets are required."
+            exit 1
           fi
+          cd android
+          ./gradlew assembleRelease
 
       - name: Sign & Verify Android Release APK
-        if: env.SHOULD_SIGN_RELEASE == 'true'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -243,50 +239,14 @@ jobs:
           # Clean up local keystore
           rm -f release.keystore
 
-      - name: Build Android Debug APK (Fallback)
-        if: env.SHOULD_SIGN_RELEASE == 'false'
-        run: |
-          cd android
-          ./gradlew assembleDebug
-
-      - name: Verify Debug APK
-        if: env.SHOULD_SIGN_RELEASE == 'false'
-        run: |
-          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
-          APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
-          
-          echo "Verifying debug APK signature..."
-          $BUILD_TOOLS_DIR/apksigner verify --verbose "$APK_PATH"
-          
-          echo "Validating package badging metadata..."
-          $BUILD_TOOLS_DIR/aapt dump badging "$APK_PATH"
-          
-          # Check size
-          APK_SIZE=$(stat -c%s "$APK_PATH")
-          echo "Verified debug APK size: $APK_SIZE bytes"
-          if [ "$APK_SIZE" -lt 1048576 ]; then
-            echo "Error: APK size is suspiciously small ($APK_SIZE bytes)!"
-            exit 1
-          fi
-
       - name: Rename APK file
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          if [ "${{ env.SHOULD_SIGN_RELEASE }}" = "true" ]; then
-            if [ -f android/app/build/outputs/apk/release/app-release-signed.apk ]; then
-              mv android/app/build/outputs/apk/release/app-release-signed.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
-            else
-              echo "Error: Signed release APK not found!"
-              exit 1
-            fi
+          if [ -f android/app/build/outputs/apk/release/app-release-signed.apk ]; then
+            mv android/app/build/outputs/apk/release/app-release-signed.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
           else
-            if [ -f android/app/build/outputs/apk/debug/app-debug.apk ]; then
-              mkdir -p android/app/build/outputs/apk/release
-              mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/release/QC.Manager_${VERSION}.apk
-            else
-              echo "Error: Debug APK fallback file not found!"
-              exit 1
-            fi
+            echo "Error: Signed release APK not found!"
+            exit 1
           fi
 
       - name: Upload Android APK

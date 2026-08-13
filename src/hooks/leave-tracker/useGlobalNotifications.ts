@@ -7,9 +7,8 @@ import { ChutiRecord } from '@/utils/offlineSync';
 import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
 import { toast } from 'sonner';
 import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
-import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
+import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
 import { useAppEventBus, useAppEvent } from '@/contexts/AppEventBusContext';
 
@@ -33,11 +32,6 @@ export function useGlobalNotifications(
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<Set<string>>(new Set());
   const [syncedApprovalsCount, setSyncedApprovalsCount] = useState<number | null>(null);
-  const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const lastNotifFetchRef = useRef<number>(0);
-  // AUDIT FIX H8: Increased throttle from 5s→10s to reduce egress amplification
-  const NOTIF_THROTTLE_MS = 10000; // Minimum 10s between notification refetches
-
   const [isChutiLoaded, setIsChutiLoaded] = useState(false);
 
   useEffect(() => {
@@ -45,14 +39,6 @@ export function useGlobalNotifications(
       setIsChutiLoaded(true);
     }
   }, [initialFetchDone]);
-
-  // Fallback trigger after 1 second if dashboard fails to report loaded status
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsChutiLoaded(true);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
 
   // R2: When shared data is available from the always-mounted ChutiDashboard,
   // sync it into local state instead of fetching independently.
@@ -92,12 +78,12 @@ export function useGlobalNotifications(
   const hasSharedUserRecords = !!sharedUserRecords && (sharedUserRecords.length > 0 || !!initialFetchDone);
   const hasSharedHolidayResponses = !!sharedHolidayResponses && (sharedHolidayResponses.length > 0 || !!initialFetchDone);
 
-  const fetchNotificationsData = useCallback(async (force = false) => {
+  const fetchNotificationsData = useCallback(async () => {
     if (!sessionUser || !profile || !isChutiLoaded) return;
 
     try {
       // 1. Fetch user's own chuti records — SKIP if shared data from ChutiDashboard is available
-      if (!hasSharedUserRecords || force) {
+      if (!hasSharedUserRecords) {
         const { data: chutiData, error: chutiError } = await supabase
           .from('chuti')
           .select('id, user_id, date, leave_type, leave_hour, status, comment, adjustment, reserve_holiday, reserve_adjustment_status, admin_edit_request, sign_in_time, sign_out_time, created_at, updated_at')
@@ -118,8 +104,8 @@ export function useGlobalNotifications(
       }
 
       // 2. Fetch holiday responses — SKIP if shared data from ChutiDashboard is available
-      if (!hasSharedHolidayResponses || force) {
-        if (isAdminRole(profile) || profile?.role === 'supervisor') {
+      if (!hasSharedHolidayResponses) {
+        if (isAdminRole(profile)) {
           const { data: holidayData, error: holidayError } = await supabase
             .from('govt_holiday_responses')
             .select('id, user_id, holiday_date, holiday_name, response, created_at')
@@ -272,62 +258,73 @@ export function useGlobalNotifications(
     }
   }, [sessionUser, profile, hasSharedUserRecords, hasSharedHolidayResponses, isChutiLoaded]);
 
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Realtime payloads patch notification inputs in memory. No event causes a
+  // multi-table notification refetch.
+  useRealtimeHandler(
+    'chuti',
+    useCallback((payload) => {
+      const id = String(payload.eventType === 'DELETE' ? payload.old.id ?? '' : payload.new.id ?? '');
+      if (!id) return;
+      const incoming = payload.new as unknown as ChutiRecordWithProfile;
+      const remove = payload.eventType === 'DELETE' || Boolean(incoming.deleted_at);
 
-  // AUDIT FIX H8: Add random jitter (0-2s) to debounce to desynchronize
-  // concurrent refetch storms across all connected approver clients.
-  const handleRealtimeDataChanged = useCallback(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    const jitter = Math.floor(Math.random() * 2000);
-    debounceTimerRef.current = setTimeout(() => {
-      fetchNotificationsData();
-    }, 500 + jitter);
-  }, [fetchNotificationsData]);
+      if (isAdminRole(profile)) {
+        setAdminPendingRecords((prev) => {
+          const without = prev.filter((row) => row.id !== id);
+          if (remove || !(
+            incoming.status === 'approved_by_supervisor'
+            || incoming.reserve_adjustment_status === 'pending'
+          )) return without;
+          return [{
+            id,
+            status: incoming.status,
+            leave_type: incoming.leave_type,
+            reserve_adjustment_status: incoming.reserve_adjustment_status,
+          }, ...without];
+        });
+      }
 
-  // Sync with standard custom DOM event
-  useAppEvent('realtime-data-changed', () => {
-    handleRealtimeDataChanged();
-  }, [handleRealtimeDataChanged]);
+      if (profile?.role === 'supervisor') {
+        setSupervisorPendingRecords((prev) => {
+          const without = prev.filter((row) => row.id !== id);
+          if (remove || incoming.status !== 'pending_supervisor') return without;
+          const target = profilesListRef.current.find((p) => p.id === incoming.user_id);
+          return [{
+            ...incoming,
+            id,
+            profiles: target ? {
+              username: target.username,
+              full_name: target.full_name,
+              role: target.role,
+              supervisor_ids: target.supervisor_ids,
+            } : null,
+          }, ...without];
+        });
+      }
+    }, [profile])
+  );
 
-  const handleProfileRealtimeChange = useCallback((payload: RealtimePayload) => {
-    if (payload.eventType === 'UPDATE') {
-      // payload.old only contains the primary key (default REPLICA IDENTITY) —
-      // compare against the cached previous row instead. password_reset_status
-      // is virtual (derived from global_settings), so map the raw row first.
-      const newRow = mapProfilePasswordResetStatus(
-        payload.new as unknown as Profile,
-      ) as Partial<Profile>;
-      const prevRow = profilesListRef.current.find(p => p.id === newRow.id);
-
-      const criticalFields: (keyof Profile)[] = [
-        'username_request_status',
-        'profile_change_status',
-        'password_reset_status',
-        'role',
-        'supervisor_ids',
-        'has_quotes_access',
-        'has_chuti_access',
-        'global_settings',
-      ];
-
-      const hasCriticalChange = !prevRow || criticalFields.some(field => {
-        const prevVal = prevRow[field];
-        const newVal = newRow[field];
-        // supervisor_ids or global_settings — compare by value, not reference
-        if (typeof prevVal === 'object' || typeof newVal === 'object') {
-          return JSON.stringify(prevVal ?? null) !== JSON.stringify(newVal ?? null);
-        }
-        return prevVal !== newVal;
+  useRealtimeHandler(
+    'compliance_rules',
+    useCallback((payload) => {
+      const id = String(payload.eventType === 'DELETE' ? payload.old.id ?? '' : payload.new.id ?? '');
+      if (!id) return;
+      const incoming = payload.new as unknown as ComplianceRule;
+      setRulesRecords((prev) => {
+        const without = prev.filter((row) => row.id !== id);
+        if (payload.eventType === 'DELETE' || incoming.is_deleted) return without;
+        return [{
+          id,
+          updated_at: incoming.updated_at,
+          created_at: incoming.created_at,
+          category: incoming.category,
+          sub_category: incoming.sub_category,
+          content: incoming.content,
+        }, ...without];
       });
-      if (!hasCriticalChange) return;
-    }
-    handleRealtimeDataChanged();
-  }, [handleRealtimeDataChanged]);
+    }, [])
+  );
 
-  // Register realtime handlers for profiles and govt_holiday_responses to update notifications in real time
-  useRealtimeHandler('profiles', handleProfileRealtimeChange);
   useRealtimeHandler(
     'govt_holiday_responses',
     useCallback(
@@ -344,9 +341,8 @@ export function useGlobalNotifications(
           const oldRespId = payload.old.id as string;
           setHolidayResponses((prev) => prev.filter((r) => r.id !== oldRespId));
         }
-        handleRealtimeDataChanged();
       },
-      [setHolidayResponses, handleRealtimeDataChanged]
+      [setHolidayResponses]
     )
   );
 
@@ -478,7 +474,7 @@ export function useGlobalNotifications(
           list.push({
             id: `govt-holiday-paid-${holiday.date}`,
             type: 'govt_holiday_history',
-            timestamp: response.created_at || currentSessionTime,
+            timestamp: response.updated_at || response.created_at || currentSessionTime,
             title: 'Reserve Holiday Converted to Payment 💸',
             body: `Your Govt Holiday reserve for ${holiday.date} (${holiday.name}) has been converted to payment based on verbal agreement.`
           });
@@ -582,18 +578,9 @@ export function useGlobalNotifications(
       const profileChangeCount = profilesList.filter(p => p.profile_change_status === 'pending').length;
       const passwordResetCount = profilesList.filter(p => p.password_reset_status === 'pending').length;
       
-      // Count govt holiday responses for admin (where user is reserve-enabled)
-      const adminHolidayNotifCount = holidayResponses.filter((r: GovtHolidayResponse) => {
-        const staff = profilesList.find(p => p.id === r.user_id);
-        const isReserveEnabled = staff ? staff.allow_reserve !== false : true;
-        if (!isReserveEnabled) return false;
-        
-        // Also check if dismissed
-        const notifId = `admin-holiday-resp-${r.id}`;
-        return !dismissedNotificationIds?.has(notifId);
-      }).length;
-
-      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount + adminHolidayNotifCount;
+      // Government-holiday entitlements are created automatically and are not
+      // pending user choices, so they must not inflate the approval badge.
+      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount;
     }
     
     if (profile?.role === 'supervisor') {
@@ -795,45 +782,6 @@ export function useGlobalNotifications(
     }
   }, [notificationsList, dismissedNotificationIds, sessionUser, setDismissedNotificationIds]);
 
-  const handleSaveHolidayResponse = useCallback(async (holidayDate: string, holidayName: string, choice: 'paid' | 'reserve') => {
-    if (!profile) return false;
-    
-    try {
-      const { error } = await supabase
-        .from('govt_holiday_responses')
-        .upsert({
-          user_id: profile.id,
-          holiday_date: holidayDate,
-          holiday_name: holidayName,
-          response: choice
-        }, { onConflict: 'user_id,holiday_date' });
-
-      if (error) {
-        throw error;
-      }
-      toast.success(`Choice '${choice === 'paid' ? 'Get Paid' : 'Reserve'}' saved successfully.`);
-      await fetchNotificationsData(true);
-      return true;
-    } catch (err: unknown) {
-      const pgErr = err as { message?: string; code?: string; details?: string; hint?: string; status?: number } | null;
-      const errMsg = pgErr?.message || String(err);
-      const errCode = pgErr?.code || '';
-      const errDetails = pgErr?.details || '';
-      const errHint = pgErr?.hint || '';
-      const errStatus = pgErr?.status ? String(pgErr.status) : '';
-
-      console.error('Failed to save holiday choice detailed error:', {
-        message: errMsg,
-        code: errCode,
-        details: errDetails,
-        hint: errHint,
-        status: errStatus
-      });
-      toast.error(`Failed to save choice: ${errMsg}${errHint ? ` (${errHint})` : ''}`);
-      return false;
-    }
-  }, [profile, fetchNotificationsData]);
-
   const setOpenModal = useCallback((val: boolean) => {
     if (val) {
       handleOpenNotifications();
@@ -842,28 +790,15 @@ export function useGlobalNotifications(
     }
   }, [handleOpenNotifications, handleCloseNotifications]);
 
-  // Identify government holidays that the user has not responded to yet
-  const pendingHolidays = useMemo(() => {
-    if (!profile || !isProfileFresh || !isInitialNotifFetchDone) return [];
-    return (globalSettings.govt_holidays || [])
-      .map((h: unknown) => parseHolidayItem(h))
-      .filter((h: { date: string; name: string }) => {
-        const responded = holidayResponses.some(r => r.user_id === profile.id && r.holiday_date === h.date);
-        return !responded;
-      });
-  }, [globalSettings.govt_holidays, holidayResponses, profile, isProfileFresh, isInitialNotifFetchDone]);
-
   return {
     unreadCount,
     notificationsList,
     showNotificationsModal,
     setShowNotificationsModal: setOpenModal,
-    handleSaveHolidayResponse,
     handleDismissNotification,
     handleDismissAllNotifications,
     fetchNotificationsData,
     approvalsCount,
-    pendingHolidays,
     isInitialNotifFetchDone
   };
 }

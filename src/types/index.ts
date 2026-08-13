@@ -74,6 +74,8 @@ export interface GovtHolidayResponse {
   holiday_name: string;
   response: 'paid' | 'reserve';
   created_at?: string;
+  updated_at?: string;
+  updated_by_admin?: boolean | null;
   profiles?: {
     full_name: string | null;
     username: string;
@@ -189,4 +191,3 @@ export interface QuotationMistake {
     codename?: string | null;
   } | null;
 }
-

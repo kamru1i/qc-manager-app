@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { useAppEventBus, useAppEvent } from '@/contexts/AppEventBusContext';
 
 import { useRouter, usePathname } from 'next/navigation';
@@ -25,9 +26,14 @@ import { useModalHandlers } from '@/hooks/leave-tracker/useModalHandlers';
 import { supabase } from '@/utils/supabase';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Profile } from '@/types';
 
 
 interface DashboardProps {
+  sessionUser: SupabaseUser;
+  profile: Profile;
+  setProfile: Dispatch<SetStateAction<Profile | null>>;
   activeChutiTab: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves';
   onChutiTabChange: (tab: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves') => void;
   /** R2: Callback to share data upward so useGlobalNotifications doesn't duplicate fetches */
@@ -35,6 +41,9 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
+  sessionUser: rootSessionUser,
+  profile: rootProfile,
+  setProfile: setRootProfile,
   activeChutiTab,
   onChutiTabChange,
   onDataReady,
@@ -50,7 +59,7 @@ export default function Dashboard({
   }, [pathname, router]);
 
   // Core Dashboard State & Real-time monitors
-  const dashboardData = useDashboardData();
+  const dashboardData = useDashboardData(rootSessionUser, rootProfile, setRootProfile);
   const {
     sessionUser,
     profile,
@@ -88,7 +97,6 @@ export default function Dashboard({
     globalSettings,
     handleSaveGlobalSettings,
     holidayResponses,
-    handleSaveHolidayResponse,
     handleAdminUpdateHolidayResponse,
     leaveSettlements,
     handleSaveLeaveSettlementsBulk,
@@ -434,6 +442,7 @@ export default function Dashboard({
     router,
     setApprovingIds,
     setApprovedIds,
+    holidayResponses,
   });
 
   const {
@@ -873,6 +882,14 @@ export default function Dashboard({
               setEditingRecord(record);
               onChutiTabChange('add_leave');
             }}
+            canDeleteRecord={(record) =>
+              profile?.role !== 'user'
+              || ['pending_supervisor', 'approved_by_supervisor', 'needs_review'].includes(record.status || '')
+            }
+            canEditRecord={(record) =>
+              profile?.role !== 'user'
+              || ['pending_supervisor', 'approved_by_supervisor', 'needs_review'].includes(record.status || '')
+            }
             onRevisionClick={handleOpenRevisionModal}
             onConvertShortLeaveToFullLeave={handleConvertShortLeaveToFullLeave}
             holidayResponses={holidayResponses}

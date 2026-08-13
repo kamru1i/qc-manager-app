@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
@@ -13,8 +14,8 @@ import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
 import { toast } from 'sonner';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
-import { fetchSubmittedAtRange, buildAvailableDates } from '@/utils/availableDatesHelper';
-import { PROFILE_COLUMNS, AUDIT_LOG_COLUMNS, RECORD_COLUMNS } from '@/utils/dbColumns';
+import { fetchSubmittedMonths, buildAvailableDates } from '@/utils/availableDatesHelper';
+import { PROFILE_COLUMNS, RECORD_COLUMNS } from '@/utils/dbColumns';
 import { isAdminRole } from '@/utils/permissionService';
 import {
   syncOfflineData,
@@ -28,6 +29,7 @@ import {
   deleteCacheItem,
   clearAllCache
 } from '@/utils/quotesOfflineSync';
+import { clearOwnedOfflineCaches } from '@/utils/cacheOwnership';
 
 const sanitizeProfile = (p: Profile | null): Profile | null => {
   if (!p) return null;
@@ -47,18 +49,21 @@ const sanitizeProfilesList = (list: Profile[]): Profile[] => {
   return list.map(p => sanitizeProfile(p) as Profile);
 };
 
-export const useQuotesDashboardData = () => {
+export const useQuotesDashboardData = (
+  sessionUser: SupabaseUser,
+  rootProfile: Profile,
+  setRootProfile: Dispatch<SetStateAction<Profile | null>>,
+) => {
   const router = useRouter();
-  const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
-  const [profile, setRawProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const profile = useMemo(() => sanitizeProfile(rootProfile), [rootProfile]);
+  const loading = false;
   const [recordsLoading, setRecordsLoading] = useState(true);
   const [initialFetchDone, setInitialFetchDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
 
   const setProfile = useCallback((val: Profile | null | ((prev: Profile | null) => Profile | null)) => {
-    setRawProfile(prev => {
+    setRootProfile(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
       const sanitized = sanitizeProfile(next);
       if (typeof window !== 'undefined' && sanitized) {
@@ -66,7 +71,7 @@ export const useQuotesDashboardData = () => {
       }
       return sanitized;
     });
-  }, []);
+  }, [setRootProfile]);
 
   // Helper to update last activity timestamp in localStorage
   const updateLastActivity = useCallback(() => {
@@ -416,11 +421,13 @@ export const useQuotesDashboardData = () => {
 
       if (navigator.onLine) {
         try {
-          // Optimized: fetch only the earliest and latest submitted_at to determine
-          // the range of year-month pairs, instead of paginating through ALL records.
+          // Fetch only grouped year/month values. The former two ORDER BY/LIMIT
+          // probes were historically among the most expensive repeated record
+          // queries and also invented empty months between distant records.
           const scopeUserId =
             !isAdminRole(profile) && profile.role !== 'supervisor' ? sessionUser.id : undefined;
-          ({ earliestDate, latestDate } = await fetchSubmittedAtRange(scopeUserId));
+          setAvailableDates(await fetchSubmittedMonths(scopeUserId));
+          return;
         } catch (netError: unknown) {
           const errMsg = netError instanceof Error ? netError.message : String(netError);
           console.error('Failed to fetch available dates online, falling back to cache:', errMsg, netError);
@@ -493,48 +500,28 @@ export const useQuotesDashboardData = () => {
     setSubmitting(true);
 
     try {
-      // 1. Call complete_profile_setup RPC first to update username, full_name, and mark has_changed_password = true
-      const { data, error: rpcError } = await supabase.rpc('complete_profile_setup', {
+      // One self-scoped transaction changes the credential and completes the
+      // profile, so neither half can succeed on its own.
+      const { data, error: rpcError } = await supabase.rpc('complete_profile_setup' as any, {
         p_username: username.toUpperCase().trim(),
-        p_full_name: fullName.trim()
-      });
+        p_full_name: fullName.trim(),
+        p_new_password: password,
+      } as any);
 
       if (rpcError) throw rpcError;
       const result = Array.isArray(data) ? data[0] : data;
 
-      if (result && result.success === false) {
-        showToast('error', result.message || 'Failed to complete setup.');
+      const typedResult = result as { success?: boolean; message?: string; profile?: Profile } | null;
+      if (!typedResult?.success || !typedResult.profile) {
+        showToast('error', typedResult?.message || 'Failed to complete setup.');
         setSubmitting(false);
         return false;
       }
 
-      // 2. Update password using official client SDK second
-      const { error: authError } = await supabase.auth.updateUser({
-        password: password
-      });
-
-      if (authError) {
-        // If the password is the same as the current password (e.g. they already set it but has_changed_password was reset to false),
-        // we treat this as success because the password has already been successfully changed.
-        const isSamePassword = authError.message?.toLowerCase().includes('different from') ||
-                               authError.message?.toLowerCase().includes('same password');
-        if (!isSamePassword) {
-          throw authError;
-        }
-      }
-
-      // Reload profile
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select(PROFILE_COLUMNS)
-        .eq('id', sessionUser.id)
-        .maybeSingle();
-
-      if (userProfile) {
-        setProfile(userProfile as Profile);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('quotes_sales_profile', JSON.stringify(userProfile));
-        }
+      const userProfile = typedResult.profile;
+      setProfile(userProfile);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('quotes_sales_profile', JSON.stringify(userProfile));
       }
 
       // Audit Log
@@ -557,144 +544,6 @@ export const useQuotesDashboardData = () => {
     }
   };
 
-
-  useEffect(() => {
-    const getSession = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          if (typeof window !== "undefined") {
-            for (const key of Object.keys(localStorage)) {
-              if (key.startsWith("sb-")) {
-                localStorage.removeItem(key);
-              }
-            }
-          }
-          try {
-            // Local: only clear this device's stale session
-            await supabase.auth.signOut({ scope: 'local' });
-          } catch (signOutErr) {
-            console.warn("Failed to clear stale auth session:", signOutErr);
-          }
-          throw sessionError;
-        }
-
-        if (!session) {
-          setLoading(false);
-          router.push('/login');
-          return;
-        }
-
-        // Check last activity timestamp for 21 days inactivity logout
-        if (typeof window !== 'undefined') {
-          const lastActivity = localStorage.getItem('quotes_sales_last_activity');
-          const limitMs = 21 * 24 * 60 * 60 * 1000; // 21 days
-          const currentTime = Date.now();
-
-          if (lastActivity) {
-            const lastTime = parseInt(lastActivity, 10);
-            if (!isNaN(lastTime) && currentTime - lastTime > limitMs) {
-              console.warn('Session expired due to 21 days of inactivity.');
-              localStorage.removeItem('quotes_sales_last_activity');
-              // Local: inactivity on this device only — other devices stay signed in
-              await supabase.auth.signOut({ scope: 'local' });
-              showToast('error', 'Logged out due to 21 days of inactivity.');
-              setLoading(false);
-              router.push('/login');
-              return;
-            }
-          }
-          localStorage.setItem('quotes_sales_last_activity', String(currentTime));
-        }
-
-        const userId = session.user.id;
-        setSessionUser(session.user);
-
-        // Fetch user profile
-        let userProfile: Profile | null = null;
-        let fetchSuccess = false;
-
-        try {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select(PROFILE_COLUMNS)
-            .eq('id', userId)
-            .maybeSingle();
-
-          if (profileError) throw profileError;
-
-          if (profileData) {
-            userProfile = profileData;
-            fetchSuccess = true;
-            // Cache profile in localStorage
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('quotes_sales_profile', JSON.stringify(userProfile));
-            }
-          }
-        } catch (profileFetchErr) {
-          console.warn('Failed to fetch profile from database, checking cache:', profileFetchErr);
-        }
-
-        // If fetch failed, try getting it from localStorage cache
-        if (!fetchSuccess && typeof window !== 'undefined') {
-          const cachedProfileStr = localStorage.getItem('quotes_sales_profile');
-          if (cachedProfileStr) {
-            try {
-              userProfile = JSON.parse(cachedProfileStr);
-            } catch (jsonErr) {
-              console.error('Failed to parse cached profile:', jsonErr);
-            }
-          }
-        }
-
-        // If we still don't have a profile, check if we are truly offline or if it's a DB error
-        if (!userProfile) {
-          if (typeof navigator !== 'undefined' && navigator.onLine) {
-            console.error('User profile not found. Logging out.');
-            // Local: only this device — don't revoke other devices' sessions
-            await supabase.auth.signOut({ scope: 'local' });
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('quotes_sales_profile');
-            }
-            setLoading(false);
-            router.push('/login');
-            return;
-          } else {
-            throw new Error('No profile cache available and connection is offline.');
-          }
-        }
-
-        setProfile(userProfile);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching session/profile on load:', err);
-
-        // Try to recover using cached profile if session is available in local storage
-        if (typeof window !== 'undefined') {
-          const cachedProfileStr = localStorage.getItem('quotes_sales_profile');
-          if (cachedProfileStr) {
-            try {
-              const cachedProfile = JSON.parse(cachedProfileStr);
-              setProfile(cachedProfile);
-              setLoading(false);
-              return;
-            } catch {}
-          }
-        }
-
-        setLoading(false);
-        router.push('/login');
-      }
-    };
-
-    // Delay the initial session retrieval by 200ms on startup to allow 
-    // the Tauri Webview network stack and disk handles to fully initialize.
-    const timer = setTimeout(() => {
-      getSession();
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [router, showToast, setProfile]);
 
   // Fetch records once authenticated & loaded
   useEffect(() => {
@@ -794,7 +643,7 @@ export const useQuotesDashboardData = () => {
       localStorage.removeItem('quotes_sales_profile');
     }
     try {
-      await clearAllCache();
+      await clearOwnedOfflineCaches();
     } catch (err) {
       console.error('Failed to clear cache on logout:', err);
     }

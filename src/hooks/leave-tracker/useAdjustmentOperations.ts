@@ -6,7 +6,6 @@ import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord, saveOfflineUpdate } from '@/utils/offlineSync';
 import { formatDate, formatTimeToAMPM, getDetailedLeaveLabel, getExistingNotifications, createNotification } from '@/utils/dashboardHelpers';
 import { isAdminRole } from '@/utils/permissionService';
-import { logAuditEvent } from '@/utils/auditLogger';
 
 interface useAdjustmentOperationsParams {
   profile: Profile | null;
@@ -319,13 +318,6 @@ export const useAdjustmentOperations = ({
       
       if (error) throw error;
 
-      await logAuditEvent({
-        actor: profile,
-        actionType: 'ADJUST_LEAVE',
-        targetId: record.id || null,
-        details: `Admin ${approve ? 'approved' : 'rejected'} adjustment request for ${record.profiles?.username || record.user_id} on ${formatDate(record.date)}`,
-      });
-      
       const updateLocalState = () => {
         setUserRecords(prev => prev.map(r => r.id === record.id ? { ...r, ...updates } : r));
         setAdminRecords(prev => prev.map(r => r.id === record.id ? { ...r, ...updates } : r));

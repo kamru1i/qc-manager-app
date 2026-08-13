@@ -98,6 +98,15 @@ export const recordsService = {
     return { data: (data && data[0]) ? data[0] : null, error };
   },
 
+  /** Return only distinct year/month values instead of transferring every timestamp. */
+  async getAvailableRecordMonths(userId?: string, timeZone = 'Asia/Dhaka') {
+    const { data, error } = await supabase.rpc('get_available_record_months' as any, {
+      p_user_id: userId ?? null,
+      p_tz: timeZone,
+    });
+    return { data: (data || []) as Array<{ year: string; month: string }>, error };
+  },
+
   /**
    * Fetch leaderboard archive entries
    */

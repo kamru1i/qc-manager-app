@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import { supabase } from '@/utils/supabase';
 import { adminService, profilesService } from '@/services';
 import { Profile } from '@/types';
-import { getApiUrl } from '@/utils/apiUrlHelper';
 import { useProfiles } from '@/contexts/ProfilesContext';
 
 interface UseAdminActionsOptions {
@@ -34,7 +33,7 @@ export const useAdminActions = ({
     username: string, 
     role: 'admin' | 'supervisor' | 'user' | 'superadmin',
     fullName: string,
-    _allowedTypes: string[],
+    allowedTypes: string[],
     canManageRules: boolean,
     hasChutiAccess: boolean,
     hasQuotesAccess: boolean,
@@ -67,52 +66,42 @@ export const useAdminActions = ({
 
     try {
       const derivedEmail = `${username.toLowerCase().trim()}@office.local`;
-      const { error } = await adminService.createNewUser({
+      const { data: createdUserId, error } = await adminService.createConfiguredUser({
         p_email: derivedEmail,
         p_password: activePassword,
         p_username: username.toUpperCase().trim(),
         p_role: role,
         p_full_name: fullName,
-        p_needs_supervisor_approval: needsSupervisorApproval ?? false,
-        p_allow_reserve: allowReserve ?? false,
-        p_allow_overtime: allowOvertime ?? false,
-        p_supervisor_ids: supervisorIds ?? null,
-      } as any);
-
-      if (error) throw error;
-
-      // Update the newly created user profile with permissions and access flags
-      const targetUser = profilesList.find(p => p.username === username.toUpperCase().trim());
-      
-      if (targetUser) {
-        const updatePayload: any = { 
+        p_profile_options: {
+          allowed_types: allowedTypes,
           can_manage_rules: canManageRules,
           has_chuti_access: hasChutiAccess,
           has_quotes_access: hasQuotesAccess,
-          needs_supervisor_approval: needsSupervisorApproval,
-          supervisor_ids: supervisorIds,
-          eligible_govt_holiday: eligibleGovtHoliday,
-          eligible_office_leave: eligibleOfficeLeave,
-          allow_overtime: allowOvertime,
-          allow_reserve: allowReserve,
-          global_settings: {
-            kpi_skills: kpiSkills || [],
-            kpi_dept_indicators: kpiDeptIndicators || [],
-            kpi_other_dept_indicators: kpiOtherDeptIndicators || [],
-            performs_data_entry: performsDataEntry !== undefined ? performsDataEntry : true,
-            department: department || 'Data Entry',
-            performs_other_dept_tasks: performsOtherDeptTasks !== undefined ? performsOtherDeptTasks : false,
-            other_department: otherDepartment || 'IT'
-          }
-        };
+          needs_supervisor_approval: needsSupervisorApproval ?? false,
+          supervisor_ids: supervisorIds ?? [],
+          eligible_govt_holiday: eligibleGovtHoliday ?? true,
+          eligible_office_leave: eligibleOfficeLeave ?? true,
+          allow_overtime: allowOvertime ?? false,
+          allow_reserve: allowReserve ?? false,
+          job_role: jobRole,
+          working_hours: workingHours ?? 9.5,
+          break_time: breakTime ?? 0,
+          default_sign_in: defaultSignIn,
+          default_sign_out: defaultSignOut,
+          kpi_skills: kpiSkills ?? [],
+          kpi_dept_indicators: kpiDeptIndicators ?? [],
+          kpi_other_dept_indicators: kpiOtherDeptIndicators ?? [],
+          performs_data_entry: performsDataEntry ?? true,
+          department: department || 'Data Entry',
+          performs_other_dept_tasks: performsOtherDeptTasks ?? false,
+          other_department: otherDepartment || 'IT',
+        },
+      });
 
-        if (jobRole !== undefined) updatePayload.job_role = jobRole;
-        if (workingHours !== undefined) updatePayload.working_hours = workingHours;
-        if (breakTime !== undefined) updatePayload.break_time = breakTime;
-        if (defaultSignIn !== undefined) updatePayload.default_sign_in = defaultSignIn;
-        if (defaultSignOut !== undefined) updatePayload.default_sign_out = defaultSignOut;
+      if (error) throw error;
 
-        await profilesService.updateProfile(targetUser.id, updatePayload);
+      if (!createdUserId || typeof createdUserId !== 'string') {
+        throw new Error('User was created but the database did not return its profile ID.');
       }
 
       // Audit Log
@@ -256,28 +245,11 @@ const getErrorMessage = (err: any): string => {
       const cleanUsername = newUsername?.trim().toUpperCase();
 
       if (editorRole === 'admin' && cleanUsername && targetProfile && cleanUsername !== oldUsername) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
-
-        const res = await fetch(getApiUrl('/api/admin/update-user-codename'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify({
-            userId,
-            newUsername: cleanUsername,
-            role: role
-          })
+        const { error: credentialError } = await adminService.updateUserCredentials({
+          p_user_id: userId,
+          p_new_username: cleanUsername,
         });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || 'Failed to update user codename');
-        }
-
-        targetProfile.username = cleanUsername;
+        if (credentialError) throw credentialError;
       }
 
       const existingSettings = targetProfile?.global_settings || {};
@@ -583,30 +555,9 @@ const getErrorMessage = (err: any): string => {
   const resetAllUserFeatureFlags = useCallback(async (): Promise<boolean> => {
     setSubmitting(true);
     try {
-      // 1. Try calling the RPC function first
+      // The role-checked RPC performs the cross-profile reset atomically.
       const { error: rpcErr } = await supabase.rpc('reset_all_user_feature_flags' as any);
-
-      if (rpcErr) {
-        // Fallback: manually strip 'user_feature_flags' from global_settings on every profile row
-        const { data: allProfiles, error: fetchErr } = await supabase
-          .from('profiles')
-          .select('id, global_settings');
-
-        if (fetchErr) throw fetchErr;
-
-        if (allProfiles) {
-          for (const p of allProfiles) {
-            if (p.global_settings && typeof p.global_settings === 'object' && 'user_feature_flags' in p.global_settings) {
-              const updatedGs = { ...(p.global_settings as Record<string, any>) };
-              delete updatedGs.user_feature_flags;
-              await supabase
-                .from('profiles')
-                .update({ global_settings: updatedGs })
-                .eq('id', p.id);
-            }
-          }
-        }
-      }
+      if (rpcErr) throw rpcErr;
 
       await refreshProfiles({ force: true });
       showToast('success', 'All individual user feature flag overrides reset to Inherit!');

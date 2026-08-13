@@ -17,7 +17,7 @@ import SmartDownloadButton from "@/components/common/SmartDownloadButton";
 import { isNativeApp } from "@/utils/envHelper";
 
 export default function LoginPage() {
-  const [savePassword, setSavePassword] = useState(false);
+  const [rememberCodename, setRememberCodename] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,55 +27,57 @@ export default function LoginPage() {
   const pathname = usePathname();
   const [isNative, setIsNative] = useState(false);
 
-  // Load saved credentials if "Save Password" was enabled or saved credentials exist
+  // Remember only the non-secret codename. Older releases persisted the raw
+  // password in localStorage; purge that legacy value on first load and rely
+  // on the browser/OS credential manager via autocomplete instead.
   useEffect(() => {
     try {
-      const isSaved = localStorage.getItem("save_password_enabled") === "true";
+      const isRemembered =
+        localStorage.getItem("remember_codename_enabled") === "true" ||
+        localStorage.getItem("save_password_enabled") === "true";
       const savedCodename = localStorage.getItem("saved_login_codename");
-      const savedPass = localStorage.getItem("saved_login_password");
+      localStorage.removeItem("saved_login_password");
+      localStorage.removeItem("save_password_enabled");
 
-      if (isSaved || (savedCodename && savedPass)) {
-        setSavePassword(true);
-        if (savedCodename) setEmail(savedCodename);
-        if (savedPass) setPassword(savedPass);
+      if (isRemembered && savedCodename) {
+        setRememberCodename(true);
+        setEmail(savedCodename);
+        localStorage.setItem("remember_codename_enabled", "true");
       }
     } catch (e) {
-      console.warn("Failed to load saved login credentials:", e);
+      console.warn("Failed to load remembered codename:", e);
     }
   }, []);
 
-  // Continuously sync credentials whenever savePassword, email, or password change
+  // Keep the remembered codename current without ever persisting the password.
   useEffect(() => {
-    if (savePassword) {
-      localStorage.setItem("save_password_enabled", "true");
+    if (rememberCodename) {
+      localStorage.setItem("remember_codename_enabled", "true");
       if (email) localStorage.setItem("saved_login_codename", email.trim());
-      if (password) localStorage.setItem("saved_login_password", password);
     }
-  }, [savePassword, email, password]);
+  }, [rememberCodename, email]);
 
-  const handleSavePasswordToggle = (checked: boolean) => {
-    setSavePassword(checked);
+  const handleRememberCodenameToggle = (checked: boolean) => {
+    setRememberCodename(checked);
     if (!checked) {
-      localStorage.removeItem("save_password_enabled");
+      localStorage.removeItem("remember_codename_enabled");
       localStorage.removeItem("saved_login_codename");
-      localStorage.removeItem("saved_login_password");
     } else {
-      localStorage.setItem("save_password_enabled", "true");
+      localStorage.setItem("remember_codename_enabled", "true");
       if (email) localStorage.setItem("saved_login_codename", email.trim());
-      if (password) localStorage.setItem("saved_login_password", password);
     }
   };
 
   const saveOrClearCredentials = () => {
-    if (savePassword) {
-      localStorage.setItem("save_password_enabled", "true");
+    if (rememberCodename) {
+      localStorage.setItem("remember_codename_enabled", "true");
       if (email) localStorage.setItem("saved_login_codename", email.trim());
-      if (password) localStorage.setItem("saved_login_password", password);
     } else {
-      localStorage.removeItem("save_password_enabled");
+      localStorage.removeItem("remember_codename_enabled");
       localStorage.removeItem("saved_login_codename");
-      localStorage.removeItem("saved_login_password");
     }
+    localStorage.removeItem("saved_login_password");
+    localStorage.removeItem("save_password_enabled");
   };
 
   useEffect(() => {
@@ -305,9 +307,13 @@ export default function LoginPage() {
     let loginEmail = loginEmailInput;
     if (!loginEmail.includes("@")) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        isNative ? 10000 : 6000,
+      );
 
       let resolvedEmail = null;
+      let resolveError = "Unable to verify credentials. Please try again.";
       try {
         const res = await fetch(getApiUrl("/api/resolve-email"), {
           method: "POST",
@@ -320,6 +326,9 @@ export default function LoginPage() {
         if (res.ok) {
           const data = await res.json();
           resolvedEmail = data.email;
+          if (!resolvedEmail) resolveError = "Invalid codename or password...";
+        } else if (res.status === 429) {
+          resolveError = "Too many login attempts. Please wait a minute.";
         }
       } catch {
         clearTimeout(timeoutId);
@@ -328,54 +337,11 @@ export default function LoginPage() {
       if (resolvedEmail) {
         loginEmail = resolvedEmail;
       } else {
-        // Fallback list of suffixes (different user roles were created under different local domains)
-        const suffixes = ["@admin.local", "@office.local", "@user.local", "@admin.chuti", "@supervisor.chuti", "@user.chuti"];
-        const baseName = loginEmail.toLowerCase().trim();
-
-        let authSuccess = false;
-        let lastAuthError: any = null;
-
-        for (const suffix of suffixes) {
-          try {
-            const { data, error: authError } =
-              await supabase.auth.signInWithPassword({
-                email: baseName + suffix,
-                password: loginPasswordInput,
-              });
-            if (!authError && data.session) {
-              saveOrClearCredentials();
-              const userId = data.session.user.id;
-              localStorage.setItem(
-                `session_start_time_${userId}`,
-                Date.now().toString(),
-              );
-              localStorage.setItem(
-                `last_access_time_${userId}`,
-                Date.now().toString(),
-              );
-              router.push("/");
-              router.refresh();
-              authSuccess = true;
-              break;
-            } else {
-              lastAuthError = authError;
-            }
-          } catch (e) {
-            lastAuthError = e;
-          }
-        }
-
-        if (authSuccess) {
-          return;
-        } else {
-          setError(
-            lastAuthError?.message === "Invalid login credentials"
-              ? "Invalid codename or password..."
-              : lastAuthError?.message || "Failed to login.",
-          );
-          setLoading(false);
-          return;
-        }
+        // Do not spray multiple guessed internal email suffixes at Supabase.
+        // The rate-limited resolver is the canonical codename-to-email path.
+        setError(resolveError);
+        setLoading(false);
+        return;
       }
     }
 
@@ -510,11 +476,11 @@ export default function LoginPage() {
               <label className="flex items-center gap-2 text-xs font-medium text-theme-text-muted hover:text-theme-text-secondary cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  checked={savePassword}
-                  onChange={(e) => handleSavePasswordToggle(e.target.checked)}
+                  checked={rememberCodename}
+                  onChange={(e) => handleRememberCodenameToggle(e.target.checked)}
                   className="h-4 w-4 rounded border-theme-border-input bg-theme-page-bg/85 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 transition-colors cursor-pointer accent-blue-600"
                 />
-                <span>Save Password</span>
+                <span>Remember Codename</span>
               </label>
 
               <button

@@ -22,6 +22,7 @@ import { DateInput } from "@/components/common/DateInput";
 import { KpiSkeleton } from "@/components/common/skeleton/KpiSkeleton";
 import { PROFILE_COLUMNS, KPI_ASSESSMENT_COLUMNS } from "@/utils/dbColumns";
 import { useProfiles } from "@/contexts/ProfilesContext";
+import { recordsService } from "@/services";
 
 interface UserKpiPerformancePanelProps {
   viewingStaff: Profile;
@@ -93,29 +94,17 @@ export const UserKpiPerformancePanel: React.FC<
             .from("kpi_assessments")
             .select("month_year, kpis, appraiser_signed, appraisee_signed")
             .eq("user_id", targetStaff.id),
-          supabase
-            .from("records")
-            .select("submitted_at")
-            .eq("user_id", targetStaff.id)
-            .not("submitted_at", "is", null),
+          recordsService.getAvailableRecordMonths(targetStaff.id),
         ]);
 
         if (active) {
           if (savedRes.data) {
             setSavedPeriods(savedRes.data);
           }
-          if (recordRes.data) {
-            const mSet = new Set<string>();
-            recordRes.data.forEach((r: any) => {
-              if (r.submitted_at) {
-                const d = new Date(r.submitted_at);
-                if (!isNaN(d.getTime())) {
-                  const y = d.getFullYear().toString();
-                  const m = String(d.getMonth() + 1).padStart(2, "0");
-                  mSet.add(`${y}-${m}`);
-                }
-              }
-            });
+          if (recordRes.data && !recordRes.error) {
+            const mSet = new Set<string>(
+              recordRes.data.map(({ year, month }) => `${year}-${month}`),
+            );
             setRecordMonths(Array.from(mSet));
           }
         }
@@ -1580,37 +1569,12 @@ export const UserKpiPerformancePanel: React.FC<
               </p>
             </div>
           </div>
-          <pre className="bg-theme-card-container/90 border border-theme-border-muted rounded-xl p-3 text-[10px] text-theme-text-muted font-mono overflow-x-auto select-all max-h-48 whitespace-pre">
-            {`CREATE TABLE IF NOT EXISTS public.kpi_assessments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  month_year TEXT NOT NULL,
-  emp_id TEXT,
-  date_of_joining TEXT,
-  department TEXT DEFAULT 'Data Entry',
-  appraiser_name TEXT,
-  reviewer_name TEXT,
-  kpis JSONB NOT NULL DEFAULT '[]'::jsonb,
-  appraisee_signed BOOLEAN DEFAULT false,
-  appraisee_sign_date TEXT,
-  appraiser_signed BOOLEAN DEFAULT false,
-  appraiser_sign_date TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  UNIQUE(user_id, month_year)
-);
-
-ALTER TABLE public.kpi_assessments ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow select for all authenticated users"
-ON public.kpi_assessments FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Allow insert/update/delete for admin, supervisor, or self"
-ON public.kpi_assessments FOR ALL TO authenticated
-USING (auth.uid() = user_id OR EXISTS (
-  SELECT 1 FROM public.profiles WHERE id = auth.uid() AND (role = 'admin' OR role = 'supervisor')
-));`}
-          </pre>
+          <p className="bg-theme-card-container/90 border border-theme-border-muted rounded-xl p-3 text-[11px] text-theme-text-muted leading-relaxed">
+            Ask an administrator to verify and deploy the timestamped Supabase
+            migrations. Do not create the table or policies manually from the
+            client: the production migration includes role-scoped RLS and KPI
+            integrity triggers that must be installed together.
+          </p>
         </div>
       )}
 

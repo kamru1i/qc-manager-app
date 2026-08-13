@@ -18,6 +18,7 @@ export interface PendingRecordAction {
   data?: Partial<Omit<RecordItem, 'id' | 'profiles'>>;
   synced: boolean;
   _retryCount?: number;
+  _owner_user_id?: string;
 }
 
 const STORE_NAME = 'pending_records';
@@ -35,7 +36,23 @@ export const manager = createOfflineSyncManager<PendingRecordAction>({
   },
 });
 
-export const getOfflineRecords = manager.getOfflineRecords;
+const getCurrentUserId = async (): Promise<string | null> => {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id ?? null;
+};
+
+export const getOfflineRecords = async (): Promise<PendingRecordAction[]> => {
+  const [records, currentUserId] = await Promise.all([
+    manager.getOfflineRecords(),
+    getCurrentUserId(),
+  ]);
+  if (!currentUserId) return [];
+  return records.filter((record) =>
+    record._owner_user_id
+      ? record._owner_user_id === currentUserId
+      : record.user_id === currentUserId
+  );
+};
 export const deleteOfflineRecord = manager.deleteOfflineRecord;
 export const setCacheData = manager.setCacheData;
 export const getCacheData = manager.getCacheData;
@@ -48,11 +65,15 @@ export const purgeStaleCacheData = manager.purgeStaleCacheData;
 
 // Save a record creation to IndexedDB
 export const saveOfflineRecord = async (record: Omit<PendingRecordAction, 'localId' | 'synced' | 'action'>): Promise<string> => {
-  return manager.saveOfflineRecord(record as any);
+  const ownerUserId = await getCurrentUserId();
+  if (!ownerUserId) throw new Error('Cannot queue quote data without an authenticated session.');
+  return manager.saveOfflineRecord({ ...record, _owner_user_id: ownerUserId } as any);
 };
 
 // Save a record update to IndexedDB
 export const saveOfflineUpdate = async (id: string, userId: string, updates: Partial<Omit<RecordItem, 'id' | 'profiles'>>): Promise<string> => {
+  const ownerUserId = await getCurrentUserId();
+  if (!ownerUserId) throw new Error('Cannot queue quote data without an authenticated session.');
   const dummyData = {
     user_id: userId,
     file_name: updates.file_name || '',
@@ -61,12 +82,15 @@ export const saveOfflineUpdate = async (id: string, userId: string, updates: Par
     file_type: updates.file_type || 'Quote',
     submitted_at: updates.submitted_at || new Date().toISOString(),
     data: updates,
+    _owner_user_id: ownerUserId,
   };
   return manager.saveOfflineUpdate(id, dummyData as any);
 };
 
 // Save a delete action to IndexedDB (and clean up pending updates)
 export const saveOfflineDelete = async (id: string, userId: string): Promise<string> => {
+  const ownerUserId = await getCurrentUserId();
+  if (!ownerUserId) throw new Error('Cannot queue quote data without an authenticated session.');
   const dummyData = {
     user_id: userId,
     file_name: '',
@@ -74,6 +98,7 @@ export const saveOfflineDelete = async (id: string, userId: string): Promise<str
     codename: '',
     file_type: 'Quote' as FileType,
     submitted_at: new Date().toISOString(),
+    _owner_user_id: ownerUserId,
   };
   return manager.saveOfflineDelete(id, dummyData as any);
 };
@@ -247,7 +272,7 @@ export const updateOfflineRecordAction = async (localId: string, updates: Partia
   await manager.idb.putItem(STORE_NAME, updatedItem);
 };
 
-// Clear all data from all cache stores and metadata
+// Clear cached server data and metadata; preserve account-owned pending writes.
 export const clearAllCache = async (): Promise<void> => {
-  return manager.idb.clearStores(['records_cache', 'profiles_cache', 'user_profile_cache', 'sync_metadata', 'pending_records']);
+  return manager.idb.clearStores(['records_cache', 'profiles_cache', 'user_profile_cache', 'sync_metadata']);
 };

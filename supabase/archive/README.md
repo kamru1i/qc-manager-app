@@ -1,14 +1,17 @@
 # Supabase Archive — Historical SQL Patches
 
-> **⚠️ DO NOT RUN these files directly.** All changes from these files have
-> been deployed to the production database and are now captured in the
-> baseline migration at `supabase/migrations/20260811074118_remote_schema.sql`.
+> **⚠️ DO NOT RUN these files directly.** This directory is outside
+> `supabase/migrations/`, is never part of `db push`, and contains superseded
+> function and policy definitions kept only as historical evidence. The
+> authoritative replayable state is the ordered migration chain beginning at
+> `supabase/migrations/20260811074118_remote_schema.sql`.
 
 ## What's in this directory?
 
-These are the **historical SQL patch files** that were manually applied to the
-production Supabase database before the migration framework was set up. They
-are preserved here for **reference and audit trail** only.
+These are **historical SQL patch files** that were manually applied before the
+migration framework was established. Some definitions are intentionally stale;
+copying or executing them can regress current authorization and performance
+controls. They are preserved for the audit trail only.
 
 ## Files
 
@@ -24,6 +27,9 @@ are preserved here for **reference and audit trail** only.
 | `add_role_guards_to_security_definer.sql` | **DEPRECATED** — neutralized no-op | — |
 
 ## Future Changes
+
+Do not edit or copy SQL from this archive into an active migration. Compare
+against `supabase/schema.sql` and add a new timestamped migration instead.
 
 All future database changes should use the Supabase migration workflow:
 

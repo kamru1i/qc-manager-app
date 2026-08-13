@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Pfu3GxaiZXx7jL6WX53VBUcmcKF8vaC912CgGLkEgQpJweYOO1h1Q5fgt3vfc0r
+\restrict F4apPkeDoLkwaa6SiBJtNnq9UT9lVJrHtYKrZURLF2eLx5yhthXpnpiByOKg0j7
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.4
@@ -20,26 +20,45 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: pg_database_owner
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA public;
 
 
-ALTER SCHEMA public OWNER TO pg_database_owner;
-
 --
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
--- Name: admin_insert_chuti_records_bulk(uuid, date[], text, boolean[], boolean, time without time zone, time without time zone, interval, text, text, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: admin_insert_chuti_records_bulk(uuid, date[], text, boolean[], boolean, time without time zone, time without time zone, interval, text, text, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone DEFAULT NULL::time without time zone, p_sign_out_time time without time zone DEFAULT NULL::time without time zone, p_leave_hour interval DEFAULT NULL::interval, p_reserve_holiday text DEFAULT NULL::text, p_comment text DEFAULT NULL::text, p_bulk_id uuid DEFAULT NULL::uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.current_user_has_workspace('chuti') THEN
+    RAISE EXCEPTION 'Leave workspace access is disabled.';
+  END IF;
+  PERFORM public.admin_insert_chuti_records_bulk_internal(
+    p_user_id, p_dates, p_leave_type, p_adjustments, p_adjust_short_leave,
+    p_sign_in_time, p_sign_out_time, p_leave_hour, p_reserve_holiday,
+    p_comment, p_bulk_id
+  );
+END;
+$$;
+
+
+--
+-- Name: admin_insert_chuti_records_bulk_internal(uuid, date[], text, boolean[], boolean, time without time zone, time without time zone, interval, text, text, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_insert_chuti_records_bulk_internal(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone DEFAULT NULL::time without time zone, p_sign_out_time time without time zone DEFAULT NULL::time without time zone, p_leave_hour interval DEFAULT NULL::interval, p_reserve_holiday text DEFAULT NULL::text, p_comment text DEFAULT NULL::text, p_bulk_id uuid DEFAULT NULL::uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
@@ -90,53 +109,109 @@ END;
 $$;
 
 
-ALTER FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) OWNER TO postgres;
-
 --
--- Name: admin_update_user_credentials(uuid, text, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: admin_update_user_credentials(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text DEFAULT NULL::text, p_new_password text DEFAULT NULL::text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'extensions', 'pg_temp'
-    AS $$
+    AS $_$
+DECLARE
+  v_actor_role text;
+  v_target_role text;
+  v_clean_username text;
+  v_current_email text;
+  v_email_domain text;
 BEGIN
-  -- Permission Guard: Admins/Superadmins can update any credentials;
-  -- Supervisors can update credentials for employees under their supervision/delegation.
-  IF NOT (
-    public.is_admin() OR 
-    (public.is_supervisor() AND public.has_leave_access(auth.uid(), p_user_id))
-  ) THEN
-    RAISE EXCEPTION 'Permission denied: Only admins or assigned supervisors can update user credentials.';
+  SELECT role INTO v_actor_role FROM public.profiles WHERE id = auth.uid();
+  SELECT role INTO v_target_role FROM public.profiles WHERE id = p_user_id FOR UPDATE;
+
+  IF v_target_role IS NULL THEN
+    RAISE EXCEPTION 'Target user not found.';
   END IF;
 
-  -- AUDIT FIX H1: Prevent supervisors from modifying admin/superadmin credentials
-  IF NOT public.is_admin() THEN
-    IF EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'superadmin')) THEN
-      RAISE EXCEPTION 'Permission denied: Cannot modify admin or superadmin credentials.';
+  IF v_actor_role = 'superadmin' THEN
+    NULL;
+  ELSIF v_actor_role = 'admin' AND v_target_role IN ('user', 'supervisor') THEN
+    NULL;
+  ELSIF v_actor_role = 'supervisor'
+        AND v_target_role = 'user'
+        AND public.has_leave_access(auth.uid(), p_user_id) THEN
+    NULL;
+  ELSE
+    RAISE EXCEPTION 'Permission denied for this target account.';
+  END IF;
+
+  IF p_new_username IS NOT NULL AND btrim(p_new_username) <> '' THEN
+    v_clean_username := upper(btrim(p_new_username));
+    IF v_clean_username !~ '^[A-Z0-9._-]{2,50}$' THEN
+      RAISE EXCEPTION 'Codename must be 2-50 characters using letters, numbers, dot, underscore, or hyphen.';
     END IF;
-  END IF;
 
-  -- Update username in profiles if provided
-  IF p_new_username IS NOT NULL AND p_new_username != '' THEN
-    UPDATE public.profiles SET username = UPPER(p_new_username) WHERE id = p_user_id;
-  END IF;
+    SELECT email INTO v_current_email FROM auth.users WHERE id = p_user_id;
+    v_email_domain := CASE
+      WHEN position('@' IN COALESCE(v_current_email, '')) > 0
+        THEN split_part(v_current_email, '@', 2)
+      WHEN v_target_role IN ('admin', 'superadmin') THEN 'admin.local'
+      WHEN v_target_role = 'supervisor' THEN 'supervisor.local'
+      ELSE 'user.local'
+    END;
 
-  -- Update password in auth.users if provided
-  IF p_new_password IS NOT NULL AND p_new_password != '' THEN
+    PERFORM set_config('app.bypass_profile_security', 'true', true);
+    UPDATE public.profiles SET username = v_clean_username WHERE id = p_user_id;
+    UPDATE public.records SET codename = v_clean_username WHERE user_id = p_user_id AND codename IS DISTINCT FROM v_clean_username;
+    UPDATE public.todos SET codename = v_clean_username WHERE user_id = p_user_id AND codename IS DISTINCT FROM v_clean_username;
+    UPDATE public.quotation_mistakes SET codename = v_clean_username WHERE user_id = p_user_id AND codename IS DISTINCT FROM v_clean_username;
     UPDATE auth.users
-    SET encrypted_password = crypt(p_new_password, gen_salt('bf')),
-        updated_at = NOW()
+    SET email = lower(v_clean_username) || '@' || v_email_domain,
+        raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('username', v_clean_username),
+        updated_at = now()
     WHERE id = p_user_id;
   END IF;
+
+  IF p_new_password IS NOT NULL AND p_new_password <> '' THEN
+    IF length(p_new_password) < 6 OR length(p_new_password) > 72 THEN
+      RAISE EXCEPTION 'Password must be between 6 and 72 characters.';
+    END IF;
+    UPDATE auth.users
+    SET encrypted_password = crypt(p_new_password, gen_salt('bf')),
+        updated_at = now()
+    WHERE id = p_user_id;
+
+    PERFORM set_config('app.bypass_profile_security', 'true', true);
+    UPDATE public.profiles
+    SET has_changed_password = p_new_password <> '1234',
+        is_setup_completed = CASE
+          WHEN p_new_password = '1234' THEN false
+          ELSE true
+        END,
+        global_settings = jsonb_set(
+          COALESCE(global_settings, '{}'::jsonb),
+          '{password_reset_status}',
+          '"none"'::jsonb,
+          true
+        )
+    WHERE id = p_user_id;
+  END IF;
+
+  INSERT INTO public.audit_logs (
+    actor_id, actor_codename, action_type, target_id, target_user_id, details, metadata
+  )
+  SELECT auth.uid(), a.username, 'UPDATE_CREDENTIALS', p_user_id::text, p_user_id,
+         'User credentials updated',
+         jsonb_build_object(
+           'username_changed', p_new_username IS NOT NULL AND btrim(p_new_username) <> '',
+           'password_changed', p_new_password IS NOT NULL AND p_new_password <> ''
+         )
+  FROM public.profiles a
+  WHERE a.id = auth.uid();
 END;
-$$;
+$_$;
 
-
-ALTER FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text) OWNER TO postgres;
 
 --
--- Name: archive_and_prune_old_records(text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: archive_and_prune_old_records(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.archive_and_prune_old_records(p_tz text DEFAULT 'Asia/Dhaka'::text) RETURNS jsonb
@@ -252,10 +327,327 @@ END;
 $$;
 
 
-ALTER FUNCTION public.archive_and_prune_old_records(p_tz text) OWNER TO postgres;
+--
+-- Name: audit_business_row_change(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.audit_business_row_change() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_actor_id uuid := auth.uid();
+  v_actor_codename text;
+  v_action text;
+  v_target_id text;
+  v_target_user_id uuid;
+  v_details text;
+  v_metadata jsonb := '{}'::jsonb;
+BEGIN
+  SELECT p.username INTO v_actor_codename
+  FROM public.profiles p
+  WHERE p.id = v_actor_id;
+
+  v_actor_codename := COALESCE(v_actor_codename, auth.role(), session_user, 'System');
+
+  IF TG_TABLE_NAME = 'chuti' THEN
+    v_target_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.id::text ELSE NEW.id::text END;
+    v_target_user_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.user_id ELSE NEW.user_id END;
+
+    IF TG_OP = 'INSERT' THEN
+      v_action := CASE WHEN NEW.adjustment IS TRUE THEN 'ADJUST_LEAVE' ELSE 'CREATE_LEAVE' END;
+      v_details := CASE WHEN NEW.adjustment IS TRUE THEN 'Leave adjustment created' ELSE 'Leave record created' END;
+      v_metadata := jsonb_build_object(
+        'date', NEW.date,
+        'leave_type', NEW.leave_type,
+        'status', NEW.status,
+        'adjustment', NEW.adjustment,
+        'bulk_id', NEW.bulk_id
+      );
+    ELSIF TG_OP = 'DELETE' OR (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL) THEN
+      v_action := 'DELETE_LEAVE';
+      v_details := 'Leave record deleted';
+      v_metadata := jsonb_build_object(
+        'date', CASE WHEN TG_OP = 'DELETE' THEN OLD.date ELSE NEW.date END,
+        'leave_type', CASE WHEN TG_OP = 'DELETE' THEN OLD.leave_type ELSE NEW.leave_type END,
+        'soft_delete', TG_OP <> 'DELETE'
+      );
+    ELSIF NEW.status IS DISTINCT FROM OLD.status AND NEW.status IN ('approved', 'approved_by_supervisor') THEN
+      v_action := 'APPROVE_LEAVE';
+      v_details := 'Leave request approved';
+      v_metadata := jsonb_build_object('date', NEW.date, 'from_status', OLD.status, 'to_status', NEW.status);
+    ELSIF NEW.status IS DISTINCT FROM OLD.status AND NEW.status = 'needs_review' THEN
+      v_action := 'REJECT_LEAVE';
+      v_details := 'Leave request returned for revision';
+      v_metadata := jsonb_build_object('date', NEW.date, 'from_status', OLD.status, 'to_status', NEW.status);
+    ELSIF NEW.adjustment IS DISTINCT FROM OLD.adjustment
+       OR NEW.adjusted_hour IS DISTINCT FROM OLD.adjusted_hour
+       OR NEW.adjust_short_leave IS DISTINCT FROM OLD.adjust_short_leave
+       OR NEW.reserve_holiday IS DISTINCT FROM OLD.reserve_holiday
+       OR NEW.reserve_adjustment_status IS DISTINCT FROM OLD.reserve_adjustment_status THEN
+      v_action := 'ADJUST_LEAVE';
+      v_details := 'Leave adjustment changed';
+      v_metadata := jsonb_build_object(
+        'date', NEW.date,
+        'adjustment', NEW.adjustment,
+        'reserve_holiday', NEW.reserve_holiday,
+        'reserve_adjustment_status', NEW.reserve_adjustment_status
+      );
+    ELSE
+      v_action := 'UPDATE_LEAVE';
+      v_details := 'Leave record updated';
+      v_metadata := jsonb_build_object(
+        'old_date', OLD.date,
+        'new_date', NEW.date,
+        'old_leave_type', OLD.leave_type,
+        'new_leave_type', NEW.leave_type
+      );
+    END IF;
+  ELSIF TG_TABLE_NAME = 'quotation_mistakes' THEN
+    v_target_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.id::text ELSE NEW.id::text END;
+    v_target_user_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.user_id ELSE NEW.user_id END;
+    v_action := CASE TG_OP
+      WHEN 'INSERT' THEN 'CREATE_MISTAKE'
+      WHEN 'UPDATE' THEN 'UPDATE_MISTAKE'
+      ELSE 'DELETE_MISTAKE'
+    END;
+    v_details := CASE TG_OP
+      WHEN 'INSERT' THEN 'Quotation mistake created'
+      WHEN 'UPDATE' THEN 'Quotation mistake updated'
+      ELSE 'Quotation mistake deleted'
+    END;
+    v_metadata := CASE WHEN TG_OP = 'DELETE'
+      THEN jsonb_build_object('date', OLD.date, 'filename', OLD.filename, 'branch', OLD.branch)
+      ELSE jsonb_build_object('date', NEW.date, 'filename', NEW.filename, 'branch', NEW.branch)
+    END;
+  ELSIF TG_TABLE_NAME = 'govt_holiday_responses' THEN
+    v_target_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.id::text ELSE NEW.id::text END;
+    v_target_user_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.user_id ELSE NEW.user_id END;
+    v_action := 'ADJUST_LEAVE';
+    v_details := CASE TG_OP
+      WHEN 'INSERT' THEN 'Government holiday entitlement initialized'
+      WHEN 'UPDATE' THEN 'Government holiday entitlement changed'
+      ELSE 'Government holiday entitlement removed'
+    END;
+    v_metadata := CASE WHEN TG_OP = 'DELETE'
+      THEN jsonb_build_object('holiday_date', OLD.holiday_date, 'holiday_name', OLD.holiday_name, 'old_response', OLD.response)
+      ELSE jsonb_build_object(
+        'holiday_date', NEW.holiday_date,
+        'holiday_name', NEW.holiday_name,
+        'old_response', CASE WHEN TG_OP = 'UPDATE' THEN OLD.response ELSE NULL END,
+        'new_response', NEW.response,
+        'updated_by_admin', NEW.updated_by_admin
+      )
+    END;
+  ELSIF TG_TABLE_NAME = 'leave_settlements' THEN
+    v_target_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.id::text ELSE NEW.id::text END;
+    v_target_user_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.user_id ELSE NEW.user_id END;
+    v_action := 'SETTLE_LEAVE';
+    v_details := CASE TG_OP
+      WHEN 'INSERT' THEN 'Leave settlement created'
+      WHEN 'UPDATE' THEN 'Leave settlement updated'
+      ELSE 'Leave settlement deleted'
+    END;
+    v_metadata := CASE WHEN TG_OP = 'DELETE'
+      THEN jsonb_build_object('year', OLD.year, 'period', OLD.period, 'category', OLD.leave_category, 'status', OLD.status)
+      ELSE jsonb_build_object(
+        'year', NEW.year,
+        'period', NEW.period,
+        'category', NEW.leave_category,
+        'old_status', CASE WHEN TG_OP = 'UPDATE' THEN OLD.status ELSE NULL END,
+        'new_status', NEW.status,
+        'action_type', NEW.action_type
+      )
+    END;
+  ELSE
+    RAISE EXCEPTION 'Unsupported audited table: %', TG_TABLE_NAME;
+  END IF;
+
+  INSERT INTO public.audit_logs (
+    actor_id,
+    actor_codename,
+    action_type,
+    target_id,
+    target_user_id,
+    details,
+    metadata
+  ) VALUES (
+    v_actor_id,
+    v_actor_codename,
+    v_action,
+    v_target_id,
+    v_target_user_id,
+    v_details,
+    v_metadata
+  );
+
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$$;
+
 
 --
--- Name: check_profile_role_change(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: can_read_profile(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.can_read_profile(p_target_id uuid) RETURNS boolean
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_actor_role text;
+  v_supervisor_ids uuid[];
+BEGIN
+  IF p_target_id = auth.uid() THEN RETURN true; END IF;
+
+  SELECT role, supervisor_ids
+  INTO v_actor_role, v_supervisor_ids
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  IF v_actor_role IN ('admin', 'superadmin', 'supervisor') THEN
+    RETURN true;
+  END IF;
+
+  IF v_actor_role = 'user' THEN
+    IF p_target_id = ANY(COALESCE(v_supervisor_ids, ARRAY[]::uuid[])) THEN
+      RETURN true;
+    END IF;
+    RETURN EXISTS (
+      SELECT 1
+      FROM public.profiles supervisor
+      WHERE supervisor.id = ANY(COALESCE(v_supervisor_ids, ARRAY[]::uuid[]))
+        AND supervisor.delegated_supervisor_id = p_target_id
+    );
+  END IF;
+
+  RETURN false;
+END;
+$$;
+
+
+--
+-- Name: can_write_quotation_mistakes(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.can_write_quotation_mistakes() RETURNS boolean
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_profile public.profiles%ROWTYPE;
+  v_entry jsonb;
+  v_now timestamptz := now();
+  v_flag jsonb;
+BEGIN
+  SELECT * INTO v_profile FROM public.profiles WHERE id = auth.uid();
+  IF NOT FOUND THEN RETURN false; END IF;
+  IF v_profile.role = 'superadmin' THEN RETURN true; END IF;
+  IF v_profile.role NOT IN ('admin', 'supervisor') THEN RETURN false; END IF;
+
+  FOR v_entry IN
+    SELECT value
+    FROM jsonb_array_elements(
+      CASE WHEN jsonb_typeof(v_profile.global_settings->'temp_access') = 'array'
+        THEN v_profile.global_settings->'temp_access' ELSE '[]'::jsonb END
+    )
+  LOOP
+    IF v_entry->>'target_type' = 'user'
+       AND (v_entry->>'user_id' = v_profile.id::text
+            OR upper(COALESCE(v_entry->>'user_codename', '')) = upper(v_profile.username))
+       AND v_entry->>'tabKey' = 'quote_mistakes_write'
+       AND COALESCE(v_entry->>'expires_at', '') <> ''
+       AND (v_entry->>'expires_at')::timestamptz > v_now THEN
+      RETURN v_entry->>'action' = 'grant';
+    END IF;
+  END LOOP;
+
+  FOR v_entry IN
+    SELECT value
+    FROM jsonb_array_elements(
+      CASE WHEN jsonb_typeof(v_profile.global_settings->'temp_access') = 'array'
+        THEN v_profile.global_settings->'temp_access' ELSE '[]'::jsonb END
+    )
+  LOOP
+    IF COALESCE(v_entry->>'target_type', 'role') = 'role'
+       AND v_entry->>'role' = v_profile.role
+       AND v_entry->>'tabKey' = 'quote_mistakes_write'
+       AND COALESCE(v_entry->>'expires_at', '') <> ''
+       AND (v_entry->>'expires_at')::timestamptz > v_now THEN
+      RETURN v_entry->>'action' = 'grant';
+    END IF;
+  END LOOP;
+
+  v_flag := v_profile.global_settings->'user_feature_flags'->'quote_mistakes_write';
+  IF jsonb_typeof(v_flag) = 'boolean' THEN RETURN (v_flag #>> '{}')::boolean; END IF;
+
+  v_flag := v_profile.global_settings->'feature_flags'->'quote_mistakes_write';
+  IF jsonb_typeof(v_flag) = 'boolean' THEN RETURN (v_flag #>> '{}')::boolean; END IF;
+
+  RETURN true;
+EXCEPTION WHEN invalid_datetime_format THEN
+  RETURN false;
+END;
+$$;
+
+
+--
+-- Name: change_default_password(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.change_default_password(p_new_password text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'extensions', 'pg_temp'
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_has_changed boolean;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Not authenticated.');
+  END IF;
+  IF p_new_password IS NULL OR length(p_new_password) < 6 OR length(p_new_password) > 72 OR p_new_password = '1234' THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Choose a non-default password between 6 and 72 characters.');
+  END IF;
+
+  SELECT has_changed_password INTO v_has_changed
+  FROM public.profiles
+  WHERE id = v_uid
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Profile not found.');
+  END IF;
+  IF v_has_changed IS TRUE THEN
+    RETURN jsonb_build_object('success', false, 'message', 'The default password has already been changed.');
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM auth.users u
+    WHERE u.id = v_uid
+      AND u.encrypted_password = crypt(p_new_password, u.encrypted_password)
+  ) THEN
+    RETURN jsonb_build_object('success', false, 'message', 'New password must differ from the current password.');
+  END IF;
+
+  UPDATE auth.users
+  SET encrypted_password = crypt(p_new_password, gen_salt('bf')),
+      updated_at = now()
+  WHERE id = v_uid;
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET has_changed_password = true
+  WHERE id = v_uid;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'profile', (SELECT to_jsonb(p) FROM public.profiles p WHERE p.id = v_uid)
+  );
+END;
+$$;
+
+
+--
+-- Name: check_profile_role_change(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.check_profile_role_change() RETURNS trigger
@@ -291,119 +683,142 @@ END;
 $$;
 
 
-ALTER FUNCTION public.check_profile_role_change() OWNER TO postgres;
-
 --
--- Name: check_profile_updates(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: check_profile_updates(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.check_profile_updates() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
+DECLARE
+  v_actor_role text;
+  v_safe_global_keys text[] := ARRAY[
+    'active_sessions',
+    'hidden_tabs',
+    'kpi_skills',
+    'kpi_dept_indicators',
+    'kpi_other_dept_indicators',
+    'performs_data_entry',
+    'department',
+    'performs_other_dept_tasks',
+    'other_department'
+  ];
+  v_admin_global_keys text[] := ARRAY[
+    'active_sessions',
+    'hidden_tabs',
+    'kpi_skills',
+    'kpi_dept_indicators',
+    'kpi_other_dept_indicators',
+    'performs_data_entry',
+    'department',
+    'performs_other_dept_tasks',
+    'other_department',
+    'user_feature_flags',
+    'emp_id',
+    'date_of_joining'
+  ];
 BEGIN
-  -- If the session bypass variable is set, allow the update (system functions/syncs)
-  IF current_setting('app.bypass_profile_security', true) = 'true' THEN
+  IF current_setting('app.bypass_profile_security', true) = 'true'
+     OR auth.role() = 'service_role' THEN
     RETURN NEW;
   END IF;
 
-  -- If the editor is the service_role (API routes / system), allow everything
-  IF auth.role() = 'service_role' THEN
+  SELECT p.role INTO v_actor_role
+  FROM public.profiles p
+  WHERE p.id = auth.uid();
+
+  IF v_actor_role = 'superadmin' THEN
     RETURN NEW;
   END IF;
 
-  -- If the editor is an admin or superadmin, allow everything
-  IF public.is_admin() THEN
-    RETURN NEW;
-  END IF;
-
-  -- If the editor is a supervisor
-  IF public.is_supervisor() THEN
-    -- If editing self, allow everything
-    IF auth.uid() = NEW.id THEN
-      RETURN NEW;
+  IF v_actor_role = 'admin' THEN
+    IF OLD.role = 'superadmin' OR (OLD.role = 'admin' AND OLD.id <> auth.uid()) THEN
+      RAISE EXCEPTION 'Admins cannot modify other admin or superadmin profiles.';
     END IF;
 
-    -- If editing an employee they directly supervise, enforce key constraints
-    IF auth.uid() = ANY(NEW.supervisor_ids) OR auth.uid() = ANY(OLD.supervisor_ids) THEN
-      IF OLD.role IS DISTINCT FROM NEW.role OR
-         OLD.has_chuti_access IS DISTINCT FROM NEW.has_chuti_access OR
-         OLD.has_quotes_access IS DISTINCT FROM NEW.has_quotes_access OR
-         OLD.can_manage_rules IS DISTINCT FROM NEW.can_manage_rules OR
-         OLD.supervisor_ids IS DISTINCT FROM NEW.supervisor_ids OR
-         (NEW.global_settings->>'office_leave_default') IS DISTINCT FROM (OLD.global_settings->>'office_leave_default') OR
-         (NEW.global_settings->>'eid_fitr_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_fitr_leave') OR
-         (NEW.global_settings->>'eid_adha_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_adha_leave') OR
-         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays') OR
-         (NEW.global_settings->>'password_reset_status') IS DISTINCT FROM (OLD.global_settings->>'password_reset_status')
-      THEN
-        RAISE EXCEPTION 'Supervisors cannot modify roles, supervisor assignments, access permissions, or sensitive global leave settings for their team members.';
+    IF (COALESCE(NEW.global_settings, '{}'::jsonb) - v_admin_global_keys)
+       IS DISTINCT FROM
+       (COALESCE(OLD.global_settings, '{}'::jsonb) - v_admin_global_keys) THEN
+      RAISE EXCEPTION 'Global access, feature, leave, VPN, and system settings must be changed through their authorized settings RPC.';
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  IF v_actor_role = 'supervisor' THEN
+    IF NEW.id = auth.uid() THEN
+      IF (to_jsonb(NEW) - ARRAY[
+        'full_name', 'working_hours', 'break_time', 'job_role',
+        'default_sign_in', 'default_sign_out', 'requested_full_name',
+        'requested_working_hours', 'requested_break_time', 'requested_job_role',
+        'requested_default_sign_in', 'requested_default_sign_out',
+        'profile_change_status', 'has_edited_profile', 'global_settings'
+      ]) IS DISTINCT FROM
+      (to_jsonb(OLD) - ARRAY[
+        'full_name', 'working_hours', 'break_time', 'job_role',
+        'default_sign_in', 'default_sign_out', 'requested_full_name',
+        'requested_working_hours', 'requested_break_time', 'requested_job_role',
+        'requested_default_sign_in', 'requested_default_sign_out',
+        'profile_change_status', 'has_edited_profile', 'global_settings'
+      ]) THEN
+        RAISE EXCEPTION 'Supervisors cannot change their own role, permissions, quotas, or delegation.';
       END IF;
-      RETURN NEW;
+    ELSIF public.has_leave_access(auth.uid(), NEW.id) THEN
+      IF OLD.role IN ('admin', 'superadmin', 'supervisor') THEN
+        RAISE EXCEPTION 'Supervisors can only manage assigned user profiles.';
+      END IF;
+      IF (to_jsonb(NEW) - ARRAY[
+        'allowed_types', 'break_time', 'default_sign_in', 'default_sign_out',
+        'global_settings'
+      ]) IS DISTINCT FROM
+      (to_jsonb(OLD) - ARRAY[
+        'allowed_types', 'break_time', 'default_sign_in', 'default_sign_out',
+        'global_settings'
+      ]) THEN
+        RAISE EXCEPTION 'Supervisors may only change assigned users'' quote types, break/default times, and non-privileged performance settings.';
+      END IF;
+    ELSE
+      RAISE EXCEPTION 'Supervisors may only modify their own or assigned user profiles.';
     END IF;
 
-    -- If editing an employee they do NOT supervise, enforce column constraints
-    IF OLD.role IS DISTINCT FROM NEW.role OR
-       OLD.has_chuti_access IS DISTINCT FROM NEW.has_chuti_access OR
-       OLD.has_quotes_access IS DISTINCT FROM NEW.has_quotes_access OR
-       OLD.supervisor_ids IS DISTINCT FROM NEW.supervisor_ids OR
-       OLD.delegated_supervisor_id IS DISTINCT FROM NEW.delegated_supervisor_id OR
-       OLD.delegated_leave_supervisor_id IS DISTINCT FROM NEW.delegated_leave_supervisor_id OR
-       OLD.delegated_kpi_supervisor_id IS DISTINCT FROM NEW.delegated_kpi_supervisor_id OR
-       OLD.eligible_govt_holiday IS DISTINCT FROM NEW.eligible_govt_holiday OR
-       OLD.eligible_office_leave IS DISTINCT FROM NEW.eligible_office_leave OR
-       OLD.allow_overtime IS DISTINCT FROM NEW.allow_overtime OR
-       OLD.allow_reserve IS DISTINCT FROM NEW.allow_reserve OR
-       OLD.needs_supervisor_approval IS DISTINCT FROM NEW.needs_supervisor_approval OR
-       OLD.global_settings IS DISTINCT FROM NEW.global_settings
-    THEN
-      RAISE EXCEPTION 'Supervisors can only modify basic settings (working hours, break time, default sign in/out, quotes allowed types) for users outside their team.';
+    IF (COALESCE(NEW.global_settings, '{}'::jsonb) - v_safe_global_keys)
+       IS DISTINCT FROM
+       (COALESCE(OLD.global_settings, '{}'::jsonb) - v_safe_global_keys) THEN
+      RAISE EXCEPTION 'Supervisors cannot modify privileged global settings.';
     END IF;
 
     RETURN NEW;
   END IF;
 
-  -- Default fallback: regular users editing their own profile
-  -- ONLY allow safe, non-privileged columns to be modified.
-  -- Access flags, quotas, and supervisor assignments are superadmin-controlled.
-  IF auth.uid() = NEW.id THEN
-    IF OLD.role IS DISTINCT FROM NEW.role OR
-       OLD.has_chuti_access IS DISTINCT FROM NEW.has_chuti_access OR
-       OLD.has_quotes_access IS DISTINCT FROM NEW.has_quotes_access OR
-       OLD.can_manage_rules IS DISTINCT FROM NEW.can_manage_rules OR
-       OLD.allow_overtime IS DISTINCT FROM NEW.allow_overtime OR
-       OLD.allow_reserve IS DISTINCT FROM NEW.allow_reserve OR
-       OLD.supervisor_ids IS DISTINCT FROM NEW.supervisor_ids OR
-       OLD.delegated_supervisor_id IS DISTINCT FROM NEW.delegated_supervisor_id OR
-       OLD.delegated_leave_supervisor_id IS DISTINCT FROM NEW.delegated_leave_supervisor_id OR
-       OLD.delegated_kpi_supervisor_id IS DISTINCT FROM NEW.delegated_kpi_supervisor_id OR
-       OLD.eligible_govt_holiday IS DISTINCT FROM NEW.eligible_govt_holiday OR
-       OLD.eligible_office_leave IS DISTINCT FROM NEW.eligible_office_leave OR
-       OLD.needs_supervisor_approval IS DISTINCT FROM NEW.needs_supervisor_approval OR
-       OLD.max_full_leaves IS DISTINCT FROM NEW.max_full_leaves OR
-       OLD.max_short_leaves IS DISTINCT FROM NEW.max_short_leaves OR
-       OLD.quotes_role IS DISTINCT FROM NEW.quotes_role OR
-       OLD.converted_short_leaves_days IS DISTINCT FROM NEW.converted_short_leaves_days OR
-       OLD.converted_short_leaves_hours IS DISTINCT FROM NEW.converted_short_leaves_hours
-    THEN
-      RAISE EXCEPTION 'Users cannot modify access control, permissions, quotas, or supervisor assignments. These are managed by superadmin.';
+  IF v_actor_role = 'user' AND NEW.id = auth.uid() THEN
+    IF (to_jsonb(NEW) - ARRAY[
+      'username', 'full_name', 'working_hours', 'break_time', 'job_role',
+      'default_sign_in', 'default_sign_out', 'requested_full_name',
+      'requested_working_hours', 'requested_break_time', 'requested_job_role',
+      'requested_default_sign_in', 'requested_default_sign_out',
+      'profile_change_status', 'has_edited_profile',
+      'global_settings'
+    ]) IS DISTINCT FROM
+    (to_jsonb(OLD) - ARRAY[
+      'username', 'full_name', 'working_hours', 'break_time', 'job_role',
+      'default_sign_in', 'default_sign_out', 'requested_full_name',
+      'requested_working_hours', 'requested_break_time', 'requested_job_role',
+      'requested_default_sign_in', 'requested_default_sign_out',
+      'profile_change_status', 'has_edited_profile',
+      'global_settings'
+    ]) THEN
+      RAISE EXCEPTION 'Users cannot modify roles, permissions, quotas, or supervisor assignments.';
     END IF;
-    -- AUDIT FIX C1: Block privilege-escalation via global_settings JSON keys.
-    IF OLD.global_settings IS DISTINCT FROM NEW.global_settings THEN
-      IF (NEW.global_settings->>'temp_access') IS DISTINCT FROM (OLD.global_settings->>'temp_access') OR
-         (NEW.global_settings->>'role_visibility') IS DISTINCT FROM (OLD.global_settings->>'role_visibility') OR
-         (NEW.global_settings->>'supervisor_access_overrides') IS DISTINCT FROM (OLD.global_settings->>'supervisor_access_overrides') OR
-         (NEW.global_settings->>'admin_delegated_flags') IS DISTINCT FROM (OLD.global_settings->>'admin_delegated_flags') OR
-         (NEW.global_settings->>'user_feature_flags') IS DISTINCT FROM (OLD.global_settings->>'user_feature_flags') OR
-         (NEW.global_settings->>'feature_flags') IS DISTINCT FROM (OLD.global_settings->>'feature_flags') OR
-         (NEW.global_settings->>'password_reset_status') IS DISTINCT FROM (OLD.global_settings->>'password_reset_status') OR
-         (NEW.global_settings->>'office_leave_default') IS DISTINCT FROM (OLD.global_settings->>'office_leave_default') OR
-         (NEW.global_settings->>'eid_fitr_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_fitr_leave') OR
-         (NEW.global_settings->>'eid_adha_leave') IS DISTINCT FROM (OLD.global_settings->>'eid_adha_leave') OR
-         (NEW.global_settings->>'govt_holidays') IS DISTINCT FROM (OLD.global_settings->>'govt_holidays')
-      THEN
-        RAISE EXCEPTION 'Users cannot modify privileged global_settings keys (feature flags, temp access, admin settings). These are managed by admin.';
-      END IF;
+
+    IF NEW.username IS DISTINCT FROM OLD.username AND OLD.has_changed_password IS TRUE THEN
+      RAISE EXCEPTION 'Codename changes after onboarding require an authorized administrator.';
+    END IF;
+
+    IF (COALESCE(NEW.global_settings, '{}'::jsonb) - v_safe_global_keys)
+       IS DISTINCT FROM
+       (COALESCE(OLD.global_settings, '{}'::jsonb) - v_safe_global_keys) THEN
+      RAISE EXCEPTION 'Users cannot modify privileged global settings.';
     END IF;
 
     RETURN NEW;
@@ -414,56 +829,468 @@ END;
 $$;
 
 
-ALTER FUNCTION public.check_profile_updates() OWNER TO postgres;
-
-
-
 --
--- Name: complete_profile_setup(text, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: complete_leave_profile_setup(text, numeric, integer, text, time without time zone, time without time zone); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.complete_profile_setup(p_username text, p_full_name text) RETURNS jsonb
-    LANGUAGE plpgsql
+CREATE FUNCTION public.complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
   v_uid uuid := auth.uid();
+  v_has_changed boolean;
+  v_is_complete boolean;
 BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('success', false, 'message', 'Not authenticated.');
   END IF;
-
-  IF p_username IS NULL OR length(trim(p_username)) = 0 THEN
-    RETURN jsonb_build_object('success', false, 'message', 'Username is required.');
+  IF p_full_name IS NULL OR length(btrim(p_full_name)) < 2 OR length(btrim(p_full_name)) > 100 THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Full name must be between 2 and 100 characters.');
+  END IF;
+  IF p_working_hours IS NULL OR p_working_hours <= 0 OR p_working_hours > 24
+     OR p_break_time IS NULL OR p_break_time < 0 OR p_break_time > 24 THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Invalid working-hours or break-time value.');
+  END IF;
+  IF p_default_sign_in IS NULL OR p_default_sign_out IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Default sign-in and sign-out times are required.');
   END IF;
 
-  IF p_full_name IS NULL OR length(trim(p_full_name)) = 0 THEN
-    RETURN jsonb_build_object('success', false, 'message', 'Full name is required.');
-  END IF;
-
-  BEGIN
-    UPDATE public.profiles
-    SET username = upper(trim(p_username)),
-        full_name = trim(p_full_name),
-        has_changed_password = true
-    WHERE id = v_uid;
-  EXCEPTION WHEN unique_violation THEN
-    RETURN jsonb_build_object('success', false, 'message', 'This username is already taken. Please choose another.');
-  END;
-
+  SELECT has_changed_password, COALESCE(is_setup_completed, false)
+  INTO v_has_changed, v_is_complete
+  FROM public.profiles
+  WHERE id = v_uid
+  FOR UPDATE;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('success', false, 'message', 'Profile not found.');
   END IF;
+  IF v_has_changed IS NOT TRUE THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Change the default password before completing the profile.');
+  END IF;
+  IF v_is_complete IS TRUE THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Profile setup is already complete.');
+  END IF;
 
-  RETURN jsonb_build_object('success', true);
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET full_name = btrim(p_full_name),
+      working_hours = p_working_hours,
+      break_time = p_break_time,
+      job_role = NULLIF(btrim(p_job_role), ''),
+      default_sign_in = p_default_sign_in,
+      default_sign_out = p_default_sign_out,
+      is_setup_completed = true,
+      has_edited_profile = true
+  WHERE id = v_uid;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'profile', (SELECT to_jsonb(p) FROM public.profiles p WHERE p.id = v_uid)
+  );
 END;
 $$;
 
 
-ALTER FUNCTION public.complete_profile_setup(p_username text, p_full_name text) OWNER TO postgres;
+--
+-- Name: complete_profile_setup(text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.complete_profile_setup(p_username text, p_full_name text, p_new_password text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'extensions', 'pg_temp'
+    AS $_$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_already_complete boolean;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Not authenticated.');
+  END IF;
+  IF p_username IS NULL OR upper(btrim(p_username)) !~ '^[A-Z0-9._-]{2,50}$' THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Codename must be 2-50 characters using letters, numbers, dot, underscore, or hyphen.');
+  END IF;
+  IF p_full_name IS NULL OR length(btrim(p_full_name)) < 2 OR length(btrim(p_full_name)) > 100 THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Full name must be between 2 and 100 characters.');
+  END IF;
+  IF p_new_password IS NULL OR length(p_new_password) < 6 OR length(p_new_password) > 72 OR p_new_password = '1234' THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Choose a non-default password between 6 and 72 characters.');
+  END IF;
+
+  SELECT has_changed_password INTO v_already_complete
+  FROM public.profiles WHERE id = v_uid FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Profile not found.');
+  END IF;
+  IF v_already_complete IS TRUE THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Profile setup is already complete.');
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM auth.users u
+    WHERE u.id = v_uid
+      AND u.encrypted_password = crypt(p_new_password, u.encrypted_password)
+  ) THEN
+    RETURN jsonb_build_object('success', false, 'message', 'New password must differ from the current password.');
+  END IF;
+
+  BEGIN
+    UPDATE auth.users
+    SET encrypted_password = crypt(p_new_password, gen_salt('bf')),
+        updated_at = now()
+    WHERE id = v_uid;
+
+    UPDATE public.profiles
+    SET username = upper(btrim(p_username)),
+        full_name = btrim(p_full_name),
+        has_changed_password = true,
+        is_setup_completed = true,
+        has_edited_profile = true
+    WHERE id = v_uid;
+  EXCEPTION WHEN unique_violation THEN
+    RETURN jsonb_build_object('success', false, 'message', 'This codename is already taken. Please choose another.');
+  END;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'profile', (SELECT to_jsonb(p) FROM public.profiles p WHERE p.id = v_uid)
+  );
+END;
+$_$;
+
 
 --
--- Name: create_new_user(text, text, text, text, text, boolean, boolean, boolean, uuid[]); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: convert_govt_holiday_response(uuid, date, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.current_user_has_workspace('chuti') THEN
+    RAISE EXCEPTION 'Leave workspace access is disabled.';
+  END IF;
+  PERFORM public.convert_govt_holiday_response_internal(
+    p_user_id, p_holiday_date, p_response
+  );
+END;
+$$;
+
+
+--
+-- Name: convert_govt_holiday_response_internal(uuid, date, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.convert_govt_holiday_response_internal(p_user_id uuid, p_holiday_date date, p_response text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_holiday_name text;
+  v_settings jsonb;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Only admins can convert government holiday entitlements.';
+  END IF;
+  IF p_response NOT IN ('reserve', 'paid') THEN
+    RAISE EXCEPTION 'Invalid government holiday response.';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = p_user_id AND eligible_govt_holiday IS DISTINCT FROM false
+  ) THEN
+    RAISE EXCEPTION 'Target user is not eligible for government holidays.';
+  END IF;
+
+  SELECT COALESCE(global_settings, '{}'::jsonb) INTO v_settings
+  FROM public.profiles
+  WHERE role IN ('superadmin', 'admin')
+  ORDER BY CASE WHEN role = 'superadmin' THEN 0 ELSE 1 END, created_at
+  LIMIT 1;
+
+  SELECT value->>'name' INTO v_holiday_name
+  FROM jsonb_array_elements(
+    CASE WHEN jsonb_typeof(v_settings->'govt_holidays') = 'array'
+      THEN v_settings->'govt_holidays' ELSE '[]'::jsonb END
+  )
+  WHERE (value->>'date')::date = p_holiday_date
+  LIMIT 1;
+
+  IF v_holiday_name IS NULL OR btrim(v_holiday_name) = '' THEN
+    RAISE EXCEPTION 'Government holiday is not active.';
+  END IF;
+
+  INSERT INTO public.govt_holiday_responses (
+    user_id, holiday_date, holiday_name, response, updated_by_admin
+  ) VALUES (
+    p_user_id, p_holiday_date, v_holiday_name, p_response, true
+  )
+  ON CONFLICT (user_id, holiday_date) DO UPDATE
+  SET holiday_name = EXCLUDED.holiday_name,
+      response = EXCLUDED.response,
+      updated_by_admin = true
+  WHERE public.govt_holiday_responses.holiday_name IS DISTINCT FROM EXCLUDED.holiday_name
+     OR public.govt_holiday_responses.response IS DISTINCT FROM EXCLUDED.response
+     OR public.govt_holiday_responses.updated_by_admin IS DISTINCT FROM true;
+
+  IF p_response = 'paid' THEN
+    PERFORM public.reconcile_govt_holiday_adjustments(p_user_id, extract(year FROM p_holiday_date)::integer);
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: convert_short_leave_to_full_leave(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text DEFAULT 'Office Leave'::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.current_user_has_workspace('chuti') THEN
+    RAISE EXCEPTION 'Leave workspace access is disabled.';
+  END IF;
+  RETURN public.convert_short_leave_to_full_leave_internal(
+    p_user_id, p_adjust_category
+  );
+END;
+$$;
+
+
+--
+-- Name: convert_short_leave_to_full_leave_internal(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.convert_short_leave_to_full_leave_internal(p_user_id uuid, p_adjust_category text DEFAULT 'Office Leave'::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_actor_role text;
+  v_working_hours numeric;
+  v_converted_hours numeric;
+  v_converted_days integer;
+  v_raw_short_minutes numeric;
+  v_net_short_minutes numeric;
+  v_minutes_per_day numeric;
+  v_days integer;
+  v_hours numeric;
+  v_inserted integer;
+  v_reserved integer;
+  v_used_reserved integer;
+BEGIN
+  SELECT role INTO v_actor_role FROM public.profiles WHERE id = auth.uid();
+  IF p_user_id <> auth.uid()
+     AND NOT public.is_admin()
+     AND NOT (v_actor_role = 'supervisor' AND public.has_leave_access(auth.uid(), p_user_id)) THEN
+    RAISE EXCEPTION 'Permission denied for target user.';
+  END IF;
+  IF p_adjust_category NOT IN ('Office Leave', 'Govt Holiday') THEN
+    RAISE EXCEPTION 'Invalid adjustment category.';
+  END IF;
+
+  -- Serializes concurrent conversion attempts for the same profile.
+  SELECT COALESCE(working_hours, 9.5),
+         COALESCE(converted_short_leaves_hours, 0),
+         COALESCE(converted_short_leaves_days, 0)
+  INTO v_working_hours, v_converted_hours, v_converted_days
+  FROM public.profiles
+  WHERE id = p_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN RAISE EXCEPTION 'Target user not found.'; END IF;
+  IF v_working_hours <= 0 OR v_working_hours > 24 THEN
+    RAISE EXCEPTION 'Target user has invalid working hours.';
+  END IF;
+
+  SELECT COALESCE(sum(
+    CASE
+      WHEN c.leave_type = 'Short Leave' AND c.adjustment IS NOT TRUE THEN
+        CASE WHEN extract(epoch FROM c.leave_hour) < 0 THEN -1 ELSE 1 END
+        * greatest(
+            abs(extract(epoch FROM c.leave_hour))
+            - COALESCE(abs(extract(epoch FROM c.adjusted_hour)), 0),
+            0
+          ) / 60
+      WHEN c.leave_type = 'Overtime' AND c.adjust_short_leave IS TRUE AND c.adjustment IS TRUE THEN
+        -extract(epoch FROM c.leave_hour) / 60
+      WHEN c.leave_type = 'Overtime' AND c.adjust_short_leave IS TRUE AND c.adjusted_hour IS NOT NULL THEN
+        -extract(epoch FROM c.adjusted_hour) / 60
+      ELSE 0
+    END
+  ), 0)
+  INTO v_raw_short_minutes
+  FROM public.chuti c
+  WHERE c.user_id = p_user_id
+    AND c.status = 'approved'
+    AND c.deleted_at IS NULL;
+
+  v_net_short_minutes := greatest(0, v_raw_short_minutes - (v_converted_hours * 60));
+  v_minutes_per_day := v_working_hours * 60;
+  v_days := floor(v_net_short_minutes / v_minutes_per_day)::integer;
+  IF v_days < 1 THEN
+    RAISE EXCEPTION 'There are not enough unconverted short-leave hours.';
+  END IF;
+  v_hours := v_days * v_working_hours;
+
+  IF p_adjust_category = 'Govt Holiday' THEN
+    SELECT count(*)::integer INTO v_reserved
+    FROM public.govt_holiday_responses
+    WHERE user_id = p_user_id AND response = 'reserve';
+
+    SELECT count(*)::integer INTO v_used_reserved
+    FROM public.chuti
+    WHERE user_id = p_user_id
+      AND status = 'approved'
+      AND deleted_at IS NULL
+      AND leave_type = 'Full Leave'
+      AND adjustment IS TRUE
+      AND (reserve_holiday = 'Govt Holiday' OR comment ILIKE '%Govt Holiday%');
+
+    IF v_reserved - v_used_reserved < v_days THEN
+      RAISE EXCEPTION 'Not enough unused reserved government holidays for this conversion.';
+    END IF;
+  END IF;
+
+  PERFORM set_config('app.bypass_chuti_security', 'true', true);
+  WITH free_dates AS (
+    SELECT (current_date - offset_days)::date AS leave_date
+    FROM generate_series(0, 3650) AS offset_days
+    WHERE NOT EXISTS (
+      SELECT 1 FROM public.chuti existing
+      WHERE existing.user_id = p_user_id
+        AND existing.date = (current_date - offset_days)::date
+        AND existing.deleted_at IS NULL
+    )
+    ORDER BY offset_days
+    LIMIT v_days
+  )
+  INSERT INTO public.chuti (
+    user_id, date, leave_type, adjustment, status, comment, reserve_holiday
+  )
+  SELECT p_user_id,
+         leave_date,
+         'Full Leave',
+         true,
+         'approved',
+         'Adjusted: ' || p_adjust_category || ' | Converted from Short Leave',
+         p_adjust_category
+  FROM free_dates;
+
+  GET DIAGNOSTICS v_inserted = ROW_COUNT;
+  IF v_inserted <> v_days THEN
+    RAISE EXCEPTION 'Unable to allocate enough free leave dates.';
+  END IF;
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET converted_short_leaves_days = v_converted_days + v_days,
+      converted_short_leaves_hours = v_converted_hours + v_hours
+  WHERE id = p_user_id;
+
+  RETURN jsonb_build_object('days_converted', v_days, 'hours_converted', v_hours);
+END;
+$$;
+
+
+--
+-- Name: create_configured_user(text, text, text, text, text, jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb DEFAULT '{}'::jsonb) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'extensions', 'pg_temp'
+    AS $$
+DECLARE
+  v_user_id uuid;
+  v_supervisor_ids uuid[];
+  v_allowed_types text[];
+  v_working_hours numeric;
+  v_break_time numeric;
+  v_actor_name text;
+BEGIN
+  IF jsonb_typeof(COALESCE(p_profile_options, '{}'::jsonb)) <> 'object' THEN
+    RAISE EXCEPTION 'Profile options must be a JSON object.';
+  END IF;
+
+  SELECT COALESCE(array_agg(value::uuid), ARRAY[]::uuid[])
+  INTO v_supervisor_ids
+  FROM jsonb_array_elements_text(
+    CASE WHEN jsonb_typeof(p_profile_options->'supervisor_ids') = 'array'
+      THEN p_profile_options->'supervisor_ids' ELSE '[]'::jsonb END
+  );
+
+  SELECT COALESCE(array_agg(value), ARRAY[]::text[])
+  INTO v_allowed_types
+  FROM jsonb_array_elements_text(
+    CASE WHEN jsonb_typeof(p_profile_options->'allowed_types') = 'array'
+      THEN p_profile_options->'allowed_types' ELSE '[]'::jsonb END
+  );
+
+  v_working_hours := COALESCE((p_profile_options->>'working_hours')::numeric, 9.5);
+  v_break_time := COALESCE((p_profile_options->>'break_time')::numeric, 0);
+  IF v_working_hours <= 0 OR v_working_hours > 24 OR v_break_time < 0 OR v_break_time > 24 THEN
+    RAISE EXCEPTION 'Invalid working-hours or break-time value.';
+  END IF;
+
+  -- The existing, hardened creator owns auth.users compatibility. Calling it
+  -- inside this function keeps auth creation and profile completion in one DB
+  -- transaction, so a validation/update error rolls the account back too.
+  v_user_id := public.create_new_user(
+    p_email,
+    p_password,
+    p_username,
+    p_role,
+    p_full_name,
+    COALESCE((p_profile_options->>'needs_supervisor_approval')::boolean, false),
+    COALESCE((p_profile_options->>'allow_reserve')::boolean, false),
+    COALESCE((p_profile_options->>'allow_overtime')::boolean, false),
+    v_supervisor_ids
+  );
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET allowed_types = v_allowed_types,
+      can_manage_rules = COALESCE((p_profile_options->>'can_manage_rules')::boolean, false),
+      has_chuti_access = COALESCE((p_profile_options->>'has_chuti_access')::boolean, true),
+      has_quotes_access = COALESCE((p_profile_options->>'has_quotes_access')::boolean, true),
+      eligible_govt_holiday = COALESCE((p_profile_options->>'eligible_govt_holiday')::boolean, true),
+      eligible_office_leave = COALESCE((p_profile_options->>'eligible_office_leave')::boolean, true),
+      job_role = NULLIF(btrim(p_profile_options->>'job_role'), ''),
+      working_hours = v_working_hours,
+      break_time = v_break_time,
+      default_sign_in = COALESCE(NULLIF(p_profile_options->>'default_sign_in', '')::time, default_sign_in),
+      default_sign_out = COALESCE(NULLIF(p_profile_options->>'default_sign_out', '')::time, default_sign_out),
+      global_settings = COALESCE(global_settings, '{}'::jsonb) || jsonb_build_object(
+        'kpi_skills', CASE WHEN jsonb_typeof(p_profile_options->'kpi_skills') = 'array' THEN p_profile_options->'kpi_skills' ELSE '[]'::jsonb END,
+        'kpi_dept_indicators', CASE WHEN jsonb_typeof(p_profile_options->'kpi_dept_indicators') = 'array' THEN p_profile_options->'kpi_dept_indicators' ELSE '[]'::jsonb END,
+        'kpi_other_dept_indicators', CASE WHEN jsonb_typeof(p_profile_options->'kpi_other_dept_indicators') = 'array' THEN p_profile_options->'kpi_other_dept_indicators' ELSE '[]'::jsonb END,
+        'performs_data_entry', COALESCE((p_profile_options->>'performs_data_entry')::boolean, true),
+        'department', COALESCE(NULLIF(btrim(p_profile_options->>'department'), ''), 'Data Entry'),
+        'performs_other_dept_tasks', COALESCE((p_profile_options->>'performs_other_dept_tasks')::boolean, false),
+        'other_department', COALESCE(NULLIF(btrim(p_profile_options->>'other_department'), ''), 'IT')
+      )
+  WHERE id = v_user_id;
+
+  IF NOT FOUND THEN RAISE EXCEPTION 'New profile was not created.'; END IF;
+
+  SELECT username INTO v_actor_name FROM public.profiles WHERE id = auth.uid();
+  INSERT INTO public.audit_logs (
+    actor_id, actor_codename, action_type, target_id, target_user_id, details, metadata
+  ) VALUES (
+    auth.uid(), COALESCE(v_actor_name, 'System'), 'CREATE_USER', v_user_id::text,
+    v_user_id, 'User account created', jsonb_build_object('role', p_role, 'username', upper(btrim(p_username)))
+  );
+
+  RETURN v_user_id;
+END;
+$$;
+
+
+--
+-- Name: create_new_user(text, text, text, text, text, boolean, boolean, boolean, uuid[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean DEFAULT false, p_allow_reserve boolean DEFAULT false, p_allow_overtime boolean DEFAULT false, p_supervisor_ids uuid[] DEFAULT NULL::uuid[]) RETURNS uuid
@@ -587,37 +1414,415 @@ END;
 $_$;
 
 
-ALTER FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]) OWNER TO postgres;
+--
+-- Name: current_user_has_workspace(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.current_user_has_workspace(p_workspace text) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+  SELECT CASE
+    WHEN auth.role() = 'service_role' THEN true
+    WHEN p.role = 'superadmin' THEN true
+    WHEN p_workspace = 'chuti' THEN COALESCE(p.has_chuti_access, false)
+    WHEN p_workspace = 'quotes' THEN COALESCE(p.has_quotes_access, false)
+    ELSE false
+  END
+  FROM public.profiles p
+  WHERE p.id = auth.uid();
+$$;
+
 
 --
--- Name: delete_user_by_id(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: delete_user_by_id(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.delete_user_by_id(p_user_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
+DECLARE
+  v_actor_role text;
+  v_actor_name text;
+  v_target_role text;
+  v_target_name text;
 BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Only admins can delete users';
+  SELECT role, username INTO v_actor_role, v_actor_name FROM public.profiles WHERE id = auth.uid();
+  SELECT role, username INTO v_target_role, v_target_name FROM public.profiles WHERE id = p_user_id FOR UPDATE;
+
+  IF v_target_role IS NULL THEN
+    RAISE EXCEPTION 'Target user not found.';
+  END IF;
+  IF p_user_id = auth.uid() THEN
+    RAISE EXCEPTION 'Self-deletion is not allowed.';
+  END IF;
+  IF NOT (
+    v_actor_role = 'superadmin'
+    OR (v_actor_role = 'admin' AND v_target_role IN ('user', 'supervisor'))
+  ) THEN
+    RAISE EXCEPTION 'Permission denied for this target account.';
   END IF;
 
-  -- Delete from auth.users (cascade will handle profiles and chuti)
+  INSERT INTO public.audit_logs (
+    actor_id, actor_codename, action_type, target_id, target_user_id, details, metadata
+  ) VALUES (
+    auth.uid(), COALESCE(v_actor_name, 'System'), 'DELETE_USER', p_user_id::text,
+    p_user_id, 'User account deleted', jsonb_build_object('target_role', v_target_role, 'target_codename', v_target_name)
+  );
+
   DELETE FROM auth.users WHERE id = p_user_id;
 END;
 $$;
 
 
-ALTER FUNCTION public.delete_user_by_id(p_user_id uuid) OWNER TO postgres;
+--
+-- Name: enforce_chuti_write_permissions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.enforce_chuti_write_permissions() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_actor_role text;
+  v_needs_supervisor boolean;
+BEGIN
+  IF auth.role() = 'service_role'
+     OR current_setting('app.bypass_chuti_security', true) = 'true' THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.date < DATE '2020-01-01' OR NEW.date > (current_date + 730) THEN
+    RAISE EXCEPTION 'Leave date is outside the supported range.';
+  END IF;
+
+  SELECT role INTO v_actor_role FROM public.profiles WHERE id = auth.uid();
+
+  IF v_actor_role IN ('admin', 'superadmin') THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' AND NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+    RAISE EXCEPTION 'A leave record cannot be reassigned to another user.';
+  END IF;
+
+  IF v_actor_role = 'supervisor' THEN
+    IF NOT (NEW.user_id = auth.uid() OR public.has_leave_access(auth.uid(), NEW.user_id)) THEN
+      RAISE EXCEPTION 'Supervisors may only change leave records for their assigned team.';
+    END IF;
+    IF TG_OP = 'INSERT' AND NEW.status NOT IN ('pending_supervisor', 'approved_by_supervisor') THEN
+      RAISE EXCEPTION 'Supervisors cannot create final-approved leave records.';
+    END IF;
+    IF TG_OP = 'UPDATE' AND NEW.status IS DISTINCT FROM OLD.status
+       AND NEW.status NOT IN ('pending_supervisor', 'approved_by_supervisor', 'needs_review') THEN
+      RAISE EXCEPTION 'Supervisors cannot grant final admin approval.';
+    END IF;
+    IF TG_OP = 'UPDATE'
+       AND NEW.reserve_adjustment_status IS DISTINCT FROM OLD.reserve_adjustment_status
+       AND NEW.reserve_adjustment_status NOT IN ('none', 'pending') THEN
+      RAISE EXCEPTION 'Supervisors cannot approve or reject reserve adjustments.';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF v_actor_role <> 'user' OR NEW.user_id <> auth.uid() THEN
+    RAISE EXCEPTION 'Users may only change their own leave records.';
+  END IF;
+
+  SELECT COALESCE(needs_supervisor_approval, true)
+  INTO v_needs_supervisor
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status = 'approved_by_supervisor' AND NOT v_needs_supervisor THEN
+      NULL;
+    ELSIF NEW.status <> 'pending_supervisor' THEN
+      RAISE EXCEPTION 'Users cannot create approved or rejected leave records.';
+    END IF;
+    IF NEW.reserve_adjustment_status <> 'none'
+       OR NEW.admin_edit_status <> 'none'
+       OR NEW.is_edited
+       OR NEW.deleted_at IS NOT NULL THEN
+      RAISE EXCEPTION 'Users cannot set administrative leave fields.';
+    END IF;
+  ELSE
+    IF NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+      RAISE EXCEPTION 'Leave creation timestamps are immutable.';
+    END IF;
+    IF OLD.status NOT IN ('pending_supervisor', 'approved_by_supervisor', 'needs_review')
+       AND (to_jsonb(NEW) - ARRAY[
+         'reserve_adjustment_status', 'admin_edit_request', 'updated_at'
+       ]) IS DISTINCT FROM
+       (to_jsonb(OLD) - ARRAY[
+         'reserve_adjustment_status', 'admin_edit_request', 'updated_at'
+       ]) THEN
+      RAISE EXCEPTION 'Approved leave details are immutable for users.';
+    END IF;
+    IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at
+       AND OLD.status NOT IN ('pending_supervisor', 'approved_by_supervisor', 'needs_review') THEN
+      RAISE EXCEPTION 'Only an unapproved leave request can be withdrawn by its owner.';
+    END IF;
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
+      IF NEW.status = 'approved_by_supervisor' AND NOT v_needs_supervisor THEN
+        NULL;
+      ELSIF NEW.status <> 'pending_supervisor' THEN
+        RAISE EXCEPTION 'Users cannot approve or reject leave records.';
+      END IF;
+    END IF;
+    IF NEW.reserve_adjustment_status IS DISTINCT FROM OLD.reserve_adjustment_status
+       AND NEW.reserve_adjustment_status NOT IN ('none', 'pending') THEN
+      RAISE EXCEPTION 'Users cannot approve or reject reserve adjustments.';
+    END IF;
+    IF NEW.admin_edit_status IS DISTINCT FROM OLD.admin_edit_status
+       AND NEW.admin_edit_status NOT IN ('none', 'pending') THEN
+      RAISE EXCEPTION 'Users cannot approve administrative edits.';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
 
 --
--- Name: get_admin_sales_summary(text, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: enforce_kpi_assessment_permissions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.enforce_kpi_assessment_permissions() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_actor_role text;
+  v_primary_appraiser text;
+BEGIN
+  IF NEW.month_year IS NULL OR btrim(NEW.month_year) = '' OR length(NEW.month_year) > 100 THEN
+    RAISE EXCEPTION 'Invalid KPI assessment period.';
+  END IF;
+  IF jsonb_typeof(NEW.kpis) <> 'object' THEN
+    RAISE EXCEPTION 'KPI data must be a JSON object.';
+  END IF;
+  IF length(COALESCE(NEW.emp_id, '')) > 100
+     OR length(COALESCE(NEW.date_of_joining, '')) > 100
+     OR length(COALESCE(NEW.department, '')) > 100
+     OR length(COALESCE(NEW.appraiser_name, '')) > 150
+     OR length(COALESCE(NEW.reviewer_name, '')) > 150 THEN
+    RAISE EXCEPTION 'KPI assessment metadata exceeds the supported length.';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    NEW.created_at := timezone('utc', now());
+  ELSE
+    IF NEW.user_id IS DISTINCT FROM OLD.user_id
+       OR NEW.month_year IS DISTINCT FROM OLD.month_year
+       OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+      RAISE EXCEPTION 'KPI assessment identity and creation time are immutable.';
+    END IF;
+  END IF;
+  NEW.updated_at := timezone('utc', now());
+
+  IF auth.role() = 'service_role' THEN RETURN NEW; END IF;
+
+  SELECT p.role INTO v_actor_role
+  FROM public.profiles p
+  WHERE p.id = auth.uid();
+
+  IF v_actor_role IN ('admin', 'superadmin') THEN
+    RETURN NEW;
+  END IF;
+  IF v_actor_role = 'supervisor'
+     AND (NEW.user_id = auth.uid() OR public.has_kpi_access(auth.uid(), NEW.user_id)) THEN
+    RETURN NEW;
+  END IF;
+  IF v_actor_role <> 'user' OR NEW.user_id <> auth.uid() THEN
+    RAISE EXCEPTION 'Permission denied for this KPI assessment.';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    SELECT COALESCE(supervisor.full_name, supervisor.username)
+    INTO v_primary_appraiser
+    FROM public.profiles employee
+    CROSS JOIN LATERAL unnest(COALESCE(employee.supervisor_ids, ARRAY[]::uuid[]))
+      WITH ORDINALITY AS assigned(supervisor_id, position)
+    JOIN public.profiles supervisor ON supervisor.id = assigned.supervisor_id
+    WHERE employee.id = NEW.user_id
+    ORDER BY assigned.position
+    LIMIT 1;
+
+    NEW.kpis := NEW.kpis - ARRAY['weightages', 'supervisorScores'];
+    NEW.appraiser_name := v_primary_appraiser;
+    NEW.appraiser_signed := false;
+    NEW.appraiser_sign_date := NULL;
+  ELSE
+    NEW.kpis := NEW.kpis - ARRAY['weightages', 'supervisorScores'];
+    IF OLD.kpis ? 'weightages' THEN
+      NEW.kpis := jsonb_set(NEW.kpis, '{weightages}', OLD.kpis->'weightages', true);
+    END IF;
+    IF OLD.kpis ? 'supervisorScores' THEN
+      NEW.kpis := jsonb_set(NEW.kpis, '{supervisorScores}', OLD.kpis->'supervisorScores', true);
+    END IF;
+    NEW.appraiser_name := OLD.appraiser_name;
+    NEW.appraiser_signed := OLD.appraiser_signed;
+    NEW.appraiser_sign_date := OLD.appraiser_sign_date;
+  END IF;
+
+  NEW.appraisee_sign_date := CASE
+    WHEN NEW.appraisee_signed IS TRUE THEN to_char(current_date, 'DD-MM-YYYY')
+    ELSE NULL
+  END;
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: enforce_leave_settlement_permissions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.enforce_leave_settlement_permissions() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  v_actor_role text;
+  v_settings jsonb;
+  v_sum numeric;
+BEGIN
+  IF auth.role() = 'service_role'
+     OR current_setting('app.bypass_settlement_security', true) = 'true' THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.year !~ '^[0-9]{4}$'
+     OR NEW.period NOT IN ('H1', 'H2', 'Instant')
+     OR NEW.leave_category NOT IN ('Govt Holiday', 'Eid-ul-Fitr', 'Eid-ul-Adha', 'Office Leave')
+     OR NEW.action_type NOT IN ('carry_forward', 'payment', 'adjust_leave', 'split')
+     OR NEW.status NOT IN ('initiated', 'responded', 'processed') THEN
+    RAISE EXCEPTION 'Invalid leave settlement value.';
+  END IF;
+
+  SELECT role, COALESCE(global_settings, '{}'::jsonb)
+  INTO v_actor_role, v_settings
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  IF v_actor_role IN ('admin', 'superadmin') THEN
+    RETURN NEW;
+  END IF;
+  IF v_actor_role = 'supervisor' THEN
+    IF NOT public.has_leave_access(auth.uid(), NEW.user_id) THEN
+      RAISE EXCEPTION 'Supervisors may only manage settlements for their assigned team.';
+    END IF;
+    RETURN NEW;
+  END IF;
+  IF v_actor_role <> 'user' OR NEW.user_id <> auth.uid() THEN
+    RAISE EXCEPTION 'Users may only submit their own settlement response.';
+  END IF;
+
+  IF NEW.status <> 'responded' OR NEW.processed_by IS NOT NULL OR NEW.processed_at IS NOT NULL THEN
+    RAISE EXCEPTION 'Users cannot process leave settlements.';
+  END IF;
+  IF NEW.action_by IS DISTINCT FROM auth.uid() THEN
+    RAISE EXCEPTION 'Settlement action_by must identify the authenticated user.';
+  END IF;
+
+  v_sum := COALESCE(NEW.carry_forward_days, 0)
+         + COALESCE(NEW.payment_days, 0)
+         + COALESCE(NEW.adjust_leave_days, 0);
+  IF abs(v_sum - NEW.remaining_days) >= 0.01 THEN
+    RAISE EXCEPTION 'Settlement allocations must equal the remaining leave balance.';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    IF NOT EXISTS (
+         SELECT 1
+         FROM public.leave_settlements existing
+         WHERE existing.id = NEW.id
+           AND existing.user_id = auth.uid()
+           AND existing.status IN ('initiated', 'responded')
+       )
+       AND (
+         v_settings->>'settlement_active_year' IS DISTINCT FROM NEW.year
+         OR v_settings->>'settlement_active_period' IS DISTINCT FROM NEW.period
+         OR v_settings->>'settlement_active_category' IS DISTINCT FROM NEW.leave_category
+       ) THEN
+      RAISE EXCEPTION 'No matching settlement response window is active.';
+    END IF;
+  ELSE
+    IF OLD.user_id IS DISTINCT FROM NEW.user_id
+       OR OLD.year IS DISTINCT FROM NEW.year
+       OR OLD.period IS DISTINCT FROM NEW.period
+       OR OLD.leave_category IS DISTINCT FROM NEW.leave_category
+       OR OLD.remaining_days IS DISTINCT FROM NEW.remaining_days
+       OR OLD.created_at IS DISTINCT FROM NEW.created_at THEN
+      RAISE EXCEPTION 'Settlement identity and authoritative balance are immutable.';
+    END IF;
+    IF OLD.status NOT IN ('initiated', 'responded') THEN
+      RAISE EXCEPTION 'Processed settlements cannot be revised by users.';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$_$;
+
+
+--
+-- Name: enforce_quotation_mistake_metadata(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.enforce_quotation_mistake_metadata() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NEW.date < DATE '2020-01-01' OR NEW.date > (current_date + 366) THEN
+    RAISE EXCEPTION 'Mistake date is outside the supported range.';
+  END IF;
+  NEW.filename := btrim(NEW.filename);
+  NEW.branch := btrim(NEW.branch);
+  NEW.mistake_details := btrim(NEW.mistake_details);
+  NEW.penalty := btrim(NEW.penalty);
+  IF NEW.filename = '' OR length(NEW.filename) > 255
+     OR NEW.branch = '' OR length(NEW.branch) > 100
+     OR NEW.mistake_details = '' OR length(NEW.mistake_details) > 5000
+     OR NEW.penalty = '' OR length(NEW.penalty) > 100 THEN
+    RAISE EXCEPTION 'Quotation mistake fields are missing or exceed their supported length.';
+  END IF;
+
+  SELECT p.username INTO NEW.codename
+  FROM public.profiles p
+  WHERE p.id = NEW.user_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'The selected user profile does not exist.';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    NEW.created_by := auth.uid();
+    NEW.updated_by := auth.uid();
+    NEW.created_at := timezone('utc', now());
+    NEW.updated_at := timezone('utc', now());
+  ELSE
+    NEW.created_by := OLD.created_by;
+    NEW.created_at := OLD.created_at;
+    NEW.updated_by := auth.uid();
+    NEW.updated_at := timezone('utc', now());
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: get_admin_sales_summary(text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.get_admin_sales_summary(p_today text, p_tz text DEFAULT 'UTC'::text) RETURNS TABLE(total_sold integer, total_unsold integer, total_attempts integer)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
-    AS $$
+    AS $_$
 BEGIN
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'Permission denied: Only admins can view sales summary.';
@@ -626,23 +1831,18 @@ BEGIN
   RETURN QUERY
   WITH todays_sales AS (
     SELECT
-      -- Group key: file name without its sold-status suffix, case/space-insensitive
       upper(btrim(regexp_replace(r.file_name, ' \[(SOLD|UNSOLD)\]$', ''))) AS file_key,
       (r.file_name LIKE '% [SOLD]') AS is_sold,
       r.submitted_at
     FROM public.records r
     WHERE r.file_type = 'Sale'
-      -- Sargable range on submitted_at: [local midnight, next local midnight) in UTC
       AND r.submitted_at >= ((p_today::date)::timestamp AT TIME ZONE p_tz)
       AND r.submitted_at <  ((p_today::date + 1)::timestamp AT TIME ZONE p_tz)
   ),
   per_file AS (
     SELECT
       file_key,
-      -- Every SOLD entry is its own closed sale
       COUNT(*) FILTER (WHERE is_sold)::INT AS sold_count,
-      -- Latest entry unsold -> one still-open attempt
-      -- (tie on submitted_at prefers SOLD via is_sold DESC)
       CASE WHEN NOT (array_agg(is_sold ORDER BY submitted_at DESC, is_sold DESC))[1]
            THEN 1 ELSE 0 END AS unsold_count
     FROM todays_sales
@@ -654,13 +1854,41 @@ BEGIN
     COALESCE(SUM(sold_count + unsold_count), 0)::INT  AS total_attempts
   FROM per_file;
 END;
+$_$;
+
+
+--
+-- Name: get_available_record_months(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_available_record_months(p_user_id uuid DEFAULT NULL::uuid, p_tz text DEFAULT 'Asia/Dhaka'::text) RETURNS TABLE(year text, month text)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF auth.uid() IS NULL AND auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'Authentication required.';
+  END IF;
+  IF p_user_id IS NOT NULL
+     AND p_user_id <> auth.uid()
+     AND NOT public.is_admin()
+     AND NOT (public.is_supervisor() AND public.has_leave_access(auth.uid(), p_user_id)) THEN
+    RAISE EXCEPTION 'Permission denied for target user.';
+  END IF;
+
+  RETURN QUERY
+  SELECT to_char(date_trunc('month', r.submitted_at AT TIME ZONE p_tz), 'YYYY'),
+         to_char(date_trunc('month', r.submitted_at AT TIME ZONE p_tz), 'MM')
+  FROM public.records r
+  WHERE p_user_id IS NULL OR r.user_id = p_user_id
+  GROUP BY date_trunc('month', r.submitted_at AT TIME ZONE p_tz)
+  ORDER BY date_trunc('month', r.submitted_at AT TIME ZONE p_tz);
+END;
 $$;
 
 
-ALTER FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) OWNER TO postgres;
-
 --
--- Name: get_leaderboard_data(text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: get_leaderboard_data(text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text DEFAULT 'UTC'::text) RETURNS TABLE(user_id uuid, username text, full_name text, role text, job_role text, branch text, badge jsonb, quotes_count integer, requotes_count integer, reviews_count integer, sales_count integer, total_submitted integer, todays_count integer, months_count integer, overall_score integer, earliest_achievement_timestamp timestamp with time zone, rank integer)
@@ -765,10 +1993,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text) OWNER TO postgres;
-
 --
--- Name: get_my_role(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: get_my_role(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.get_my_role() RETURNS text
@@ -806,10 +2032,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.get_my_role() OWNER TO postgres;
-
 --
--- Name: get_user_email_by_username(text); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: get_user_email_by_username(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.get_user_email_by_username(p_username text) RETURNS text
@@ -829,10 +2053,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.get_user_email_by_username(p_username text) OWNER TO postgres;
-
 --
--- Name: handle_new_user(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: handle_new_user(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.handle_new_user() RETURNS trigger
@@ -889,66 +2111,58 @@ END;
 $$;
 
 
-ALTER FUNCTION public.handle_new_user() OWNER TO postgres;
-
 --
--- Name: has_kpi_access(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: has_kpi_access(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) RETURNS boolean
-    LANGUAGE plpgsql SECURITY DEFINER
+    LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.profiles u
-    WHERE u.id = employee_id
-    AND (
-      -- Direct team supervision
-      supervisor_id = ANY(u.supervisor_ids)
-      -- Explicit KPI delegation for this user
-      OR u.delegated_kpi_supervisor_id = supervisor_id
-    )
-  );
-END;
+  SELECT
+    (auth.role() = 'service_role' OR supervisor_id = auth.uid())
+    AND EXISTS (
+      SELECT 1
+      FROM public.profiles employee
+      WHERE employee.id = employee_id
+        AND (
+          supervisor_id = ANY(COALESCE(employee.supervisor_ids, ARRAY[]::uuid[]))
+          OR employee.delegated_kpi_supervisor_id = supervisor_id
+        )
+    );
 $$;
 
 
-ALTER FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) OWNER TO postgres;
-
 --
--- Name: has_leave_access(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: has_leave_access(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) RETURNS boolean
-    LANGUAGE plpgsql SECURITY DEFINER
+    LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.profiles u
-    WHERE u.id = employee_id
-    AND (
-      -- Direct team supervision
-      supervisor_id = ANY(u.supervisor_ids)
-      -- Explicit Leave delegation for this user
-      OR u.delegated_leave_supervisor_id = supervisor_id
-      -- Delegated team supervision
-      OR EXISTS (
-        SELECT 1 FROM public.profiles s
-        WHERE s.id = ANY(u.supervisor_ids)
-        AND s.delegated_supervisor_id = supervisor_id
-      )
-    )
-  );
-END;
+  SELECT
+    (auth.role() = 'service_role' OR supervisor_id = auth.uid())
+    AND EXISTS (
+      SELECT 1
+      FROM public.profiles employee
+      WHERE employee.id = employee_id
+        AND (
+          supervisor_id = ANY(COALESCE(employee.supervisor_ids, ARRAY[]::uuid[]))
+          OR employee.delegated_leave_supervisor_id = supervisor_id
+          OR EXISTS (
+            SELECT 1
+            FROM public.profiles direct_supervisor
+            WHERE direct_supervisor.id = ANY(COALESCE(employee.supervisor_ids, ARRAY[]::uuid[]))
+              AND direct_supervisor.delegated_supervisor_id = supervisor_id
+          )
+        )
+    );
 $$;
 
 
-ALTER FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) OWNER TO postgres;
-
 --
--- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.is_admin() RETURNS boolean
@@ -959,10 +2173,8 @@ CREATE FUNCTION public.is_admin() RETURNS boolean
 $$;
 
 
-ALTER FUNCTION public.is_admin() OWNER TO postgres;
-
 --
--- Name: is_admin_or_supervisor(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: is_admin_or_supervisor(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.is_admin_or_supervisor() RETURNS boolean
@@ -973,10 +2185,8 @@ CREATE FUNCTION public.is_admin_or_supervisor() RETURNS boolean
 $$;
 
 
-ALTER FUNCTION public.is_admin_or_supervisor() OWNER TO postgres;
-
 --
--- Name: is_superadmin(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: is_superadmin(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.is_superadmin() RETURNS boolean
@@ -987,10 +2197,8 @@ CREATE FUNCTION public.is_superadmin() RETURNS boolean
 $$;
 
 
-ALTER FUNCTION public.is_superadmin() OWNER TO postgres;
-
 --
--- Name: is_supervisor(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: is_supervisor(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.is_supervisor() RETURNS boolean
@@ -1001,75 +2209,150 @@ CREATE FUNCTION public.is_supervisor() RETURNS boolean
 $$;
 
 
-ALTER FUNCTION public.is_supervisor() OWNER TO postgres;
-
 --
--- Name: is_supervisor_of(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: reconcile_govt_holiday_adjustments(uuid, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.is_supervisor_of(supervisor_id uuid, employee_id uuid) RETURNS boolean
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public', 'pg_temp'
-    AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = employee_id
-    AND supervisor_id = ANY(supervisor_ids)
-  ) OR EXISTS (
-    SELECT 1 FROM public.profiles u
-    JOIN public.profiles s ON s.id = ANY(u.supervisor_ids)
-    WHERE u.id = employee_id
-    AND s.delegated_supervisor_id = supervisor_id
-  );
-END;
-$$;
-
-
-ALTER FUNCTION public.is_supervisor_of(supervisor_id uuid, employee_id uuid) OWNER TO postgres;
-
---
--- Name: is_user_in_top_5_for_month(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer) RETURNS boolean
+CREATE FUNCTION public.reconcile_govt_holiday_adjustments(p_user_id uuid, p_year integer) RETURNS integer
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
-  v_rank INT;
+  v_reserved integer;
+  v_changed integer;
 BEGIN
-  WITH monthly_counts AS (
-    SELECT 
-      r.user_id,
-      COUNT(*) AS record_count,
-      p.username
-    FROM public.records r
-    JOIN public.profiles p ON r.user_id = p.id
-    WHERE 
-      EXTRACT(YEAR FROM r.submitted_at) = p_year
-      AND EXTRACT(MONTH FROM r.submitted_at) = p_month
-    GROUP BY r.user_id, p.username
-  ),
-  ranked_users AS (
-    SELECT 
-      user_id,
-      ROW_NUMBER() OVER (ORDER BY record_count DESC, UPPER(username) ASC) AS rank
-    FROM monthly_counts
-  )
-  SELECT rank INTO v_rank
-  FROM ranked_users
-  WHERE user_id = p_user_id;
+  SELECT count(*)::integer INTO v_reserved
+  FROM public.govt_holiday_responses
+  WHERE user_id = p_user_id
+    AND response = 'reserve'
+    AND holiday_date >= make_date(p_year, 1, 1)
+    AND holiday_date < make_date(p_year + 1, 1, 1);
 
-  RETURN (v_rank IS NOT NULL AND v_rank <= 5);
+  WITH excess AS (
+    SELECT c.id
+    FROM public.chuti c
+    WHERE c.user_id = p_user_id
+      AND c.leave_type = 'Full Leave'
+      AND c.adjustment IS TRUE
+      AND c.date >= make_date(p_year, 1, 1)
+      AND c.date < make_date(p_year + 1, 1, 1)
+      AND c.deleted_at IS NULL
+      AND (c.reserve_holiday = 'Govt Holiday' OR c.comment ILIKE '%Govt Holiday%')
+    ORDER BY c.date ASC, c.created_at ASC
+    OFFSET v_reserved
+  )
+  UPDATE public.chuti c
+  SET adjustment = false,
+      reserve_holiday = NULL,
+      comment = NULLIF(
+        btrim(regexp_replace(COALESCE(c.comment, ''), '^Adjusted:\s*Govt Holiday(?:\s*\|\s*)?', '', 'i')),
+        ''
+      )
+  WHERE c.id IN (SELECT id FROM excess);
+
+  GET DIAGNOSTICS v_changed = ROW_COUNT;
+  RETURN v_changed;
 END;
 $$;
 
 
-ALTER FUNCTION public.is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer) OWNER TO postgres;
+--
+-- Name: register_active_session(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.register_active_session(p_session_id text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_now_ms bigint := floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint;
+  v_existing jsonb;
+  v_sessions jsonb;
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated.';
+  END IF;
+  IF p_session_id IS NULL OR p_session_id !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' THEN
+    RAISE EXCEPTION 'Invalid session identifier.';
+  END IF;
+
+  SELECT CASE
+    WHEN jsonb_typeof(global_settings->'active_sessions') = 'array'
+      THEN global_settings->'active_sessions'
+    ELSE '[]'::jsonb
+  END
+  INTO v_existing
+  FROM public.profiles
+  WHERE id = v_uid
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Profile not found.';
+  END IF;
+
+  SELECT COALESCE(jsonb_agg(entry ORDER BY (entry->>'lastActive')::bigint), '[]'::jsonb)
+  INTO v_sessions
+  FROM (
+    SELECT entry
+    FROM (
+      SELECT value AS entry
+      FROM jsonb_array_elements(v_existing)
+      WHERE value ? 'sessionId'
+        AND value ? 'lastActive'
+        AND value->>'sessionId' <> p_session_id
+        AND value->>'lastActive' ~ '^[0-9]+$'
+        AND (value->>'lastActive')::bigint > v_now_ms - 604800000
+      UNION ALL
+      SELECT jsonb_build_object('sessionId', p_session_id, 'lastActive', v_now_ms)
+    ) candidates
+    ORDER BY (entry->>'lastActive')::bigint DESC
+    LIMIT 10
+  ) recent;
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(
+    COALESCE(global_settings, '{}'::jsonb),
+    '{active_sessions}',
+    v_sessions,
+    true
+  )
+  WHERE id = v_uid;
+
+  RETURN v_sessions;
+END;
+$_$;
+
 
 --
--- Name: reset_all_user_feature_flags(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: request_password_reset(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.request_password_reset(p_username text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF auth.role() <> 'service_role' AND session_user NOT IN ('postgres', 'supabase_admin') THEN
+    RAISE EXCEPTION 'Service role required.';
+  END IF;
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(
+    COALESCE(global_settings, '{}'::jsonb),
+    '{password_reset_status}',
+    '"pending"'::jsonb,
+    true
+  )
+  WHERE upper(username) = upper(btrim(p_username))
+    AND COALESCE(global_settings->>'password_reset_status', '') <> 'pending';
+END;
+$$;
+
+
+--
+-- Name: reset_all_user_feature_flags(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.reset_all_user_feature_flags() RETURNS void
@@ -1088,10 +2371,256 @@ END;
 $$;
 
 
-ALTER FUNCTION public.reset_all_user_feature_flags() OWNER TO postgres;
+--
+-- Name: resolve_password_reset(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.resolve_password_reset(p_user_id uuid, p_approve boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_actor_role text;
+  v_target_role text;
+BEGIN
+  SELECT role INTO v_actor_role FROM public.profiles WHERE id = auth.uid();
+  SELECT role INTO v_target_role FROM public.profiles WHERE id = p_user_id FOR UPDATE;
+
+  IF v_target_role IS NULL THEN
+    RAISE EXCEPTION 'Target user not found.';
+  END IF;
+  IF NOT (
+    v_actor_role = 'superadmin'
+    OR (v_actor_role = 'admin' AND v_target_role IN ('user', 'supervisor'))
+  ) THEN
+    RAISE EXCEPTION 'Permission denied for this target account.';
+  END IF;
+
+  IF p_approve THEN
+    PERFORM public.admin_update_user_credentials(p_user_id, NULL, '1234');
+  ELSE
+    PERFORM set_config('app.bypass_profile_security', 'true', true);
+    UPDATE public.profiles
+    SET global_settings = jsonb_set(
+      COALESCE(global_settings, '{}'::jsonb),
+      '{password_reset_status}',
+      '"none"'::jsonb,
+      true
+    )
+    WHERE id = p_user_id;
+  END IF;
+END;
+$$;
+
 
 --
--- Name: set_admin_delegated_flags(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: save_global_leave_settings(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.save_global_leave_settings(p_settings jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.current_user_has_workspace('chuti') THEN
+    RAISE EXCEPTION 'Leave workspace access is disabled.';
+  END IF;
+  PERFORM public.save_global_leave_settings_internal(p_settings);
+END;
+$$;
+
+
+--
+-- Name: save_global_leave_settings_internal(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.save_global_leave_settings_internal(p_settings jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  v_old_settings jsonb := '{}'::jsonb;
+  v_old_holidays jsonb := '[]'::jsonb;
+  v_canonical_holidays jsonb := '[]'::jsonb;
+  v_leave_settings jsonb;
+  v_item jsonb;
+  v_date_text text;
+  v_date date;
+  v_name text;
+  v_created_at text;
+  v_old_dates date[] := ARRAY[]::date[];
+  v_new_dates date[] := ARRAY[]::date[];
+  v_removed_date date;
+  v_target_user uuid;
+  v_target_year integer;
+  v_mode text;
+  v_h1 numeric;
+  v_h2 numeric;
+  v_default numeric;
+  v_eid_fitr numeric;
+  v_eid_adha numeric;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Only admins can change global leave settings.';
+  END IF;
+  IF jsonb_typeof(p_settings) <> 'object' THEN
+    RAISE EXCEPTION 'Leave settings must be a JSON object.';
+  END IF;
+
+  SELECT COALESCE(global_settings, '{}'::jsonb)
+  INTO v_old_settings
+  FROM public.profiles
+  WHERE role IN ('superadmin', 'admin')
+  ORDER BY CASE WHEN role = 'superadmin' THEN 0 ELSE 1 END, created_at
+  LIMIT 1
+  FOR UPDATE;
+
+  v_old_holidays := CASE WHEN jsonb_typeof(v_old_settings->'govt_holidays') = 'array'
+    THEN v_old_settings->'govt_holidays' ELSE '[]'::jsonb END;
+
+  SELECT COALESCE(array_agg(DISTINCT holiday_date), ARRAY[]::date[])
+  INTO v_old_dates
+  FROM (
+    SELECT CASE
+      WHEN jsonb_typeof(value) = 'object' THEN (value->>'date')::date
+      ELSE trim(both '"' from value::text)::date
+    END AS holiday_date
+    FROM jsonb_array_elements(v_old_holidays)
+  ) old_items;
+
+  IF jsonb_typeof(COALESCE(p_settings->'govt_holidays', '[]'::jsonb)) <> 'array' THEN
+    RAISE EXCEPTION 'govt_holidays must be an array.';
+  END IF;
+
+  FOR v_item IN SELECT value FROM jsonb_array_elements(COALESCE(p_settings->'govt_holidays', '[]'::jsonb))
+  LOOP
+    v_date_text := CASE WHEN jsonb_typeof(v_item) = 'object'
+      THEN btrim(v_item->>'date')
+      ELSE trim(both '"' from v_item::text)
+    END;
+    BEGIN
+      v_date := v_date_text::date;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'Invalid government holiday date: %', v_date_text;
+    END;
+
+    IF v_date = ANY(v_new_dates) THEN
+      RAISE EXCEPTION 'Duplicate government holiday date: %', v_date;
+    END IF;
+
+    v_name := CASE WHEN jsonb_typeof(v_item) = 'object'
+      THEN btrim(COALESCE(v_item->>'name', ''))
+      ELSE ''
+    END;
+    IF v_name = '' THEN
+      RAISE EXCEPTION 'A government holiday name is required for %.', v_date;
+    END IF;
+
+    v_created_at := CASE WHEN jsonb_typeof(v_item) = 'object'
+      THEN COALESCE(NULLIF(v_item->>'created_at', ''), timezone('utc', now())::text)
+      ELSE timezone('utc', now())::text
+    END;
+    v_new_dates := array_append(v_new_dates, v_date);
+    v_canonical_holidays := v_canonical_holidays || jsonb_build_array(
+      jsonb_build_object('date', v_date::text, 'name', v_name, 'created_at', v_created_at)
+    );
+  END LOOP;
+
+  v_mode := COALESCE(NULLIF(p_settings->>'office_leave_mode', ''), 'split');
+  IF v_mode NOT IN ('split', 'merged') THEN RAISE EXCEPTION 'Invalid office leave mode.'; END IF;
+  v_h1 := COALESCE((p_settings->>'office_leave_h1')::numeric, 7);
+  v_h2 := COALESCE((p_settings->>'office_leave_h2')::numeric, 7);
+  v_default := COALESCE((p_settings->>'office_leave_default')::numeric, v_h1 + v_h2);
+  v_eid_fitr := COALESCE((p_settings->>'eid_fitr_leave')::numeric, 0);
+  v_eid_adha := COALESCE((p_settings->>'eid_adha_leave')::numeric, 0);
+  IF v_h1 < 0 OR v_h2 < 0 OR v_default < 0 OR v_eid_fitr < 0 OR v_eid_adha < 0
+     OR v_h1 > 366 OR v_h2 > 366 OR v_default > 366 OR v_eid_fitr > 366 OR v_eid_adha > 366 THEN
+    RAISE EXCEPTION 'Leave quotas must be between 0 and 366.';
+  END IF;
+
+  IF COALESCE(p_settings->>'settlement_active_period', '') NOT IN ('', 'H1', 'H2', 'Instant') THEN
+    RAISE EXCEPTION 'Invalid settlement period.';
+  END IF;
+  IF COALESCE(p_settings->>'settlement_active_category', '') NOT IN ('', 'Office Leave', 'Govt Holiday', 'Eid-ul-Fitr', 'Eid-ul-Adha') THEN
+    RAISE EXCEPTION 'Invalid settlement category.';
+  END IF;
+  IF COALESCE(p_settings->>'settlement_active_year', '') <> ''
+     AND p_settings->>'settlement_active_year' !~ '^20[0-9]{2}$' THEN
+    RAISE EXCEPTION 'Invalid settlement year.';
+  END IF;
+
+  v_leave_settings := jsonb_build_object(
+    'office_leave_mode', v_mode,
+    'office_leave_h1', v_h1,
+    'office_leave_h2', v_h2,
+    'office_leave_split_h1', COALESCE((p_settings->>'office_leave_split_h1')::numeric, v_h1),
+    'office_leave_split_h2', COALESCE((p_settings->>'office_leave_split_h2')::numeric, v_h2),
+    'office_leave_default', v_default,
+    'eid_fitr_leave', v_eid_fitr,
+    'eid_adha_leave', v_eid_adha,
+    'govt_holidays', v_canonical_holidays,
+    'settlement_active_year', p_settings->'settlement_active_year',
+    'settlement_active_period', p_settings->'settlement_active_period',
+    'settlement_active_category', p_settings->'settlement_active_category'
+  );
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET global_settings = COALESCE(global_settings, '{}'::jsonb) || v_leave_settings
+  WHERE (COALESCE(global_settings, '{}'::jsonb) || v_leave_settings) IS DISTINCT FROM global_settings;
+
+  -- Delete removed entitlements and reconcile only the affected user/year pairs.
+  FOR v_removed_date IN
+    SELECT unnest(v_old_dates)
+    EXCEPT
+    SELECT unnest(v_new_dates)
+  LOOP
+    FOR v_target_user, v_target_year IN
+      SELECT DISTINCT user_id, extract(year FROM holiday_date)::integer
+      FROM public.govt_holiday_responses
+      WHERE holiday_date = v_removed_date
+    LOOP
+      DELETE FROM public.govt_holiday_responses
+      WHERE user_id = v_target_user AND holiday_date = v_removed_date;
+      PERFORM public.reconcile_govt_holiday_adjustments(v_target_user, v_target_year);
+    END LOOP;
+  END LOOP;
+
+  -- Every eligible user receives an explicit entitlement: reserve when enabled,
+  -- otherwise payment. Existing admin conversions are preserved when unrelated
+  -- leave settings are saved; only a profile eligibility/preference change may
+  -- intentionally recompute them.
+  INSERT INTO public.govt_holiday_responses (
+    user_id, holiday_date, holiday_name, response, updated_by_admin
+  )
+  SELECT p.id,
+         (h.value->>'date')::date,
+         h.value->>'name',
+         CASE WHEN p.allow_reserve IS TRUE THEN 'reserve' ELSE 'paid' END,
+         true
+  FROM public.profiles p
+  CROSS JOIN LATERAL jsonb_array_elements(v_canonical_holidays) h(value)
+  WHERE p.eligible_govt_holiday IS DISTINCT FROM false
+  ON CONFLICT (user_id, holiday_date) DO UPDATE
+  SET holiday_name = EXCLUDED.holiday_name
+  WHERE public.govt_holiday_responses.holiday_name IS DISTINCT FROM EXCLUDED.holiday_name;
+
+  INSERT INTO public.audit_logs (
+    actor_id, actor_codename, action_type, details, metadata
+  )
+  SELECT auth.uid(), p.username, 'ADJUST_LEAVE', 'Global leave settings changed',
+         jsonb_build_object(
+           'added_holiday_dates', ARRAY(SELECT unnest(v_new_dates) EXCEPT SELECT unnest(v_old_dates)),
+           'removed_holiday_dates', ARRAY(SELECT unnest(v_old_dates) EXCEPT SELECT unnest(v_new_dates))
+         )
+  FROM public.profiles p
+  WHERE p.id = auth.uid();
+END;
+$_$;
+
+
+--
+-- Name: set_admin_delegated_flags(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.set_admin_delegated_flags(p_flags jsonb) RETURNS void
@@ -1115,37 +2644,81 @@ END;
 $$;
 
 
-ALTER FUNCTION public.set_admin_delegated_flags(p_flags jsonb) OWNER TO postgres;
-
 --
--- Name: set_feature_flags(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: set_feature_flags(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.set_feature_flags(p_flags jsonb) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
+DECLARE
+  v_actor_role text;
+  v_current jsonb := '{}'::jsonb;
+  v_delegated jsonb := '{}'::jsonb;
+  v_key text;
 BEGIN
-  IF NOT public.is_superadmin() THEN
-    RAISE EXCEPTION 'Only a superadmin can configure feature flags.';
+  IF jsonb_typeof(COALESCE(p_flags, '{}'::jsonb)) <> 'object' THEN
+    RAISE EXCEPTION 'Feature flags must be a JSON object.';
   END IF;
 
+  SELECT role,
+         COALESCE(global_settings->'feature_flags', '{}'::jsonb),
+         COALESCE(global_settings->'admin_delegated_flags', '{}'::jsonb)
+  INTO v_actor_role, v_current, v_delegated
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  IF v_actor_role <> 'superadmin' THEN
+    IF v_actor_role <> 'admin' THEN
+      RAISE EXCEPTION 'Only a superadmin or delegated admin can configure feature flags.';
+    END IF;
+    FOR v_key IN
+      SELECT key
+      FROM (
+        SELECT key, value FROM jsonb_each(COALESCE(p_flags, '{}'::jsonb))
+        UNION
+        SELECT key, value FROM jsonb_each(v_current)
+      ) keys
+      GROUP BY key
+      HAVING (COALESCE(p_flags, '{}'::jsonb)->key) IS DISTINCT FROM (v_current->key)
+    LOOP
+      IF COALESCE((v_delegated->>v_key)::boolean, false) IS NOT TRUE THEN
+        RAISE EXCEPTION 'Feature flag "%" has not been delegated to admins.', v_key;
+      END IF;
+    END LOOP;
+  END IF;
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
   UPDATE public.profiles
   SET global_settings = jsonb_set(
-        COALESCE(global_settings, '{}'::jsonb),
-        '{feature_flags}',
-        COALESCE(p_flags, '{}'::jsonb),
-        true
-      )
-  WHERE true;  -- intentional: global_settings is replicated to every row
+    COALESCE(global_settings, '{}'::jsonb),
+    '{feature_flags}',
+    COALESCE(p_flags, '{}'::jsonb),
+    true
+  )
+  WHERE (global_settings->'feature_flags') IS DISTINCT FROM COALESCE(p_flags, '{}'::jsonb);
 END;
 $$;
 
 
-ALTER FUNCTION public.set_feature_flags(p_flags jsonb) OWNER TO postgres;
+--
+-- Name: set_govt_holiday_response_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_govt_holiday_response_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  NEW.updated_at := timezone('utc', now());
+  RETURN NEW;
+END;
+$$;
+
 
 --
--- Name: set_role_visibility(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: set_role_visibility(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.set_role_visibility(p_visibility jsonb) RETURNS void
@@ -1169,10 +2742,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.set_role_visibility(p_visibility jsonb) OWNER TO postgres;
-
 --
--- Name: set_sanitizer_rules(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: set_sanitizer_rules(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.set_sanitizer_rules(p_rules jsonb) RETURNS void
@@ -1196,10 +2767,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.set_sanitizer_rules(p_rules jsonb) OWNER TO postgres;
-
 --
--- Name: set_sanitizer_words(text[]); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: set_sanitizer_words(text[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.set_sanitizer_words(p_words text[]) RETURNS void
@@ -1223,10 +2792,38 @@ END;
 $$;
 
 
-ALTER FUNCTION public.set_sanitizer_words(p_words text[]) OWNER TO postgres;
+--
+-- Name: set_supervisor_access_overrides(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_supervisor_access_overrides(p_overrides jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Only an admin can configure supervisor access overrides.';
+  END IF;
+  IF jsonb_typeof(COALESCE(p_overrides, '{}'::jsonb)) <> 'object' THEN
+    RAISE EXCEPTION 'Supervisor access overrides must be a JSON object.';
+  END IF;
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(
+    COALESCE(global_settings, '{}'::jsonb),
+    '{supervisor_access_overrides}',
+    COALESCE(p_overrides, '{}'::jsonb),
+    true
+  )
+  WHERE global_settings->'supervisor_access_overrides'
+        IS DISTINCT FROM COALESCE(p_overrides, '{}'::jsonb);
+END;
+$$;
+
 
 --
--- Name: set_temp_access(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: set_temp_access(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.set_temp_access(p_entries jsonb) RETURNS void
@@ -1250,10 +2847,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.set_temp_access(p_entries jsonb) OWNER TO postgres;
-
 --
--- Name: set_user_hidden_tabs(uuid, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: set_user_hidden_tabs(uuid, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) RETURNS void
@@ -1277,109 +2872,182 @@ END;
 $$;
 
 
-ALTER FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) OWNER TO postgres;
+--
+-- Name: sync_profile_govt_holiday_entitlements(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.sync_profile_govt_holiday_entitlements() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_settings jsonb;
+  v_year integer;
+BEGIN
+  IF TG_OP = 'UPDATE'
+     AND NEW.allow_reserve IS NOT DISTINCT FROM OLD.allow_reserve
+     AND NEW.eligible_govt_holiday IS NOT DISTINCT FROM OLD.eligible_govt_holiday THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT COALESCE(global_settings, '{}'::jsonb) INTO v_settings
+  FROM public.profiles
+  WHERE role IN ('superadmin', 'admin') AND id <> NEW.id
+  ORDER BY CASE WHEN role = 'superadmin' THEN 0 ELSE 1 END, created_at
+  LIMIT 1;
+  v_settings := COALESCE(v_settings, NEW.global_settings, '{}'::jsonb);
+
+  IF NEW.eligible_govt_holiday IS FALSE THEN
+    FOR v_year IN
+      SELECT DISTINCT extract(year FROM holiday_date)::integer
+      FROM public.govt_holiday_responses
+      WHERE user_id = NEW.id
+    LOOP
+      DELETE FROM public.govt_holiday_responses WHERE user_id = NEW.id;
+      PERFORM public.reconcile_govt_holiday_adjustments(NEW.id, v_year);
+    END LOOP;
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.govt_holiday_responses (
+    user_id, holiday_date, holiday_name, response, updated_by_admin
+  )
+  SELECT NEW.id,
+         (h.value->>'date')::date,
+         h.value->>'name',
+         CASE WHEN NEW.allow_reserve IS TRUE THEN 'reserve' ELSE 'paid' END,
+         true
+  FROM jsonb_array_elements(
+    CASE WHEN jsonb_typeof(v_settings->'govt_holidays') = 'array'
+      THEN v_settings->'govt_holidays' ELSE '[]'::jsonb END
+  ) h(value)
+  ON CONFLICT (user_id, holiday_date) DO UPDATE
+  SET holiday_name = EXCLUDED.holiday_name,
+      response = EXCLUDED.response,
+      updated_by_admin = true
+  WHERE public.govt_holiday_responses.holiday_name IS DISTINCT FROM EXCLUDED.holiday_name
+     OR public.govt_holiday_responses.response IS DISTINCT FROM EXCLUDED.response;
+
+  DELETE FROM public.govt_holiday_responses r
+  WHERE r.user_id = NEW.id
+    AND NOT EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements(
+        CASE WHEN jsonb_typeof(v_settings->'govt_holidays') = 'array'
+          THEN v_settings->'govt_holidays' ELSE '[]'::jsonb END
+      ) h(value)
+      WHERE (h.value->>'date')::date = r.holiday_date
+    );
+
+  IF NEW.allow_reserve IS NOT TRUE THEN
+    FOR v_year IN
+      SELECT DISTINCT extract(year FROM date_value)::integer
+      FROM (
+        SELECT (h.value->>'date')::date AS date_value
+        FROM jsonb_array_elements(
+          CASE WHEN jsonb_typeof(v_settings->'govt_holidays') = 'array'
+            THEN v_settings->'govt_holidays' ELSE '[]'::jsonb END
+        ) h(value)
+      ) years
+    LOOP
+      PERFORM public.reconcile_govt_holiday_adjustments(NEW.id, v_year);
+    END LOOP;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
 
 --
--- Name: sync_top_performer_badges(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: sync_top_performer_badges(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.sync_top_performer_badges() RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
     AS $$
 DECLARE
-  v_today DATE := CURRENT_DATE;
-  v_prev_month_date DATE := (DATE_TRUNC('month', v_today) - INTERVAL '1 month')::DATE;
-  v_prev_year INT := EXTRACT(YEAR FROM v_prev_month_date)::INT;
-  v_prev_month INT := EXTRACT(MONTH FROM v_prev_month_date)::INT;
-  v_prev_month_name TEXT := TO_CHAR(v_prev_month_date, 'Month');
-  
-  v_current_year INT := EXTRACT(YEAR FROM v_today)::INT;
-  
-  r_user RECORD;
-  v_rank INT := 0;
-  v_badge_type TEXT;
-  v_consecutive_months INT;
-  v_yearly_wins INT;
-  v_check_date DATE;
-  v_badge_json JSONB;
+  v_prev_month date := (date_trunc('month', current_date) - interval '1 month')::date;
+  v_current_year integer := extract(year FROM current_date)::integer;
+  v_user record;
+  v_consecutive integer;
+  v_yearly_wins integer;
+  v_badge jsonb;
 BEGIN
-  -- Set local parameter so the triggers bypass security checks
+  IF session_user NOT IN ('postgres', 'supabase_admin') AND auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'Badge synchronization is a scheduled system operation.';
+  END IF;
+
   PERFORM set_config('app.bypass_profile_security', 'true', true);
 
-  -- ক. আগের মাসের টপ ৫ পারফর্মারদের একটি সাময়িক টেবিল তৈরি করা
-  CREATE TEMP TABLE temp_top_5 ON COMMIT DROP AS
+  CREATE TEMP TABLE tmp_monthly_ranks ON COMMIT DROP AS
   WITH monthly_counts AS (
-    SELECT 
-      r.user_id,
-      COUNT(*) AS record_count,
-      p.username
+    SELECT r.user_id,
+           date_trunc('month', r.submitted_at AT TIME ZONE 'Asia/Dhaka')::date AS month_start,
+           count(*) AS record_count,
+           p.username
     FROM public.records r
-    JOIN public.profiles p ON r.user_id = p.id
-    WHERE 
-      EXTRACT(YEAR FROM r.submitted_at) = v_prev_year
-      AND EXTRACT(MONTH FROM r.submitted_at) = v_prev_month
-    GROUP BY r.user_id, p.username
+    JOIN public.profiles p ON p.id = r.user_id
+    WHERE r.submitted_at >= ((v_prev_month - interval '24 months')::timestamp AT TIME ZONE 'Asia/Dhaka')
+      AND r.submitted_at < ((v_prev_month + interval '1 month')::timestamp AT TIME ZONE 'Asia/Dhaka')
+    GROUP BY r.user_id, date_trunc('month', r.submitted_at AT TIME ZONE 'Asia/Dhaka')::date, p.username
   )
-  SELECT 
-    user_id,
-    ROW_NUMBER() OVER (ORDER BY record_count DESC, UPPER(username) ASC) AS rank
-  FROM monthly_counts
-  LIMIT 5;
+  SELECT user_id,
+         month_start,
+         row_number() OVER (PARTITION BY month_start ORDER BY record_count DESC, upper(username), user_id) AS rank
+  FROM monthly_counts;
 
-  -- খ. যারা আগের মাসের টপ ৫-এ নেই, তাদের প্রোফাইলের ব্যাজ মুছে ফেলা
-  -- Only touch rows that actually carry the badge — otherwise every profile row
-  -- gets a new version on each run and realtime emits an UPDATE per profile.
-  UPDATE public.profiles
-  SET global_settings = COALESCE(global_settings, '{}'::JSONB) - 'top_performer_badge'
-  WHERE id NOT IN (SELECT user_id FROM temp_top_5)
-    AND global_settings ? 'top_performer_badge';
+  UPDATE public.profiles p
+  SET global_settings = COALESCE(p.global_settings, '{}'::jsonb) - 'top_performer_badge'
+  WHERE p.global_settings ? 'top_performer_badge'
+    AND NOT EXISTS (
+      SELECT 1 FROM tmp_monthly_ranks r
+      WHERE r.user_id = p.id AND r.month_start = v_prev_month AND r.rank <= 5
+    );
 
-  -- গ. টপ ৫ পারফর্মারদের লুপ চালিয়ে ধারাবাহিকতা (streaks) ও বার্ষিক উইন ক্যালকুলেট করে আপডেট করা
-  FOR r_user IN (SELECT * FROM temp_top_5) LOOP
-    v_rank := r_user.rank;
-    v_badge_type := CASE WHEN v_rank <= 3 THEN 'blue' ELSE 'grey' END;
+  FOR v_user IN
+    SELECT user_id, rank
+    FROM tmp_monthly_ranks
+    WHERE month_start = v_prev_month AND rank <= 5
+    ORDER BY rank
+  LOOP
+    SELECT COALESCE(min(offset_value), 25)
+    INTO v_consecutive
+    FROM generate_series(0, 24) offset_value
+    WHERE NOT EXISTS (
+      SELECT 1 FROM tmp_monthly_ranks r
+      WHERE r.user_id = v_user.user_id
+        AND r.month_start = (v_prev_month - (offset_value || ' months')::interval)::date
+        AND r.rank <= 5
+    );
 
-    -- কন্টিনিউয়াস মান্থলি স্ট্রাক ক্যালকুলেশন
-    v_consecutive_months := 0;
-    v_check_date := v_prev_month_date;
-    
-    WHILE public.is_user_in_top_5_for_month(r_user.user_id, EXTRACT(YEAR FROM v_check_date)::INT, EXTRACT(MONTH FROM v_check_date)::INT) LOOP
-      v_consecutive_months := v_consecutive_months + 1;
-      v_check_date := (v_check_date - INTERVAL '1 month')::DATE;
-    END LOOP;
+    SELECT count(DISTINCT month_start)::integer INTO v_yearly_wins
+    FROM tmp_monthly_ranks
+    WHERE user_id = v_user.user_id
+      AND rank <= 5
+      AND extract(year FROM month_start)::integer = v_current_year;
 
-    -- চলতি ক্যালেন্ডার বছরে টোটাল উইন
-    v_yearly_wins := 0;
-    FOR m IN 1..12 LOOP
-      IF public.is_user_in_top_5_for_month(r_user.user_id, v_current_year, m) THEN
-        v_yearly_wins := v_yearly_wins + 1;
-      END IF;
-    END LOOP;
-
-    -- JSON ডাটা প্রস্তুত করা
-    v_badge_json := JSONB_BUILD_OBJECT(
-      'userId', r_user.user_id,
-      'rank', v_rank,
-      'badgeType', v_badge_type,
-      'monthName', TRIM(v_prev_month_name),
-      'consecutiveMonths', v_consecutive_months,
+    v_badge := jsonb_build_object(
+      'userId', v_user.user_id,
+      'rank', v_user.rank,
+      'badgeType', CASE WHEN v_user.rank <= 3 THEN 'blue' ELSE 'grey' END,
+      'monthName', to_char(v_prev_month, 'FMMonth'),
+      'consecutiveMonths', v_consecutive,
       'yearlyTopPerformances', v_yearly_wins
     );
 
-    -- ইউজারের প্রোফাইলে ব্যাজ সেট করা
     UPDATE public.profiles
-    SET global_settings = COALESCE(global_settings, '{}'::JSONB) || JSONB_BUILD_OBJECT('top_performer_badge', v_badge_json)
-    WHERE id = r_user.user_id
-      AND (global_settings->'top_performer_badge') IS DISTINCT FROM v_badge_json;
+    SET global_settings = COALESCE(global_settings, '{}'::jsonb) || jsonb_build_object('top_performer_badge', v_badge)
+    WHERE id = v_user.user_id
+      AND global_settings->'top_performer_badge' IS DISTINCT FROM v_badge;
   END LOOP;
 END;
 $$;
 
 
-ALTER FUNCTION public.sync_top_performer_badges() OWNER TO postgres;
-
 --
--- Name: update_chuti_updated_at(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: update_chuti_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.update_chuti_updated_at() RETURNS trigger
@@ -1392,10 +3060,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_chuti_updated_at() OWNER TO postgres;
-
 --
--- Name: update_compliance_rules_updated_at(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: update_compliance_rules_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.update_compliance_rules_updated_at() RETURNS trigger
@@ -1410,10 +3076,41 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_compliance_rules_updated_at() OWNER TO postgres;
+--
+-- Name: update_global_settings_key(uuid, text, jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF auth.role() = 'service_role' THEN
+    NULL;
+  ELSIF auth.uid() = p_user_id AND p_key = 'hidden_tabs' THEN
+    NULL;
+  ELSE
+    RAISE EXCEPTION 'Permission denied for global settings key "%".', p_key;
+  END IF;
+
+  IF p_key = 'hidden_tabs' AND jsonb_typeof(p_value) <> 'array' THEN
+    RAISE EXCEPTION 'hidden_tabs must be an array.';
+  END IF;
+
+  PERFORM set_config('app.bypass_profile_security', 'true', true);
+  UPDATE public.profiles
+  SET global_settings = jsonb_set(COALESCE(global_settings, '{}'::jsonb), ARRAY[p_key], p_value, true)
+  WHERE id = p_user_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Target profile not found.';
+  END IF;
+END;
+$$;
+
 
 --
--- Name: update_records_updated_at(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: update_records_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.update_records_updated_at() RETURNS trigger
@@ -1427,10 +3124,8 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_records_updated_at() OWNER TO postgres;
-
 --
--- Name: update_todos_last_activity(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: update_todos_last_activity(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.update_todos_last_activity() RETURNS trigger
@@ -1444,43 +3139,29 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_todos_last_activity() OWNER TO postgres;
-
-
---
--- Name: update_global_settings_key(uuid, text, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
--- AUDIT FIX M9: Atomic JSONB key-level update to prevent race conditions
--- when multiple components update global_settings concurrently.
---
-
-CREATE OR REPLACE FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public', 'pg_temp'
-    AS $$
-BEGIN
-  UPDATE profiles
-  SET global_settings = jsonb_set(
-    COALESCE(global_settings, '{}'::jsonb),
-    ARRAY[p_key],
-    p_value
-  )
-  WHERE id = p_user_id;
-END;
-$$;
-
-
-ALTER FUNCTION public.update_global_settings_key(uuid, text, jsonb) OWNER TO postgres;
-
-GRANT EXECUTE ON FUNCTION public.update_global_settings_key(uuid, text, jsonb) TO authenticated;
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
+--
+-- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    actor_id uuid,
+    actor_codename text NOT NULL,
+    action_type text NOT NULL,
+    target_id text,
+    details text NOT NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    target_user_id uuid,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL
+);
 
 
 --
--- Name: chuti; Type: TABLE; Schema: public; Owner: postgres
+-- Name: chuti; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.chuti (
@@ -1512,10 +3193,8 @@ CREATE TABLE public.chuti (
 );
 
 
-ALTER TABLE public.chuti OWNER TO postgres;
-
 --
--- Name: compliance_rules; Type: TABLE; Schema: public; Owner: postgres
+-- Name: compliance_rules; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.compliance_rules (
@@ -1536,10 +3215,8 @@ CREATE TABLE public.compliance_rules (
 );
 
 
-ALTER TABLE public.compliance_rules OWNER TO postgres;
-
 --
--- Name: dismissed_notifications; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dismissed_notifications; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.dismissed_notifications (
@@ -1550,10 +3227,8 @@ CREATE TABLE public.dismissed_notifications (
 );
 
 
-ALTER TABLE public.dismissed_notifications OWNER TO postgres;
-
 --
--- Name: govt_holiday_responses; Type: TABLE; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.govt_holiday_responses (
@@ -1564,21 +3239,20 @@ CREATE TABLE public.govt_holiday_responses (
     response text NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_by_admin boolean DEFAULT false,
+    updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     CONSTRAINT govt_holiday_responses_response_check CHECK ((response = ANY (ARRAY['paid'::text, 'reserve'::text])))
 );
 
 
-ALTER TABLE public.govt_holiday_responses OWNER TO postgres;
-
 --
--- Name: TABLE govt_holiday_responses; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE govt_holiday_responses; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.govt_holiday_responses IS 'Stores user choices (Get Paid vs Reserve) for each government holiday';
 
 
 --
--- Name: kpi_assessments; Type: TABLE; Schema: public; Owner: postgres
+-- Name: kpi_assessments; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.kpi_assessments (
@@ -1590,7 +3264,7 @@ CREATE TABLE public.kpi_assessments (
     department text DEFAULT 'Data Entry'::text,
     appraiser_name text,
     reviewer_name text,
-    kpis jsonb DEFAULT '[]'::jsonb NOT NULL,
+    kpis jsonb DEFAULT '{}'::jsonb NOT NULL,
     appraisee_signed boolean DEFAULT false,
     appraisee_sign_date text,
     appraiser_signed boolean DEFAULT false,
@@ -1600,10 +3274,8 @@ CREATE TABLE public.kpi_assessments (
 );
 
 
-ALTER TABLE public.kpi_assessments OWNER TO postgres;
-
 --
--- Name: leaderboard_archive; Type: TABLE; Schema: public; Owner: postgres
+-- Name: leaderboard_archive; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.leaderboard_archive (
@@ -1624,10 +3296,8 @@ CREATE TABLE public.leaderboard_archive (
 );
 
 
-ALTER TABLE public.leaderboard_archive OWNER TO postgres;
-
 --
--- Name: leave_settlements; Type: TABLE; Schema: public; Owner: postgres
+-- Name: leave_settlements; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.leave_settlements (
@@ -1653,10 +3323,8 @@ CREATE TABLE public.leave_settlements (
 );
 
 
-ALTER TABLE public.leave_settlements OWNER TO postgres;
-
 --
--- Name: login_codes; Type: TABLE; Schema: public; Owner: postgres
+-- Name: login_codes; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.login_codes (
@@ -1667,10 +3335,8 @@ CREATE TABLE public.login_codes (
 );
 
 
-ALTER TABLE public.login_codes OWNER TO postgres;
-
 --
--- Name: mobile_app_versions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: mobile_app_versions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.mobile_app_versions (
@@ -1682,10 +3348,8 @@ CREATE TABLE public.mobile_app_versions (
 );
 
 
-ALTER TABLE public.mobile_app_versions OWNER TO postgres;
-
 --
--- Name: mobile_app_versions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: mobile_app_versions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.mobile_app_versions_id_seq
@@ -1696,17 +3360,15 @@ CREATE SEQUENCE public.mobile_app_versions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.mobile_app_versions_id_seq OWNER TO postgres;
-
 --
--- Name: mobile_app_versions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: mobile_app_versions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.mobile_app_versions_id_seq OWNED BY public.mobile_app_versions.id;
 
 
 --
--- Name: profiles; Type: TABLE; Schema: public; Owner: postgres
+-- Name: profiles; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.profiles (
@@ -1758,17 +3420,35 @@ CREATE TABLE public.profiles (
 );
 
 
-ALTER TABLE public.profiles OWNER TO postgres;
-
 --
--- Name: COLUMN profiles.global_settings; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN profiles.global_settings; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.profiles.global_settings IS 'Global leave quotas and government holidays list stored in JSON format';
 
 
 --
--- Name: records; Type: TABLE; Schema: public; Owner: postgres
+-- Name: quotation_mistakes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.quotation_mistakes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    date date NOT NULL,
+    filename text NOT NULL,
+    branch text NOT NULL,
+    user_id uuid NOT NULL,
+    codename text NOT NULL,
+    mistake_details text NOT NULL,
+    penalty text NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+
+--
+-- Name: records; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.records (
@@ -1785,10 +3465,8 @@ CREATE TABLE public.records (
 );
 
 
-ALTER TABLE public.records OWNER TO postgres;
-
 --
--- Name: todos; Type: TABLE; Schema: public; Owner: postgres
+-- Name: todos; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.todos (
@@ -1806,20 +3484,23 @@ CREATE TABLE public.todos (
 );
 
 
-ALTER TABLE public.todos OWNER TO postgres;
-
 --
--- Name: mobile_app_versions id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: mobile_app_versions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.mobile_app_versions ALTER COLUMN id SET DEFAULT nextval('public.mobile_app_versions_id_seq'::regclass);
 
 
+--
+-- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
 
 
 --
--- Name: chuti chuti_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chuti chuti_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chuti
@@ -1827,7 +3508,7 @@ ALTER TABLE ONLY public.chuti
 
 
 --
--- Name: compliance_rules compliance_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: compliance_rules compliance_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.compliance_rules
@@ -1835,7 +3516,7 @@ ALTER TABLE ONLY public.compliance_rules
 
 
 --
--- Name: dismissed_notifications dismissed_notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dismissed_notifications dismissed_notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dismissed_notifications
@@ -1843,7 +3524,7 @@ ALTER TABLE ONLY public.dismissed_notifications
 
 
 --
--- Name: govt_holiday_responses govt_holiday_responses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses govt_holiday_responses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.govt_holiday_responses
@@ -1851,7 +3532,7 @@ ALTER TABLE ONLY public.govt_holiday_responses
 
 
 --
--- Name: kpi_assessments kpi_assessments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: kpi_assessments kpi_assessments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.kpi_assessments
@@ -1859,7 +3540,7 @@ ALTER TABLE ONLY public.kpi_assessments
 
 
 --
--- Name: kpi_assessments kpi_assessments_user_id_month_year_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: kpi_assessments kpi_assessments_user_id_month_year_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.kpi_assessments
@@ -1867,7 +3548,7 @@ ALTER TABLE ONLY public.kpi_assessments
 
 
 --
--- Name: leaderboard_archive leaderboard_archive_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leaderboard_archive leaderboard_archive_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leaderboard_archive
@@ -1875,7 +3556,7 @@ ALTER TABLE ONLY public.leaderboard_archive
 
 
 --
--- Name: leaderboard_archive leaderboard_archive_username_year_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leaderboard_archive leaderboard_archive_username_year_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leaderboard_archive
@@ -1883,7 +3564,7 @@ ALTER TABLE ONLY public.leaderboard_archive
 
 
 --
--- Name: leave_settlements leave_settlements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leave_settlements leave_settlements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leave_settlements
@@ -1891,7 +3572,7 @@ ALTER TABLE ONLY public.leave_settlements
 
 
 --
--- Name: login_codes login_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: login_codes login_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.login_codes
@@ -1899,7 +3580,7 @@ ALTER TABLE ONLY public.login_codes
 
 
 --
--- Name: mobile_app_versions mobile_app_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: mobile_app_versions mobile_app_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.mobile_app_versions
@@ -1907,7 +3588,7 @@ ALTER TABLE ONLY public.mobile_app_versions
 
 
 --
--- Name: profiles profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: profiles profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
@@ -1915,7 +3596,7 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: profiles profiles_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: profiles profiles_username_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
@@ -1923,7 +3604,15 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: records records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: quotation_mistakes quotation_mistakes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quotation_mistakes
+    ADD CONSTRAINT quotation_mistakes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: records records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.records
@@ -1931,7 +3620,7 @@ ALTER TABLE ONLY public.records
 
 
 --
--- Name: todos todos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: todos todos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.todos
@@ -1939,7 +3628,7 @@ ALTER TABLE ONLY public.todos
 
 
 --
--- Name: govt_holiday_responses unique_user_holiday; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses unique_user_holiday; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.govt_holiday_responses
@@ -1947,7 +3636,7 @@ ALTER TABLE ONLY public.govt_holiday_responses
 
 
 --
--- Name: dismissed_notifications unique_user_notification; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dismissed_notifications unique_user_notification; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dismissed_notifications
@@ -1955,168 +3644,339 @@ ALTER TABLE ONLY public.dismissed_notifications
 
 
 --
--- Name: leave_settlements unique_user_year_period_category; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leave_settlements unique_user_year_period_category; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT unique_user_year_period_category UNIQUE (user_id, year, period, leave_category);
 
 
+--
+-- Name: idx_audit_logs_action_created_at; Type: INDEX; Schema: public; Owner: -
+--
 
+CREATE INDEX idx_audit_logs_action_created_at ON public.audit_logs USING btree (action_type, created_at DESC);
 
 
 --
--- Name: idx_chuti_bulk_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_audit_logs_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created_at DESC);
+
+
+--
+-- Name: idx_audit_logs_target_user_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_logs_target_user_created_at ON public.audit_logs USING btree (target_user_id, created_at DESC) WHERE (target_user_id IS NOT NULL);
+
+
+--
+-- Name: idx_chuti_bulk_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_chuti_bulk_id ON public.chuti USING btree (bulk_id) WHERE (bulk_id IS NOT NULL);
 
 
 --
--- Name: idx_chuti_deleted_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_chuti_deleted_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_chuti_deleted_at ON public.chuti USING btree (deleted_at);
 
 
 --
--- Name: idx_chuti_updated_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_chuti_pending_adjustments; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_chuti_pending_adjustments ON public.chuti USING btree (reserve_adjustment_status, date DESC) WHERE ((deleted_at IS NULL) AND (reserve_adjustment_status = 'pending'::text));
+
+
+--
+-- Name: idx_chuti_pending_status_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_chuti_pending_status_date ON public.chuti USING btree (status, date DESC) WHERE (deleted_at IS NULL);
+
+
+--
+-- Name: idx_chuti_updated_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_chuti_updated_at ON public.chuti USING btree (updated_at);
 
 
 --
--- Name: idx_chuti_user_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_chuti_user_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_chuti_user_date ON public.chuti USING btree (user_id, date);
 
 
 --
--- Name: idx_leaderboard_archive_year; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_govt_holiday_responses_date_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_govt_holiday_responses_date_user ON public.govt_holiday_responses USING btree (holiday_date, user_id);
+
+
+--
+-- Name: idx_leaderboard_archive_year; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_leaderboard_archive_year ON public.leaderboard_archive USING btree (year, rank);
 
 
 --
--- Name: idx_leave_settlements_user_year; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_leave_settlements_user_year; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_leave_settlements_user_year ON public.leave_settlements USING btree (user_id, year);
 
 
 --
--- Name: idx_records_sale_submitted; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_quotation_mistakes_branch; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quotation_mistakes_branch ON public.quotation_mistakes USING btree (branch);
+
+
+--
+-- Name: idx_quotation_mistakes_branch_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quotation_mistakes_branch_date ON public.quotation_mistakes USING btree (branch, date DESC, id DESC);
+
+
+--
+-- Name: idx_quotation_mistakes_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quotation_mistakes_created_at ON public.quotation_mistakes USING btree (created_at DESC);
+
+
+--
+-- Name: idx_quotation_mistakes_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quotation_mistakes_date ON public.quotation_mistakes USING btree (date);
+
+
+--
+-- Name: idx_quotation_mistakes_user_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quotation_mistakes_user_date ON public.quotation_mistakes USING btree (user_id, date DESC, id DESC);
+
+
+--
+-- Name: idx_quotation_mistakes_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quotation_mistakes_user_id ON public.quotation_mistakes USING btree (user_id);
+
+
+--
+-- Name: idx_records_sale_submitted; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_records_sale_submitted ON public.records USING btree (submitted_at) WHERE (file_type = 'Sale'::text);
 
 
 --
--- Name: idx_records_updated_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_records_submitted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_records_submitted_at ON public.records USING btree (submitted_at);
+
+
+--
+-- Name: idx_records_updated_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_records_updated_at ON public.records USING btree (updated_at);
 
 
 --
--- Name: idx_records_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_records_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_records_user_id ON public.records USING btree (user_id);
 
 
 --
--- Name: idx_records_user_submitted; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_records_user_submitted; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_records_user_submitted ON public.records USING btree (user_id, submitted_at);
 
 
 --
--- Name: idx_todos_last_activity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_todos_last_activity; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_todos_last_activity ON public.todos USING btree (user_id, todo_date, last_activity_at DESC);
 
 
 --
--- Name: idx_todos_todo_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_todos_todo_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_todos_todo_date ON public.todos USING btree (todo_date);
 
 
 --
--- Name: idx_todos_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_todos_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_todos_user_id ON public.todos USING btree (user_id);
 
 
 --
--- Name: unique_user_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: unique_user_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX unique_user_date ON public.chuti USING btree (user_id, date) WHERE (deleted_at IS NULL);
 
 
 --
--- Name: uq_records_user_file_submitted; Type: INDEX; Schema: public; Owner: postgres
+-- Name: uq_records_user_file_submitted; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX uq_records_user_file_submitted ON public.records USING btree (user_id, file_name, submitted_at);
 
 
 --
--- Name: chuti chuti_set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: chuti audit_chuti_changes; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_chuti_changes AFTER INSERT OR DELETE OR UPDATE ON public.chuti FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
+
+
+--
+-- Name: govt_holiday_responses audit_govt_holiday_response_changes; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_govt_holiday_response_changes AFTER INSERT OR DELETE OR UPDATE ON public.govt_holiday_responses FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
+
+
+--
+-- Name: leave_settlements audit_leave_settlement_changes; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_leave_settlement_changes AFTER INSERT OR DELETE OR UPDATE ON public.leave_settlements FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
+
+
+--
+-- Name: quotation_mistakes audit_quotation_mistake_changes; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_quotation_mistake_changes AFTER INSERT OR DELETE OR UPDATE ON public.quotation_mistakes FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
+
+
+--
+-- Name: chuti chuti_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER chuti_set_updated_at BEFORE UPDATE ON public.chuti FOR EACH ROW EXECUTE FUNCTION public.update_chuti_updated_at();
 
 
 --
--- Name: profiles on_profile_role_update; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: chuti enforce_chuti_write_permissions_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER enforce_chuti_write_permissions_trigger BEFORE INSERT OR UPDATE ON public.chuti FOR EACH ROW EXECUTE FUNCTION public.enforce_chuti_write_permissions();
+
+
+--
+-- Name: kpi_assessments enforce_kpi_assessment_permissions_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER enforce_kpi_assessment_permissions_trigger BEFORE INSERT OR UPDATE ON public.kpi_assessments FOR EACH ROW EXECUTE FUNCTION public.enforce_kpi_assessment_permissions();
+
+
+--
+-- Name: leave_settlements enforce_leave_settlement_permissions_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER enforce_leave_settlement_permissions_trigger BEFORE INSERT OR UPDATE ON public.leave_settlements FOR EACH ROW EXECUTE FUNCTION public.enforce_leave_settlement_permissions();
+
+
+--
+-- Name: quotation_mistakes enforce_quotation_mistake_metadata_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER enforce_quotation_mistake_metadata_trigger BEFORE INSERT OR UPDATE ON public.quotation_mistakes FOR EACH ROW EXECUTE FUNCTION public.enforce_quotation_mistake_metadata();
+
+
+--
+-- Name: govt_holiday_responses govt_holiday_response_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER govt_holiday_response_set_updated_at BEFORE UPDATE ON public.govt_holiday_responses FOR EACH ROW EXECUTE FUNCTION public.set_govt_holiday_response_updated_at();
+
+
+--
+-- Name: profiles on_profile_role_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER on_profile_role_update BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.check_profile_role_change();
 
 
 --
--- Name: profiles on_profile_update_security; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: profiles on_profile_update_security; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER on_profile_update_security BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.check_profile_updates();
 
 
 --
--- Name: records records_set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: records records_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER records_set_updated_at BEFORE UPDATE ON public.records FOR EACH ROW EXECUTE FUNCTION public.update_records_updated_at();
 
 
 --
--- Name: todos todos_set_last_activity; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: profiles sync_profile_govt_holiday_entitlements_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER sync_profile_govt_holiday_entitlements_trigger AFTER INSERT OR UPDATE OF allow_reserve, eligible_govt_holiday ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.sync_profile_govt_holiday_entitlements();
+
+
+--
+-- Name: todos todos_set_last_activity; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER todos_set_last_activity BEFORE UPDATE ON public.todos FOR EACH ROW EXECUTE FUNCTION public.update_todos_last_activity();
 
 
 --
--- Name: compliance_rules trg_update_compliance_rules_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: compliance_rules trg_update_compliance_rules_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER trg_update_compliance_rules_updated_at BEFORE UPDATE ON public.compliance_rules FOR EACH ROW EXECUTE FUNCTION public.update_compliance_rules_updated_at();
 
 
+--
+-- Name: audit_logs audit_logs_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
 
 --
--- Name: chuti chuti_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: audit_logs audit_logs_target_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_target_user_id_fkey FOREIGN KEY (target_user_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: chuti chuti_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chuti
@@ -2124,7 +3984,7 @@ ALTER TABLE ONLY public.chuti
 
 
 --
--- Name: compliance_rules compliance_rules_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: compliance_rules compliance_rules_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.compliance_rules
@@ -2132,7 +3992,7 @@ ALTER TABLE ONLY public.compliance_rules
 
 
 --
--- Name: dismissed_notifications dismissed_notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dismissed_notifications dismissed_notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dismissed_notifications
@@ -2140,7 +4000,7 @@ ALTER TABLE ONLY public.dismissed_notifications
 
 
 --
--- Name: govt_holiday_responses govt_holiday_responses_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses govt_holiday_responses_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.govt_holiday_responses
@@ -2148,7 +4008,7 @@ ALTER TABLE ONLY public.govt_holiday_responses
 
 
 --
--- Name: kpi_assessments kpi_assessments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: kpi_assessments kpi_assessments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.kpi_assessments
@@ -2156,7 +4016,7 @@ ALTER TABLE ONLY public.kpi_assessments
 
 
 --
--- Name: leaderboard_archive leaderboard_archive_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leaderboard_archive leaderboard_archive_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leaderboard_archive
@@ -2164,7 +4024,7 @@ ALTER TABLE ONLY public.leaderboard_archive
 
 
 --
--- Name: leave_settlements leave_settlements_action_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leave_settlements leave_settlements_action_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leave_settlements
@@ -2172,7 +4032,7 @@ ALTER TABLE ONLY public.leave_settlements
 
 
 --
--- Name: leave_settlements leave_settlements_processed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leave_settlements leave_settlements_processed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leave_settlements
@@ -2180,7 +4040,7 @@ ALTER TABLE ONLY public.leave_settlements
 
 
 --
--- Name: leave_settlements leave_settlements_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: leave_settlements leave_settlements_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leave_settlements
@@ -2188,7 +4048,7 @@ ALTER TABLE ONLY public.leave_settlements
 
 
 --
--- Name: profiles profiles_delegated_kpi_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: profiles profiles_delegated_kpi_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
@@ -2196,7 +4056,7 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: profiles profiles_delegated_leave_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: profiles profiles_delegated_leave_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
@@ -2204,7 +4064,7 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: profiles profiles_delegated_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: profiles profiles_delegated_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
@@ -2212,7 +4072,7 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: profiles profiles_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: profiles profiles_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
@@ -2220,7 +4080,31 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: records records_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: quotation_mistakes quotation_mistakes_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quotation_mistakes
+    ADD CONSTRAINT quotation_mistakes_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: quotation_mistakes quotation_mistakes_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quotation_mistakes
+    ADD CONSTRAINT quotation_mistakes_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: quotation_mistakes quotation_mistakes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quotation_mistakes
+    ADD CONSTRAINT quotation_mistakes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: records records_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.records
@@ -2228,7 +4112,7 @@ ALTER TABLE ONLY public.records
 
 
 --
--- Name: todos todos_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: todos todos_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.todos
@@ -2236,440 +4120,416 @@ ALTER TABLE ONLY public.todos
 
 
 --
--- Name: dismissed_notifications Admins can do everything on dismissed notifications; Type: POLICY; Schema: public; Owner: postgres
+-- Name: dismissed_notifications Admins can do everything on dismissed notifications; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Admins can do everything on dismissed notifications" ON public.dismissed_notifications USING (public.is_admin());
 
 
 --
--- Name: govt_holiday_responses Admins can read all holiday responses; Type: POLICY; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses Admins can read all holiday responses; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can read all holiday responses" ON public.govt_holiday_responses FOR SELECT USING (public.is_admin());
-
-
---
--- Name: govt_holiday_responses Admins can update/delete responses; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Admins can update/delete responses" ON public.govt_holiday_responses USING (public.is_admin());
+CREATE POLICY "Admins can read all holiday responses" ON public.govt_holiday_responses FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND public.is_admin()));
 
 
 --
--- Name: leave_settlements Admins/supervisors can manage settlements; Type: POLICY; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses Admins can update/delete responses; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins/supervisors can manage settlements" ON public.leave_settlements USING ((public.is_admin() OR public.is_supervisor())) WITH CHECK ((public.is_admin() OR public.is_supervisor()));
-
-
---
--- Name: chuti Allow admin/supervisor to read all chuti; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow admin/supervisor to read all chuti" ON public.chuti FOR SELECT USING (public.is_admin_or_supervisor());
+CREATE POLICY "Admins can update/delete responses" ON public.govt_holiday_responses TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND public.is_admin())) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND public.is_admin()));
 
 
 --
--- Name: login_codes Allow admins & supervisors to manage login codes; Type: POLICY; Schema: public; Owner: postgres
+-- Name: login_codes Allow admins & supervisors to manage login codes; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Allow admins & supervisors to manage login codes" ON public.login_codes TO authenticated USING ((public.is_admin() OR public.is_supervisor()));
-
-
---
--- Name: chuti Allow admins to delete chuti; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow admins to delete chuti" ON public.chuti FOR DELETE USING (public.is_admin());
+CREATE POLICY "Allow admins & supervisors to manage login codes" ON public.login_codes TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND (public.is_admin() OR public.is_supervisor()))) WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND (public.is_admin() OR public.is_supervisor())));
 
 
 --
--- Name: profiles Allow admins to delete profiles; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow admins to delete profiles" ON public.profiles FOR DELETE USING (public.is_admin());
-
-
---
--- Name: chuti Allow admins to insert chuti for all users; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow admins to insert chuti for all users" ON public.chuti FOR INSERT WITH CHECK (public.is_admin());
-
-
---
--- Name: profiles Allow admins to insert profiles; Type: POLICY; Schema: public; Owner: postgres
+-- Name: profiles Allow admins to insert profiles; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow admins to insert profiles" ON public.profiles FOR INSERT WITH CHECK (public.is_admin());
 
 
+--
+-- Name: compliance_rules Allow authenticated to read compliance rules; Type: POLICY; Schema: public; Owner: -
+--
 
+CREATE POLICY "Allow authenticated to read compliance rules" ON public.compliance_rules FOR SELECT TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((NOT is_deleted) OR (EXISTS ( SELECT 1
+   FROM public.profiles p
+  WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE))))))));
 
 
 --
--- Name: chuti Allow admins to update all chuti; Type: POLICY; Schema: public; Owner: postgres
+-- Name: login_codes Allow authenticated to read login codes; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Allow admins to update all chuti" ON public.chuti FOR UPDATE USING (public.is_admin());
-
-
---
--- Name: profiles Allow admins to update all profiles; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow admins to update all profiles" ON public.profiles FOR UPDATE USING (public.is_admin());
+CREATE POLICY "Allow authenticated to read login codes" ON public.login_codes FOR SELECT TO authenticated USING (public.current_user_has_workspace('quotes'::text));
 
 
 --
--- Name: compliance_rules Allow admins, supervisors or authorized editors to delete rules; Type: POLICY; Schema: public; Owner: postgres
+-- Name: compliance_rules Allow authorized editors to delete rules; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Allow admins, supervisors or authorized editors to delete rules" ON public.compliance_rules FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND ((profiles.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (profiles.can_manage_rules = true))))));
-
-
---
--- Name: compliance_rules Allow admins, supervisors or authorized editors to insert rules; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow admins, supervisors or authorized editors to insert rules" ON public.compliance_rules FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND ((profiles.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (profiles.can_manage_rules = true))))));
+CREATE POLICY "Allow authorized editors to delete rules" ON public.compliance_rules FOR DELETE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND (EXISTS ( SELECT 1
+   FROM public.profiles p
+  WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE)))))));
 
 
 --
--- Name: compliance_rules Allow admins, supervisors or authorized editors to update rules; Type: POLICY; Schema: public; Owner: postgres
+-- Name: compliance_rules Allow authorized editors to insert rules; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Allow admins, supervisors or authorized editors to update rules" ON public.compliance_rules FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND ((profiles.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (profiles.can_manage_rules = true)))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND ((profiles.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (profiles.can_manage_rules = true))))));
+CREATE POLICY "Allow authorized editors to insert rules" ON public.compliance_rules FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND (EXISTS ( SELECT 1
+   FROM public.profiles p
+  WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE)))))));
 
 
 --
--- Name: compliance_rules Allow authenticated to read compliance rules; Type: POLICY; Schema: public; Owner: postgres
+-- Name: compliance_rules Allow authorized editors to update rules; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Allow authenticated to read compliance rules" ON public.compliance_rules FOR SELECT TO authenticated USING (((NOT is_deleted) OR (EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND ((profiles.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (profiles.can_manage_rules = true)))))));
-
-
---
--- Name: login_codes Allow authenticated to read login codes; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow authenticated to read login codes" ON public.login_codes FOR SELECT TO authenticated USING (true);
-
-
-
+CREATE POLICY "Allow authorized editors to update rules" ON public.compliance_rules FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND (EXISTS ( SELECT 1
+   FROM public.profiles p
+  WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE))))))) WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND (EXISTS ( SELECT 1
+   FROM public.profiles p
+  WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE)))))));
 
 
 --
--- Name: profiles Allow authenticated users to read all profiles; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow authenticated users to read all profiles" ON public.profiles FOR SELECT TO authenticated USING (true);
-
-
---
--- Name: records Allow authenticated users to read all records; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow authenticated users to read all records" ON public.records FOR SELECT TO authenticated USING (true);
-
-
---
--- Name: kpi_assessments Allow insert/update/delete for owner, admin, or assigned superv; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow insert/update/delete for owner, admin, or assigned superv" ON public.kpi_assessments TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(auth.uid(), user_id))));
-
-
---
--- Name: mobile_app_versions Allow public read access to mobile_app_versions; Type: POLICY; Schema: public; Owner: postgres
+-- Name: mobile_app_versions Allow public read access to mobile_app_versions; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow public read access to mobile_app_versions" ON public.mobile_app_versions FOR SELECT USING (true);
 
 
 --
--- Name: kpi_assessments Allow select for owner, admin, or assigned supervisor; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow select for owner, admin, or assigned supervisor" ON public.kpi_assessments FOR SELECT TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(auth.uid(), user_id))));
-
-
---
--- Name: chuti Allow supervisors to delete chuti; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow supervisors to delete chuti" ON public.chuti FOR DELETE USING ((public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id)));
-
-
---
--- Name: chuti Allow supervisors to insert chuti for supervised users; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow supervisors to insert chuti for supervised users" ON public.chuti FOR INSERT WITH CHECK ((public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id)));
-
-
---
--- Name: chuti Allow supervisors to update chuti status; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow supervisors to update chuti status" ON public.chuti FOR UPDATE USING ((public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id)));
-
-
---
--- Name: profiles Allow supervisors to update profiles; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow supervisors to update profiles" ON public.profiles FOR UPDATE USING (public.is_supervisor()) WITH CHECK (public.is_supervisor());
-
-
---
--- Name: records Allow users to delete own records, admins/supervisors delete al; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to delete own records, admins/supervisors delete al" ON public.records FOR DELETE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id))));
-
-
---
--- Name: todos Allow users to delete own todos; Type: POLICY; Schema: public; Owner: postgres
+-- Name: todos Allow users to delete own todos; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow users to delete own todos" ON public.todos FOR DELETE TO authenticated USING ((auth.uid() = user_id));
 
 
 --
--- Name: chuti Allow users to delete their own chuti; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to delete their own chuti" ON public.chuti FOR DELETE USING ((auth.uid() = user_id));
-
-
---
--- Name: records Allow users to insert own records, admins/supervisors insert al; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to insert own records, admins/supervisors insert al" ON public.records FOR INSERT TO authenticated WITH CHECK (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id))));
-
-
---
--- Name: todos Allow users to insert own todos; Type: POLICY; Schema: public; Owner: postgres
+-- Name: todos Allow users to insert own todos; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow users to insert own todos" ON public.todos FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
 
 
 --
--- Name: chuti Allow users to insert their own chuti; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to insert their own chuti" ON public.chuti FOR INSERT WITH CHECK ((auth.uid() = user_id));
-
-
---
--- Name: profiles Allow users to insert their own profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: profiles Allow users to insert their own profile; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow users to insert their own profile" ON public.profiles FOR INSERT WITH CHECK (((auth.uid() = id) AND (role = 'user'::text)));
 
 
 --
--- Name: todos Allow users to read own todos; Type: POLICY; Schema: public; Owner: postgres
+-- Name: todos Allow users to read own todos; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow users to read own todos" ON public.todos FOR SELECT TO authenticated USING ((auth.uid() = user_id));
 
 
 --
--- Name: chuti Allow users to read their own chuti; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to read their own chuti" ON public.chuti FOR SELECT USING ((auth.uid() = user_id));
-
-
---
--- Name: records Allow users to update own records, admins/supervisors update al; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to update own records, admins/supervisors update al" ON public.records FOR UPDATE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id)))) WITH CHECK (((auth.uid() = user_id) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(auth.uid(), user_id))));
-
-
---
--- Name: todos Allow users to update own todos; Type: POLICY; Schema: public; Owner: postgres
+-- Name: todos Allow users to update own todos; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow users to update own todos" ON public.todos FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 
 
 --
--- Name: chuti Allow users to update their own chuti; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to update their own chuti" ON public.chuti FOR UPDATE USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
-
-
---
--- Name: profiles Allow users to update their own profile; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow users to update their own profile" ON public.profiles FOR UPDATE USING ((auth.uid() = id)) WITH CHECK ((auth.uid() = id));
-
-
---
--- Name: leaderboard_archive Authenticated users can read leaderboard archive; Type: POLICY; Schema: public; Owner: postgres
+-- Name: leaderboard_archive Authenticated users can read leaderboard archive; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Authenticated users can read leaderboard archive" ON public.leaderboard_archive FOR SELECT TO authenticated USING (true);
 
 
 --
--- Name: dismissed_notifications Users can delete own dismissed notifications; Type: POLICY; Schema: public; Owner: postgres
+-- Name: quotation_mistakes Feature-controlled quotation mistake deletes; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Feature-controlled quotation mistake deletes" ON public.quotation_mistakes FOR DELETE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes()));
+
+
+--
+-- Name: quotation_mistakes Feature-controlled quotation mistake inserts; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Feature-controlled quotation mistake inserts" ON public.quotation_mistakes FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes()));
+
+
+--
+-- Name: quotation_mistakes Feature-controlled quotation mistake updates; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Feature-controlled quotation mistake updates" ON public.quotation_mistakes FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes())) WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes()));
+
+
+--
+-- Name: profiles Role-hierarchical profile deletion; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Role-hierarchical profile deletion" ON public.profiles FOR DELETE TO authenticated USING (((public.is_superadmin() AND (id <> ( SELECT auth.uid() AS uid))) OR ((public.get_my_role() = 'admin'::text) AND (role = ANY (ARRAY['user'::text, 'supervisor'::text])))));
+
+
+--
+-- Name: profiles Role-scoped profile reads; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Role-scoped profile reads" ON public.profiles FOR SELECT TO authenticated USING (public.can_read_profile(id));
+
+
+--
+-- Name: quotation_mistakes Role-scoped quotation mistake reads; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Role-scoped quotation mistake reads" ON public.quotation_mistakes FOR SELECT TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR (public.get_my_role() = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])))));
+
+
+--
+-- Name: kpi_assessments Scoped KPI assessment deletion; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped KPI assessment deletion" ON public.kpi_assessments FOR DELETE TO authenticated USING ((public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
+
+
+--
+-- Name: kpi_assessments Scoped KPI assessment inserts; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped KPI assessment inserts" ON public.kpi_assessments FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
+
+
+--
+-- Name: kpi_assessments Scoped KPI assessment reads; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped KPI assessment reads" ON public.kpi_assessments FOR SELECT TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
+
+
+--
+-- Name: kpi_assessments Scoped KPI assessment updates; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped KPI assessment updates" ON public.kpi_assessments FOR UPDATE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id)))) WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
+
+
+--
+-- Name: audit_logs Scoped audit log visibility; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped audit log visibility" ON public.audit_logs FOR SELECT TO authenticated USING ((public.is_admin() OR (actor_id = ( SELECT auth.uid() AS uid)) OR (target_user_id = ( SELECT auth.uid() AS uid)) OR (public.is_supervisor() AND (target_user_id IS NOT NULL) AND public.has_leave_access(( SELECT auth.uid() AS uid), target_user_id))));
+
+
+--
+-- Name: chuti Scoped leave deletion; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped leave deletion" ON public.chuti FOR DELETE TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)) OR ((user_id = ( SELECT auth.uid() AS uid)) AND (status = ANY (ARRAY['pending_supervisor'::text, 'approved_by_supervisor'::text, 'needs_review'::text]))))));
+
+
+--
+-- Name: chuti Scoped leave insertion; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped leave insertion" ON public.chuti FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: chuti Scoped leave read access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped leave read access" ON public.chuti FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: chuti Scoped leave updates; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped leave updates" ON public.chuti FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id))))) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: profiles Scoped profile updates; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped profile updates" ON public.profiles FOR UPDATE TO authenticated USING (((id = ( SELECT auth.uid() AS uid)) OR public.is_superadmin() OR ((public.get_my_role() = 'admin'::text) AND (role = ANY (ARRAY['user'::text, 'supervisor'::text]))) OR (public.is_supervisor() AND (role = 'user'::text) AND public.has_leave_access(( SELECT auth.uid() AS uid), id)))) WITH CHECK (((id = ( SELECT auth.uid() AS uid)) OR public.is_superadmin() OR ((public.get_my_role() = 'admin'::text) AND (role = ANY (ARRAY['user'::text, 'supervisor'::text]))) OR (public.is_supervisor() AND (role = 'user'::text) AND public.has_leave_access(( SELECT auth.uid() AS uid), id))));
+
+
+--
+-- Name: records Scoped records deletion; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped records deletion" ON public.records FOR DELETE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: records Scoped records insertion; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped records insertion" ON public.records FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: records Scoped records read access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped records read access" ON public.records FOR SELECT TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: records Scoped records updates; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped records updates" ON public.records FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id))))) WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: leave_settlements Scoped settlement management; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped settlement management" ON public.leave_settlements TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id))))) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND (public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: leave_settlements Scoped settlement read access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Scoped settlement read access" ON public.leave_settlements FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
+
+
+--
+-- Name: dismissed_notifications Users can delete own dismissed notifications; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can delete own dismissed notifications" ON public.dismissed_notifications FOR DELETE USING ((auth.uid() = user_id));
 
 
 --
--- Name: dismissed_notifications Users can insert own dismissed notifications; Type: POLICY; Schema: public; Owner: postgres
+-- Name: dismissed_notifications Users can insert own dismissed notifications; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert own dismissed notifications" ON public.dismissed_notifications FOR INSERT WITH CHECK ((auth.uid() = user_id));
 
 
 --
--- Name: govt_holiday_responses Users can insert own holiday responses; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can insert own holiday responses" ON public.govt_holiday_responses FOR INSERT WITH CHECK ((auth.uid() = user_id));
-
-
---
--- Name: leave_settlements Users can insert own settlements; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can insert own settlements" ON public.leave_settlements FOR INSERT WITH CHECK ((auth.uid() = user_id));
-
-
---
--- Name: dismissed_notifications Users can read own dismissed notifications; Type: POLICY; Schema: public; Owner: postgres
+-- Name: dismissed_notifications Users can read own dismissed notifications; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can read own dismissed notifications" ON public.dismissed_notifications FOR SELECT USING ((auth.uid() = user_id));
 
 
 --
--- Name: govt_holiday_responses Users can read own holiday responses; Type: POLICY; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses Users can read own holiday responses; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can read own holiday responses" ON public.govt_holiday_responses FOR SELECT USING ((auth.uid() = user_id));
-
-
---
--- Name: leave_settlements Users can read own settlements; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can read own settlements" ON public.leave_settlements FOR SELECT USING (((auth.uid() = user_id) OR public.is_admin() OR public.is_supervisor()));
+CREATE POLICY "Users can read own holiday responses" ON public.govt_holiday_responses FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid))));
 
 
 --
--- Name: govt_holiday_responses Users can update own holiday responses; Type: POLICY; Schema: public; Owner: postgres
+-- Name: leave_settlements Users can revise own settlement response; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can update own holiday responses" ON public.govt_holiday_responses FOR UPDATE USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
-
-
---
--- Name: leave_settlements Users can update own settlements; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can update own settlements" ON public.leave_settlements FOR UPDATE USING (((auth.uid() = user_id) AND (status <> 'processed'::text))) WITH CHECK (((auth.uid() = user_id) AND (status <> 'processed'::text)));
-
-
+CREATE POLICY "Users can revise own settlement response" ON public.leave_settlements FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid)) AND (status = ANY (ARRAY['initiated'::text, 'responded'::text])))) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid)) AND (status = 'responded'::text) AND (processed_by IS NULL) AND (processed_at IS NULL)));
 
 
 --
--- Name: chuti; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: leave_settlements Users can submit own settlement response; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can submit own settlement response" ON public.leave_settlements FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid)) AND (status = 'responded'::text) AND (processed_by IS NULL) AND (processed_at IS NULL)));
+
+
+--
+-- Name: audit_logs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: chuti; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.chuti ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: compliance_rules; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: compliance_rules; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.compliance_rules ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: dismissed_notifications; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: dismissed_notifications; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.dismissed_notifications ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: govt_holiday_responses; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: govt_holiday_responses; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.govt_holiday_responses ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: kpi_assessments; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: kpi_assessments; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.kpi_assessments ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: leaderboard_archive; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: leaderboard_archive; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.leaderboard_archive ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: leave_settlements; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: leave_settlements; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.leave_settlements ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: login_codes; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: login_codes; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.login_codes ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mobile_app_versions; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: mobile_app_versions; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.mobile_app_versions ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: profiles; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: profiles; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: records; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: quotation_mistakes; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.quotation_mistakes ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: records; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.records ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: todos; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: todos; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
 --
 
 GRANT USAGE ON SCHEMA public TO postgres;
@@ -2679,25 +4539,33 @@ GRANT USAGE ON SCHEMA public TO service_role;
 
 
 --
--- Name: FUNCTION admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) TO anon;
+REVOKE ALL ON FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION admin_insert_chuti_records_bulk_internal(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text) TO anon;
+REVOKE ALL ON FUNCTION public.admin_insert_chuti_records_bulk_internal(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_insert_chuti_records_bulk_internal(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text) TO authenticated;
 GRANT ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text) TO service_role;
 
 
 --
--- Name: FUNCTION archive_and_prune_old_records(p_tz text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION archive_and_prune_old_records(p_tz text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.archive_and_prune_old_records(p_tz text) FROM PUBLIC;
@@ -2705,55 +4573,177 @@ GRANT ALL ON FUNCTION public.archive_and_prune_old_records(p_tz text) TO service
 
 
 --
--- Name: FUNCTION check_profile_role_change(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION audit_business_row_change(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.check_profile_role_change() TO anon;
-GRANT ALL ON FUNCTION public.check_profile_role_change() TO authenticated;
+REVOKE ALL ON FUNCTION public.audit_business_row_change() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.audit_business_row_change() TO service_role;
+
+
+--
+-- Name: FUNCTION can_read_profile(p_target_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.can_read_profile(p_target_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.can_read_profile(p_target_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.can_read_profile(p_target_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION can_write_quotation_mistakes(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.can_write_quotation_mistakes() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.can_write_quotation_mistakes() TO authenticated;
+GRANT ALL ON FUNCTION public.can_write_quotation_mistakes() TO service_role;
+
+
+--
+-- Name: FUNCTION change_default_password(p_new_password text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.change_default_password(p_new_password text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.change_default_password(p_new_password text) TO authenticated;
+GRANT ALL ON FUNCTION public.change_default_password(p_new_password text) TO service_role;
+
+
+--
+-- Name: FUNCTION check_profile_role_change(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.check_profile_role_change() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.check_profile_role_change() TO service_role;
 
 
 --
--- Name: FUNCTION check_profile_updates(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION check_profile_updates(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.check_profile_updates() TO anon;
-GRANT ALL ON FUNCTION public.check_profile_updates() TO authenticated;
+REVOKE ALL ON FUNCTION public.check_profile_updates() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.check_profile_updates() TO service_role;
 
 
+--
+-- Name: FUNCTION complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone); Type: ACL; Schema: public; Owner: -
+--
 
+REVOKE ALL ON FUNCTION public.complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone) TO authenticated;
+GRANT ALL ON FUNCTION public.complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone) TO service_role;
 
 
 --
--- Name: FUNCTION complete_profile_setup(p_username text, p_full_name text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION complete_profile_setup(p_username text, p_full_name text, p_new_password text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text) TO authenticated;
-GRANT ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text) TO service_role;
+REVOKE ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text, p_new_password text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text, p_new_password text) TO authenticated;
+GRANT ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text, p_new_password text) TO service_role;
 
 
 --
--- Name: FUNCTION create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]) TO anon;
-GRANT ALL ON FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]) TO authenticated;
+REVOKE ALL ON FUNCTION public.convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text) TO authenticated;
+GRANT ALL ON FUNCTION public.convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text) TO service_role;
+
+
+--
+-- Name: FUNCTION convert_govt_holiday_response_internal(p_user_id uuid, p_holiday_date date, p_response text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.convert_govt_holiday_response_internal(p_user_id uuid, p_holiday_date date, p_response text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.convert_govt_holiday_response_internal(p_user_id uuid, p_holiday_date date, p_response text) TO service_role;
+
+
+--
+-- Name: FUNCTION convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text) TO authenticated;
+GRANT ALL ON FUNCTION public.convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text) TO service_role;
+
+
+--
+-- Name: FUNCTION convert_short_leave_to_full_leave_internal(p_user_id uuid, p_adjust_category text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.convert_short_leave_to_full_leave_internal(p_user_id uuid, p_adjust_category text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.convert_short_leave_to_full_leave_internal(p_user_id uuid, p_adjust_category text) TO service_role;
+
+
+--
+-- Name: FUNCTION create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb) TO service_role;
+
+
+--
+-- Name: FUNCTION create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]) TO service_role;
 
 
 --
--- Name: FUNCTION delete_user_by_id(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION current_user_has_workspace(p_workspace text); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.delete_user_by_id(p_user_id uuid) TO anon;
+REVOKE ALL ON FUNCTION public.current_user_has_workspace(p_workspace text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.current_user_has_workspace(p_workspace text) TO authenticated;
+GRANT ALL ON FUNCTION public.current_user_has_workspace(p_workspace text) TO service_role;
+
+
+--
+-- Name: FUNCTION delete_user_by_id(p_user_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.delete_user_by_id(p_user_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.delete_user_by_id(p_user_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.delete_user_by_id(p_user_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION get_admin_sales_summary(p_today text, p_tz text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION enforce_chuti_write_permissions(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.enforce_chuti_write_permissions() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.enforce_chuti_write_permissions() TO service_role;
+
+
+--
+-- Name: FUNCTION enforce_kpi_assessment_permissions(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.enforce_kpi_assessment_permissions() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.enforce_kpi_assessment_permissions() TO service_role;
+
+
+--
+-- Name: FUNCTION enforce_leave_settlement_permissions(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.enforce_leave_settlement_permissions() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.enforce_leave_settlement_permissions() TO service_role;
+
+
+--
+-- Name: FUNCTION enforce_quotation_mistake_metadata(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.enforce_quotation_mistake_metadata() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.enforce_quotation_mistake_metadata() TO service_role;
+
+
+--
+-- Name: FUNCTION get_admin_sales_summary(p_today text, p_tz text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) FROM PUBLIC;
@@ -2762,7 +4752,16 @@ GRANT ALL ON FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) TO
 
 
 --
--- Name: FUNCTION get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION get_available_record_months(p_user_id uuid, p_tz text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_available_record_months(p_user_id uuid, p_tz text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_available_record_months(p_user_id uuid, p_tz text) TO authenticated;
+GRANT ALL ON FUNCTION public.get_available_record_months(p_user_id uuid, p_tz text) TO service_role;
+
+
+--
+-- Name: FUNCTION get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text) FROM PUBLIC;
@@ -2771,109 +4770,111 @@ GRANT ALL ON FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_p
 
 
 --
--- Name: FUNCTION get_my_role(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION get_my_role(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.get_my_role() TO anon;
+REVOKE ALL ON FUNCTION public.get_my_role() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_my_role() TO authenticated;
 GRANT ALL ON FUNCTION public.get_my_role() TO service_role;
 
 
 --
--- Name: FUNCTION get_user_email_by_username(p_username text); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION get_user_email_by_username(p_username text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.get_user_email_by_username(p_username text) FROM PUBLIC;
--- AUDIT FIX C4: Revoked anon and authenticated grants to prevent direct email enumeration.
--- This SECURITY DEFINER function queries auth.users and must only be callable by
--- service_role via the rate-limited /api/resolve-email backend route.
--- Previously granted to anon and authenticated (removed 2026-08-07).
 GRANT ALL ON FUNCTION public.get_user_email_by_username(p_username text) TO service_role;
 
 
 --
--- Name: FUNCTION handle_new_user(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION handle_new_user(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.handle_new_user() TO anon;
-GRANT ALL ON FUNCTION public.handle_new_user() TO authenticated;
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.handle_new_user() TO service_role;
 
 
 --
--- Name: FUNCTION has_kpi_access(supervisor_id uuid, employee_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION has_kpi_access(supervisor_id uuid, employee_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) TO anon;
+REVOKE ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION has_leave_access(supervisor_id uuid, employee_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION has_leave_access(supervisor_id uuid, employee_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) TO anon;
+REVOKE ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) TO service_role;
 
 
 --
--- Name: FUNCTION is_admin(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION is_admin(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.is_admin() TO anon;
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_admin() TO authenticated;
 GRANT ALL ON FUNCTION public.is_admin() TO service_role;
 
 
 --
--- Name: FUNCTION is_admin_or_supervisor(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION is_admin_or_supervisor(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.is_admin_or_supervisor() TO anon;
+REVOKE ALL ON FUNCTION public.is_admin_or_supervisor() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_admin_or_supervisor() TO authenticated;
 GRANT ALL ON FUNCTION public.is_admin_or_supervisor() TO service_role;
 
 
 --
--- Name: FUNCTION is_superadmin(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION is_superadmin(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.is_superadmin() TO anon;
+REVOKE ALL ON FUNCTION public.is_superadmin() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_superadmin() TO authenticated;
 GRANT ALL ON FUNCTION public.is_superadmin() TO service_role;
 
 
 --
--- Name: FUNCTION is_supervisor(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION is_supervisor(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.is_supervisor() TO anon;
+REVOKE ALL ON FUNCTION public.is_supervisor() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_supervisor() TO authenticated;
 GRANT ALL ON FUNCTION public.is_supervisor() TO service_role;
 
 
 --
--- Name: FUNCTION is_supervisor_of(supervisor_id uuid, employee_id uuid); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION reconcile_govt_holiday_adjustments(p_user_id uuid, p_year integer); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.is_supervisor_of(supervisor_id uuid, employee_id uuid) TO anon;
-GRANT ALL ON FUNCTION public.is_supervisor_of(supervisor_id uuid, employee_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.is_supervisor_of(supervisor_id uuid, employee_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer) TO anon;
-GRANT ALL ON FUNCTION public.is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer) TO authenticated;
-GRANT ALL ON FUNCTION public.is_user_in_top_5_for_month(p_user_id uuid, p_year integer, p_month integer) TO service_role;
+REVOKE ALL ON FUNCTION public.reconcile_govt_holiday_adjustments(p_user_id uuid, p_year integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.reconcile_govt_holiday_adjustments(p_user_id uuid, p_year integer) TO service_role;
 
 
 --
--- Name: FUNCTION reset_all_user_feature_flags(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION register_active_session(p_session_id text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.register_active_session(p_session_id text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.register_active_session(p_session_id text) TO authenticated;
+GRANT ALL ON FUNCTION public.register_active_session(p_session_id text) TO service_role;
+
+
+--
+-- Name: FUNCTION request_password_reset(p_username text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.request_password_reset(p_username text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.request_password_reset(p_username text) TO service_role;
+
+
+--
+-- Name: FUNCTION reset_all_user_feature_flags(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.reset_all_user_feature_flags() FROM PUBLIC;
@@ -2882,7 +4883,33 @@ GRANT ALL ON FUNCTION public.reset_all_user_feature_flags() TO service_role;
 
 
 --
--- Name: FUNCTION set_admin_delegated_flags(p_flags jsonb); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION resolve_password_reset(p_user_id uuid, p_approve boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.resolve_password_reset(p_user_id uuid, p_approve boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.resolve_password_reset(p_user_id uuid, p_approve boolean) TO authenticated;
+GRANT ALL ON FUNCTION public.resolve_password_reset(p_user_id uuid, p_approve boolean) TO service_role;
+
+
+--
+-- Name: FUNCTION save_global_leave_settings(p_settings jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.save_global_leave_settings(p_settings jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.save_global_leave_settings(p_settings jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.save_global_leave_settings(p_settings jsonb) TO service_role;
+
+
+--
+-- Name: FUNCTION save_global_leave_settings_internal(p_settings jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.save_global_leave_settings_internal(p_settings jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.save_global_leave_settings_internal(p_settings jsonb) TO service_role;
+
+
+--
+-- Name: FUNCTION set_admin_delegated_flags(p_flags jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_admin_delegated_flags(p_flags jsonb) FROM PUBLIC;
@@ -2891,7 +4918,7 @@ GRANT ALL ON FUNCTION public.set_admin_delegated_flags(p_flags jsonb) TO service
 
 
 --
--- Name: FUNCTION set_feature_flags(p_flags jsonb); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION set_feature_flags(p_flags jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_feature_flags(p_flags jsonb) FROM PUBLIC;
@@ -2900,7 +4927,15 @@ GRANT ALL ON FUNCTION public.set_feature_flags(p_flags jsonb) TO service_role;
 
 
 --
--- Name: FUNCTION set_role_visibility(p_visibility jsonb); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION set_govt_holiday_response_updated_at(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_govt_holiday_response_updated_at() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_govt_holiday_response_updated_at() TO service_role;
+
+
+--
+-- Name: FUNCTION set_role_visibility(p_visibility jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_role_visibility(p_visibility jsonb) FROM PUBLIC;
@@ -2909,7 +4944,7 @@ GRANT ALL ON FUNCTION public.set_role_visibility(p_visibility jsonb) TO service_
 
 
 --
--- Name: FUNCTION set_sanitizer_rules(p_rules jsonb); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION set_sanitizer_rules(p_rules jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_sanitizer_rules(p_rules jsonb) FROM PUBLIC;
@@ -2918,7 +4953,7 @@ GRANT ALL ON FUNCTION public.set_sanitizer_rules(p_rules jsonb) TO service_role;
 
 
 --
--- Name: FUNCTION set_sanitizer_words(p_words text[]); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION set_sanitizer_words(p_words text[]); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_sanitizer_words(p_words text[]) FROM PUBLIC;
@@ -2927,7 +4962,16 @@ GRANT ALL ON FUNCTION public.set_sanitizer_words(p_words text[]) TO service_role
 
 
 --
--- Name: FUNCTION set_temp_access(p_entries jsonb); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION set_supervisor_access_overrides(p_overrides jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_supervisor_access_overrides(p_overrides jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_supervisor_access_overrides(p_overrides jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.set_supervisor_access_overrides(p_overrides jsonb) TO service_role;
+
+
+--
+-- Name: FUNCTION set_temp_access(p_entries jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_temp_access(p_entries jsonb) FROM PUBLIC;
@@ -2936,63 +4980,82 @@ GRANT ALL ON FUNCTION public.set_temp_access(p_entries jsonb) TO service_role;
 
 
 --
--- Name: FUNCTION set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) TO service_role;
 
+
 --
--- Name: FUNCTION sync_top_performer_badges(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION sync_profile_govt_holiday_entitlements(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.sync_top_performer_badges() TO anon;
-GRANT ALL ON FUNCTION public.sync_top_performer_badges() TO authenticated;
+REVOKE ALL ON FUNCTION public.sync_profile_govt_holiday_entitlements() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.sync_profile_govt_holiday_entitlements() TO service_role;
+
+
+--
+-- Name: FUNCTION sync_top_performer_badges(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.sync_top_performer_badges() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.sync_top_performer_badges() TO service_role;
 
 
 --
--- Name: FUNCTION update_chuti_updated_at(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION update_chuti_updated_at(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.update_chuti_updated_at() TO anon;
-GRANT ALL ON FUNCTION public.update_chuti_updated_at() TO authenticated;
+REVOKE ALL ON FUNCTION public.update_chuti_updated_at() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_chuti_updated_at() TO service_role;
 
 
 --
--- Name: FUNCTION update_compliance_rules_updated_at(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION update_compliance_rules_updated_at(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.update_compliance_rules_updated_at() TO anon;
-GRANT ALL ON FUNCTION public.update_compliance_rules_updated_at() TO authenticated;
+REVOKE ALL ON FUNCTION public.update_compliance_rules_updated_at() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_compliance_rules_updated_at() TO service_role;
 
 
 --
--- Name: FUNCTION update_records_updated_at(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.update_records_updated_at() TO anon;
-GRANT ALL ON FUNCTION public.update_records_updated_at() TO authenticated;
+REVOKE ALL ON FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) TO service_role;
+
+
+--
+-- Name: FUNCTION update_records_updated_at(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.update_records_updated_at() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_records_updated_at() TO service_role;
 
 
 --
--- Name: FUNCTION update_todos_last_activity(); Type: ACL; Schema: public; Owner: postgres
+-- Name: FUNCTION update_todos_last_activity(); Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON FUNCTION public.update_todos_last_activity() TO anon;
-GRANT ALL ON FUNCTION public.update_todos_last_activity() TO authenticated;
+REVOKE ALL ON FUNCTION public.update_todos_last_activity() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_todos_last_activity() TO service_role;
 
 
+--
+-- Name: TABLE audit_logs; Type: ACL; Schema: public; Owner: -
+--
 
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.audit_logs TO anon;
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.audit_logs TO authenticated;
+GRANT ALL ON TABLE public.audit_logs TO service_role;
 
 
 --
--- Name: TABLE chuti; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE chuti; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.chuti TO anon;
@@ -3001,7 +5064,7 @@ GRANT ALL ON TABLE public.chuti TO service_role;
 
 
 --
--- Name: TABLE compliance_rules; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE compliance_rules; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.compliance_rules TO anon;
@@ -3010,7 +5073,7 @@ GRANT ALL ON TABLE public.compliance_rules TO service_role;
 
 
 --
--- Name: TABLE dismissed_notifications; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE dismissed_notifications; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.dismissed_notifications TO anon;
@@ -3019,16 +5082,16 @@ GRANT ALL ON TABLE public.dismissed_notifications TO service_role;
 
 
 --
--- Name: TABLE govt_holiday_responses; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE govt_holiday_responses; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.govt_holiday_responses TO anon;
-GRANT ALL ON TABLE public.govt_holiday_responses TO authenticated;
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.govt_holiday_responses TO anon;
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.govt_holiday_responses TO authenticated;
 GRANT ALL ON TABLE public.govt_holiday_responses TO service_role;
 
 
 --
--- Name: TABLE kpi_assessments; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE kpi_assessments; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.kpi_assessments TO anon;
@@ -3037,7 +5100,7 @@ GRANT ALL ON TABLE public.kpi_assessments TO service_role;
 
 
 --
--- Name: TABLE leaderboard_archive; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE leaderboard_archive; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.leaderboard_archive TO anon;
@@ -3046,7 +5109,7 @@ GRANT ALL ON TABLE public.leaderboard_archive TO service_role;
 
 
 --
--- Name: TABLE leave_settlements; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE leave_settlements; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.leave_settlements TO anon;
@@ -3055,7 +5118,7 @@ GRANT ALL ON TABLE public.leave_settlements TO service_role;
 
 
 --
--- Name: TABLE login_codes; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE login_codes; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.login_codes TO anon;
@@ -3064,7 +5127,7 @@ GRANT ALL ON TABLE public.login_codes TO service_role;
 
 
 --
--- Name: TABLE mobile_app_versions; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE mobile_app_versions; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.mobile_app_versions TO anon;
@@ -3073,7 +5136,7 @@ GRANT ALL ON TABLE public.mobile_app_versions TO service_role;
 
 
 --
--- Name: SEQUENCE mobile_app_versions_id_seq; Type: ACL; Schema: public; Owner: postgres
+-- Name: SEQUENCE mobile_app_versions_id_seq; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON SEQUENCE public.mobile_app_versions_id_seq TO anon;
@@ -3082,7 +5145,7 @@ GRANT ALL ON SEQUENCE public.mobile_app_versions_id_seq TO service_role;
 
 
 --
--- Name: TABLE profiles; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE profiles; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.profiles TO anon;
@@ -3091,7 +5154,16 @@ GRANT ALL ON TABLE public.profiles TO service_role;
 
 
 --
--- Name: TABLE records; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE quotation_mistakes; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.quotation_mistakes TO anon;
+GRANT ALL ON TABLE public.quotation_mistakes TO authenticated;
+GRANT ALL ON TABLE public.quotation_mistakes TO service_role;
+
+
+--
+-- Name: TABLE records; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.records TO anon;
@@ -3100,7 +5172,7 @@ GRANT ALL ON TABLE public.records TO service_role;
 
 
 --
--- Name: TABLE todos; Type: ACL; Schema: public; Owner: postgres
+-- Name: TABLE todos; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT ALL ON TABLE public.todos TO anon;
@@ -3109,7 +5181,7 @@ GRANT ALL ON TABLE public.todos TO service_role;
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
+-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
@@ -3119,7 +5191,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
+-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
@@ -3129,17 +5201,16 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON S
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: postgres
+-- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
+-- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
@@ -3149,7 +5220,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON F
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO postgres;
@@ -3159,7 +5230,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES 
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO postgres;
@@ -3172,56 +5243,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Pfu3GxaiZXx7jL6WX53VBUcmcKF8vaC912CgGLkEgQpJweYOO1h1Q5fgt3vfc0r
+\unrestrict F4apPkeDoLkwaa6SiBJtNnq9UT9lVJrHtYKrZURLF2eLx5yhthXpnpiByOKg0j7
 
--- 1. Create the quotation_mistakes table
-CREATE TABLE IF NOT EXISTS public.quotation_mistakes (
-    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    codename TEXT NOT NULL,
-    branch TEXT NOT NULL,
-    filename TEXT NOT NULL,
-    mistake_details TEXT NOT NULL,
-    penalty TEXT NOT NULL,
-    date TEXT NOT NULL,
-    created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-    updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 2. Enable Row Level Security (RLS)
-ALTER TABLE public.quotation_mistakes ENABLE ROW LEVEL SECURITY;
-
--- 3. Create RLS Policies for authenticated users
--- Allow read access
-DROP POLICY IF EXISTS "Allow authenticated users to read quotation mistakes" ON public.quotation_mistakes;
-CREATE POLICY "Allow authenticated users to read quotation mistakes"
-ON public.quotation_mistakes
-FOR SELECT
-TO authenticated
-USING (true);
-
--- Allow insert access
-DROP POLICY IF EXISTS "Allow authenticated users to insert quotation mistakes" ON public.quotation_mistakes;
-CREATE POLICY "Allow authenticated users to insert quotation mistakes"
-ON public.quotation_mistakes
-FOR INSERT
-TO authenticated
-WITH CHECK (true);
-
--- Allow update access
-DROP POLICY IF EXISTS "Allow authenticated users to update quotation mistakes" ON public.quotation_mistakes;
-CREATE POLICY "Allow authenticated users to update quotation mistakes"
-ON public.quotation_mistakes
-FOR UPDATE
-TO authenticated
-USING (true);
-
--- Allow delete access
-DROP POLICY IF EXISTS "Allow authenticated users to delete quotation mistakes" ON public.quotation_mistakes;
-CREATE POLICY "Allow authenticated users to delete quotation mistakes"
-ON public.quotation_mistakes
-FOR DELETE
-TO authenticated
-USING (true);

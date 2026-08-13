@@ -25,7 +25,7 @@ export const CHUTI_COLUMNS =
   'id, user_id, date, leave_type, status, leave_hour, sign_in_time, sign_out_time, comment, adjustment, adjust_short_leave, adjusted_hour, admin_edit_request, admin_edit_status, bulk_id, is_edited, reserve_adjustment_status, reserve_holiday, deleted_at, created_at, updated_at';
 
 export const GOVT_HOLIDAY_RESPONSE_COLUMNS =
-  'id, user_id, holiday_date, holiday_name, response, updated_by_admin, created_at';
+  'id, user_id, holiday_date, holiday_name, response, updated_by_admin, created_at, updated_at';
 
 export const LEAVE_SETTLEMENT_COLUMNS =
   'id, user_id, action_type, action_by, adjust_leave_days, carry_forward_days, leave_category, payment_days, period, processed_at, processed_by, remaining_days, status, year, created_at';
@@ -49,4 +49,3 @@ export const LEADERBOARD_ARCHIVE_COLUMNS =
 
 export const QUOTATION_MISTAKE_COLUMNS =
   'id, date, filename, branch, user_id, codename, mistake_details, penalty, created_by, updated_by, created_at, updated_at';
-

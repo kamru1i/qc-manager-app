@@ -217,3 +217,5 @@ export const QuotesModalsGroup = React.memo((props: QuotesModalsGroupProps) => {
     portalRoot
   );
 });
+
+QuotesModalsGroup.displayName = "QuotesModalsGroup";

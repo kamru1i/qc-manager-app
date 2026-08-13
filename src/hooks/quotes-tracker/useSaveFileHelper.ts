@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { RecordItem, SavedDocument } from '@/types';
 import { isTauriApp } from '@/utils/apiUrlHelper';
 import { Capacitor } from '@capacitor/core';
+import { sanitizeRichTextHtml } from '@/utils/htmlSanitizer';
 
 interface UseSaveFileHelperOptions {
   showToast: (type: 'success' | 'error', text: string) => void;
@@ -53,7 +54,13 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
         return [];
       }
       const saved = localStorage.getItem("quotes_sales_saved_record_ids");
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      try {
+        return JSON.parse(saved);
+      } catch {
+        localStorage.removeItem("quotes_sales_saved_record_ids");
+        return [];
+      }
     }
     return [];
   });
@@ -65,7 +72,16 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
         return [];
       }
       const saved = localStorage.getItem("quotes_sales_saved_documents");
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      try {
+        const parsed = JSON.parse(saved) as SavedDocument[];
+        return Array.isArray(parsed)
+          ? parsed.map((doc) => ({ ...doc, htmlContent: sanitizeRichTextHtml(doc.htmlContent || '') }))
+          : [];
+      } catch {
+        localStorage.removeItem("quotes_sales_saved_documents");
+        return [];
+      }
     }
     return [];
   });
@@ -192,7 +208,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       return;
     }
 
-    const editorHtml = editorRef.current?.innerHTML || "";
+    const editorHtml = sanitizeRichTextHtml(editorRef.current?.innerHTML || "");
     if (!editorHtml || editorHtml.trim() === "" || editorHtml === "<br>") {
       showToast("error", "Please paste some content into the input field first.");
       return;
@@ -355,7 +371,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       return;
     }
 
-    const editorHtml = editorRef.current?.innerHTML || "";
+    const editorHtml = sanitizeRichTextHtml(editorRef.current?.innerHTML || "");
     if (!editorHtml || editorHtml.trim() === "" || editorHtml === "<br>") {
       showToast("error", "Editor content is empty.");
       return;
@@ -457,7 +473,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     setSavedFilePath(doc.filePath);
     setSelectedRecordIdForSave(doc.recordId);
     if (editorRef.current) {
-      editorRef.current.innerHTML = doc.htmlContent;
+      editorRef.current.innerHTML = sanitizeRichTextHtml(doc.htmlContent);
       // Defensively fire input event so MutationObserver / input listeners reliably
       // update the isEditorEmpty state inside SaveFileHelperPanel
       editorRef.current.dispatchEvent(new Event('input', { bubbles: true }));
@@ -519,7 +535,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       return;
     }
 
-    const editorHtml = editorRef.current?.innerHTML || "";
+    const editorHtml = sanitizeRichTextHtml(editorRef.current?.innerHTML || "");
     if (!editorHtml || editorHtml.trim() === "" || editorHtml === "<br>") {
       showToast("error", "Please paste some content into the input field first.");
       return;

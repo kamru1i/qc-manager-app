@@ -89,14 +89,19 @@ export const chutiService = {
     }
   },
 
-  /**
-   * RPC: Admin bulk insert chuti records
-   */
-  async bulkInsertChuti(records: any[]) {
-    const { data, error } = await supabase.rpc('admin_insert_chuti_records_bulk' as any, {
-      p_records: records,
+  /** Atomically convert verified short-leave hours into full-leave rows. */
+  async convertShortLeaveToFullLeave(
+    userId: string,
+    adjustmentCategory: 'Office Leave' | 'Govt Holiday',
+  ) {
+    const { data, error } = await supabase.rpc('convert_short_leave_to_full_leave' as any, {
+      p_user_id: userId,
+      p_adjust_category: adjustmentCategory,
     });
-    return { data, error };
+    return {
+      data: data as { days_converted?: number; hours_converted?: number } | null,
+      error,
+    };
   },
 
   /**

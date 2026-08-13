@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default window permissions. fs is write-only: the app only ever exports files (CSV/Word) to user-chosen locations — it never reads user files, so fs:read-all was removed (read access remains only for app-specific dirs via fs:default). The static write scope stays broad because the save dialog lets users pick any directory, that choice is remembered across same-day restarts (localStorage), and exports create Sold/Unsold subfolders — all outside the runtime scope the dialog plugin grants. fs:default also keeps the webview-data-folder deny protections.",
+  "description": "Default window permissions. File-system access is write-only. Persistent static access is limited to standard export folders; paths selected through the native dialog receive runtime scope for the current app session.",
   "windows": [
     "main"
   ],
@@ -17,7 +17,9 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "**" }
+        { "path": "$DOCUMENT/**/*" },
+        { "path": "$DOWNLOAD/**/*" },
+        { "path": "$DESKTOP/**/*" }
       ]
     }
   ]

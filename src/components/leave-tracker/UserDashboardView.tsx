@@ -52,6 +52,8 @@ interface UserDashboardViewProps {
   onToggleAdjustment: (r: ChutiRecord) => void;
   onDeleteClick: (r: ChutiRecord) => void;
   onEditClick?: (r: ChutiRecord) => void;
+  canDeleteRecord?: (r: ChutiRecord) => boolean;
+  canEditRecord?: (r: ChutiRecord) => boolean;
   onRevisionClick: (r: ChutiRecord) => void;
   onConvertShortLeaveToFullLeave: (userId: string, workingHours: number, shortMins: number) => void;
   holidayResponses: GovtHolidayResponse[];
@@ -92,6 +94,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   onToggleAdjustment,
   onDeleteClick,
   onEditClick,
+  canDeleteRecord,
+  canEditRecord,
   onRevisionClick,
   onConvertShortLeaveToFullLeave,
   holidayResponses,
@@ -356,6 +360,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         onToggleAdjustment={onToggleAdjustment}
         onDeleteClick={onDeleteClick}
         onEditClick={onEditClick}
+        canDeleteRecord={canDeleteRecord}
+        canEditRecord={canEditRecord}
         onRevisionClick={onRevisionClick}
         formatDate={formatDate}
         formatTimeToAMPM={formatTimeToAMPM}

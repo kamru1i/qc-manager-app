@@ -226,18 +226,27 @@ export function useDerivedState({
             list.push({
               id: `govt-holiday-choice-${holiday.date}`,
               type: 'govt_holiday_history',
-              timestamp: response.created_at || currentSessionTime,
+              timestamp: response.updated_at || response.created_at || currentSessionTime,
               title: 'Govt Holiday Payment Notification 💸',
               body: `${holiday.name} (${formatDate(holiday.date)}) government holiday payment will be added to your salary.`
             });
-          } else if (response.updated_by_admin) {
-            // If the preference was updated by the admin, notify the user.
+          } else if (response.response === 'paid') {
+            // Reserve-enabled users reach "paid" only through an authorized
+            // admin conversion, so this is the payment confirmation.
             list.push({
               id: `govt-holiday-admin-update-${holiday.date}`,
               type: 'govt_holiday_history',
+              timestamp: response.updated_at || response.created_at || currentSessionTime,
+              title: 'Reserve Holiday Converted to Payment 💸',
+              body: `Your reserve for ${holiday.name} (${formatDate(holiday.date)}) has been converted to payment by an administrator.`
+            });
+          } else if (response.response === 'reserve') {
+            list.push({
+              id: `govt-holiday-reserve-${holiday.date}`,
+              type: 'govt_holiday_history',
               timestamp: response.created_at || currentSessionTime,
-              title: 'Govt Holiday Choice Updated By Admin 💸',
-              body: `Admin has updated your preference for ${holiday.name} (${formatDate(holiday.date)}) to ${response.response === 'reserve' ? 'Reserve' : 'Get Paid'}.`
+              title: 'Govt Holiday Reserved 📅',
+              body: `The Government Holiday on ${holiday.date} (${holiday.name}) has been reserved for you.`
             });
           }
         } else if (profile.allow_reserve !== false) {

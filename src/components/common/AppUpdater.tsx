@@ -219,11 +219,12 @@ export default function AppUpdater() {
 
     const apkUrl = downloadUrl || `https://github.com/${REPO}/releases/download/v${newVersion}/QC.Manager_${newVersion}.apk`;
 
+    let progressListener: { remove: () => Promise<void> } | null = null;
     try {
       const { Filesystem, Directory } = await import("@capacitor/filesystem");
       const { FileOpener } = await import("@capacitor-community/file-opener");
 
-      const progressListener = await Filesystem.addListener("progress", (progress) => {
+      progressListener = await Filesystem.addListener("progress", (progress) => {
         if (progress.contentLength > 0) {
           const pct = Math.min(
             99,
@@ -241,7 +242,6 @@ export default function AppUpdater() {
         progress: true,
       });
 
-      progressListener.remove();
       setDownloadProgress(100);
       setReadyToRestart(true);
 
@@ -265,6 +265,10 @@ export default function AppUpdater() {
         }
       } catch (openErr) {
         setError("Failed to open update installer.");
+      }
+    } finally {
+      if (progressListener) {
+        await progressListener.remove().catch(() => {});
       }
     }
   };

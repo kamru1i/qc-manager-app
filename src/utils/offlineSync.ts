@@ -38,6 +38,7 @@ export interface ChutiRecord {
   bulk_id?: string | null;
   action?: 'insert' | 'update' | 'delete';
   _retryCount?: number;
+  _owner_user_id?: string;
   data?: Partial<Omit<ChutiRecord, 'localId' | 'synced'>>;
 }
 
@@ -58,7 +59,23 @@ export const manager = createOfflineSyncManager<ChutiRecord>({
   },
 });
 
-export const getOfflineRecords = manager.getOfflineRecords;
+const getCurrentUserId = async (): Promise<string | null> => {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id ?? null;
+};
+
+export const getOfflineRecords = async (): Promise<ChutiRecord[]> => {
+  const [records, currentUserId] = await Promise.all([
+    manager.getOfflineRecords(),
+    getCurrentUserId(),
+  ]);
+  if (!currentUserId) return [];
+  return records.filter((record) =>
+    record._owner_user_id
+      ? record._owner_user_id === currentUserId
+      : record.user_id === currentUserId
+  );
+};
 export const deleteOfflineRecord = manager.deleteOfflineRecord;
 export const setCacheData = manager.setCacheData;
 export const getCacheData = manager.getCacheData;
@@ -73,11 +90,15 @@ let isSyncing = false;
 
 // Save a record to IndexedDB
 export const saveOfflineRecord = async (record: Omit<ChutiRecord, 'localId' | 'synced'>): Promise<string> => {
-  return manager.saveOfflineRecord(record as any);
+  const ownerUserId = await getCurrentUserId();
+  if (!ownerUserId) throw new Error('Cannot queue leave data without an authenticated session.');
+  return manager.saveOfflineRecord({ ...record, _owner_user_id: ownerUserId } as any);
 };
 
 // Save an update record to IndexedDB
 export const saveOfflineUpdate = async (id: string, updates: Partial<Omit<ChutiRecord, 'localId' | 'synced'>>): Promise<string> => {
+  const ownerUserId = await getCurrentUserId();
+  if (!ownerUserId) throw new Error('Cannot queue leave data without an authenticated session.');
   const dummyData = {
     user_id: '',
     date: '',
@@ -88,6 +109,7 @@ export const saveOfflineUpdate = async (id: string, updates: Partial<Omit<ChutiR
     leave_hour: null,
     reserve_holiday: null,
     comment: null,
+    _owner_user_id: ownerUserId,
     data: updates,
   };
   return manager.saveOfflineUpdate(id, dummyData as any);
@@ -95,6 +117,8 @@ export const saveOfflineUpdate = async (id: string, updates: Partial<Omit<ChutiR
 
 // Save a delete action to IndexedDB (and clean up any pending updates for this ID)
 export const saveOfflineDelete = async (id: string): Promise<string> => {
+  const ownerUserId = await getCurrentUserId();
+  if (!ownerUserId) throw new Error('Cannot queue leave data without an authenticated session.');
   const dummyData = {
     user_id: '',
     date: '',
@@ -105,6 +129,7 @@ export const saveOfflineDelete = async (id: string): Promise<string> => {
     leave_hour: null,
     reserve_holiday: null,
     comment: null,
+    _owner_user_id: ownerUserId,
   };
   return manager.saveOfflineDelete(id, dummyData as any);
 };
@@ -310,4 +335,16 @@ export const setGlobalSettingsCache = async (settings: any): Promise<void> => {
 export const getGlobalSettingsCache = async (): Promise<any | null> => {
   const result = await manager.idb.getItem<{ value: any }>('global_settings_cache', 'settings');
   return result ? result.value : null;
+};
+
+/** Remove cached server data while preserving account-owned pending writes. */
+export const clearAllCache = async (): Promise<void> => {
+  return manager.idb.clearStores([
+    'profiles_cache',
+    'chuti_cache',
+    'holiday_responses_cache',
+    'settlements_cache',
+    'global_settings_cache',
+    'sync_metadata',
+  ]);
 };

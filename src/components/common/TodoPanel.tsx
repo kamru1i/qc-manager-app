@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/utils/supabase";
 import { Profile, TodoItem } from "@/types";
 import {
   Check,
@@ -21,8 +20,8 @@ import { toast } from "sonner";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
 import { createPortal } from "react-dom";
 import { TodoSkeleton } from "@/components/common/skeleton/TodoSkeleton";
-import { TODO_COLUMNS } from "@/utils/dbColumns";
 import { sortTodosByActivity } from "@/utils/todoSort";
+import { todosService } from "@/services";
 import {
   useRealtimeHandler,
   RealtimePayload,
@@ -117,12 +116,10 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     setLoading(true);
     try {
       // 1. Fetch today's existing todos — most recently active first
-      const { data: todayData, error: todayErr } = await supabase
-        .from("todos")
-        .select(TODO_COLUMNS)
-        .eq("user_id", profile.id)
-        .eq("todo_date", todayStr)
-        .order("last_activity_at", { ascending: false });
+      const { data: todayData, error: todayErr } = await todosService.getTodos({
+        userId: profile.id,
+        todoDate: todayStr,
+      });
 
       if (todayErr) throw todayErr;
 
@@ -153,10 +150,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
       if (duplicateIdsToDelete.length > 0) {
         // Delete duplicates in database
-        const { error: deleteErr } = await supabase
-          .from("todos")
-          .delete()
-          .in("id", duplicateIdsToDelete);
+        const { error: deleteErr } = await todosService.deleteTodo(duplicateIdsToDelete);
 
         if (deleteErr)
           console.error("Failed to auto-clean duplicate todos:", deleteErr);
@@ -173,25 +167,17 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
         try {
           // A. Find the most recent active day to carry over "Working" tasks
-          const { data: lastDateData, error: lastDateErr } = await supabase
-            .from("todos")
-            .select("todo_date")
-            .eq("user_id", profile.id)
-            .lt("todo_date", todayStr)
-            .order("todo_date", { ascending: false })
-            .limit(1);
+          const { data: lastActiveDate, error: lastDateErr } =
+            await todosService.getLatestTodoDateBefore(profile.id, todayStr);
 
           if (lastDateErr) throw lastDateErr;
 
-          if (lastDateData && lastDateData.length > 0) {
-            const lastActiveDate = lastDateData[0].todo_date;
-
-            const { data: lastTodos, error: lastErr } = await supabase
-              .from("todos")
-              .select(TODO_COLUMNS)
-              .eq("user_id", profile.id)
-              .eq("todo_date", lastActiveDate)
-              .order("created_at", { ascending: false });
+          if (lastActiveDate) {
+            const { data: lastTodos, error: lastErr } = await todosService.getTodos({
+              userId: profile.id,
+              todoDate: lastActiveDate,
+              orderBy: 'created',
+            });
 
             if (lastErr) throw lastErr;
 
@@ -231,10 +217,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
             // Insert carried-over and all-time tasks into database
             if (tempInserted.length > 0) {
-              const { data: insertedData, error: insertErr } = await supabase
-                .from("todos")
-                .insert(tempInserted)
-                .select();
+              const { data: insertedData, error: insertErr } =
+                await todosService.bulkCreateTodos(tempInserted);
 
               if (insertErr) throw insertErr;
               if (insertedData) {
@@ -271,15 +255,13 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       const startDate = `${selectedYear}-${selectedMonth}-01`;
       const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
 
-      const { data, error } = await supabase
-        .from("todos")
-        .select(TODO_COLUMNS)
-        .eq("user_id", profile.id)
-        .gte("todo_date", startDate)
-        .lte("todo_date", endDate)
-        .neq("status", "Idle")
-        .order("todo_date", { ascending: false })
-        .order("created_at", { ascending: false });
+      const { data, error } = await todosService.getTodos({
+        userId: profile.id,
+        gteDate: startDate,
+        lteDate: endDate,
+        excludeStatus: 'Idle',
+        orderBy: 'date',
+      });
 
       if (error) throw error;
       setArchiveTodos(data || []);
@@ -356,9 +338,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     if (!profile || !newTask.trim()) return;
 
     try {
-      const { data, error } = await supabase
-        .from("todos")
-        .insert({
+      const { data, error } = await todosService.createTodo({
           user_id: profile.id,
           codename: profile.username.toUpperCase(),
           task: newTask.trim(),
@@ -366,12 +346,11 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
           comment: "",
           todo_date: todayStr,
           is_all_time: isAllTime,
-        })
-        .select();
+        });
 
       if (error) throw error;
       if (data) {
-        setTodos((prev) => [...prev, ...data]);
+        setTodos((prev) => [...prev, data]);
         setNewTask("");
         setIsAllTime(false);
         toast.success("Task added successfully!");
@@ -394,10 +373,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     }
 
     try {
-      const { error } = await supabase
-        .from("todos")
-        .update({ status: nextStatus })
-        .eq("id", todo.id);
+      const { error } = await todosService.updateTodo(todo.id, { status: nextStatus });
 
       if (error) throw error;
       // Optimistic bump — the DB trigger sets the authoritative timestamp,
@@ -421,10 +397,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   const handleToggleAllTime = async (todo: TodoItem) => {
     const nextAllTime = !todo.is_all_time;
     try {
-      const { error } = await supabase
-        .from("todos")
-        .update({ is_all_time: nextAllTime })
-        .eq("id", todo.id);
+      const { error } = await todosService.updateTodo(todo.id, { is_all_time: nextAllTime });
 
       if (error) throw error;
       setTodos((prev) =>
@@ -459,10 +432,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     const current = todos.find((t) => t.id === id);
     if (current && (current.comment || "") === commentVal) return;
     try {
-      const { error } = await supabase
-        .from("todos")
-        .update({ comment: commentVal })
-        .eq("id", id);
+      const { error } = await todosService.updateTodo(id, { comment: commentVal });
 
       if (error) throw error;
       setTodos((prev) =>
@@ -527,10 +497,9 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       return;
     }
     try {
-      const { error } = await supabase
-        .from("todos")
-        .update({ task: editingTaskText.trim() })
-        .eq("id", todoId);
+      const { error } = await todosService.updateTodo(todoId, {
+        task: editingTaskText.trim(),
+      });
 
       if (error) throw error;
       setTodos((prev) =>
@@ -569,10 +538,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   const handleBulkDelete = async () => {
     if (selectedTodoIds.length === 0) return;
     try {
-      const { error } = await supabase
-        .from("todos")
-        .delete()
-        .in("id", selectedTodoIds);
+      const { error } = await todosService.deleteTodo(selectedTodoIds);
 
       if (error) throw error;
       setTodos((prev) => prev.filter((t) => !selectedTodoIds.includes(t.id)));
@@ -590,7 +556,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Delete a Todo Item
   const handleDeleteTodo = async (id: string) => {
     try {
-      const { error } = await supabase.from("todos").delete().eq("id", id);
+      const { error } = await todosService.deleteTodo(id);
 
       if (error) throw error;
       setTodos((prev) => prev.filter((t) => t.id !== id));

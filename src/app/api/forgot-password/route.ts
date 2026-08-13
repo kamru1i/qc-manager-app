@@ -56,41 +56,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Resolve username to profile
-    const { data: profile, error: profileError } = await supabaseServer
-      .from('profiles')
-      .select('id, username, full_name, global_settings')
-      .eq('username', cleanUsername)
-      .maybeSingle();
-    if (profileError) {
-      console.error('[ForgotPassword] Error searching profile:', profileError.message);
-      return NextResponse.json(
-        { error: 'Database unavailable' },
-        { status: 500, headers: getCorsHeaders(request) }
-      );
-    }
-
-    if (!profile) {
-      // Security best practice: return success response regardless to prevent username enumeration
+    if (!/^[A-Z0-9._-]{2,50}$/.test(cleanUsername)) {
       return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
     }
 
-    const currentSettings = (profile as any).global_settings || {};
-    if (currentSettings.password_reset_status === 'pending') {
-      // Security: return success response if request is already pending to prevent status enumeration
-      return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
-    }
-
-    const updatedSettings = {
-      ...currentSettings,
-      password_reset_status: 'pending'
-    };
-
-    // 2. Update profile password_reset_status to 'pending' inside global_settings
-    const { error: updateError } = await supabaseServer
-      .from('profiles')
-      .update({ global_settings: updatedSettings })
-      .eq('id', profile.id);
+    // Service-only RPC performs one atomic key update and intentionally returns
+    // no match information, preserving the endpoint's anti-enumeration behavior.
+    const { error: updateError } = await supabaseServer.rpc('request_password_reset', {
+      p_username: cleanUsername,
+    });
 
     if (updateError) {
       console.error('[ForgotPassword] Error updating profile status:', updateError.message);
@@ -99,24 +73,6 @@ export async function POST(request: NextRequest) {
         { status: 500, headers: getCorsHeaders(request) }
       );
     }
-
-    // 3. Find admins to notify (fire-and-forget — don't block the response).
-    // Previously this ran synchronously before the response, causing
-    // desktop/mobile apps to hit AbortController timeouts and show
-    // "network error" even though the password reset was already saved.
-    Promise.resolve(
-      supabaseServer
-        .from('profiles')
-        .select('id')
-        .eq('role', 'admin')
-    ).then(({ error: adminsError }) => {
-        if (adminsError) {
-          console.error('[ForgotPassword] Error getting admins:', adminsError.message);
-        }
-      })
-      .catch((err: unknown) => {
-        console.error('[ForgotPassword] Admin notification failed:', err);
-      });
 
     return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (err) {

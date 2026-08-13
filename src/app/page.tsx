@@ -53,6 +53,7 @@ import { TodoPanel } from "@/components/common/TodoPanel";
 import { ProfilesProvider, useProfiles } from "@/contexts/ProfilesContext";
 import { fetchOwnProfileRow } from "@/utils/profileFetcher";
 import { ProfileSettings } from "@/components/common/ProfileSettings";
+import { clearOwnedOfflineCaches, prepareOfflineCachesForUser } from '@/utils/cacheOwnership';
 
 function getInitialState() {
   if (typeof window === "undefined") {
@@ -135,13 +136,15 @@ export default function AppPortal() {
     // Silent in production
   };
 
-  const loadUserProfile = useCallback(async (userId: string, retryCount = 0) => {
+  const loadUserProfile = useCallback(async (userId: string) => {
     if (fetchingRef.current === userId) {
       addLog(`loadUserProfile duplicate call skipped for ${userId}`);
       return;
     }
 
     addLog(`loadUserProfile started for ${userId}`);
+
+    await prepareOfflineCachesForUser(userId);
 
     // Try loading from localStorage cache first (Stale-While-Revalidate pattern)
     const cacheKey = `cached_profile_${userId}`;
@@ -167,16 +170,26 @@ export default function AppPortal() {
     // Fetch fresh profile in the background
     fetchingRef.current = userId;
     try {
-      // Deduped with useDashboardData's SIGNED_IN fetch — both listeners share
-      // one in-flight single-row query per login instead of two identical ones.
-      const fetchPromise = fetchOwnProfileRow(userId);
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Database query timed out")), 5000),
-      );
-
-      addLog("Background query to profiles table started...");
-      const result = await Promise.race([fetchPromise, timeoutPromise]);
+      let result: Awaited<ReturnType<typeof fetchOwnProfileRow>> | null = null;
+      let finalFetchError: unknown = null;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const fetchPromise = fetchOwnProfileRow(userId);
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Database query timed out")), 5000),
+          );
+          addLog("Background query to profiles table started...");
+          result = await Promise.race([fetchPromise, timeoutPromise]);
+          break;
+        } catch (error) {
+          finalFetchError = error;
+          if (attempt === 0) {
+            addLog("Retrying profile load (attempt 1)...");
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+        }
+      }
+      if (!result) throw finalFetchError || new Error("Profile query failed");
 
       const { data: profileData, error: profileError } = result as {
         data: any;
@@ -251,13 +264,6 @@ export default function AppPortal() {
       setLoading(false);
     } catch (err: any) {
       addLog(`Background fetch error: ${err?.message || err}`);
-      // Retry once on transient failures (common during user switching)
-      if (retryCount < 1) {
-        addLog(`Retrying profile load (attempt ${retryCount + 1})...`);
-        fetchingRef.current = null;
-        await new Promise(r => setTimeout(r, 500));
-        return loadUserProfile(userId, retryCount + 1);
-      }
       if (!cachedProfile) {
         setErrorMsg("Error loading profile settings.");
         setLoading(false);
@@ -303,18 +309,11 @@ export default function AppPortal() {
       }
 
       if (session) {
-        const currentUserId = sessionUserRef.current?.id;
-        if (currentUserId === session.user.id && _cachedInitialState?.profile) {
-          addLog(
-            "onAuthStateChange: Same user session already active and profile cached. Skipping profile fetch.",
-          );
-          setSessionUser(session.user);
-          sessionUserRef.current = session.user;
-          return;
-        }
-
         setSessionUser(session.user);
         sessionUserRef.current = session.user;
+        // Cached data is paint-only. Always revalidate the authoritative row
+        // on INITIAL_SESSION/SIGNED_IN so role or workspace revocation applies
+        // after an offline period or app restart.
         await loadUserProfile(session.user.id);
       } else if (event === "SIGNED_OUT") {
         addLog(
@@ -356,6 +355,7 @@ export default function AppPortal() {
       localStorage.removeItem(`last_access_time_${currentUserId}`);
     }
     localStorage.removeItem('qc_session_id');
+    await clearOwnedOfflineCaches();
     // Local scope: log out this device only. The previous global default
     // revoked ALL of the user's refresh tokens, logging out every other
     // device (Web/Desktop/Android) at once.
@@ -442,7 +442,7 @@ export default function AppPortal() {
 
   return (
     <RealtimeProvider sessionUser={sessionUser} profile={profile}>
-      <ProfilesProvider sessionUser={sessionUser}>
+      <ProfilesProvider sessionUser={sessionUser} profile={profile}>
         <AppPortalInner
           sessionUser={sessionUser}
           profile={profile}
@@ -487,8 +487,40 @@ function AppPortalInner({
       if (cached === "analytics") cached = "leaderboard";
       if (cached) return cached as any;
     }
-    return "chuti";
+    return canAccessModule(profile, null, "leave") ? "chuti" : "quotes";
   });
+
+  const hasLeaveWorkspace = canAccessModule(profile, null, "leave");
+  const hasQuotesWorkspace = canAccessModule(profile, null, "quotes");
+
+  useEffect(() => {
+    if (activeTab === "chuti" && !hasLeaveWorkspace && hasQuotesWorkspace) {
+      setActiveTab("quotes");
+      localStorage.setItem("last_active_dashboard", "quotes");
+    } else if (activeTab === "quotes" && !hasQuotesWorkspace && hasLeaveWorkspace) {
+      setActiveTab("chuti");
+      localStorage.setItem("last_active_dashboard", "chuti");
+    }
+  }, [activeTab, hasLeaveWorkspace, hasQuotesWorkspace]);
+
+  // Defer the heavy quotes dashboard until it is first visited, then keep it
+  // mounted so tab switches remain instant without paying its initial queries
+  // for leave-only sessions.
+  const [hasMountedQuotes, setHasMountedQuotes] = useState(
+    () => hasQuotesWorkspace && activeTab !== "chuti",
+  );
+  useEffect(() => {
+    if (
+      hasQuotesWorkspace &&
+      (activeTab === "quotes" ||
+        activeTab === "leaderboard" ||
+        activeTab === "my_report" ||
+        activeTab === "all_report" ||
+        activeTab === "reports")
+    ) {
+      setHasMountedQuotes(true);
+    }
+  }, [activeTab, hasQuotesWorkspace]);
 
   const activeTabRef = useRef<string>(activeTab || "chuti");
   const [previousTab, setPreviousTab] = useState<string>("chuti");
@@ -620,7 +652,7 @@ function AppPortalInner({
   const [isUserManagementFullView, setIsUserManagementFullView] =
     useState(false);
   // R1/R2: single shared profiles list from ProfilesContext (was local state)
-  const { profilesList, refreshProfiles } = useProfiles();
+  const { profilesList } = useProfiles();
   // Realtime UPDATE payloads only carry the primary key in `old` (tables use
   // default REPLICA IDENTITY), so field-change checks must compare against the
   // locally cached previous row instead of payload.old.
@@ -690,22 +722,27 @@ function AppPortalInner({
   useEffect(() => {
     if (!isNativeApp()) return;
 
-    let backListenerPromise: any = null;
+    let active = true;
+    let removeBackListener: (() => Promise<void>) | null = null;
 
-    import("@capacitor/app").then(({ App }) => {
-      backListenerPromise = App.addListener("backButton", () => {
+    import("@capacitor/app").then(async ({ App }) => {
+      const listener = await App.addListener("backButton", () => {
         if (isMobileDrawerOpen) {
           setIsMobileDrawerOpen(false);
         } else {
           setIsExitModalOpen(true);
         }
       });
+      if (!active) {
+        await listener.remove();
+      } else {
+        removeBackListener = () => listener.remove();
+      }
     });
 
     return () => {
-      if (backListenerPromise) {
-        backListenerPromise.then((l: any) => l.remove());
-      }
+      active = false;
+      void removeBackListener?.();
     };
   }, [isMobileDrawerOpen]);
 
@@ -751,50 +788,6 @@ function AppPortalInner({
       };
     }
   }, []);
-
-  useEffect(() => {
-    if (!sessionUser) return;
-
-    // R1/R2: profiles are fetched once by ProfilesProvider — this effect only
-    // triggers the badge-sync RPC and refreshes the shared list afterwards.
-    const triggerBadgeSync = async () => {
-      // Once-daily guard: badges are computed from the PREVIOUS month's records,
-      // so re-running the RPC on every mount only rewrites identical rows and
-      // floods realtime with profile UPDATE events. One run per device per day
-      // is more than enough to keep badges current.
-      const BADGE_SYNC_KEY = "badge_sync_last_run";
-      const todayStr = new Date().toLocaleDateString("en-CA");
-      try {
-        if (localStorage.getItem(BADGE_SYNC_KEY) === todayStr) {
-          return;
-        }
-      } catch {
-        // localStorage unavailable — fall through and sync anyway
-      }
-
-      try {
-        const { error } = await supabase.rpc("sync_top_performer_badges");
-        if (error) {
-          console.error(
-            "Failed to sync top performer badges from DB:",
-            error.message,
-          );
-        } else {
-          try {
-            localStorage.setItem(BADGE_SYNC_KEY, todayStr);
-          } catch {
-            // ignore storage failures
-          }
-          // Pull the updated badge data into the shared list
-          refreshProfiles({ force: true });
-        }
-      } catch (err) {
-        console.error("Error triggering top performer badges sync:", err);
-      }
-    };
-
-    triggerBadgeSync();
-  }, [sessionUser, refreshProfiles]);
 
   const [topPerformerBadges, setTopPerformerBadges] = useState<
     Record<string, any>
@@ -842,11 +835,9 @@ function AppPortalInner({
     notificationsList: globalNotificationsList,
     showNotificationsModal,
     setShowNotificationsModal,
-    handleSaveHolidayResponse,
     handleDismissNotification,
     handleDismissAllNotifications,
     approvalsCount: globalApprovalsCount,
-    pendingHolidays,
     isInitialNotifFetchDone,
   } = useGlobalNotifications(
     sessionUser,
@@ -1518,7 +1509,7 @@ function AppPortalInner({
             }
           >
             {/* QuotesDashboard: always mounted to prevent duplicate query fetches on tab switches */}
-            <div
+            {hasQuotesWorkspace && hasMountedQuotes && <div
               className={
                 activeTab !== "quotes" &&
                 activeTab !== "leaderboard" &&
@@ -1530,6 +1521,9 @@ function AppPortalInner({
               }
             >
               <QuotesDashboard
+                sessionUser={sessionUser}
+                profile={profile}
+                setProfile={setProfile}
                 activeTab={
                   activeTab === "quotes" ? activeQuotesTab : (activeTab as any)
                 }
@@ -1539,15 +1533,18 @@ function AppPortalInner({
                   localStorage.setItem("last_active_dashboard", previousTab);
                 }}
               />
-            </div>
+            </div>}
             {/* ChutiDashboard: always mounted to keep global event listeners (like open-profile-settings) and approval modals active on all tabs */}
-            <div className={activeTab !== "chuti" ? "hidden" : undefined}>
+            {hasLeaveWorkspace && <div className={activeTab !== "chuti" ? "hidden" : undefined}>
               <ChutiDashboard
+                sessionUser={sessionUser}
+                profile={profile}
+                setProfile={setProfile}
                 activeChutiTab={activeChutiTab}
                 onChutiTabChange={handleChutiTabChange}
                 onDataReady={handleChutiDataReady}
               />
-            </div>
+            </div>}
             {activeTab === "user_management" && (
               <UserManagement
                 sessionUser={sessionUser}

@@ -254,3 +254,5 @@ export const MonthlyTab = React.memo(
     );
   }
 );
+
+MonthlyTab.displayName = "MonthlyTab";
