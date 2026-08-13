@@ -168,6 +168,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 6. Audit Log
+    try {
+      await supabaseServer.from('audit_logs').insert({
+        actor_id: user.id,
+        actor_codename: requesterProfile.role || 'Supervisor/Admin',
+        action_type: 'CREATE_LEAVE',
+        details: `${requesterProfile.role} created ${sanitizedRecords.length} leave record(s)`,
+        created_at: new Date().toISOString(),
+      });
+    } catch (auditErr) {
+      console.error('Audit logging failed in supervisor add-leave route:', auditErr);
+    }
+
     return NextResponse.json(
       { success: true, data: insertedData },
       { status: 200, headers: getCorsHeaders(request) }

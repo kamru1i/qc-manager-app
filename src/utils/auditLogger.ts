@@ -1,9 +1,25 @@
 import { supabase } from '@/utils/supabase';
 import { Profile } from '@/types';
 
+export type AuditActionType =
+  | 'CREATE_MISTAKE'
+  | 'UPDATE_MISTAKE'
+  | 'DELETE_MISTAKE'
+  | 'CREATE_LEAVE'
+  | 'UPDATE_LEAVE'
+  | 'APPROVE_LEAVE'
+  | 'REJECT_LEAVE'
+  | 'DELETE_LEAVE'
+  | 'SETTLE_LEAVE'
+  | 'ADJUST_LEAVE'
+  | 'CREATE_USER'
+  | 'UPDATE_USER'
+  | 'DELETE_USER'
+  | string;
+
 export interface AuditLogPayload {
   actor: Profile | null;
-  actionType: 'CREATE_MISTAKE' | 'UPDATE_MISTAKE' | 'DELETE_MISTAKE' | string;
+  actionType: AuditActionType;
   targetId?: string | null;
   details: string;
 }
