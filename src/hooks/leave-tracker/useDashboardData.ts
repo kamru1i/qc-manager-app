@@ -815,7 +815,7 @@ export const useDashboardData = (
         return sortChutiRecordsDescending([hydrated, ...without]);
       });
     }
-  }, [emit, profile, sessionUser.id]);
+  }, [emit, profile, sessionUser]);
 
   // ── profiles handler ──
   const handleProfilesRealtime = useCallback((payload: RealtimePayload) => {

@@ -6,6 +6,7 @@ import { supabase } from "@/utils/supabase";
 import { Profile } from "@/types";
 import { mapProfilePasswordResetStatus } from "@/utils/profileHelpers";
 import { canAccessModule, isAdminRole } from "@/utils/permissionService";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import {
   Loader2,
   Clock,
@@ -469,6 +470,11 @@ function AppPortalInner({
   isProfileFresh: boolean;
 }) {
   const { emit } = useAppEventBus();
+  
+  // Continuously track user activity to prevent premature 7-day logouts
+  // for users who never close the app (Desktop/Android/pinned tabs).
+  useActivityTracker(sessionUser?.id);
+  
   const [activeTab, setActiveTab] = useState<
     | "chuti"
     | "quotes"
