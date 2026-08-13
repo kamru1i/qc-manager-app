@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { supabase } from '@/utils/supabase';
+import { profilesService, adminService } from '@/services';
 import { toast } from 'sonner';
 import { MENU_TABS, CONFIGURABLE_ROLES } from '@/utils/menuTabsRegistry';
 import { isSuperadmin, isAdminRole, canAdminManageFeatureFlag } from '@/utils/permissionService';
@@ -349,7 +350,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
     try {
       // RPC updates only the sanitizer_rules key across all profiles,
       // preserving every other per-user global_settings value.
-      const { error } = await supabase.rpc('set_sanitizer_rules', { p_rules: nextRules });
+      const { error } = await profilesService.setSanitizerRules(sessionUser.id, nextRules);
       if (error) throw error;
 
       setSanitizerRules(nextRules);
@@ -403,7 +404,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
 
     setActiveRoleVisKey(itemKey);
     try {
-      const { error } = await supabase.rpc('set_role_visibility', { p_visibility: next });
+      const { error } = await profilesService.setRoleVisibility(sessionUser.id, next);
       if (error) throw error;
       setRoleVisibility(next);
       const updatedProfile = {
@@ -442,11 +443,11 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
 
     setActiveFlagKey(flagKey);
     try {
-      const { error: flagErr } = await supabase.rpc('set_feature_flags', { p_flags: nextFlags });
+      const { error: flagErr } = await profilesService.setFeatureFlags(sessionUser.id, nextFlags);
       if (flagErr) throw flagErr;
 
       if (tabKey) {
-        const { error: visErr } = await supabase.rpc('set_role_visibility', { p_visibility: nextRoleVis });
+        const { error: visErr } = await profilesService.setRoleVisibility(sessionUser.id, nextRoleVis);
         if (visErr) console.error('Failed to sync role visibility:', visErr);
       }
 
@@ -479,7 +480,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
     setActiveFlagKey(`delegate:${flagKey}`);
     try {
       // 1. Try set_admin_delegated_flags RPC first to replicate across all rows
-      const { error: rpcErr } = await supabase.rpc('set_admin_delegated_flags' as any, { p_flags: nextDelegatedFlags });
+      const { error: rpcErr } = await profilesService.setAdminDelegatedFlags(sessionUser.id, nextDelegatedFlags);
 
       // 2. Fallback: update across all profiles if RPC function isn't created in DB yet
       if (rpcErr) {
@@ -488,10 +489,9 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
           ...(profile.global_settings || {}),
           admin_delegated_flags: nextDelegatedFlags
         };
-        const { error: updateErr } = await supabase
-          .from('profiles')
-          .update({ global_settings: updatedGs })
-          .eq('id', sessionUser?.id || profile.id);
+        const { error: updateErr } = await profilesService.updateProfile(sessionUser?.id || profile.id, {
+          global_settings: updatedGs,
+        });
         if (updateErr) throw updateErr;
       }
 
@@ -518,7 +518,7 @@ export function useProfileSettingsHandlers(props: any, stateHook: any) {
     if (!profile || !isSuperadmin(profile)) return;
     setSubmitting(true);
     try {
-      const { error: rpcErr } = await supabase.rpc('reset_all_user_feature_flags' as any);
+      const { error: rpcErr } = await adminService.resetAllUserFeatureFlags();
       if (rpcErr) {
         console.warn('reset_all_user_feature_flags RPC fallback:', rpcErr.message);
         const { data: allProfiles } = await supabase.from('profiles').select('id, global_settings');

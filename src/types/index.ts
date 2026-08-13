@@ -1,4 +1,5 @@
 import { ChutiRecord } from '@/utils/offlineSync';
+export type { ChutiRecord };
 
 export interface Profile {
   id: string;

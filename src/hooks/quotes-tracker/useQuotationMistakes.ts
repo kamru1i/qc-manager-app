@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { supabase } from '@/utils/supabase';
+import { mistakesService } from '@/services';
 import { Profile, QuotationMistake } from '@/types';
-import { QUOTATION_MISTAKE_COLUMNS } from '@/utils/dbColumns';
 import { canWriteQuotationMistakes, isFeatureEnabled } from '@/utils/permissionService';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { logAuditEvent } from '@/utils/auditLogger';
@@ -62,18 +61,9 @@ export function useQuotationMistakes({
       setIsLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('quotation_mistakes')
-        .select(QUOTATION_MISTAKE_COLUMNS)
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      // STRICT USER ISOLATION: Regular users can ONLY query their own records
-      if (isUserRole) {
-        query = query.eq('user_id', sessionUser.id);
-      }
-
-      const { data, error: fetchErr } = await query.limit(1000);
+      const { data, error: fetchErr } = await mistakesService.getQuotationMistakes({
+        userId: isUserRole ? sessionUser.id : undefined,
+      });
 
       if (fetchErr) {
         console.error('Failed to fetch quotation mistakes:', fetchErr);
@@ -215,11 +205,7 @@ export function useQuotationMistakes({
           updated_at: new Date().toISOString(),
         };
 
-        const { data, error: insertErr } = await supabase
-          .from('quotation_mistakes')
-          .insert([newRecord])
-          .select(QUOTATION_MISTAKE_COLUMNS)
-          .single();
+        const { data, error: insertErr } = await mistakesService.createQuotationMistake(newRecord);
 
         if (insertErr) {
           console.error('Failed to add quotation mistake:', insertErr);
@@ -282,10 +268,7 @@ export function useQuotationMistakes({
           updated_at: new Date().toISOString(),
         };
 
-        const { error: updateErr } = await supabase
-          .from('quotation_mistakes')
-          .update(updateData)
-          .eq('id', id);
+        const { error: updateErr } = await mistakesService.updateQuotationMistake(id, updateData);
 
         if (updateErr) {
           console.error('Failed to update quotation mistake:', updateErr);
@@ -325,10 +308,7 @@ export function useQuotationMistakes({
 
       try {
         setIsSubmitting(true);
-        const { error: deleteErr } = await supabase
-          .from('quotation_mistakes')
-          .delete()
-          .eq('id', item.id);
+        const { error: deleteErr } = await mistakesService.deleteQuotationMistake(item.id);
 
         if (deleteErr) {
           console.error('Failed to delete quotation mistake:', deleteErr);
@@ -369,10 +349,7 @@ export function useQuotationMistakes({
 
       try {
         setIsSubmitting(true);
-        const { error: deleteErr } = await supabase
-          .from('quotation_mistakes')
-          .delete()
-          .in('id', ids);
+        const { error: deleteErr } = await mistakesService.bulkDeleteQuotationMistakes(ids);
 
         if (deleteErr) {
           console.error('Failed to bulk delete quotation mistakes:', deleteErr);

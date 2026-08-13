@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { supabase } from '@/utils/supabase';
+import { recordsService } from '@/services';
 import { RecordItem } from '@/types';
 import {
   AdminSalesSummary,
@@ -49,12 +49,8 @@ export const useAdminSalesSummary = ({ enabled, records, targetDateStr }: UseAdm
         : new Date().toLocaleDateString('en-CA');
 
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-      const { data, error } = await supabase.rpc('get_admin_sales_summary', {
-        p_today: dateIso,
-        p_tz: timeZone,
-      });
+      const { data: row, error } = await recordsService.getAdminSalesSummary(dateIso, timeZone);
       if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
       if (row) {
         setServerSummary(buildSummary(row.total_sold ?? 0, row.total_unsold ?? 0));
       }

@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { supabase } from '@/utils/supabase';
+import { adminService, profilesService } from '@/services';
 import { Profile } from '@/types';
 import { getApiUrl } from '@/utils/apiUrlHelper';
 import { useProfiles } from '@/contexts/ProfilesContext';
@@ -66,7 +67,7 @@ export const useAdminActions = ({
 
     try {
       const derivedEmail = `${username.toLowerCase().trim()}@office.local`;
-      const { error } = await supabase.rpc('create_new_user', {
+      const { error } = await adminService.createNewUser({
         p_email: derivedEmail,
         p_password: activePassword,
         p_username: username.toUpperCase().trim(),
@@ -76,18 +77,14 @@ export const useAdminActions = ({
         p_allow_reserve: allowReserve ?? false,
         p_allow_overtime: allowOvertime ?? false,
         p_supervisor_ids: supervisorIds ?? null,
-      });
+      } as any);
 
       if (error) throw error;
 
       // Update the newly created user profile with permissions and access flags
-      const { data: newProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', username.toUpperCase().trim())
-        .single();
+      const targetUser = profilesList.find(p => p.username === username.toUpperCase().trim());
       
-      if (newProfile) {
+      if (targetUser) {
         const updatePayload: any = { 
           can_manage_rules: canManageRules,
           has_chuti_access: hasChutiAccess,
@@ -115,10 +112,7 @@ export const useAdminActions = ({
         if (defaultSignIn !== undefined) updatePayload.default_sign_in = defaultSignIn;
         if (defaultSignOut !== undefined) updatePayload.default_sign_out = defaultSignOut;
 
-        await supabase
-          .from('profiles')
-          .update(updatePayload)
-          .eq('id', newProfile.id);
+        await profilesService.updateProfile(targetUser.id, updatePayload);
       }
 
       // Audit Log
@@ -159,9 +153,9 @@ const getErrorMessage = (err: any): string => {
       return false;
     }
     try {
-      const { data, error } = await supabase.rpc('admin_update_user_credentials', {
+      const { data, error } = await adminService.updateUserCredentials({
         p_user_id: userId,
-        p_new_password: newPassword
+        p_new_password: newPassword,
       });
 
       if (error) throw error;
@@ -187,9 +181,7 @@ const getErrorMessage = (err: any): string => {
     }
     updateLastActivity();
     try {
-      const { data, error } = await supabase.rpc('delete_user_by_id', {
-        p_user_id: userId
-      });
+      const { data, error } = await adminService.deleteUserById(userId);
 
       if (error) throw error;
       const result = Array.isArray(data) ? data[0] : data;

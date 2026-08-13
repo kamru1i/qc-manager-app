@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { supabase } from "@/utils/supabase";
+import { loginCodesService } from "@/services";
 import { LoginCode } from "@/types";
-import { LOGIN_CODE_COLUMNS } from "@/utils/dbColumns";
 import {
   Search,
   X,
@@ -136,10 +135,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
     setLoading(true);
     const delayPromise = new Promise((resolve) => setTimeout(resolve, 450));
     try {
-      const dbPromise = supabase
-        .from("login_codes")
-        .select(LOGIN_CODE_COLUMNS)
-        .order("login_id", { ascending: true });
+      const dbPromise = loginCodesService.getLoginCodes();
 
       const [dbResult] = await Promise.all([dbPromise, delayPromise]);
       const { data, error } = dbResult;
@@ -223,7 +219,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
 
     let savedInDB = false;
     try {
-      const { error } = await supabase.from("login_codes").upsert(payload);
+      const { error } = await loginCodesService.upsertLoginCode(payload);
 
       if (!error) {
         savedInDB = true;
@@ -270,10 +266,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
 
     let deletedInDB = false;
     try {
-      const { error } = await supabase
-        .from("login_codes")
-        .delete()
-        .eq("login_id", itemToDelete.login_id);
+      const { error } = await loginCodesService.deleteLoginCode(itemToDelete.login_id);
 
       if (!error) {
         deletedInDB = true;

@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { supabase } from '@/utils/supabase';
+import { recordsService } from '@/services';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { Profile } from '@/types';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { fetchSubmittedMonths } from '@/utils/availableDatesHelper';
-import { LEADERBOARD_ARCHIVE_COLUMNS } from '@/utils/dbColumns';
 
 export interface LeaderboardUser {
   user_id: string;
@@ -96,13 +95,9 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local format
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
-      const { data, error: rpcError } = await supabase.rpc('get_leaderboard_data', {
+      const { data, error: rpcError } = await recordsService.getLeaderboardData({
         p_year: selectedYear,
         p_month: selectedMonth,
-        // p_period is vestigial — the SQL always returns month rank + yearly
-        // totals (overall_score) in one payload. Yearly view is derived
-        // client-side from the same response, so toggling Monthly/Yearly
-        // never triggers an extra RPC call (no added egress).
         p_period: 'monthly',
         p_today: todayStr,
         p_tz: timeZone,
@@ -155,10 +150,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // ~staff-count rows per year). Runs once on mount + on realtime bursts.
   const fetchArchiveYears = useCallback(async () => {
     try {
-      const { data, error: archErr } = await supabase
-        .from('leaderboard_archive')
-        .select('year')
-        .order('year', { ascending: false });
+      const { data, error: archErr } = await recordsService.getLeaderboardArchive();
       if (archErr) throw archErr;
       const years = Array.from(
         new Set((data || []).map((r: { year: number }) => String(r.year)))
@@ -175,11 +167,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   const fetchArchivedYearData = useCallback(async (year: string) => {
     setLoading(true);
     try {
-      const { data, error: archErr } = await supabase
-        .from('leaderboard_archive')
-        .select(LEADERBOARD_ARCHIVE_COLUMNS)
-        .eq('year', Number(year))
-        .order('rank', { ascending: true });
+      const { data, error: archErr } = await recordsService.getLeaderboardArchive(Number(year));
       if (archErr) throw archErr;
 
       const mappedData: LeaderboardUser[] = (data || []).map((row: any) => ({
