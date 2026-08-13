@@ -12,7 +12,6 @@ import {
   Plus,
   Trash2,
   Edit,
-  Key,
   User,
   AlertCircle,
   ChevronLeft,
@@ -486,7 +485,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
                       {item.login_id}
                     </span>
                     {item.name ? (
-                      <span className="text-[10px] text-theme-text-muted mt-0.5 max-w-[180px] truncate">
+                      <span className="text-[10px] text-theme-text-muted mt-0.5 max-w-45 truncate">
                         {item.name}
                       </span>
                     ) : (
@@ -616,11 +615,11 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
 
       {/* ─── ADD/EDIT OVERLAY MODAL ─── */}
       {isFormOpen && mounted && createPortal(
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in"
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-100 flex items-center justify-center p-6 animate-fade-in"
           onClick={() => setIsFormOpen(false)}
         >
-          <div 
+          <div
             className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-sm shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
@@ -702,11 +701,11 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
 
       {/* ─── DELETE CONFIRM OVERLAY ─── */}
       {itemToDelete && mounted && createPortal(
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in"
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-100 flex items-center justify-center p-6 animate-fade-in"
           onClick={() => setItemToDelete(null)}
         >
-          <div 
+          <div
             className="bg-theme-card-bg border border-theme-border-input p-6 rounded-2xl w-full max-w-xs shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -728,7 +727,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-xl bg-red-650 hover:bg-red-550 text-white font-semibold cursor-pointer transition-colors shadow-md shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                className="px-4 py-2 rounded-xl bg-red-650 hover:bg-red-550 text-white font-semibold cursor-pointer transition-colors shadow-md shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98] duration-200"
               >
                 Delete
               </button>
@@ -742,7 +741,7 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       {contextMenu && (
         <div
           ref={contextMenuRef}
-          className="absolute bg-theme-card-bg border border-theme-border-input rounded-lg shadow-2xl py-1 w-36 z-[60] text-xs animate-fade-in"
+          className="absolute bg-theme-card-bg border border-theme-border-input rounded-lg shadow-2xl py-1 w-36 z-60 text-xs animate-fade-in"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           <button
