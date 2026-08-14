@@ -87,6 +87,11 @@ const DEFAULT_LOGIN_CODES: LoginCode[] = [
   { login_id: "OS525", code: "S", name: "Md Omar Faruque Sunny" },
 ];
 
+let _loginCodesCache: {
+  data: LoginCode[];
+  timestamp: number;
+} | null = null;
+
 interface LoginCodesPanelProps {
   canEdit: boolean;
   isOnline: boolean;
@@ -97,9 +102,13 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   canEdit,
   showToast,
 }) => {
-  const [loginCodes, setLoginCodes] = useState<LoginCode[]>([]);
+  const [loginCodes, setLoginCodes] = useState<LoginCode[]>(() => {
+    return _loginCodesCache?.data || [];
+  });
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => {
+    return !_loginCodesCache;
+  });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Pagination states
@@ -130,9 +139,9 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch from database or fallback to localStorage / DEFAULT_LOGIN_CODES
-  const fetchLoginCodes = useCallback(async () => {
-    setLoading(true);
-    const delayPromise = new Promise((resolve) => setTimeout(resolve, 450));
+  const fetchLoginCodes = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    const delayPromise = silent ? Promise.resolve() : new Promise((resolve) => setTimeout(resolve, 450));
     try {
       const dbPromise = loginCodesService.getLoginCodes();
 
@@ -143,8 +152,16 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       if (data && data.length > 0) {
         const filtered = data.filter((item: any) => !item.login_id.startsWith("__"));
         setLoginCodes(filtered);
+        _loginCodesCache = {
+          data: filtered,
+          timestamp: Date.now(),
+        };
       } else {
         setLoginCodes(DEFAULT_LOGIN_CODES);
+        _loginCodesCache = {
+          data: DEFAULT_LOGIN_CODES,
+          timestamp: Date.now(),
+        };
       }
     } catch (err) {
       console.warn(
@@ -157,9 +174,18 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         const filtered = Array.isArray(parsed)
           ? parsed.filter((item: any) => !item.login_id.startsWith("__"))
           : [];
-        setLoginCodes(filtered.length > 0 ? filtered : DEFAULT_LOGIN_CODES);
+        const fallbackData = filtered.length > 0 ? filtered : DEFAULT_LOGIN_CODES;
+        setLoginCodes(fallbackData);
+        _loginCodesCache = {
+          data: fallbackData,
+          timestamp: Date.now(),
+        };
       } else {
         setLoginCodes(DEFAULT_LOGIN_CODES);
+        _loginCodesCache = {
+          data: DEFAULT_LOGIN_CODES,
+          timestamp: Date.now(),
+        };
       }
     } finally {
       setLoading(false);
@@ -167,7 +193,8 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   }, []);
 
   useEffect(() => {
-    fetchLoginCodes();
+    const isCached = !!_loginCodesCache;
+    fetchLoginCodes(isCached);
   }, [fetchLoginCodes]);
 
   // Handle outside click to close context menu
@@ -246,6 +273,12 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
       }
       next.sort((a, b) => a.login_id.localeCompare(b.login_id));
       localStorage.setItem("local_login_codes", JSON.stringify(next));
+      
+      _loginCodesCache = {
+        data: next,
+        timestamp: Date.now(),
+      };
+      
       return next;
     });
 
@@ -281,6 +314,12 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
         (item) => item.login_id !== itemToDelete.login_id,
       );
       localStorage.setItem("local_login_codes", JSON.stringify(next));
+      
+      _loginCodesCache = {
+        data: next,
+        timestamp: Date.now(),
+      };
+      
       return next;
     });
 
