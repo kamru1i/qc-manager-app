@@ -146,14 +146,23 @@ const isRuleRelevant = (
   return mentioned.includes(selectedKey);
 };
 
+let _quoteRulesCache: {
+  data: ComplianceRule[];
+  timestamp: number;
+} | null = null;
+
 export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
   profile,
   sessionUser,
   isOnline,
   showToast,
 }) => {
-  const [rules, setRules] = useState<ComplianceRule[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [rules, setRules] = useState<ComplianceRule[]>(() => {
+    return _quoteRulesCache?.data || [];
+  });
+  const [loading, setLoading] = useState(() => {
+    return !_quoteRulesCache;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(
@@ -235,11 +244,15 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         });
 
         setRules(Array.from(uniqueRulesMap.values()));
+        _quoteRulesCache = {
+          data: Array.from(uniqueRulesMap.values()),
+          timestamp: Date.now(),
+        };
 
         // Background cleanup of duplicate rules for admins
         if (
           duplicateIdsToDelete.length > 0 &&
-          isAdminRole(profile) &&
+          (profile?.role === 'admin' || profile?.role === 'superadmin') &&
           isOnline
         ) {
           supabase
@@ -264,13 +277,14 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         setLoading(false);
       }
     },
-    [showToast, profile, isOnline],
+    [showToast, profile?.role, isOnline],
   );
 
   // Trigger rules query on mount
   useEffect(() => {
     setMounted(true);
-    fetchRules();
+    const isCached = !!_quoteRulesCache;
+    fetchRules(isCached);
   }, [fetchRules]);
 
   // Close context menu and dropdown on outside click
