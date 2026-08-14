@@ -8,6 +8,12 @@ import { Profile, QuotationMistake } from '@/types';
 import { canWriteQuotationMistakes, isFeatureEnabled } from '@/utils/permissionService';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 
+let _mistakesCache: {
+  key: string;
+  data: QuotationMistake[];
+  count: number;
+} | null = null;
+
 interface UseQuotationMistakesOptions {
   sessionUser: SupabaseUser | null;
   profile: Profile | null;
@@ -21,11 +27,8 @@ export function useQuotationMistakes({
   globalSettings,
   profilesList = [],
 }: UseQuotationMistakesOptions) {
-  const [mistakes, setMistakes] = useState<QuotationMistake[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -38,6 +41,27 @@ export function useQuotationMistakes({
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 15;
+
+  const getCacheKey = useCallback(() => {
+    return `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+  }, [debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, currentPage]);
+
+  const [mistakes, setMistakes] = useState<QuotationMistake[]>(() => {
+    const key = `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+    return _mistakesCache?.key === key ? _mistakesCache.data : [];
+  });
+  
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    const key = `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+    return _mistakesCache?.key !== key;
+  });
+  
+  const [totalCount, setTotalCount] = useState(() => {
+    const key = `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+    return _mistakesCache?.key === key ? _mistakesCache.count : 0;
+  });
+
+
 
   // Permission Checks
   const canWrite = useMemo(
@@ -57,8 +81,8 @@ export function useQuotationMistakes({
     return () => window.clearTimeout(timer);
   }, [searchQuery]);
 
-  const fetchMistakes = useCallback(async (signal?: AbortSignal) => {
-    if (!sessionUser || !profile || !canRead) {
+  const fetchMistakes = useCallback(async (isSilent = false, signal?: AbortSignal) => {
+    if (!sessionUser?.id || !profile?.id || !canRead) {
       setMistakes([]);
       setTotalCount(0);
       setIsLoading(false);
@@ -66,11 +90,11 @@ export function useQuotationMistakes({
     }
 
     try {
-      setIsLoading(true);
+      if (!isSilent) setIsLoading(true);
       setError(null);
 
       const { data, count, error: fetchErr } = await mistakesService.getQuotationMistakes({
-        userId: isUserRole ? sessionUser.id : undefined,
+        userId: isUserRole ? sessionUser?.id : undefined,
         page: currentPage,
         pageSize,
         search: debouncedSearchQuery,
@@ -88,8 +112,14 @@ export function useQuotationMistakes({
         setError(fetchErr.message);
         toast.error('Failed to load quotation mistakes.');
       } else {
-        setMistakes((data as QuotationMistake[]) || []);
+        const mappedData = (data as QuotationMistake[]) || [];
+        setMistakes(mappedData);
         setTotalCount(count);
+        _mistakesCache = {
+          key: getCacheKey(),
+          data: mappedData,
+          count,
+        };
       }
     } catch (err: any) {
       if (signal?.aborted || err?.name === 'AbortError') return;
@@ -98,14 +128,15 @@ export function useQuotationMistakes({
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
-  }, [sessionUser, profile, canRead, isUserRole, currentPage, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate]);
+  }, [sessionUser?.id, profile?.id, canRead, isUserRole, currentPage, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, getCacheKey]);
 
   // Initial Fetch
   useEffect(() => {
+    const isCached = _mistakesCache?.key === getCacheKey();
     const controller = new AbortController();
-    void fetchMistakes(controller.signal);
+    void fetchMistakes(isCached, controller.signal);
     return () => controller.abort();
-  }, [fetchMistakes]);
+  }, [fetchMistakes, getCacheKey]);
 
   // Realtime Integration
   const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -115,7 +146,7 @@ export function useQuotationMistakes({
       if (Date.now() < suppressRealtimeUntilRef.current) return;
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
       realtimeDebounceRef.current = setTimeout(() => {
-        fetchMistakes();
+        fetchMistakes(true);
       }, 350);
     },
     [fetchMistakes]

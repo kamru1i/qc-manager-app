@@ -101,7 +101,7 @@ export const DailyEntryTab = React.memo(
             <div className="shrink-0">
               <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
                 <Clock className="h-4.5 w-4.5 text-blue-500" />
-                Today's File Entry List
+                Today's File Summary
               </h3>
               <p className="text-[11px] text-theme-text-muted mt-0.5">
                 Date:{" "}
