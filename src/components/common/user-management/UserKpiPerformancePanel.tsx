@@ -44,6 +44,47 @@ const CORE_FILE_TYPES = [
   { key: "Van", label: "Van" },
 ];
 
+interface CachedKpiAssessment {
+  empId: string;
+  dateOfJoining: string;
+  department: string;
+  appraiserName: string;
+  reviewerName: string;
+  weightages: Record<string, number>;
+  selfScores: Record<string, number>;
+  supervisorScores: Record<string, number>;
+  comments: Record<string, string>;
+  customPeriodFrom: string;
+  customPeriodTo: string;
+  customPeriodLabel: string;
+  appraiseeSigned: boolean;
+  appraiseeSignDate: string;
+  appraiserSigned: boolean;
+  appraiserSignDate: string;
+  dbState: "synced" | "local" | "checking";
+  typeCounts: Record<string, number>;
+  totalSubmissions: number;
+  timestamp: number;
+}
+
+interface CachedStaffData {
+  savedPeriods: any[];
+  recordMonths: string[];
+  timestamp: number;
+}
+
+interface CachedAppraisees {
+  appraisees: any[];
+  hasAssigned: boolean;
+  timestamp: number;
+}
+
+// Module-level caches to prevent unnecessary full refetches and skeleton flashing across focus/nav changes
+const _kpiAssessmentCache = new Map<string, CachedKpiAssessment>();
+const _kpiStaffDataCache = new Map<string, CachedStaffData>();
+const _kpiAppraiseesCache = new Map<string, CachedAppraisees>();
+const _kpiSupervisorNameCache = new Map<string, string>();
+
 export const UserKpiPerformancePanel: React.FC<
   UserKpiPerformancePanelProps
 > = ({
@@ -60,12 +101,6 @@ export const UserKpiPerformancePanel: React.FC<
     useState<Profile | null>(null);
   const targetStaff = evaluatorModeProfile || viewingStaff;
 
-  const [showViewKpiModal, setShowViewKpiModal] = useState(false);
-  const [appraiseeSearchText, setAppraiseeSearchText] = useState("");
-  const [assignedAppraisees, setAssignedAppraisees] = useState<any[]>([]);
-  const [searchingAppraisee, setSearchingAppraisee] = useState(false);
-  const [hasAssignedAppraisees, setHasAssignedAppraisees] = useState(false);
-
   // Date Selection
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth());
@@ -73,17 +108,34 @@ export const UserKpiPerformancePanel: React.FC<
 
   const [metricsTimeScope, setMetricsTimeScope] = useState<"yearly" | "monthly">("monthly");
   const [activePeriodKey, setActivePeriodKey] = useState<string>("");
-  const [dbCustomPeriodFrom, setDbCustomPeriodFrom] = useState<string>("");
-  const [dbCustomPeriodTo, setDbCustomPeriodTo] = useState<string>("");
-  const [dbCustomPeriodLabel, setDbCustomPeriodLabel] = useState<string>("");
+
+  const initialMonthYearKey = preSelectedPeriodKey || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const initialCachedAssessment = _kpiAssessmentCache.get(`${targetStaff.id}_${initialMonthYearKey}`);
+  const initialStaffData = _kpiStaffDataCache.get(targetStaff.id);
+
+  const [showViewKpiModal, setShowViewKpiModal] = useState(false);
+  const [appraiseeSearchText, setAppraiseeSearchText] = useState("");
+  const [assignedAppraisees, setAssignedAppraisees] = useState<any[]>(() => {
+    const cachedAppr = _kpiAppraiseesCache.get(`_${initialMonthYearKey}`);
+    return cachedAppr?.appraisees || [];
+  });
+  const [searchingAppraisee, setSearchingAppraisee] = useState(false);
+  const [hasAssignedAppraisees, setHasAssignedAppraisees] = useState(() => {
+    const cachedAppr = _kpiAppraiseesCache.get(`_${initialMonthYearKey}`);
+    return cachedAppr?.hasAssigned || false;
+  });
+
+  const [dbCustomPeriodFrom, setDbCustomPeriodFrom] = useState<string>(() => initialCachedAssessment?.customPeriodFrom || "");
+  const [dbCustomPeriodTo, setDbCustomPeriodTo] = useState<string>(() => initialCachedAssessment?.customPeriodTo || "");
+  const [dbCustomPeriodLabel, setDbCustomPeriodLabel] = useState<string>(() => initialCachedAssessment?.customPeriodLabel || "");
 
   const [customPeriodModalOpen, setCustomPeriodModalOpen] = useState(false);
   const [newCustomPeriodLabel, setNewCustomPeriodLabel] = useState("");
   const [newCustomPeriodFrom, setNewCustomPeriodFrom] = useState("");
   const [newCustomPeriodTo, setNewCustomPeriodTo] = useState("");
 
-  const [savedPeriods, setSavedPeriods] = useState<any[]>([]);
-  const [recordMonths, setRecordMonths] = useState<string[]>([]);
+  const [savedPeriods, setSavedPeriods] = useState<any[]>(() => initialStaffData?.savedPeriods || []);
+  const [recordMonths, setRecordMonths] = useState<string[]>(() => initialStaffData?.recordMonths || []);
 
   useEffect(() => {
     let active = true;
@@ -98,15 +150,24 @@ export const UserKpiPerformancePanel: React.FC<
         ]);
 
         if (active) {
+          let periods: any[] = [];
+          let months: string[] = [];
           if (savedRes.data) {
+            periods = savedRes.data;
             setSavedPeriods(savedRes.data);
           }
           if (recordRes.data && !recordRes.error) {
             const mSet = new Set<string>(
               recordRes.data.map(({ year, month }) => `${year}-${month}`),
             );
-            setRecordMonths(Array.from(mSet));
+            months = Array.from(mSet);
+            setRecordMonths(months);
           }
+          _kpiStaffDataCache.set(targetStaff.id, {
+            savedPeriods: periods,
+            recordMonths: months,
+            timestamp: Date.now(),
+          });
         }
       } catch (err) {
         console.error("Error fetching staff KPI data:", err);
@@ -230,11 +291,11 @@ export const UserKpiPerformancePanel: React.FC<
   }, [preSelectedPeriodKey, setPreSelectedPeriodKey]);
 
   // Header inputs
-  const [empId, setEmpId] = useState("");
-  const [dateOfJoining, setDateOfJoining] = useState("");
-  const [department, setDepartment] = useState(() => targetStaff.global_settings?.department || "Data Entry");
-  const [appraiserName, setAppraiserName] = useState("");
-  const [reviewerName, setReviewerName] = useState("");
+  const [empId, setEmpId] = useState(() => initialCachedAssessment?.empId ?? targetStaff.global_settings?.emp_id ?? "");
+  const [dateOfJoining, setDateOfJoining] = useState(() => initialCachedAssessment?.dateOfJoining ?? targetStaff.global_settings?.date_of_joining ?? "");
+  const [department, setDepartment] = useState(() => initialCachedAssessment?.department ?? targetStaff.global_settings?.department ?? "Data Entry");
+  const [appraiserName, setAppraiserName] = useState(() => initialCachedAssessment?.appraiserName ?? "");
+  const [reviewerName, setReviewerName] = useState(() => initialCachedAssessment?.reviewerName ?? "");
 
   // Keep department synced with targetStaff profile settings
   useEffect(() => {
@@ -242,24 +303,24 @@ export const UserKpiPerformancePanel: React.FC<
   }, [targetStaff.id, targetStaff.global_settings?.department]);
 
   // Table row data maps
-  const [weightages, setWeightages] = useState<Record<string, number>>({});
-  const [selfScores, setSelfScores] = useState<Record<string, number>>({});
+  const [weightages, setWeightages] = useState<Record<string, number>>(() => initialCachedAssessment?.weightages || {});
+  const [selfScores, setSelfScores] = useState<Record<string, number>>(() => initialCachedAssessment?.selfScores || {});
   const [supervisorScores, setSupervisorScores] = useState<
     Record<string, number>
-  >({});
-  const [comments, setComments] = useState<Record<string, string>>({});
+  >(() => initialCachedAssessment?.supervisorScores || {});
+  const [comments, setComments] = useState<Record<string, string>>(() => initialCachedAssessment?.comments || {});
 
   // Signatures
-  const [appraiseeSigned, setAppraiseeSigned] = useState(false);
-  const [appraiseeSignDate, setAppraiseeSignDate] = useState("");
-  const [appraiserSigned, setAppraiserSigned] = useState(false);
-  const [appraiserSignDate, setAppraiserSignDate] = useState("");
+  const [appraiseeSigned, setAppraiseeSigned] = useState(() => initialCachedAssessment?.appraiseeSigned || false);
+  const [appraiseeSignDate, setAppraiseeSignDate] = useState(() => initialCachedAssessment?.appraiseeSignDate || "");
+  const [appraiserSigned, setAppraiserSigned] = useState(() => initialCachedAssessment?.appraiserSigned || false);
+  const [appraiserSignDate, setAppraiserSignDate] = useState(() => initialCachedAssessment?.appraiserSignDate || "");
 
   // UI state
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !initialCachedAssessment);
   const [saving, setSaving] = useState(false);
   const [dbState, setDbState] = useState<"synced" | "local" | "checking">(
-    "checking",
+    () => initialCachedAssessment?.dbState || "checking",
   );
   const [, setIsDirty] = useState(false);
 
@@ -267,8 +328,8 @@ export const UserKpiPerformancePanel: React.FC<
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Production stats count
-  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
-  const [totalSubmissions, setTotalSubmissions] = useState(0);
+  const [typeCounts, setTypeCounts] = useState<Record<string, number>>(() => initialCachedAssessment?.typeCounts || {});
+  const [totalSubmissions, setTotalSubmissions] = useState(() => initialCachedAssessment?.totalSubmissions || 0);
 
   // Month list
   const months = [
@@ -298,7 +359,19 @@ export const UserKpiPerformancePanel: React.FC<
       } = await supabase.auth.getSession();
       if (session?.user) {
         const own = profilesList.find((p) => p.id === session.user.id);
-        if (own) setCurrentUser(own);
+        if (own) {
+          setCurrentUser((prev) => {
+            if (
+              prev?.id === own.id &&
+              prev?.full_name === own.full_name &&
+              prev?.username === own.username &&
+              prev?.role === own.role
+            ) {
+              return prev;
+            }
+            return own;
+          });
+        }
       }
     };
     fetchSession();
@@ -501,13 +574,21 @@ export const UserKpiPerformancePanel: React.FC<
     let active = true;
     const fetchSupervisorName = async () => {
       if (targetStaff.supervisor_ids && targetStaff.supervisor_ids.length > 0) {
+        const cachedSupervisorName = _kpiSupervisorNameCache.get(targetStaff.id);
+        if (cachedSupervisorName && active && !appraiserName) {
+          setAppraiserName(cachedSupervisorName);
+          return;
+        }
+
         const { data } = await supabase
           .from("profiles")
           .select("full_name")
           .in("id", targetStaff.supervisor_ids)
           .limit(1);
         if (data && data.length > 0 && active && !appraiserName) {
-          setAppraiserName(data[0].full_name || "");
+          const supName = data[0].full_name || "";
+          setAppraiserName(supName);
+          _kpiSupervisorNameCache.set(targetStaff.id, supName);
         }
       }
     };
@@ -560,6 +641,14 @@ export const UserKpiPerformancePanel: React.FC<
         });
         setTypeCounts(counts);
         setTotalSubmissions(total);
+
+        // Update production counts in assessment cache
+        const cacheKey = `${targetStaff.id}_${monthYearKey}`;
+        const existing = _kpiAssessmentCache.get(cacheKey);
+        if (existing) {
+          existing.typeCounts = counts;
+          existing.totalSubmissions = total;
+        }
       }
     };
 
@@ -818,13 +907,42 @@ export const UserKpiPerformancePanel: React.FC<
   useEffect(() => {
     let active = true;
     const fetchAssessment = async () => {
-      const isNewFetch =
+      const cacheKey = `${targetStaff.id}_${monthYearKey}`;
+      const cached = _kpiAssessmentCache.get(cacheKey);
+
+      const isNewTargetOrMonth =
         lastLoadedRef.current.id !== targetStaff.id ||
         lastLoadedRef.current.monthYear !== monthYearKey;
-      if (isNewFetch) {
-        setLoading(true);
+
+      if (isNewTargetOrMonth) {
         lastLoadedRef.current = { id: targetStaff.id, monthYear: monthYearKey };
+        if (cached) {
+          // Immediately populate cached data for the new month/user
+          setEmpId(cached.empId);
+          setDateOfJoining(cached.dateOfJoining);
+          setDepartment(cached.department);
+          setAppraiserName(cached.appraiserName);
+          setReviewerName(cached.reviewerName);
+          setWeightages(cached.weightages);
+          setSelfScores(cached.selfScores);
+          setSupervisorScores(cached.supervisorScores);
+          setComments(cached.comments);
+          setDbCustomPeriodFrom(cached.customPeriodFrom);
+          setDbCustomPeriodTo(cached.customPeriodTo);
+          setDbCustomPeriodLabel(cached.customPeriodLabel);
+          setAppraiseeSigned(cached.appraiseeSigned);
+          setAppraiseeSignDate(cached.appraiseeSignDate);
+          setAppraiserSigned(cached.appraiserSigned);
+          setAppraiserSignDate(cached.appraiserSignDate);
+          setDbState(cached.dbState);
+          if (cached.typeCounts) setTypeCounts(cached.typeCounts);
+          if (cached.totalSubmissions !== undefined) setTotalSubmissions(cached.totalSubmissions);
+          setLoading(false);
+        } else {
+          setLoading(true);
+        }
       }
+
       try {
         const { data, error } = await supabase
           .from("kpi_assessments")
@@ -838,63 +956,141 @@ export const UserKpiPerformancePanel: React.FC<
         if (data) {
           if (active) {
             const currentProfileDept = targetStaff.global_settings?.department;
-            setEmpId(data.emp_id || "");
-            setDateOfJoining(data.date_of_joining || "");
-            setDepartment(currentProfileDept || data.department || "Data Entry");
-            setAppraiserName(data.appraiser_name || "");
-            setReviewerName(data.reviewer_name || "");
+            const newEmpId = data.emp_id || "";
+            const newDateOfJoining = data.date_of_joining || "";
+            const newDept = currentProfileDept || data.department || "Data Entry";
+            const newAppraiser = data.appraiser_name || "";
+            const newReviewer = data.reviewer_name || "";
 
             // Unpack KPI values maps
             const savedKpi = data.kpis || {};
-            setWeightages(savedKpi.weightages || {});
-            setSelfScores(savedKpi.selfScores || {});
-            setSupervisorScores(savedKpi.supervisorScores || {});
-            setComments(savedKpi.comments || {});
+            const newWeightages = savedKpi.weightages || {};
+            const newSelfScores = savedKpi.selfScores || {};
+            const newSupervisorScores = savedKpi.supervisorScores || {};
+            const newComments = savedKpi.comments || {};
 
             // Set custom period dates
-            setDbCustomPeriodFrom(savedKpi.customPeriodFrom || "");
-            setDbCustomPeriodTo(savedKpi.customPeriodTo || "");
-            setDbCustomPeriodLabel(savedKpi.customPeriodLabel || "");
+            const newCustomFrom = savedKpi.customPeriodFrom || "";
+            const newCustomTo = savedKpi.customPeriodTo || "";
+            const newCustomLabel = savedKpi.customPeriodLabel || "";
 
-            setAppraiseeSigned(!!data.appraisee_signed);
-            setAppraiseeSignDate(data.appraisee_sign_date || "");
-            setAppraiserSigned(!!data.appraiser_signed);
-            setAppraiserSignDate(data.appraiser_sign_date || "");
+            const newAppraiseeSigned = !!data.appraisee_signed;
+            const newAppraiseeSignDate = data.appraisee_sign_date || "";
+            const newAppraiserSigned = !!data.appraiser_signed;
+            const newAppraiserSignDate = data.appraiser_sign_date || "";
+
+            setEmpId(newEmpId);
+            setDateOfJoining(newDateOfJoining);
+            setDepartment(newDept);
+            setAppraiserName(newAppraiser);
+            setReviewerName(newReviewer);
+            setWeightages(newWeightages);
+            setSelfScores(newSelfScores);
+            setSupervisorScores(newSupervisorScores);
+            setComments(newComments);
+            setDbCustomPeriodFrom(newCustomFrom);
+            setDbCustomPeriodTo(newCustomTo);
+            setDbCustomPeriodLabel(newCustomLabel);
+            setAppraiseeSigned(newAppraiseeSigned);
+            setAppraiseeSignDate(newAppraiseeSignDate);
+            setAppraiserSigned(newAppraiserSigned);
+            setAppraiserSignDate(newAppraiserSignDate);
             setDbState("synced");
+
+            _kpiAssessmentCache.set(cacheKey, {
+              empId: newEmpId,
+              dateOfJoining: newDateOfJoining,
+              department: newDept,
+              appraiserName: newAppraiser,
+              reviewerName: newReviewer,
+              weightages: newWeightages,
+              selfScores: newSelfScores,
+              supervisorScores: newSupervisorScores,
+              comments: newComments,
+              customPeriodFrom: newCustomFrom,
+              customPeriodTo: newCustomTo,
+              customPeriodLabel: newCustomLabel,
+              appraiseeSigned: newAppraiseeSigned,
+              appraiseeSignDate: newAppraiseeSignDate,
+              appraiserSigned: newAppraiserSigned,
+              appraiserSignDate: newAppraiserSignDate,
+              dbState: "synced",
+              typeCounts: cached?.typeCounts || typeCounts,
+              totalSubmissions: cached?.totalSubmissions ?? totalSubmissions,
+              timestamp: Date.now(),
+            });
           }
         } else {
           // Initialize default state
           if (active) {
-            setEmpId(targetStaff.global_settings?.emp_id || "");
-            setDateOfJoining(
-              targetStaff.global_settings?.date_of_joining || "",
-            );
-            setDepartment(
-              targetStaff.global_settings?.department || "Data Entry",
-            );
-            setReviewerName("");
-            setWeightages(defaultWeightages);
-            setSelfScores({
+            const newEmpId = targetStaff.global_settings?.emp_id || "";
+            const newDateOfJoining = targetStaff.global_settings?.date_of_joining || "";
+            const newDept = targetStaff.global_settings?.department || "Data Entry";
+            const newReviewer = "";
+            const newWeightages = defaultWeightages;
+            const newSelfScores = {
               mistakes: 0,
               monthly_reports: 0,
               self_development: 0,
-            });
-            setSupervisorScores({});
-            setComments({});
-            setAppraiseeSigned(false);
-            setAppraiseeSignDate("");
-            setAppraiserSigned(false);
-            setAppraiserSignDate("");
+            };
+            const newSupervisorScores = {};
+            const newComments = {};
+            const newAppraiseeSigned = false;
+            const newAppraiseeSignDate = "";
+            const newAppraiserSigned = false;
+            const newAppraiserSignDate = "";
 
+            let newCustomFrom = "";
+            let newCustomTo = "";
+            let newCustomLabel = "";
             const isCustom =
               !/^\d{4}-\d{2}$/.test(monthYearKey) &&
               !/^yearly-\d{4}$/.test(monthYearKey);
-            if (!isCustom) {
-              setDbCustomPeriodFrom("");
-              setDbCustomPeriodTo("");
-              setDbCustomPeriodLabel("");
+            if (isCustom) {
+              newCustomFrom = dbCustomPeriodFrom;
+              newCustomTo = dbCustomPeriodTo;
+              newCustomLabel = dbCustomPeriodLabel;
             }
+
+            setEmpId(newEmpId);
+            setDateOfJoining(newDateOfJoining);
+            setDepartment(newDept);
+            setReviewerName(newReviewer);
+            setWeightages(newWeightages);
+            setSelfScores(newSelfScores);
+            setSupervisorScores(newSupervisorScores);
+            setComments(newComments);
+            setAppraiseeSigned(newAppraiseeSigned);
+            setAppraiseeSignDate(newAppraiseeSignDate);
+            setAppraiserSigned(newAppraiserSigned);
+            setAppraiserSignDate(newAppraiserSignDate);
+            setDbCustomPeriodFrom(newCustomFrom);
+            setDbCustomPeriodTo(newCustomTo);
+            setDbCustomPeriodLabel(newCustomLabel);
             setDbState("synced");
+
+            _kpiAssessmentCache.set(cacheKey, {
+              empId: newEmpId,
+              dateOfJoining: newDateOfJoining,
+              department: newDept,
+              appraiserName: appraiserName,
+              reviewerName: newReviewer,
+              weightages: newWeightages,
+              selfScores: newSelfScores,
+              supervisorScores: newSupervisorScores,
+              comments: newComments,
+              customPeriodFrom: newCustomFrom,
+              customPeriodTo: newCustomTo,
+              customPeriodLabel: newCustomLabel,
+              appraiseeSigned: newAppraiseeSigned,
+              appraiseeSignDate: newAppraiseeSignDate,
+              appraiserSigned: newAppraiserSigned,
+              appraiserSignDate: newAppraiserSignDate,
+              dbState: "synced",
+              typeCounts: cached?.typeCounts || typeCounts,
+              totalSubmissions: cached?.totalSubmissions ?? totalSubmissions,
+              timestamp: Date.now(),
+            });
           }
         }
       } catch (err: any) {
@@ -911,24 +1107,62 @@ export const UserKpiPerformancePanel: React.FC<
             try {
               const localData = JSON.parse(localDataStr);
               const currentProfileDept = targetStaff.global_settings?.department;
-              setEmpId(localData.emp_id || "");
-              setDateOfJoining(localData.date_of_joining || "");
-              setDepartment(currentProfileDept || localData.department || "Data Entry");
-              setAppraiserName(localData.appraiser_name || "");
-              setReviewerName(localData.reviewer_name || "");
-              setWeightages(localData.kpis?.weightages || {});
-              setSelfScores(localData.kpis?.selfScores || {});
-              setSupervisorScores(localData.kpis?.supervisorScores || {});
-              setComments(localData.kpis?.comments || {});
+              const newEmpId = localData.emp_id || "";
+              const newDateOfJoining = localData.date_of_joining || "";
+              const newDept = currentProfileDept || localData.department || "Data Entry";
+              const newAppraiser = localData.appraiser_name || "";
+              const newReviewer = localData.reviewer_name || "";
+              const newWeightages = localData.kpis?.weightages || {};
+              const newSelfScores = localData.kpis?.selfScores || {};
+              const newSupervisorScores = localData.kpis?.supervisorScores || {};
+              const newComments = localData.kpis?.comments || {};
+              const newCustomFrom = localData.kpis?.customPeriodFrom || "";
+              const newCustomTo = localData.kpis?.customPeriodTo || "";
+              const newCustomLabel = localData.kpis?.customPeriodLabel || "";
+              const newAppraiseeSigned = !!localData.appraisee_signed;
+              const newAppraiseeSignDate = localData.appraisee_sign_date || "";
+              const newAppraiserSigned = !!localData.appraiser_signed;
+              const newAppraiserSignDate = localData.appraiser_sign_date || "";
 
-              setDbCustomPeriodFrom(localData.kpis?.customPeriodFrom || "");
-              setDbCustomPeriodTo(localData.kpis?.customPeriodTo || "");
-              setDbCustomPeriodLabel(localData.kpis?.customPeriodLabel || "");
+              setEmpId(newEmpId);
+              setDateOfJoining(newDateOfJoining);
+              setDepartment(newDept);
+              setAppraiserName(newAppraiser);
+              setReviewerName(newReviewer);
+              setWeightages(newWeightages);
+              setSelfScores(newSelfScores);
+              setSupervisorScores(newSupervisorScores);
+              setComments(newComments);
+              setDbCustomPeriodFrom(newCustomFrom);
+              setDbCustomPeriodTo(newCustomTo);
+              setDbCustomPeriodLabel(newCustomLabel);
+              setAppraiseeSigned(newAppraiseeSigned);
+              setAppraiseeSignDate(newAppraiseeSignDate);
+              setAppraiserSigned(newAppraiserSigned);
+              setAppraiserSignDate(newAppraiserSignDate);
 
-              setAppraiseeSigned(!!localData.appraisee_signed);
-              setAppraiseeSignDate(localData.appraisee_sign_date || "");
-              setAppraiserSigned(!!localData.appraiser_signed);
-              setAppraiserSignDate(localData.appraiser_sign_date || "");
+              _kpiAssessmentCache.set(cacheKey, {
+                empId: newEmpId,
+                dateOfJoining: newDateOfJoining,
+                department: newDept,
+                appraiserName: newAppraiser,
+                reviewerName: newReviewer,
+                weightages: newWeightages,
+                selfScores: newSelfScores,
+                supervisorScores: newSupervisorScores,
+                comments: newComments,
+                customPeriodFrom: newCustomFrom,
+                customPeriodTo: newCustomTo,
+                customPeriodLabel: newCustomLabel,
+                appraiseeSigned: newAppraiseeSigned,
+                appraiseeSignDate: newAppraiseeSignDate,
+                appraiserSigned: newAppraiserSigned,
+                appraiserSignDate: newAppraiserSignDate,
+                dbState: "local",
+                typeCounts: cached?.typeCounts || typeCounts,
+                totalSubmissions: cached?.totalSubmissions ?? totalSubmissions,
+                timestamp: Date.now(),
+              });
             } catch {
               // ignore JSON error
             }
@@ -976,14 +1210,26 @@ export const UserKpiPerformancePanel: React.FC<
     let active = true;
     const loadAppraisees = async () => {
       if (!currentUser) return;
-      setSearchingAppraisee(true);
+      const currentUserId = currentUser.id;
+      const userFullName = currentUser.full_name || "";
+      const userUsername = currentUser.username || "";
+      const appraiseesKey = `${currentUserId}_${monthYearKey}`;
+
+      const cachedAppraisees = _kpiAppraiseesCache.get(appraiseesKey);
+      if (cachedAppraisees) {
+        setAssignedAppraisees(cachedAppraisees.appraisees);
+        setHasAssignedAppraisees(cachedAppraisees.hasAssigned);
+      } else {
+        setSearchingAppraisee(true);
+      }
+
       try {
         const { data: assessments, error } = await supabase
           .from("kpi_assessments")
           .select("user_id")
           .eq("month_year", monthYearKey)
           .or(
-            `appraiser_name.ilike.%${currentUser.full_name || "NOTHING_HERE"}%,appraiser_name.ilike.%${currentUser.username || "NOTHING_HERE"}%`,
+            `appraiser_name.ilike.%${userFullName || "NOTHING_HERE"}%,appraiser_name.ilike.%${userUsername || "NOTHING_HERE"}%`,
           );
 
         if (error) throw error;
@@ -1002,12 +1248,22 @@ export const UserKpiPerformancePanel: React.FC<
           if (profilesData && active) {
             setAssignedAppraisees(profilesData);
             setHasAssignedAppraisees(profilesData.length > 0);
+            _kpiAppraiseesCache.set(appraiseesKey, {
+              appraisees: profilesData,
+              hasAssigned: profilesData.length > 0,
+              timestamp: Date.now(),
+            });
             return;
           }
         }
         if (active) {
           setAssignedAppraisees([]);
           setHasAssignedAppraisees(false);
+          _kpiAppraiseesCache.set(appraiseesKey, {
+            appraisees: [],
+            hasAssigned: false,
+            timestamp: Date.now(),
+          });
         }
       } catch (err) {
         console.error("Failed to load appraisees:", err);
@@ -1021,7 +1277,7 @@ export const UserKpiPerformancePanel: React.FC<
     return () => {
       active = false;
     };
-  }, [currentUser, monthYearKey]);
+  }, [currentUser?.id, currentUser?.username, currentUser?.full_name, monthYearKey]);
 
   const handleLoadAppraiseeByCodename = async (codename: string) => {
     const clean = codename.trim().toUpperCase();
@@ -1123,6 +1379,31 @@ export const UserKpiPerformancePanel: React.FC<
 
         toast.success("Performance Assessment saved successfully!");
         setIsDirty(false);
+
+        // Update cache on successful DB save
+        const cacheKey = `${targetStaff.id}_${monthYearKey}`;
+        _kpiAssessmentCache.set(cacheKey, {
+          empId,
+          dateOfJoining,
+          department,
+          appraiserName,
+          reviewerName,
+          weightages,
+          selfScores,
+          supervisorScores,
+          comments,
+          customPeriodFrom: activeKeyIsCustom ? dbCustomPeriodFrom : "",
+          customPeriodTo: activeKeyIsCustom ? dbCustomPeriodTo : "",
+          customPeriodLabel: activeKeyIsCustom ? dbCustomPeriodLabel : "",
+          appraiseeSigned,
+          appraiseeSignDate,
+          appraiserSigned,
+          appraiserSignDate,
+          dbState: "synced",
+          typeCounts,
+          totalSubmissions,
+          timestamp: Date.now(),
+        });
       } catch (err: any) {
         console.error("Save to Database failed, saving to local storage:", err);
         toast.error("Cloud Sync failed. Saved locally inside localStorage.");
@@ -1161,6 +1442,31 @@ export const UserKpiPerformancePanel: React.FC<
       appraiser_sign_date: appraiserSignDate,
     };
     localStorage.setItem(localKey, JSON.stringify(payload));
+
+    const cacheKey = `${targetStaff.id}_${monthYearKey}`;
+    _kpiAssessmentCache.set(cacheKey, {
+      empId,
+      dateOfJoining,
+      department,
+      appraiserName,
+      reviewerName,
+      weightages,
+      selfScores,
+      supervisorScores,
+      comments,
+      customPeriodFrom: activeKeyIsCustom ? dbCustomPeriodFrom : "",
+      customPeriodTo: activeKeyIsCustom ? dbCustomPeriodTo : "",
+      customPeriodLabel: activeKeyIsCustom ? dbCustomPeriodLabel : "",
+      appraiseeSigned,
+      appraiseeSignDate,
+      appraiserSigned,
+      appraiserSignDate,
+      dbState: "local",
+      typeCounts,
+      totalSubmissions,
+      timestamp: Date.now(),
+    });
+
     toast.success("Performance Assessment saved locally!");
     setIsDirty(false);
   };
