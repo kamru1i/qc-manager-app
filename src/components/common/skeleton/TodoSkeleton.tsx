@@ -43,30 +43,21 @@ export const TodoSkeleton: React.FC<TodoSkeletonProps> = ({ className = '' }) =>
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className="py-5 px-1 flex items-start justify-between gap-4"
+            className="py-4 px-1 flex items-center justify-between gap-4"
           >
-            {/* Left side: task text + badge + notes */}
-            <div className="flex-1 space-y-2.5">
-              <div className="flex items-center gap-2.5">
+            {/* Left side: status circle + task text + badge */}
+            <div className="flex-1 flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full border border-slate-700/60 bg-slate-800/40 shrink-0" />
+              <div className="flex-1 flex items-center gap-2.5">
                 <div
                   className={`h-3.5 rounded-lg ${innerBg}`}
-                  style={{ width: `${45 + (i * 17) % 35}%` }}
+                  style={{ width: `${45 + ((i * 17) % 35)}%` }}
                 />
                 {/* Permanent badge placeholder (shown on some items) */}
                 {i % 2 === 0 && (
-                  <div className="h-5 w-20 bg-indigo-600/10 border border-indigo-500/15 rounded-md" />
+                  <div className="h-4 w-16 bg-indigo-600/10 border border-indigo-500/15 rounded-full" />
                 )}
               </div>
-              {/* Notes row */}
-              <div className="flex items-center gap-2">
-                <div className={`h-3 w-12 bg-slate-850/30 rounded`} />
-                <div className={`h-8 w-64 ${innerBg} rounded-lg`} />
-              </div>
-            </div>
-
-            {/* Right side: circle checkbox */}
-            <div className="shrink-0 mt-2">
-              <div className="w-6 h-6 rounded-full border-2 border-slate-700/60 bg-slate-900/40" />
             </div>
           </div>
         ))}

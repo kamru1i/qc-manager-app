@@ -31,6 +31,45 @@ interface TodoPanelProps {
   profile: Profile | null;
 }
 
+interface CachedDailyTodos {
+  todos: TodoItem[];
+  date: string;
+  timestamp: number;
+}
+
+interface CachedArchiveTodos {
+  archiveTodos: TodoItem[];
+  yearMonth: string;
+  timestamp: number;
+}
+
+// Module-level caches to preserve state across component remounts and focus changes
+const _dailyTodosCache = new Map<string, CachedDailyTodos>();
+const _archiveTodosCache = new Map<string, CachedArchiveTodos>();
+
+const updateDailyCache = (userId: string, date: string, todos: TodoItem[]) => {
+  if (!userId) return;
+  _dailyTodosCache.set(`${userId}_${date}`, {
+    todos,
+    date,
+    timestamp: Date.now(),
+  });
+};
+
+const updateArchiveCache = (
+  userId: string,
+  year: string,
+  month: string,
+  archiveTodos: TodoItem[],
+) => {
+  if (!userId) return;
+  _archiveTodosCache.set(`${userId}_${year}_${month}`, {
+    archiveTodos,
+    yearMonth: `${year}_${month}`,
+    timestamp: Date.now(),
+  });
+};
+
 // All-time tasks are dynamically managed by the user using the "All-Time" checkbox when adding a task.
 
 export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
@@ -46,8 +85,59 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     localStorage.setItem("todoTabPrefs", subTab);
   }, [subTab]);
 
-  const [loading, setLoading] = useState(false);
-  const [todos, setTodos] = useState<TodoItem[]>([]);
+  // Daily State
+  const [todayStr] = useState(() => new Date().toLocaleDateString("en-CA")); // Local YYYY-MM-DD
+  const isCarryingOverRef = React.useRef(false);
+
+  // Archive / All State
+  const [selectedYear, setSelectedYear] = useState(() =>
+    new Date().getFullYear().toString(),
+  );
+  const [selectedMonth, setSelectedMonth] = useState(() =>
+    String(new Date().getMonth() + 1).padStart(2, "0"),
+  );
+
+  const profileId = profile?.id || "";
+  const initialDailyCache = _dailyTodosCache.get(`${profileId}_${todayStr}`);
+  const initialArchiveCache = _archiveTodosCache.get(
+    `${profileId}_${selectedYear}_${selectedMonth}`,
+  );
+
+  const [loading, setLoading] = useState(() => !initialDailyCache);
+  const [todos, setTodos] = useState<TodoItem[]>(() => initialDailyCache?.todos || []);
+
+  const [archiveTodos, setArchiveTodos] = useState<TodoItem[]>(
+    () => initialArchiveCache?.archiveTodos || [],
+  );
+  const [archiveLoading, setArchiveLoading] = useState(
+    () => !initialArchiveCache,
+  );
+
+  const setAndCacheTodos = useCallback(
+    (updater: TodoItem[] | ((prev: TodoItem[]) => TodoItem[])) => {
+      setTodos((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        if (profile?.id) {
+          updateDailyCache(profile.id, todayStr, next);
+        }
+        return next;
+      });
+    },
+    [profile?.id, todayStr],
+  );
+
+  const setAndCacheArchiveTodos = useCallback(
+    (updater: TodoItem[] | ((prev: TodoItem[]) => TodoItem[])) => {
+      setArchiveTodos((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        if (profile?.id) {
+          updateArchiveCache(profile.id, selectedYear, selectedMonth, next);
+        }
+        return next;
+      });
+    },
+    [profile?.id, selectedYear, selectedMonth],
+  );
 
   const sortedTodos = React.useMemo(() => sortTodosByActivity(todos), [todos]);
 
@@ -75,19 +165,6 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   } | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Daily State
-  const [todayStr] = useState(() => new Date().toLocaleDateString("en-CA")); // Local YYYY-MM-DD
-  const isCarryingOverRef = React.useRef(false);
-
-  // Archive / All State
-  const [selectedYear, setSelectedYear] = useState(() =>
-    new Date().getFullYear().toString(),
-  );
-  const [selectedMonth, setSelectedMonth] = useState(() =>
-    String(new Date().getMonth() + 1).padStart(2, "0"),
-  );
-  const [archiveTodos, setArchiveTodos] = useState<TodoItem[]>([]);
-  const [archiveLoading, setArchiveLoading] = useState(false);
   const [copiedDates, setCopiedDates] = useState<Record<string, boolean>>({});
 
   const yearsList = React.useMemo(() => {
@@ -111,170 +188,179 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   ];
 
   // Fetch Daily Todos and Handle Carry-Over / All-Time auto-population
-  const fetchDailyTodos = useCallback(async () => {
-    if (!profile) return;
-    setLoading(true);
-    try {
-      // 1. Fetch today's existing todos — most recently active first
-      const { data: todayData, error: todayErr } = await todosService.getTodos({
-        userId: profile.id,
-        todoDate: todayStr,
-      });
+  const fetchDailyTodos = useCallback(
+    async (isSilent = false) => {
+      if (!profile?.id) return;
+      if (!isSilent) setLoading(true);
+      try {
+        // 1. Fetch today's existing todos — most recently active first
+        const { data: todayData, error: todayErr } =
+          await todosService.getTodos({
+            userId: profile.id,
+            todoDate: todayStr,
+          });
 
-      if (todayErr) throw todayErr;
+        if (todayErr) throw todayErr;
 
-      let currentTodayTodos = (todayData || []) as unknown as TodoItem[];
+        let currentTodayTodos = (todayData || []) as unknown as TodoItem[];
 
-      // A. Check for existing duplicates in today's list and clean them up
-      const uniqueTodayMap = new Map<string, TodoItem>();
-      const duplicateIdsToDelete: string[] = [];
+        // A. Check for existing duplicates in today's list and clean them up
+        const uniqueTodayMap = new Map<string, TodoItem>();
+        const duplicateIdsToDelete: string[] = [];
 
-      currentTodayTodos.forEach((todo) => {
-        const key = todo.task.trim().toLowerCase();
-        const existing = uniqueTodayMap.get(key);
-        if (existing) {
-          // Merge status and is_all_time
-          if (todo.status === "Completed" && existing.status !== "Completed") {
-            existing.status = "Completed";
-          } else if (todo.status === "Working" && existing.status === "Idle") {
-            existing.status = "Working";
+        currentTodayTodos.forEach((todo) => {
+          const key = todo.task.trim().toLowerCase();
+          const existing = uniqueTodayMap.get(key);
+          if (existing) {
+            // Merge status and is_all_time
+            if (todo.status === "Completed" && existing.status !== "Completed") {
+              existing.status = "Completed";
+            } else if (todo.status === "Working" && existing.status === "Idle") {
+              existing.status = "Working";
+            }
+            if (todo.is_all_time) {
+              existing.is_all_time = true;
+            }
+            duplicateIdsToDelete.push(todo.id);
+          } else {
+            uniqueTodayMap.set(key, { ...todo });
           }
-          if (todo.is_all_time) {
-            existing.is_all_time = true;
+        });
+
+        if (duplicateIdsToDelete.length > 0) {
+          // Delete duplicates in database
+          const { error: deleteErr } =
+            await todosService.deleteTodo(duplicateIdsToDelete);
+
+          if (deleteErr)
+            console.error("Failed to auto-clean duplicate todos:", deleteErr);
+          currentTodayTodos = Array.from(uniqueTodayMap.values());
+        }
+
+        // 2. If today has zero todos, perform the carry-over & all-time auto-population
+        if (currentTodayTodos.length === 0) {
+          if (isCarryingOverRef.current) {
+            setLoading(false);
+            return;
           }
-          duplicateIdsToDelete.push(todo.id);
-        } else {
-          uniqueTodayMap.set(key, { ...todo });
-        }
-      });
+          isCarryingOverRef.current = true;
 
-      if (duplicateIdsToDelete.length > 0) {
-        // Delete duplicates in database
-        const { error: deleteErr } = await todosService.deleteTodo(duplicateIdsToDelete);
+          try {
+            // A. Find the most recent active day to carry over "Working" tasks
+            const { data: lastActiveDate, error: lastDateErr } =
+              await todosService.getLatestTodoDateBefore(profile.id, todayStr);
 
-        if (deleteErr)
-          console.error("Failed to auto-clean duplicate todos:", deleteErr);
-        currentTodayTodos = Array.from(uniqueTodayMap.values());
-      }
+            if (lastDateErr) throw lastDateErr;
 
-      // 2. If today has zero todos, perform the carry-over & all-time auto-population
-      if (currentTodayTodos.length === 0) {
-        if (isCarryingOverRef.current) {
-          setLoading(false);
-          return;
-        }
-        isCarryingOverRef.current = true;
+            if (lastActiveDate) {
+              const { data: lastTodos, error: lastErr } =
+                await todosService.getTodos({
+                  userId: profile.id,
+                  todoDate: lastActiveDate,
+                  orderBy: "created",
+                });
 
-        try {
-          // A. Find the most recent active day to carry over "Working" tasks
-          const { data: lastActiveDate, error: lastDateErr } =
-            await todosService.getLatestTodoDateBefore(profile.id, todayStr);
+              if (lastErr) throw lastErr;
 
-          if (lastDateErr) throw lastDateErr;
+              const lastActiveTodos = lastTodos || [];
+              const taskMap = new Map<string, Partial<TodoItem>>();
 
-          if (lastActiveDate) {
-            const { data: lastTodos, error: lastErr } = await todosService.getTodos({
-              userId: profile.id,
-              todoDate: lastActiveDate,
-              orderBy: 'created',
-            });
+              lastActiveTodos.forEach((task) => {
+                // Carry over if it was not completed ('Working' or 'Idle') OR if it is an 'All-Time' task (recreated daily)
+                const shouldCarryOver =
+                  task.status === "Working" ||
+                  task.status === "Idle" ||
+                  task.is_all_time;
 
-            if (lastErr) throw lastErr;
-
-            const lastActiveTodos = lastTodos || [];
-            const taskMap = new Map<string, Partial<TodoItem>>();
-
-            lastActiveTodos.forEach((task) => {
-              // Carry over if it was not completed ('Working' or 'Idle') OR if it is an 'All-Time' task (recreated daily)
-              const shouldCarryOver =
-                task.status === "Working" ||
-                task.status === "Idle" ||
-                task.is_all_time;
-
-              if (shouldCarryOver) {
-                const taskKey = task.task.trim().toLowerCase();
-                const existing = taskMap.get(taskKey);
-                if (existing) {
-                  // If the new one is permanent, ensure the combined one is also permanent
-                  if (task.is_all_time) {
-                    existing.is_all_time = true;
+                if (shouldCarryOver) {
+                  const taskKey = task.task.trim().toLowerCase();
+                  const existing = taskMap.get(taskKey);
+                  if (existing) {
+                    // If the new one is permanent, ensure the combined one is also permanent
+                    if (task.is_all_time) {
+                      existing.is_all_time = true;
+                    }
+                  } else {
+                    taskMap.set(taskKey, {
+                      user_id: profile.id,
+                      codename: (profile.username || "").toUpperCase(),
+                      task: task.task.trim(),
+                      status: "Idle", // Every carried over task starts as 'Idle' today
+                      comment: task.is_all_time ? "" : task.comment || "", // reset comment for all-time tasks
+                      todo_date: todayStr,
+                      is_all_time: task.is_all_time,
+                    });
                   }
-                } else {
-                  taskMap.set(taskKey, {
-                    user_id: profile.id,
-                    codename: profile.username.toUpperCase(),
-                    task: task.task.trim(),
-                    status: "Idle", // Every carried over task starts as 'Idle' today
-                    comment: task.is_all_time ? "" : task.comment || "", // reset comment for all-time tasks
-                    todo_date: todayStr,
-                    is_all_time: task.is_all_time,
-                  });
+                }
+              });
+
+              const tempInserted = Array.from(taskMap.values());
+
+              // Insert carried-over and all-time tasks into database
+              if (tempInserted.length > 0) {
+                const { data: insertedData, error: insertErr } =
+                  await todosService.bulkCreateTodos(tempInserted);
+
+                if (insertErr) throw insertErr;
+                if (insertedData) {
+                  currentTodayTodos = insertedData;
                 }
               }
-            });
-
-            const tempInserted = Array.from(taskMap.values());
-
-            // Insert carried-over and all-time tasks into database
-            if (tempInserted.length > 0) {
-              const { data: insertedData, error: insertErr } =
-                await todosService.bulkCreateTodos(tempInserted);
-
-              if (insertErr) throw insertErr;
-              if (insertedData) {
-                currentTodayTodos = insertedData;
-              }
             }
+          } finally {
+            isCarryingOverRef.current = false;
           }
-        } finally {
-          isCarryingOverRef.current = false;
         }
-      }
 
-      setTodos(currentTodayTodos);
-    } catch (err: unknown) {
-      console.error(
-        "Failed to fetch daily todos:",
-        (err as Error)?.message || err,
-      );
-      toast.error("Failed to load today's Todo list.");
-    } finally {
-      setLoading(false);
-    }
-  }, [profile, todayStr]);
+        setAndCacheTodos(currentTodayTodos);
+      } catch (err: unknown) {
+        console.error(
+          "Failed to fetch daily todos:",
+          (err as Error)?.message || err,
+        );
+        toast.error("Failed to load today's Todo list.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [profile?.id, profile?.username, todayStr, setAndCacheTodos],
+  );
 
   // Fetch Archive (All) Todos based on selected Month/Year
-  const fetchArchiveTodos = useCallback(async () => {
-    if (!profile) return;
-    setArchiveLoading(true);
-    try {
-      const yearNum = parseInt(selectedYear, 10);
-      const monthNum = parseInt(selectedMonth, 10);
-      const lastDay = new Date(yearNum, monthNum, 0).getDate();
+  const fetchArchiveTodos = useCallback(
+    async (isSilent = false) => {
+      if (!profile?.id) return;
+      if (!isSilent) setArchiveLoading(true);
+      try {
+        const yearNum = parseInt(selectedYear, 10);
+        const monthNum = parseInt(selectedMonth, 10);
+        const lastDay = new Date(yearNum, monthNum, 0).getDate();
 
-      const startDate = `${selectedYear}-${selectedMonth}-01`;
-      const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
+        const startDate = `${selectedYear}-${selectedMonth}-01`;
+        const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
 
-      const { data, error } = await todosService.getTodos({
-        userId: profile.id,
-        gteDate: startDate,
-        lteDate: endDate,
-        excludeStatus: 'Idle',
-        orderBy: 'date',
-      });
+        const { data, error } = await todosService.getTodos({
+          userId: profile.id,
+          gteDate: startDate,
+          lteDate: endDate,
+          excludeStatus: "Idle",
+          orderBy: "date",
+        });
 
-      if (error) throw error;
-      setArchiveTodos(data || []);
-    } catch (err: unknown) {
-      console.error(
-        "Failed to fetch archive todos:",
-        (err as Error)?.message || err,
-      );
-      toast.error("Failed to load historical Todo list.");
-    } finally {
-      setArchiveLoading(false);
-    }
-  }, [profile, selectedYear, selectedMonth]);
+        if (error) throw error;
+        setAndCacheArchiveTodos(data || []);
+      } catch (err: unknown) {
+        console.error(
+          "Failed to fetch archive todos:",
+          (err as Error)?.message || err,
+        );
+        toast.error("Failed to load historical Todo list.");
+      } finally {
+        setArchiveLoading(false);
+      }
+    },
+    [profile?.id, selectedYear, selectedMonth, setAndCacheArchiveTodos],
+  );
 
   // Handle Mounting state for Portals
   useEffect(() => {
@@ -284,19 +370,28 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Handle Initial Load and Sub-tab toggle updates
   useEffect(() => {
+    if (!profile?.id) return;
     if (subTab === "daily") {
-      fetchDailyTodos();
+      const hasCached = _dailyTodosCache.has(`${profile.id}_${todayStr}`);
+      fetchDailyTodos(hasCached);
     } else {
-      fetchArchiveTodos();
+      const hasCached = _archiveTodosCache.has(
+        `${profile.id}_${selectedYear}_${selectedMonth}`,
+      );
+      fetchArchiveTodos(hasCached);
     }
-  }, [subTab, fetchDailyTodos, fetchArchiveTodos]);
+  }, [subTab, profile?.id, todayStr, selectedYear, selectedMonth, fetchDailyTodos, fetchArchiveTodos]);
 
   // Trigger archive fetch on Month or Year dropdown changes
   useEffect(() => {
+    if (!profile?.id) return;
     if (subTab === "all") {
-      fetchArchiveTodos();
+      const hasCached = _archiveTodosCache.has(
+        `${profile.id}_${selectedYear}_${selectedMonth}`,
+      );
+      fetchArchiveTodos(hasCached);
     }
-  }, [selectedYear, selectedMonth, subTab, fetchArchiveTodos]);
+  }, [selectedYear, selectedMonth, subTab, profile?.id, fetchArchiveTodos]);
 
   // Realtime: keep today's list in sync across all open windows via the
   // unified channel (no extra Supabase channels/subscriptions created here).
@@ -309,7 +404,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       if (payload.eventType === "DELETE") {
         const deletedId = (payload.old as { id?: string })?.id;
         if (!deletedId) return;
-        setTodos((prev) => prev.filter((t) => t.id !== deletedId));
+        setAndCacheTodos((prev) => prev.filter((t) => t.id !== deletedId));
         setSelectedTodoIds((prev) => prev.filter((id) => id !== deletedId));
         return;
       }
@@ -318,17 +413,17 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       if (!row?.id) return;
       // Daily list only shows today's tasks; a row moved off today is removed.
       if (row.todo_date !== todayStr) {
-        setTodos((prev) => prev.filter((t) => t.id !== row.id));
+        setAndCacheTodos((prev) => prev.filter((t) => t.id !== row.id));
         return;
       }
-      setTodos((prev) => {
+      setAndCacheTodos((prev) => {
         const exists = prev.some((t) => t.id === row.id);
         return exists
           ? prev.map((t) => (t.id === row.id ? { ...t, ...row } : t))
           : [...prev, row];
       });
     },
-    [todayStr],
+    [todayStr, setAndCacheTodos],
   );
   useRealtimeHandler("todos", handleTodoRealtime);
 
@@ -339,18 +434,18 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
     try {
       const { data, error } = await todosService.createTodo({
-          user_id: profile.id,
-          codename: profile.username.toUpperCase(),
-          task: newTask.trim(),
-          status: "Idle",
-          comment: "",
-          todo_date: todayStr,
-          is_all_time: isAllTime,
-        });
+        user_id: profile.id,
+        codename: (profile.username || "").toUpperCase(),
+        task: newTask.trim(),
+        status: "Idle",
+        comment: "",
+        todo_date: todayStr,
+        is_all_time: isAllTime,
+      });
 
       if (error) throw error;
       if (data) {
-        setTodos((prev) => [...prev, data]);
+        setAndCacheTodos((prev) => [...prev, data]);
         setNewTask("");
         setIsAllTime(false);
         toast.success("Task added successfully!");
@@ -373,13 +468,15 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     }
 
     try {
-      const { error } = await todosService.updateTodo(todo.id, { status: nextStatus });
+      const { error } = await todosService.updateTodo(todo.id, {
+        status: nextStatus,
+      });
 
       if (error) throw error;
       // Optimistic bump — the DB trigger sets the authoritative timestamp,
       // and the realtime UPDATE echo reconciles it across all windows.
       const bumpedAt = new Date().toISOString();
-      setTodos((prev) =>
+      setAndCacheTodos((prev) =>
         prev.map((t) =>
           t.id === todo.id
             ? { ...t, status: nextStatus, last_activity_at: bumpedAt }
@@ -397,10 +494,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   const handleToggleAllTime = async (todo: TodoItem) => {
     const nextAllTime = !todo.is_all_time;
     try {
-      const { error } = await todosService.updateTodo(todo.id, { is_all_time: nextAllTime });
+      const { error } = await todosService.updateTodo(todo.id, {
+        is_all_time: nextAllTime,
+      });
 
       if (error) throw error;
-      setTodos((prev) =>
+      setAndCacheTodos((prev) =>
         prev.map((t) =>
           t.id === todo.id
             ? {
@@ -432,10 +531,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     const current = todos.find((t) => t.id === id);
     if (current && (current.comment || "") === commentVal) return;
     try {
-      const { error } = await todosService.updateTodo(id, { comment: commentVal });
+      const { error } = await todosService.updateTodo(id, {
+        comment: commentVal,
+      });
 
       if (error) throw error;
-      setTodos((prev) =>
+      setAndCacheTodos((prev) =>
         prev.map((t) =>
           t.id === id
             ? {
@@ -502,7 +603,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       });
 
       if (error) throw error;
-      setTodos((prev) =>
+      setAndCacheTodos((prev) =>
         prev.map((t) =>
           t.id === todoId
             ? {
@@ -541,7 +642,9 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       const { error } = await todosService.deleteTodo(selectedTodoIds);
 
       if (error) throw error;
-      setTodos((prev) => prev.filter((t) => !selectedTodoIds.includes(t.id)));
+      setAndCacheTodos((prev) =>
+        prev.filter((t) => !selectedTodoIds.includes(t.id)),
+      );
       setSelectedTodoIds([]);
       toast.success("Selected tasks deleted successfully.");
     } catch (err: unknown) {
@@ -559,7 +662,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
       const { error } = await todosService.deleteTodo(id);
 
       if (error) throw error;
-      setTodos((prev) => prev.filter((t) => t.id !== id));
+      setAndCacheTodos((prev) => prev.filter((t) => t.id !== id));
       toast.success("Task deleted successfully.");
     } catch (err: unknown) {
       console.error("Failed to delete todo:", (err as Error)?.message || err);
@@ -770,7 +873,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
                   <button
                     type="button"
-                    onClick={fetchDailyTodos}
+                    onClick={() => fetchDailyTodos(false)}
                     disabled={loading}
                     className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
                     title="Refresh today's list"
@@ -830,7 +933,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                       <div
                         key={todo.id}
                         onContextMenu={(e) => handleContextMenu(e, todo.id)}
-                        className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-200 ${
+                        className={`p-3.5 sm:p-4 rounded-xl border flex items-center justify-between gap-3 sm:gap-4 transition-all duration-200 ${
                           isSelected
                             ? "bg-indigo-950/15 border-indigo-500/40 shadow-inner"
                             : todo.status === "Completed"
@@ -840,9 +943,31 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                                 : "bg-theme-card-container/5 border-theme-card-bg/50 hover:border-theme-border-muted opacity-80"
                         }`}
                       >
-                        {/* Task and Comment Layout */}
-                        <div className="flex-1 min-w-0 flex items-start gap-3">
-                          <div className="flex-1 space-y-1.5 min-w-0">
+                        {/* Task and Status Layout: Status Icon immediately before the Todo Name */}
+                        <div className="flex-1 min-w-0 flex items-center gap-3">
+                          {/* Interactive status toggle icon - moved to the LEFT before task name */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(todo)}
+                            className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                              todo.status === "Completed"
+                                ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                                : todo.status === "Working"
+                                  ? "bg-purple-500/20 border-purple-500/50 text-purple-400"
+                                  : "border-theme-border-active text-transparent hover:border-theme-border-active hover:bg-theme-border-input/40"
+                            }`}
+                            title={`Status: ${todo.status}. Click to cycle status.`}
+                          >
+                            {todo.status === "Completed" ? (
+                              <Check className="w-3.5 h-3.5 stroke-3" />
+                            ) : todo.status === "Working" ? (
+                              <Clock className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5 opacity-0 hover:opacity-40 transition-opacity stroke-3" />
+                            )}
+                          </button>
+
+                          <div className="flex-1 min-w-0">
                             {editingTodoId === todo.id ? (
                               <input
                                 type="text"
@@ -912,49 +1037,25 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                           </div>
                         </div>
 
-                        {/* Meta Indicators and Actions */}
-                        <div className="flex items-center gap-3 shrink-0 justify-end border-t sm:border-0 border-theme-card-bg/50 pt-3 sm:pt-0">
-                          <div className="flex items-center gap-2">
-                            {/* Interactive checkmark toggle - moved to the RIGHT */}
-                            <button
-                              onClick={() => handleToggleStatus(todo)}
-                              className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                                todo.status === "Completed"
-                                  ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
-                                  : todo.status === "Working"
-                                    ? "bg-purple-500/20 border-purple-500/50 text-purple-400"
-                                    : "border-theme-border-active text-transparent hover:border-theme-border-active hover:bg-theme-border-input/40"
-                              }`}
-                              title={`Status: ${todo.status}. Click to cycle status.`}
-                            >
-                              {todo.status === "Completed" ? (
-                                <Check className="w-3.5 h-3.5 stroke-3" />
-                              ) : todo.status === "Working" ? (
-                                <Clock className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-                              ) : (
-                                <Check className="w-3.5 h-3.5 opacity-0 hover:opacity-40 transition-opacity stroke-3" />
-                              )}
-                            </button>
-
-                            {/* Checkbox for bulk selection - on the RIGHT with smooth transition animation */}
-                            <button
-                              type="button"
-                              onClick={() => handleToggleSelect(todo.id)}
-                              className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
-                                isSelected
-                                  ? "bg-indigo-500 border-indigo-500"
-                                  : ""
-                              } ${
-                                selectedTodoIds.length > 0
-                                  ? "scale-100 opacity-100 w-4 ml-1"
-                                  : "scale-0 opacity-0 w-0 pointer-events-none ml-0"
-                              }`}
-                            >
-                              {isSelected && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                              )}
-                            </button>
-                          </div>
+                        {/* Right Side: Bulk Selection Checkbox */}
+                        <div className="flex items-center shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSelect(todo.id)}
+                            className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                              isSelected
+                                ? "bg-indigo-500 border-indigo-500"
+                                : ""
+                            } ${
+                              selectedTodoIds.length > 0
+                                ? "scale-100 opacity-100 w-4 ml-1"
+                                : "scale-0 opacity-0 w-0 pointer-events-none ml-0"
+                            }`}
+                          >
+                            {isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     );
@@ -1016,7 +1117,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             <div className="ml-auto flex items-center gap-2 mt-4 sm:mt-0 shrink-0">
               <button
                 type="button"
-                onClick={fetchArchiveTodos}
+                onClick={() => fetchArchiveTodos(false)}
                 disabled={archiveLoading}
                 className="px-4 py-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
