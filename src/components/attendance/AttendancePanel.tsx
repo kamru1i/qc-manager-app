@@ -626,7 +626,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
   ];
 
   return (
-    <div className="space-y-4 w-full max-w-7xl mx-auto pb-12">
+    <div className="space-y-4 w-full pb-12 animate-fade-in">
       {/* Controls & Quick Actions Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-theme-card-bg/40 p-3.5 sm:p-4 rounded-2xl border border-theme-border-input/60 shadow-sm backdrop-blur-md">
         {/* Left Side: Filters (Daily: Date & Search | Monthly: Year, Month & Search) */}
