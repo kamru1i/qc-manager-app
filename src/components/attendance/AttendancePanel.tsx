@@ -626,27 +626,87 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
   ];
 
   return (
-    <div className="space-y-6 w-full max-w-7xl mx-auto pb-12">
-      {/* Header Bar */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-theme-card-bg/40 p-4 sm:p-5 rounded-2xl border border-theme-border-input/60 shadow-sm backdrop-blur-md">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-400">
-              <Clock className="w-5 h-5" />
+    <div className="space-y-4 w-full max-w-7xl mx-auto pb-12">
+      {/* Controls & Quick Actions Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-theme-card-bg/40 p-3.5 sm:p-4 rounded-2xl border border-theme-border-input/60 shadow-sm backdrop-blur-md">
+        {/* Left Side: Filters (Daily: Date & Search | Monthly: Year, Month & Search) */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {subTab === "daily" ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
+                Date:
+              </span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-1.5 rounded-xl border border-theme-border-input bg-theme-card-bg text-xs text-theme-text-primary font-medium focus:outline-none focus:border-blue-500 transition-colors"
+              />
+              {selectedDate !== todayStr && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(todayStr)}
+                  className="px-2.5 py-1 text-[11px] font-bold bg-blue-600/15 border border-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-600/25 transition-all cursor-pointer"
+                >
+                  Today
+                </button>
+              )}
             </div>
-            <div>
-              <h1 className="text-base sm:text-lg font-bold text-theme-text-primary flex items-center gap-2">
-                Attendance & Shift Tracking
-              </h1>
-              <p className="text-xs text-theme-text-muted">
-                Live office join, break, and prayer tracking for all team members.
-              </p>
+          ) : (
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Year Selector */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
+                  Year:
+                </span>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-blue-500"
+                >
+                  {yearsList.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Month Selector */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
+                  Month:
+                </span>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-blue-500"
+                >
+                  {monthsList.map((m) => (
+                    <option key={m.val} value={m.val}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+          )}
+
+          {/* Search filter */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-theme-text-muted" />
+            <input
+              type="text"
+              placeholder="Filter codename..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-3 py-1.5 rounded-xl border border-theme-border-input bg-theme-card-bg text-xs text-theme-text-primary placeholder:text-theme-text-muted/60 focus:outline-none focus:border-blue-500 transition-colors w-40 sm:w-56"
+            />
           </div>
         </div>
 
-        {/* User Quick Actions (Join, Close, Snack Break, Prayer Break) */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
+        {/* Right Side: Quick Actions + Sub-tabs + Refresh */}
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end ml-auto">
           {/* Join Shift Action */}
           <button
             type="button"
@@ -750,6 +810,18 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
               Monthly
             </button>
           </div>
+
+          {/* Refresh Action */}
+          <button
+            type="button"
+            onClick={() => (subTab === "daily" ? fetchDailyAttendance(false) : fetchMonthlyAttendance(false))}
+            disabled={subTab === "daily" ? loading : monthlyLoading}
+            className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs font-bold"
+            title="Refresh attendance records"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${(subTab === "daily" ? loading : monthlyLoading) ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -767,54 +839,6 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
       {/* SUBTAB 1: DAILY VIEW */}
       {subTab === "daily" && (
         <div className="space-y-4">
-          {/* Controls Bar: Date Selector, Search, Refresh */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-theme-card-container/40 p-3.5 border border-theme-border-input/60 rounded-xl">
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
-                  Date:
-                </span>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl border border-theme-border-input bg-theme-card-bg text-xs text-theme-text-primary font-medium focus:outline-none focus:border-blue-500 transition-colors"
-                />
-                {selectedDate !== todayStr && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDate(todayStr)}
-                    className="px-2.5 py-1 text-[11px] font-bold bg-blue-600/15 border border-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-600/25 transition-all cursor-pointer"
-                  >
-                    Today
-                  </button>
-                )}
-              </div>
-
-              {/* Search filter */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-theme-text-muted" />
-                <input
-                  type="text"
-                  placeholder="Filter codename..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-xl border border-theme-border-input bg-theme-card-bg text-xs text-theme-text-primary placeholder:text-theme-text-muted/60 focus:outline-none focus:border-blue-500 transition-colors w-40 sm:w-56"
-                />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => fetchDailyAttendance(false)}
-              disabled={loading}
-              className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs font-bold ml-auto"
-              title="Refresh attendance records"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </button>
-          </div>
 
           {/* Daily Live Attendance Table */}
           {loading ? (
@@ -1077,70 +1101,6 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
       {/* SUBTAB 2: MONTHLY VIEW */}
       {subTab === "monthly" && (
         <div className="space-y-4">
-          {/* Monthly Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-theme-card-container/40 p-3.5 border border-theme-border-input/60 rounded-xl">
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Year Selector */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
-                  Year:
-                </span>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-blue-500"
-                >
-                  {yearsList.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Month Selector */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
-                  Month:
-                </span>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-blue-500"
-                >
-                  {monthsList.map((m) => (
-                    <option key={m.val} value={m.val}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Search filter */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-theme-text-muted" />
-                <input
-                  type="text"
-                  placeholder="Filter codename..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-xl border border-theme-border-input bg-theme-card-bg text-xs text-theme-text-primary placeholder:text-theme-text-muted/60 focus:outline-none focus:border-blue-500 transition-colors w-40 sm:w-56"
-                />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => fetchMonthlyAttendance(false)}
-              disabled={monthlyLoading}
-              className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs font-bold ml-auto"
-              title="Refresh monthly records"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${monthlyLoading ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </button>
-          </div>
-
           {/* Monthly Aggregated Table */}
           {monthlyLoading ? (
             <SkeletonLoader variant="table" rows={6} />

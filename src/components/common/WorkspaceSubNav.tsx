@@ -251,8 +251,8 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
   } else if (activeTab === "attendance") {
     subTabs.push({
       id: "attendance_shifts",
-      label: "Home",
-      icon: Home,
+      label: "Attendance & Shift Tracking",
+      icon: Clock,
       iconColor: "text-blue-400",
       active: true,
       onClick: () => {},
@@ -346,6 +346,9 @@ const getSubTabColors = (id: string): { class: string; hex: string } => {
 
     case "my_todos":
       return { class: "text-sky-400", hex: "#38bdf8" };
+
+    case "attendance_shifts":
+      return { class: "text-blue-400", hex: "#60a5fa" };
 
     case "leaderboard":
       return { class: "text-amber-400", hex: "#fbbf24" };
