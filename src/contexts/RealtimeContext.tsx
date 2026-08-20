@@ -20,6 +20,7 @@ export type RealtimeTable =
   | 'quotation_mistakes'
   | 'compliance_rules'
   | 'attendance_daily'
+  | 'attendance_shifts'
   | 'attendance_breaks';
 
 /** Minimal interface for Supabase postgres_changes payloads */
@@ -221,7 +222,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
         );
       }
 
-      // ── attendance_daily & attendance_breaks (state transitions only) ──
+      // ── attendance_daily, attendance_shifts & attendance_breaks (state transitions only) ──
       if (hasAttendanceAccess) {
         channel.on(
           'postgres_changes',
@@ -232,6 +233,16 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             ...(hasAdminAttendanceAccess ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('attendance_daily', payload as unknown as RealtimePayload)
+        );
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'attendance_shifts',
+            ...(hasAdminAttendanceAccess ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
+          },
+          (payload) => dispatch('attendance_shifts', payload as unknown as RealtimePayload)
         );
         channel.on(
           'postgres_changes',

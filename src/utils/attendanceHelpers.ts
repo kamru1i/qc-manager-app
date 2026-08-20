@@ -1,4 +1,4 @@
-import { AttendanceDaily, AttendanceBreak } from "@/types";
+import { AttendanceDaily, AttendanceShift, AttendanceBreak } from "@/types";
 
 /**
  * Formats an ISO string to "HH:MM:SS AM/PM" (with second-level precision)
@@ -57,52 +57,6 @@ export function formatDateToDDMMYYYY(dateStr: string): string {
 }
 
 /**
- * Calculates net working seconds for a daily attendance record and its break sessions
- */
-export function calculateWorkingSeconds(
-  daily: AttendanceDaily | null,
-  breaks: AttendanceBreak[],
-  nowMs: number
-): number {
-  if (!daily?.join_time) return 0;
-  const isClosed = daily.status === "CLOSED";
-  const joinMs = new Date(daily.join_time).getTime();
-  const endMs = isClosed && daily.close_time ? new Date(daily.close_time).getTime() : nowMs;
-
-  const grossSeconds = Math.max(0, Math.floor((endMs - joinMs) / 1000));
-
-  let totalBreakSeconds = 0;
-  breaks.forEach((b) => {
-    if (b.end_time) {
-      const s = new Date(b.start_time).getTime();
-      const e = new Date(b.end_time).getTime();
-      totalBreakSeconds += Math.max(0, Math.floor((e - s) / 1000));
-    } else if (!isClosed) {
-      // Active break
-      const s = new Date(b.start_time).getTime();
-      totalBreakSeconds += Math.max(0, Math.floor((nowMs - s) / 1000));
-    }
-  });
-
-  return Math.max(0, grossSeconds - totalBreakSeconds);
-}
-
-/**
- * Calculates elapsed seconds for a single break session
- */
-export function calculateBreakSessionSeconds(
-  b: AttendanceBreak,
-  nowMs: number
-): number {
-  const startMs = new Date(b.start_time).getTime();
-  if (b.end_time) {
-    const endMs = new Date(b.end_time).getTime();
-    return Math.max(0, Math.floor((endMs - startMs) / 1000));
-  }
-  return Math.max(0, Math.floor((nowMs - startMs) / 1000));
-}
-
-/**
  * Formats a short elapsed time string for a break session, e.g. "10m 32s" or "02s"
  */
 export function formatBreakSessionElapsed(totalSeconds: number): string {
@@ -113,6 +67,115 @@ export function formatBreakSessionElapsed(totalSeconds: number): string {
     return `${mins}m ${String(secs).padStart(2, "0")}s`;
   }
   return `${secs}s`;
+}
+
+/**
+ * Calculates elapsed seconds for a single break session
+ */
+export function calculateBreakSessionSeconds(
+  b: AttendanceBreak,
+  nowMs: number
+): number {
+  const startMs = new Date(b.start_time).getTime();
+  if (isNaN(startMs)) return 0;
+  if (b.end_time) {
+    const endMs = new Date(b.end_time).getTime();
+    if (isNaN(endMs)) return 0;
+    return Math.max(0, Math.floor((endMs - startMs) / 1000));
+  }
+  return Math.max(0, Math.floor((nowMs - startMs) / 1000));
+}
+
+/**
+ * Checks if a break belongs to a given shift session
+ */
+export function doesBreakBelongToShift(
+  b: AttendanceBreak,
+  shift: AttendanceShift
+): boolean {
+  if (b.shift_id && b.shift_id === shift.id) return true;
+  const breakStartMs = new Date(b.start_time).getTime();
+  const shiftJoinMs = new Date(shift.join_time).getTime();
+  if (isNaN(breakStartMs) || isNaN(shiftJoinMs)) return false;
+  if (breakStartMs < shiftJoinMs) return false;
+
+  if (shift.close_time) {
+    const shiftCloseMs = new Date(shift.close_time).getTime();
+    if (!isNaN(shiftCloseMs) && breakStartMs > shiftCloseMs) return false;
+  }
+  return true;
+}
+
+/**
+ * Calculates net working seconds for a single shift session
+ */
+export function calculateShiftWorkingSeconds(
+  shift: AttendanceShift,
+  breaks: AttendanceBreak[],
+  nowMs: number
+): number {
+  const joinMs = new Date(shift.join_time).getTime();
+  if (isNaN(joinMs)) return 0;
+
+  const isShiftClosed = !!shift.close_time;
+  const endMs = isShiftClosed && shift.close_time ? new Date(shift.close_time).getTime() : nowMs;
+  if (isNaN(endMs)) return 0;
+
+  const grossSeconds = Math.max(0, Math.floor((endMs - joinMs) / 1000));
+
+  // Find breaks belonging to this specific shift
+  const shiftBreaks = breaks.filter((b) => doesBreakBelongToShift(b, shift));
+  let totalBreakSeconds = 0;
+
+  shiftBreaks.forEach((b) => {
+    totalBreakSeconds += calculateBreakSessionSeconds(b, isShiftClosed && shift.close_time ? endMs : nowMs);
+  });
+
+  return Math.max(0, grossSeconds - totalBreakSeconds);
+}
+
+/**
+ * Calculates total daily net working seconds across all shift sessions for a user today
+ */
+export function calculateTotalDailyWorkingSeconds(
+  daily: AttendanceDaily | null,
+  shifts: AttendanceShift[],
+  breaks: AttendanceBreak[],
+  nowMs: number
+): number {
+  if (shifts && shifts.length > 0) {
+    let totalSec = 0;
+    shifts.forEach((s) => {
+      totalSec += calculateShiftWorkingSeconds(s, breaks, nowMs);
+    });
+    return totalSec;
+  }
+
+  // Fallback for legacy single-shift daily record
+  if (!daily?.join_time) return 0;
+  const dummyShift: AttendanceShift = {
+    id: daily.id,
+    attendance_id: daily.id,
+    user_id: daily.user_id,
+    attendance_date: daily.attendance_date,
+    join_time: daily.join_time,
+    close_time: daily.status === "CLOSED" ? daily.close_time : null,
+    duration_seconds: daily.total_work_minutes * 60,
+    created_at: daily.created_at,
+    updated_at: daily.updated_at,
+  };
+  return calculateShiftWorkingSeconds(dummyShift, breaks, nowMs);
+}
+
+/**
+ * Legacy alias for backwards compatibility
+ */
+export function calculateWorkingSeconds(
+  daily: AttendanceDaily | null,
+  breaks: AttendanceBreak[],
+  nowMs: number
+): number {
+  return calculateTotalDailyWorkingSeconds(daily, [], breaks, nowMs);
 }
 
 /**
@@ -134,13 +197,15 @@ export function calculateTotalBreakTypeSeconds(
 
 /**
  * Returns the most recent activity timestamp (in ms) for an employee's attendance
- * Covers: join_time, close_time, updated_at, break start/end times
+ * Covers: all shift joins/closes, break starts/ends, and daily updates
  */
 export function getLatestAttendanceActivityTimestamp(
   daily: AttendanceDaily | null,
-  breaks: AttendanceBreak[]
+  shifts: AttendanceShift[] = [],
+  breaks: AttendanceBreak[] = []
 ): number {
   let latest = 0;
+
   if (daily?.join_time) {
     const t = new Date(daily.join_time).getTime();
     if (!isNaN(t) && t > latest) latest = t;
@@ -153,6 +218,22 @@ export function getLatestAttendanceActivityTimestamp(
     const t = new Date(daily.updated_at).getTime();
     if (!isNaN(t) && t > latest) latest = t;
   }
+
+  shifts.forEach((s) => {
+    if (s.join_time) {
+      const t = new Date(s.join_time).getTime();
+      if (!isNaN(t) && t > latest) latest = t;
+    }
+    if (s.close_time) {
+      const t = new Date(s.close_time).getTime();
+      if (!isNaN(t) && t > latest) latest = t;
+    }
+    if (s.updated_at) {
+      const t = new Date(s.updated_at).getTime();
+      if (!isNaN(t) && t > latest) latest = t;
+    }
+  });
+
   breaks.forEach((b) => {
     if (b.start_time) {
       const t = new Date(b.start_time).getTime();
@@ -167,5 +248,6 @@ export function getLatestAttendanceActivityTimestamp(
       if (!isNaN(t) && t > latest) latest = t;
     }
   });
+
   return latest;
 }

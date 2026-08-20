@@ -53,6 +53,9 @@ export const QUOTATION_MISTAKE_COLUMNS =
 export const ATTENDANCE_DAILY_COLUMNS =
   'id, user_id, attendance_date, join_time, close_time, status, total_work_minutes, total_break_minutes, total_prayer_minutes, created_at, updated_at';
 
+export const ATTENDANCE_SHIFT_COLUMNS =
+  'id, attendance_id, user_id, attendance_date, join_time, close_time, duration_seconds, created_at, updated_at';
+
 export const ATTENDANCE_BREAK_COLUMNS =
-  'id, attendance_id, user_id, attendance_date, type, start_time, end_time, duration_minutes, created_at, updated_at';
+  'id, attendance_id, shift_id, user_id, attendance_date, type, start_time, end_time, duration_minutes, created_at, updated_at';
 

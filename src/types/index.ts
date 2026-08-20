@@ -219,9 +219,22 @@ export interface AttendanceDaily {
   } | null;
 }
 
+export interface AttendanceShift {
+  id: string;
+  attendance_id: string;
+  user_id: string;
+  attendance_date: string; // YYYY-MM-DD
+  join_time: string; // ISO timestamptz
+  close_time: string | null; // ISO timestamptz
+  duration_seconds: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AttendanceBreak {
   id: string;
   attendance_id: string;
+  shift_id?: string | null;
   user_id: string;
   attendance_date: string; // YYYY-MM-DD
   type: 'snack' | 'prayer';
@@ -235,5 +248,6 @@ export interface AttendanceBreak {
 export interface AttendanceRowData {
   profile: Profile;
   daily: AttendanceDaily | null;
+  shifts: AttendanceShift[];
   breaks: AttendanceBreak[];
 }

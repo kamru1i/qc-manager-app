@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Profile, AttendanceDaily, AttendanceBreak, AttendanceStatus, AttendanceRowData } from "@/types";
+import {
+  Profile,
+  AttendanceDaily,
+  AttendanceShift,
+  AttendanceBreak,
+  AttendanceStatus,
+  AttendanceRowData,
+} from "@/types";
 import {
   Clock,
   Play,
@@ -17,6 +24,7 @@ import { toast } from "sonner";
 import { attendanceService } from "@/services";
 import { useRealtimeHandler, RealtimePayload } from "@/contexts/RealtimeContext";
 import { useProfiles } from "@/contexts/ProfilesContext";
+import { useAttendance } from "@/contexts/AttendanceContext";
 import { canWriteAttendance } from "@/utils/permissionService";
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
 import {
@@ -24,9 +32,10 @@ import {
   formatDurationSeconds,
   formatDurationMinutes,
   formatDateToDDMMYYYY,
-  calculateWorkingSeconds,
-  calculateBreakSessionSeconds,
   formatBreakSessionElapsed,
+  calculateShiftWorkingSeconds,
+  calculateTotalDailyWorkingSeconds,
+  calculateBreakSessionSeconds,
   calculateTotalBreakTypeSeconds,
   getLatestAttendanceActivityTimestamp,
 } from "@/utils/attendanceHelpers";
@@ -35,13 +44,32 @@ interface AttendancePanelProps {
   profile: Profile | null;
 }
 
-// Module-level caches to preserve state across component remounts and focus changes
-const _dailyAttendanceCache = new Map<string, { dailyList: AttendanceDaily[]; breaksList: AttendanceBreak[]; timestamp: number }>();
-const _monthlyAttendanceCache = new Map<string, { dailyList: AttendanceDaily[]; breaksList: AttendanceBreak[]; timestamp: number }>();
+// Module-level cache for historical daily & monthly data
+const _historicalDailyCache = new Map<
+  string,
+  {
+    dailyList: AttendanceDaily[];
+    shiftsList: AttendanceShift[];
+    breaksList: AttendanceBreak[];
+    timestamp: number;
+  }
+>();
+const _monthlyAttendanceCache = new Map<
+  string,
+  {
+    dailyList: AttendanceDaily[];
+    shiftsList: AttendanceShift[];
+    breaksList: AttendanceBreak[];
+    timestamp: number;
+  }
+>();
 
 export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => {
   const { profilesList } = useProfiles();
   const datePickerRef = useRef<HTMLInputElement>(null);
+
+  // Consume shared canonical context for today's state & actions
+  const attendanceContext = useAttendance();
 
   const [subTab, setSubTab] = useState<"daily" | "monthly">(() => {
     if (typeof window !== "undefined") {
@@ -65,22 +93,29 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
   const [selectedMonth, setSelectedMonth] = useState(() => String(new Date().getMonth() + 1).padStart(2, "0"));
   const [searchQuery, setSearchQuery] = useState("");
 
-  const cachedDaily = _dailyAttendanceCache.get(selectedDate);
-  const [dailyAttendance, setDailyAttendance] = useState<AttendanceDaily[]>(() => cachedDaily?.dailyList || []);
-  const [attendanceBreaks, setAttendanceBreaks] = useState<AttendanceBreak[]>(() => cachedDaily?.breaksList || []);
-  const [loading, setLoading] = useState(() => !cachedDaily);
+  // Historical Daily State (when selectedDate !== todayStr)
+  const cachedHistorical = _historicalDailyCache.get(selectedDate);
+  const [histDaily, setHistDaily] = useState<AttendanceDaily[]>(() => cachedHistorical?.dailyList || []);
+  const [histShifts, setHistShifts] = useState<AttendanceShift[]>(() => cachedHistorical?.shiftsList || []);
+  const [histBreaks, setHistBreaks] = useState<AttendanceBreak[]>(() => cachedHistorical?.breaksList || []);
+  const [histLoading, setHistLoading] = useState(() => !cachedHistorical && !isToday);
 
+  // Monthly State
   const cachedMonthlyKey = `${selectedYear}_${selectedMonth}`;
   const cachedMonthly = _monthlyAttendanceCache.get(cachedMonthlyKey);
   const [monthlyAttendance, setMonthlyAttendance] = useState<AttendanceDaily[]>(() => cachedMonthly?.dailyList || []);
+  const [monthlyShifts, setMonthlyShifts] = useState<AttendanceShift[]>(() => cachedMonthly?.shiftsList || []);
   const [monthlyBreaks, setMonthlyBreaks] = useState<AttendanceBreak[]>(() => cachedMonthly?.breaksList || []);
   const [monthlyLoading, setMonthlyLoading] = useState(() => !cachedMonthly);
-  const profileId = profile?.id || "";
 
-  // Live timer tick state (updates every second in client without writing to DB)
-  const [now, setNow] = useState<number>(() => Date.now());
+  // Effective datasets for current selected daily view
+  const effectiveDaily = isToday ? attendanceContext.dailyAttendance : histDaily;
+  const effectiveShifts = isToday ? attendanceContext.attendanceShifts : histShifts;
+  const effectiveBreaks = isToday ? attendanceContext.attendanceBreaks : histBreaks;
+  const effectiveLoading = isToday ? attendanceContext.loading : histLoading;
+  const now = attendanceContext.now;
 
-  // Check if today / selected date is Sunday
+  // Check if selected date is Sunday
   const isSunday = useMemo(() => {
     try {
       const parts = selectedDate.split("-");
@@ -99,64 +134,50 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
     return canWriteAttendance(profile, profile?.global_settings, profilesList);
   }, [profile, profilesList]);
 
-  // Current logged in user's daily record & active break
-  const myDailyRecord = useMemo(() => {
-    if (!profileId) return null;
-    return dailyAttendance.find((a) => a.user_id === profileId) || null;
-  }, [profileId, dailyAttendance]);
+  // Current logged in user's status & active items
+  const myStatus = isToday ? attendanceContext.myStatus : "NOT_JOINED";
+  const isShiftActive = isToday && (myStatus === "WORKING" || myStatus === "SNACK_BREAK" || myStatus === "PRAYER_BREAK");
 
-  const myBreaks = useMemo(() => {
-    if (!profileId) return [];
-    return attendanceBreaks.filter((b) => b.user_id === profileId);
-  }, [profileId, attendanceBreaks]);
-
-  const activeBreak = useMemo(() => {
-    return myBreaks.find((b) => !b.end_time) || null;
-  }, [myBreaks]);
-
-  // Timer interval: tick every second if there is any active shift or break
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Fetch Daily Attendance
-  const fetchDailyAttendance = useCallback(
+  // Fetch Historical Daily Attendance (when selectedDate !== todayStr)
+  const fetchHistoricalDaily = useCallback(
     async (isSilent = false, signal?: AbortSignal) => {
-      if (!isSilent) setLoading(true);
+      if (isToday) return;
+      if (!isSilent) setHistLoading(true);
       try {
-        const [dailyRes, breaksRes] = await Promise.all([
+        const [dailyRes, shiftsRes, breaksRes] = await Promise.all([
           attendanceService.getDailyAttendance({ date: selectedDate, signal }),
+          attendanceService.getAttendanceShifts({ date: selectedDate, signal }),
           attendanceService.getAttendanceBreaks({ date: selectedDate, signal }),
         ]);
 
         if (signal?.aborted) return;
         if (dailyRes.error) throw dailyRes.error;
+        if (shiftsRes.error) throw shiftsRes.error;
         if (breaksRes.error) throw breaksRes.error;
 
         const nextDaily = dailyRes.data || [];
+        const nextShifts = shiftsRes.data || [];
         const nextBreaks = breaksRes.data || [];
 
-        setDailyAttendance(nextDaily);
-        setAttendanceBreaks(nextBreaks);
+        setHistDaily(nextDaily);
+        setHistShifts(nextShifts);
+        setHistBreaks(nextBreaks);
 
-        _dailyAttendanceCache.set(selectedDate, {
+        _historicalDailyCache.set(selectedDate, {
           dailyList: nextDaily,
+          shiftsList: nextShifts,
           breaksList: nextBreaks,
           timestamp: Date.now(),
         });
       } catch (err: unknown) {
         if (signal?.aborted) return;
-        console.error("Failed to fetch daily attendance:", err);
+        console.error("Failed to fetch historical attendance:", err);
         toast.error("Failed to load attendance records.");
       } finally {
-        if (!signal?.aborted) setLoading(false);
+        if (!signal?.aborted) setHistLoading(false);
       }
     },
-    [selectedDate]
+    [selectedDate, isToday]
   );
 
   // Fetch Monthly Attendance
@@ -171,23 +192,28 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
         const startDate = `${selectedYear}-${selectedMonth}-01`;
         const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
 
-        const [dailyRes, breaksRes] = await Promise.all([
+        const [dailyRes, shiftsRes, breaksRes] = await Promise.all([
           attendanceService.getDailyAttendance({ startDate, endDate, signal }),
+          attendanceService.getAttendanceShifts({ startDate, endDate, signal }),
           attendanceService.getAttendanceBreaks({ startDate, endDate, signal }),
         ]);
 
         if (signal?.aborted) return;
         if (dailyRes.error) throw dailyRes.error;
+        if (shiftsRes.error) throw shiftsRes.error;
         if (breaksRes.error) throw breaksRes.error;
 
         const nextDaily = dailyRes.data || [];
+        const nextShifts = shiftsRes.data || [];
         const nextBreaks = breaksRes.data || [];
 
         setMonthlyAttendance(nextDaily);
+        setMonthlyShifts(nextShifts);
         setMonthlyBreaks(nextBreaks);
 
         _monthlyAttendanceCache.set(`${selectedYear}_${selectedMonth}`, {
           dailyList: nextDaily,
+          shiftsList: nextShifts,
           breaksList: nextBreaks,
           timestamp: Date.now(),
         });
@@ -202,349 +228,61 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
     [selectedYear, selectedMonth]
   );
 
-  // Initial & Dependency-driven fetch
+  // Trigger historical fetch when date changes
   useEffect(() => {
-    const controller = new AbortController();
-    if (subTab === "daily") {
-      const hasCached = _dailyAttendanceCache.has(selectedDate);
-      fetchDailyAttendance(hasCached, controller.signal);
-    } else {
-      const hasCached = _monthlyAttendanceCache.has(`${selectedYear}_${selectedMonth}`);
-      fetchMonthlyAttendance(hasCached, controller.signal);
+    if (!isToday) {
+      const controller = new AbortController();
+      fetchHistoricalDaily(false, controller.signal);
+      return () => controller.abort();
     }
-    return () => controller.abort();
-  }, [subTab, selectedDate, selectedYear, selectedMonth, fetchDailyAttendance, fetchMonthlyAttendance]);
+  }, [selectedDate, isToday, fetchHistoricalDaily]);
 
-  // Realtime handler for attendance_daily
-  const handleDailyRealtime = useCallback(
-    (payload: RealtimePayload) => {
-      if (payload.eventType === "DELETE") {
-        const deletedId = (payload.old as { id?: string })?.id;
-        if (!deletedId) return;
-        setDailyAttendance((prev) => prev.filter((d) => d.id !== deletedId));
-        return;
-      }
-
-      const row = payload.new as unknown as AttendanceDaily;
-      if (!row?.id) return;
-
-      // Only update if matches current date in daily view
-      if (row.attendance_date === selectedDate) {
-        setDailyAttendance((prev) => {
-          const exists = prev.some((d) => d.id === row.id);
-          const next = exists ? prev.map((d) => (d.id === row.id ? { ...d, ...row } : d)) : [...prev, row];
-          _dailyAttendanceCache.set(selectedDate, {
-            dailyList: next,
-            breaksList: attendanceBreaks,
-            timestamp: Date.now(),
-          });
-          return next;
-        });
-      }
-    },
-    [selectedDate, attendanceBreaks]
-  );
-
-  // Realtime handler for attendance_breaks
-  const handleBreaksRealtime = useCallback(
-    (payload: RealtimePayload) => {
-      if (payload.eventType === "DELETE") {
-        const deletedId = (payload.old as { id?: string })?.id;
-        if (!deletedId) return;
-        setAttendanceBreaks((prev) => prev.filter((b) => b.id !== deletedId));
-        return;
-      }
-
-      const row = payload.new as unknown as AttendanceBreak;
-      if (!row?.id) return;
-
-      if (row.attendance_date === selectedDate) {
-        setAttendanceBreaks((prev) => {
-          const exists = prev.some((b) => b.id === row.id);
-          const next = exists ? prev.map((b) => (b.id === row.id ? { ...b, ...row } : b)) : [...prev, row];
-          _dailyAttendanceCache.set(selectedDate, {
-            dailyList: dailyAttendance,
-            breaksList: next,
-            timestamp: Date.now(),
-          });
-          return next;
-        });
-      }
-    },
-    [selectedDate, dailyAttendance]
-  );
-
-  useRealtimeHandler("attendance_daily", handleDailyRealtime);
-  useRealtimeHandler("attendance_breaks", handleBreaksRealtime);
+  // Trigger monthly fetch when subTab is monthly
+  useEffect(() => {
+    if (subTab === "monthly") {
+      const controller = new AbortController();
+      fetchMonthlyAttendance(false, controller.signal);
+      return () => controller.abort();
+    }
+  }, [subTab, selectedYear, selectedMonth, fetchMonthlyAttendance]);
 
   // ── Actions ─────────────────────────────────────────────────────────────
 
-  // Join Shift
   const handleJoinShift = async () => {
-    if (!profile?.id) return;
-    if (isSunday) {
-      toast.error("Today is Sunday (Weekly Holiday). Joining is disabled.");
-      return;
-    }
     if (!hasWritePermission) {
       toast.error("You do not have write permission for Attendance.");
       return;
     }
-
-    const joinTimeIso = new Date().toISOString();
-    try {
-      const { data, error } = await attendanceService.joinShift(profile.id, todayStr, joinTimeIso);
-      if (error) throw error;
-      if (data) {
-        setDailyAttendance((prev) => {
-          const exists = prev.some((d) => d.id === data.id);
-          const next = exists ? prev.map((d) => (d.id === data.id ? data : d)) : [...prev, data];
-          _dailyAttendanceCache.set(selectedDate, {
-            dailyList: next,
-            breaksList: attendanceBreaks,
-            timestamp: Date.now(),
-          });
-          return next;
-        });
-        toast.success("Joined shift successfully! Have a great workday.");
-      }
-    } catch (err: unknown) {
-      console.error("Failed to join shift:", err);
-      toast.error("Failed to record shift join.");
-    }
+    await attendanceContext.joinShift();
   };
 
-  // Close Shift
   const handleCloseShift = async () => {
-    if (!profile?.id || !myDailyRecord) return;
     if (!hasWritePermission) {
       toast.error("You do not have write permission for Attendance.");
       return;
     }
-
-    const closeTimeIso = new Date().toISOString();
-    const closeTimeMs = new Date(closeTimeIso).getTime();
-
-    // Calculate total break & prayer seconds
-    let currentTotalBreakSec = 0;
-    let currentTotalPrayerSec = 0;
-
-    myBreaks.forEach((b) => {
-      if (b.end_time) {
-        const s = new Date(b.start_time).getTime();
-        const e = new Date(b.end_time).getTime();
-        const dur = Math.max(0, Math.floor((e - s) / 1000));
-        if (b.type === "snack") currentTotalBreakSec += dur;
-        else currentTotalPrayerSec += dur;
-      }
-    });
-
-    if (activeBreak) {
-      const breakStartMs = new Date(activeBreak.start_time).getTime();
-      const activeDurSec = Math.max(0, Math.floor((closeTimeMs - breakStartMs) / 1000));
-      if (activeBreak.type === "snack") currentTotalBreakSec += activeDurSec;
-      else currentTotalPrayerSec += activeDurSec;
-
-      const durMin = activeDurSec / 60;
-      await attendanceService.endBreak(
-        activeBreak.id,
-        myDailyRecord.id,
-        closeTimeIso,
-        durMin,
-        currentTotalBreakSec / 60,
-        currentTotalPrayerSec / 60
-      );
-    }
-
-    const joinMs = myDailyRecord.join_time ? new Date(myDailyRecord.join_time).getTime() : closeTimeMs;
-    const grossSec = Math.max(0, Math.floor((closeTimeMs - joinMs) / 1000));
-    const netWorkSec = Math.max(0, grossSec - currentTotalBreakSec - currentTotalPrayerSec);
-    const netWorkMin = netWorkSec / 60;
-
-    try {
-      const { data, error } = await attendanceService.closeShift(
-        myDailyRecord.id,
-        closeTimeIso,
-        netWorkMin
-      );
-      if (error) throw error;
-      if (data) {
-        setDailyAttendance((prev) => {
-          const next = prev.map((d) => (d.id === data.id ? { ...data, updated_at: closeTimeIso } : d));
-          _dailyAttendanceCache.set(selectedDate, {
-            dailyList: next,
-            breaksList: attendanceBreaks,
-            timestamp: Date.now(),
-          });
-          return next;
-        });
-        toast.success("Shift closed successfully. See you next time!");
-      }
-    } catch (err: unknown) {
-      console.error("Failed to close shift:", err);
-      toast.error("Failed to close shift.");
-    }
+    await attendanceContext.closeShift();
   };
 
-  // Toggle Snack Break (UI label: Break)
   const handleToggleSnackBreak = async () => {
-    if (!profile?.id || !myDailyRecord) return;
     if (!hasWritePermission) {
       toast.error("You do not have write permission for Attendance.");
       return;
     }
-
-    const nowIso = new Date().toISOString();
-
-    if (myDailyRecord.status === "SNACK_BREAK" && activeBreak && activeBreak.type === "snack") {
-      // End snack break
-      const startMs = new Date(activeBreak.start_time).getTime();
-      const durSec = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
-      const durMin = durSec / 60;
-
-      let totalBreakSec = 0;
-      myBreaks.forEach((b) => {
-        if (b.id !== activeBreak.id && b.type === "snack" && b.end_time) {
-          totalBreakSec += Math.max(0, Math.floor((new Date(b.end_time).getTime() - new Date(b.start_time).getTime()) / 1000));
-        }
-      });
-      totalBreakSec += durSec;
-      const totalBreakMin = totalBreakSec / 60;
-      const totalPrayerMin = Number(myDailyRecord.total_prayer_minutes) || 0;
-
-      try {
-        const { error } = await attendanceService.endBreak(
-          activeBreak.id,
-          myDailyRecord.id,
-          nowIso,
-          durMin,
-          totalBreakMin,
-          totalPrayerMin
-        );
-        if (error) throw error;
-        setDailyAttendance((prev) =>
-          prev.map((d) =>
-            d.id === myDailyRecord.id
-              ? { ...d, status: "WORKING", total_break_minutes: totalBreakMin, updated_at: nowIso }
-              : d
-          )
-        );
-        setAttendanceBreaks((prev) =>
-          prev.map((b) =>
-            b.id === activeBreak.id ? { ...b, end_time: nowIso, duration_minutes: durMin, updated_at: nowIso } : b
-          )
-        );
-        toast.success("Break ended. Back to work!");
-      } catch (err: unknown) {
-        console.error("Failed to end break:", err);
-        toast.error("Failed to end break.");
-      }
-    } else if (myDailyRecord.status === "WORKING") {
-      // Start snack break
-      try {
-        const { data, error } = await attendanceService.startBreak(
-          myDailyRecord.id,
-          profile.id,
-          todayStr,
-          "snack",
-          nowIso
-        );
-        if (error) throw error;
-        if (data) {
-          setAttendanceBreaks((prev) => [...prev, data]);
-          setDailyAttendance((prev) =>
-            prev.map((d) => (d.id === myDailyRecord.id ? { ...d, status: "SNACK_BREAK", updated_at: nowIso } : d))
-          );
-          toast.success("Break started! Enjoy your break.");
-        }
-      } catch (err: unknown) {
-        console.error("Failed to start break:", err);
-        toast.error("Failed to start break.");
-      }
-    }
+    await attendanceContext.toggleSnackBreak();
   };
 
-  // Toggle Prayer Break
   const handleTogglePrayerBreak = async () => {
-    if (!profile?.id || !myDailyRecord) return;
     if (!hasWritePermission) {
       toast.error("You do not have write permission for Attendance.");
       return;
     }
-
-    const nowIso = new Date().toISOString();
-
-    if (myDailyRecord.status === "PRAYER_BREAK" && activeBreak && activeBreak.type === "prayer") {
-      // End prayer break
-      const startMs = new Date(activeBreak.start_time).getTime();
-      const durSec = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
-      const durMin = durSec / 60;
-
-      let totalPrayerSec = 0;
-      myBreaks.forEach((b) => {
-        if (b.id !== activeBreak.id && b.type === "prayer" && b.end_time) {
-          totalPrayerSec += Math.max(0, Math.floor((new Date(b.end_time).getTime() - new Date(b.start_time).getTime()) / 1000));
-        }
-      });
-      totalPrayerSec += durSec;
-      const totalPrayerMin = totalPrayerSec / 60;
-      const totalBreakMin = Number(myDailyRecord.total_break_minutes) || 0;
-
-      try {
-        const { error } = await attendanceService.endBreak(
-          activeBreak.id,
-          myDailyRecord.id,
-          nowIso,
-          durMin,
-          totalBreakMin,
-          totalPrayerMin
-        );
-        if (error) throw error;
-        setDailyAttendance((prev) =>
-          prev.map((d) =>
-            d.id === myDailyRecord.id
-              ? { ...d, status: "WORKING", total_prayer_minutes: totalPrayerMin, updated_at: nowIso }
-              : d
-          )
-        );
-        setAttendanceBreaks((prev) =>
-          prev.map((b) =>
-            b.id === activeBreak.id ? { ...b, end_time: nowIso, duration_minutes: durMin, updated_at: nowIso } : b
-          )
-        );
-        toast.success("Prayer break ended. Back to work!");
-      } catch (err: unknown) {
-        console.error("Failed to end prayer break:", err);
-        toast.error("Failed to end prayer break.");
-      }
-    } else if (myDailyRecord.status === "WORKING") {
-      // Start prayer break
-      try {
-        const { data, error } = await attendanceService.startBreak(
-          myDailyRecord.id,
-          profile.id,
-          todayStr,
-          "prayer",
-          nowIso
-        );
-        if (error) throw error;
-        if (data) {
-          setAttendanceBreaks((prev) => [...prev, data]);
-          setDailyAttendance((prev) =>
-            prev.map((d) => (d.id === myDailyRecord.id ? { ...d, status: "PRAYER_BREAK", updated_at: nowIso } : d))
-          );
-          toast.success("Prayer break started.");
-        }
-      } catch (err: unknown) {
-        console.error("Failed to start prayer break:", err);
-        toast.error("Failed to start prayer break.");
-      }
-    }
+    await attendanceContext.togglePrayerBreak();
   };
 
   // Compile full Daily Table Rows (Employees list + Attendance records)
   // Dynamic Row Ordering: Most Recent Attendance Action moves to TOP!
-  // If user closed their shift, that action timestamp keeps them at top!
+  // Any action (Join, Close, Break Start/End, Prayer Start/End) moves row to top!
   const dailyRows: (AttendanceRowData & { latestActivityTimestamp: number })[] = useMemo(() => {
     return profilesList
       .filter((p) => {
@@ -557,13 +295,15 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
         );
       })
       .map((emp) => {
-        const daily = dailyAttendance.find((d) => d.user_id === emp.id) || null;
-        const breaks = attendanceBreaks.filter((b) => b.user_id === emp.id);
-        const latestActivityTimestamp = getLatestAttendanceActivityTimestamp(daily, breaks);
+        const daily = effectiveDaily.find((d) => d.user_id === emp.id) || null;
+        const shifts = effectiveShifts.filter((s) => s.user_id === emp.id);
+        const breaks = effectiveBreaks.filter((b) => b.user_id === emp.id);
+        const latestActivityTimestamp = getLatestAttendanceActivityTimestamp(daily, shifts, breaks);
 
         return {
           profile: emp,
           daily,
+          shifts,
           breaks,
           latestActivityTimestamp,
         };
@@ -584,7 +324,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
         const codeB = (b.profile.codename || b.profile.username).toUpperCase();
         return codeA.localeCompare(codeB);
       });
-  }, [profilesList, dailyAttendance, attendanceBreaks, searchQuery]);
+  }, [profilesList, effectiveDaily, effectiveShifts, effectiveBreaks, searchQuery]);
 
   // Monthly aggregated statistics
   const monthlySummary = useMemo(() => {
@@ -674,14 +414,6 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
     }
   };
 
-  // Determine single dynamic shift button state
-  const isShiftActive = Boolean(
-    myDailyRecord &&
-      myDailyRecord.join_time &&
-      myDailyRecord.status !== "CLOSED" &&
-      myDailyRecord.status !== "DAY_OFF"
-  );
-
   return (
     <div className="space-y-4 w-full pb-12 animate-fade-in">
       {/* Controls & Quick Actions Bar */}
@@ -700,92 +432,84 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                 <span className="text-xs font-mono font-semibold text-theme-text-primary tracking-wide">
                   {formatDateToDDMMYYYY(selectedDate)}
                 </span>
-
-                {/* Hidden Native Date Input */}
                 <input
-                  type="date"
                   ref={datePickerRef}
+                  type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                  className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
                   tabIndex={-1}
+                  aria-label="Select Date"
                 />
               </div>
 
-              {selectedDate !== todayStr && (
+              {!isToday && (
                 <button
                   type="button"
                   onClick={() => setSelectedDate(todayStr)}
-                  className="px-2.5 py-1 text-[11px] font-bold bg-blue-600/15 border border-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-600/25 transition-all cursor-pointer shadow-sm"
-                  title="Jump to today's attendance"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-600/15 border border-blue-500/30 text-blue-400 hover:bg-blue-600/25 transition-all cursor-pointer shadow-sm"
+                  title="Return to today"
                 >
                   Today
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Year Selector */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
-                  Year:
-                </span>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-blue-500"
-                >
-                  {yearsList.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex items-center gap-2">
+              {/* Year Select */}
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-sm"
+                aria-label="Select Year"
+              >
+                {yearsList.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
 
-              {/* Month Selector */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-theme-text-muted">
-                  Month:
-                </span>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-blue-500"
-                >
-                  {monthsList.map((m) => (
-                    <option key={m.val} value={m.val}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Month Select */}
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-sm"
+                aria-label="Select Month"
+              >
+                {monthsList.map((m) => (
+                  <option key={m.val} value={m.val}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
-          {/* Search filter */}
+          {/* Search Box */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-theme-text-muted" />
             <input
               type="text"
               placeholder="Filter codename..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-xl border border-theme-border-input bg-theme-card-bg text-xs text-theme-text-primary placeholder:text-theme-text-muted/60 focus:outline-none focus:border-blue-500 transition-colors w-40 sm:w-56"
+              className="pl-8 pr-3 py-1.5 bg-theme-card-bg border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder:text-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-blue-500 w-44 sm:w-56 shadow-sm"
+              aria-label="Filter codename"
             />
+            <Search className="w-3.5 h-3.5 text-theme-text-muted absolute left-2.5 top-2.5" />
           </div>
         </div>
 
-        {/* Right Side: Quick Actions + Sub-tabs + Refresh */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end ml-auto">
-          {/* Single Dynamic Shift Action Button (Join when not active, Close when active) */}
+        {/* Right Side: Shift & Break Action Buttons (Only 1 Shift Button) */}
+        <div className="flex items-center gap-2 flex-wrap ml-auto">
+          {/* Shift Action Button (Single Dynamic Toggle: Join <-> Close) */}
           {!isShiftActive ? (
             <button
               type="button"
               onClick={handleJoinShift}
-              disabled={!hasWritePermission || isSunday}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm"
-              title="Start your workday and record join time"
+              disabled={!hasWritePermission || isSunday || !isToday}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm border bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+              title="Join Shift"
             >
               <Play className="w-3.5 h-3.5 fill-emerald-400" />
               Join
@@ -794,9 +518,9 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
             <button
               type="button"
               onClick={handleCloseShift}
-              disabled={!hasWritePermission || isSunday}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm"
-              title="Close your workday shift and finalize hours"
+              disabled={!hasWritePermission || !isToday}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm border bg-rose-500/20 border-rose-500/40 text-rose-300 hover:bg-rose-500/30"
+              title="Close Shift (Automatically closes any open break)"
             >
               <Square className="w-3.5 h-3.5 fill-rose-400" />
               Close
@@ -810,20 +534,19 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
             disabled={
               !hasWritePermission ||
               isSunday ||
-              !myDailyRecord ||
-              myDailyRecord.status === "CLOSED" ||
-              myDailyRecord.status === "PRAYER_BREAK" ||
-              myDailyRecord.status === "DAY_OFF"
+              !isToday ||
+              !isShiftActive ||
+              myStatus === "PRAYER_BREAK"
             }
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm border ${
-              myDailyRecord?.status === "SNACK_BREAK"
+              myStatus === "SNACK_BREAK"
                 ? "bg-amber-500/25 border-amber-500/60 text-amber-300 animate-pulse"
                 : "bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
             }`}
             title="Toggle normal break session"
           >
             <Coffee className="w-3.5 h-3.5" />
-            {myDailyRecord?.status === "SNACK_BREAK" ? "End Break" : "Break"}
+            {myStatus === "SNACK_BREAK" ? "End Break" : "Break"}
           </button>
 
           {/* Prayer Break Action */}
@@ -833,20 +556,19 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
             disabled={
               !hasWritePermission ||
               isSunday ||
-              !myDailyRecord ||
-              myDailyRecord.status === "CLOSED" ||
-              myDailyRecord.status === "SNACK_BREAK" ||
-              myDailyRecord.status === "DAY_OFF"
+              !isToday ||
+              !isShiftActive ||
+              myStatus === "SNACK_BREAK"
             }
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm border ${
-              myDailyRecord?.status === "PRAYER_BREAK"
+              myStatus === "PRAYER_BREAK"
                 ? "bg-sky-500/25 border-sky-500/60 text-sky-300 animate-pulse"
                 : "bg-sky-500/15 border-sky-500/30 text-sky-400 hover:bg-sky-500/20"
             }`}
             title="Toggle prayer break session"
           >
             <Sun className="w-3.5 h-3.5" />
-            {myDailyRecord?.status === "PRAYER_BREAK" ? "End Prayer Break" : "Prayer Break"}
+            {myStatus === "PRAYER_BREAK" ? "End Prayer Break" : "Prayer Break"}
           </button>
 
           <div className="h-6 w-px bg-theme-border-input/80 hidden sm:block mx-1" />
@@ -880,13 +602,24 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
           {/* Refresh Action: Icon-only [ ↻ ] */}
           <button
             type="button"
-            onClick={() => (subTab === "daily" ? fetchDailyAttendance(false) : fetchMonthlyAttendance(false))}
-            disabled={subTab === "daily" ? loading : monthlyLoading}
+            onClick={() => {
+              if (subTab === "daily") {
+                if (isToday) attendanceContext.refreshAttendance(false);
+                else fetchHistoricalDaily(false);
+              } else {
+                fetchMonthlyAttendance(false);
+              }
+            }}
+            disabled={subTab === "daily" ? effectiveLoading : monthlyLoading}
             className="p-2.5 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center justify-center shrink-0 shadow-sm"
             title="Refresh attendance records"
             aria-label="Refresh attendance records"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${(subTab === "daily" ? loading : monthlyLoading) ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${
+                (subTab === "daily" ? effectiveLoading : monthlyLoading) ? "animate-spin" : ""
+              }`}
+            />
           </button>
         </div>
       </div>
@@ -905,8 +638,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
       {/* SUBTAB 1: DAILY VIEW */}
       {subTab === "daily" && (
         <div className="space-y-4">
-          {/* Daily Live Attendance Table */}
-          {loading ? (
+          {effectiveLoading ? (
             <SkeletonLoader variant="table" rows={6} />
           ) : (
             <div className="bg-theme-page-bg/40 border border-theme-border-muted/80 rounded-2xl overflow-hidden shadow-inner backdrop-blur-sm">
@@ -915,7 +647,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                   <thead>
                     <tr className="bg-theme-card-container border-b border-theme-border-muted/80 text-[10px] text-theme-text-muted uppercase tracking-wider font-bold">
                       <th className="px-4 py-3 min-w-[160px] text-left">Employee Codename</th>
-                      <th className="px-4 py-3 min-w-[180px] text-center">Shift</th>
+                      <th className="px-4 py-3 min-w-[200px] text-center">Shift</th>
                       <th className="px-4 py-3 min-w-[210px] text-center">Break</th>
                       <th className="px-4 py-3 min-w-[210px] text-center">Prayer Break</th>
                       <th className="px-4 py-3 min-w-[130px] text-center">Status</th>
@@ -930,18 +662,33 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                         </td>
                       </tr>
                     ) : (
-                      dailyRows.map(({ profile: emp, daily, breaks }) => {
+                      dailyRows.map(({ profile: emp, daily, shifts, breaks }) => {
                         const isClosed = daily?.status === "CLOSED";
                         const isWorking = daily?.status === "WORKING";
                         const isSnackBreak = daily?.status === "SNACK_BREAK";
                         const isPrayerBreak = daily?.status === "PRAYER_BREAK";
                         const isEmployeeSunday = isSunday;
 
-                        const snackBreaks = breaks.filter((b) => b.type === "snack");
-                        const prayerBreaks = breaks.filter((b) => b.type === "prayer");
+                        // Sort breaks newest session on top
+                        const snackBreaks = breaks
+                          .filter((b) => b.type === "snack")
+                          .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+                        const prayerBreaks = breaks
+                          .filter((b) => b.type === "prayer")
+                          .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
 
-                        // Net working seconds calculation
-                        const workingSeconds = calculateWorkingSeconds(daily, breaks, now);
+                        // Sort shifts newest session on top
+                        const sortedShifts = [...shifts].sort(
+                          (a, b) => new Date(b.join_time).getTime() - new Date(a.join_time).getTime()
+                        );
+
+                        // Net working seconds across all shifts today
+                        const totalWorkingSeconds = calculateTotalDailyWorkingSeconds(
+                          daily,
+                          shifts,
+                          breaks,
+                          now
+                        );
 
                         // Total break & prayer seconds with exact second precision
                         const totalSnackSec = calculateTotalBreakTypeSeconds(breaks, "snack", now);
@@ -974,9 +721,37 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                               </div>
                             </td>
 
-                            {/* Shift (Join, Close, Live Timer) */}
+                            {/* Shift (Join, Close, Live Timer — Multi-shift supported) */}
                             <td className="px-4 py-3 text-center">
-                              {daily?.join_time ? (
+                              {sortedShifts.length > 0 ? (
+                                <div className="space-y-1 max-h-28 overflow-y-auto pr-1 custom-scrollbar flex flex-col items-center">
+                                  {sortedShifts.map((s, idx) => {
+                                    const isShiftActive = !s.close_time;
+                                    const sWorkingSec = calculateShiftWorkingSeconds(s, breaks, now);
+
+                                    return (
+                                      <div
+                                        key={s.id || idx}
+                                        className={`inline-flex flex-col items-center justify-center text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
+                                          isShiftActive
+                                            ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/35 font-bold"
+                                            : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between w-full text-[10px]">
+                                          <span className="text-theme-text-muted">
+                                            {formatAttendanceTime(s.join_time)} - {isShiftActive ? "Active" : formatAttendanceTime(s.close_time)}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-1 mt-0.5 text-[10px] font-bold">
+                                          {isShiftActive && <Clock className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />}
+                                          <span>Work: {formatDurationSeconds(sWorkingSec)}</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : daily?.join_time ? (
                                 <div className="space-y-1 flex flex-col items-center">
                                   <div className="flex items-center justify-center gap-1.5 text-[11px]">
                                     <span className="text-theme-text-muted">Join:</span>
@@ -995,7 +770,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                   {!isClosed && (
                                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
                                       <Clock className="w-2.5 h-2.5 animate-pulse" />
-                                      <span>Working: {formatDurationSeconds(workingSeconds)}</span>
+                                      <span>Working: {formatDurationSeconds(totalWorkingSeconds)}</span>
                                     </div>
                                   )}
                                 </div>
@@ -1004,7 +779,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                               )}
                             </td>
 
-                            {/* Break (Snack) */}
+                            {/* Break (Snack — Newest Session on Top) */}
                             <td className="px-4 py-3 text-center">
                               {snackBreaks.length === 0 ? (
                                 <span className="text-theme-text-muted/60">-</span>
@@ -1019,7 +794,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono ${
+                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
                                           isActive
                                             ? isRedWarning
                                               ? "bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse font-bold"
@@ -1040,7 +815,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                               )}
                             </td>
 
-                            {/* Prayer Break */}
+                            {/* Prayer Break (Newest Session on Top) */}
                             <td className="px-4 py-3 text-center">
                               {prayerBreaks.length === 0 ? (
                                 <span className="text-theme-text-muted/60">-</span>
@@ -1053,7 +828,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono ${
+                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
                                           isActive
                                             ? "bg-sky-500/20 text-sky-300 border-sky-500/40 font-bold"
                                             : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
@@ -1078,7 +853,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                 <span className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-400 border border-purple-500/30">
                                   Day Off
                                 </span>
-                              ) : !daily?.join_time ? (
+                              ) : (!daily?.join_time && shifts.length === 0) ? (
                                 <span className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/20">
                                   Not Joined
                                 </span>
@@ -1101,18 +876,27 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                               )}
                             </td>
 
-                            {/* Total Duration: Left-aligned with second-level precision */}
+                            {/* Total Duration (Left-aligned) */}
                             <td className="px-4 py-3 text-left">
-                              {daily?.join_time ? (
-                                <div className="space-y-0.5 text-[11px] font-mono flex flex-col items-start text-left">
-                                  <div className="text-emerald-400 font-bold">
-                                    Work: {formatDurationSeconds(workingSeconds)}
+                              {daily?.join_time || shifts.length > 0 ? (
+                                <div className="font-mono text-[11px] space-y-0.5 flex flex-col items-start text-left">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-emerald-400 font-bold">Work:</span>
+                                    <span className="text-emerald-300 font-bold">
+                                      {formatDurationSeconds(totalWorkingSeconds)}
+                                    </span>
                                   </div>
-                                  <div className="text-amber-400/90">
-                                    Break: {formatDurationSeconds(totalSnackSec)}
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-purple-400 font-semibold">Break:</span>
+                                    <span className="text-purple-300">
+                                      {formatDurationSeconds(totalSnackSec)}
+                                    </span>
                                   </div>
-                                  <div className="text-sky-400/90">
-                                    Prayer: {formatDurationSeconds(totalPrayerSec)}
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-sky-400 font-semibold">Prayer:</span>
+                                    <span className="text-sky-300">
+                                      {formatDurationSeconds(totalPrayerSec)}
+                                    </span>
                                   </div>
                                 </div>
                               ) : (
@@ -1134,7 +918,6 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
       {/* SUBTAB 2: MONTHLY VIEW */}
       {subTab === "monthly" && (
         <div className="space-y-4">
-          {/* Monthly Aggregated Table */}
           {monthlyLoading ? (
             <SkeletonLoader variant="table" rows={6} />
           ) : (
@@ -1144,54 +927,43 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                   <thead>
                     <tr className="bg-theme-card-container border-b border-theme-border-muted/80 text-[10px] text-theme-text-muted uppercase tracking-wider font-bold">
                       <th className="px-4 py-3 min-w-[160px] text-left">Employee Codename</th>
-                      <th className="px-4 py-3 min-w-[130px] text-center">Days Worked</th>
-                      <th className="px-4 py-3 min-w-[150px] text-center">Total Work Time</th>
-                      <th className="px-4 py-3 min-w-[150px] text-center">Total Break Time</th>
-                      <th className="px-4 py-3 min-w-[150px] text-center">Total Prayer Time</th>
+                      <th className="px-4 py-3 min-w-[100px] text-center">Days Worked</th>
+                      <th className="px-4 py-3 min-w-[150px] text-center">Total Working</th>
+                      <th className="px-4 py-3 min-w-[150px] text-center">Total Break</th>
+                      <th className="px-4 py-3 min-w-[150px] text-center">Total Prayer</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-theme-border-muted/40 text-theme-text-secondary">
                     {monthlySummary.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="py-12 text-center text-theme-text-muted">
-                          No monthly records found for this period.
+                          No employee records matching criteria.
                         </td>
                       </tr>
                     ) : (
-                      monthlySummary.map(({ profile: emp, daysWorked, totalWorkMinutes, totalBreakMinutes, totalPrayerMinutes }) => (
-                        <tr key={emp.id} className="hover:bg-theme-card-bg/25 transition-colors">
-                          {/* Employee */}
+                      monthlySummary.map((item) => (
+                        <tr key={item.profile.id} className="hover:bg-theme-card-bg/25 transition-colors">
                           <td className="px-4 py-3 font-semibold text-theme-text-primary text-left">
                             <div className="min-w-0">
                               <span className="font-mono text-xs font-bold text-theme-text-primary block truncate">
-                                {emp.codename || emp.username.toUpperCase()}
+                                {item.profile.codename || item.profile.username.toUpperCase()}
                               </span>
                               <span className="text-[10px] text-theme-text-muted block truncate">
-                                {emp.full_name || emp.job_role || emp.role}
+                                {item.profile.full_name || item.profile.job_role || item.profile.role}
                               </span>
                             </div>
                           </td>
-
-                          {/* Days Worked */}
-                          <td className="px-4 py-3 text-center">
-                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-                              {daysWorked} {daysWorked === 1 ? "day" : "days"}
-                            </span>
+                          <td className="px-4 py-3 text-center font-bold font-mono text-theme-text-primary">
+                            {item.daysWorked} days
                           </td>
-
-                          {/* Work Time */}
-                          <td className="px-4 py-3 font-mono font-bold text-emerald-400 text-center">
-                            {formatDurationMinutes(totalWorkMinutes)}
+                          <td className="px-4 py-3 text-center font-mono font-bold text-emerald-400">
+                            {formatDurationMinutes(item.totalWorkMinutes)}
                           </td>
-
-                          {/* Break Time */}
-                          <td className="px-4 py-3 font-mono text-amber-400 text-center">
-                            {formatDurationMinutes(totalBreakMinutes)}
+                          <td className="px-4 py-3 text-center font-mono text-purple-400">
+                            {formatDurationMinutes(item.totalBreakMinutes)}
                           </td>
-
-                          {/* Prayer Time */}
-                          <td className="px-4 py-3 font-mono text-sky-400 text-center">
-                            {formatDurationMinutes(totalPrayerMinutes)}
+                          <td className="px-4 py-3 text-center font-mono text-sky-400">
+                            {formatDurationMinutes(item.totalPrayerMinutes)}
                           </td>
                         </tr>
                       ))

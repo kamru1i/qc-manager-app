@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onManualSync,
   onMenuToggle,
 }) => {
-  const { myDailyRecord, myWorkingSeconds, myActiveBreakSeconds } = useAttendance();
+  const { myDailyRecord, myStatus, myWorkingSeconds, myActiveBreakSeconds } = useAttendance();
 
   const formatWorkingHours = (hours: number | string) => {
     const h = parseFloat(String(hours));
@@ -113,59 +113,67 @@ export const Navbar: React.FC<NavbarProps> = ({
             </p>
             {profile && (
               <div className="hidden md:flex flex-wrap gap-2 mt-2">
-                {myDailyRecord && (myDailyRecord.status === 'WORKING' || myDailyRecord.status === 'SNACK_BREAK' || myDailyRecord.status === 'PRAYER_BREAK') ? (
-                  <>
-                    {myDailyRecord.status === 'WORKING' && (
-                      <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-lg px-2.5 py-1 text-[11px] text-emerald-300 flex items-center gap-1.5 shadow-sm">
-                        <Clock className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                        <span>
-                          Working: <strong className="text-emerald-300 font-mono font-bold">{formatDurationSeconds(myWorkingSeconds)}</strong>
-                        </span>
-                      </div>
-                    )}
-                    {myDailyRecord.status === 'SNACK_BREAK' && (
-                      <div className="bg-amber-950/40 border border-amber-500/40 rounded-lg px-2.5 py-1 text-[11px] text-amber-300 flex items-center gap-1.5 shadow-sm">
-                        <Coffee className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                        <span>
-                          Break: <strong className="text-amber-300 font-mono font-bold">{formatDurationSeconds(myActiveBreakSeconds)}</strong>
-                        </span>
-                      </div>
-                    )}
-                    {myDailyRecord.status === 'PRAYER_BREAK' && (
-                      <div className="bg-sky-950/40 border border-sky-500/40 rounded-lg px-2.5 py-1 text-[11px] text-sky-300 flex items-center gap-1.5 shadow-sm">
-                        <Sun className="h-3.5 w-3.5 text-sky-400 animate-pulse" />
-                        <span>
-                          Prayer: <strong className="text-sky-300 font-mono font-bold">{formatDurationSeconds(myActiveBreakSeconds)}</strong>
-                        </span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="bg-theme-card-bg/60 border border-theme-border-input/80 rounded-lg px-2.5 py-1 text-[11px] text-theme-text-secondary flex items-center gap-1.5 shadow-sm">
-                      <Clock className="h-3.5 w-3.5 text-blue-400" />
-                      <span>
-                        Working Hours:{" "}
-                        <strong className="text-theme-text-primary">
-                          {formatWorkingHours(profile.working_hours || 9.5)}
-                        </strong>
-                      </span>
-                    </div>
-                    <div className="bg-theme-card-bg/60 border border-theme-border-input/80 rounded-lg px-2.5 py-1 text-[11px] text-theme-text-secondary flex items-center gap-1.5 shadow-sm">
-                      <Coffee className="h-3.5 w-3.5 text-purple-400" />
-                      <span>
-                        Break Time:{" "}
-                        <strong className="text-theme-text-primary">
-                          {profile.break_time || 0} Mins
-                        </strong>
-                      </span>
-                    </div>
-                  </>
-                )}
+                <div className="bg-theme-card-bg/60 border border-theme-border-input/80 rounded-lg px-2.5 py-1 text-[11px] text-theme-text-secondary flex items-center gap-1.5 shadow-sm">
+                  <Clock className="h-3.5 w-3.5 text-blue-400" />
+                  <span>
+                    Working Hours:{" "}
+                    <strong className="text-theme-text-primary">
+                      {formatWorkingHours(profile.working_hours || 9.5)}
+                    </strong>
+                  </span>
+                </div>
+                <div className="bg-theme-card-bg/60 border border-theme-border-input/80 rounded-lg px-2.5 py-1 text-[11px] text-theme-text-secondary flex items-center gap-1.5 shadow-sm">
+                  <Coffee className="h-3.5 w-3.5 text-purple-400" />
+                  <span>
+                    Break Time:{" "}
+                    <strong className="text-theme-text-primary">
+                      {profile.break_time || 0} Mins
+                    </strong>
+                  </span>
+                </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Center Prominent Attendance Live Timer */}
+        {profile && (myStatus === 'WORKING' || myStatus === 'SNACK_BREAK' || myStatus === 'PRAYER_BREAK') && (
+          <div className="flex flex-col items-center justify-center px-4 py-1 rounded-xl border min-w-[130px] sm:min-w-[150px] shadow-md select-none transition-all duration-200 animate-in fade-in zoom-in-95 mx-2">
+            {myStatus === 'WORKING' && (
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="flex items-center gap-1 text-[10px] tracking-widest font-extrabold text-emerald-400 uppercase">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <span>WORKING</span>
+                </div>
+                <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-emerald-300">
+                  {formatDurationSeconds(myWorkingSeconds)}
+                </div>
+              </div>
+            )}
+            {myStatus === 'SNACK_BREAK' && (
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="flex items-center gap-1 text-[10px] tracking-widest font-extrabold text-amber-400 uppercase">
+                  <Coffee className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span>BREAK</span>
+                </div>
+                <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-amber-300">
+                  {formatDurationSeconds(myActiveBreakSeconds)}
+                </div>
+              </div>
+            )}
+            {myStatus === 'PRAYER_BREAK' && (
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="flex items-center gap-1 text-[10px] tracking-widest font-extrabold text-sky-400 uppercase">
+                  <Sun className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
+                  <span>PRAYER BREAK</span>
+                </div>
+                <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-sky-300">
+                  {formatDurationSeconds(myActiveBreakSeconds)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="hidden md:flex items-center gap-3 flex-wrap">
           {/* Offline Sync Area */}
