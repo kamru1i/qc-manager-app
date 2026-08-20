@@ -5,9 +5,10 @@ interface VerifiedBadgeProps {
   badge: BadgeInfo;
   position?: 'top' | 'bottom';
   forceBlue?: boolean;
+  disableTooltip?: boolean;
 }
 
-export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 'top', forceBlue = false }) => {
+export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 'top', forceBlue = false, disableTooltip = false }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -31,6 +32,7 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
     : 'bottom-full mb-2';
 
   const handleMouseEnter = () => {
+    if (disableTooltip) return;
     hoverTimeoutRef.current = setTimeout(() => {
       setShowTooltip(true);
     }, 2000); // 2 seconds delay
@@ -46,9 +48,9 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ badge, position = 
 
   return (
     <span 
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="relative group inline-flex items-center align-middle ml-0.5 cursor-help select-none shrink-0"
+      onMouseEnter={disableTooltip ? undefined : handleMouseEnter}
+      onMouseLeave={disableTooltip ? undefined : handleMouseLeave}
+      className={`relative group inline-flex items-center align-middle ml-0.5 select-none shrink-0 ${disableTooltip ? '' : 'cursor-help'}`}
     >
       {/* Premium Verified Icon */}
       <svg
