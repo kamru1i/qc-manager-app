@@ -873,7 +873,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                               {snackBreaks.length === 0 ? (
                                 <span className="text-theme-text-muted/60">-</span>
                               ) : (
-                                <div className="space-y-1 max-h-24 overflow-y-auto pr-1 custom-scrollbar flex flex-col items-center">
+                                <div className="space-y-1 max-h-28 overflow-y-auto pr-1 custom-scrollbar flex flex-col items-center">
                                   {snackBreaks.map((b) => {
                                     const isActive = !b.end_time;
                                     const sessionSec = calculateBreakSessionSeconds(b, now);
@@ -883,7 +883,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`group relative inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
+                                        className={`group relative inline-flex flex-col items-center justify-center text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
                                           isActive
                                             ? isRedWarning
                                               ? "bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse font-bold"
@@ -891,12 +891,9 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                             : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
                                         }`}
                                       >
-                                        <span className="truncate">
-                                          {formatAttendanceTime(b.start_time)} - {isActive ? "Active" : formatAttendanceTime(b.end_time)}
-                                        </span>
-                                        <div className="flex items-center gap-1 shrink-0">
-                                          <span className="text-[10px] ml-1 font-mono">
-                                            ({formatBreakSessionElapsed(sessionSec)})
+                                        <div className="flex items-center justify-between w-full text-[10px]">
+                                          <span className="text-theme-text-muted truncate">
+                                            {formatAttendanceTime(b.start_time)} - {isActive ? "Active" : formatAttendanceTime(b.end_time)}
                                           </span>
                                           {isSuperAdmin && (
                                             <button
@@ -910,12 +907,16 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                                   attendanceDate: selectedDate,
                                                 });
                                               }}
-                                              className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 rounded transition-all cursor-pointer"
+                                              className="opacity-0 group-hover:opacity-100 p-0.5 ml-1 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 rounded transition-all cursor-pointer shrink-0"
                                               title="Delete Break Session (Superadmin)"
                                             >
                                               <Trash2 className="w-3 h-3" />
                                             </button>
                                           )}
+                                        </div>
+                                        <div className="flex items-center gap-1 mt-0.5 text-[10px] font-bold">
+                                          {isActive && <Clock className="w-2.5 h-2.5 text-amber-400 animate-pulse" />}
+                                          <span>Break: {formatDurationSeconds(sessionSec)}</span>
                                         </div>
                                       </div>
                                     );
@@ -929,7 +930,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                               {prayerBreaks.length === 0 ? (
                                 <span className="text-theme-text-muted/60">-</span>
                               ) : (
-                                <div className="space-y-1 max-h-24 overflow-y-auto pr-1 custom-scrollbar flex flex-col items-center">
+                                <div className="space-y-1 max-h-28 overflow-y-auto pr-1 custom-scrollbar flex flex-col items-center">
                                   {prayerBreaks.map((b) => {
                                     const isActive = !b.end_time;
                                     const sessionSec = calculateBreakSessionSeconds(b, now);
@@ -937,18 +938,15 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`group relative inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
+                                        className={`group relative inline-flex flex-col items-center justify-center text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
                                           isActive
                                             ? "bg-sky-500/20 text-sky-300 border-sky-500/40 font-bold"
                                             : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
                                         }`}
                                       >
-                                        <span className="truncate">
-                                          {formatAttendanceTime(b.start_time)} - {isActive ? "Active" : formatAttendanceTime(b.end_time)}
-                                        </span>
-                                        <div className="flex items-center gap-1 shrink-0">
-                                          <span className="text-[10px] ml-1 font-mono">
-                                            ({formatBreakSessionElapsed(sessionSec)})
+                                        <div className="flex items-center justify-between w-full text-[10px]">
+                                          <span className="text-theme-text-muted truncate">
+                                            {formatAttendanceTime(b.start_time)} - {isActive ? "Active" : formatAttendanceTime(b.end_time)}
                                           </span>
                                           {isSuperAdmin && (
                                             <button
@@ -962,12 +960,16 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                                   attendanceDate: selectedDate,
                                                 });
                                               }}
-                                              className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 rounded transition-all cursor-pointer"
+                                              className="opacity-0 group-hover:opacity-100 p-0.5 ml-1 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 rounded transition-all cursor-pointer shrink-0"
                                               title="Delete Prayer Break Session (Superadmin)"
                                             >
                                               <Trash2 className="w-3 h-3" />
                                             </button>
                                           )}
+                                        </div>
+                                        <div className="flex items-center gap-1 mt-0.5 text-[10px] font-bold">
+                                          {isActive && <Clock className="w-2.5 h-2.5 text-sky-400 animate-pulse" />}
+                                          <span>Prayer: {formatDurationSeconds(sessionSec)}</span>
                                         </div>
                                       </div>
                                     );
