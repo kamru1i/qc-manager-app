@@ -107,12 +107,14 @@ export function doesBreakBelongToShift(
 }
 
 /**
- * Calculates net working seconds for a single shift session
+ * Calculates working seconds for a single shift session.
+ * Break time is part of working time, so the working timer continues
+ * running continuously from join time to close time (or current time if active).
  */
 export function calculateShiftWorkingSeconds(
   shift: AttendanceShift,
-  breaks: AttendanceBreak[],
-  nowMs: number
+  _breaks?: AttendanceBreak[],
+  nowMs: number = Date.now()
 ): number {
   const joinMs = new Date(shift.join_time).getTime();
   if (isNaN(joinMs)) return 0;
@@ -121,21 +123,12 @@ export function calculateShiftWorkingSeconds(
   const endMs = isShiftClosed && shift.close_time ? new Date(shift.close_time).getTime() : nowMs;
   if (isNaN(endMs)) return 0;
 
-  const grossSeconds = Math.max(0, Math.floor((endMs - joinMs) / 1000));
-
-  // Find breaks belonging to this specific shift
-  const shiftBreaks = breaks.filter((b) => doesBreakBelongToShift(b, shift));
-  let totalBreakSeconds = 0;
-
-  shiftBreaks.forEach((b) => {
-    totalBreakSeconds += calculateBreakSessionSeconds(b, isShiftClosed && shift.close_time ? endMs : nowMs);
-  });
-
-  return Math.max(0, grossSeconds - totalBreakSeconds);
+  return Math.max(0, Math.floor((endMs - joinMs) / 1000));
 }
 
 /**
- * Calculates total daily net working seconds across all shift sessions for a user today
+ * Calculates total daily working seconds across all shift sessions for a user today.
+ * Break time is an integral part of working time, so working seconds accumulate continuously.
  */
 export function calculateTotalDailyWorkingSeconds(
   daily: AttendanceDaily | null,
@@ -153,18 +146,11 @@ export function calculateTotalDailyWorkingSeconds(
 
   // Fallback for legacy single-shift daily record
   if (!daily?.join_time) return 0;
-  const dummyShift: AttendanceShift = {
-    id: daily.id,
-    attendance_id: daily.id,
-    user_id: daily.user_id,
-    attendance_date: daily.attendance_date,
-    join_time: daily.join_time,
-    close_time: daily.status === "CLOSED" ? daily.close_time : null,
-    duration_seconds: daily.total_work_minutes * 60,
-    created_at: daily.created_at,
-    updated_at: daily.updated_at,
-  };
-  return calculateShiftWorkingSeconds(dummyShift, breaks, nowMs);
+  const joinMs = new Date(daily.join_time).getTime();
+  if (isNaN(joinMs)) return 0;
+  const isClosed = daily.status === "CLOSED" && !!daily.close_time;
+  const endMs = isClosed && daily.close_time ? new Date(daily.close_time).getTime() : nowMs;
+  return Math.max(0, Math.floor((endMs - joinMs) / 1000));
 }
 
 /**

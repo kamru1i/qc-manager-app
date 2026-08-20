@@ -403,21 +403,12 @@ export function AttendanceProvider({ children, sessionUser, profile }: Attendanc
       const targetShift = myActiveShift || myShifts[myShifts.length - 1];
       const shiftJoinMs = targetShift?.join_time ? new Date(targetShift.join_time).getTime() : closeTimeMs;
       const shiftGrossSec = Math.max(0, Math.floor((closeTimeMs - shiftJoinMs) / 1000));
-
-      const shiftBreaks = updatedBreaks.filter((b) => {
-        const bStart = new Date(b.start_time).getTime();
-        return bStart >= shiftJoinMs && bStart <= closeTimeMs;
-      });
-      let shiftBreakSec = 0;
-      shiftBreaks.forEach((b) => {
-        shiftBreakSec += calculateBreakSessionSeconds(b, closeTimeMs);
-      });
-      const shiftNetWorkingSec = Math.max(0, shiftGrossSec - shiftBreakSec);
+      const shiftDurationSec = shiftGrossSec;
 
       // Updated shifts array with this shift closed
       const updatedShifts = myShifts.map((s) => {
         if (targetShift && s.id === targetShift.id) {
-          return { ...s, close_time: closeTimeIso, duration_seconds: shiftNetWorkingSec };
+          return { ...s, close_time: closeTimeIso, duration_seconds: shiftDurationSec };
         }
         return s;
       });
@@ -430,7 +421,7 @@ export function AttendanceProvider({ children, sessionUser, profile }: Attendanc
         dailyId: myDailyRecord.id,
         shiftId: targetShift?.id,
         closeTime: closeTimeIso,
-        shiftDurationSeconds: shiftNetWorkingSec,
+        shiftDurationSeconds: shiftDurationSec,
         totalWorkMinutes: totalDayWorkSec / 60,
         totalBreakMinutes: totalDayBreakSec / 60,
         totalPrayerMinutes: totalDayPrayerSec / 60,
@@ -454,7 +445,7 @@ export function AttendanceProvider({ children, sessionUser, profile }: Attendanc
         });
       } else if (targetShift) {
         setAttendanceShifts((prev) => {
-          const next = prev.map((s) => (s.id === targetShift.id ? { ...s, close_time: closeTimeIso, duration_seconds: shiftNetWorkingSec } : s));
+          const next = prev.map((s) => (s.id === targetShift.id ? { ...s, close_time: closeTimeIso, duration_seconds: shiftDurationSec } : s));
           _todayAttendanceCache.shiftsList = next;
           return next;
         });
