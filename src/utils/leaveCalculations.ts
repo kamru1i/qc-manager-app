@@ -393,6 +393,29 @@ export const getDetailedLeaveLabel = (rec: { leave_type: string; reserve_holiday
   return rec.leave_type;
 };
 
+/**
+ * Formats duration of a leave record dynamically for notifications and messages
+ * Examples: "1 day", "3 days", "4 hours", "46 mins", "1 hour 30 mins"
+ */
+export function formatLeaveDuration(record: { leave_type: string; leave_hour?: string | null; dates?: string[] }): string {
+  if (record.leave_type === 'Short Leave' || record.leave_type === 'Early Leave') {
+    if (record.leave_hour) {
+      const parts = String(record.leave_hour).split(':');
+      if (parts.length >= 2) {
+        const hrs = parseInt(parts[0], 10) || 0;
+        const mins = parseInt(parts[1], 10) || 0;
+        if (hrs > 0 && mins > 0) return `${hrs} ${hrs === 1 ? 'hour' : 'hours'} ${mins} mins`;
+        if (hrs > 0) return `${hrs} ${hrs === 1 ? 'hour' : 'hours'}`;
+        if (mins > 0) return `${mins} mins`;
+      }
+      return `${record.leave_hour} hours`;
+    }
+    return '1 hour';
+  }
+  const count = (record.dates && record.dates.length) || 1;
+  return `${count} ${count === 1 ? 'day' : 'days'}`;
+}
+
 
 export const parseDateToMs = (dateStr: string | null | undefined): number => {
   if (!dateStr) return 0;

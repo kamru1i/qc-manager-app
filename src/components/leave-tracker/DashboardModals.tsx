@@ -1,8 +1,9 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useDashboardContext } from '@/contexts/DashboardContext';
-import { ChutiRecordWithProfile, GovtHolidayResponse } from '@/types';
+import { ChutiRecordWithProfile, GovtHolidayResponse, Profile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
+import { isAdminRole } from '@/utils/permissionService';
 
 import { WelcomeModals } from '@/components/common/modals/WelcomeModals';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
@@ -334,6 +335,8 @@ export const DashboardModals = () => {
         holidayResponses={adjustmentRecord ? holidayResponses.filter((r: GovtHolidayResponse) => r.user_id === adjustmentRecord.user_id) : []}
         globalSettings={globalSettings}
         submitting={submitting}
+        targetProfile={adjustmentRecord ? profilesList.find((p: Profile) => p.id === adjustmentRecord.user_id) || profile : profile}
+        isAdmin={isAdminRole(profile) && adminActiveTab === 'admin'}
       />
 
       <SupervisorApprovalModal

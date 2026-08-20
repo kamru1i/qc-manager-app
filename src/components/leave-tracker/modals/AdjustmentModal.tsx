@@ -7,6 +7,8 @@ import { calculateStats, GlobalSettings } from '@/utils/dashboardHelpers';
 
 import { Modal } from '@/components/common/Modal';
 
+import { Profile } from '@/types';
+
 interface AdjustmentModalProps {
   showAdjustmentModal: boolean;
   setShowAdjustmentModal: (val: boolean) => void;
@@ -22,6 +24,8 @@ interface AdjustmentModalProps {
   holidayResponses: any[];
   globalSettings: GlobalSettings;
   submitting?: boolean;
+  targetProfile?: Profile | null;
+  isAdmin?: boolean;
 }
 
 export function AdjustmentModal({
@@ -39,6 +43,8 @@ export function AdjustmentModal({
   holidayResponses = [],
   globalSettings,
   submitting = false,
+  targetProfile,
+  isAdmin = false,
 }: AdjustmentModalProps) {
   const [selectedCategory, setSelectedCategory] = useState('None');
 
@@ -53,7 +59,12 @@ export function AdjustmentModal({
   const approvedRecords = records.filter(r => r.status === 'approved' && r.date && r.date.substring(0, 4) === selectedYear);
   const stats = calculateStats(approvedRecords);
 
-  const reservedCount = holidayResponses.filter((r: any) => r.user_id === adjustmentRecord?.user_id && r.response === 'reserve').length;
+  // If reserve is disabled on profile and not admin, govt holiday remaining is 0
+  const isReserveAllowed = isAdmin || (targetProfile ? targetProfile.allow_reserve !== false : true);
+
+  const reservedCount = isReserveAllowed
+    ? holidayResponses.filter((r: any) => r.user_id === adjustmentRecord?.user_id && r.response === 'reserve').length
+    : 0;
   const govtHolidayRemaining = Math.max(0, reservedCount - (stats.govtHolidaysTaken ?? 0));
 
   const eidFitrTotal = globalSettings?.eid_fitr_leave ?? 0;
@@ -62,7 +73,7 @@ export function AdjustmentModal({
   const eidAdhaTotal = globalSettings?.eid_adha_leave ?? 0;
   const eidAdhaRemaining = Math.max(0, eidAdhaTotal - (stats.eidAdhaTaken ?? 0));
 
-  const hasAnyCategoryRemaining = govtHolidayRemaining > 0 || eidFitrRemaining > 0 || eidAdhaRemaining > 0;
+  const hasAnyCategoryRemaining = govtHolidayRemaining > 0 || eidFitrRemaining > 0 || eidAdhaRemaining > 0 || isAdmin;
 
   return (
     <Modal
@@ -80,14 +91,17 @@ export function AdjustmentModal({
         <>
           {adjustmentRecord.leave_type === 'Short Leave' ? (
             <div className="space-y-4">
-              <p className="text-xs text-theme-text-muted">For Short Leave, select whether you want to adjust the full duration or a partial duration:</p>
-              <div className="flex gap-4">
+              <p className="text-xs text-theme-text-muted">For Short Leave, select the adjustment method:</p>
+              <div className="flex flex-col sm:flex-row gap-3">
                 <label className="flex-1 flex items-center gap-2 p-3 bg-theme-page-bg/60 border border-theme-border-input rounded-lg cursor-pointer hover:border-theme-border-active hover:scale-[1.01] transition-all">
                   <input
                     type="radio"
                     name="adjustmentType"
-                    checked={adjustmentType === 'full'}
-                    onChange={() => setAdjustmentType('full')}
+                    checked={adjustmentType === 'full' && selectedCategory !== 'Salary'}
+                    onChange={() => {
+                      setAdjustmentType('full');
+                      setSelectedCategory('None');
+                    }}
                     className="text-blue-500 focus:ring-blue-500"
                   />
                   <span className="text-xs text-theme-text-primary font-medium">Full Duration ({adjustmentRecord.leave_hour ? adjustmentRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '-'})</span>
@@ -96,15 +110,32 @@ export function AdjustmentModal({
                   <input
                     type="radio"
                     name="adjustmentType"
-                    checked={adjustmentType === 'partial'}
-                    onChange={() => setAdjustmentType('partial')}
+                    checked={adjustmentType === 'partial' && selectedCategory !== 'Salary'}
+                    onChange={() => {
+                      setAdjustmentType('partial');
+                      setSelectedCategory('None');
+                    }}
                     className="text-blue-500 focus:ring-blue-500"
                   />
                   <span className="text-xs text-theme-text-primary font-medium">Partial Duration</span>
                 </label>
+                {isAdmin && (
+                  <label className="flex-1 flex items-center gap-2 p-3 bg-amber-950/20 border border-amber-500/50 rounded-lg cursor-pointer hover:border-amber-400 hover:scale-[1.01] transition-all">
+                    <input
+                      type="radio"
+                      name="adjustmentType"
+                      checked={selectedCategory === 'Salary'}
+                      onChange={() => {
+                        setSelectedCategory('Salary');
+                      }}
+                      className="text-amber-500 focus:ring-amber-500"
+                    />
+                    <span className="text-xs text-amber-400 font-medium">Adjust with Salary</span>
+                  </label>
+                )}
               </div>
 
-              {adjustmentType === 'partial' && (
+              {adjustmentType === 'partial' && selectedCategory !== 'Salary' && (
                 <div>
                   <label className="block text-xs font-medium text-theme-text-muted uppercase tracking-wider mb-1">Partial Adjustment Duration (HH:MM)</label>
                   <input
@@ -132,11 +163,11 @@ export function AdjustmentModal({
                 <button
                   type="button"
                   disabled={submitting}
-                  onClick={() => handleSaveAdjustment()}
+                  onClick={() => handleSaveAdjustment(undefined, selectedCategory)}
                   className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                  {submitting ? 'Adjusting...' : 'Adjust Leave'}
+                  {submitting ? 'Adjusting...' : selectedCategory === 'Salary' ? 'Adjust with Salary' : 'Adjust Leave'}
                 </button>
               </div>
             </div>
@@ -282,6 +313,29 @@ export function AdjustmentModal({
                             selectedCategory === 'Eid-ul-Adha' ? 'border-purple-500' : 'border-theme-border-input'
                           }`}>
                             {selectedCategory === 'Eid-ul-Adha' && <div className="w-2 h-2 rounded-full bg-purple-500" />}
+                          </div>
+                        </button>
+                      )}
+
+                      {/* Admin Direct Salary Adjustment Option */}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory('Salary')}
+                          className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
+                            selectedCategory === 'Salary'
+                              ? 'bg-amber-955/30 border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+                              : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
+                          }`}
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-amber-400 font-sans">Adjust with Salary</span>
+                            <span className="text-[10px] text-theme-text-muted">Salary deduction</span>
+                          </div>
+                          <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                            selectedCategory === 'Salary' ? 'border-amber-500' : 'border-theme-border-input'
+                          }`}>
+                            {selectedCategory === 'Salary' && <div className="w-2 h-2 rounded-full bg-amber-500" />}
                           </div>
                         </button>
                       )}

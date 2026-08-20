@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord, saveOfflineUpdate } from '@/utils/offlineSync';
-import { formatDate, formatTimeToAMPM, getDetailedLeaveLabel, getExistingNotifications, createNotification } from '@/utils/dashboardHelpers';
+import { formatDate, formatTimeToAMPM, getDetailedLeaveLabel, getExistingNotifications, createNotification, formatLeaveDuration } from '@/utils/dashboardHelpers';
 import { isAdminRole } from '@/utils/permissionService';
 
 interface useAdjustmentOperationsParams {
@@ -143,9 +143,41 @@ export const useAdjustmentOperations = ({
     try {
       const isShortLeave = record.leave_type === 'Short Leave';
       const isAdmin = isAdminRole(profile) && adminActiveTab === 'admin';
+      const selectedCat = adjustmentCategoryInput || 'None';
+
+      // Permission verification for normal users
+      if (!isAdmin) {
+        if (record.leave_type === 'Overtime' && !profile?.allow_overtime) {
+          setMessage({ type: 'error', text: 'You do not have permission for Overtime adjustments.' });
+          setSubmitting(false);
+          return;
+        }
+        if (record.leave_type === 'Short Leave' && !profile?.allow_overtime) {
+          setMessage({ type: 'error', text: 'You do not have permission for Short Leave adjustments.' });
+          setSubmitting(false);
+          return;
+        }
+        if (record.leave_type === 'Full Leave' && selectedCat === 'Govt Holiday' && !profile?.allow_reserve) {
+          setMessage({ type: 'error', text: 'You do not have permission for Government Holiday Reserve adjustments.' });
+          setSubmitting(false);
+          return;
+        }
+      }
+
       let requestedUpdates: Record<string, unknown> = {};
 
-      if (isShortLeave) {
+      if (selectedCat === 'Salary') {
+        let cleanComment = record.comment || '';
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+        const finalComment = `Adjusted: Salary${cleanComment ? ` | ${cleanComment}` : ''}`;
+        requestedUpdates = { 
+          adjustment: true, 
+          adjusted_hour: null, 
+          adjust_short_leave: false,
+          reserve_holiday: 'Salary',
+          comment: finalComment || null
+        };
+      } else if (isShortLeave) {
         if (adjustmentType === 'full') {
           requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false };
         } else {
@@ -161,11 +193,10 @@ export const useAdjustmentOperations = ({
         const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : adjustShortLeaveOption;
         requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust };
       } else {
-        const selectedCat = adjustmentCategoryInput || 'None';
         const isCat = selectedCat !== 'None';
         let cleanComment = record.comment || '';
         // Clean any existing prefixes
-        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave)(?:\s*\|\s*)?/g, '').trim();
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
         const finalComment = isCat 
           ? `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`
           : cleanComment;
@@ -183,17 +214,26 @@ export const useAdjustmentOperations = ({
       const existingNotifications = getExistingNotifications(record);
 
       if (isAdmin) {
-        const actionLabel = 'Leave Adjustment';
-        const leaveLabel = getDetailedLeaveLabel(record);
-        const isShortOrOvertime = record.leave_type === 'Short Leave' || record.leave_type === 'Overtime';
-        const dateTimeStr = isShortOrOvertime
-          ? `${formatDate(record.date)} (${formatTimeToAMPM(record.sign_in_time)} - ${formatTimeToAMPM(record.sign_out_time)})`
-          : formatDate(record.date);
+        let notifTitle = 'Leave Adjustment Completed ✅';
+        let notifBody = '';
+
+        if (selectedCat === 'Salary') {
+          const durationText = formatLeaveDuration(record);
+          notifTitle = 'Salary Adjustment Applied 💸';
+          notifBody = `Your ${durationText} leave has been adjusted with ${durationText} salary deduction.`;
+        } else {
+          const leaveLabel = getDetailedLeaveLabel(record);
+          const isShortOrOvertime = record.leave_type === 'Short Leave' || record.leave_type === 'Overtime';
+          const dateTimeStr = isShortOrOvertime
+            ? `${formatDate(record.date)} (${formatTimeToAMPM(record.sign_in_time)} - ${formatTimeToAMPM(record.sign_out_time)})`
+            : formatDate(record.date);
+          notifBody = `Your ${leaveLabel} adjustment for date ${dateTimeStr} has been completed.`;
+        }
 
         const newNotification = createNotification(
           'adjusted',
-          `${actionLabel} Completed ✅`,
-          `Your ${leaveLabel} adjustment for date ${dateTimeStr} has been completed.`
+          notifTitle,
+          notifBody
         );
 
         updates = {
@@ -228,11 +268,10 @@ export const useAdjustmentOperations = ({
       }
       fetchRecords();
 
-
       setMessage({ 
         type: 'success', 
         text: isAdmin
-          ? 'Leave adjustment successfully completed.'
+          ? (selectedCat === 'Salary' ? 'Leave adjusted with salary deduction.' : 'Leave adjustment successfully completed.')
           : 'Adjustment request successfully sent and is pending approval.'
       });
     } catch (err) {

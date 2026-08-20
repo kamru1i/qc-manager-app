@@ -419,6 +419,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               <LeavesRecordsTable
                 records={individualRecords}
                 allowOvertime={staffProfile?.allow_overtime}
+                allowReserve={staffProfile?.allow_reserve}
+                isAdminView={true}
                 filterType={filterType}
                 setFilterType={setFilterType}
                 filterStartDate={filterStartDate}

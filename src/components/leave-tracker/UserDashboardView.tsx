@@ -344,6 +344,8 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
       <LeavesRecordsTable
         records={filteredUserRecords}
         allowOvertime={profile?.allow_overtime}
+        allowReserve={profile?.allow_reserve}
+        isAdminView={isAdmin}
         selectedYear={selectedYear}
         setSelectedYear={setSelectedYear}
         availableYears={availableYears}

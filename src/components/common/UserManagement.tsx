@@ -42,9 +42,10 @@ import { UserQuotesHistoryPanel } from '@/components/common/user-management/User
 import { useAppEvent } from '@/contexts/AppEventBusContext';
 import { UserKpiPerformancePanel } from '@/components/common/user-management/UserKpiPerformancePanel';
 import { AddLeave } from '@/components/leave-tracker/AddLeave';
+import { AdjustmentModal } from '@/components/leave-tracker/modals/AdjustmentModal';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { LeaveSettlement, GovtHolidayResponse } from '@/types';
-import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
+import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings, createNotification, getExistingNotifications, formatLeaveDuration, formatDate, getDetailedLeaveLabel } from '@/utils/dashboardHelpers';
 import { PROFILE_COLUMNS, CHUTI_COLUMNS, LEAVE_SETTLEMENT_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS } from '@/utils/dbColumns';
 import { holidaysService } from '@/services/holidaysService';
 
@@ -197,6 +198,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [credConfirmPassword, setCredConfirmPassword] = useState('');
   const [updatingCredentials, setUpdatingCredentials] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+
+  // Staff leave adjustment modal states
+  const [showStaffAdjustmentModal, setShowStaffAdjustmentModal] = useState(false);
+  const [staffAdjustmentRecord, setStaffAdjustmentRecord] = useState<ChutiRecord | null>(null);
+  const [staffAdjustmentType, setStaffAdjustmentType] = useState<'full' | 'partial'>('full');
+  const [staffPartialAdjustmentTime, setStaffPartialAdjustmentTime] = useState('02:00');
+  const [staffAdjustShortLeaveOption, setStaffAdjustShortLeaveOption] = useState(false);
+  const [staffAdjustmentSubmitting, setStaffAdjustmentSubmitting] = useState(false);
 
   const hasStaffAccess = useCallback((viewingStaffProfile: Profile) => {
     if (!profile) return false;
@@ -597,20 +606,47 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     const isSupervisor = profile?.role === 'supervisor';
 
     if (isAdmin) {
-      // ─── Admin: Direct toggle, no approval needed ───
-      try {
-        setViewingStaffRecords(prev => prev.map(r => r.id === record.id ? { ...r, adjustment: !r.adjustment } : r));
-        const { error } = await supabase
-          .from('chuti')
-          .update({ adjustment: !record.adjustment })
-          .eq('id', record.id);
-        if (error) throw error;
-        toast.success('Adjustment status updated.');
-        if (viewingStaff) debouncedFetchStaffLeaveData(viewingStaff.id, true);
-      } catch (err: unknown) {
-        console.error(err);
-        toast.error('Failed to update adjustment: ' + ((err as Error).message || 'unknown error'));
-        if (viewingStaff) fetchStaffLeaveData(viewingStaff.id, true);
+      if (record.adjustment || record.adjusted_hour) {
+        // Toggle OFF directly
+        try {
+          setViewingStaffRecords(prev => prev.map(r => r.id === record.id ? { ...r, adjustment: false, adjusted_hour: null, reserve_holiday: null } : r));
+          const existingNotifications = getExistingNotifications(record);
+          const leaveLabel = getDetailedLeaveLabel(record);
+          const dateTimeStr = formatDate(record.date);
+          const newNotification = createNotification(
+            'cancelled',
+            'Leave Adjustment Cancelled ⚠️',
+            `Your adjustment for ${leaveLabel} on date ${dateTimeStr} has been cancelled.`
+          );
+          const { error } = await supabase
+            .from('chuti')
+            .update({
+              adjustment: false,
+              adjusted_hour: null,
+              adjust_short_leave: false,
+              reserve_adjustment_status: 'none',
+              admin_edit_request: {
+                notifications: [...existingNotifications, newNotification]
+              }
+            })
+            .eq('id', record.id);
+          if (error) throw error;
+          toast.success('Adjustment status cancelled.');
+          if (viewingStaff) debouncedFetchStaffLeaveData(viewingStaff.id, true);
+        } catch (err: unknown) {
+          console.error(err);
+          toast.error('Failed to update adjustment: ' + ((err as Error).message || 'unknown error'));
+          if (viewingStaff) fetchStaffLeaveData(viewingStaff.id, true);
+        }
+      } else {
+        // Open modal to choose Salary Adjustment, Full, Partial, or Category
+        setStaffAdjustmentRecord(record);
+        setStaffAdjustShortLeaveOption(record.adjust_short_leave === true);
+        if (record.leave_type === 'Short Leave') {
+          setStaffAdjustmentType('full');
+          setStaffPartialAdjustmentTime(record.leave_hour ? record.leave_hour.toString().split('.')[0].substring(0, 5) : '02:00');
+        }
+        setShowStaffAdjustmentModal(true);
       }
     } else if (isSupervisor) {
       // ─── Supervisor: Toggle needs admin approval ───
@@ -635,6 +671,95 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       }
     } else {
       toast.error('You do not have permission to toggle adjustments.');
+    }
+  };
+
+  // Save Staff Adjustment handler from modal
+  const handleSaveStaffAdjustment = async (overrideAdjustShortLeave?: boolean, adjustmentCategoryInput?: string) => {
+    if (!staffAdjustmentRecord || staffAdjustmentSubmitting) return;
+    setStaffAdjustmentSubmitting(true);
+    const record = staffAdjustmentRecord;
+    try {
+      const selectedCat = adjustmentCategoryInput || 'None';
+      let requestedUpdates: Record<string, unknown> = {};
+
+      if (selectedCat === 'Salary') {
+        let cleanComment = record.comment || '';
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+        const finalComment = `Adjusted: Salary${cleanComment ? ` | ${cleanComment}` : ''}`;
+        requestedUpdates = {
+          adjustment: true,
+          adjusted_hour: null,
+          adjust_short_leave: false,
+          reserve_holiday: 'Salary',
+          comment: finalComment || null
+        };
+      } else if (record.leave_type === 'Short Leave') {
+        if (staffAdjustmentType === 'full') {
+          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false };
+        } else {
+          requestedUpdates = { adjustment: false, adjusted_hour: `${staffPartialAdjustmentTime}:00`, adjust_short_leave: false };
+        }
+      } else if (record.leave_type === 'Overtime') {
+        const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : staffAdjustShortLeaveOption;
+        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust };
+      } else {
+        const isCat = selectedCat !== 'None';
+        let cleanComment = record.comment || '';
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+        const finalComment = isCat ? `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}` : cleanComment;
+        requestedUpdates = {
+          adjustment: true,
+          adjusted_hour: null,
+          adjust_short_leave: false,
+          reserve_holiday: isCat ? selectedCat : null,
+          comment: finalComment || null
+        };
+      }
+
+      const existingNotifications = getExistingNotifications(record);
+      let notifTitle = 'Leave Adjustment Completed ✅';
+      let notifBody = '';
+
+      if (selectedCat === 'Salary') {
+        const durationText = formatLeaveDuration(record);
+        notifTitle = 'Salary Adjustment Applied 💸';
+        notifBody = `Your ${durationText} leave has been adjusted with ${durationText} salary deduction.`;
+      } else {
+        const leaveLabel = getDetailedLeaveLabel(record);
+        const dateTimeStr = formatDate(record.date);
+        notifBody = `Your ${leaveLabel} adjustment for date ${dateTimeStr} has been completed.`;
+      }
+
+      const newNotification = createNotification('adjusted', notifTitle, notifBody);
+
+      const updates = {
+        ...requestedUpdates,
+        reserve_adjustment_status: 'none',
+        admin_edit_request: {
+          notifications: [...existingNotifications, newNotification]
+        }
+      };
+
+      setViewingStaffRecords(prev => prev.map(r => r.id === record.id ? { ...r, ...updates } : r));
+
+      const { error } = await supabase
+        .from('chuti')
+        .update(updates)
+        .eq('id', record.id);
+
+      if (error) throw error;
+
+      toast.success(selectedCat === 'Salary' ? 'Leave adjusted with salary deduction.' : 'Adjustment completed successfully.');
+      if (viewingStaff) debouncedFetchStaffLeaveData(viewingStaff.id, true);
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error('Failed to update adjustment: ' + ((err as Error).message || 'unknown error'));
+      if (viewingStaff) fetchStaffLeaveData(viewingStaff.id, true);
+    } finally {
+      setShowStaffAdjustmentModal(false);
+      setStaffAdjustmentRecord(null);
+      setStaffAdjustmentSubmitting(false);
     }
   };
 
@@ -1455,6 +1580,26 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 </div>
               </Modal>
             )}
+
+            {/* Staff Leave Adjustment Modal */}
+            <AdjustmentModal
+              showAdjustmentModal={showStaffAdjustmentModal}
+              setShowAdjustmentModal={setShowStaffAdjustmentModal}
+              adjustmentRecord={staffAdjustmentRecord}
+              setAdjustmentRecord={setStaffAdjustmentRecord}
+              adjustmentType={staffAdjustmentType}
+              setAdjustmentType={setStaffAdjustmentType}
+              partialAdjustmentTime={staffPartialAdjustmentTime}
+              setPartialAdjustmentTime={setStaffPartialAdjustmentTime}
+              setAdjustShortLeaveOption={setStaffAdjustShortLeaveOption}
+              handleSaveAdjustment={handleSaveStaffAdjustment}
+              records={viewingStaffRecords}
+              holidayResponses={viewingStaffHolidayResponses}
+              globalSettings={globalSettings}
+              submitting={staffAdjustmentSubmitting}
+              targetProfile={viewingStaff}
+              isAdmin={isAdminRole(profile)}
+            />
 
             {/* Delete User Confirmation Modal */}
             <ConfirmModal
