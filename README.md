@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 6.10.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.0.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,18 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v6.10.0 — Minor Release (Smart Year-Linked Monthly Filter, Codename Header Standardization, Copy Helper Cleanup & Security Audit Logs Removal) (Current)
+### 🚀 v7.0.0 — Major Release (Enterprise Attendance & Multi-Shift Tracking System, Realtime Cross-User Live Sync, Chuti Permission Hardening & Enhanced Login Security) (Current)
+
+- **Enterprise Attendance & Multi-Shift Module**: Introduced full-featured Home → Attendance system supporting multiple shifts per day, join/close actions, snack breaks, and prayer breaks with zero data loss.
+- **Continuous Working Time & Gross Elapsed Duration**: Standardized working duration calculations so snack breaks and prayer breaks remain included in the total shift and daily working time.
+- **Realtime Cross-User Live Sync**: Enabled instant fleet-wide attendance state synchronization across User, Supervisor, Admin, and Superadmin roles with zero polling overhead and zero full-table refetches.
+- **Sub-Second Live Clock & Navbar Timer Synchronization**: Upgraded LiveClock and Navbar timer ticker loops to sub-second precision, ensuring perfect lockstep synchronization with zero drift.
+- **Standardized 2-Line Session Badges**: Re-engineered Shift, Break, and Prayer Break table badges into uniform 2-line cards displaying start/end timestamps on top and formatted elapsed duration on bottom with pulsing status indicators.
+- **Superadmin Granular Session Deletion**: Empowered Superadmins with safe, granular deletion controls directly on individual Shift, Break, and Prayer Break badges with automated reconciliation of daily metrics and status.
+- **Leave History Permission Hardening**: Secured Chuti adjustment permissions, implemented direct administrative salary deduction adjustments, and streamlined employee approval workflows.
+- **Enhanced Login Credential Security**: Replaced single-field remembering with comprehensive Codename & Password local persistence while removing the password reveal toggle for hardened security.
+
+### 🚀 v6.10.0 — Minor Release (Smart Year-Linked Monthly Filter, Codename Header Standardization, Copy Helper Cleanup & Security Audit Logs Removal)
 
 - **Smart Year-Linked Month Filter**: Integrated dynamic month selector in `LeavesRecordsTable.tsx` that lists only months with submitted records. Filter activates when an individual year is selected and automatically resets when Year is set to ALL.
 - **Codename Header Standardization**: Updated `UserLeaveHistoryPanel.tsx` so the leave history table header displays Codename's Leave Records (e.g. NZ720's Leave Records) instead of full names.
