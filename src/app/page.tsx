@@ -47,8 +47,8 @@ import {
 } from "@/contexts/RealtimeContext";
 import { updateGlobalRankCacheDirect } from "@/components/common/UserDisplayName";
 import { UserKpiPerformancePanel } from "@/components/common/user-management/UserKpiPerformancePanel";
-import ChutiDashboard from "@/app/chuti/page";
-import QuotesDashboard from "@/app/quotes/page";
+import ChutiDashboard from "@/components/leave-tracker/ChutiDashboard";
+import QuotesDashboard from "@/components/quotes-tracker/QuotesDashboard";
 import { UserManagement } from "@/components/common/UserManagement";
 import { TodoPanel } from "@/components/common/TodoPanel";
 import { AttendancePanel } from "@/components/attendance/AttendancePanel";

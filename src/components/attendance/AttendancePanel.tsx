@@ -97,6 +97,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
   const [monthlyAttendance, setMonthlyAttendance] = useState<AttendanceDaily[]>(() => cachedMonthly?.dailyList || []);
   const [monthlyBreaks, setMonthlyBreaks] = useState<AttendanceBreak[]>(() => cachedMonthly?.breaksList || []);
   const [monthlyLoading, setMonthlyLoading] = useState(() => !cachedMonthly);
+  const profileId = profile?.id || "";
 
   // Live timer tick state (updates every second in client without writing to DB)
   const [now, setNow] = useState<number>(() => Date.now());
@@ -122,14 +123,14 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
 
   // Current logged in user's daily record & active break
   const myDailyRecord = useMemo(() => {
-    if (!profile?.id) return null;
-    return dailyAttendance.find((a) => a.user_id === profile.id) || null;
-  }, [profile?.id, dailyAttendance]);
+    if (!profileId) return null;
+    return dailyAttendance.find((a) => a.user_id === profileId) || null;
+  }, [profileId, dailyAttendance]);
 
   const myBreaks = useMemo(() => {
-    if (!profile?.id) return [];
-    return attendanceBreaks.filter((b) => b.user_id === profile.id);
-  }, [profile?.id, attendanceBreaks]);
+    if (!profileId) return [];
+    return attendanceBreaks.filter((b) => b.user_id === profileId);
+  }, [profileId, attendanceBreaks]);
 
   const activeBreak = useMemo(() => {
     return myBreaks.find((b) => !b.end_time) || null;
@@ -146,14 +147,15 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
 
   // Fetch Daily Attendance
   const fetchDailyAttendance = useCallback(
-    async (isSilent = false) => {
+    async (isSilent = false, signal?: AbortSignal) => {
       if (!isSilent) setLoading(true);
       try {
         const [dailyRes, breaksRes] = await Promise.all([
-          attendanceService.getDailyAttendance({ date: selectedDate }),
-          attendanceService.getAttendanceBreaks({ date: selectedDate }),
+          attendanceService.getDailyAttendance({ date: selectedDate, signal }),
+          attendanceService.getAttendanceBreaks({ date: selectedDate, signal }),
         ]);
 
+        if (signal?.aborted) return;
         if (dailyRes.error) throw dailyRes.error;
         if (breaksRes.error) throw breaksRes.error;
 
@@ -169,10 +171,11 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
           timestamp: Date.now(),
         });
       } catch (err: unknown) {
+        if (signal?.aborted) return;
         console.error("Failed to fetch daily attendance:", err);
         toast.error("Failed to load attendance records.");
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) setLoading(false);
       }
     },
     [selectedDate]
@@ -180,7 +183,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
 
   // Fetch Monthly Attendance
   const fetchMonthlyAttendance = useCallback(
-    async (isSilent = false) => {
+    async (isSilent = false, signal?: AbortSignal) => {
       if (!isSilent) setMonthlyLoading(true);
       try {
         const yearNum = parseInt(selectedYear, 10);
@@ -191,10 +194,11 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
         const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
 
         const [dailyRes, breaksRes] = await Promise.all([
-          attendanceService.getDailyAttendance({ startDate, endDate }),
-          attendanceService.getAttendanceBreaks({ startDate, endDate }),
+          attendanceService.getDailyAttendance({ startDate, endDate, signal }),
+          attendanceService.getAttendanceBreaks({ startDate, endDate, signal }),
         ]);
 
+        if (signal?.aborted) return;
         if (dailyRes.error) throw dailyRes.error;
         if (breaksRes.error) throw breaksRes.error;
 
@@ -210,10 +214,11 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
           timestamp: Date.now(),
         });
       } catch (err: unknown) {
+        if (signal?.aborted) return;
         console.error("Failed to fetch monthly attendance:", err);
         toast.error("Failed to load monthly attendance.");
       } finally {
-        setMonthlyLoading(false);
+        if (!signal?.aborted) setMonthlyLoading(false);
       }
     },
     [selectedYear, selectedMonth]
@@ -221,13 +226,15 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
 
   // Initial & Dependency-driven fetch
   useEffect(() => {
+    const controller = new AbortController();
     if (subTab === "daily") {
       const hasCached = _dailyAttendanceCache.has(selectedDate);
-      fetchDailyAttendance(hasCached);
+      fetchDailyAttendance(hasCached, controller.signal);
     } else {
       const hasCached = _monthlyAttendanceCache.has(`${selectedYear}_${selectedMonth}`);
-      fetchMonthlyAttendance(hasCached);
+      fetchMonthlyAttendance(hasCached, controller.signal);
     }
+    return () => controller.abort();
   }, [subTab, selectedDate, selectedYear, selectedMonth, fetchDailyAttendance, fetchMonthlyAttendance]);
 
   // Realtime handler for attendance_daily

@@ -1402,7 +1402,7 @@ export const UserKpiPerformancePanel: React.FC<
           dbState: "synced",
           typeCounts,
           totalSubmissions,
-          timestamp: Date.now(),
+          timestamp: new Date(updateObj.updated_at).getTime(),
         });
       } catch (err: any) {
         console.error("Save to Database failed, saving to local storage:", err);

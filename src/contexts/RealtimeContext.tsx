@@ -95,6 +95,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
     const hasChutiAccess = canAccessModule(profile, null, 'leave');
     const hasQuotesAccess = canAccessModule(profile, null, 'quotes');
     const hasAttendanceAccess = canAccessModule(profile, null, 'attendance');
+    const hasAdminAttendanceAccess = isAdminRole(profile);
 
 
     let active = true;
@@ -228,6 +229,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             event: '*',
             schema: 'public',
             table: 'attendance_daily',
+            ...(hasAdminAttendanceAccess ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('attendance_daily', payload as unknown as RealtimePayload)
         );
@@ -237,6 +239,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             event: '*',
             schema: 'public',
             table: 'attendance_breaks',
+            ...(hasAdminAttendanceAccess ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('attendance_breaks', payload as unknown as RealtimePayload)
         );

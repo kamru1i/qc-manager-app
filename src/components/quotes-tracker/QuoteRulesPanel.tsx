@@ -217,6 +217,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const profileRole = profile?.role;
 
   // Fetch rules from Supabase
   const fetchRules = useCallback(
@@ -252,7 +253,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         // Background cleanup of duplicate rules for admins
         if (
           duplicateIdsToDelete.length > 0 &&
-          (profile?.role === 'admin' || profile?.role === 'superadmin') &&
+          (profileRole === 'admin' || profileRole === 'superadmin') &&
           isOnline
         ) {
           supabase
@@ -277,7 +278,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
         setLoading(false);
       }
     },
-    [showToast, profile?.role, isOnline],
+    [showToast, profileRole, isOnline],
   );
 
   // Trigger rules query on mount

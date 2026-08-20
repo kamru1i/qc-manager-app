@@ -43,12 +43,15 @@ CREATE INDEX IF NOT EXISTS idx_attendance_breaks_type ON public.attendance_break
 
 -- 4. Automatic updated_at trigger function
 CREATE OR REPLACE FUNCTION public.handle_attendance_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 DROP TRIGGER IF EXISTS trigger_attendance_daily_updated_at ON public.attendance_daily;
 CREATE TRIGGER trigger_attendance_daily_updated_at
@@ -68,20 +71,33 @@ ALTER TABLE public.attendance_breaks ENABLE ROW LEVEL SECURITY;
 
 -- Helper check for admin role
 CREATE OR REPLACE FUNCTION public.is_admin_or_superadmin(user_id uuid)
-RETURNS boolean AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1 FROM public.profiles
-        WHERE id = user_id AND role IN ('admin', 'superadmin')
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.profiles
+        WHERE id = $1
+          AND role IN ('admin', 'superadmin')
     );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+
+REVOKE ALL ON FUNCTION public.is_admin_or_superadmin(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_admin_or_superadmin(uuid) TO authenticated, service_role;
 
 -- RLS Policies: attendance_daily
 DROP POLICY IF EXISTS "attendance_daily_select_all" ON public.attendance_daily;
-CREATE POLICY "attendance_daily_select_all" ON public.attendance_daily
+DROP POLICY IF EXISTS "attendance_daily_select_scoped" ON public.attendance_daily;
+CREATE POLICY "attendance_daily_select_scoped" ON public.attendance_daily
     FOR SELECT TO authenticated
-    USING (true);
+    USING (
+        auth.uid() = user_id
+        OR public.is_admin_or_superadmin(auth.uid())
+        OR public.has_leave_access(auth.uid(), user_id)
+    );
 
 DROP POLICY IF EXISTS "attendance_daily_insert_own_or_admin" ON public.attendance_daily;
 CREATE POLICY "attendance_daily_insert_own_or_admin" ON public.attendance_daily
@@ -101,20 +117,49 @@ CREATE POLICY "attendance_daily_delete_admin" ON public.attendance_daily
 
 -- RLS Policies: attendance_breaks
 DROP POLICY IF EXISTS "attendance_breaks_select_all" ON public.attendance_breaks;
-CREATE POLICY "attendance_breaks_select_all" ON public.attendance_breaks
+DROP POLICY IF EXISTS "attendance_breaks_select_scoped" ON public.attendance_breaks;
+CREATE POLICY "attendance_breaks_select_scoped" ON public.attendance_breaks
     FOR SELECT TO authenticated
-    USING (true);
+    USING (
+        auth.uid() = user_id
+        OR public.is_admin_or_superadmin(auth.uid())
+        OR public.has_leave_access(auth.uid(), user_id)
+    );
 
 DROP POLICY IF EXISTS "attendance_breaks_insert_own_or_admin" ON public.attendance_breaks;
 CREATE POLICY "attendance_breaks_insert_own_or_admin" ON public.attendance_breaks
     FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = user_id OR public.is_admin_or_superadmin(auth.uid()));
+    WITH CHECK (
+        public.is_admin_or_superadmin(auth.uid())
+        OR (
+            auth.uid() = user_id
+            AND EXISTS (
+                SELECT 1
+                FROM public.attendance_daily d
+                WHERE d.id = attendance_id
+                  AND d.user_id = attendance_breaks.user_id
+                  AND d.attendance_date = attendance_breaks.attendance_date
+            )
+        )
+    );
 
 DROP POLICY IF EXISTS "attendance_breaks_update_own_or_admin" ON public.attendance_breaks;
 CREATE POLICY "attendance_breaks_update_own_or_admin" ON public.attendance_breaks
     FOR UPDATE TO authenticated
     USING (auth.uid() = user_id OR public.is_admin_or_superadmin(auth.uid()))
-    WITH CHECK (auth.uid() = user_id OR public.is_admin_or_superadmin(auth.uid()));
+    WITH CHECK (
+        public.is_admin_or_superadmin(auth.uid())
+        OR (
+            auth.uid() = user_id
+            AND EXISTS (
+                SELECT 1
+                FROM public.attendance_daily d
+                WHERE d.id = attendance_id
+                  AND d.user_id = attendance_breaks.user_id
+                  AND d.attendance_date = attendance_breaks.attendance_date
+            )
+        )
+    );
 
 DROP POLICY IF EXISTS "attendance_breaks_delete_admin" ON public.attendance_breaks;
 CREATE POLICY "attendance_breaks_delete_admin" ON public.attendance_breaks

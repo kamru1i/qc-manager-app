@@ -1,14 +1,9 @@
--- QC Manager production bootstrap baseline.
+-- Production baseline regenerated from the hardened live database on 2026-08-20.
+-- Historical SQL patches live under supabase/archive and must not be copied
+-- back into active migrations without re-auditing current function/RLS state.
 --
--- The remote project recorded this version as a baseline marker because its
--- objects already existed. This checked-in form is intentionally replayable:
--- a new Supabase project can run the complete migration chain from this file.
--- It is a schema-only snapshot of the hardened production `public` schema as
--- of 2026-08-13; the later timestamped migrations remain idempotent and are
--- retained so the linked production history continues to match this repo.
+-- PostgreSQL database dump
 --
--- `public` already exists in a Supabase database, so pg_dump's CREATE SCHEMA
--- and psql-only restrict/unrestrict commands are omitted here.
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.4
@@ -213,13 +208,11 @@ CREATE FUNCTION public.archive_and_prune_old_records(p_tz text DEFAULT 'Asia/Dha
 DECLARE
   v_current_year INT := EXTRACT(YEAR FROM timezone(p_tz, now()))::INT;
   v_year INT;
-  v_archived_users INT;
-  v_deleted INT;
+  v_archived_users INT := 0;
   v_total_deleted INT := 0;
-  v_years_archived INT[] := '{}';
+  v_years_archived INT[] := ARRAY[]::INT[];
   v_purged INT;
 BEGIN
-  -- ROLE GUARD: Only service_role (cron jobs, system tasks) or admins may invoke this.
   IF auth.role() != 'service_role' AND NOT public.is_admin() THEN
     RAISE EXCEPTION 'Permission denied: only admins or service_role can archive and prune old records.';
   END IF;
@@ -237,7 +230,7 @@ BEGIN
     WITH year_stats AS (
       SELECT
         r.user_id,
-        COUNT(*)::INT AS total_submitted,
+        COUNT(*) FILTER (WHERE r.file_type != 'Other Site')::INT AS total_submitted,
         COUNT(*) FILTER (WHERE r.file_type = 'Quote')::INT AS quotes_count,
         COUNT(*) FILTER (WHERE r.file_type IN ('Requote', 'Requote Van', 'Requote Bike'))::INT AS requotes_count,
         COUNT(*) FILTER (WHERE r.file_type LIKE '%Review%')::INT AS reviews_count,
@@ -274,9 +267,7 @@ BEGIN
       ys.reviews_count,
       ys.sales_count,
       ys.total_submitted,
-      DENSE_RANK() OVER (
-        ORDER BY ys.total_submitted DESC, COALESCE(p.username, ys.user_id::text) ASC
-      )::INT AS rank
+      DENSE_RANK() OVER (ORDER BY ys.total_submitted DESC, COALESCE(p.username, ys.user_id::text) ASC)::INT AS rank
     FROM year_stats ys
     LEFT JOIN public.profiles p ON p.id = ys.user_id
     LEFT JOIN user_branches ub ON ub.user_id = ys.user_id
@@ -294,26 +285,23 @@ BEGIN
       archived_at = timezone('utc'::text, now());
 
     GET DIAGNOSTICS v_archived_users = ROW_COUNT;
-
-    DELETE FROM public.records r
-    WHERE EXTRACT(YEAR FROM timezone(p_tz, r.submitted_at))::INT = v_year;
-    GET DIAGNOSTICS v_deleted = ROW_COUNT;
-
-    v_total_deleted := v_total_deleted + v_deleted;
-    v_years_archived := v_years_archived || v_year;
-
-    RAISE NOTICE 'Archived year %: % users snapshotted, % records deleted',
-      v_year, v_archived_users, v_deleted;
+    v_years_archived := array_append(v_years_archived, v_year);
   END LOOP;
 
-  DELETE FROM public.leaderboard_archive WHERE year < v_current_year - 5;
+  DELETE FROM public.records r
+  WHERE EXTRACT(YEAR FROM timezone(p_tz, r.submitted_at))::INT < v_current_year - 2;
+  GET DIAGNOSTICS v_total_deleted = ROW_COUNT;
+
+  DELETE FROM public.audit_logs al
+  WHERE EXTRACT(YEAR FROM timezone(p_tz, al.created_at))::INT < v_current_year - 2;
   GET DIAGNOSTICS v_purged = ROW_COUNT;
 
   RETURN jsonb_build_object(
-    'years_archived', to_jsonb(v_years_archived),
+    'status', 'success',
+    'years_archived', v_years_archived,
     'records_deleted', v_total_deleted,
-    'archive_rows_purged', v_purged,
-    'run_at', timezone('utc'::text, now())
+    'audit_logs_purged', v_purged,
+    'archive_rows_upserted', v_archived_users
   );
 END;
 $$;
@@ -646,30 +634,32 @@ CREATE FUNCTION public.check_profile_role_change() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
+DECLARE
+  v_actor_role text;
 BEGIN
-  -- service_role (API routes / system / migrations) bypasses.
   IF auth.role() = 'service_role' THEN
     RETURN NEW;
   END IF;
 
   IF OLD.role IS DISTINCT FROM NEW.role THEN
-    -- Must be admin OR superadmin to change any role at all.
-    IF NOT EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
-    ) THEN
+    IF auth.uid() = OLD.id THEN
+      v_actor_role := OLD.role;
+    ELSE
+      SELECT role INTO v_actor_role
+      FROM public.profiles
+      WHERE id = auth.uid();
+    END IF;
+
+    IF v_actor_role NOT IN ('admin', 'superadmin') THEN
       RAISE EXCEPTION 'You are not allowed to change your role.';
     END IF;
 
-    -- Touching an admin/superadmin role in EITHER direction requires superadmin.
     IF (NEW.role IN ('admin', 'superadmin') OR OLD.role IN ('admin', 'superadmin'))
-       AND NOT EXISTS (
-         SELECT 1 FROM public.profiles
-         WHERE id = auth.uid() AND role = 'superadmin'
-       ) THEN
+       AND v_actor_role <> 'superadmin' THEN
       RAISE EXCEPTION 'Only a superadmin can create, promote, or demote admin/superadmin accounts.';
     END IF;
   END IF;
+
   RETURN NEW;
 END;
 $$;
@@ -716,9 +706,13 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  SELECT p.role INTO v_actor_role
-  FROM public.profiles p
-  WHERE p.id = auth.uid();
+  IF OLD.id = auth.uid() THEN
+    v_actor_role := OLD.role;
+  ELSE
+    SELECT p.role INTO v_actor_role
+    FROM public.profiles p
+    WHERE p.id = auth.uid();
+  END IF;
 
   IF v_actor_role = 'superadmin' THEN
     RETURN NEW;
@@ -1201,6 +1195,8 @@ DECLARE
   v_allowed_types text[];
   v_working_hours numeric;
   v_break_time numeric;
+  v_default_sign_in text;
+  v_default_sign_out text;
   v_actor_name text;
 BEGIN
   IF jsonb_typeof(COALESCE(p_profile_options, '{}'::jsonb)) <> 'object' THEN
@@ -1227,9 +1223,15 @@ BEGIN
     RAISE EXCEPTION 'Invalid working-hours or break-time value.';
   END IF;
 
-  -- The existing, hardened creator owns auth.users compatibility. Calling it
-  -- inside this function keeps auth creation and profile completion in one DB
-  -- transaction, so a validation/update error rolls the account back too.
+  v_default_sign_in := NULLIF(btrim(p_profile_options->>'default_sign_in'), '');
+  v_default_sign_out := NULLIF(btrim(p_profile_options->>'default_sign_out'), '');
+  IF v_default_sign_in IS NOT NULL THEN
+    PERFORM v_default_sign_in::time;
+  END IF;
+  IF v_default_sign_out IS NOT NULL THEN
+    PERFORM v_default_sign_out::time;
+  END IF;
+
   v_user_id := public.create_new_user(
     p_email,
     p_password,
@@ -1253,8 +1255,8 @@ BEGIN
       job_role = NULLIF(btrim(p_profile_options->>'job_role'), ''),
       working_hours = v_working_hours,
       break_time = v_break_time,
-      default_sign_in = COALESCE(NULLIF(p_profile_options->>'default_sign_in', '')::time, default_sign_in),
-      default_sign_out = COALESCE(NULLIF(p_profile_options->>'default_sign_out', '')::time, default_sign_out),
+      default_sign_in = COALESCE(v_default_sign_in, default_sign_in),
+      default_sign_out = COALESCE(v_default_sign_out, default_sign_out),
       global_settings = COALESCE(global_settings, '{}'::jsonb) || jsonb_build_object(
         'kpi_skills', CASE WHEN jsonb_typeof(p_profile_options->'kpi_skills') = 'array' THEN p_profile_options->'kpi_skills' ELSE '[]'::jsonb END,
         'kpi_dept_indicators', CASE WHEN jsonb_typeof(p_profile_options->'kpi_dept_indicators') = 'array' THEN p_profile_options->'kpi_dept_indicators' ELSE '[]'::jsonb END,
@@ -1895,7 +1897,8 @@ DECLARE
   v_today_start timestamptz;
   v_today_end   timestamptz;
 BEGIN
-  -- Compute UTC timestamp boundaries for target month, year, and day
+  p_period := COALESCE(p_period, '');
+
   v_month_start := (make_date(p_year::int, p_month::int, 1)::timestamp AT TIME ZONE p_tz);
   v_month_end   := ((make_date(p_year::int, p_month::int, 1) + interval '1 month')::timestamp AT TIME ZONE p_tz);
 
@@ -1909,12 +1912,12 @@ BEGIN
   WITH selected_month_stats AS (
     SELECT
       r.user_id,
-      COUNT(*)::INT AS months_count,
+      COUNT(*) FILTER (WHERE r.file_type != 'Other Site')::INT AS months_count,
       COUNT(*) FILTER (WHERE r.file_type = 'Quote')::INT AS quotes_count,
       COUNT(*) FILTER (WHERE r.file_type IN ('Requote', 'Requote Van', 'Requote Bike'))::INT AS requotes_count,
       COUNT(*) FILTER (WHERE r.file_type LIKE '%Review%')::INT AS reviews_count,
       COUNT(*) FILTER (WHERE r.file_type = 'Sale')::INT AS sales_count,
-      MAX(r.submitted_at) AS earliest_achievement_timestamp
+      MAX(r.submitted_at) FILTER (WHERE r.file_type != 'Other Site') AS earliest_achievement_timestamp
     FROM public.records r
     WHERE r.submitted_at >= v_month_start AND r.submitted_at < v_month_end
     GROUP BY r.user_id
@@ -1922,7 +1925,7 @@ BEGIN
   selected_year_stats AS (
     SELECT
       r.user_id,
-      COUNT(*)::INT AS years_count
+      COUNT(*) FILTER (WHERE r.file_type != 'Other Site')::INT AS years_count
     FROM public.records r
     WHERE r.submitted_at >= v_year_start AND r.submitted_at < v_year_end
     GROUP BY r.user_id
@@ -1930,13 +1933,11 @@ BEGIN
   today_stats AS (
     SELECT
       r.user_id,
-      COUNT(*)::INT AS todays_count
+      COUNT(*) FILTER (WHERE r.file_type != 'Other Site')::INT AS todays_count
     FROM public.records r
     WHERE r.submitted_at >= v_today_start AND r.submitted_at < v_today_end
     GROUP BY r.user_id
   ),
-  -- Profiles carry no branch column; derive each user's primary branch from
-  -- their most frequent (latest-active on ties) records.branch_name.
   user_branches AS (
     SELECT DISTINCT ON (b.user_id)
       b.user_id,
@@ -1990,37 +1991,14 @@ $$;
 --
 
 CREATE FUNCTION public.get_my_role() RETURNS text
-    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_role text;
-BEGIN
-  -- Try to read from the per-transaction cache first
-  BEGIN
-    v_role := current_setting('app.user_role', true);
-    IF v_role IS NOT NULL AND v_role <> '' THEN
-      RETURN v_role;
-    END IF;
-  EXCEPTION WHEN OTHERS THEN
-    -- Setting doesn't exist yet, compute it
-  END;
-
-  -- Cache miss: look up the role from profiles (single PK lookup)
-  SELECT role INTO v_role
-  FROM public.profiles
-  WHERE id = auth.uid();
-
-  -- Store in transaction-scoped session variable (resets at txn end)
-  IF v_role IS NOT NULL THEN
-    PERFORM set_config('app.user_role', v_role, true);
-  ELSE
-    PERFORM set_config('app.user_role', 'none', true);
-    v_role := 'none';
-  END IF;
-
-  RETURN v_role;
-END;
+  SELECT COALESCE((
+    SELECT p.role
+    FROM public.profiles p
+    WHERE p.id = (SELECT auth.uid())
+  ), 'none');
 $$;
 
 
@@ -2041,6 +2019,21 @@ BEGIN
   WHERE UPPER(p.username) = UPPER(p_username);
   
   RETURN v_email;
+END;
+$$;
+
+
+--
+-- Name: handle_attendance_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.handle_attendance_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
 END;
 $$;
 
@@ -2163,6 +2156,23 @@ CREATE FUNCTION public.is_admin() RETURNS boolean
     AS $$
   SELECT public.get_my_role() IN ('admin', 'superadmin');
 $$;
+
+
+--
+-- Name: is_admin_or_superadmin(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_admin_or_superadmin(user_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $_$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = $1
+      AND role IN ('admin', 'superadmin')
+  );
+$_$;
 
 
 --
@@ -2963,8 +2973,6 @@ DECLARE
   v_prev_month date := (date_trunc('month', current_date) - interval '1 month')::date;
   v_current_year integer := extract(year FROM current_date)::integer;
   v_user record;
-  v_consecutive integer;
-  v_yearly_wins integer;
   v_badge jsonb;
 BEGIN
   IF session_user NOT IN ('postgres', 'supabase_admin') AND auth.role() <> 'service_role' THEN
@@ -2973,60 +2981,85 @@ BEGIN
 
   PERFORM set_config('app.bypass_profile_security', 'true', true);
 
-  CREATE TEMP TABLE tmp_monthly_ranks ON COMMIT DROP AS
   WITH monthly_counts AS (
     SELECT r.user_id,
            date_trunc('month', r.submitted_at AT TIME ZONE 'Asia/Dhaka')::date AS month_start,
-           count(*) AS record_count,
+           count(*) FILTER (WHERE r.file_type != 'Other Site') AS record_count,
            p.username
     FROM public.records r
     JOIN public.profiles p ON p.id = r.user_id
     WHERE r.submitted_at >= ((v_prev_month - interval '24 months')::timestamp AT TIME ZONE 'Asia/Dhaka')
       AND r.submitted_at < ((v_prev_month + interval '1 month')::timestamp AT TIME ZONE 'Asia/Dhaka')
     GROUP BY r.user_id, date_trunc('month', r.submitted_at AT TIME ZONE 'Asia/Dhaka')::date, p.username
+  ),
+  monthly_ranks AS (
+    SELECT user_id,
+           month_start,
+           row_number() OVER (PARTITION BY month_start ORDER BY record_count DESC, upper(username), user_id) AS rank
+    FROM monthly_counts
   )
-  SELECT user_id,
-         month_start,
-         row_number() OVER (PARTITION BY month_start ORDER BY record_count DESC, upper(username), user_id) AS rank
-  FROM monthly_counts;
-
   UPDATE public.profiles p
   SET global_settings = COALESCE(p.global_settings, '{}'::jsonb) - 'top_performer_badge'
   WHERE p.global_settings ? 'top_performer_badge'
     AND NOT EXISTS (
-      SELECT 1 FROM tmp_monthly_ranks r
+      SELECT 1 FROM monthly_ranks r
       WHERE r.user_id = p.id AND r.month_start = v_prev_month AND r.rank <= 5
     );
 
   FOR v_user IN
-    SELECT user_id, rank
-    FROM tmp_monthly_ranks
-    WHERE month_start = v_prev_month AND rank <= 5
-    ORDER BY rank
+    WITH monthly_counts AS (
+      SELECT r.user_id,
+             date_trunc('month', r.submitted_at AT TIME ZONE 'Asia/Dhaka')::date AS month_start,
+             count(*) FILTER (WHERE r.file_type != 'Other Site') AS record_count,
+             p.username
+      FROM public.records r
+      JOIN public.profiles p ON p.id = r.user_id
+      WHERE r.submitted_at >= ((v_prev_month - interval '24 months')::timestamp AT TIME ZONE 'Asia/Dhaka')
+        AND r.submitted_at < ((v_prev_month + interval '1 month')::timestamp AT TIME ZONE 'Asia/Dhaka')
+      GROUP BY r.user_id, date_trunc('month', r.submitted_at AT TIME ZONE 'Asia/Dhaka')::date, p.username
+    ),
+    monthly_ranks AS (
+      SELECT user_id,
+             month_start,
+             row_number() OVER (PARTITION BY month_start ORDER BY record_count DESC, upper(username), user_id) AS rank
+      FROM monthly_counts
+    ),
+    current_top AS (
+      SELECT user_id, rank
+      FROM monthly_ranks
+      WHERE month_start = v_prev_month AND rank <= 5
+    )
+    SELECT
+      ct.user_id,
+      ct.rank,
+      (
+        SELECT COALESCE(min(offset_value), 25)::integer
+        FROM generate_series(0, 24) offset_value
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM monthly_ranks r
+          WHERE r.user_id = ct.user_id
+            AND r.month_start = (v_prev_month - (offset_value || ' months')::interval)::date
+            AND r.rank <= 5
+        )
+      ) AS consecutive_months,
+      (
+        SELECT count(DISTINCT month_start)::integer
+        FROM monthly_ranks r
+        WHERE r.user_id = ct.user_id
+          AND r.rank <= 5
+          AND extract(year FROM month_start)::integer = v_current_year
+      ) AS yearly_wins
+    FROM current_top ct
+    ORDER BY ct.rank
   LOOP
-    SELECT COALESCE(min(offset_value), 25)
-    INTO v_consecutive
-    FROM generate_series(0, 24) offset_value
-    WHERE NOT EXISTS (
-      SELECT 1 FROM tmp_monthly_ranks r
-      WHERE r.user_id = v_user.user_id
-        AND r.month_start = (v_prev_month - (offset_value || ' months')::interval)::date
-        AND r.rank <= 5
-    );
-
-    SELECT count(DISTINCT month_start)::integer INTO v_yearly_wins
-    FROM tmp_monthly_ranks
-    WHERE user_id = v_user.user_id
-      AND rank <= 5
-      AND extract(year FROM month_start)::integer = v_current_year;
-
     v_badge := jsonb_build_object(
       'userId', v_user.user_id,
       'rank', v_user.rank,
       'badgeType', CASE WHEN v_user.rank <= 3 THEN 'blue' ELSE 'grey' END,
       'monthName', to_char(v_prev_month, 'FMMonth'),
-      'consecutiveMonths', v_consecutive,
-      'yearlyTopPerformances', v_yearly_wins
+      'consecutiveMonths', v_user.consecutive_months,
+      'yearlyTopPerformances', v_user.yearly_wins
     );
 
     UPDATE public.profiles
@@ -3136,6 +3169,45 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: attendance_breaks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.attendance_breaks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    attendance_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    attendance_date date NOT NULL,
+    type text NOT NULL,
+    start_time timestamp with time zone NOT NULL,
+    end_time timestamp with time zone,
+    duration_minutes numeric(8,2) DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT attendance_breaks_type_check CHECK ((type = ANY (ARRAY['snack'::text, 'prayer'::text])))
+);
+
+
+--
+-- Name: attendance_daily; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.attendance_daily (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    attendance_date date NOT NULL,
+    join_time timestamp with time zone,
+    close_time timestamp with time zone,
+    status text DEFAULT 'WORKING'::text NOT NULL,
+    total_work_minutes numeric(8,2) DEFAULT 0 NOT NULL,
+    total_break_minutes numeric(8,2) DEFAULT 0 NOT NULL,
+    total_prayer_minutes numeric(8,2) DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT attendance_daily_status_check CHECK ((status = ANY (ARRAY['WORKING'::text, 'SNACK_BREAK'::text, 'PRAYER_BREAK'::text, 'CLOSED'::text, 'DAY_OFF'::text])))
+);
+
+
+--
 -- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3179,7 +3251,7 @@ CREATE TABLE public.chuti (
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
     CONSTRAINT chuti_admin_edit_status_check CHECK ((admin_edit_status = ANY (ARRAY['none'::text, 'pending'::text, 'approved'::text, 'rejected'::text]))),
-    CONSTRAINT chuti_leave_type_check CHECK ((leave_type = ANY (ARRAY['Short Leave'::text, 'Full Leave'::text, 'Overtime'::text]))),
+    CONSTRAINT chuti_leave_type_check CHECK ((leave_type = ANY (ARRAY['Short Leave'::text, 'Early Leave'::text, 'Full Leave'::text, 'Overtime'::text]))),
     CONSTRAINT chuti_reserve_adjustment_status_check CHECK ((reserve_adjustment_status = ANY (ARRAY['none'::text, 'pending'::text, 'approved'::text, 'rejected'::text]))),
     CONSTRAINT chuti_status_check CHECK ((status = ANY (ARRAY['pending_supervisor'::text, 'needs_review'::text, 'approved_by_supervisor'::text, 'approved'::text])))
 );
@@ -3484,6 +3556,22 @@ ALTER TABLE ONLY public.mobile_app_versions ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
+-- Name: attendance_breaks attendance_breaks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attendance_breaks
+    ADD CONSTRAINT attendance_breaks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: attendance_daily attendance_daily_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attendance_daily
+    ADD CONSTRAINT attendance_daily_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3620,6 +3708,14 @@ ALTER TABLE ONLY public.todos
 
 
 --
+-- Name: attendance_daily unique_user_attendance_date; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attendance_daily
+    ADD CONSTRAINT unique_user_attendance_date UNIQUE (user_id, attendance_date);
+
+
+--
 -- Name: govt_holiday_responses unique_user_holiday; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3641,6 +3737,55 @@ ALTER TABLE ONLY public.dismissed_notifications
 
 ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT unique_user_year_period_category UNIQUE (user_id, year, period, leave_category);
+
+
+--
+-- Name: idx_attendance_breaks_attendance_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_attendance_breaks_attendance_id ON public.attendance_breaks USING btree (attendance_id);
+
+
+--
+-- Name: idx_attendance_breaks_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_attendance_breaks_type ON public.attendance_breaks USING btree (type);
+
+
+--
+-- Name: idx_attendance_breaks_user_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_attendance_breaks_user_date ON public.attendance_breaks USING btree (user_id, attendance_date);
+
+
+--
+-- Name: idx_attendance_breaks_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_attendance_breaks_user_id ON public.attendance_breaks USING btree (user_id);
+
+
+--
+-- Name: idx_attendance_daily_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_attendance_daily_date ON public.attendance_daily USING btree (attendance_date);
+
+
+--
+-- Name: idx_attendance_daily_user_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_attendance_daily_user_date ON public.attendance_daily USING btree (user_id, attendance_date);
+
+
+--
+-- Name: idx_attendance_daily_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_attendance_daily_user_id ON public.attendance_daily USING btree (user_id);
 
 
 --
@@ -3949,6 +4094,44 @@ CREATE TRIGGER todos_set_last_activity BEFORE UPDATE ON public.todos FOR EACH RO
 --
 
 CREATE TRIGGER trg_update_compliance_rules_updated_at BEFORE UPDATE ON public.compliance_rules FOR EACH ROW EXECUTE FUNCTION public.update_compliance_rules_updated_at();
+
+
+--
+-- Name: attendance_breaks trigger_attendance_breaks_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_attendance_breaks_updated_at BEFORE UPDATE ON public.attendance_breaks FOR EACH ROW EXECUTE FUNCTION public.handle_attendance_updated_at();
+
+
+--
+-- Name: attendance_daily trigger_attendance_daily_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_attendance_daily_updated_at BEFORE UPDATE ON public.attendance_daily FOR EACH ROW EXECUTE FUNCTION public.handle_attendance_updated_at();
+
+
+--
+-- Name: attendance_breaks attendance_breaks_attendance_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attendance_breaks
+    ADD CONSTRAINT attendance_breaks_attendance_id_fkey FOREIGN KEY (attendance_id) REFERENCES public.attendance_daily(id) ON DELETE CASCADE;
+
+
+--
+-- Name: attendance_breaks attendance_breaks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attendance_breaks
+    ADD CONSTRAINT attendance_breaks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: attendance_daily attendance_daily_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attendance_daily
+    ADD CONSTRAINT attendance_daily_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 --
@@ -4437,6 +4620,78 @@ CREATE POLICY "Users can submit own settlement response" ON public.leave_settlem
 
 
 --
+-- Name: attendance_breaks; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.attendance_breaks ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: attendance_breaks attendance_breaks_delete_admin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_breaks_delete_admin ON public.attendance_breaks FOR DELETE TO authenticated USING (public.is_admin_or_superadmin(auth.uid()));
+
+
+--
+-- Name: attendance_breaks attendance_breaks_insert_own_or_admin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_breaks_insert_own_or_admin ON public.attendance_breaks FOR INSERT TO authenticated WITH CHECK ((public.is_admin_or_superadmin(auth.uid()) OR ((auth.uid() = user_id) AND (EXISTS ( SELECT 1
+   FROM public.attendance_daily d
+  WHERE ((d.id = attendance_breaks.attendance_id) AND (d.user_id = attendance_breaks.user_id) AND (d.attendance_date = attendance_breaks.attendance_date)))))));
+
+
+--
+-- Name: attendance_breaks attendance_breaks_select_scoped; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_breaks_select_scoped ON public.attendance_breaks FOR SELECT TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()) OR public.has_leave_access(auth.uid(), user_id)));
+
+
+--
+-- Name: attendance_breaks attendance_breaks_update_own_or_admin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_breaks_update_own_or_admin ON public.attendance_breaks FOR UPDATE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()))) WITH CHECK ((public.is_admin_or_superadmin(auth.uid()) OR ((auth.uid() = user_id) AND (EXISTS ( SELECT 1
+   FROM public.attendance_daily d
+  WHERE ((d.id = attendance_breaks.attendance_id) AND (d.user_id = attendance_breaks.user_id) AND (d.attendance_date = attendance_breaks.attendance_date)))))));
+
+
+--
+-- Name: attendance_daily; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.attendance_daily ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: attendance_daily attendance_daily_delete_admin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_daily_delete_admin ON public.attendance_daily FOR DELETE TO authenticated USING (public.is_admin_or_superadmin(auth.uid()));
+
+
+--
+-- Name: attendance_daily attendance_daily_insert_own_or_admin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_daily_insert_own_or_admin ON public.attendance_daily FOR INSERT TO authenticated WITH CHECK (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid())));
+
+
+--
+-- Name: attendance_daily attendance_daily_select_scoped; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_daily_select_scoped ON public.attendance_daily FOR SELECT TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()) OR public.has_leave_access(auth.uid(), user_id)));
+
+
+--
+-- Name: attendance_daily attendance_daily_update_own_or_admin; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY attendance_daily_update_own_or_admin ON public.attendance_daily FOR UPDATE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()))) WITH CHECK (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid())));
+
+
+--
 -- Name: audit_logs; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -4779,6 +5034,14 @@ GRANT ALL ON FUNCTION public.get_user_email_by_username(p_username text) TO serv
 
 
 --
+-- Name: FUNCTION handle_attendance_updated_at(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.handle_attendance_updated_at() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.handle_attendance_updated_at() TO service_role;
+
+
+--
 -- Name: FUNCTION handle_new_user(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -4811,6 +5074,15 @@ GRANT ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uu
 REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_admin() TO authenticated;
 GRANT ALL ON FUNCTION public.is_admin() TO service_role;
+
+
+--
+-- Name: FUNCTION is_admin_or_superadmin(user_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.is_admin_or_superadmin(user_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.is_admin_or_superadmin(user_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.is_admin_or_superadmin(user_id uuid) TO service_role;
 
 
 --
@@ -5038,6 +5310,24 @@ GRANT ALL ON FUNCTION public.update_todos_last_activity() TO service_role;
 
 
 --
+-- Name: TABLE attendance_breaks; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.attendance_breaks TO anon;
+GRANT ALL ON TABLE public.attendance_breaks TO authenticated;
+GRANT ALL ON TABLE public.attendance_breaks TO service_role;
+
+
+--
+-- Name: TABLE attendance_daily; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.attendance_daily TO anon;
+GRANT ALL ON TABLE public.attendance_daily TO authenticated;
+GRANT ALL ON TABLE public.attendance_daily TO service_role;
+
+
+--
 -- Name: TABLE audit_logs; Type: ACL; Schema: public; Owner: -
 --
 
@@ -5231,4 +5521,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
 
--- End of replayable production bootstrap baseline.
+--
+-- PostgreSQL database dump complete
+--

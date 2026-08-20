@@ -22,6 +22,18 @@ const client = new pg.Client({
   application_name: "qc-manager-read-only-forensic-audit",
 });
 
+const migrationValidationFiles = [
+  "supabase/migrations/20260813090000_final_forensic_hardening.sql",
+  "supabase/migrations/20260813170000_workspace_and_kpi_integrity.sql",
+  "supabase/migrations/20260813180500_exclude_othersite_from_leaderboard.sql",
+  "supabase/migrations/20260813181000_exclude_othersite_from_badges.sql",
+  "supabase/migrations/20260813181500_exclude_othersite_from_archive.sql",
+  "supabase/migrations/20260818180000_attendance_module.sql",
+  "supabase/migrations/20260820120000_final_lint_attendance_hardening.sql",
+  "supabase/migrations/20260820123000_profile_archive_badge_final_fix.sql",
+  "supabase/migrations/20260820124500_revoke_attendance_trigger_execute.sql",
+];
+
 if (process.argv.includes("--dump-schema")) {
   const output = "/private/tmp/qc-manager-final-schema.sql";
   execFileSync(
@@ -281,17 +293,31 @@ const queries = {
 await client.connect();
 
 try {
+  const getPendingMigrationSql = async () => {
+    const { rows } = await client.query("select version from supabase_migrations.schema_migrations");
+    const applied = new Set(rows.map((row) => String(row.version)));
+    return migrationValidationFiles
+      .filter((file) => {
+        const version = file.match(/\/(\d{14})_[^/]+\.sql$/)?.[1];
+        return version && !applied.has(version);
+      })
+      .map((file) => fs.readFileSync(file, "utf8"))
+      .join("\n");
+  };
+
   if (process.argv.includes("--probe-runtime-functions")) {
     const probes = [
       {
         name: "sync_top_performer_badges",
         sql: "select public.sync_top_performer_badges()",
         params: [],
+        role: "service_role",
       },
       {
         name: "archive_and_prune_old_records",
         sql: "select public.archive_and_prune_old_records('Asia/Dhaka')",
         params: [],
+        role: "service_role",
       },
       {
         name: "create_configured_user",
@@ -303,6 +329,7 @@ try {
           `forensic.rollback.${Date.now()}@example.invalid`,
           `ROLLBACK_${Date.now()}`,
         ],
+        role: "admin",
       },
     ];
     const results = [];
@@ -310,7 +337,23 @@ try {
     for (const probe of probes) {
       await client.query("begin");
       try {
-        await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+        if (probe.role === "admin") {
+          const { rows } = await client.query(`
+            select p.id, u.email
+            from public.profiles p
+            left join auth.users u on u.id = p.id
+            where p.role in ('superadmin', 'admin')
+            order by case p.role when 'superadmin' then 1 else 2 end
+            limit 1
+          `);
+          if (!rows[0]) throw new Error("No admin actor fixture found.");
+          await client.query("set local role authenticated");
+          await client.query("select set_config('request.jwt.claims', $1, true)", [
+            JSON.stringify({ sub: rows[0].id, role: "authenticated", email: rows[0].email ?? "audit@example.invalid" }),
+          ]);
+        } else {
+          await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+        }
         await client.query(probe.sql, probe.params);
         results.push({ name: probe.name, passed: true });
       } catch (error) {
@@ -331,10 +374,7 @@ try {
   }
 
   if (process.argv.includes("--security-tests") || process.argv.includes("--security-tests-live")) {
-    const migrationSql = [
-      "supabase/migrations/20260813090000_final_forensic_hardening.sql",
-      "supabase/migrations/20260813170000_workspace_and_kpi_integrity.sql",
-    ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
+    const migrationSql = await getPendingMigrationSql();
     const assertions = [];
 
     const assert = (condition, name, evidence) => {
@@ -351,7 +391,8 @@ try {
         [JSON.stringify({ sub: actor.id, role: "authenticated", email: actor.email ?? "audit@example.invalid" })],
       );
       await client.query(`
-        select set_config('app.user_role', '', true),
+        select set_config('request.jwt.claim.role', 'authenticated', true),
+               set_config('app.user_role', '', true),
                set_config('app.bypass_profile_security', '', true),
                set_config('app.bypass_chuti_security', '', true),
                set_config('app.bypass_settlement_security', '', true)
@@ -400,7 +441,7 @@ try {
     };
 
     await client.query("begin");
-    if (!process.argv.includes("--security-tests-live")) {
+    if (!process.argv.includes("--security-tests-live") && migrationSql) {
       await client.query(migrationSql);
     }
 
@@ -430,6 +471,44 @@ try {
       const { rows } = await client.query(`select distinct user_id from public.${table}`);
       tableOwnerIds[table] = new Set(rows.map((row) => row.user_id));
     }
+    const { rows: attendanceExists } = await client.query(`
+      select to_regclass('public.attendance_daily') is not null
+         and to_regclass('public.attendance_breaks') is not null as exists
+    `);
+    const hasAttendanceTables = attendanceExists[0]?.exists === true;
+    let ownAttendanceId = null;
+    let otherAttendanceId = null;
+    let otherAttendanceDate = null;
+    const otherAttendanceUser = actors.find((actor) => actor.id !== user.id && actor.role === "user")
+      ?? actors.find((actor) => actor.id !== user.id);
+    if (hasAttendanceTables && otherAttendanceUser) {
+      await client.query("reset role");
+      await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+      const ownAttendance = await client.query(`
+        insert into public.attendance_daily (user_id, attendance_date, join_time, status)
+        values ($1, current_date - 10, now(), 'WORKING')
+        on conflict (user_id, attendance_date) do update
+          set join_time = excluded.join_time,
+              status = excluded.status
+        returning id, attendance_date
+      `, [user.id]);
+      const otherAttendance = await client.query(`
+        insert into public.attendance_daily (user_id, attendance_date, join_time, status)
+        values ($1, current_date - 11, now(), 'WORKING')
+        on conflict (user_id, attendance_date) do update
+          set join_time = excluded.join_time,
+              status = excluded.status
+        returning id, attendance_date
+      `, [otherAttendanceUser.id]);
+      ownAttendanceId = ownAttendance.rows[0].id;
+      otherAttendanceId = otherAttendance.rows[0].id;
+      otherAttendanceDate = otherAttendance.rows[0].attendance_date;
+      await client.query(`
+        insert into public.attendance_breaks (attendance_id, user_id, attendance_date, type, start_time)
+        values ($1, $2, current_date - 10, 'snack', now()),
+               ($3, $4, current_date - 11, 'snack', now())
+      `, [ownAttendanceId, user.id, otherAttendanceId, otherAttendanceUser.id]);
+    }
     const directSupervisors = new Set(user.supervisor_ids ?? []);
     const expectedNormalProfileIds = new Set([user.id, ...directSupervisors]);
     for (const candidate of actors) {
@@ -457,6 +536,24 @@ try {
         `normal user ${table} reads are own-only`,
         { visible_user_ids: rows.map((row) => row.user_id) },
       );
+    }
+    if (hasAttendanceTables && otherAttendanceUser) {
+      const { rows: visibleDaily } = await client.query("select distinct user_id from public.attendance_daily order by user_id");
+      assert(
+        JSON.stringify(visibleDaily.map((row) => row.user_id)) === JSON.stringify([user.id]),
+        "normal user attendance reads are own-only",
+        { visible_user_ids: visibleDaily.map((row) => row.user_id) },
+      );
+      const { rows: visibleBreaks } = await client.query("select distinct user_id from public.attendance_breaks order by user_id");
+      assert(
+        JSON.stringify(visibleBreaks.map((row) => row.user_id)) === JSON.stringify([user.id]),
+        "normal user attendance break reads are own-only",
+        { visible_user_ids: visibleBreaks.map((row) => row.user_id) },
+      );
+      await expectDeniedOrNoRows("normal user cannot attach a break to another attendance row", () => client.query(`
+        insert into public.attendance_breaks (attendance_id, user_id, attendance_date, type, start_time)
+        values ($1, auth.uid(), $2, 'prayer', now())
+      `, [otherAttendanceId, otherAttendanceDate]));
     }
 
     await expectDenied("normal user cannot forge audit rows", () => client.query(`
@@ -704,14 +801,13 @@ try {
   }
 
   if (process.argv.includes("--validate-migration")) {
-    const migrationSql = [
-      "supabase/migrations/20260813090000_final_forensic_hardening.sql",
-      "supabase/migrations/20260813170000_workspace_and_kpi_integrity.sql",
-    ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
+    const migrationSql = await getPendingMigrationSql();
     await client.query("begin");
-    await client.query(migrationSql);
+    if (migrationSql) {
+      await client.query(migrationSql);
+    }
     await client.query("rollback");
-    console.log(JSON.stringify({ migration_validated_in_rolled_back_transaction: true }));
+    console.log(JSON.stringify({ pending_migrations_validated_in_rolled_back_transaction: true }));
     await client.end();
     process.exit(0);
   }

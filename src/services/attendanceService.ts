@@ -11,7 +11,12 @@ export const attendanceService = {
     userId?: string;
     startDate?: string;
     endDate?: string;
+    signal?: AbortSignal;
   }) {
+    if (!options?.date && !(options?.startDate && options?.endDate) && !options?.userId) {
+      return { data: [] as AttendanceDaily[], error: new Error('Attendance queries require a date, user, or bounded date range.') };
+    }
+
     let query = supabase.from('attendance_daily').select(ATTENDANCE_DAILY_COLUMNS);
 
     if (options?.date) {
@@ -27,7 +32,10 @@ export const attendanceService = {
       query = query.lte('attendance_date', options.endDate);
     }
 
-    query = query.order('attendance_date', { ascending: false });
+    query = query.order('attendance_date', { ascending: false }).limit(2000);
+    if (options?.signal) {
+      query = query.abortSignal(options.signal);
+    }
 
     const { data, error } = await query;
     return { data: (data || []) as unknown as AttendanceDaily[], error };
@@ -42,7 +50,12 @@ export const attendanceService = {
     attendanceId?: string;
     startDate?: string;
     endDate?: string;
+    signal?: AbortSignal;
   }) {
+    if (!options?.attendanceId && !options?.date && !(options?.startDate && options?.endDate) && !options?.userId) {
+      return { data: [] as AttendanceBreak[], error: new Error('Attendance break queries require an attendance id, date, user, or bounded date range.') };
+    }
+
     let query = supabase.from('attendance_breaks').select(ATTENDANCE_BREAK_COLUMNS);
 
     if (options?.attendanceId) {
@@ -61,7 +74,10 @@ export const attendanceService = {
       query = query.lte('attendance_date', options.endDate);
     }
 
-    query = query.order('start_time', { ascending: true });
+    query = query.order('start_time', { ascending: true }).limit(5000);
+    if (options?.signal) {
+      query = query.abortSignal(options.signal);
+    }
 
     const { data, error } = await query;
     return { data: (data || []) as unknown as AttendanceBreak[], error };

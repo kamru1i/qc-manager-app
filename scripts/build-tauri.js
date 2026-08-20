@@ -6,6 +6,7 @@ const apiSrc = path.join(__dirname, '..', 'src', 'app', 'api');
 const apiBackup = path.join(__dirname, '..', 'src', 'api_backup');
 
 let renamed = false;
+let failed = false;
 try {
   if (fs.existsSync(apiSrc)) {
     console.log('Temporarily moving src/app/api to src/api_backup for static export...');
@@ -19,12 +20,13 @@ try {
       } else {
         console.error('Rename error:', renameError);
       }
-      process.exit(1);
+      failed = true;
+      throw renameError;
     }
   }
 
   console.log('Running Next.js production build...');
-  execSync('npx next build', { 
+  execSync('npx next build --webpack', { 
     env: { 
       ...process.env, 
       IS_TAURI_BUILD: 'true' 
@@ -35,10 +37,14 @@ try {
   console.log('Static export build completed successfully.');
 } catch (error) {
   console.error('Next.js build failed:', error);
-  process.exit(1);
+  failed = true;
 } finally {
   if (renamed && fs.existsSync(apiBackup)) {
     console.log('Restoring src/app/api...');
     fs.renameSync(apiBackup, apiSrc);
   }
+}
+
+if (failed) {
+  process.exit(1);
 }

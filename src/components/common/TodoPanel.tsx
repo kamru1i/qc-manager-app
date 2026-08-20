@@ -98,6 +98,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   );
 
   const profileId = profile?.id || "";
+  const profileUsername = profile?.username || "";
   const initialDailyCache = _dailyTodosCache.get(`${profileId}_${todayStr}`);
   const initialArchiveCache = _archiveTodosCache.get(
     `${profileId}_${selectedYear}_${selectedMonth}`,
@@ -117,26 +118,26 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     (updater: TodoItem[] | ((prev: TodoItem[]) => TodoItem[])) => {
       setTodos((prev) => {
         const next = typeof updater === "function" ? updater(prev) : updater;
-        if (profile?.id) {
-          updateDailyCache(profile.id, todayStr, next);
+        if (profileId) {
+          updateDailyCache(profileId, todayStr, next);
         }
         return next;
       });
     },
-    [profile?.id, todayStr],
+    [profileId, todayStr],
   );
 
   const setAndCacheArchiveTodos = useCallback(
     (updater: TodoItem[] | ((prev: TodoItem[]) => TodoItem[])) => {
       setArchiveTodos((prev) => {
         const next = typeof updater === "function" ? updater(prev) : updater;
-        if (profile?.id) {
-          updateArchiveCache(profile.id, selectedYear, selectedMonth, next);
+        if (profileId) {
+          updateArchiveCache(profileId, selectedYear, selectedMonth, next);
         }
         return next;
       });
     },
-    [profile?.id, selectedYear, selectedMonth],
+    [profileId, selectedYear, selectedMonth],
   );
 
   const sortedTodos = React.useMemo(() => sortTodosByActivity(todos), [todos]);
@@ -190,13 +191,13 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Fetch Daily Todos and Handle Carry-Over / All-Time auto-population
   const fetchDailyTodos = useCallback(
     async (isSilent = false) => {
-      if (!profile?.id) return;
+      if (!profileId) return;
       if (!isSilent) setLoading(true);
       try {
         // 1. Fetch today's existing todos — most recently active first
         const { data: todayData, error: todayErr } =
           await todosService.getTodos({
-            userId: profile.id,
+            userId: profileId,
             todoDate: todayStr,
           });
 
@@ -248,14 +249,14 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
           try {
             // A. Find the most recent active day to carry over "Working" tasks
             const { data: lastActiveDate, error: lastDateErr } =
-              await todosService.getLatestTodoDateBefore(profile.id, todayStr);
+              await todosService.getLatestTodoDateBefore(profileId, todayStr);
 
             if (lastDateErr) throw lastDateErr;
 
             if (lastActiveDate) {
               const { data: lastTodos, error: lastErr } =
                 await todosService.getTodos({
-                  userId: profile.id,
+                  userId: profileId,
                   todoDate: lastActiveDate,
                   orderBy: "created",
                 });
@@ -282,8 +283,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                     }
                   } else {
                     taskMap.set(taskKey, {
-                      user_id: profile.id,
-                      codename: (profile.username || "").toUpperCase(),
+                      user_id: profileId,
+                      codename: profileUsername.toUpperCase(),
                       task: task.task.trim(),
                       status: "Idle", // Every carried over task starts as 'Idle' today
                       comment: task.is_all_time ? "" : task.comment || "", // reset comment for all-time tasks
@@ -323,13 +324,13 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setLoading(false);
       }
     },
-    [profile?.id, profile?.username, todayStr, setAndCacheTodos],
+    [profileId, profileUsername, todayStr, setAndCacheTodos],
   );
 
   // Fetch Archive (All) Todos based on selected Month/Year
   const fetchArchiveTodos = useCallback(
     async (isSilent = false) => {
-      if (!profile?.id) return;
+      if (!profileId) return;
       if (!isSilent) setArchiveLoading(true);
       try {
         const yearNum = parseInt(selectedYear, 10);
@@ -340,7 +341,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
 
         const { data, error } = await todosService.getTodos({
-          userId: profile.id,
+          userId: profileId,
           gteDate: startDate,
           lteDate: endDate,
           excludeStatus: "Idle",
@@ -359,7 +360,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setArchiveLoading(false);
       }
     },
-    [profile?.id, selectedYear, selectedMonth, setAndCacheArchiveTodos],
+    [profileId, selectedYear, selectedMonth, setAndCacheArchiveTodos],
   );
 
   // Handle Mounting state for Portals
@@ -370,28 +371,28 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Handle Initial Load and Sub-tab toggle updates
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!profileId) return;
     if (subTab === "daily") {
-      const hasCached = _dailyTodosCache.has(`${profile.id}_${todayStr}`);
+      const hasCached = _dailyTodosCache.has(`${profileId}_${todayStr}`);
       fetchDailyTodos(hasCached);
     } else {
       const hasCached = _archiveTodosCache.has(
-        `${profile.id}_${selectedYear}_${selectedMonth}`,
+        `${profileId}_${selectedYear}_${selectedMonth}`,
       );
       fetchArchiveTodos(hasCached);
     }
-  }, [subTab, profile?.id, todayStr, selectedYear, selectedMonth, fetchDailyTodos, fetchArchiveTodos]);
+  }, [subTab, profileId, todayStr, selectedYear, selectedMonth, fetchDailyTodos, fetchArchiveTodos]);
 
   // Trigger archive fetch on Month or Year dropdown changes
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!profileId) return;
     if (subTab === "all") {
       const hasCached = _archiveTodosCache.has(
-        `${profile.id}_${selectedYear}_${selectedMonth}`,
+        `${profileId}_${selectedYear}_${selectedMonth}`,
       );
       fetchArchiveTodos(hasCached);
     }
-  }, [selectedYear, selectedMonth, subTab, profile?.id, fetchArchiveTodos]);
+  }, [selectedYear, selectedMonth, subTab, profileId, fetchArchiveTodos]);
 
   // Realtime: keep today's list in sync across all open windows via the
   // unified channel (no extra Supabase channels/subscriptions created here).

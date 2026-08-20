@@ -74,6 +74,8 @@ export function useQuotationMistakes({
     [globalSettings, profile]
   );
 
+  const profileId = profile?.id || '';
+  const sessionUserId = sessionUser?.id || '';
   const isUserRole = profile?.role === 'user';
 
   useEffect(() => {
@@ -82,7 +84,7 @@ export function useQuotationMistakes({
   }, [searchQuery]);
 
   const fetchMistakes = useCallback(async (isSilent = false, signal?: AbortSignal) => {
-    if (!sessionUser?.id || !profile?.id || !canRead) {
+    if (!sessionUserId || !profileId || !canRead) {
       setMistakes([]);
       setTotalCount(0);
       setIsLoading(false);
@@ -94,7 +96,7 @@ export function useQuotationMistakes({
       setError(null);
 
       const { data, count, error: fetchErr } = await mistakesService.getQuotationMistakes({
-        userId: isUserRole ? sessionUser?.id : undefined,
+        userId: isUserRole ? sessionUserId : undefined,
         page: currentPage,
         pageSize,
         search: debouncedSearchQuery,
@@ -128,7 +130,7 @@ export function useQuotationMistakes({
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
-  }, [sessionUser?.id, profile?.id, canRead, isUserRole, currentPage, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, getCacheKey]);
+  }, [sessionUserId, profileId, canRead, isUserRole, currentPage, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, getCacheKey]);
 
   // Initial Fetch
   useEffect(() => {
