@@ -849,12 +849,12 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                 <table className="w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="bg-theme-card-container border-b border-theme-border-muted/80 text-[10px] text-theme-text-muted uppercase tracking-wider font-bold">
-                      <th className="px-4 py-3 min-w-[160px]">Employee Codename</th>
-                      <th className="px-4 py-3 min-w-[180px]">Shift</th>
-                      <th className="px-4 py-3 min-w-[200px]">Break (Snack)</th>
-                      <th className="px-4 py-3 min-w-[200px]">Prayer Break</th>
+                      <th className="px-4 py-3 min-w-[160px] text-left">Employee Codename</th>
+                      <th className="px-4 py-3 min-w-[180px] text-center">Shift</th>
+                      <th className="px-4 py-3 min-w-[200px] text-center">Break (Snack)</th>
+                      <th className="px-4 py-3 min-w-[200px] text-center">Prayer Break</th>
                       <th className="px-4 py-3 min-w-[130px] text-center">Status</th>
-                      <th className="px-4 py-3 min-w-[150px]">Total Duration</th>
+                      <th className="px-4 py-3 min-w-[150px] text-center">Total Duration</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-theme-border-muted/40 text-theme-text-secondary">
@@ -914,34 +914,29 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                             }`}
                           >
                             {/* Employee Codename */}
-                            <td className="px-4 py-3 font-semibold text-theme-text-primary">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-theme-card-bg border border-theme-border-input flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
-                                  {(emp.codename || emp.username).slice(0, 2).toUpperCase()}
-                                </div>
-                                <div className="min-w-0">
-                                  <span className="font-mono text-xs font-bold text-theme-text-primary block truncate">
-                                    {emp.codename || emp.username.toUpperCase()}
-                                  </span>
-                                  <span className="text-[10px] text-theme-text-muted block truncate">
-                                    {emp.full_name || emp.job_role || emp.role}
-                                  </span>
-                                </div>
+                            <td className="px-4 py-3 font-semibold text-theme-text-primary text-left">
+                              <div className="min-w-0">
+                                <span className="font-mono text-xs font-bold text-theme-text-primary block truncate">
+                                  {emp.codename || emp.username.toUpperCase()}
+                                </span>
+                                <span className="text-[10px] text-theme-text-muted block truncate">
+                                  {emp.full_name || emp.job_role || emp.role}
+                                </span>
                               </div>
                             </td>
 
                             {/* Shift (Join, Close, Live Timer) */}
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 text-center">
                               {daily?.join_time ? (
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-1.5 text-[11px]">
+                                <div className="space-y-1 flex flex-col items-center">
+                                  <div className="flex items-center justify-center gap-1.5 text-[11px]">
                                     <span className="text-theme-text-muted">Join:</span>
                                     <span className="font-mono font-semibold text-theme-text-primary">
                                       {formatTime(daily.join_time)}
                                     </span>
                                   </div>
                                   {isClosed && daily.close_time && (
-                                    <div className="flex items-center gap-1.5 text-[11px]">
+                                    <div className="flex items-center justify-center gap-1.5 text-[11px]">
                                       <span className="text-theme-text-muted">Close:</span>
                                       <span className="font-mono font-semibold text-theme-text-primary">
                                         {formatTime(daily.close_time)}
@@ -961,11 +956,11 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                             </td>
 
                             {/* Break (Snack) */}
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 text-center">
                               {snackBreaks.length === 0 ? (
                                 <span className="text-theme-text-muted/60">-</span>
                               ) : (
-                                <div className="space-y-1 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
+                                <div className="space-y-1 max-h-24 overflow-y-auto pr-1 custom-scrollbar flex flex-col items-center">
                                   {snackBreaks.map((b) => {
                                     const isActive = !b.end_time;
                                     let elapsedSec = 0;
@@ -980,7 +975,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`flex items-center justify-between text-[11px] px-2 py-1 rounded-lg border font-mono ${
+                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono ${
                                           isActive
                                             ? isRedWarning
                                               ? "bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse font-bold"
@@ -1002,11 +997,11 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                             </td>
 
                             {/* Prayer Break */}
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 text-center">
                               {prayerBreaks.length === 0 ? (
                                 <span className="text-theme-text-muted/60">-</span>
                               ) : (
-                                <div className="space-y-1 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
+                                <div className="space-y-1 max-h-24 overflow-y-auto pr-1 custom-scrollbar flex flex-col items-center">
                                   {prayerBreaks.map((b) => {
                                     const isActive = !b.end_time;
                                     let elapsedSec = 0;
@@ -1020,7 +1015,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`flex items-center justify-between text-[11px] px-2 py-1 rounded-lg border font-mono ${
+                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono ${
                                           isActive
                                             ? "bg-sky-500/20 text-sky-300 border-sky-500/40 font-bold"
                                             : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
@@ -1069,9 +1064,9 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                             </td>
 
                             {/* Total Duration */}
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 text-center">
                               {daily?.join_time ? (
-                                <div className="space-y-0.5 text-[10px] font-mono">
+                                <div className="space-y-0.5 text-[10px] font-mono flex flex-col items-center">
                                   <div className="text-emerald-400 font-bold">
                                     Work: {isClosed ? formatDurationMinutes(Number(daily.total_work_minutes) || 0) : formatDurationSeconds(liveWorkingSeconds)}
                                   </div>
@@ -1110,11 +1105,11 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                 <table className="w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="bg-theme-card-container border-b border-theme-border-muted/80 text-[10px] text-theme-text-muted uppercase tracking-wider font-bold">
-                      <th className="px-4 py-3 min-w-[160px]">Employee Codename</th>
+                      <th className="px-4 py-3 min-w-[160px] text-left">Employee Codename</th>
                       <th className="px-4 py-3 min-w-[130px] text-center">Days Worked</th>
-                      <th className="px-4 py-3 min-w-[150px]">Total Work Time</th>
-                      <th className="px-4 py-3 min-w-[150px]">Total Break Time</th>
-                      <th className="px-4 py-3 min-w-[150px]">Total Prayer Time</th>
+                      <th className="px-4 py-3 min-w-[150px] text-center">Total Work Time</th>
+                      <th className="px-4 py-3 min-w-[150px] text-center">Total Break Time</th>
+                      <th className="px-4 py-3 min-w-[150px] text-center">Total Prayer Time</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-theme-border-muted/40 text-theme-text-secondary">
@@ -1128,19 +1123,14 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                       monthlySummary.map(({ profile: emp, daysWorked, totalWorkMinutes, totalBreakMinutes, totalPrayerMinutes }) => (
                         <tr key={emp.id} className="hover:bg-theme-card-bg/25 transition-colors">
                           {/* Employee */}
-                          <td className="px-4 py-3 font-semibold text-theme-text-primary">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-xl bg-theme-card-bg border border-theme-border-input flex items-center justify-center font-bold text-xs text-blue-400 shrink-0">
-                                {(emp.codename || emp.username).slice(0, 2).toUpperCase()}
-                              </div>
-                              <div className="min-w-0">
-                                <span className="font-mono text-xs font-bold text-theme-text-primary block truncate">
-                                  {emp.codename || emp.username.toUpperCase()}
-                                </span>
-                                <span className="text-[10px] text-theme-text-muted block truncate">
-                                  {emp.full_name || emp.job_role || emp.role}
-                                </span>
-                              </div>
+                          <td className="px-4 py-3 font-semibold text-theme-text-primary text-left">
+                            <div className="min-w-0">
+                              <span className="font-mono text-xs font-bold text-theme-text-primary block truncate">
+                                {emp.codename || emp.username.toUpperCase()}
+                              </span>
+                              <span className="text-[10px] text-theme-text-muted block truncate">
+                                {emp.full_name || emp.job_role || emp.role}
+                              </span>
                             </div>
                           </td>
 
@@ -1152,17 +1142,17 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                           </td>
 
                           {/* Work Time */}
-                          <td className="px-4 py-3 font-mono font-bold text-emerald-400">
+                          <td className="px-4 py-3 font-mono font-bold text-emerald-400 text-center">
                             {formatDurationMinutes(totalWorkMinutes)}
                           </td>
 
                           {/* Break Time */}
-                          <td className="px-4 py-3 font-mono text-amber-400">
+                          <td className="px-4 py-3 font-mono text-amber-400 text-center">
                             {formatDurationMinutes(totalBreakMinutes)}
                           </td>
 
                           {/* Prayer Time */}
-                          <td className="px-4 py-3 font-mono text-sky-400">
+                          <td className="px-4 py-3 font-mono text-sky-400 text-center">
                             {formatDurationMinutes(totalPrayerMinutes)}
                           </td>
                         </tr>
