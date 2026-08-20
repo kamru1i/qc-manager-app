@@ -12,6 +12,7 @@ import {
   Calendar,
   FileText,
   Clock,
+  Home,
   BookOpen,
   Award,
   Users,
@@ -213,11 +214,11 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
       {/* Main Workspace Tabs */}
       <div className="space-y-2">
-        {/* Workspace: Attendance Shift Tracker */}
+        {/* Workspace: Home (Attendance & Shifts) */}
         {canAccessModule(profile, null, 'attendance', profilesList) && !tabHidden('attendance') && (
           <button
             onClick={handleAttendanceNav}
-            title={isSidebarCollapsed ? 'Attendance' : undefined}
+            title={isSidebarCollapsed ? 'Home' : undefined}
             className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
               isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
             } ${
@@ -226,8 +227,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
             }`}
           >
-            <Clock className="h-5 w-5 shrink-0" />
-            {!isSidebarCollapsed && <span className="whitespace-nowrap">Attendance</span>}
+            <Home className="h-5 w-5 shrink-0" />
+            {!isSidebarCollapsed && <span className="whitespace-nowrap">Home</span>}
           </button>
         )}
 

@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Settings,
   Clock,
+  Home,
   ScrollText,
   Save,
   FileText,
@@ -250,8 +251,8 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
   } else if (activeTab === "attendance") {
     subTabs.push({
       id: "attendance_shifts",
-      label: "Attendance & Shifts",
-      icon: Clock,
+      label: "Home",
+      icon: Home,
       iconColor: "text-blue-400",
       active: true,
       onClick: () => {},
