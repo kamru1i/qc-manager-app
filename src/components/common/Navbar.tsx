@@ -136,45 +136,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center Prominent Attendance Live Timer */}
-        {profile && (myStatus === 'WORKING' || myStatus === 'SNACK_BREAK' || myStatus === 'PRAYER_BREAK') && (
-          <div className="flex flex-col items-center justify-center px-4 py-1 rounded-xl border min-w-[130px] sm:min-w-[150px] shadow-md select-none transition-all duration-200 animate-in fade-in zoom-in-95 mx-2">
-            {myStatus === 'WORKING' && (
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="flex items-center gap-1 text-[10px] tracking-widest font-extrabold text-emerald-400 uppercase">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                  <span>WORKING</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-emerald-300">
-                  {formatDurationSeconds(myWorkingSeconds)}
-                </div>
-              </div>
-            )}
-            {myStatus === 'SNACK_BREAK' && (
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="flex items-center gap-1 text-[10px] tracking-widest font-extrabold text-amber-400 uppercase">
-                  <Coffee className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                  <span>BREAK</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-amber-300">
-                  {formatDurationSeconds(myActiveBreakSeconds)}
-                </div>
-              </div>
-            )}
-            {myStatus === 'PRAYER_BREAK' && (
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="flex items-center gap-1 text-[10px] tracking-widest font-extrabold text-sky-400 uppercase">
-                  <Sun className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
-                  <span>PRAYER BREAK</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-sky-300">
-                  {formatDurationSeconds(myActiveBreakSeconds)}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="hidden md:flex items-center gap-3 flex-wrap">
           {/* Offline Sync Area */}
           {offlineCount > 0 && onManualSync && (
@@ -185,6 +146,48 @@ export const Navbar: React.FC<NavbarProps> = ({
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
               Sync ({offlineCount})
             </button>
+          )}
+
+          {/* Attendance Live Timer (Borderless, left of LiveClock with vertical divider) */}
+          {profile && (myStatus === 'WORKING' || myStatus === 'SNACK_BREAK' || myStatus === 'PRAYER_BREAK') && (
+            <>
+              <div className="flex flex-col items-end justify-center select-none font-mono">
+                {myStatus === 'WORKING' && (
+                  <div className="flex flex-col items-end leading-none">
+                    <div className="flex items-center gap-1 text-[9px] tracking-widest font-extrabold text-emerald-400 uppercase mb-0.5">
+                      <Clock className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+                      <span>WORKING</span>
+                    </div>
+                    <div className="text-xs sm:text-sm font-bold font-mono tracking-tight text-emerald-300">
+                      {formatDurationSeconds(myWorkingSeconds)}
+                    </div>
+                  </div>
+                )}
+                {myStatus === 'SNACK_BREAK' && (
+                  <div className="flex flex-col items-end leading-none">
+                    <div className="flex items-center gap-1 text-[9px] tracking-widest font-extrabold text-amber-400 uppercase mb-0.5">
+                      <Coffee className="w-2.5 h-2.5 text-amber-400 animate-pulse" />
+                      <span>BREAK</span>
+                    </div>
+                    <div className="text-xs sm:text-sm font-bold font-mono tracking-tight text-amber-300">
+                      {formatDurationSeconds(myActiveBreakSeconds)}
+                    </div>
+                  </div>
+                )}
+                {myStatus === 'PRAYER_BREAK' && (
+                  <div className="flex flex-col items-end leading-none">
+                    <div className="flex items-center gap-1 text-[9px] tracking-widest font-extrabold text-sky-400 uppercase mb-0.5">
+                      <Sun className="w-2.5 h-2.5 text-sky-400 animate-pulse" />
+                      <span>PRAYER BREAK</span>
+                    </div>
+                    <div className="text-xs sm:text-sm font-bold font-mono tracking-tight text-sky-300">
+                      {formatDurationSeconds(myActiveBreakSeconds)}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="h-6 w-px bg-theme-border-input/80 hidden sm:block shrink-0" />
+            </>
           )}
 
           {/* Live Clocks (Superadmin-controlled via Access Control & Feature Flags) */}
