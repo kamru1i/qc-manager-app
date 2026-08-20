@@ -53,6 +53,7 @@ import { UserManagement } from "@/components/common/UserManagement";
 import { TodoPanel } from "@/components/common/TodoPanel";
 import { AttendancePanel } from "@/components/attendance/AttendancePanel";
 import { ProfilesProvider, useProfiles } from "@/contexts/ProfilesContext";
+import { AttendanceProvider } from "@/contexts/AttendanceContext";
 import { fetchOwnProfileRow } from "@/utils/profileFetcher";
 import { ProfileSettings } from "@/components/common/ProfileSettings";
 import { clearOwnedOfflineCaches, prepareOfflineCachesForUser } from '@/utils/cacheOwnership';
@@ -445,13 +446,15 @@ export default function AppPortal() {
   return (
     <RealtimeProvider sessionUser={sessionUser} profile={profile}>
       <ProfilesProvider sessionUser={sessionUser} profile={profile}>
-        <AppPortalInner
-          sessionUser={sessionUser}
-          profile={profile}
-          setProfile={setProfile}
-          handleLogout={handleLogout}
-          isProfileFresh={isProfileFresh}
-        />
+        <AttendanceProvider sessionUser={sessionUser} profile={profile}>
+          <AppPortalInner
+            sessionUser={sessionUser}
+            profile={profile}
+            setProfile={setProfile}
+            handleLogout={handleLogout}
+            isProfileFresh={isProfileFresh}
+          />
+        </AttendanceProvider>
       </ProfilesProvider>
     </RealtimeProvider>
   );
