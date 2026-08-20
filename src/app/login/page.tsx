@@ -8,8 +8,6 @@ import {
   Mail,
   AlertCircle,
   Loader,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { getApiUrl } from "@/utils/apiUrlHelper";
 import { Modal } from "@/components/common/Modal";
@@ -17,67 +15,72 @@ import SmartDownloadButton from "@/components/common/SmartDownloadButton";
 import { isNativeApp } from "@/utils/envHelper";
 
 export default function LoginPage() {
-  const [rememberCodename, setRememberCodename] = useState(false);
+  const [rememberCredentials, setRememberCredentials] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const pathname = usePathname();
   const [isNative, setIsNative] = useState(false);
 
-  // Remember only the non-secret codename. Older releases persisted the raw
-  // password in localStorage; purge that legacy value on first load and rely
-  // on the browser/OS credential manager via autocomplete instead.
+  // Load remembered codename and password on first mount
   useEffect(() => {
     try {
       const isRemembered =
+        localStorage.getItem("remember_credentials_enabled") === "true" ||
         localStorage.getItem("remember_codename_enabled") === "true" ||
         localStorage.getItem("save_password_enabled") === "true";
       const savedCodename = localStorage.getItem("saved_login_codename");
-      localStorage.removeItem("saved_login_password");
-      localStorage.removeItem("save_password_enabled");
+      const savedPassword = localStorage.getItem("saved_login_password");
 
-      if (isRemembered && savedCodename) {
-        setRememberCodename(true);
-        setEmail(savedCodename);
-        localStorage.setItem("remember_codename_enabled", "true");
+      if (isRemembered) {
+        setRememberCredentials(true);
+        if (savedCodename) setEmail(savedCodename);
+        if (savedPassword) setPassword(savedPassword);
+        localStorage.setItem("remember_credentials_enabled", "true");
       }
     } catch (e) {
-      console.warn("Failed to load remembered codename:", e);
+      console.warn("Failed to load remembered credentials:", e);
     }
   }, []);
 
-  // Keep the remembered codename current without ever persisting the password.
+  // Keep remembered credentials in sync
   useEffect(() => {
-    if (rememberCodename) {
-      localStorage.setItem("remember_codename_enabled", "true");
+    if (rememberCredentials) {
+      localStorage.setItem("remember_credentials_enabled", "true");
       if (email) localStorage.setItem("saved_login_codename", email.trim());
+      if (password) localStorage.setItem("saved_login_password", password);
     }
-  }, [rememberCodename, email]);
+  }, [rememberCredentials, email, password]);
 
-  const handleRememberCodenameToggle = (checked: boolean) => {
-    setRememberCodename(checked);
+  const handleRememberCredentialsToggle = (checked: boolean) => {
+    setRememberCredentials(checked);
     if (!checked) {
+      localStorage.removeItem("remember_credentials_enabled");
       localStorage.removeItem("remember_codename_enabled");
       localStorage.removeItem("saved_login_codename");
+      localStorage.removeItem("saved_login_password");
+      localStorage.removeItem("save_password_enabled");
     } else {
-      localStorage.setItem("remember_codename_enabled", "true");
+      localStorage.setItem("remember_credentials_enabled", "true");
       if (email) localStorage.setItem("saved_login_codename", email.trim());
+      if (password) localStorage.setItem("saved_login_password", password);
     }
   };
 
   const saveOrClearCredentials = () => {
-    if (rememberCodename) {
-      localStorage.setItem("remember_codename_enabled", "true");
+    if (rememberCredentials) {
+      localStorage.setItem("remember_credentials_enabled", "true");
       if (email) localStorage.setItem("saved_login_codename", email.trim());
+      if (password) localStorage.setItem("saved_login_password", password);
     } else {
+      localStorage.removeItem("remember_credentials_enabled");
       localStorage.removeItem("remember_codename_enabled");
       localStorage.removeItem("saved_login_codename");
+      localStorage.removeItem("saved_login_password");
+      localStorage.removeItem("save_password_enabled");
     }
-    localStorage.removeItem("saved_login_password");
-    localStorage.removeItem("save_password_enabled");
   };
 
   useEffect(() => {
@@ -450,25 +453,14 @@ export default function LoginPage() {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   autoComplete="current-password"
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-2.5 bg-theme-page-bg/85 border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
+                  className="block w-full pl-10 pr-3 py-2.5 bg-theme-page-bg/85 border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all font-sans"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors focus:outline-none"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" aria-hidden="true" />
-                  ) : (
-                    <Eye className="h-5 w-5" aria-hidden="true" />
-                  )}
-                </button>
               </div>
             </div>
 
@@ -476,11 +468,11 @@ export default function LoginPage() {
               <label className="flex items-center gap-2 text-xs font-medium text-theme-text-muted hover:text-theme-text-secondary cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  checked={rememberCodename}
-                  onChange={(e) => handleRememberCodenameToggle(e.target.checked)}
+                  checked={rememberCredentials}
+                  onChange={(e) => handleRememberCredentialsToggle(e.target.checked)}
                   className="h-4 w-4 rounded border-theme-border-input bg-theme-page-bg/85 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 transition-colors cursor-pointer accent-blue-600"
                 />
-                <span>Remember Codename</span>
+                <span>Remember Codename & Password</span>
               </label>
 
               <button
