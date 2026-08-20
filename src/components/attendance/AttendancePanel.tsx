@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Calendar,
   Search,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { attendanceService } from "@/services";
@@ -27,6 +28,7 @@ import { useProfiles } from "@/contexts/ProfilesContext";
 import { useAttendance } from "@/contexts/AttendanceContext";
 import { canWriteAttendance } from "@/utils/permissionService";
 import { SkeletonLoader } from "@/components/common/SkeletonLoader";
+import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
 import {
   formatAttendanceTime,
   formatDurationSeconds,
@@ -134,9 +136,78 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
     return canWriteAttendance(profile, profile?.global_settings, profilesList);
   }, [profile, profilesList]);
 
+  // Superadmin check for granular deletion
+  const isSuperAdmin = profile?.role === 'superadmin';
+
+  // Superadmin deletion state
+  const [deletingSession, setDeletingSession] = useState<{
+    type: 'shift' | 'snack_break' | 'prayer_break';
+    shift?: AttendanceShift;
+    breakItem?: AttendanceBreak;
+    employee: Profile;
+    attendanceDate: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Current logged in user's status & active items
   const myStatus = isToday ? attendanceContext.myStatus : "NOT_JOINED";
   const isShiftActive = isToday && (myStatus === "WORKING" || myStatus === "SNACK_BREAK" || myStatus === "PRAYER_BREAK");
+
+  const handleConfirmDeleteSession = async () => {
+    if (!deletingSession || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      if (deletingSession.type === 'shift' && deletingSession.shift) {
+        if (isToday) {
+          await attendanceContext.deleteShiftSession(
+            deletingSession.shift,
+            deletingSession.employee.id,
+            deletingSession.attendanceDate
+          );
+        } else {
+          const { error } = await attendanceService.deleteShiftSession({
+            shiftId: deletingSession.shift.id,
+            attendanceId: deletingSession.shift.attendance_id,
+            userId: deletingSession.employee.id,
+            attendanceDate: deletingSession.attendanceDate,
+          });
+          if (error) throw error;
+          setHistShifts((prev) => prev.filter((s) => s.id !== deletingSession.shift!.id));
+          setHistBreaks((prev) => prev.filter((b) => b.shift_id !== deletingSession.shift!.id));
+          fetchHistoricalDaily(true);
+          toast.success('Shift session deleted successfully.');
+        }
+      } else if (
+        (deletingSession.type === 'snack_break' || deletingSession.type === 'prayer_break') &&
+        deletingSession.breakItem
+      ) {
+        if (isToday) {
+          await attendanceContext.deleteBreakSession(
+            deletingSession.breakItem,
+            deletingSession.employee.id,
+            deletingSession.attendanceDate
+          );
+        } else {
+          const { error } = await attendanceService.deleteBreakSession({
+            breakId: deletingSession.breakItem.id,
+            attendanceId: deletingSession.breakItem.attendance_id,
+            userId: deletingSession.employee.id,
+            attendanceDate: deletingSession.attendanceDate,
+          });
+          if (error) throw error;
+          setHistBreaks((prev) => prev.filter((b) => b.id !== deletingSession.breakItem!.id));
+          fetchHistoricalDaily(true);
+          toast.success('Break session deleted successfully.');
+        }
+      }
+    } catch (err: unknown) {
+      console.error('Failed to delete session:', err);
+      toast.error('Failed to delete session: ' + ((err as Error).message || 'unknown error'));
+    } finally {
+      setIsDeleting(false);
+      setDeletingSession(null);
+    }
+  };
 
   // Fetch Historical Daily Attendance (when selectedDate !== todayStr)
   const fetchHistoricalDaily = useCallback(
@@ -732,16 +803,34 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={s.id || idx}
-                                        className={`inline-flex flex-col items-center justify-center text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
+                                        className={`group relative inline-flex flex-col items-center justify-center text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
                                           isShiftActive
                                             ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/35 font-bold"
                                             : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
                                         }`}
                                       >
                                         <div className="flex items-center justify-between w-full text-[10px]">
-                                          <span className="text-theme-text-muted">
+                                          <span className="text-theme-text-muted truncate">
                                             {formatAttendanceTime(s.join_time)} - {isShiftActive ? "Active" : formatAttendanceTime(s.close_time)}
                                           </span>
+                                          {isSuperAdmin && (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeletingSession({
+                                                  type: 'shift',
+                                                  shift: s,
+                                                  employee: emp,
+                                                  attendanceDate: selectedDate,
+                                                });
+                                              }}
+                                              className="opacity-0 group-hover:opacity-100 p-0.5 ml-1 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 rounded transition-all cursor-pointer shrink-0"
+                                              title="Delete Shift Session (Superadmin)"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </button>
+                                          )}
                                         </div>
                                         <div className="flex items-center gap-1 mt-0.5 text-[10px] font-bold">
                                           {isShiftActive && <Clock className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />}
@@ -794,7 +883,7 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
+                                        className={`group relative inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
                                           isActive
                                             ? isRedWarning
                                               ? "bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse font-bold"
@@ -802,12 +891,32 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                             : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
                                         }`}
                                       >
-                                        <span>
+                                        <span className="truncate">
                                           {formatAttendanceTime(b.start_time)} - {isActive ? "Active" : formatAttendanceTime(b.end_time)}
                                         </span>
-                                        <span className="text-[10px] ml-2 font-mono">
-                                          ({formatBreakSessionElapsed(sessionSec)})
-                                        </span>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <span className="text-[10px] ml-1 font-mono">
+                                            ({formatBreakSessionElapsed(sessionSec)})
+                                          </span>
+                                          {isSuperAdmin && (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeletingSession({
+                                                  type: 'snack_break',
+                                                  breakItem: b,
+                                                  employee: emp,
+                                                  attendanceDate: selectedDate,
+                                                });
+                                              }}
+                                              className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 rounded transition-all cursor-pointer"
+                                              title="Delete Break Session (Superadmin)"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
                                     );
                                   })}
@@ -828,18 +937,38 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
                                     return (
                                       <div
                                         key={b.id}
-                                        className={`inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
+                                        className={`group relative inline-flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border font-mono w-full max-w-[190px] ${
                                           isActive
                                             ? "bg-sky-500/20 text-sky-300 border-sky-500/40 font-bold"
                                             : "bg-theme-card-bg/40 border-theme-border-input/40 text-theme-text-secondary"
                                         }`}
                                       >
-                                        <span>
+                                        <span className="truncate">
                                           {formatAttendanceTime(b.start_time)} - {isActive ? "Active" : formatAttendanceTime(b.end_time)}
                                         </span>
-                                        <span className="text-[10px] ml-2 font-mono">
-                                          ({formatBreakSessionElapsed(sessionSec)})
-                                        </span>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <span className="text-[10px] ml-1 font-mono">
+                                            ({formatBreakSessionElapsed(sessionSec)})
+                                          </span>
+                                          {isSuperAdmin && (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeletingSession({
+                                                  type: 'prayer_break',
+                                                  breakItem: b,
+                                                  employee: emp,
+                                                  attendanceDate: selectedDate,
+                                                });
+                                              }}
+                                              className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 rounded transition-all cursor-pointer"
+                                              title="Delete Prayer Break Session (Superadmin)"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
                                     );
                                   })}
@@ -974,6 +1103,62 @@ export const AttendancePanel: React.FC<AttendancePanelProps> = ({ profile }) => 
             </div>
           )}
         </div>
+      )}
+
+      {/* Superadmin Delete Session Confirmation Modal */}
+      {deletingSession && (
+        <ConfirmModal
+          isOpen={!!deletingSession}
+          onClose={() => !isDeleting && setDeletingSession(null)}
+          onConfirm={handleConfirmDeleteSession}
+          title={
+            deletingSession.type === 'shift'
+              ? 'Delete Shift Session'
+              : deletingSession.type === 'snack_break'
+              ? 'Delete Snack Break Session'
+              : 'Delete Prayer Break Session'
+          }
+          message={
+            <div className="space-y-2 font-sans">
+              <p className="text-theme-text-secondary text-xs">
+                Are you sure you want to permanently delete this{' '}
+                <strong className="text-theme-text-primary">
+                  {deletingSession.type === 'shift'
+                    ? 'Shift session'
+                    : deletingSession.type === 'snack_break'
+                    ? 'Break session'
+                    : 'Prayer Break session'}
+                </strong>{' '}
+                for employee{' '}
+                <strong className="text-theme-text-primary">
+                  {(deletingSession.employee.codename || deletingSession.employee.username).toUpperCase()}
+                </strong>{' '}
+                on date <strong className="text-theme-text-primary">{formatDateToDDMMYYYY(deletingSession.attendanceDate)}</strong>?
+              </p>
+              {deletingSession.type === 'shift' && deletingSession.shift && (
+                <div className="p-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs font-mono text-theme-text-secondary space-y-1">
+                  <div><strong className="text-theme-text-primary">Join Time:</strong> {formatAttendanceTime(deletingSession.shift.join_time)}</div>
+                  <div><strong className="text-theme-text-primary">Close Time:</strong> {deletingSession.shift.close_time ? formatAttendanceTime(deletingSession.shift.close_time) : 'Active'}</div>
+                  <div><strong className="text-theme-text-primary">Duration:</strong> {formatDurationSeconds(calculateShiftWorkingSeconds(deletingSession.shift, [], now))}</div>
+                </div>
+              )}
+              {(deletingSession.type === 'snack_break' || deletingSession.type === 'prayer_break') && deletingSession.breakItem && (
+                <div className="p-2.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs font-mono text-theme-text-secondary space-y-1">
+                  <div><strong className="text-theme-text-primary">Category:</strong> {deletingSession.type === 'snack_break' ? 'Break' : 'Prayer Break'}</div>
+                  <div><strong className="text-theme-text-primary">Start Time:</strong> {formatAttendanceTime(deletingSession.breakItem.start_time)}</div>
+                  <div><strong className="text-theme-text-primary">End Time:</strong> {deletingSession.breakItem.end_time ? formatAttendanceTime(deletingSession.breakItem.end_time) : 'Active'}</div>
+                  <div><strong className="text-theme-text-primary">Duration:</strong> {formatBreakSessionElapsed(calculateBreakSessionSeconds(deletingSession.breakItem, now))}</div>
+                </div>
+              )}
+              <p className="text-[11px] text-rose-400">
+                ⚠️ This will recalculate the employee&apos;s daily attendance metrics automatically.
+              </p>
+            </div>
+          }
+          confirmText={isDeleting ? 'Deleting...' : 'Permanently Delete'}
+          cancelText="Cancel"
+          isDanger={true}
+        />
       )}
     </div>
   );

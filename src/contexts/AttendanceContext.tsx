@@ -58,6 +58,8 @@ interface AttendanceContextValue {
   closeShift: () => Promise<void>;
   toggleSnackBreak: () => Promise<void>;
   togglePrayerBreak: () => Promise<void>;
+  deleteShiftSession: (shift: AttendanceShift, employeeId: string, attendanceDate: string) => Promise<void>;
+  deleteBreakSession: (breakItem: AttendanceBreak, employeeId: string, attendanceDate: string) => Promise<void>;
   refreshAttendance: (isSilent?: boolean) => Promise<void>;
 }
 
@@ -81,6 +83,8 @@ const defaultAttendanceContextValue: AttendanceContextValue = {
   closeShift: async () => {},
   toggleSnackBreak: async () => {},
   togglePrayerBreak: async () => {},
+  deleteShiftSession: async () => {},
+  deleteBreakSession: async () => {},
   refreshAttendance: async () => {},
 };
 
@@ -644,6 +648,94 @@ export function AttendanceProvider({ children, sessionUser, profile }: Attendanc
     }
   };
 
+  const deleteShiftSession = async (shift: AttendanceShift, employeeId: string, attendanceDate: string) => {
+    if (!profile || profile.role !== 'superadmin') {
+      toast.error('Only Superadmin can delete shift sessions.');
+      return;
+    }
+
+    try {
+      const { daily: updatedDaily, error } = await attendanceService.deleteShiftSession({
+        shiftId: shift.id,
+        attendanceId: shift.attendance_id,
+        userId: employeeId,
+        attendanceDate: attendanceDate,
+      });
+
+      if (error) throw error;
+
+      // Update local shifts
+      setAttendanceShifts((prev) => {
+        const next = prev.filter((s) => s.id !== shift.id);
+        _todayAttendanceCache.shiftsList = next;
+        return next;
+      });
+
+      // Update local breaks (remove breaks tied to this shift)
+      setAttendanceBreaks((prev) => {
+        const next = prev.filter((b) => b.shift_id !== shift.id);
+        _todayAttendanceCache.breaksList = next;
+        return next;
+      });
+
+      // Update local daily record
+      setDailyAttendance((prev) => {
+        let next: AttendanceDaily[];
+        if (!updatedDaily) {
+          next = prev.filter((d) => d.id !== shift.attendance_id);
+        } else {
+          next = prev.map((d) => (d.id === updatedDaily.id ? updatedDaily : d));
+        }
+        _todayAttendanceCache.dailyList = next;
+        return next;
+      });
+
+      toast.success('Shift session deleted successfully.');
+    } catch (err: unknown) {
+      console.error('Failed to delete shift session:', err);
+      toast.error('Failed to delete shift session: ' + ((err as Error).message || 'unknown error'));
+    }
+  };
+
+  const deleteBreakSession = async (breakItem: AttendanceBreak, employeeId: string, attendanceDate: string) => {
+    if (!profile || profile.role !== 'superadmin') {
+      toast.error('Only Superadmin can delete break sessions.');
+      return;
+    }
+
+    try {
+      const { daily: updatedDaily, error } = await attendanceService.deleteBreakSession({
+        breakId: breakItem.id,
+        attendanceId: breakItem.attendance_id,
+        userId: employeeId,
+        attendanceDate: attendanceDate,
+      });
+
+      if (error) throw error;
+
+      // Update local breaks
+      setAttendanceBreaks((prev) => {
+        const next = prev.filter((b) => b.id !== breakItem.id);
+        _todayAttendanceCache.breaksList = next;
+        return next;
+      });
+
+      // Update local daily record
+      if (updatedDaily) {
+        setDailyAttendance((prev) => {
+          const next = prev.map((d) => (d.id === updatedDaily.id ? updatedDaily : d));
+          _todayAttendanceCache.dailyList = next;
+          return next;
+        });
+      }
+
+      toast.success('Break session deleted successfully.');
+    } catch (err: unknown) {
+      console.error('Failed to delete break session:', err);
+      toast.error('Failed to delete break session: ' + ((err as Error).message || 'unknown error'));
+    }
+  };
+
   const value: AttendanceContextValue = {
     dailyAttendance,
     attendanceShifts,
@@ -664,6 +756,8 @@ export function AttendanceProvider({ children, sessionUser, profile }: Attendanc
     closeShift,
     toggleSnackBreak,
     togglePrayerBreak,
+    deleteShiftSession,
+    deleteBreakSession,
     refreshAttendance,
   };
 

@@ -349,4 +349,195 @@ export const attendanceService = {
 
     return { data: data as unknown as AttendanceDaily | null, error };
   },
+
+  /**
+   * Delete an individual Shift Session (Superadmin only)
+   * Automatically reconciles remaining shifts and updates/removes attendance_daily
+   */
+  async deleteShiftSession(params: {
+    shiftId: string;
+    attendanceId: string;
+    userId: string;
+    attendanceDate: string;
+  }) {
+    try {
+      // 1. Delete associated breaks tied to this shift
+      await supabase
+        .from('attendance_breaks')
+        .delete()
+        .eq('shift_id', params.shiftId);
+
+      // 2. Delete the shift record
+      const { error: delShiftErr } = await supabase
+        .from('attendance_shifts')
+        .delete()
+        .eq('id', params.shiftId);
+
+      if (delShiftErr) return { daily: null, remainingShifts: [], error: delShiftErr };
+
+      // 3. Fetch remaining shifts for this attendance
+      const { data: remShiftsData } = await supabase
+        .from('attendance_shifts')
+        .select(ATTENDANCE_SHIFT_COLUMNS)
+        .eq('attendance_id', params.attendanceId)
+        .order('join_time', { ascending: true });
+
+      const remShifts = (remShiftsData || []) as unknown as AttendanceShift[];
+
+      // 4. If no shifts remain, delete the daily record (resets user to NOT_JOINED)
+      if (remShifts.length === 0) {
+        await supabase
+          .from('attendance_breaks')
+          .delete()
+          .eq('attendance_id', params.attendanceId);
+
+        await supabase
+          .from('attendance_daily')
+          .delete()
+          .eq('id', params.attendanceId);
+
+        return { daily: null, remainingShifts: [], error: null };
+      }
+
+      // 5. If shifts remain, recalculate totals and status
+      const nowMs = Date.now();
+      let totalWorkSec = 0;
+      let hasActiveShift = false;
+      let latestCloseTime: string | null = null;
+      let earliestJoinTime: string = remShifts[0].join_time;
+
+      remShifts.forEach((s) => {
+        if (!s.close_time) {
+          hasActiveShift = true;
+          const joinMs = new Date(s.join_time).getTime();
+          if (!isNaN(joinMs)) {
+            totalWorkSec += Math.max(0, Math.floor((nowMs - joinMs) / 1000));
+          }
+        } else {
+          totalWorkSec += s.duration_seconds || 0;
+          if (!latestCloseTime || new Date(s.close_time).getTime() > new Date(latestCloseTime).getTime()) {
+            latestCloseTime = s.close_time;
+          }
+        }
+      });
+
+      // Check if any break is currently active
+      const { data: remBreaksData } = await supabase
+        .from('attendance_breaks')
+        .select(ATTENDANCE_BREAK_COLUMNS)
+        .eq('attendance_id', params.attendanceId);
+
+      const remBreaks = (remBreaksData || []) as unknown as AttendanceBreak[];
+      const activeBreak = remBreaks.find((b) => !b.end_time);
+
+      let nextStatus: AttendanceDaily['status'] = 'CLOSED';
+      if (hasActiveShift) {
+        if (activeBreak?.type === 'snack') {
+          nextStatus = 'SNACK_BREAK';
+        } else if (activeBreak?.type === 'prayer') {
+          nextStatus = 'PRAYER_BREAK';
+        } else {
+          nextStatus = 'WORKING';
+        }
+      }
+
+      const { data: updatedDaily, error: updateDailyErr } = await supabase
+        .from('attendance_daily')
+        .update({
+          join_time: earliestJoinTime,
+          close_time: hasActiveShift ? null : latestCloseTime,
+          status: nextStatus,
+          total_work_minutes: totalWorkSec / 60,
+        })
+        .eq('id', params.attendanceId)
+        .select(ATTENDANCE_DAILY_COLUMNS)
+        .single();
+
+      return {
+        daily: (updatedDaily || null) as unknown as AttendanceDaily | null,
+        remainingShifts: remShifts,
+        error: updateDailyErr,
+      };
+    } catch (err: unknown) {
+      console.error('Error in deleteShiftSession:', err);
+      return { daily: null, remainingShifts: [], error: err as Error };
+    }
+  },
+
+  /**
+   * Delete an individual Break Session (Superadmin only)
+   * Automatically reconciles remaining breaks and updates attendance_daily totals & status
+   */
+  async deleteBreakSession(params: {
+    breakId: string;
+    attendanceId: string;
+    userId: string;
+    attendanceDate: string;
+  }) {
+    try {
+      // 1. Delete the break record
+      const { error: delBreakErr } = await supabase
+        .from('attendance_breaks')
+        .delete()
+        .eq('id', params.breakId);
+
+      if (delBreakErr) return { daily: null, remainingBreaks: [], error: delBreakErr };
+
+      // 2. Fetch remaining breaks
+      const { data: remBreaksData } = await supabase
+        .from('attendance_breaks')
+        .select(ATTENDANCE_BREAK_COLUMNS)
+        .eq('attendance_id', params.attendanceId);
+
+      const remBreaks = (remBreaksData || []) as unknown as AttendanceBreak[];
+
+      let totalBreakMin = 0;
+      let totalPrayerMin = 0;
+      let activeBreak: AttendanceBreak | undefined;
+
+      remBreaks.forEach((b) => {
+        if (!b.end_time) {
+          activeBreak = b;
+        } else {
+          if (b.type === 'snack') totalBreakMin += b.duration_minutes || 0;
+          if (b.type === 'prayer') totalPrayerMin += b.duration_minutes || 0;
+        }
+      });
+
+      // 3. Fetch shifts to determine whether working or closed
+      const { data: shiftsData } = await supabase
+        .from('attendance_shifts')
+        .select('id, close_time')
+        .eq('attendance_id', params.attendanceId);
+
+      const hasActiveShift = (shiftsData || []).some((s) => !s.close_time);
+
+      let nextStatus: AttendanceDaily['status'] = hasActiveShift ? 'WORKING' : 'CLOSED';
+      if (activeBreak?.type === 'snack') {
+        nextStatus = 'SNACK_BREAK';
+      } else if (activeBreak?.type === 'prayer') {
+        nextStatus = 'PRAYER_BREAK';
+      }
+
+      const { data: updatedDaily, error: updateDailyErr } = await supabase
+        .from('attendance_daily')
+        .update({
+          status: nextStatus,
+          total_break_minutes: totalBreakMin,
+          total_prayer_minutes: totalPrayerMin,
+        })
+        .eq('id', params.attendanceId)
+        .select(ATTENDANCE_DAILY_COLUMNS)
+        .single();
+
+      return {
+        daily: (updatedDaily || null) as unknown as AttendanceDaily | null,
+        remainingBreaks: remBreaks,
+        error: updateDailyErr,
+      };
+    } catch (err: unknown) {
+      console.error('Error in deleteBreakSession:', err);
+      return { daily: null, remainingBreaks: [], error: err as Error };
+    }
+  },
 };
