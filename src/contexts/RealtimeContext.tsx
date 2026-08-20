@@ -230,7 +230,6 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             event: '*',
             schema: 'public',
             table: 'attendance_daily',
-            ...(hasAdminAttendanceAccess ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('attendance_daily', payload as unknown as RealtimePayload)
         );
@@ -240,7 +239,6 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             event: '*',
             schema: 'public',
             table: 'attendance_shifts',
-            ...(hasAdminAttendanceAccess ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('attendance_shifts', payload as unknown as RealtimePayload)
         );
@@ -250,7 +248,6 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             event: '*',
             schema: 'public',
             table: 'attendance_breaks',
-            ...(hasAdminAttendanceAccess ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('attendance_breaks', payload as unknown as RealtimePayload)
         );
