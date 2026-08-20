@@ -84,7 +84,7 @@ export const LiveClock: React.FC<LiveClockProps> = ({
     };
 
     updateTime();
-    const interval = setInterval(updateTime, 1000);
+    const interval = setInterval(updateTime, 250);
     return () => clearInterval(interval);
   }, [showBd, showUk]);
 

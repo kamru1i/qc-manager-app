@@ -120,6 +120,10 @@ export function calculateShiftWorkingSeconds(
   if (isNaN(joinMs)) return 0;
 
   const isShiftClosed = !!shift.close_time;
+  if (isShiftClosed && typeof shift.duration_seconds === 'number' && shift.duration_seconds > 0) {
+    return shift.duration_seconds;
+  }
+
   const endMs = isShiftClosed && shift.close_time ? new Date(shift.close_time).getTime() : nowMs;
   if (isNaN(endMs)) return 0;
 

@@ -125,11 +125,11 @@ export function AttendanceProvider({ children, sessionUser, profile }: Attendanc
 
   const [now, setNow] = useState<number>(() => Date.now());
 
-  // 1-second local timer tick (updates UI smoothly with zero per-second DB/realtime writes)
+  // Sub-second local timer tick (keeps all UI timers and clocks in lockstep synchrony)
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(Date.now());
-    }, 1000);
+    }, 250);
     return () => clearInterval(timer);
   }, []);
 
