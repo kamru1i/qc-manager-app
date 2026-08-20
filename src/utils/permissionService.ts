@@ -150,6 +150,40 @@ export const canWriteQuotationMistakes = (
   return false;
 };
 
+/**
+ * True if the user has read permission for the Attendance module.
+ */
+export const canReadAttendance = (
+  user: Profile | null,
+  globalSettings?: VisibilitySettings | null,
+  profilesList: Profile[] = []
+): boolean => {
+  if (!user) return false;
+  if (isSuperadmin(user)) return true;
+
+  const gs = getEffectiveGlobalSettings(user, globalSettings, profilesList);
+  if (!isFeatureEnabled('attendance_module', gs, user)) return false;
+  if (!isFeatureEnabled('attendance_read', gs, user)) return false;
+  return isTabVisibleForRole(user, 'attendance', gs, profilesList);
+};
+
+/**
+ * True if the user has write permission for Attendance actions (Join, Close, Breaks).
+ */
+export const canWriteAttendance = (
+  user: Profile | null,
+  globalSettings?: VisibilitySettings | null,
+  profilesList: Profile[] = []
+): boolean => {
+  if (!user) return false;
+  if (isSuperadmin(user)) return true;
+
+  const gs = getEffectiveGlobalSettings(user, globalSettings, profilesList);
+  if (!isFeatureEnabled('attendance_module', gs, user)) return false;
+  return isFeatureEnabled('attendance_write', gs, user);
+};
+
+
 
 interface VisibilitySettings {
   feature_flags?: Record<string, boolean>;
@@ -417,7 +451,7 @@ export const isDirectlySupervised = (
 export const canAccessModule = (
   currentUser: Profile | null,
   targetUser: Profile | null,
-  module: 'kpi' | 'leave' | 'profile_settings' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | string,
+  module: 'attendance' | 'kpi' | 'leave' | 'profile_settings' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | string,
   profilesList: Profile[] = [],
   globalSettings?: VisibilitySettings | null
 ): boolean => {

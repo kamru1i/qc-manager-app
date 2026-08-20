@@ -51,6 +51,7 @@ import ChutiDashboard from "@/app/chuti/page";
 import QuotesDashboard from "@/app/quotes/page";
 import { UserManagement } from "@/components/common/UserManagement";
 import { TodoPanel } from "@/components/common/TodoPanel";
+import { AttendancePanel } from "@/components/attendance/AttendancePanel";
 import { ProfilesProvider, useProfiles } from "@/contexts/ProfilesContext";
 import { fetchOwnProfileRow } from "@/utils/profileFetcher";
 import { ProfileSettings } from "@/components/common/ProfileSettings";
@@ -476,6 +477,7 @@ function AppPortalInner({
   useActivityTracker(sessionUser?.id);
   
   const [activeTab, setActiveTab] = useState<
+    | "attendance"
     | "chuti"
     | "quotes"
     | "user_management"
@@ -493,6 +495,7 @@ function AppPortalInner({
       if (cached === "analytics") cached = "leaderboard";
       if (cached) return cached as any;
     }
+    if (canAccessModule(profile, null, "attendance")) return "attendance";
     return canAccessModule(profile, null, "leave") ? "chuti" : "quotes";
   });
 
@@ -1008,6 +1011,7 @@ function AppPortalInner({
     }
 
     if (
+      targetWorkspace !== "attendance" &&
       targetWorkspace !== "chuti" &&
       targetWorkspace !== "quotes" &&
       targetWorkspace !== "user_management" &&
@@ -1157,8 +1161,10 @@ function AppPortalInner({
     typeof window !== "undefined" &&
     sessionStorage.getItem("viewingStaffFromUserManagement") === "true"
       ? "user_management"
-      : activeTab === "user_management"
-        ? "user_management"
+      : activeTab === "attendance"
+        ? "attendance"
+        : activeTab === "user_management"
+          ? "user_management"
         : activeTab === "todo"
           ? "todo"
           : activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report"
@@ -1551,6 +1557,7 @@ function AppPortalInner({
                 onDataReady={handleChutiDataReady}
               />
             </div>}
+            {activeTab === "attendance" && <AttendancePanel profile={profile} />}
             {activeTab === "user_management" && (
               <UserManagement
                 sessionUser={sessionUser}

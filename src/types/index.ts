@@ -191,3 +191,49 @@ export interface QuotationMistake {
     codename?: string | null;
   } | null;
 }
+
+export type AttendanceStatus =
+  | 'WORKING'
+  | 'SNACK_BREAK'
+  | 'PRAYER_BREAK'
+  | 'CLOSED'
+  | 'DAY_OFF';
+
+export interface AttendanceDaily {
+  id: string;
+  user_id: string;
+  attendance_date: string; // YYYY-MM-DD
+  join_time: string | null; // ISO timestamptz
+  close_time: string | null; // ISO timestamptz
+  status: AttendanceStatus;
+  total_work_minutes: number;
+  total_break_minutes: number;
+  total_prayer_minutes: number;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    username: string;
+    full_name?: string | null;
+    codename?: string | null;
+    role?: string;
+  } | null;
+}
+
+export interface AttendanceBreak {
+  id: string;
+  attendance_id: string;
+  user_id: string;
+  attendance_date: string; // YYYY-MM-DD
+  type: 'snack' | 'prayer';
+  start_time: string; // ISO timestamptz
+  end_time: string | null; // ISO timestamptz
+  duration_minutes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AttendanceRowData {
+  profile: Profile;
+  daily: AttendanceDaily | null;
+  breaks: AttendanceBreak[];
+}

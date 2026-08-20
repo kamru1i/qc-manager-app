@@ -247,6 +247,15 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         onClick: () => onCreatingNewUserChange?.(true),
       });
     }
+  } else if (activeTab === "attendance") {
+    subTabs.push({
+      id: "attendance_shifts",
+      label: "Attendance & Shifts",
+      icon: Clock,
+      iconColor: "text-blue-400",
+      active: true,
+      onClick: () => {},
+    });
   } else if (activeTab === "todo") {
     subTabs.push({
       id: "my_todos",

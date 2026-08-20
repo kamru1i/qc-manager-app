@@ -115,6 +115,23 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
     description: 'Creating, assigning, and managing task todos in the Todos Panel.',
   },
 
+  // Attendance & Shift Tracking Features
+  {
+    key: 'attendance_module',
+    label: 'Attendance Module',
+    description: 'The live office attendance and shift tracking module replacing manual Viber reporting.',
+  },
+  {
+    key: 'attendance_read',
+    label: 'Attendance: Read Permission',
+    description: 'Controls permission to view daily and monthly employee attendance records.',
+  },
+  {
+    key: 'attendance_write',
+    label: 'Attendance: Write Permission',
+    description: 'Controls permission for users to Join shift, Close shift, and record breaks.',
+  },
+
   // User Profile Settings Components Features
   {
     key: 'profile_component_leave_workspace',
@@ -146,6 +163,7 @@ export const FEATURE_FLAGS: FeatureFlagDef[] = [
 /** Default state for a feature flag when no explicit superadmin toggle exists. */
 export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
   switch (flagKey) {
+    case 'attendance_module':
     case 'todo_management':
     case 'copy_helper_save_file':
     case 'copy_helper_user_summary':
@@ -158,6 +176,7 @@ export const getDefaultFeatureFlagState = (flagKey: string): boolean => {
 
 /** Mapping between feature flags and corresponding Tab Access keys. */
 export const FLAG_TO_TAB_KEY: Record<string, string> = {
+  attendance_module: 'attendance',
   todo_management: 'todo',
   copy_helper_save_file: 'save_file',
   causality_generator: 'causality',
@@ -173,3 +192,4 @@ export const FLAG_TO_TAB_KEY: Record<string, string> = {
   profile_component_change_password: 'profile_component_change_password',
   system_health_metrics: 'system_health_metrics',
 };
+

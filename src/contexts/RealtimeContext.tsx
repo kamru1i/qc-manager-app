@@ -18,7 +18,9 @@ export type RealtimeTable =
   | 'dismissed_notifications'
   | 'todos'
   | 'quotation_mistakes'
-  | 'compliance_rules';
+  | 'compliance_rules'
+  | 'attendance_daily'
+  | 'attendance_breaks';
 
 /** Minimal interface for Supabase postgres_changes payloads */
 export interface RealtimePayload {
@@ -92,6 +94,8 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
     const hasTodoAccess = canAccessModule(profile, null, 'todo');
     const hasChutiAccess = canAccessModule(profile, null, 'leave');
     const hasQuotesAccess = canAccessModule(profile, null, 'quotes');
+    const hasAttendanceAccess = canAccessModule(profile, null, 'attendance');
+
 
     let active = true;
     let resubscribeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -215,6 +219,29 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
           (payload) => dispatch('todos', payload as unknown as RealtimePayload)
         );
       }
+
+      // ── attendance_daily & attendance_breaks (state transitions only) ──
+      if (hasAttendanceAccess) {
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'attendance_daily',
+          },
+          (payload) => dispatch('attendance_daily', payload as unknown as RealtimePayload)
+        );
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'attendance_breaks',
+          },
+          (payload) => dispatch('attendance_breaks', payload as unknown as RealtimePayload)
+        );
+      }
+
 
       channel.subscribe((status, err) => {
           if (!active || stale) return;

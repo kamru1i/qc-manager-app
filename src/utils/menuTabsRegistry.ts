@@ -13,12 +13,14 @@ export interface MenuTabDef {
 
 export const MENU_TABS: MenuTabDef[] = [
   // Main Workspace Sections
+  { key: 'attendance', label: 'Attendance Workspace', category: 'Main Workspace Sections' },
   { key: 'kpi', label: 'Reports Workspace (KPI & Leaderboard)', category: 'Main Workspace Sections' },
   { key: 'todo', label: 'Todos Panel', category: 'Main Workspace Sections' },
   { key: 'leaderboard', label: 'Leaderboard (Workspace)', category: 'Main Workspace Sections' },
   { key: 'user_management', label: 'User Management', category: 'Main Workspace Sections' },
   { key: 'bd_clock', label: 'Navbar BD Clock', category: 'Main Workspace Sections' },
   { key: 'uk_clock', label: 'Navbar UK Clock', category: 'Main Workspace Sections' },
+
 
   // Quotes Tracker Subtabs
   { key: 'copy_helper', label: 'Copy Helper Subtab', category: 'Quotes Tracker Subtabs' },
@@ -95,6 +97,7 @@ export const getDefaultRoleVisibility = (
       return role === 'supervisor' || role === 'admin';
 
     case 'settings_profile':
+    case 'attendance':
     case 'kpi':
     case 'leaderboard':
     case 'copy_helper':
