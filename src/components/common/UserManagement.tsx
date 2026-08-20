@@ -75,6 +75,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const { emit } = useAppEventBus();
   // R1/R2: shared profiles list from ProfilesContext (was a local duplicate copy)
   const { profilesList: profiles, setProfilesList: setProfiles, refreshProfiles, isLoaded: profilesLoaded } = useProfiles();
+
+  // Robust fallback: resolve top-performer badges from passed props or directly from profiles list
+  const effectiveBadges = React.useMemo(() => {
+    const map: Record<string, BadgeInfo> = { ...(topPerformerBadges || {}) };
+    profiles.forEach((p) => {
+      if (!map[p.id] && p.global_settings?.top_performer_badge) {
+        map[p.id] = p.global_settings.top_performer_badge as BadgeInfo;
+      }
+    });
+    return map;
+  }, [topPerformerBadges, profiles]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -921,7 +933,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       viewingStaff && (
                         <UserDisplayName
                           profile={viewingStaff}
-                          badge={topPerformerBadges[viewingStaff.id]}
+                          badge={effectiveBadges[viewingStaff.id] || (viewingStaff.global_settings?.top_performer_badge as BadgeInfo) || null}
                           tooltipPosition="bottom"
                         />
                       )
@@ -1305,7 +1317,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                           <div className="flex items-center">
                             <UserDisplayName
                               profile={u}
-                              badge={topPerformerBadges[u.id]}
+                              badge={effectiveBadges[u.id] || (u.global_settings?.top_performer_badge as BadgeInfo) || null}
                               tooltipPosition="top"
                               showRank={false}
                             />

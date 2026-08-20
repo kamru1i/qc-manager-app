@@ -52,6 +52,7 @@ interface ProfileSettingsProps {
   sessionUser: any;
   onBack?: () => void;
   globalSettings?: GlobalSettings;
+  topPerformerBadges?: Record<string, any>;
 }
 
 export function ProfileSettings({
@@ -59,6 +60,7 @@ export function ProfileSettings({
   setProfile,
   sessionUser,
   globalSettings,
+  topPerformerBadges,
 }: ProfileSettingsProps) {
   const stateHook = useProfileSettingsState(profile, sessionUser);
   const {
@@ -482,6 +484,7 @@ export function ProfileSettings({
             onThemeToggle={() => {}}
             isSidebarCollapsed={false}
             onSidebarToggle={() => {}}
+            topPerformerBadges={topPerformerBadges}
             globalSettings={globalSettings}
           />
         </div>

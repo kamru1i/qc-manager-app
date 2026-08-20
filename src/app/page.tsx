@@ -1586,6 +1586,7 @@ function AppPortalInner({
                 profile={profile}
                 setProfile={setProfile}
                 sessionUser={sessionUser}
+                topPerformerBadges={topPerformerBadges}
                 onBack={() => {
                   setActiveTab(previousTab as any);
                   localStorage.setItem("last_active_dashboard", previousTab);
