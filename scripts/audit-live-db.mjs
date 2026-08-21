@@ -471,44 +471,6 @@ try {
       const { rows } = await client.query(`select distinct user_id from public.${table}`);
       tableOwnerIds[table] = new Set(rows.map((row) => row.user_id));
     }
-    const { rows: attendanceExists } = await client.query(`
-      select to_regclass('public.attendance_daily') is not null
-         and to_regclass('public.attendance_breaks') is not null as exists
-    `);
-    const hasAttendanceTables = attendanceExists[0]?.exists === true;
-    let ownAttendanceId = null;
-    let otherAttendanceId = null;
-    let otherAttendanceDate = null;
-    const otherAttendanceUser = actors.find((actor) => actor.id !== user.id && actor.role === "user")
-      ?? actors.find((actor) => actor.id !== user.id);
-    if (hasAttendanceTables && otherAttendanceUser) {
-      await client.query("reset role");
-      await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
-      const ownAttendance = await client.query(`
-        insert into public.attendance_daily (user_id, attendance_date, join_time, status)
-        values ($1, current_date - 10, now(), 'WORKING')
-        on conflict (user_id, attendance_date) do update
-          set join_time = excluded.join_time,
-              status = excluded.status
-        returning id, attendance_date
-      `, [user.id]);
-      const otherAttendance = await client.query(`
-        insert into public.attendance_daily (user_id, attendance_date, join_time, status)
-        values ($1, current_date - 11, now(), 'WORKING')
-        on conflict (user_id, attendance_date) do update
-          set join_time = excluded.join_time,
-              status = excluded.status
-        returning id, attendance_date
-      `, [otherAttendanceUser.id]);
-      ownAttendanceId = ownAttendance.rows[0].id;
-      otherAttendanceId = otherAttendance.rows[0].id;
-      otherAttendanceDate = otherAttendance.rows[0].attendance_date;
-      await client.query(`
-        insert into public.attendance_breaks (attendance_id, user_id, attendance_date, type, start_time)
-        values ($1, $2, current_date - 10, 'snack', now()),
-               ($3, $4, current_date - 11, 'snack', now())
-      `, [ownAttendanceId, user.id, otherAttendanceId, otherAttendanceUser.id]);
-    }
     const directSupervisors = new Set(user.supervisor_ids ?? []);
     const expectedNormalProfileIds = new Set([user.id, ...directSupervisors]);
     for (const candidate of actors) {
@@ -536,24 +498,6 @@ try {
         `normal user ${table} reads are own-only`,
         { visible_user_ids: rows.map((row) => row.user_id) },
       );
-    }
-    if (hasAttendanceTables && otherAttendanceUser) {
-      const { rows: visibleDaily } = await client.query("select distinct user_id from public.attendance_daily order by user_id");
-      assert(
-        JSON.stringify(visibleDaily.map((row) => row.user_id)) === JSON.stringify([user.id]),
-        "normal user attendance reads are own-only",
-        { visible_user_ids: visibleDaily.map((row) => row.user_id) },
-      );
-      const { rows: visibleBreaks } = await client.query("select distinct user_id from public.attendance_breaks order by user_id");
-      assert(
-        JSON.stringify(visibleBreaks.map((row) => row.user_id)) === JSON.stringify([user.id]),
-        "normal user attendance break reads are own-only",
-        { visible_user_ids: visibleBreaks.map((row) => row.user_id) },
-      );
-      await expectDeniedOrNoRows("normal user cannot attach a break to another attendance row", () => client.query(`
-        insert into public.attendance_breaks (attendance_id, user_id, attendance_date, type, start_time)
-        values ($1, auth.uid(), $2, 'prayer', now())
-      `, [otherAttendanceId, otherAttendanceDate]));
     }
 
     await expectDenied("normal user cannot forge audit rows", () => client.query(`

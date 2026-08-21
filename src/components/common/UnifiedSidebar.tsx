@@ -29,8 +29,8 @@ import {
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
-  activeSection: 'attendance' | 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings';
-  onSectionChange?: (section: 'attendance' | 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings') => void;
+  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings';
+  onSectionChange?: (section: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings') => void;
   profile: Profile | null;
   activeQuotesTab?: 'entry' | 'monthly' | 'sale_summary' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import' | 'mistakes';
   onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import' | 'mistakes') => void;
@@ -102,13 +102,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   };
 
   // Navigation handlers
-  const handleAttendanceNav = () => {
-    localStorage.setItem('last_active_dashboard', 'attendance');
-    emit('workspace-change', 'attendance');
-    router.push('/');
-    onNavItemClick?.();
-  };
-
   const handleChutiNav = () => {
     localStorage.setItem('last_active_dashboard', 'chuti');
     emit('workspace-change', 'chuti');
@@ -214,24 +207,6 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
 
       {/* Main Workspace Tabs */}
       <div className="space-y-2">
-        {/* Workspace: Home (Attendance & Shifts) */}
-        {canAccessModule(profile, null, 'attendance', profilesList) && !tabHidden('attendance') && (
-          <button
-            onClick={handleAttendanceNav}
-            title={isSidebarCollapsed ? 'Home' : undefined}
-            className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-              isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
-            } ${
-              activeSection === 'attendance'
-                ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-955/5'
-                : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
-            }`}
-          >
-            <Home className="h-5 w-5 shrink-0" />
-            {!isSidebarCollapsed && <span className="whitespace-nowrap">Home</span>}
-          </button>
-        )}
-
         {/* Workspace 1: Chuti Leave Tracker */}
         {canAccessModule(profile, null, 'leave') && (
           <button
