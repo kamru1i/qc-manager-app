@@ -285,7 +285,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex flex-wrap items-stretch justify-center gap-2.5 sm:gap-3 w-full">
+      <div className="flex flex-wrap lg:flex-nowrap items-stretch justify-between gap-2 sm:gap-2.5 w-full">
         {/* Office Leave */}
         {showOfficeCard && officeLeaveStats && (
           <StatCard
@@ -301,17 +301,13 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 : "Office Leave"
             }
             value={officeRemainingDisplay}
-            action={
-              halfYearlyStats ? (
-                <button
-                  type="button"
-                  onClick={() => setShowOfficeDetailsModal(true)}
-                  className="p-1 bg-theme-border-input/80 hover:bg-theme-border-active text-blue-400 border border-theme-border-active/60 rounded-md cursor-pointer transition-all shadow-xs flex items-center justify-center shrink-0"
-                  title={halfYearlyStats.isMergedMode ? "Yearly Leave Account" : "Half-Yearly Leave Account"}
-                >
-                  <Info className="h-3.5 w-3.5" />
-                </button>
-              ) : undefined
+            onIconClick={halfYearlyStats ? () => setShowOfficeDetailsModal(true) : undefined}
+            iconTooltip={
+              halfYearlyStats
+                ? halfYearlyStats.isMergedMode
+                  ? "View Yearly Leave Account"
+                  : "View Half-Yearly Leave Account"
+                : undefined
             }
             loading={!initialFetchDone}
           />
@@ -326,18 +322,12 @@ export const UserStats: React.FC<UserStatsProps> = ({
             iconBorderClass="border-teal-500/20"
             title="Govt Holiday (Reserve)"
             value={`${govtHolidayStats.remaining} days`}
-            action={
-              respondedHolidays && respondedHolidays.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setShowHistoryModal(true)}
-                  className="p-1 bg-theme-border-input/80 hover:bg-theme-border-active text-teal-400 border border-theme-border-active/60 rounded-md cursor-pointer transition-all shadow-xs flex items-center justify-center shrink-0"
-                  title="Govt Holiday History"
-                >
-                  <History className="h-3.5 w-3.5" />
-                </button>
-              ) : undefined
+            onIconClick={
+              respondedHolidays && respondedHolidays.length > 0
+                ? () => setShowHistoryModal(true)
+                : undefined
             }
+            iconTooltip="View Govt Holiday History"
             loading={!initialFetchDone}
           />
         )}
