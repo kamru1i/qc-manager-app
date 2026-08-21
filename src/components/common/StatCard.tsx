@@ -79,7 +79,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             <Icon className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <span className="block text-[11px] text-theme-text-muted font-medium truncate" title={title}>
+            <span className="block text-[11px] text-theme-text-muted font-bold truncate" title={title}>
               {title}
             </span>
             {loading ? (

@@ -348,7 +348,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
               <button
                 type="button"
                 onClick={onConvertToFullLeave}
-                className="w-full py-1 px-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-[10px] font-bold cursor-pointer transition-all border border-blue-500/50 shadow-xs flex items-center justify-center gap-1 shrink-0"
+                className="w-full py-0.5 px-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-[9px] font-bold cursor-pointer transition-all border border-blue-400/40 shadow-xs flex items-center justify-center gap-1 shrink-0"
                 title="Convert to Full Leave"
               >
                 Add to Full Leave
