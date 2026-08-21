@@ -695,14 +695,25 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           comment: finalComment || null
         };
       } else if (record.leave_type === 'Short Leave') {
-        if (staffAdjustmentType === 'full') {
-          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false };
+        if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
+          let cleanComment = record.comment || '';
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+          const finalComment = `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`;
+          requestedUpdates = {
+            adjustment: true,
+            adjusted_hour: null,
+            adjust_short_leave: false,
+            reserve_holiday: selectedCat,
+            comment: finalComment || null
+          };
+        } else if (staffAdjustmentType === 'full') {
+          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null };
         } else {
-          requestedUpdates = { adjustment: false, adjusted_hour: `${staffPartialAdjustmentTime}:00`, adjust_short_leave: false };
+          requestedUpdates = { adjustment: false, adjusted_hour: `${staffPartialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null };
         }
       } else if (record.leave_type === 'Overtime') {
         const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : staffAdjustShortLeaveOption;
-        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust };
+        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust, reserve_holiday: null };
       } else {
         const isCat = selectedCat !== 'None';
         let cleanComment = record.comment || '';

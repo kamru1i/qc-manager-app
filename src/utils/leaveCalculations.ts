@@ -153,13 +153,14 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
       const hasCategoryAdj = isOfficeLeave || isEidFitr || isEidAdha || isGovtHoliday;
 
       if (r.leave_type === 'Full Leave') {
+        totalFullLeaves++;
         if (hasCategoryAdj) {
           if (isOfficeLeave) officeLeavesTaken++;
           else if (isEidFitr) eidFitrTaken++;
           else if (isEidAdha) eidAdhaTaken++;
           else if (isGovtHoliday) govtHolidaysTaken++;
-        } else {
-          if (!r.adjustment) totalFullLeaves++;
+        } else if (!r.adjustment) {
+          officeLeavesTaken++;
         }
       } else if (r.leave_type === 'Short Leave') {
         if (r.leave_hour) {
@@ -173,6 +174,7 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
             const isEidFitrShort = r.reserve_holiday === "Eid-ul-Fitr" || r.comment?.includes("Eid-ul-Fitr") || false;
             const isEidAdhaShort = r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid-ul-Adha") || false;
             const isGovtHolidayShort = r.reserve_holiday === "Govt Holiday" || r.comment?.includes("Govt Holiday") || false;
+            const isSalaryShort = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
 
             if (isOfficeLeaveShort || isEidFitrShort || isEidAdhaShort || isGovtHolidayShort) {
               const daysEquivalent = fullAdjMins / (workingHours * 60);
@@ -181,6 +183,8 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
               else if (isEidFitrShort) eidFitrTaken += signedDaysEquivalent;
               else if (isEidAdhaShort) eidAdhaTaken += signedDaysEquivalent;
               else if (isGovtHolidayShort) govtHolidaysTaken += signedDaysEquivalent;
+            } else if (isSalaryShort) {
+              // Salary adjusted short leave: does not deduct from overtime or reserves
             } else {
               totalOvertimeMinutes -= isNegative ? -fullAdjMins : fullAdjMins;
             }
@@ -192,7 +196,10 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
             if (r.adjusted_hour) {
               const adjMins = parseIntervalToMinutes(r.adjusted_hour);
               mins = Math.max(0, mins - adjMins);
-              totalOvertimeMinutes -= isNegative ? -adjMins : adjMins;
+              const isSalaryShort = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
+              if (!isSalaryShort) {
+                totalOvertimeMinutes -= isNegative ? -adjMins : adjMins;
+              }
             }
           }
           totalShortMinutes += isNegative ? -mins : mins;

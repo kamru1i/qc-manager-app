@@ -713,43 +713,6 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               )}
             </div>
           )}
-
-        {/* Overtime Adjustment toggle with Short Leave (Conditional) */}
-        {leaveType === "Overtime" && availableShortLeaveMins > 0 && (
-          <div className="space-y-2">
-            <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
-              <div>
-                <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                  Adjust with Short Leave?
-                </span>
-                <span className="block text-[10px] text-theme-text-muted">
-                  If yes, it will be adjusted from short leave balance
-                </span>
-              </div>
-              <button
-                type="button"
-                disabled={isDateBlocked}
-                onClick={() => !isDateBlocked && setAdjustShortLeave(!adjustShortLeave)}
-                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-                  adjustShortLeave ? "bg-emerald-600" : "bg-theme-border-input"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    adjustShortLeave ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
-            {overtimeAdjMsg && (
-              <div
-                className={`text-[11px] font-semibold px-1 font-sans ${adjustShortLeave ? "text-emerald-400" : "text-theme-text-muted"}`}
-              >
-                {overtimeAdjMsg}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Sign In & Sign Out Times & Leave Hour (Conditional) */}

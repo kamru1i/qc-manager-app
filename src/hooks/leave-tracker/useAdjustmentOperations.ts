@@ -178,8 +178,19 @@ export const useAdjustmentOperations = ({
           comment: finalComment || null
         };
       } else if (isShortLeave) {
-        if (adjustmentType === 'full') {
-          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false };
+        if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
+          let cleanComment = record.comment || '';
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+          const finalComment = `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`;
+          requestedUpdates = {
+            adjustment: true,
+            adjusted_hour: null,
+            adjust_short_leave: false,
+            reserve_holiday: selectedCat,
+            comment: finalComment || null
+          };
+        } else if (adjustmentType === 'full') {
+          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null };
         } else {
           const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
           if (!timeRegex.test(partialAdjustmentTime)) {
@@ -187,11 +198,11 @@ export const useAdjustmentOperations = ({
             setSubmitting(false);
             return;
           }
-          requestedUpdates = { adjustment: false, adjusted_hour: `${partialAdjustmentTime}:00`, adjust_short_leave: false };
+          requestedUpdates = { adjustment: false, adjusted_hour: `${partialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null };
         }
       } else if (record.leave_type === 'Overtime') {
         const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : adjustShortLeaveOption;
-        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust };
+        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust, reserve_holiday: null };
       } else {
         const isCat = selectedCat !== 'None';
         let cleanComment = record.comment || '';
