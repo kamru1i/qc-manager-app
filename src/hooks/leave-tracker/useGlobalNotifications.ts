@@ -463,8 +463,8 @@ export function useGlobalNotifications(
     if (!sessionUser || !profile || !isProfileFresh || !isInitialNotifFetchDone) return [];
     const list: NotificationItem[] = [];
 
-    // 1. Govt Holiday Notifications
-    if (profile.eligible_govt_holiday !== false && profile.allow_reserve !== false) {
+    // 1. Govt Holiday Notifications (strictly for users who have allow_reserve enabled)
+    if (profile.eligible_govt_holiday !== false && !!profile.allow_reserve) {
       const activeHolidays = (globalSettings.govt_holidays || []).map((h: unknown) => parseHolidayItem(h));
 
       activeHolidays.forEach((holiday: { date: string; name: string }) => {
