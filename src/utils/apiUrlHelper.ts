@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 /**
  * Detects if the app is running inside a Tauri Desktop App.
  */
@@ -6,18 +8,20 @@ export function isTauriApp(): boolean {
   return (
     window.location.protocol === 'tauri:' || 
     window.location.hostname === 'tauri.localhost' || 
-    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ !== undefined
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ !== undefined ||
+    (window as any).__TAURI__ !== undefined
   );
 }
 
 /**
- * Detects if the app is running inside a Capacitor Mobile App.
+ * Detects if the app is running inside a native Capacitor Mobile App.
+ * Uses Capacitor.isNativePlatform() to prevent false positives in web browsers.
  */
 export function isMobileApp(): boolean {
   if (typeof window === 'undefined') return false;
   return (
     window.location.protocol === 'capacitor:' || 
-    (window as any).Capacitor !== undefined
+    Capacitor.isNativePlatform()
   );
 }
 
@@ -41,7 +45,9 @@ export function getApiUrl(path: string): string {
 
     if (isLocalDev) {
       return `http://localhost:3000${path}`;
-    }    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://qc-manager-app.vercel.app';
+    }
+    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://chuti.bnfcorporate.com';
+    const baseUrl = envUrl.startsWith('http://') ? envUrl.replace('http://', 'https://') : envUrl;
     return `${baseUrl.replace(/\/$/, '')}${path}`;
   }
   

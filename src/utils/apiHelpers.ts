@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 
 /** Trusted origins for CORS — only these or matching patterns are reflected back. */
 const ALLOWED_ORIGINS = [
+  'https://chuti.bnfcorporate.com',
   'https://qc-manager-app.vercel.app',
   'tauri://localhost',
   'http://tauri.localhost',
@@ -21,6 +22,7 @@ function isOriginAllowed(origin: string): boolean {
   try {
     const url = new URL(origin);
     const host = url.hostname;
+    if (host.endsWith('.bnfcorporate.com') || host === 'bnfcorporate.com') return true;
     if (host.endsWith('.vercel.app') || host === 'vercel.app') return true;
     if (host === 'localhost' || host === '127.0.0.1') return true;
     if (url.protocol === 'tauri:' || url.protocol === 'capacitor:' || host === 'tauri.localhost') return true;
