@@ -51,6 +51,7 @@ interface LeavesRecordsTableProps {
   hideYearSelect?: boolean;
   profilesList?: Profile[];
   hideFilterPanel?: boolean;
+  canToggleAdjustment?: boolean;
 }
 
 export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
@@ -58,6 +59,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   allowOvertime,
   allowReserve,
   isAdminView = false,
+  canToggleAdjustment = false,
   filterType,
   setFilterType,
   filterStartDate,
@@ -654,40 +656,59 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                               return <span className="text-theme-text-muted/60 font-mono">-</span>;
                             }
 
-                            return (
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    if (isSelectionMode) return;
-                                    e.stopPropagation();
-                                    onToggleAdjustment(r);
-                                  }}
-                                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                    (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'bg-blue-600' : 'bg-theme-border-input'
-                                  }`}
-                                  title={r.reserve_adjustment_status === 'pending' ? 'Adjustment pending approval' : 'Toggle adjustment'}
-                                >
-                                  <span
-                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                      (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'translate-x-4' : 'translate-x-0'
+                            if (canToggleAdjustment) {
+                              return (
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      if (isSelectionMode) return;
+                                      e.stopPropagation();
+                                      onToggleAdjustment(r);
+                                    }}
+                                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                      (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'bg-blue-600' : 'bg-theme-border-input'
                                     }`}
-                                  />
-                                </button>
-                                <span className="text-xs font-semibold">
-                                  {r.reserve_adjustment_status === 'pending' ? (
-                                    <span className="text-purple-400 animate-pulse font-semibold">Pending</span>
-                                  ) : r.adjustment ? (
-                                    <span className="text-blue-400">Yes</span>
-                                  ) : r.adjusted_hour ? (
-                                    <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
-                                  ) : r.reserve_adjustment_status === 'rejected' ? (
-                                    <span className="text-theme-text-muted">No (Rejected)</span>
-                                  ) : (
-                                    <span className="text-theme-text-muted">No</span>
-                                  )}
-                                </span>
-                              </div>
+                                    title={r.reserve_adjustment_status === 'pending' ? 'Adjustment pending approval' : 'Toggle adjustment'}
+                                  >
+                                    <span
+                                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                        (r.adjustment || r.adjusted_hour || r.reserve_adjustment_status === 'pending') ? 'translate-x-4' : 'translate-x-0'
+                                      }`}
+                                    />
+                                  </button>
+                                  <span className="text-xs font-semibold">
+                                    {r.reserve_adjustment_status === 'pending' ? (
+                                      <span className="text-purple-400 animate-pulse font-semibold">Pending</span>
+                                    ) : r.adjustment ? (
+                                      <span className="text-blue-400">Yes</span>
+                                    ) : r.adjusted_hour ? (
+                                      <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
+                                    ) : r.reserve_adjustment_status === 'rejected' ? (
+                                      <span className="text-theme-text-muted">No (Rejected)</span>
+                                    ) : (
+                                      <span className="text-theme-text-muted">No</span>
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            // Read-only view for own leave records (no interactive toggle switch)
+                            return (
+                              <span className="text-xs font-semibold">
+                                {r.reserve_adjustment_status === 'pending' ? (
+                                  <span className="text-purple-400 animate-pulse font-semibold">Pending</span>
+                                ) : r.adjustment ? (
+                                  <span className="text-blue-400 font-semibold">Yes</span>
+                                ) : r.adjusted_hour ? (
+                                  <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
+                                ) : r.reserve_adjustment_status === 'rejected' ? (
+                                  <span className="text-theme-text-muted">No (Rejected)</span>
+                                ) : (
+                                  <span className="text-theme-text-muted">No</span>
+                                )}
+                              </span>
                             );
                           })()}
                         </td>

@@ -153,6 +153,7 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
         hideDelete={hideDelete}
         showAddLeave={showAddLeave}
         isAdmin={isAdmin}
+        canToggleAdjustment={isAdmin ?? true}
         onAdminUpdateHolidayResponse={onAdminUpdateHolidayResponse}
       />
     </div>

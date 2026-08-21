@@ -421,6 +421,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 allowOvertime={staffProfile?.allow_overtime}
                 allowReserve={staffProfile?.allow_reserve}
                 isAdminView={true}
+                canToggleAdjustment={true}
                 filterType={filterType}
                 setFilterType={setFilterType}
                 filterStartDate={filterStartDate}

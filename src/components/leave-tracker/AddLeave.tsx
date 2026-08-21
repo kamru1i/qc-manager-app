@@ -122,11 +122,15 @@ export function AddLeave({
 
   // Feature flags (superadmin-controlled; default ON)
   const effectiveProfileForFlags = targetProfile || profile;
+  // Only admin or supervisor adding/editing on behalf of a staff member in User Management can set adjustments
+  const isStaffManagementOnBehalf = !!targetUser && targetUser.id !== profile?.id && (isAdminRole(profile) || profile?.role === 'supervisor');
+  const canSubmitAdjustment = isStaffManagementOnBehalf;
+
   const breakFeatureOn = isFeatureEnabled('break_time', globalSettings, effectiveProfileForFlags);
   const jummahFeatureOn = isFeatureEnabled('jummah_adjustment', globalSettings, effectiveProfileForFlags);
-  const leaveAdjustmentsOn = isFeatureEnabled('leave_adjustments', globalSettings, effectiveProfileForFlags);
+  const leaveAdjustmentsOn = canSubmitAdjustment && isFeatureEnabled('leave_adjustments', globalSettings, effectiveProfileForFlags);
   const bulkLeaveOn = isFeatureEnabled('bulk_leave_submission', globalSettings, effectiveProfileForFlags);
-  const reserveClaimingOn = isFeatureEnabled('reserve_holiday_claiming', globalSettings, effectiveProfileForFlags);
+  const reserveClaimingOn = canSubmitAdjustment && isFeatureEnabled('reserve_holiday_claiming', globalSettings, effectiveProfileForFlags);
 
   // Break time is only offered for Short Leave when signed in more than 1 hour late.
   const breakEligible = breakFeatureOn && isBreakEligible(leaveType, signInTime, defaultSignIn || '13:00');
@@ -624,6 +628,12 @@ export function AddLeave({
         }
       }
 
+      if (!canSubmitAdjustment) {
+        finalAdjustment = false;
+        finalAdjustedHour = null;
+        finalAdjustShortLeave = false;
+      }
+
       const updateData = {
         date: date,
         leave_type: leaveType,
@@ -632,10 +642,10 @@ export function AddLeave({
         leave_hour: leaveType === 'Full Leave' ? null : `${leaveHour}:00`,
         comment: commentWithCategory || null,
         status: finalStatus,
-        adjustment: leaveType === 'Full Leave' ? (adjustmentCategory !== 'None') : finalAdjustment,
-        adjusted_hour: finalAdjustedHour,
-        adjust_short_leave: finalAdjustShortLeave,
-        reserve_holiday: ['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null),
+        adjustment: canSubmitAdjustment ? (leaveType === 'Full Leave' ? (adjustmentCategory !== 'None') : finalAdjustment) : false,
+        adjusted_hour: canSubmitAdjustment ? finalAdjustedHour : null,
+        adjust_short_leave: canSubmitAdjustment ? finalAdjustShortLeave : false,
+        reserve_holiday: canSubmitAdjustment ? (['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null)) : null,
       };
 
       try {
@@ -773,12 +783,18 @@ export function AddLeave({
       }
     }
 
+    if (!canSubmitAdjustment) {
+      finalAdjustment = false;
+      finalAdjustedHour = null;
+      finalAdjustShortLeave = false;
+    }
+
     const bulkId = allDates.length > 1 ? generateUUID() : null;
 
     datesWithAdjustment.forEach(item => {
       let commentWithCategory = comment.trim();
       if (leaveType === 'Full Leave') {
-        commentWithCategory = (item.adjustment && adjustmentCategory !== 'None')
+        commentWithCategory = (canSubmitAdjustment && item.adjustment && adjustmentCategory !== 'None')
           ? `Adjusted: ${adjustmentCategory} | ${comment.trim()}`
           : comment.trim();
       } else if (['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment) {
@@ -847,11 +863,11 @@ export function AddLeave({
         leave_hour: leaveType === 'Full Leave' ? null : `${leaveHour}:00`,
         comment: commentWithCategory || null,
         status: finalStatus,
-        adjustment: leaveType === 'Full Leave' ? item.adjustment : finalAdjustment,
-        adjusted_hour: finalAdjustedHour,
-        adjust_short_leave: finalAdjustShortLeave,
+        adjustment: canSubmitAdjustment ? (leaveType === 'Full Leave' ? item.adjustment : finalAdjustment) : false,
+        adjusted_hour: canSubmitAdjustment ? finalAdjustedHour : null,
+        adjust_short_leave: canSubmitAdjustment ? finalAdjustShortLeave : false,
         bulk_id: bulkId,
-        reserve_holiday: ['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && item.adjustment && adjustmentCategory !== 'None' ? adjustmentCategory : null),
+        reserve_holiday: canSubmitAdjustment ? (['Short Leave', 'Early Leave'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && item.adjustment && adjustmentCategory !== 'None' ? adjustmentCategory : null)) : null,
         reserve_adjustment_status: 'none',
         admin_edit_request: adminEditRequest
       });

@@ -70,6 +70,7 @@ interface UserDashboardViewProps {
   showAddLeave?: boolean;
   title?: string;
   emptyMessage?: string;
+  canToggleAdjustment?: boolean;
 }
 
 export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
@@ -110,6 +111,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   showAddLeave = true,
   title = "My Annual Leave Records",
   emptyMessage = "No leave records found. Submit a new entry.",
+  canToggleAdjustment = false,
 }) => {
   // Eligibility & Deduction
   const isOfficeLeaveEligible = profile?.eligible_office_leave !== false;
@@ -374,6 +376,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         initialFetchDone={initialFetchDone}
         hideDelete={hideDelete}
         showAddLeave={showAddLeave}
+        canToggleAdjustment={canToggleAdjustment}
       />
 
       {showUserSettleModal && (
