@@ -288,16 +288,23 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   let dateStatusNotice: { type: 'error' | 'warning' | 'info'; message: string } | null = null;
 
   if (sameDayRecords.length > 0) {
-    if (sameDayEarlyLeaves.length > 0) {
-      dateStatusNotice = {
-        type: 'error',
-        message: `⚠️ An Early Leave is already recorded for ${formatDate(date)}. No further leaves can be added for this day.`,
-      };
-    } else if (sameDayFullLeaves.length > 0) {
+    if (sameDayFullLeaves.length > 0) {
       dateStatusNotice = {
         type: 'error',
         message: `⚠️ A Full Leave is already recorded for ${formatDate(date)}.`,
       };
+    } else if (sameDayEarlyLeaves.length > 0) {
+      if (isAdmin && leaveType === 'Short Leave') {
+        dateStatusNotice = {
+          type: 'warning',
+          message: `⚠️ Notice: An Early Leave is already recorded for ${formatDate(date)}. As Admin, you can add an additional Short Leave.`,
+        };
+      } else {
+        dateStatusNotice = {
+          type: 'error',
+          message: `⚠️ An Early Leave is already recorded for ${formatDate(date)}. No further leaves can be added for this day.`,
+        };
+      }
     } else if (leaveType === 'Full Leave') {
       dateStatusNotice = {
         type: 'error',

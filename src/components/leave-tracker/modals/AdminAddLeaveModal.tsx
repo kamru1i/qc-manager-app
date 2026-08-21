@@ -295,7 +295,14 @@ export function AdminAddLeaveModal({
     const sameDay = recordsToCheck.filter((r) => r.date === date);
     if (sameDay.length === 0) return false;
 
-    if (sameDay.some((r) => r.leave_type === 'Early Leave' || r.leave_type === 'Full Leave')) {
+    if (sameDay.some((r) => r.leave_type === 'Full Leave')) {
+      return true;
+    }
+
+    if (sameDay.some((r) => r.leave_type === 'Early Leave')) {
+      if (leaveType === 'Short Leave') {
+        return false;
+      }
       return true;
     }
 

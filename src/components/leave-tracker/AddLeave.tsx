@@ -314,6 +314,10 @@ export function AddLeave({
   const isHoliday = checkIfHolidayOrWeekend(date, globalSettings);
   const validationError = getLeaveValidationError(leaveType, signInTime, signOutTime, targetProfile?.working_hours || 9.5, isHoliday);
 
+  const isAdminAddingForStaff = Boolean(
+    profile && isAdminRole(profile) && targetProfile && targetProfile.id !== profile.id
+  );
+
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
     const recordsToCheck = editingRecord
@@ -328,18 +332,23 @@ export function AddLeave({
     const sameDay = recordsToCheck.filter(r => r.date === date);
     if (sameDay.length === 0) return false;
 
-    // Rule: If Early Leave or Full Leave already exists on this date -> block further submissions
-    if (sameDay.some(r => r.leave_type === 'Early Leave' || r.leave_type === 'Full Leave')) {
+    // Rule: If Full Leave already exists on this date -> block
+    if (sameDay.some(r => r.leave_type === 'Full Leave')) {
       return true;
     }
 
-    // Rule: If adding Short Leave when only Short Leave(s) exist -> ALLOW (modal will confirm)
-    if (leaveType === 'Short Leave') {
-      return false;
+    // Rule: If Early Leave exists on this date:
+    if (sameDay.some(r => r.leave_type === 'Early Leave')) {
+      // If admin is adding on behalf of a user in Settings/User Profile, allow Short Leave
+      if (isAdminAddingForStaff && leaveType === 'Short Leave') {
+        return false;
+      }
+      // For regular user or other leave types, block
+      return true;
     }
 
-    // Rule: If adding Early Leave when only Short Leave(s) exist -> ALLOW (short leave will be deducted)
-    if (leaveType === 'Early Leave') {
+    // Rule: If only Short Leave(s) exist on this date -> allow another Short Leave (modal will confirm) or Early Leave
+    if (leaveType === 'Short Leave' || leaveType === 'Early Leave') {
       return false;
     }
 
@@ -349,7 +358,7 @@ export function AddLeave({
     }
 
     return false;
-  }, [date, leaveType, bulkDates, staffRecords, editingRecord]);
+  }, [date, leaveType, bulkDates, staffRecords, editingRecord, isAdminAddingForStaff]);
 
   // Real-time deduction preview logic based on state
   let officeDeduction = 0;
@@ -557,8 +566,8 @@ export function AddLeave({
         changeDescription = changeDescription.replace(/,\s*$/, '');
         const editorName = isAdminRole(profile)
           ? (profile?.username?.toUpperCase() || 'ADMIN')
-          : isSupervisorRole 
-          ? (profile?.username?.toUpperCase() || 'SUPERVISOR') 
+          : isSupervisorRole
+          ? (profile?.username?.toUpperCase() || 'SUPERVISOR')
           : (profile?.username?.toUpperCase() || 'USER');
         const editLog = `\n[Edited by ${editorName}: ${changeDescription}. Reason: ${editReason}]`;
         commentWithCategory = baseComment + editLog;
