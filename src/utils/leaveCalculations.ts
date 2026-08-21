@@ -299,12 +299,8 @@ export const calculateLeaveOrOvertime = (
     if (worked < 0) {
       worked += 24 * 60;
     }
-    if (isHoliday) {
-      return formatDuration(Math.max(0, worked));
-    } else {
-      const regular = workingHours * 60;
-      return formatDuration(Math.max(0, worked - regular));
-    }
+    const regular = workingHours * 60;
+    return formatDuration(Math.max(0, worked - regular));
   }
   return '00:00';
 };
@@ -314,7 +310,7 @@ export const getLeaveValidationError = (
   signInTime: string,
   signOutTime: string,
   workingHours: number = 9.5,
-  isHoliday: boolean = false
+  _isHoliday: boolean = false
 ): string | null => {
   if (type === 'Full Leave' || !type) return null;
   if (!signInTime || !signOutTime) return null;
@@ -329,10 +325,7 @@ export const getLeaveValidationError = (
   const regularMins = workingHours * 60;
 
   if (type === 'Overtime') {
-    if (!isHoliday && workedMins <= regularMins) {
-      return 'Overtime must be extra from working hour';
-    }
-    if (isHoliday && workedMins === 0) {
+    if (workedMins <= regularMins) {
       return 'Overtime must be extra from working hour';
     }
   }
