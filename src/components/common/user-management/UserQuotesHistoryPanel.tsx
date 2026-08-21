@@ -401,7 +401,7 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
   }
 
   return (
-    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-2xl rounded-2xl p-6 space-y-6">
+    <div className="space-y-6">
       {/* Filters bar */}
       <div className="bg-theme-page-bg/45 p-4 rounded-xl border border-theme-border-muted flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
