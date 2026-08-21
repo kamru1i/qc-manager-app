@@ -139,6 +139,80 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
     ...(allowOvertime ? [{ value: "Overtime", label: "Overtime" }] : []),
   ];
 
+  const sameDayRecords = date
+    ? records.filter((r) => r.date === date && r.status !== 'rejected')
+    : [];
+  const sameDayShortLeaves = sameDayRecords.filter((r) => r.leave_type === 'Short Leave');
+  const sameDayEarlyLeaves = sameDayRecords.filter((r) => r.leave_type === 'Early Leave');
+  const sameDayFullLeaves = sameDayRecords.filter((r) => r.leave_type === 'Full Leave');
+
+  let dateStatusNotice: { type: 'error' | 'warning' | 'info'; message: string } | null = null;
+
+  if (sameDayRecords.length > 0) {
+    if (sameDayFullLeaves.length > 0) {
+      dateStatusNotice = {
+        type: 'error',
+        message: `⚠️ A Full Leave is already recorded for ${formatDate(date)}.`,
+      };
+    } else if (sameDayEarlyLeaves.length > 0) {
+      if (isAdmin && leaveType === 'Short Leave') {
+        dateStatusNotice = {
+          type: 'warning',
+          message: `⚠️ Notice: An Early Leave is already recorded for ${formatDate(date)}. As Admin, you can add an additional Short Leave.`,
+        };
+      } else {
+        dateStatusNotice = {
+          type: 'error',
+          message: `⚠️ An Early Leave is already recorded for ${formatDate(date)}. No further leaves can be added for this day.`,
+        };
+      }
+    } else if (leaveType === 'Full Leave') {
+      dateStatusNotice = {
+        type: 'error',
+        message: `⚠️ Leave records already exist for ${formatDate(date)}. Full Leave cannot be added.`,
+      };
+    } else if (leaveType === 'Short Leave') {
+      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
+        const parts = (r.leave_hour || '').toString().split(':').map(Number);
+        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
+      }, 0);
+      const hours = Math.floor(shortMins / 60);
+      const mins = shortMins % 60;
+      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      dateStatusNotice = {
+        type: 'warning',
+        message: `⚠️ ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs). You can add another Short Leave (a confirmation modal will appear upon submission).`,
+      };
+    } else if (leaveType === 'Early Leave' && sameDayShortLeaves.length > 0) {
+      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
+        const parts = (r.leave_hour || '').toString().split(':').map(Number);
+        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
+      }, 0);
+      const hours = Math.floor(shortMins / 60);
+      const mins = shortMins % 60;
+      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      dateStatusNotice = {
+        type: 'info',
+        message: `ℹ️ Notice: ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs).`,
+      };
+    }
+  }
+
+  const isDateBlocked = dateStatusNotice?.type === 'error';
+
+  // Automatically turn off any active adjustment if the date is blocked from adding leave
+  React.useEffect(() => {
+    if (isDateBlocked) {
+      if (adjustment) {
+        setAdjustment(false);
+        setAdjustmentCategory('None');
+      }
+      if (adjustShortLeave) {
+        setAdjustShortLeave(false);
+      }
+    }
+  }, [isDateBlocked, adjustment, adjustShortLeave, setAdjustment, setAdjustmentCategory, setAdjustShortLeave]);
+
   const [showBulkAdjPrompt, setShowBulkAdjPrompt] = React.useState(false);
   const [pendingCategory, setPendingCategory] = React.useState("");
   const [customDaysInput, setCustomDaysInput] = React.useState("");
@@ -156,6 +230,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   }, [showBulkAdjPrompt]);
 
   const handleToggleCategory = (cat: string) => {
+    if (isDateBlocked) return;
     if (cat === "None") {
       if (adjustment && adjustmentCategory === "None") {
         setAdjustment(false);
@@ -275,65 +350,6 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
       overtimeAdjMsg = `✅ ${adjustedStr} hour adjusted, ${remainingStr} hour will be counted as overtime.`;
     } else {
       overtimeAdjMsg = `ℹ️ adjust with ${adjustedStr} hours`;
-    }
-  }
-
-  const sameDayRecords = date
-    ? records.filter((r) => r.date === date && r.status !== 'rejected')
-    : [];
-  const sameDayShortLeaves = sameDayRecords.filter((r) => r.leave_type === 'Short Leave');
-  const sameDayEarlyLeaves = sameDayRecords.filter((r) => r.leave_type === 'Early Leave');
-  const sameDayFullLeaves = sameDayRecords.filter((r) => r.leave_type === 'Full Leave');
-
-  let dateStatusNotice: { type: 'error' | 'warning' | 'info'; message: string } | null = null;
-
-  if (sameDayRecords.length > 0) {
-    if (sameDayFullLeaves.length > 0) {
-      dateStatusNotice = {
-        type: 'error',
-        message: `⚠️ A Full Leave is already recorded for ${formatDate(date)}.`,
-      };
-    } else if (sameDayEarlyLeaves.length > 0) {
-      if (isAdmin && leaveType === 'Short Leave') {
-        dateStatusNotice = {
-          type: 'warning',
-          message: `⚠️ Notice: An Early Leave is already recorded for ${formatDate(date)}. As Admin, you can add an additional Short Leave.`,
-        };
-      } else {
-        dateStatusNotice = {
-          type: 'error',
-          message: `⚠️ An Early Leave is already recorded for ${formatDate(date)}. No further leaves can be added for this day.`,
-        };
-      }
-    } else if (leaveType === 'Full Leave') {
-      dateStatusNotice = {
-        type: 'error',
-        message: `⚠️ Leave records already exist for ${formatDate(date)}. Full Leave cannot be added.`,
-      };
-    } else if (leaveType === 'Short Leave') {
-      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
-        const parts = (r.leave_hour || '').toString().split(':').map(Number);
-        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
-      }, 0);
-      const hours = Math.floor(shortMins / 60);
-      const mins = shortMins % 60;
-      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      dateStatusNotice = {
-        type: 'warning',
-        message: `⚠️ ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs). You can add another Short Leave (a confirmation modal will appear upon submission).`,
-      };
-    } else if (leaveType === 'Early Leave' && sameDayShortLeaves.length > 0) {
-      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
-        const parts = (r.leave_hour || '').toString().split(':').map(Number);
-        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
-      }, 0);
-      const hours = Math.floor(shortMins / 60);
-      const mins = shortMins % 60;
-      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      dateStatusNotice = {
-        type: 'info',
-        message: `ℹ️ Notice: ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs).`,
-      };
     }
   }
 
@@ -470,7 +486,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* General Adjustment Toggle - Render only if isAdmin === true */}
                 {isAdmin && (
-                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                  <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
                     <div>
                       <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                         Adjustment (Salary/Other)
@@ -478,8 +494,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     </div>
                     <button
                       type="button"
+                      disabled={isDateBlocked}
                       onClick={() => handleToggleCategory("None")}
-                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                         adjustment && adjustmentCategory === "None"
                           ? "bg-blue-600"
                           : "bg-theme-border-input"
@@ -498,7 +515,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
                 {/* Govt Holiday Toggle - Render only if govtHolidayRemaining > 0 */}
                 {govtHolidayRemaining > 0 && (
-                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                  <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
                     <div>
                       <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                         Govt Holiday
@@ -506,8 +523,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     </div>
                     <button
                       type="button"
+                      disabled={isDateBlocked}
                       onClick={() => handleToggleCategory("Govt Holiday")}
-                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                         adjustmentCategory === "Govt Holiday"
                           ? "bg-blue-600"
                           : "bg-theme-border-input"
@@ -526,7 +544,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
                 {/* Eid-ul-Fitr Toggle - Render only if eidFitrRemaining > 0 */}
                 {eidFitrRemaining > 0 && (
-                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                  <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
                     <div>
                       <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                         Eid-ul-Fitr Reserve
@@ -534,8 +552,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     </div>
                     <button
                       type="button"
+                      disabled={isDateBlocked}
                       onClick={() => handleToggleCategory("Eid-ul-Fitr")}
-                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                         adjustmentCategory === "Eid-ul-Fitr"
                           ? "bg-blue-600"
                           : "bg-theme-border-input"
@@ -554,7 +573,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
                 {/* Eid-ul-Adha Toggle - Render only if eidAdhaRemaining > 0 */}
                 {eidAdhaRemaining > 0 && (
-                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                  <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
                     <div>
                       <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                         Eid-ul-Adha Reserve
@@ -562,8 +581,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     </div>
                     <button
                       type="button"
+                      disabled={isDateBlocked}
                       onClick={() => handleToggleCategory("Eid-ul-Adha")}
-                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                         adjustmentCategory === "Eid-ul-Adha"
                           ? "bg-blue-600"
                           : "bg-theme-border-input"
@@ -589,7 +609,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           (govtHolidayRemaining > 0 ||
             eidFitrRemaining > 0 ||
             eidAdhaRemaining > 0) && (
-            <div className="space-y-3 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted">
+            <div className={`space-y-3 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
               <div className="flex items-center justify-between">
                 <div>
                   <span className="block text-xs font-bold text-theme-text-primary font-sans">
@@ -602,7 +622,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 </div>
                 <button
                   type="button"
+                  disabled={isDateBlocked}
                   onClick={() => {
+                    if (isDateBlocked) return;
                     const newAdj = !adjustment;
                     setAdjustment(newAdj);
                     if (newAdj) {
@@ -616,7 +638,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                       setAdjustmentCategory("Office Leave");
                     }
                   }}
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                     adjustment ? "bg-blue-600" : "bg-theme-border-input"
                   }`}
                 >
@@ -637,8 +659,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     {govtHolidayRemaining > 0 && (
                       <button
                         type="button"
-                        onClick={() => setAdjustmentCategory("Govt Holiday")}
-                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
+                        disabled={isDateBlocked}
+                        onClick={() => !isDateBlocked && setAdjustmentCategory("Govt Holiday")}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                           adjustmentCategory === "Govt Holiday"
                             ? "bg-teal-950/30 border-teal-500/50 text-teal-400 font-semibold"
                             : "bg-theme-card-bg/40 border-theme-border-input text-theme-text-secondary hover:bg-theme-card-bg"
@@ -653,8 +676,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     {eidFitrRemaining > 0 && (
                       <button
                         type="button"
-                        onClick={() => setAdjustmentCategory("Eid-ul-Fitr")}
-                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
+                        disabled={isDateBlocked}
+                        onClick={() => !isDateBlocked && setAdjustmentCategory("Eid-ul-Fitr")}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                           adjustmentCategory === "Eid-ul-Fitr"
                             ? "bg-purple-955/30 border-purple-500/50 text-purple-450 font-semibold"
                             : "bg-theme-card-bg/40 border-theme-border-input text-theme-text-secondary hover:bg-theme-card-bg"
@@ -669,8 +693,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     {eidAdhaRemaining > 0 && (
                       <button
                         type="button"
-                        onClick={() => setAdjustmentCategory("Eid-ul-Adha")}
-                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
+                        disabled={isDateBlocked}
+                        onClick={() => !isDateBlocked && setAdjustmentCategory("Eid-ul-Adha")}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                           adjustmentCategory === "Eid-ul-Adha"
                             ? "bg-purple-950/30 border-purple-500/50 text-purple-450 font-semibold"
                             : "bg-theme-card-bg/40 border-theme-border-input text-theme-text-secondary hover:bg-theme-card-bg"
@@ -691,7 +716,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         {/* Overtime Adjustment toggle with Short Leave (Conditional) */}
         {leaveType === "Overtime" && availableShortLeaveMins > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+            <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
               <div>
                 <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                   Adjust with Short Leave?
@@ -702,8 +727,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setAdjustShortLeave(!adjustShortLeave)}
-                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                disabled={isDateBlocked}
+                onClick={() => !isDateBlocked && setAdjustShortLeave(!adjustShortLeave)}
+                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                   adjustShortLeave ? "bg-emerald-600" : "bg-theme-border-input"
                 }`}
               >
