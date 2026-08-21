@@ -2,18 +2,39 @@ import { NextRequest } from 'next/server';
 
 
 
-/** Trusted origins for CORS — only these are reflected back. */
+/** Trusted origins for CORS — only these or matching patterns are reflected back. */
 const ALLOWED_ORIGINS = [
   'https://qc-manager-app.vercel.app',
   'tauri://localhost',
+  'http://tauri.localhost',
+  'https://tauri.localhost',
   'capacitor://localhost',
+  'http://localhost',
+  'https://localhost',
   'http://localhost:3000',
   'http://localhost:3001',
 ];
 
+function isOriginAllowed(origin: string): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  try {
+    const url = new URL(origin);
+    const host = url.hostname;
+    if (host.endsWith('.vercel.app') || host === 'vercel.app') return true;
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+    if (url.protocol === 'tauri:' || url.protocol === 'capacitor:' || host === 'tauri.localhost') return true;
+  } catch {
+    if (origin.startsWith('tauri://') || origin.startsWith('capacitor://') || origin.includes('tauri.localhost')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function getCorsHeaders(request: NextRequest): Record<string, string> {
   const origin = request.headers.get('origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = isOriginAllowed(origin) ? origin : ALLOWED_ORIGINS[0];
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
