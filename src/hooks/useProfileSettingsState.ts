@@ -54,9 +54,22 @@ export function useProfileSettingsState(profile: Profile | null, sessionUser: an
     tempForm: { target_type: 'role', user_id: '', user_codename: '', role: 'user', tabKey: '', action: 'revoke', expires_at: '', comment: '' },
     submitting: false,
     isCodenameEditable: false,
-    activeSubTab: 'profile',
+    activeSubTab: (typeof window !== 'undefined' && localStorage.getItem('settings_active_subtab'))
+      ? (localStorage.getItem('settings_active_subtab') as any)
+      : 'profile',
     currentTimestamp: 0,
   });
+
+  useEffect(() => {
+    try {
+      const savedSubtab = localStorage.getItem('settings_active_subtab');
+      if (savedSubtab && ['profile', 'user_management', 'sanitizer', 'access_controls', 'feature_flags'].includes(savedSubtab)) {
+        dispatch({ activeSubTab: savedSubtab });
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
 
   useEffect(() => {
     const updateTimestamp = () => dispatch({ currentTimestamp: Date.now() });
@@ -153,7 +166,15 @@ export function useProfileSettingsState(profile: Profile | null, sessionUser: an
   const setTempForm = (val: any) => dispatch({ tempForm: typeof val === 'function' ? val(state.tempForm) : val });
   const setSubmitting = (val: any) => dispatch({ submitting: typeof val === 'function' ? val(state.submitting) : val });
   const setIsCodenameEditable = (val: any) => dispatch({ isCodenameEditable: typeof val === 'function' ? val(state.isCodenameEditable) : val });
-  const setActiveSubTab = (val: any) => dispatch({ activeSubTab: typeof val === 'function' ? val(state.activeSubTab) : val });
+  const setActiveSubTab = (val: any) => {
+    const nextTab = typeof val === 'function' ? val(state.activeSubTab) : val;
+    if (typeof window !== 'undefined' && nextTab) {
+      try {
+        localStorage.setItem('settings_active_subtab', nextTab);
+      } catch {}
+    }
+    dispatch({ activeSubTab: nextTab });
+  };
   const setCurrentTimestamp = (val: any) => dispatch({ currentTimestamp: typeof val === 'function' ? val(state.currentTimestamp) : val });
 
   return { state, dispatch,

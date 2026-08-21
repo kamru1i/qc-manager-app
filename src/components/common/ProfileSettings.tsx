@@ -214,10 +214,13 @@ export function ProfileSettings({
     }
   }, []);
 
-  // Fallback check: if saved subtab is restricted for current role, revert to profile
+  // Fallback check: if saved subtab is restricted for current role, revert to profile (or first available tab)
   useEffect(() => {
     if (!profile) return;
-    if (activeSubTab === 'sanitizer' && !canSeeSanitizer) {
+    if (activeSubTab === 'user_management' && !canSeeUserManagement) {
+      setActiveSubTab('profile');
+      localStorage.setItem('settings_active_subtab', 'profile');
+    } else if (activeSubTab === 'sanitizer' && !canSeeSanitizer) {
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
     } else if (activeSubTab === 'access_controls' && !canSeeAccess) {
@@ -227,7 +230,7 @@ export function ProfileSettings({
       setActiveSubTab('profile');
       localStorage.setItem('settings_active_subtab', 'profile');
     }
-  }, [profile, activeSubTab, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags]);
+  }, [profile, activeSubTab, canSeeUserManagement, canSeeSanitizer, canSeeAccess, canSeeFeatureFlags]);
 
   const isSuperAdmin = isSuperadmin(profile);
 
