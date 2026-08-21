@@ -476,15 +476,12 @@ export const useDashboardData = (
       global_settings: { ...(profile.global_settings || {}), ...newSettings },
     };
     setProfile(updatedProfile);
-    setProfilesList(prev => prev.map(p => ({
-      ...p,
-      global_settings: { ...(p.global_settings || {}), ...newSettings },
-    })));
-
-    profilesListRef.current = profilesListRef.current.map(p => ({
+    const updatedProfilesList = (profilesListRef.current || []).map(p => ({
       ...p,
       global_settings: { ...(p.global_settings || {}), ...newSettings },
     }));
+    setProfilesList(updatedProfilesList);
+    profilesListRef.current = updatedProfilesList;
 
     setGlobalSettings(newSettings);
     if (typeof window !== 'undefined') {
@@ -499,6 +496,7 @@ export const useDashboardData = (
             localStorage.setItem(cacheKey, JSON.stringify(p));
           }
         }
+        setCacheData('profiles_cache', updatedProfilesList).catch(() => {});
       } catch (e) {
         console.warn('Error updating local global_settings cache:', e);
       }
