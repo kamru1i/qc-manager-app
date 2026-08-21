@@ -16,6 +16,7 @@ interface AdminLeaveSettingsProps {
 export function AdminLeaveSettings({
   globalSettings,
   onSaveGlobalSettings,
+  initialFetchDone = true,
 }: AdminLeaveSettingsProps) {
   // 1. Office Leave Settings State
   const [officeLeaveMode, setOfficeLeaveMode] = useState<'split' | 'merged'>(() => {
@@ -467,9 +468,23 @@ export function AdminLeaveSettings({
 
             {/* Holidays List */}
             <div className="flex-1 flex flex-col gap-2 min-h-[220px]">
-              <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">Holidays List ({govtHolidays.length} {govtHolidays.length === 1 ? 'day' : 'days'})</label>
+              <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
+                Holidays List {!initialFetchDone ? '' : `(${govtHolidays.length} ${govtHolidays.length === 1 ? 'day' : 'days'})`}
+              </label>
 
-              {govtHolidays.length === 0 ? (
+              {!initialFetchDone ? (
+                <div className="flex-1 overflow-hidden border border-theme-border-muted rounded-xl bg-theme-page-bg/20 divide-y divide-theme-border-muted/60">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex justify-between items-center px-4 py-3 animate-pulse">
+                      <div className="flex flex-col gap-1.5 w-2/3">
+                        <div className="h-3.5 w-24 bg-theme-border-input/80 rounded" />
+                        <div className="h-2.5 w-40 bg-theme-border-muted/70 rounded" />
+                      </div>
+                      <div className="h-4 w-4 bg-theme-border-input/60 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : govtHolidays.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center py-12 text-center text-theme-text-muted border border-dashed border-theme-border-muted rounded-xl bg-theme-page-bg/20 text-xs">
                   No government holidays have been added for the current year.
                 </div>
