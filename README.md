@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.0.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.1.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.0.0 — Major Release (Enterprise Attendance & Multi-Shift Tracking System, Realtime Cross-User Live Sync, Chuti Permission Hardening & Enhanced Login Security) (Current)
+### 🚀 v7.1.0 — Minor Release (Same-Day Multi-Leave Support, Strict Early Leave Form Lockout, Realtime Field Disabling & Chuti Optimization) (Current)
+
+- **Multiple Short Leaves on Same Day**: Removed restrictive unique constraint index from remote PostgreSQL/Supabase database (`unique_user_date` dropped) and introduced interactive confirmation warning modal for consecutive short leaves.
+- **Early Leave Isolation & Lockout**: Enforced same-day leave lockout when an Early Leave is already recorded on a given date for regular staff, while maintaining administrator override capabilities from User Profile & Leave History.
+- **Co-existence of Short Leave & Early Leave**: Enabled recording Early Leave on dates with existing Short Leaves without erroneous cross-leave hour deductions or conflicting validation blockers.
+- **Contextual Form Field Disabling**: Dynamically disabled and reset all adjustment toggles (Govt Holiday, Eid-ul-Fitr, Eid-ul-Adha, Salary/Other, Overtime Short Leave Adjustment) whenever a date with blocking leave records is selected.
+- **Leave Form Field Sanitization**: Completely disabled Leave Type dropdown, Start/End time pickers, Break toggles, Comment box, and false hour calculations when selecting blocked dates.
+
+### 🚀 v7.0.0 — Major Release (Enterprise Attendance & Multi-Shift Tracking System, Realtime Cross-User Live Sync, Chuti Permission Hardening & Enhanced Login Security)
 
 - **Enterprise Attendance & Multi-Shift Module**: Introduced full-featured Home → Attendance system supporting multiple shifts per day, join/close actions, snack breaks, and prayer breaks with zero data loss.
 - **Continuous Working Time & Gross Elapsed Duration**: Standardized working duration calculations so snack breaks and prayer breaks remain included in the total shift and daily working time.
