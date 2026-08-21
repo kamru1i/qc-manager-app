@@ -174,7 +174,7 @@ export function AdjustmentModal({
                     type="button"
                     disabled={submitting}
                     onClick={() => handleSaveAdjustment(true)}
-                    className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 cursor-pointer transition-all disabled:opacity-50  items-center gap-1.5"
                   >
                     {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                     {submitting ? 'Processing...' : 'Confirm'}

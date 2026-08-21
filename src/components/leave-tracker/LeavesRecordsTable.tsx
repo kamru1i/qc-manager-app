@@ -373,7 +373,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       setSelectedIds([]);
       setIsSelectionMode(false);
       setDeleteConfirmOpen(false);
-      
+
       for (const id of idsToDelete) {
         const record = records.find(r => r.id === id);
         if (record) {
@@ -393,8 +393,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
       } else if (e.key === 'Delete') {
         const activeEl = document.activeElement;
         const isTyping = activeEl && (
-          activeEl.tagName === 'INPUT' || 
-          activeEl.tagName === 'TEXTAREA' || 
+          activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
           activeEl.getAttribute('contenteditable') === 'true'
         );
         if (!isTyping && selectedIds.length > 0) {
@@ -445,7 +445,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               value={filterType}
               onChange={setFilterType}
               options={leaveTypeOptions}
-              className="min-w-[130px]"
+              className="min-w-32.5"
             />
 
             {/* Quick Search Box */}
@@ -487,7 +487,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 value={selectedYear}
                 onChange={setSelectedYear}
                 options={yearOptions}
-                className="min-w-[85px]"
+                className="min-w-21.25"
               />
             )}
 
@@ -497,7 +497,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 value={selectedMonth}
                 onChange={setSelectedMonth}
                 options={monthOptions}
-                className="min-w-[125px]"
+                className="min-w-31.25"
               />
             )}
           </div>
@@ -634,8 +634,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                       )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${
-                          r.leave_type === 'Full Leave' 
-                            ? 'bg-red-955/50 border border-red-800 text-red-300' 
+                          r.leave_type === 'Full Leave'
+                            ? 'bg-red-955/50 border border-red-800 text-red-300'
                             : r.leave_type === 'Overtime'
                             ? 'bg-emerald-955/50 border border-emerald-800 text-emerald-300'
                             : 'bg-blue-955/50 border border-blue-800 text-blue-300'
@@ -725,7 +725,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         </td>
                       )}
                       {/* Comment Column */}
-                      <td className="px-6 py-4 text-sm text-theme-text-muted max-w-[150px] truncate text-center" title={getCleanComment(r.comment)}>
+                      <td className="px-6 py-4 text-sm text-theme-text-muted max-w-37.5 truncate text-center" title={getCleanComment(r.comment)}>
                         {getCleanComment(r.comment) || '-'}
                       </td>
                       {/* Animated selection checkbox column in place of Action */}

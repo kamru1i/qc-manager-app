@@ -36,7 +36,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
   if (variant === 'small') {
     return (
-      <div className={`flex-1 min-w-[140px] max-w-[280px] bg-theme-card-bg/20 border border-theme-border-input/70 rounded-xl p-2.5 flex items-center gap-2 ${className}`}>
+      <div className={`flex-1 min-w-35 max-w-70 bg-theme-card-bg/20 border border-theme-border-input/70 rounded-xl p-2.5 flex items-center gap-2 ${className}`}>
         <Icon className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
         <div className="flex-1 min-w-0">
           <span className="block text-[11px] text-theme-text-muted truncate">{title}</span>
@@ -52,7 +52,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   // Large Variant (Compact, Single-Line Friendly)
   return (
-    <div className={`flex-1 min-w-[140px] sm:min-w-[150px] lg:min-w-0 bg-theme-card-bg/40 border border-theme-border-input/70 hover:border-theme-border-active/60 rounded-xl p-2.5 sm:p-3 flex flex-col justify-between gap-1.5 shadow-xs transition-all ${className}`}>
+    <div className={`flex-1 min-w-35 sm:min-w-37.5 lg:min-w-0 bg-theme-card-bg/40 border border-theme-border-input/70 hover:border-theme-border-active/60 rounded-xl p-2.5 sm:p-3 flex flex-col justify-between gap-1.5 shadow-xs transition-all ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div

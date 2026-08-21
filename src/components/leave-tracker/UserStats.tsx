@@ -218,7 +218,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
   // Office leave display determinations based on half-yearly split
   const showOfficeCard = !!officeLeaveStats;
-  const showGovtCard = allowReserve !== false && eligibleGovtHoliday !== false && govtHolidayStats;
+  const showGovtCard =
+    allowReserve !== false && eligibleGovtHoliday !== false && govtHolidayStats;
 
   const h1Carryover = halfYearlyStats
     ? halfYearlyStats.h1Total - halfYearlyStats.h1Base
@@ -274,7 +275,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
     : "0 Days";
   if (halfYearlyStats) {
     if (halfYearlyStats.isMergedMode) {
-      officeRemainingDisplay = formatDaysAndHoursNode(halfYearlyStats.h1Remaining, workingHours);
+      officeRemainingDisplay = formatDaysAndHoursNode(
+        halfYearlyStats.h1Remaining,
+        workingHours,
+      );
     } else {
       const isH1 = halfYearlyStats.currentHalf === 1;
       officeRemainingDisplay = isH1
@@ -301,7 +305,11 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 : "Office Leave"
             }
             value={officeRemainingDisplay}
-            onIconClick={halfYearlyStats ? () => setShowOfficeDetailsModal(true) : undefined}
+            onIconClick={
+              halfYearlyStats
+                ? () => setShowOfficeDetailsModal(true)
+                : undefined
+            }
             iconTooltip={
               halfYearlyStats
                 ? halfYearlyStats.isMergedMode
@@ -424,7 +432,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
                 <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
-                  <History className="h-4 w-4 text-teal-400" /> Govt Holiday History
+                  <History className="h-4 w-4 text-teal-400" /> Govt Holiday
+                  History
                 </h3>
                 <button
                   onClick={() => setShowHistoryModal(false)}
@@ -434,9 +443,11 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 </button>
               </div>
 
-              <div className="max-h-[360px] overflow-y-auto pr-1">
+              <div className="max-h-90 overflow-y-auto pr-1">
                 {(() => {
-                  const activeReserveList = (respondedHolidays || []).filter(h => h.response !== "paid");
+                  const activeReserveList = (respondedHolidays || []).filter(
+                    (h) => h.response !== "paid",
+                  );
                   if (activeReserveList.length === 0) {
                     return (
                       <p className="text-center py-8 text-xs text-theme-text-muted font-medium">
@@ -450,7 +461,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
                     (r: any) =>
                       r.status === "approved" &&
                       r.adjustment &&
-                      (r.reserve_holiday === "Govt Holiday" || r.comment?.includes("Govt Holiday"))
+                      (r.reserve_holiday === "Govt Holiday" ||
+                        r.comment?.includes("Govt Holiday")),
                   );
 
                   const assignedLeaveIds = new Set<string>();
@@ -460,10 +472,20 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       <table className="w-full text-xs text-theme-text-secondary">
                         <thead>
                           <tr className="bg-theme-card-bg/60 border-b border-theme-border-muted text-theme-text-muted font-semibold text-[10px] uppercase tracking-wider">
-                            <th className="py-2.5 px-4 text-left whitespace-nowrap">Date</th>
-                            <th className="py-2.5 px-4 text-left whitespace-nowrap">Holiday Name</th>
-                            <th className="py-2.5 px-4 text-left whitespace-nowrap">Status</th>
-                            {isAdmin && onUpdateHolidayResponse && userId && <th className="py-2.5 px-4 text-right whitespace-nowrap">Action</th>}
+                            <th className="py-2.5 px-4 text-left whitespace-nowrap">
+                              Date
+                            </th>
+                            <th className="py-2.5 px-4 text-left whitespace-nowrap">
+                              Holiday Name
+                            </th>
+                            <th className="py-2.5 px-4 text-left whitespace-nowrap">
+                              Status
+                            </th>
+                            {isAdmin && onUpdateHolidayResponse && userId && (
+                              <th className="py-2.5 px-4 text-right whitespace-nowrap">
+                                Action
+                              </th>
+                            )}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-theme-border-muted">
@@ -472,12 +494,13 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             let matchingLeave = approvedAdjustedGovtLeaves.find(
                               (r: any) =>
                                 !assignedLeaveIds.has(r.id) &&
-                                (r.comment?.includes(h.name) || r.comment?.includes(h.date))
+                                (r.comment?.includes(h.name) ||
+                                  r.comment?.includes(h.date)),
                             );
 
                             if (!matchingLeave) {
                               matchingLeave = approvedAdjustedGovtLeaves.find(
-                                (r: any) => !assignedLeaveIds.has(r.id)
+                                (r: any) => !assignedLeaveIds.has(r.id),
                               );
                             }
 
@@ -498,39 +521,55 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                 </td>
                                 <td className="py-3 px-4 whitespace-nowrap">
                                   {matchingLeave ? (
-                                    <Badge variant="default" className="text-xs px-3 py-1 font-medium whitespace-nowrap bg-blue-955/60 border-blue-800 text-blue-300">
-                                      Adjusted with Leave on {formatDate(matchingLeave.date)}
+                                    <Badge
+                                      variant="default"
+                                      className="text-xs px-3 py-1 font-medium whitespace-nowrap bg-blue-955/60 border-blue-800 text-blue-300"
+                                    >
+                                      Adjusted with Leave on{" "}
+                                      {formatDate(matchingLeave.date)}
                                     </Badge>
                                   ) : (
-                                    <Badge variant="success" className="text-xs px-3 py-1 font-medium whitespace-nowrap">
+                                    <Badge
+                                      variant="success"
+                                      className="text-xs px-3 py-1 font-medium whitespace-nowrap"
+                                    >
                                       Reserved
                                     </Badge>
                                   )}
                                 </td>
-                                {isAdmin && onUpdateHolidayResponse && userId && (
-                                  <td className="py-3 px-4 text-right whitespace-nowrap">
-                                    {!matchingLeave ? (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={updatingHolidayDate === h.date}
-                                        onClick={() =>
-                                          setPendingVerbalAgreement({ date: h.date, name: h.name })
-                                        }
-                                        className="h-7 px-3 text-[11px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20 cursor-pointer whitespace-nowrap"
-                                        title="Pay"
-                                      >
-                                        {updatingHolidayDate === h.date ? (
-                                          <RefreshCw className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                          "Pay"
-                                        )}
-                                      </Button>
-                                    ) : (
-                                      <span className="text-xs text-theme-text-muted italic whitespace-nowrap">Adjusted</span>
-                                    )}
-                                  </td>
-                                )}
+                                {isAdmin &&
+                                  onUpdateHolidayResponse &&
+                                  userId && (
+                                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                                      {!matchingLeave ? (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          disabled={
+                                            updatingHolidayDate === h.date
+                                          }
+                                          onClick={() =>
+                                            setPendingVerbalAgreement({
+                                              date: h.date,
+                                              name: h.name,
+                                            })
+                                          }
+                                          className="h-7 px-3 text-[11px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20 cursor-pointer whitespace-nowrap"
+                                          title="Pay"
+                                        >
+                                          {updatingHolidayDate === h.date ? (
+                                            <RefreshCw className="h-3 w-3 animate-spin" />
+                                          ) : (
+                                            "Pay"
+                                          )}
+                                        </Button>
+                                      ) : (
+                                        <span className="text-xs text-theme-text-muted italic whitespace-nowrap">
+                                          Adjusted
+                                        </span>
+                                      )}
+                                    </td>
+                                  )}
                               </tr>
                             );
                           })}
@@ -565,7 +604,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
                 <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
-                  <AlertTriangle className="h-4.5 w-4.5 text-amber-400" /> Confirm Verbal Agreement
+                  <AlertTriangle className="h-4.5 w-4.5 text-amber-400" />{" "}
+                  Confirm Verbal Agreement
                 </h3>
                 <button
                   onClick={() => setPendingVerbalAgreement(null)}
@@ -576,12 +616,23 @@ export const UserStats: React.FC<UserStatsProps> = ({
               </div>
 
               <p className="text-xs text-theme-text-secondary mb-4 leading-relaxed font-medium">
-                Has a verbal agreement been made with the user to convert this reserved holiday date to payment?
+                Has a verbal agreement been made with the user to convert this
+                reserved holiday date to payment?
               </p>
 
               <div className="bg-theme-page-bg/60 border border-theme-border-muted p-3.5 rounded-xl mb-5 space-y-1.5 font-mono text-xs">
-                <div>Date: <strong className="text-teal-400">{formatDate(pendingVerbalAgreement.date)}</strong></div>
-                <div>Holiday Name: <strong className="text-theme-text-primary">{pendingVerbalAgreement.name}</strong></div>
+                <div>
+                  Date:{" "}
+                  <strong className="text-teal-400">
+                    {formatDate(pendingVerbalAgreement.date)}
+                  </strong>
+                </div>
+                <div>
+                  Holiday Name:{" "}
+                  <strong className="text-theme-text-primary">
+                    {pendingVerbalAgreement.name}
+                  </strong>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2">
@@ -596,13 +647,20 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   variant="default"
                   size="sm"
                   onClick={async () => {
-                    if (!userId || !onUpdateHolidayResponse || !pendingVerbalAgreement) return;
+                    if (
+                      !userId ||
+                      !onUpdateHolidayResponse ||
+                      !pendingVerbalAgreement
+                    )
+                      return;
                     const { date, name } = pendingVerbalAgreement;
                     setPendingVerbalAgreement(null);
                     setUpdatingHolidayDate(date);
                     try {
                       await onUpdateHolidayResponse(userId, date, name, "paid");
-                      toast.success("Converted reserve holiday to payment based on verbal agreement!");
+                      toast.success(
+                        "Converted reserve holiday to payment based on verbal agreement!",
+                      );
                     } catch (err) {
                       console.error("Failed to convert holiday response:", err);
                       toast.error("Failed to convert holiday response.");
@@ -632,7 +690,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
                 <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-blue-400" />
-                  {halfYearlyStats.isMergedMode ? 'Yearly Office Leave Details' : 'Half-Yearly Office Leave Details'}
+                  {halfYearlyStats.isMergedMode
+                    ? "Yearly Office Leave Details"
+                    : "Half-Yearly Office Leave Details"}
                 </h3>
                 <button
                   onClick={() => setShowOfficeDetailsModal(false)}
@@ -652,7 +712,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                     <div
                       className={`grid ${hasH1Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
                     >
-                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                         <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                           {hasH1Carryover ? "Base" : "Allocated"}
                         </span>
@@ -664,14 +724,14 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         )}
                       </div>
                       {hasH1Carryover && (
-                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                           <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                             Carryover
                           </span>
                           {renderTwoLineLeave(h1Carryover, workingHours, true)}
                         </div>
                       )}
-                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                         <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                           Taken
                         </span>
@@ -680,7 +740,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                           workingHours,
                         )}
                       </div>
-                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                      <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                         <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                           Remaining
                         </span>
@@ -712,7 +772,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       <div
                         className={`grid ${hasH1Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
                       >
-                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                           <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                             {hasH1Carryover ? "Base" : "Allocated"}
                           </span>
@@ -724,14 +784,18 @@ export const UserStats: React.FC<UserStatsProps> = ({
                           )}
                         </div>
                         {hasH1Carryover && (
-                          <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                             <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                               Carryover
                             </span>
-                            {renderTwoLineLeave(h1Carryover, workingHours, true)}
+                            {renderTwoLineLeave(
+                              h1Carryover,
+                              workingHours,
+                              true,
+                            )}
                           </div>
                         )}
-                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                           <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                             Taken
                           </span>
@@ -740,7 +804,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             workingHours,
                           )}
                         </div>
-                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                           <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                             Remaining
                           </span>
@@ -770,7 +834,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       <div
                         className={`grid ${hasH2Carryover ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center text-xs`}
                       >
-                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                           <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                             {hasH2Carryover ? "Base" : "Allocated"}
                           </span>
@@ -782,7 +846,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                           )}
                         </div>
                         {hasH2Carryover && (
-                          <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                          <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                             <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                               Carryover
                             </span>
@@ -793,7 +857,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             )}
                           </div>
                         )}
-                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                           <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                             Taken
                           </span>
@@ -802,7 +866,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             workingHours,
                           )}
                         </div>
-                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-[64px]">
+                        <div className="bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/60 flex flex-col justify-between min-h-16">
                           <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">
                             Remaining
                           </span>

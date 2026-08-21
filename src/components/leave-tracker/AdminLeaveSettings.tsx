@@ -448,14 +448,14 @@ export function AdminLeaveSettings({
                   placeholder="e.g. Shab-e-Barat, Victory Day"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full px-3 py-2 bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 h-[34px]"
+                  className="w-full px-3 py-2 bg-theme-card-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:border-blue-500/50 h-8.5"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleAddGovtDate}
                 disabled={submittingGovt}
-                className="py-2 px-4 bg-teal-600 hover:bg-teal-555 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer border border-teal-700 shadow-md font-bold text-xs h-[34px] w-full sm:w-auto shrink-0 gap-1 disabled:opacity-50"
+                className="py-2 px-4 bg-teal-600 hover:bg-teal-555 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer border border-teal-700 shadow-md font-bold text-xs h-8.5 w-full sm:w-auto shrink-0 gap-1 disabled:opacity-50"
               >
                 {submittingGovt ? (
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -467,7 +467,7 @@ export function AdminLeaveSettings({
             </div>
 
             {/* Holidays List */}
-            <div className="flex-1 flex flex-col gap-2 min-h-[220px]">
+            <div className="flex-1 flex flex-col gap-2 min-h-55">
               <label className="block text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
                 Holidays List {!initialFetchDone ? '' : `(${govtHolidays.length} ${govtHolidays.length === 1 ? 'day' : 'days'})`}
               </label>
@@ -489,7 +489,7 @@ export function AdminLeaveSettings({
                   No government holidays have been added for the current year.
                 </div>
               ) : (
-                <div className="flex-1 overflow-y-auto max-h-[300px] border border-theme-border-muted rounded-xl bg-theme-page-bg/20 divide-y divide-theme-border-muted/60 font-mono text-xs">
+                <div className="flex-1 overflow-y-auto max-h-75 border border-theme-border-muted rounded-xl bg-theme-page-bg/20 divide-y divide-theme-border-muted/60 font-mono text-xs">
                   {govtHolidays.map((h) => (
                     <div key={h.date} className="flex justify-between items-center px-4 py-2.5 hover:bg-theme-card-bg/30 transition-all">
                       <div className="flex flex-col gap-0.5">
