@@ -452,7 +452,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             <th className="py-2 px-3 text-left">Date</th>
                             <th className="py-2 px-3 text-left">Holiday Name</th>
                             <th className="py-2 px-3 text-left">Status</th>
-                            {isAdmin && <th className="py-2 px-3 text-right">Action</th>}
+                            {isAdmin && onUpdateHolidayResponse && userId && <th className="py-2 px-3 text-right">Action</th>}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-theme-border-muted">
