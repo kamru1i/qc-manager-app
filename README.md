@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.1.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.2.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.1.0 — Minor Release (Same-Day Multi-Leave Support, Strict Early Leave Form Lockout, Realtime Field Disabling & Chuti Optimization) (Current)
+### 🚀 v7.2.0 — Minor Release (Attendance Feature Complete Removal, Overtime Calculation Precision Fix, Enhanced Leave Adjustments & User Management Polish) (Current)
+
+- **Attendance Module Removal**: Completely uninstalled and removed the experimental Home → Attendance & Shift Tracker module from UI, contexts, services, timers, realtime subscriptions, and database migrations.
+- **Overtime Calculation Precision Fix**: Strictly standardized overtime calculation to `MAX(0, Actual Work - Regular Duration)` by deducting the configured working duration across all days.
+- **Restricted Self-Service Adjustments**: Disabled self-service adjustment submissions on `Add Leave` and restricted adjustment controls strictly to Admin profile management under `Settings > Users > Leave History`.
+- **Interactive Adjustment Modal**: Enhanced `AdjustmentModal` in Admin Settings with live calculation breakdown between accumulated Short Leave and Overtime, plus direct Salary Deduction (`Salary`) support.
+- **Settings UI Cleanups**: Removed redundant nested card containers in User Profile (`Leave History`, `Quotes History`) for clean edge-to-edge layout.
+
+### 🚀 v7.1.0 — Minor Release (Same-Day Multi-Leave Support, Strict Early Leave Form Lockout, Realtime Field Disabling & Chuti Optimization)
 
 - **Multiple Short Leaves on Same Day**: Removed restrictive unique constraint index from remote PostgreSQL/Supabase database (`unique_user_date` dropped) and introduced interactive confirmation warning modal for consecutive short leaves.
 - **Early Leave Isolation & Lockout**: Enforced same-day leave lockout when an Early Leave is already recorded on a given date for regular staff, while maintaining administrator override capabilities from User Profile & Leave History.
