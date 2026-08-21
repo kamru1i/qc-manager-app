@@ -26,43 +26,57 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const checkConnectivity = useCallback(async (): Promise<boolean> => {
     if (typeof window === "undefined") return true;
 
-    // 1. Check navigator.onLine first
-    if (!navigator.onLine) {
+    // 1. Primary browser connectivity check
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
       setIsOnline(false);
+      setIsChecking(false);
       return false;
     }
 
     setIsChecking(true);
 
-    // Determine ping target
-    const isTauri =
+    // Determine platform
+    const isNative =
       (window as any).__TAURI_INTERNALS__ !== undefined ||
       window.location.protocol === "tauri:" ||
+      window.location.protocol === "capacitor:" ||
       window.location.hostname === "tauri.localhost";
 
-    // Use origin favicon for ping on all platforms (avoids sending HEAD requests to Supabase URL)
-    const pingUrl = "/favicon.ico";
+    const pingUrl = isNative 
+      ? "https://chuti.bnfcorporate.com/favicon.ico" 
+      : "/favicon.ico";
 
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-      // Perform a HEAD request using no-cors to avoid CORS blocks
-      await fetch(`${pingUrl}?t=${Date.now()}`, {
-        method: "HEAD",
-        mode: "no-cors",
+      // Perform a lightweight GET ping
+      const res = await fetch(`${pingUrl}?t=${Date.now()}`, {
+        method: "GET",
         cache: "no-store",
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
-      setIsOnline(true);
+
+      if (res.ok || res.type === "opaque" || res.status === 200 || res.status === 304) {
+        setIsOnline(true);
+        setIsChecking(false);
+        return true;
+      }
+
+      // If server returned another status, check navigator.onLine as source of truth
+      const online = typeof navigator !== "undefined" ? navigator.onLine : true;
+      setIsOnline(online);
       setIsChecking(false);
-      return true;
-    } catch (err) {
-      setIsOnline(false);
+      return online;
+    } catch {
+      // If ping failed (e.g. adblocker, local webview asset route, or temporary timeout),
+      // defer to navigator.onLine so users are not falsely locked out with "No Internet Connection"
+      const online = typeof navigator !== "undefined" ? navigator.onLine : true;
+      setIsOnline(online);
       setIsChecking(false);
-      return false;
+      return online;
     }
   }, []);
 
