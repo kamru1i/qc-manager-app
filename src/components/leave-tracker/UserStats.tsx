@@ -419,7 +419,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
         isMounted &&
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
-            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-2xl p-6 relative overflow-hidden font-sans">
               <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-teal-900/10 blur-[80px] pointer-events-none" />
 
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
@@ -428,18 +428,18 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 </h3>
                 <button
                   onClick={() => setShowHistoryModal(false)}
-                  className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer"
+                  className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer transition-colors"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="max-h-[300px] overflow-y-auto pr-1">
+              <div className="max-h-[360px] overflow-y-auto pr-1">
                 {(() => {
                   const activeReserveList = (respondedHolidays || []).filter(h => h.response !== "paid");
                   if (activeReserveList.length === 0) {
                     return (
-                      <p className="text-center py-6 text-xs text-theme-text-muted font-medium">
+                      <p className="text-center py-8 text-xs text-theme-text-muted font-medium">
                         No active reserve govt holidays.
                       </p>
                     );
@@ -456,14 +456,14 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   const assignedLeaveIds = new Set<string>();
 
                   return (
-                    <div className="border border-theme-border-muted rounded-xl overflow-hidden bg-theme-page-bg/40">
+                    <div className="border border-theme-border-muted rounded-xl overflow-x-auto bg-theme-page-bg/40">
                       <table className="w-full text-xs text-theme-text-secondary">
                         <thead>
                           <tr className="bg-theme-card-bg/60 border-b border-theme-border-muted text-theme-text-muted font-semibold text-[10px] uppercase tracking-wider">
-                            <th className="py-2 px-3 text-left">Date</th>
-                            <th className="py-2 px-3 text-left">Holiday Name</th>
-                            <th className="py-2 px-3 text-left">Status</th>
-                            {isAdmin && onUpdateHolidayResponse && userId && <th className="py-2 px-3 text-right">Action</th>}
+                            <th className="py-2.5 px-4 text-left whitespace-nowrap">Date</th>
+                            <th className="py-2.5 px-4 text-left whitespace-nowrap">Holiday Name</th>
+                            <th className="py-2.5 px-4 text-left whitespace-nowrap">Status</th>
+                            {isAdmin && onUpdateHolidayResponse && userId && <th className="py-2.5 px-4 text-right whitespace-nowrap">Action</th>}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-theme-border-muted">
@@ -490,25 +490,25 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                 key={i}
                                 className="hover:bg-theme-card-bg/20 transition-colors"
                               >
-                                <td className="py-2.5 px-3 font-mono font-bold text-teal-400">
+                                <td className="py-3 px-4 font-mono font-bold text-teal-400 whitespace-nowrap">
                                   {formatDate(h.date)}
                                 </td>
-                                <td className="py-2.5 px-3 text-theme-text-primary">
+                                <td className="py-3 px-4 text-theme-text-primary font-medium whitespace-nowrap">
                                   {h.name}
                                 </td>
-                                <td className="py-2.5 px-3">
+                                <td className="py-3 px-4 whitespace-nowrap">
                                   {matchingLeave ? (
-                                    <Badge variant="default" className="text-[10px] bg-blue-955/60 border-blue-800 text-blue-300">
+                                    <Badge variant="default" className="text-xs px-3 py-1 font-medium whitespace-nowrap bg-blue-955/60 border-blue-800 text-blue-300">
                                       Adjusted with Leave on {formatDate(matchingLeave.date)}
                                     </Badge>
                                   ) : (
-                                    <Badge variant="success" className="text-[10px]">
+                                    <Badge variant="success" className="text-xs px-3 py-1 font-medium whitespace-nowrap">
                                       Reserved
                                     </Badge>
                                   )}
                                 </td>
                                 {isAdmin && onUpdateHolidayResponse && userId && (
-                                  <td className="py-2.5 px-3 text-right">
+                                  <td className="py-3 px-4 text-right whitespace-nowrap">
                                     {!matchingLeave ? (
                                       <Button
                                         variant="outline"
@@ -517,7 +517,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                         onClick={() =>
                                           setPendingVerbalAgreement({ date: h.date, name: h.name })
                                         }
-                                        className="h-7 px-3 text-[11px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20 cursor-pointer"
+                                        className="h-7 px-3 text-[11px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20 cursor-pointer whitespace-nowrap"
                                         title="Pay"
                                       >
                                         {updatingHolidayDate === h.date ? (
@@ -527,7 +527,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                         )}
                                       </Button>
                                     ) : (
-                                      <span className="text-[10px] text-theme-text-muted italic">Adjusted</span>
+                                      <span className="text-xs text-theme-text-muted italic whitespace-nowrap">Adjusted</span>
                                     )}
                                   </td>
                                 )}
