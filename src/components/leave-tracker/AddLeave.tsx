@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { RefreshCw, AlertTriangle, User, Calendar } from 'lucide-react';
 import { Profile, GovtHolidayResponse, LeaveSettlement } from '@/types';
 import { ChutiRecord, AdminEditRequest } from '@/utils/offlineSync';
@@ -13,6 +14,8 @@ import {
   getLeaveValidationError,
   calculateLeaveOrOvertime,
   formatDate,
+  formatDuration,
+  formatTimeToAMPM,
   getSettlementSplits,
   isFriday,
   adjustShortLeaveForJummah,
@@ -98,6 +101,12 @@ export function AddLeave({
   const [submitting, setSubmitting] = useState(false);
   const [editReason, setEditReason] = useState('');
   const [dateErrors, setDateErrors] = useState<Record<string, boolean>>({});
+  const [showMultipleShortLeaveModal, setShowMultipleShortLeaveModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const hasDateError = Object.values(dateErrors).some(Boolean);
 
@@ -121,6 +130,50 @@ export function AddLeave({
 
   // Break time is only offered for Short Leave when signed in more than 1 hour late.
   const breakEligible = breakFeatureOn && isBreakEligible(leaveType, signInTime, defaultSignIn || '13:00');
+
+  // Filter records belonging to the target staff member
+  const staffRecords = React.useMemo(() => {
+    if (!targetProfile) return [];
+    return records.filter(r => r.user_id === targetProfile.id);
+  }, [records, targetProfile]);
+
+  const parseHHMMToMinutes = (str: string) => {
+    if (!str) return 0;
+    const parts = str.replace('-', '').split(':').map(Number);
+    if (parts.length >= 2) {
+      return parts[0] * 60 + parts[1];
+    }
+    return 0;
+  };
+
+  // Same-day records inspection
+  const existingRecordsOnDate = React.useMemo(() => {
+    if (!date || !targetProfile) return [];
+    return staffRecords.filter(r =>
+      r.date === date &&
+      (editingRecord ? r.id !== editingRecord.id : true) &&
+      r.status !== 'rejected'
+    );
+  }, [date, targetProfile, staffRecords, editingRecord]);
+
+  const existingShortLeavesOnDate = React.useMemo(() => {
+    return existingRecordsOnDate.filter(r => r.leave_type === 'Short Leave');
+  }, [existingRecordsOnDate]);
+
+  const existingEarlyLeavesOnDate = React.useMemo(() => {
+    return existingRecordsOnDate.filter(r => r.leave_type === 'Early Leave');
+  }, [existingRecordsOnDate]);
+
+  const existingFullLeavesOnDate = React.useMemo(() => {
+    return existingRecordsOnDate.filter(r => r.leave_type === 'Full Leave');
+  }, [existingRecordsOnDate]);
+
+  const existingShortLeaveMinutes = React.useMemo(() => {
+    return existingShortLeavesOnDate.reduce((acc, r) => {
+      const mins = r.leave_hour ? parseHHMMToMinutes(r.leave_hour.toString()) : 0;
+      return acc + mins;
+    }, 0);
+  }, [existingShortLeavesOnDate]);
 
   // Initialize today's date and default times
   useEffect(() => {
@@ -164,7 +217,15 @@ export function AddLeave({
     const shiftEnd = defaultSignOut || '22:30';
     const workingHours = targetWorkingHours ?? 9.5;
     const isHoliday = checkIfHolidayOrWeekend(date, globalSettings);
-    const calc = calculateLeaveOrOvertime(leaveType, signInTime, signOutTime, shiftStart, shiftEnd, workingHours, isHoliday);
+    const calc = calculateLeaveOrOvertime(
+      leaveType,
+      signInTime,
+      signOutTime,
+      shiftStart,
+      shiftEnd,
+      workingHours,
+      isHoliday
+    );
     const jummahApplied = (['Short Leave', 'Early Leave'].includes(leaveType) && isFriday(date) && jummahFeatureOn)
       ? adjustShortLeaveForJummah(calc, adjustJummah)
       : calc;
@@ -175,25 +236,10 @@ export function AddLeave({
     setLeaveHour(finalCalc);
   }, [signInTime, signOutTime, leaveType, date, defaultSignIn, defaultSignOut, targetWorkingHours, globalSettings, targetProfile, adjustJummah, breakEligible, breakEnabled, breakMinutes]);
 
-  // Filter records belonging to the target staff member
-  const staffRecords = React.useMemo(() => {
-    if (!targetProfile) return [];
-    return records.filter(r => r.user_id === targetProfile.id);
-  }, [records, targetProfile]);
-
   // Real-time balance calculations
   const selectedYear = date ? date.substring(0, 4) : new Date().getFullYear().toString();
   const approvedRecords = staffRecords.filter(r => r.status === 'approved' && r.date && r.date.substring(0, 4) === selectedYear);
   const stats = calculateStats(approvedRecords, targetProfile?.working_hours || 9.5);
-
-  const parseHHMMToMinutes = (str: string) => {
-    if (!str) return 0;
-    const parts = str.replace('-', '').split(':').map(Number);
-    if (parts.length >= 2) {
-      return parts[0] * 60 + parts[1];
-    }
-    return 0;
-  };
 
   const isOfficeLeaveEligible = targetProfile?.eligible_office_leave !== false;
   const isGovtHolidayEligible = targetProfile?.eligible_govt_holiday !== false;
@@ -246,7 +292,7 @@ export function AddLeave({
   const govtHolidayRemaining = adjustedGovtHolidayStats.remaining;
   const govtHolidayTotal = adjustedGovtHolidayStats.total;
 
-    const officeLeaveTotalBase = isOfficeLeaveEligible ? (globalSettings.office_leave_h1 + globalSettings.office_leave_h2) : 0;
+  const officeLeaveTotalBase = isOfficeLeaveEligible ? (globalSettings.office_leave_h1 + globalSettings.office_leave_h2) : 0;
   const officeLeaveTotal = isOfficeLeaveEligible
     ? officeLeaveTotalBase + carriedOffice + (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha
     : (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
@@ -271,14 +317,37 @@ export function AddLeave({
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
     const recordsToCheck = editingRecord
-      ? staffRecords.filter(r => r.id !== editingRecord.id)
-      : staffRecords;
-    const hasMainDuplicate = recordsToCheck.some(r => r.date === date);
-    if (hasMainDuplicate) return true;
+      ? staffRecords.filter(r => r.id !== editingRecord.id && r.status !== 'rejected')
+      : staffRecords.filter(r => r.status !== 'rejected');
 
-    if (leaveType === 'Full Leave' && bulkDates.length > 0) {
-      return bulkDates.some(bd => bd && recordsToCheck.some(r => r.date === bd));
+    if (leaveType === 'Full Leave') {
+      const allDates = [date, ...bulkDates.filter(Boolean)];
+      return allDates.some(d => recordsToCheck.some(r => r.date === d));
     }
+
+    const sameDay = recordsToCheck.filter(r => r.date === date);
+    if (sameDay.length === 0) return false;
+
+    // Rule: If Early Leave or Full Leave already exists on this date -> block further submissions
+    if (sameDay.some(r => r.leave_type === 'Early Leave' || r.leave_type === 'Full Leave')) {
+      return true;
+    }
+
+    // Rule: If adding Short Leave when only Short Leave(s) exist -> ALLOW (modal will confirm)
+    if (leaveType === 'Short Leave') {
+      return false;
+    }
+
+    // Rule: If adding Early Leave when only Short Leave(s) exist -> ALLOW (short leave will be deducted)
+    if (leaveType === 'Early Leave') {
+      return false;
+    }
+
+    // Rule: Overtime duplicates
+    if (leaveType === 'Overtime') {
+      return sameDay.some(r => r.leave_type === 'Overtime');
+    }
+
     return false;
   }, [date, leaveType, bulkDates, staffRecords, editingRecord]);
 
@@ -590,23 +659,14 @@ export function AddLeave({
     }
 
     // ─── INSERT NEW RECORD (Original Logic) ───
-    const datesWithAdjustment = isFullLeave
-      ? [
-          { date, adjustment: adjustmentCategory !== 'None' },
-          ...bulkDates.map((d, idx) => ({ date: d, adjustment: bulkAdjustments[idx] || false }))
-        ].filter(item => item.date)
-      : [{ date, adjustment: false }];
-
-    const allDates = datesWithAdjustment.map(item => item.date);
-
-    if (allDates.length === 0) {
-      toast.error('Please select at least one date!');
-      setSubmitting(false);
-      return;
-    }
-
     if (isDuplicateDate) {
-      toast.error('duplicated leave detected, please confirm the leave date again.');
+      if (existingEarlyLeavesOnDate.length > 0) {
+        toast.error(`An Early Leave has already been submitted for ${formatDate(date)}. No further leaves can be added for this day.`);
+      } else if (existingFullLeavesOnDate.length > 0) {
+        toast.error(`A Full Leave has already been submitted for ${formatDate(date)}.`);
+      } else {
+        toast.error('Duplicated leave detected, please confirm the leave date again.');
+      }
       setSubmitting(false);
       return;
     }
@@ -619,6 +679,34 @@ export function AddLeave({
 
     if (!isFullLeave && validationError) {
       toast.error(validationError);
+      setSubmitting(false);
+      return;
+    }
+
+    // Check if user is adding an additional Short Leave on a date that already has Short Leave(s)
+    if (leaveType === 'Short Leave' && existingShortLeavesOnDate.length > 0) {
+      setShowMultipleShortLeaveModal(true);
+      setSubmitting(false);
+      return;
+    }
+
+    await executeInsert();
+  };
+
+  const executeInsert = async () => {
+    if (!targetProfile) return;
+    setSubmitting(true);
+    const datesWithAdjustment = isFullLeave
+      ? [
+          { date, adjustment: adjustmentCategory !== 'None' },
+          ...bulkDates.map((d, idx) => ({ date: d, adjustment: bulkAdjustments[idx] || false }))
+        ].filter(item => item.date)
+      : [{ date, adjustment: false }];
+
+    const allDates = datesWithAdjustment.map(item => item.date);
+
+    if (allDates.length === 0) {
+      toast.error('Please select at least one date!');
       setSubmitting(false);
       return;
     }
@@ -820,8 +908,6 @@ export function AddLeave({
 
       toast.success(allDates.length > 1 ? `Successfully added ${allDates.length} bulk leaves!` : 'Leave added successfully!');
 
-
-
       // Send notifications to supervisors if pending approval (normal user request)
       const targetSupervisors = targetProfile.supervisor_ids || [];
       if (finalStatus === 'pending_supervisor' && targetSupervisors.length > 0 && data && data.length > 0) {
@@ -838,8 +924,6 @@ export function AddLeave({
         } catch (notifErr) {
           console.error('Failed to insert fallback notifications:', notifErr);
         }
-
-
       }
 
       onSuccess(data || undefined);
@@ -879,10 +963,10 @@ export function AddLeave({
           <div className="p-3 bg-blue-950/40 border border-blue-800/40 text-blue-300 text-xs rounded-lg flex items-start gap-2">
             <User className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold block text-theme-text-primary">Adding leave on behalf of a user</span>
-              <span className="text-[11px] block mt-0.5 text-theme-text-muted">
-                This leave will be submitted for <span className="text-theme-text-primary font-semibold">{targetProfile.full_name || targetProfile.username}</span> ({targetProfile.username?.toUpperCase()}) and sent directly to admin for approval.
-              </span>
+              <p className="font-semibold">Submitting on behalf of:</p>
+              <p className="text-[11px] text-blue-200 mt-0.5 font-bold">
+                {targetProfile.full_name || targetProfile.username} ({targetProfile.role})
+              </p>
             </div>
           </div>
         )}
@@ -900,7 +984,7 @@ export function AddLeave({
           </div>
         )}
 
-        {submitting && !initialFetchDone ? (
+        {!initialFetchDone ? (
           <SkeletonLoader variant="chuti-form" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -1018,6 +1102,80 @@ export function AddLeave({
           </div>
         )}
       </div>
+
+      {/* Multiple Short Leaves Confirmation Warning Modal */}
+      {showMultipleShortLeaveModal && isMounted && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
+          <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-md p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-amber-900/10 blur-[80px] pointer-events-none" />
+
+            <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
+              <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
+                <AlertTriangle className="h-4.5 w-4.5 text-amber-400" /> Existing Short Leave Warning
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowMultipleShortLeaveModal(false)}
+                className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-theme-text-secondary mb-3 leading-relaxed">
+              You already have <strong>{existingShortLeavesOnDate.length}</strong> existing short leave record(s) on <strong>{formatDate(date)}</strong>:
+            </p>
+
+            <div className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-3 mb-3 divide-y divide-theme-border-muted/60 text-xs">
+              {existingShortLeavesOnDate.map((r, idx) => (
+                <div key={r.id || idx} className="py-1.5 first:pt-0 last:pb-0 flex justify-between items-center">
+                  <span className="text-theme-text-muted font-mono">
+                    {r.sign_in_time ? formatTimeToAMPM(r.sign_in_time.substring(0, 5)) : '--:--'} - {r.sign_out_time ? formatTimeToAMPM(r.sign_out_time.substring(0, 5)) : '--:--'}
+                  </span>
+                  <span className="font-bold text-amber-400">{r.leave_hour} hrs</span>
+                </div>
+              ))}
+              <div className="pt-2 flex justify-between items-center font-bold text-theme-text-primary">
+                <span>Total Recorded Short Leave:</span>
+                <span className="text-amber-400">{formatDuration(existingShortLeaveMinutes)} hrs</span>
+              </div>
+            </div>
+
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4 text-xs text-blue-300">
+              <p className="font-semibold mb-1">New Short Leave to Add:</p>
+              <div className="flex justify-between items-center">
+                <span>{formatTimeToAMPM(signInTime)} - {formatTimeToAMPM(signOutTime)}</span>
+                <span className="font-bold text-blue-400">{leaveHour} hrs</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-theme-text-muted mb-5 font-medium">
+              Are you sure you want to proceed and add this additional short leave for this day?
+            </p>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowMultipleShortLeaveModal(false)}
+                className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-theme-border-input hover:bg-theme-card-bg/40 text-theme-text-secondary cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowMultipleShortLeaveModal(false);
+                  await executeInsert();
+                }}
+                className="px-4 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-500 text-white cursor-pointer shadow-md"
+              >
+                Yes, Add Short Leave
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

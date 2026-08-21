@@ -126,6 +126,18 @@ export function AdminAddLeaveModal({
     }
   }, [date, leaveType, adjustJummah]);
 
+  const sameDayShortLeaves = React.useMemo(() => {
+    if (!date) return [];
+    return records.filter((r) => r.date === date && r.leave_type === "Short Leave" && r.status !== "rejected");
+  }, [date, records]);
+
+  const existingShortLeaveMinutes = React.useMemo(() => {
+    return sameDayShortLeaves.reduce((acc, r) => {
+      const parts = (r.leave_hour || "").toString().split(":").map(Number);
+      return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
+    }, 0);
+  }, [sameDayShortLeaves]);
+
   // Recalculate leave hour when inputs change
   useEffect(() => {
     if (!staffProfile) return;
@@ -140,7 +152,7 @@ export function AdminAddLeaveModal({
       shiftStart,
       shiftEnd,
       workingHours,
-      isHoliday,
+      isHoliday
     );
     const jummahApplied = (leaveType === 'Short Leave' && isFriday(date))
       ? adjustShortLeaveForJummah(calc, adjustJummah)
@@ -274,12 +286,27 @@ export function AdminAddLeaveModal({
 
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
-    const hasMainDuplicate = records.some((r) => r.date === date);
-    if (hasMainDuplicate) return true;
-
-    if (leaveType === "Full Leave" && bulkDates.length > 0) {
-      return bulkDates.some((bd) => bd && records.some((r) => r.date === bd));
+    const recordsToCheck = records.filter(r => r.status !== 'rejected');
+    if (leaveType === "Full Leave") {
+      const allDates = [date, ...bulkDates.filter(Boolean)];
+      return allDates.some((bd) => recordsToCheck.some((r) => r.date === bd));
     }
+
+    const sameDay = recordsToCheck.filter((r) => r.date === date);
+    if (sameDay.length === 0) return false;
+
+    if (sameDay.some((r) => r.leave_type === 'Early Leave' || r.leave_type === 'Full Leave')) {
+      return true;
+    }
+
+    if (leaveType === 'Short Leave' || leaveType === 'Early Leave') {
+      return false;
+    }
+
+    if (leaveType === 'Overtime') {
+      return sameDay.some((r) => r.leave_type === 'Overtime');
+    }
+
     return false;
   }, [date, leaveType, bulkDates, records]);
 

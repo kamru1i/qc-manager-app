@@ -278,7 +278,57 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
     }
   }
 
-  const duplicateRecord = date ? records.find((r) => r.date === date) : null;
+  const sameDayRecords = date
+    ? records.filter((r) => r.date === date && r.status !== 'rejected')
+    : [];
+  const sameDayShortLeaves = sameDayRecords.filter((r) => r.leave_type === 'Short Leave');
+  const sameDayEarlyLeaves = sameDayRecords.filter((r) => r.leave_type === 'Early Leave');
+  const sameDayFullLeaves = sameDayRecords.filter((r) => r.leave_type === 'Full Leave');
+
+  let dateStatusNotice: { type: 'error' | 'warning' | 'info'; message: string } | null = null;
+
+  if (sameDayRecords.length > 0) {
+    if (sameDayEarlyLeaves.length > 0) {
+      dateStatusNotice = {
+        type: 'error',
+        message: `⚠️ An Early Leave is already recorded for ${formatDate(date)}. No further leaves can be added for this day.`,
+      };
+    } else if (sameDayFullLeaves.length > 0) {
+      dateStatusNotice = {
+        type: 'error',
+        message: `⚠️ A Full Leave is already recorded for ${formatDate(date)}.`,
+      };
+    } else if (leaveType === 'Full Leave') {
+      dateStatusNotice = {
+        type: 'error',
+        message: `⚠️ Leave records already exist for ${formatDate(date)}. Full Leave cannot be added.`,
+      };
+    } else if (leaveType === 'Short Leave') {
+      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
+        const parts = (r.leave_hour || '').toString().split(':').map(Number);
+        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
+      }, 0);
+      const hours = Math.floor(shortMins / 60);
+      const mins = shortMins % 60;
+      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      dateStatusNotice = {
+        type: 'warning',
+        message: `⚠️ ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs). You can add another Short Leave (a confirmation modal will appear upon submission).`,
+      };
+    } else if (leaveType === 'Early Leave' && sameDayShortLeaves.length > 0) {
+      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
+        const parts = (r.leave_hour || '').toString().split(':').map(Number);
+        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
+      }, 0);
+      const hours = Math.floor(shortMins / 60);
+      const mins = shortMins % 60;
+      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      dateStatusNotice = {
+        type: 'info',
+        message: `ℹ️ Notice: ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs).`,
+      };
+    }
+  }
 
   const currentYear = new Date().getFullYear();
   const minDate = `${currentYear}-01-01`;
@@ -318,10 +368,17 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               </button>
             )}
           </div>
-          {duplicateRecord && (
-            <p className="text-red-500 font-semibold text-[10px] mt-1.5 leading-snug">
-              ⚠️ Duplicate! {formatDate(date)} is already added as{" "}
-              {duplicateRecord.leave_type}
+          {dateStatusNotice && (
+            <p
+              className={`font-semibold text-[10px] mt-1.5 leading-snug ${
+                dateStatusNotice.type === "error"
+                  ? "text-red-500"
+                  : dateStatusNotice.type === "warning"
+                  ? "text-amber-400"
+                  : "text-blue-400"
+              }`}
+            >
+              {dateStatusNotice.message}
             </p>
           )}
         </div>
