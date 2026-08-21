@@ -312,7 +312,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 title="Add more dates"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Add Date</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">
+                  Add Date
+                </span>
               </button>
             )}
           </div>
@@ -394,126 +396,128 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
       {/* Adjustment Category & Overtime/Reserve Switch */}
       <div className="grid grid-cols-1 gap-4">
         {/* Render Adjustment Category Toggles only for Full Leave */}
-        {leaveType === "Full Leave" && leaveAdjustmentsEnabled && hasAnyFullLeaveToggle && (
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
-              Leave Adjustment
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* General Adjustment Toggle - Render only if isAdmin === true */}
-              {isAdmin && (
-                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
-                  <div>
-                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                      Adjustment (Salary/Other)
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleCategory("None")}
-                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      adjustment && adjustmentCategory === "None"
-                        ? "bg-blue-600"
-                        : "bg-theme-border-input"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+        {leaveType === "Full Leave" &&
+          leaveAdjustmentsEnabled &&
+          hasAnyFullLeaveToggle && (
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1">
+                Leave Adjustment
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* General Adjustment Toggle - Render only if isAdmin === true */}
+                {isAdmin && (
+                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                    <div>
+                      <span className="block text-xs font-semibold text-theme-text-primary font-sans">
+                        Adjustment (Salary/Other)
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCategory("None")}
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                         adjustment && adjustmentCategory === "None"
-                          ? "translate-x-5"
-                          : "translate-x-0"
+                          ? "bg-blue-600"
+                          : "bg-theme-border-input"
                       }`}
-                    />
-                  </button>
-                </div>
-              )}
-
-              {/* Govt Holiday Toggle - Render only if govtHolidayRemaining > 0 */}
-              {govtHolidayRemaining > 0 && (
-                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
-                  <div>
-                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                      Govt Holiday
-                    </span>
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          adjustment && adjustmentCategory === "None"
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleCategory("Govt Holiday")}
-                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      adjustmentCategory === "Govt Holiday"
-                        ? "bg-blue-600"
-                        : "bg-theme-border-input"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                )}
+
+                {/* Govt Holiday Toggle - Render only if govtHolidayRemaining > 0 */}
+                {govtHolidayRemaining > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                    <div>
+                      <span className="block text-xs font-semibold text-theme-text-primary font-sans">
+                        Govt Holiday
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCategory("Govt Holiday")}
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                         adjustmentCategory === "Govt Holiday"
-                          ? "translate-x-5"
-                          : "translate-x-0"
+                          ? "bg-blue-600"
+                          : "bg-theme-border-input"
                       }`}
-                    />
-                  </button>
-                </div>
-              )}
-
-              {/* Eid-ul-Fitr Toggle - Render only if eidFitrRemaining > 0 */}
-              {eidFitrRemaining > 0 && (
-                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
-                  <div>
-                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                      Eid-ul-Fitr Reserve
-                    </span>
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          adjustmentCategory === "Govt Holiday"
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleCategory("Eid-ul-Fitr")}
-                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      adjustmentCategory === "Eid-ul-Fitr"
-                        ? "bg-blue-600"
-                        : "bg-theme-border-input"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                )}
+
+                {/* Eid-ul-Fitr Toggle - Render only if eidFitrRemaining > 0 */}
+                {eidFitrRemaining > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                    <div>
+                      <span className="block text-xs font-semibold text-theme-text-primary font-sans">
+                        Eid-ul-Fitr Reserve
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCategory("Eid-ul-Fitr")}
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                         adjustmentCategory === "Eid-ul-Fitr"
-                          ? "translate-x-5"
-                          : "translate-x-0"
+                          ? "bg-blue-600"
+                          : "bg-theme-border-input"
                       }`}
-                    />
-                  </button>
-                </div>
-              )}
-
-              {/* Eid-ul-Adha Toggle - Render only if eidAdhaRemaining > 0 */}
-              {eidAdhaRemaining > 0 && (
-                <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
-                  <div>
-                    <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                      Eid-ul-Adha Reserve
-                    </span>
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          adjustmentCategory === "Eid-ul-Fitr"
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleCategory("Eid-ul-Adha")}
-                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      adjustmentCategory === "Eid-ul-Adha"
-                        ? "bg-blue-600"
-                        : "bg-theme-border-input"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                )}
+
+                {/* Eid-ul-Adha Toggle - Render only if eidAdhaRemaining > 0 */}
+                {eidAdhaRemaining > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+                    <div>
+                      <span className="block text-xs font-semibold text-theme-text-primary font-sans">
+                        Eid-ul-Adha Reserve
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCategory("Eid-ul-Adha")}
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                         adjustmentCategory === "Eid-ul-Adha"
-                          ? "translate-x-5"
-                          : "translate-x-0"
+                          ? "bg-blue-600"
+                          : "bg-theme-border-input"
                       }`}
-                    />
-                  </button>
-                </div>
-              )}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          adjustmentCategory === "Eid-ul-Adha"
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Short Leave Adjustment toggles */}
         {["Short Leave", "Early Leave"].includes(leaveType) &&
@@ -662,13 +666,21 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TimeInput
-              label={leaveType === "Short Leave" ? "Leave Start Time" : "Sign-in"}
+              label={
+                leaveType === "Short Leave" ? "Leave Start Time" : "Sign-in"
+              }
               required
               value={signInTime}
               onChange={setSignInTime}
             />
             <TimeInput
-              label={leaveType === "Short Leave" ? "Leave End Time" : leaveType === "Early Leave" ? "Leave Time" : "Sign-out"}
+              label={
+                leaveType === "Short Leave"
+                  ? "Leave End Time"
+                  : leaveType === "Early Leave"
+                    ? "Sign-Out"
+                    : "Sign-out"
+              }
               required
               value={signOutTime}
               onChange={setSignOutTime}
@@ -676,93 +688,103 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           </div>
 
           {/* Jummah Prayer Adjustment Toggle (Short Leave, Fridays only) */}
-          {["Short Leave", "Early Leave"].includes(leaveType) && isFriday(date) && jummahEnabled && (
-            <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
-              <div>
-                <span className="block text-xs font-semibold text-theme-text-primary font-sans">
-                  Adjust with Jummah Prayer?
-                </span>
-                <span className="block text-[10px] text-theme-text-muted mt-0.5">
-                  Deduct 20 minutes from the calculated short leave duration
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAdjustJummah && setAdjustJummah(!adjustJummah)}
-                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  adjustJummah ? "bg-indigo-600" : "bg-theme-border-input"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    adjustJummah ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
-          )}
-
-          {/* Break Time (Short Leave only, when signed in more than 1 hour late).
-              Break counts as short leave, so it is added to the calculated hours. */}
-          {["Short Leave", "Early Leave"].includes(leaveType) && breakEligible && (
-            <div className="space-y-2 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted">
-              <div className="flex items-center justify-between">
+          {["Short Leave", "Early Leave"].includes(leaveType) &&
+            isFriday(date) &&
+            jummahEnabled && (
+              <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
                 <div>
-                  <span className="block text-xs font-bold text-theme-text-primary font-sans">
-                    Add break time?
+                  <span className="block text-xs font-semibold text-theme-text-primary font-sans">
+                    Adjust with Jummah Prayer?
                   </span>
                   <span className="block text-[10px] text-theme-text-muted mt-0.5">
-                    Signed in over an hour late — break time (01–40 min) is added
-                    to the short leave.
+                    Deduct 20 minutes from the calculated short leave duration
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setBreakEnabled && setBreakEnabled(!breakEnabled)}
+                  onClick={() =>
+                    setAdjustJummah && setAdjustJummah(!adjustJummah)
+                  }
                   className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    breakEnabled ? "bg-amber-600" : "bg-theme-border-input"
+                    adjustJummah ? "bg-indigo-600" : "bg-theme-border-input"
                   }`}
                 >
                   <span
                     className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      breakEnabled ? "translate-x-5" : "translate-x-0"
+                      adjustJummah ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
                 </button>
               </div>
+            )}
 
-              {breakEnabled && (
-                <div className="flex items-center gap-3 pt-2.5 border-t border-theme-border-muted/50">
-                  <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider shrink-0">
-                    Break
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={40}
-                    step={1}
-                    value={breakMinutes}
-                    onChange={(e) => {
-                      if (!setBreakMinutes) return;
-                      const raw = parseInt(e.target.value, 10);
-                      if (isNaN(raw)) {
-                        setBreakMinutes(1);
-                        return;
-                      }
-                      setBreakMinutes(Math.min(40, Math.max(1, raw)));
-                    }}
-                    className="w-20 px-2.5 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
-                  />
-                  <span className="text-[10px] text-theme-text-muted">
-                    mins (max 40)
-                  </span>
-                  <span className="ml-auto font-mono text-amber-400 text-xs font-bold">
-                    +{formatMinsToHHMM(Math.min(40, Math.max(0, breakMinutes || 0)))}
-                  </span>
+          {/* Break Time (Short Leave only, when signed in more than 1 hour late).
+              Break counts as short leave, so it is added to the calculated hours. */}
+          {["Short Leave", "Early Leave"].includes(leaveType) &&
+            breakEligible && (
+              <div className="space-y-2 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="block text-xs font-bold text-theme-text-primary font-sans">
+                      Add break time?
+                    </span>
+                    <span className="block text-[10px] text-theme-text-muted mt-0.5">
+                      Signed in over an hour late — break time (01–40 min) is
+                      added to the short leave.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBreakEnabled && setBreakEnabled(!breakEnabled)
+                    }
+                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      breakEnabled ? "bg-amber-600" : "bg-theme-border-input"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        breakEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
                 </div>
-              )}
-            </div>
-          )}
+
+                {breakEnabled && (
+                  <div className="flex items-center gap-3 pt-2.5 border-t border-theme-border-muted/50">
+                    <label className="text-[10px] font-bold text-theme-text-muted uppercase tracking-wider shrink-0">
+                      Break
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={40}
+                      step={1}
+                      value={breakMinutes}
+                      onChange={(e) => {
+                        if (!setBreakMinutes) return;
+                        const raw = parseInt(e.target.value, 10);
+                        if (isNaN(raw)) {
+                          setBreakMinutes(1);
+                          return;
+                        }
+                        setBreakMinutes(Math.min(40, Math.max(1, raw)));
+                      }}
+                      className="w-20 px-2.5 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                    />
+                    <span className="text-[10px] text-theme-text-muted">
+                      mins (max 40)
+                    </span>
+                    <span className="ml-auto font-mono text-amber-400 text-xs font-bold">
+                      +
+                      {formatMinsToHHMM(
+                        Math.min(40, Math.max(0, breakMinutes || 0)),
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
           <div>
             <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">

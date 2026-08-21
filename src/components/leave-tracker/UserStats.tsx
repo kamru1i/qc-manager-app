@@ -444,6 +444,17 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       </p>
                     );
                   }
+
+                  // 1-to-1 match approved adjusted leaves with active reserved holidays
+                  const approvedAdjustedGovtLeaves = (userLeaves || []).filter(
+                    (r: any) =>
+                      r.status === "approved" &&
+                      r.adjustment &&
+                      (r.reserve_holiday === "Govt Holiday" || r.comment?.includes("Govt Holiday"))
+                  );
+
+                  const assignedLeaveIds = new Set<string>();
+
                   return (
                     <div className="border border-theme-border-muted rounded-xl overflow-hidden bg-theme-page-bg/40">
                       <table className="w-full text-xs text-theme-text-secondary">
@@ -457,13 +468,22 @@ export const UserStats: React.FC<UserStatsProps> = ({
                         </thead>
                         <tbody className="divide-y divide-theme-border-muted">
                           {activeReserveList.map((h, i) => {
-                            const matchingLeave = (userLeaves || []).find(
+                            // Find matching leave: first by exact name or date, else by unassigned adjusted leave
+                            let matchingLeave = approvedAdjustedGovtLeaves.find(
                               (r: any) =>
-                                r.adjustment &&
-                                (r.comment?.includes(h.name) ||
-                                  r.comment?.includes(h.date) ||
-                                  r.reserve_holiday === "Govt Holiday")
+                                !assignedLeaveIds.has(r.id) &&
+                                (r.comment?.includes(h.name) || r.comment?.includes(h.date))
                             );
+
+                            if (!matchingLeave) {
+                              matchingLeave = approvedAdjustedGovtLeaves.find(
+                                (r: any) => !assignedLeaveIds.has(r.id)
+                              );
+                            }
+
+                            if (matchingLeave?.id) {
+                              assignedLeaveIds.add(matchingLeave.id);
+                            }
 
                             return (
                               <tr
@@ -489,22 +509,26 @@ export const UserStats: React.FC<UserStatsProps> = ({
                                 </td>
                                 {isAdmin && onUpdateHolidayResponse && userId && (
                                   <td className="py-2.5 px-3 text-right">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      disabled={updatingHolidayDate === h.date}
-                                      onClick={() =>
-                                        setPendingVerbalAgreement({ date: h.date, name: h.name })
-                                      }
-                                      className="h-7 px-3 text-[11px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"
-                                      title="Pay"
-                                    >
-                                      {updatingHolidayDate === h.date ? (
-                                        <RefreshCw className="h-3 w-3 animate-spin" />
-                                      ) : (
-                                        "Pay"
-                                      )}
-                                    </Button>
+                                    {!matchingLeave ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={updatingHolidayDate === h.date}
+                                        onClick={() =>
+                                          setPendingVerbalAgreement({ date: h.date, name: h.name })
+                                        }
+                                        className="h-7 px-3 text-[11px] font-bold bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20 cursor-pointer"
+                                        title="Pay"
+                                      >
+                                        {updatingHolidayDate === h.date ? (
+                                          <RefreshCw className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          "Pay"
+                                        )}
+                                      </Button>
+                                    ) : (
+                                      <span className="text-[10px] text-theme-text-muted italic">Adjusted</span>
+                                    )}
                                   </td>
                                 )}
                               </tr>
