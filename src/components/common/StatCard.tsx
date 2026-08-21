@@ -46,7 +46,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   // Large Variant
   return (
-    <div className={`flex-1 min-w-[250px] max-w-[350px] bg-theme-card-bg/40 border border-theme-card-bg rounded-2xl p-5 flex items-center justify-between gap-4 ${className}`}>
+    <div className={`flex-1 min-w-[240px] bg-theme-card-bg/40 border border-theme-card-bg rounded-2xl p-5 flex items-center justify-between gap-4 ${className}`}>
       <div className="flex items-center gap-4 flex-1">
         <div className={`p-3 rounded-xl border shrink-0 ${iconBgClass} ${iconColorClass} ${iconBorderClass}`}>
           <Icon className="h-6 w-6" />
