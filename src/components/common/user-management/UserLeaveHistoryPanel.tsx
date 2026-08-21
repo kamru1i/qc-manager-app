@@ -113,49 +113,47 @@ export const UserLeaveHistoryPanel: React.FC<UserLeaveHistoryPanelProps> = ({
   };
 
   return (
-    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted shadow-2xl rounded-2xl p-6">
-      <UserDashboardView
-        profile={viewingStaff}
-        userStats={dashboardStats}
-        globalSettings={globalSettings}
-        holidayResponses={viewingStaffHolidayResponses}
-        filteredUserRecords={filteredStaffRecords}
-        userRecords={viewingStaffRecords}
-        title={`${viewingStaff.username || viewingStaff.full_name}'s Leave Records`}
-        emptyMessage={`No leave records found for ${viewingStaff.username || viewingStaff.full_name}.`}
-        selectedYear={selectedYear}
-        setSelectedYear={setSelectedYear}
-        availableYears={availableYears}
-        filterType={leaveFilterType}
-        setFilterType={setLeaveFilterType}
-        filterStartDate={leaveFilterStartDate}
-        setFilterStartDate={setLeaveFilterStartDate}
-        filterEndDate={leaveFilterEndDate}
-        setFilterEndDate={setLeaveFilterEndDate}
-        onResetFilters={() => {
-          setLeaveFilterType('all');
-          setLeaveFilterStartDate('');
-          setLeaveFilterEndDate('');
-          setLeaveSearchQuery('');
-        }}
-        onExportExcel={() => {}}
-        onExportPDF={() => {}}
-        onAddLeaveClick={onAddLeaveClick ?? (() => {})}
-        onToggleAdjustment={onToggleAdjustment}
-        onDeleteClick={onDeleteRecord}
-        onEditClick={onEditClick}
-        onRevisionClick={() => {}}
-        onConvertShortLeaveToFullLeave={() => {}}
+    <UserDashboardView
+      profile={viewingStaff}
+      userStats={dashboardStats}
+      globalSettings={globalSettings}
+      holidayResponses={viewingStaffHolidayResponses}
+      filteredUserRecords={filteredStaffRecords}
+      userRecords={viewingStaffRecords}
+      title={`${viewingStaff.username || viewingStaff.full_name}'s Leave Records`}
+      emptyMessage={`No leave records found for ${viewingStaff.username || viewingStaff.full_name}.`}
+      selectedYear={selectedYear}
+      setSelectedYear={setSelectedYear}
+      availableYears={availableYears}
+      filterType={leaveFilterType}
+      setFilterType={setLeaveFilterType}
+      filterStartDate={leaveFilterStartDate}
+      setFilterStartDate={setLeaveFilterStartDate}
+      filterEndDate={leaveFilterEndDate}
+      setFilterEndDate={setLeaveFilterEndDate}
+      onResetFilters={() => {
+        setLeaveFilterType('all');
+        setLeaveFilterStartDate('');
+        setLeaveFilterEndDate('');
+        setLeaveSearchQuery('');
+      }}
+      onExportExcel={() => {}}
+      onExportPDF={() => {}}
+      onAddLeaveClick={onAddLeaveClick ?? (() => {})}
+      onToggleAdjustment={onToggleAdjustment}
+      onDeleteClick={onDeleteRecord}
+      onEditClick={onEditClick}
+      onRevisionClick={() => {}}
+      onConvertShortLeaveToFullLeave={() => {}}
 
-        initialFetchDone={true}
-        leaveSettlements={viewingStaffSettlements}
-        onSaveLeaveSettlementsBulk={async () => true}
-        hideDelete={hideDelete}
-        showAddLeave={showAddLeave}
-        isAdmin={isAdmin}
-        canToggleAdjustment={isAdmin ?? true}
-        onAdminUpdateHolidayResponse={onAdminUpdateHolidayResponse}
-      />
-    </div>
+      initialFetchDone={true}
+      leaveSettlements={viewingStaffSettlements}
+      onSaveLeaveSettlementsBulk={async () => true}
+      hideDelete={hideDelete}
+      showAddLeave={showAddLeave}
+      isAdmin={isAdmin}
+      canToggleAdjustment={isAdmin ?? true}
+      onAdminUpdateHolidayResponse={onAdminUpdateHolidayResponse}
+    />
   );
 };
