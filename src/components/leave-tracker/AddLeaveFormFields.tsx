@@ -414,7 +414,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
             value={leaveType}
             onChange={setLeaveType}
             options={leaveTypeOptions}
-            className="w-full mt-1"
+            disabled={isDateBlocked}
+            className={`w-full mt-1 ${isDateBlocked ? "opacity-50 pointer-events-none" : ""}`}
           />
         </div>
       </div>
@@ -753,13 +754,14 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
       {/* Sign In & Sign Out Times & Leave Hour (Conditional) */}
       {!isFullLeave && (
-        <div className="space-y-4">
+        <div className={`space-y-4 transition-opacity ${isDateBlocked ? "opacity-50" : ""}`}>
           <div className="grid grid-cols-2 gap-4">
             <TimeInput
               label={
                 leaveType === "Short Leave" ? "Leave Start Time" : "Sign-in"
               }
               required
+              disabled={isDateBlocked}
               value={signInTime}
               onChange={setSignInTime}
             />
@@ -772,6 +774,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                     : "Sign-out"
               }
               required
+              disabled={isDateBlocked}
               value={signOutTime}
               onChange={setSignOutTime}
             />
@@ -781,7 +784,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           {["Short Leave", "Early Leave"].includes(leaveType) &&
             isFriday(date) &&
             jummahEnabled && (
-              <div className="flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80">
+              <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
                 <div>
                   <span className="block text-xs font-semibold text-theme-text-primary font-sans">
                     Adjust with Jummah Prayer?
@@ -792,10 +795,11 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                 </div>
                 <button
                   type="button"
+                  disabled={isDateBlocked}
                   onClick={() =>
-                    setAdjustJummah && setAdjustJummah(!adjustJummah)
+                    !isDateBlocked && setAdjustJummah && setAdjustJummah(!adjustJummah)
                   }
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                     adjustJummah ? "bg-indigo-600" : "bg-theme-border-input"
                   }`}
                 >
@@ -812,7 +816,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               Break counts as short leave, so it is added to the calculated hours. */}
           {["Short Leave", "Early Leave"].includes(leaveType) &&
             breakEligible && (
-              <div className="space-y-2 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted">
+              <div className={`space-y-2 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="block text-xs font-bold text-theme-text-primary font-sans">
@@ -825,10 +829,11 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                   </div>
                   <button
                     type="button"
+                    disabled={isDateBlocked}
                     onClick={() =>
-                      setBreakEnabled && setBreakEnabled(!breakEnabled)
+                      !isDateBlocked && setBreakEnabled && setBreakEnabled(!breakEnabled)
                     }
-                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
                       breakEnabled ? "bg-amber-600" : "bg-theme-border-input"
                     }`}
                   >
@@ -850,9 +855,10 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                       min={1}
                       max={40}
                       step={1}
+                      disabled={isDateBlocked}
                       value={breakMinutes}
                       onChange={(e) => {
-                        if (!setBreakMinutes) return;
+                        if (isDateBlocked || !setBreakMinutes) return;
                         const raw = parseInt(e.target.value, 10);
                         if (isNaN(raw)) {
                           setBreakMinutes(1);
@@ -860,7 +866,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
                         }
                         setBreakMinutes(Math.min(40, Math.max(1, raw)));
                       }}
-                      className="w-20 px-2.5 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                      className="w-20 px-2.5 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-[10px] text-theme-text-muted">
                       mins (max 40)
@@ -887,10 +893,10 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               required
               readOnly
               disabled
-              value={leaveHour}
-              className="mt-1 block w-full px-3 py-2 bg-theme-page-bg/50 border border-theme-border-input rounded-lg text-blue-400 font-mono text-xs focus:outline-none cursor-not-allowed opacity-80"
+              value={isDateBlocked ? "00:00" : leaveHour}
+              className="mt-1 block w-full px-3 py-2 bg-theme-page-bg/50 border border-theme-border-input rounded-lg text-blue-400 font-mono text-xs focus:outline-none cursor-not-allowed opacity-80 disabled:opacity-40"
             />
-            {validationError && (
+            {!isDateBlocked && validationError && (
               <div className="mt-1 text-xs text-rose-500 font-semibold font-sans">
                 ⚠️ {validationError}
               </div>
@@ -910,9 +916,10 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         <textarea
           rows={2}
           placeholder="Write a brief description..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isDateBlocked}
+          value={isDateBlocked ? "" : comment}
+          onChange={(e) => !isDateBlocked && setComment(e.target.value)}
+          className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
         />
       </div>
 
