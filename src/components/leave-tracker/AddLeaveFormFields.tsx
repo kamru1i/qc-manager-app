@@ -414,8 +414,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
             value={leaveType}
             onChange={setLeaveType}
             options={leaveTypeOptions}
-            disabled={isDateBlocked}
-            className={`w-full mt-1 ${isDateBlocked ? "opacity-50 pointer-events-none" : ""}`}
+            className="w-full mt-1"
           />
         </div>
       </div>
