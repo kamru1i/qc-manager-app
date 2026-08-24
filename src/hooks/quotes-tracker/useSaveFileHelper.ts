@@ -175,19 +175,8 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
         showToast("success", `Save directory set to: ${selectedDir}`);
         return selectedDir;
       } else {
-        if (typeof window !== "undefined" && "showDirectoryPicker" in window) {
-          const handle = await (window as any).showDirectoryPicker();
-          baseDirectoryHandleRef.current = handle;
-
-          const label = `Local_Directory/${handle.name}`;
-          setBaseDirectory(label);
-          setTodayDirectory(label);
-          showToast("success", `Save directory set to: ${handle.name}`);
-          return label;
-        } else {
-          showToast("error", "Directory picking is not supported by this browser. Files will download normally.");
-          return null;
-        }
+        showToast("success", "Files will be saved directly via your browser.");
+        return "Web_Downloads";
       }
     } catch (err) {
       const errMsg = String(err);
@@ -215,9 +204,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       return;
     }
 
-    // 1. Get or choose base directory — read from today's persisted value at
-    // call time (NOT the baseDirectory state, which can be a stale closure
-    // when this runs from the permission modal's onConfirm).
+    // 1. Get or choose base directory (for Tauri desktop app)
     let currentBaseDir = getTodayDirectory();
     const isTauri = isTauriApp();
 
@@ -225,13 +212,6 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       if (!currentBaseDir) {
         currentBaseDir = await handleChooseDirectory();
         if (!currentBaseDir) return; // Cancelled
-      }
-    } else {
-      if (typeof window !== "undefined" && "showDirectoryPicker" in window) {
-        if (!baseDirectoryHandleRef.current) {
-          currentBaseDir = await handleChooseDirectory();
-          if (!currentBaseDir) return; // Cancelled
-        }
       }
     }
 
