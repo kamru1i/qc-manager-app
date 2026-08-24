@@ -123,6 +123,8 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
       const rType = (r.leave_type || "").toLowerCase();
       const isShort =
         rType.includes("short") ||
+        rType.includes("early") ||
+        rType.includes("late") ||
         (Boolean(r.sign_in_time) && Boolean(r.sign_out_time));
       const isOvertime = rType.includes("overtime");
       const isFull = !isShort && !isOvertime;

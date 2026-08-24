@@ -66,7 +66,7 @@ export const isBreakEligible = (
   signInTime: string,
   shiftStart: string,
 ): boolean => {
-  if (leaveType !== 'Short Leave') return false;
+  if (!['Short Leave', 'Late Join'].includes(leaveType)) return false;
   return getShortLeaveLateMinutes(signInTime, shiftStart) > 60;
 };
 

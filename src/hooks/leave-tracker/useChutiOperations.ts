@@ -230,7 +230,16 @@ export const useChutiOperations = ({
       return;
     }
 
-    const hasDuplicateDate = allDates.some(d => userRecords.some(r => r.date === d));
+    const hasDuplicateDate = allDates.some(d => {
+      const recordsOnDate = userRecords.filter(r => r.date === d && r.status !== 'rejected');
+      if (recordsOnDate.length === 0) return false;
+      if (leaveType === 'Full Leave') return true;
+      if (recordsOnDate.some(r => r.leave_type === 'Full Leave')) return true;
+      if (leaveType === 'Early Leave') return recordsOnDate.some(r => r.leave_type === 'Early Leave');
+      if (leaveType === 'Late Join') return recordsOnDate.some(r => r.leave_type === 'Late Join');
+      if (leaveType === 'Overtime') return recordsOnDate.some(r => r.leave_type === 'Overtime');
+      return false;
+    });
     if (hasDuplicateDate) {
       toast.error('duplicated leave detected, please confirm the leave date again.');
       setSubmitting(false);
@@ -278,7 +287,7 @@ export const useChutiOperations = ({
       finalAdjustment = adjustmentCategory !== 'None';
       finalAdjustedHour = null;
       finalAdjustShortLeave = false;
-    } else if (leaveType === 'Short Leave') {
+    } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType)) {
       if (adjustment) {
         finalAdjustment = true;
         finalAdjustedHour = null;
@@ -312,9 +321,9 @@ export const useChutiOperations = ({
         commentWithCategory = (targetAdjustment && adjustmentCategory !== 'None')
           ? `Adjusted: ${adjustmentCategory} | ${comment}`
           : comment;
-      } else if (leaveType === 'Short Leave' && finalAdjustment) {
+      } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && finalAdjustment) {
         commentWithCategory = `Adjusted: ${adjustmentCategory} | ${comment}`;
-      } else if (leaveType === 'Short Leave' && finalAdjustedHour) {
+      } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && finalAdjustedHour) {
         commentWithCategory = `Partially Adjusted with Overtime (${finalAdjustedHour.substring(0, 5)}) | ${comment}`;
       } else if (leaveType === 'Overtime' && finalAdjustment) {
         commentWithCategory = `Adjusted with Short Leave | ${comment}`;
@@ -332,7 +341,7 @@ export const useChutiOperations = ({
         sign_in_time: isFullLeave ? null : signInTime,
         sign_out_time: isFullLeave ? null : signOutTime,
         leave_hour: isFullLeave ? null : `${leaveHour}:00`,
-        reserve_holiday: leaveType === 'Short Leave' && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && targetAdjustment && adjustmentCategory !== 'None' ? adjustmentCategory : null),
+        reserve_holiday: ['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && targetAdjustment && adjustmentCategory !== 'None' ? adjustmentCategory : null),
         reserve_adjustment_status: 'none',
         status: bypassSupervisor ? 'approved_by_supervisor' : 'pending_supervisor',
         comment: commentWithCategory || null,

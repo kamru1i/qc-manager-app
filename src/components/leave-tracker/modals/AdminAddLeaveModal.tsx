@@ -131,6 +131,16 @@ export function AdminAddLeaveModal({
     return records.filter((r) => r.date === date && r.leave_type === "Short Leave" && r.status !== "rejected");
   }, [date, records]);
 
+  const sameDayEarlyLeaves = React.useMemo(() => {
+    if (!date) return [];
+    return records.filter((r) => r.date === date && r.leave_type === "Early Leave" && r.status !== "rejected");
+  }, [date, records]);
+
+  const sameDayLateJoins = React.useMemo(() => {
+    if (!date) return [];
+    return records.filter((r) => r.date === date && r.leave_type === "Late Join" && r.status !== "rejected");
+  }, [date, records]);
+
   const existingShortLeaveMinutes = React.useMemo(() => {
     return sameDayShortLeaves.reduce((acc, r) => {
       const parts = (r.leave_hour || "").toString().split(":").map(Number);
@@ -158,7 +168,7 @@ export function AdminAddLeaveModal({
       workingHours,
       isHoliday
     );
-    const jummahApplied = (leaveType === 'Short Leave' && isFriday(date))
+    const jummahApplied = (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && isFriday(date))
       ? adjustShortLeaveForJummah(calc, adjustJummah)
       : calc;
     const breakEligibleNow = isBreakEligible(leaveType, signInTime, shiftStart);
@@ -272,7 +282,7 @@ export function AdminAddLeaveModal({
     } else if (adjustmentCategory === "Eid-ul-Adha") {
       eidAdhaDeduction = adjustedDays;
     }
-  } else if (leaveType === "Short Leave") {
+  } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType)) {
     const mins = parseHHMMToMinutes(leaveHour);
     if (mins > 0) {
       const dayEquivalent = mins / ((staffProfile?.working_hours || 9.5) * 60);
@@ -302,23 +312,29 @@ export function AdminAddLeaveModal({
     const sameDay = recordsToCheck.filter((r) => r.date === date);
     if (sameDay.length === 0) return false;
 
+    // Rule 1: Full Leave exists -> block all
     if (sameDay.some((r) => r.leave_type === 'Full Leave')) {
       return true;
     }
 
-    if (sameDay.some((r) => r.leave_type === 'Early Leave')) {
-      if (leaveType === 'Short Leave') {
-        return false;
-      }
-      return true;
+    // Rule 2: Early Leave
+    if (leaveType === 'Early Leave') {
+      return sameDay.some((r) => r.leave_type === 'Early Leave');
     }
 
-    if (leaveType === 'Short Leave' || leaveType === 'Early Leave') {
-      return false;
+    // Rule 3: Late Join
+    if (leaveType === 'Late Join') {
+      return sameDay.some((r) => r.leave_type === 'Late Join');
     }
 
+    // Rule 4: Overtime
     if (leaveType === 'Overtime') {
       return sameDay.some((r) => r.leave_type === 'Overtime');
+    }
+
+    // Rule 5: Short Leave can coexist with Early Leave, Late Join, and other Short Leaves
+    if (leaveType === 'Short Leave') {
+      return false;
     }
 
     return false;
@@ -387,10 +403,33 @@ export function AdminAddLeaveModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!staffProfile) return;
+    if (submitting) return;
+
     if (!leaveType || leaveType === "Select") {
       toast.error("Please choose a Leave Type.");
       return;
     }
+
+    const allDates = [date, ...bulkDates.filter(Boolean)];
+    if (isDuplicateDate) {
+      toast.error(
+        "duplicated leave detected, please confirm the leave date again.",
+      );
+      return;
+    }
+
+    if (!isFullLeave && leaveHour === "00:00") {
+      toast.error(
+        `${leaveType} requests cannot be submitted with 00:00 hours. Please adjust Sign-in and Sign-out times.`,
+      );
+      return;
+    }
+    
+    await executeInsert();
+  };
+
+  const executeInsert = async () => {
+    if (!staffProfile) return;
     setSubmitting(true);
 
     const datesWithAdjustment = isFullLeave
@@ -411,31 +450,12 @@ export function AdminAddLeaveModal({
       return;
     }
 
-    const hasDuplicateDate = allDates.some((d) =>
-      records.some((r) => r.date === d),
-    );
-    if (hasDuplicateDate) {
-      toast.error(
-        "duplicated leave detected, please confirm the leave date again.",
-      );
-      setSubmitting(false);
-      return;
-    }
-
-    if (!isFullLeave && leaveHour === "00:00") {
-      toast.error(
-        `${leaveType} requests cannot be submitted with 00:00 hours. Please adjust Sign-in and Sign-out times.`,
-      );
-      setSubmitting(false);
-      return;
-    }
-
     try {
       // Direct Admin bulk insertion (bypasses regular user submission logic)
       const adjustedArr = datesWithAdjustment.map((item) => item.adjustment);
 
       let finalComment = comment.trim();
-      if (leaveType === 'Short Leave' && isFriday(date) && adjustJummah) {
+      if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && isFriday(date) && adjustJummah) {
         const jummahMsg = '20 Min Adjusted with Jummah Prayer';
         if (!finalComment) {
           finalComment = jummahMsg;
@@ -444,7 +464,7 @@ export function AdminAddLeaveModal({
         }
       }
       // Break time counts as short leave — persist the marker for edit round-trip.
-      if (leaveType === 'Short Leave' && breakEligible && breakEnabled) {
+      if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && breakEligible && breakEnabled) {
         finalComment = applyBreakComment(finalComment, breakMinutes, true);
       }
 
@@ -461,7 +481,7 @@ export function AdminAddLeaveModal({
           p_leave_hour: leaveType === "Full Leave" ? null : leaveHour,
           p_comment: finalComment || null,
           p_reserve_holiday:
-            leaveType === "Short Leave"
+            ['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType)
               ? adjustment
                 ? adjustmentCategory
                 : null
@@ -473,8 +493,6 @@ export function AdminAddLeaveModal({
       );
 
       if (bulkInsertError) throw bulkInsertError;
-
-
 
       toast.success("Leave successfully added for the user!");
       onSuccess();

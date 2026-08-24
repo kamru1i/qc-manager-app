@@ -162,7 +162,7 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
         } else if (!r.adjustment) {
           officeLeavesTaken++;
         }
-      } else if (r.leave_type === 'Short Leave') {
+      } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type)) {
         if (r.leave_hour) {
           let mins = parseIntervalToMinutes(r.leave_hour);
           const isNegative = r.leave_hour.toString().startsWith('-');
@@ -265,12 +265,12 @@ export const calculateLeaveOrOvertime = (
   type: string,
   actualStart: string,
   actualEnd: string,
-  shiftStart: string,
-  _shiftEnd: string,
+  shiftStart: string = '13:00',
+  shiftEnd: string = '22:30',
   workingHours: number = 9.5,
   isHoliday: boolean = false
 ) => {
-  if (type === 'Full Leave') {
+  if (type === 'Full Leave' || type === 'Select' || !type) {
     return '00:00';
   }
   if (!actualStart || !actualEnd) return '00:00';
@@ -301,6 +301,9 @@ export const calculateLeaveOrOvertime = (
     }
     const required = workingHours * 60;
     return formatDuration(Math.max(0, required - worked));
+  } else if (type === 'Late Join') {
+    const lateDuration = Math.max(0, actualStartMins - shiftStartMins);
+    return formatDuration(lateDuration);
   } else if (type === 'Overtime') {
     let worked = actualEndMins - actualStartMins;
     if (worked < 0) {
@@ -317,9 +320,10 @@ export const getLeaveValidationError = (
   signInTime: string,
   signOutTime: string,
   workingHours: number = 9.5,
-  _isHoliday: boolean = false
+  _isHoliday: boolean = false,
+  shiftStart: string = '13:00'
 ): string | null => {
-  if (type === 'Full Leave' || !type) return null;
+  if (type === 'Full Leave' || !type || type === 'Select') return null;
   if (!signInTime || !signOutTime) return null;
 
   const startMins = parseTimeToMinutes(signInTime);
@@ -335,6 +339,11 @@ export const getLeaveValidationError = (
     if (workedMins <= regularMins) {
       return 'Overtime must be extra from working hour';
     }
+  } else if (type === 'Late Join') {
+    const shiftStartMins = parseTimeToMinutes(shiftStart);
+    if (startMins <= shiftStartMins) {
+      return `Sign-in time must be later than shift start (${formatTimeToAMPM(shiftStart)})`;
+    }
   }
 
   return null;
@@ -348,10 +357,11 @@ export const formatWorkingHours = (hours: number | string) => {
   if (fraction === 0.5) {
     return `${wholeHours} hours 30 mins`;
   }
-  if (fraction === 0) {
-    return `${wholeHours} hours`;
+  if (fraction > 0) {
+    const mins = Math.round(fraction * 60);
+    return `${wholeHours} hours ${mins} mins`;
   }
-  return `${h} hours`;
+  return `${wholeHours} hours`;
 };
 
 // Time format to AM/PM style (e.g. 07:25 PM)
@@ -398,7 +408,7 @@ export const getDetailedLeaveLabel = (rec: { leave_type: string; reserve_holiday
  * Examples: "1 day", "3 days", "4 hours", "46 mins", "1 hour 30 mins"
  */
 export function formatLeaveDuration(record: { leave_type: string; leave_hour?: string | null; dates?: string[] }): string {
-  if (record.leave_type === 'Short Leave' || record.leave_type === 'Early Leave') {
+  if (record.leave_type === 'Short Leave' || record.leave_type === 'Early Leave' || record.leave_type === 'Late Join') {
     if (record.leave_hour) {
       const parts = String(record.leave_hour).split(':');
       if (parts.length >= 2) {

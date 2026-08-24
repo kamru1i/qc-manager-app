@@ -179,8 +179,7 @@ export function UserNotificationsModal({
                                                 : n.record?.leave_type ===
                                                     "Overtime"
                                                   ? "bg-blue-955 border border-blue-900 text-blue-400"
-                                                  : n.record?.leave_type ===
-                                                      "Short Leave"
+                                                  : ['Short Leave', 'Early Leave', 'Late Join'].includes(n.record?.leave_type || '')
                                                     ? "bg-purple-955 border border-purple-900 text-purple-400"
                                                     : "bg-theme-page-bg border border-theme-card-bg text-theme-text-muted"
                     }`}

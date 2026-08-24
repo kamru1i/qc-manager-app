@@ -80,8 +80,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Sanitize payload: whitelist only allowed fields to prevent injection
+    // 3. Sanitize & Validate payload: whitelist only allowed fields to prevent injection
     //    of security-sensitive values (status, admin_edit_status, is_edited, etc.)
+    const allowedLeaveTypes = ['Short Leave', 'Early Leave', 'Late Join', 'Full Leave', 'Overtime'];
+    for (const item of insertData) {
+      if (!item.leave_type || !allowedLeaveTypes.includes(String(item.leave_type))) {
+        return NextResponse.json(
+          { error: `Bad Request: Invalid leave_type "${item.leave_type}"` },
+          { status: 400, headers: getCorsHeaders(request) }
+        );
+      }
+      if (!item.date || typeof item.date !== 'string') {
+        return NextResponse.json(
+          { error: 'Bad Request: Missing or invalid date' },
+          { status: 400, headers: getCorsHeaders(request) }
+        );
+      }
+    }
+
     const sanitizedRecords = insertData.map((item: Record<string, unknown>) => ({
       user_id: item.user_id,
       date: item.date,

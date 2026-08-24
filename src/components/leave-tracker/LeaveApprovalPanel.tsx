@@ -97,6 +97,8 @@ export function LeaveApprovalPanel({
       return [
         { value: "all", label: "All Categories" },
         { value: "Short Leave", label: "Short Leave" },
+        { value: "Early Leave", label: "Early Leave" },
+        { value: "Late Join", label: "Late Join" },
         { value: "Full Leave", label: "Full Leave" },
         { value: "Overtime", label: "Overtime" },
       ];
@@ -134,7 +136,7 @@ export function LeaveApprovalPanel({
           r.leave_type === notificationTypeFilter;
       } else {
         if (notificationTypeFilter === "short_leave") {
-          matchesType = r.leave_type === "Short Leave";
+          matchesType = ["Short Leave", "Early Leave", "Late Join"].includes(r.leave_type);
         } else if (notificationTypeFilter === "full_leave") {
           matchesType = r.leave_type === "Full Leave";
         } else if (notificationTypeFilter === "overtime") {
@@ -165,13 +167,12 @@ export function LeaveApprovalPanel({
 
       let matchesType = true;
       if (notificationTypeFilter === "short_leave") {
-        matchesType = r.leave_type === "Short Leave";
+        matchesType = ["Short Leave", "Early Leave", "Late Join"].includes(r.leave_type);
       } else if (notificationTypeFilter === "full_leave") {
         matchesType = r.leave_type === "Full Leave";
       } else if (notificationTypeFilter === "overtime") {
         matchesType = r.leave_type === "Overtime";
       }
-
       return matchesSearch && matchesType;
     });
   }, [

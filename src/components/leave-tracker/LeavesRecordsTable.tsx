@@ -216,6 +216,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   const leaveTypeOptions = useMemo(() => [
     { value: 'all', label: 'All Categories' },
     { value: 'Short Leave', label: 'Short Leave' },
+    { value: 'Early Leave', label: 'Early Leave' },
+    { value: 'Late Join', label: 'Late Join' },
     { value: 'Full Leave', label: 'Full Leave' },
     ...(allowOvertime ? [{ value: 'Overtime', label: 'Overtime' }] : []),
   ], [allowOvertime]);
@@ -647,7 +649,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
                           {(() => {
                             const isEligible = isAdminView || (
-                              (r.leave_type === 'Overtime' || r.leave_type === 'Short Leave' || r.leave_type === 'Early Leave')
+                              (['Overtime', 'Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type))
                                 ? !!allowOvertime
                                 : !!allowReserve
                             );

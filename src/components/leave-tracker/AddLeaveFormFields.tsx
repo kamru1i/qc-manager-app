@@ -136,6 +136,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
     { value: "Select", label: "Select" },
     { value: "Short Leave", label: "Short Leave" },
     { value: "Early Leave", label: "Early Leave" },
+    { value: "Late Join", label: "Late Join" },
     { value: "Full Leave", label: "Full Leave" },
     ...(allowOvertime ? [{ value: "Overtime", label: "Overtime" }] : []),
   ];
@@ -145,6 +146,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
     : [];
   const sameDayShortLeaves = sameDayRecords.filter((r) => r.leave_type === 'Short Leave');
   const sameDayEarlyLeaves = sameDayRecords.filter((r) => r.leave_type === 'Early Leave');
+  const sameDayLateJoins = sameDayRecords.filter((r) => r.leave_type === 'Late Join');
   const sameDayFullLeaves = sameDayRecords.filter((r) => r.leave_type === 'Full Leave');
 
   let dateStatusNotice: { type: 'error' | 'warning' | 'info'; message: string } | null = null;
@@ -153,61 +155,58 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
     if (sameDayFullLeaves.length > 0) {
       dateStatusNotice = {
         type: 'error',
-        message: `⚠️ A Full Leave is already recorded for ${formatDate(date)}.`,
+        message: `⚠️ A Full Leave is already recorded for ${formatDate(date)}. No further leaves can be added for this day.`,
       };
-    } else if (sameDayEarlyLeaves.length > 0) {
-      if (isAdmin && leaveType === 'Short Leave') {
-        dateStatusNotice = {
-          type: 'warning',
-          message: `⚠️ Notice: An Early Leave is already recorded for ${formatDate(date)}. As Admin, you can add an additional Short Leave.`,
-        };
-      } else {
-        dateStatusNotice = {
-          type: 'error',
-          message: `⚠️ An Early Leave is already recorded for ${formatDate(date)}. No further leaves can be added for this day.`,
-        };
-      }
     } else if (leaveType === 'Full Leave') {
       dateStatusNotice = {
         type: 'error',
-        message: `⚠️ Leave records already exist for ${formatDate(date)}. Full Leave cannot be added.`,
+        message: `⚠️ Full Day Leave cannot be submitted because partial leave records already exist for ${formatDate(date)}.`,
+      };
+    } else if (leaveType === 'Early Leave' && sameDayEarlyLeaves.length > 0) {
+      dateStatusNotice = {
+        type: 'error',
+        message: `⚠️ An Early Leave is already recorded for ${formatDate(date)}.`,
+      };
+    } else if (leaveType === 'Late Join' && sameDayLateJoins.length > 0) {
+      dateStatusNotice = {
+        type: 'error',
+        message: `⚠️ A Late Join is already recorded for ${formatDate(date)}.`,
       };
     } else if (leaveType === 'Short Leave') {
-      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
-        const parts = (r.leave_hour || '').toString().split(':').map(Number);
-        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
-      }, 0);
-      const hours = Math.floor(shortMins / 60);
-      const mins = shortMins % 60;
-      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      dateStatusNotice = {
-        type: 'warning',
-        message: `⚠️ ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs). You can add another Short Leave (a confirmation modal will appear upon submission).`,
-      };
-    } else if (leaveType === 'Early Leave' && sameDayShortLeaves.length > 0) {
-      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
-        const parts = (r.leave_hour || '').toString().split(':').map(Number);
-        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
-      }, 0);
-      const hours = Math.floor(shortMins / 60);
-      const mins = shortMins % 60;
-      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      dateStatusNotice = {
-        type: 'info',
-        message: `ℹ️ Notice: ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs).`,
-      };
-    } else if (sameDayShortLeaves.length > 0) {
-      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
-        const parts = (r.leave_hour || '').toString().split(':').map(Number);
-        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
-      }, 0);
-      const hours = Math.floor(shortMins / 60);
-      const mins = shortMins % 60;
-      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      dateStatusNotice = {
-        type: 'info',
-        message: `ℹ️ Notice: ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs).`,
-      };
+      if (sameDayShortLeaves.length > 0) {
+        const shortMins = sameDayShortLeaves.reduce((acc, r) => {
+          const parts = (r.leave_hour || '').toString().split(':').map(Number);
+          return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
+        }, 0);
+        const hours = Math.floor(shortMins / 60);
+        const mins = shortMins % 60;
+        const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+        dateStatusNotice = {
+          type: 'warning',
+          message: `⚠️ ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs). You can add another Short Leave (a confirmation modal will appear upon submission).`,
+        };
+      } else {
+        const partials: string[] = [];
+        if (sameDayEarlyLeaves.length > 0) partials.push('Early Leave');
+        if (sameDayLateJoins.length > 0) partials.push('Late Join');
+        if (partials.length > 0) {
+          dateStatusNotice = {
+            type: 'info',
+            message: `ℹ️ Notice: ${partials.join(' and ')} already recorded for this day. You can also add Short Leave.`,
+          };
+        }
+      }
+    } else if (['Early Leave', 'Late Join'].includes(leaveType)) {
+      const existing: string[] = [];
+      if (sameDayShortLeaves.length > 0) existing.push(`${sameDayShortLeaves.length} Short Leave`);
+      if (sameDayEarlyLeaves.length > 0 && leaveType !== 'Early Leave') existing.push('Early Leave');
+      if (sameDayLateJoins.length > 0 && leaveType !== 'Late Join') existing.push('Late Join');
+      if (existing.length > 0) {
+        dateStatusNotice = {
+          type: 'info',
+          message: `ℹ️ Notice: ${existing.join(' and ')} already recorded for this day.`,
+        };
+      }
     }
   }
 
@@ -617,7 +616,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           )}
 
         {/* Short Leave Adjustment toggles */}
-        {["Short Leave", "Early Leave"].includes(leaveType) &&
+        {["Short Leave", "Early Leave", "Late Join"].includes(leaveType) &&
           reserveClaimingEnabled &&
           (govtHolidayRemaining > 0 ||
             eidFitrRemaining > 0 ||
@@ -728,7 +727,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
       </div>
 
       {/* Sign In & Sign Out Times & Leave Hour (Conditional for partial leave types) */}
-      {["Short Leave", "Early Leave", "Overtime"].includes(leaveType) && (
+      {["Short Leave", "Early Leave", "Late Join", "Overtime"].includes(leaveType) && (
         <div className={`space-y-4 transition-opacity ${isDateBlocked ? "opacity-50" : ""}`}>
           <div className="grid grid-cols-2 gap-4">
             <TimeInput
@@ -755,8 +754,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
             />
           </div>
 
-          {/* Jummah Prayer Adjustment Toggle (Short Leave, Fridays only) */}
-          {["Short Leave", "Early Leave"].includes(leaveType) &&
+          {/* Jummah Prayer Adjustment Toggle (Fridays only) */}
+          {["Short Leave", "Early Leave", "Late Join"].includes(leaveType) &&
             isFriday(date) &&
             jummahEnabled && (
               <div className={`flex items-center justify-between p-3 bg-theme-page-bg/60 rounded-lg border border-theme-border-input/80 transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
@@ -787,9 +786,9 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
               </div>
             )}
 
-          {/* Break Time (Short Leave only, when signed in more than 1 hour late).
+          {/* Break Time (Short Leave / Late Join, when signed in more than 1 hour late).
               Break counts as short leave, so it is added to the calculated hours. */}
-          {["Short Leave", "Early Leave"].includes(leaveType) &&
+          {["Short Leave", "Early Leave", "Late Join"].includes(leaveType) &&
             breakEligible && (
               <div className={`space-y-2 bg-theme-page-bg/40 p-3.5 rounded-xl border border-theme-border-muted transition-opacity ${isDateBlocked ? 'opacity-50' : ''}`}>
                 <div className="flex items-center justify-between">

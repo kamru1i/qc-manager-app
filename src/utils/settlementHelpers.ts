@@ -116,7 +116,7 @@ export const calculateHalfYearlyOfficeLeave = (
 
   approvedRecs.forEach(r => {
     const isFullLeave = r.leave_type === 'Full Leave';
-    const isShortLeave = r.leave_type === 'Short Leave';
+    const isShortLeave = ['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type);
 
     if (isFullLeave) {
       // Check if it should count against office leave: 

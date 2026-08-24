@@ -642,7 +642,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         // Open modal to choose Salary Adjustment, Full, Partial, or Category
         setStaffAdjustmentRecord(record);
         setStaffAdjustShortLeaveOption(record.adjust_short_leave === true);
-        if (record.leave_type === 'Short Leave') {
+        if (['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
           setStaffAdjustmentType('full');
           setStaffPartialAdjustmentTime(record.leave_hour ? record.leave_hour.toString().split('.')[0].substring(0, 5) : '02:00');
         }
@@ -694,7 +694,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           reserve_holiday: 'Salary',
           comment: finalComment || null
         };
-      } else if (record.leave_type === 'Short Leave') {
+      } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
         if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
           let cleanComment = record.comment || '';
           cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
