@@ -133,6 +133,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
     eidAdhaRemaining > 0;
 
   const leaveTypeOptions = [
+    { value: "Select", label: "Select" },
     { value: "Short Leave", label: "Short Leave" },
     { value: "Early Leave", label: "Early Leave" },
     { value: "Full Leave", label: "Full Leave" },
@@ -184,6 +185,18 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
         message: `⚠️ ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs). You can add another Short Leave (a confirmation modal will appear upon submission).`,
       };
     } else if (leaveType === 'Early Leave' && sameDayShortLeaves.length > 0) {
+      const shortMins = sameDayShortLeaves.reduce((acc, r) => {
+        const parts = (r.leave_hour || '').toString().split(':').map(Number);
+        return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
+      }, 0);
+      const hours = Math.floor(shortMins / 60);
+      const mins = shortMins % 60;
+      const totalStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      dateStatusNotice = {
+        type: 'info',
+        message: `ℹ️ Notice: ${sameDayShortLeaves.length} Short Leave already recorded for this day (Total: ${totalStr} hrs).`,
+      };
+    } else if (sameDayShortLeaves.length > 0) {
       const shortMins = sameDayShortLeaves.reduce((acc, r) => {
         const parts = (r.leave_hour || '').toString().split(':').map(Number);
         return acc + (parts.length >= 2 ? parts[0] * 60 + parts[1] : 0);
@@ -714,8 +727,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           )}
       </div>
 
-      {/* Sign In & Sign Out Times & Leave Hour (Conditional) */}
-      {!isFullLeave && (
+      {/* Sign In & Sign Out Times & Leave Hour (Conditional for partial leave types) */}
+      {["Short Leave", "Early Leave", "Overtime"].includes(leaveType) && (
         <div className={`space-y-4 transition-opacity ${isDateBlocked ? "opacity-50" : ""}`}>
           <div className="grid grid-cols-2 gap-4">
             <TimeInput

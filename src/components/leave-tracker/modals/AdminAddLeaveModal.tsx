@@ -48,7 +48,7 @@ export function AdminAddLeaveModal({
   leaveSettlements = [],
 }: AdminAddLeaveModalProps) {
   const [date, setDate] = useState("");
-  const [leaveType, setLeaveType] = useState("Short Leave");
+  const [leaveType, setLeaveType] = useState("Select");
   const [adjustment, setAdjustment] = useState(false);
   const [adjustmentCategory, setAdjustmentCategory] = useState("None");
   const [adjustShortLeave, setAdjustShortLeave] = useState(false);
@@ -105,7 +105,7 @@ export function AdminAddLeaveModal({
 
       setSignInTime(staffProfile.default_sign_in || "13:00");
       setSignOutTime(staffProfile.default_sign_out || "22:30");
-      setLeaveType("Short Leave");
+      setLeaveType("Select");
       setAdjustment(false);
       setAdjustmentCategory("None");
       setAdjustShortLeave(false);
@@ -141,6 +141,10 @@ export function AdminAddLeaveModal({
   // Recalculate leave hour when inputs change
   useEffect(() => {
     if (!staffProfile) return;
+    if (!leaveType || leaveType === "Select") {
+      setLeaveHour("00:00");
+      return;
+    }
     const shiftStart = staffProfile.default_sign_in || "13:00";
     const shiftEnd = staffProfile.default_sign_out || "22:30";
     const workingHours = staffProfile.working_hours ?? 9.5;
@@ -270,22 +274,25 @@ export function AdminAddLeaveModal({
     }
   } else if (leaveType === "Short Leave") {
     const mins = parseHHMMToMinutes(leaveHour);
-    const dayEquivalent = mins / ((staffProfile?.working_hours || 9.5) * 60);
-    if (!adjustment || adjustmentCategory === "Office Leave") {
-      officeDeduction = dayEquivalent;
-    } else if (adjustment) {
-      if (adjustmentCategory === "Govt Holiday") {
-        govtDeduction = dayEquivalent;
-      } else if (adjustmentCategory === "Eid-ul-Fitr") {
-        eidFitrDeduction = dayEquivalent;
-      } else if (adjustmentCategory === "Eid-ul-Adha") {
-        eidAdhaDeduction = dayEquivalent;
+    if (mins > 0) {
+      const dayEquivalent = mins / ((staffProfile?.working_hours || 9.5) * 60);
+      if (!adjustment || adjustmentCategory === "Office Leave") {
+        officeDeduction = dayEquivalent;
+      } else if (adjustment) {
+        if (adjustmentCategory === "Govt Holiday") {
+          govtDeduction = dayEquivalent;
+        } else if (adjustmentCategory === "Eid-ul-Fitr") {
+          eidFitrDeduction = dayEquivalent;
+        } else if (adjustmentCategory === "Eid-ul-Adha") {
+          eidAdhaDeduction = dayEquivalent;
+        }
       }
     }
   }
 
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
+    if (!leaveType || leaveType === "Select") return false;
     const recordsToCheck = records.filter(r => r.status !== 'rejected');
     if (leaveType === "Full Leave") {
       const allDates = [date, ...bulkDates.filter(Boolean)];
@@ -380,6 +387,10 @@ export function AdminAddLeaveModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!staffProfile) return;
+    if (!leaveType || leaveType === "Select") {
+      toast.error("Please choose a Leave Type.");
+      return;
+    }
     setSubmitting(true);
 
     const datesWithAdjustment = isFullLeave
@@ -578,7 +589,7 @@ export function AdminAddLeaveModal({
                   <button
                     type="submit"
                     disabled={
-                      submitting || !!validationError || isDuplicateDate
+                      submitting || !leaveType || leaveType === "Select" || (!isFullLeave && leaveHour === "00:00") || !!validationError || isDuplicateDate
                     }
                     className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-semibold text-white bg-linear-to-r from-blue-600 to-purple-500 hover:from-blue-500 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >

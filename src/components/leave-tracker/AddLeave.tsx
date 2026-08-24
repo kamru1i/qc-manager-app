@@ -70,7 +70,7 @@ export function AddLeave({
   const targetProfile = targetUser ?? profile;
 
   const [date, setDate] = useState(() => editingRecord?.date || '');
-  const [leaveType, setLeaveType] = useState(() => editingRecord?.leave_type || 'Short Leave');
+  const [leaveType, setLeaveType] = useState(() => editingRecord?.leave_type || 'Select');
   const [adjustment, setAdjustment] = useState(() => editingRecord ? !!editingRecord.adjustment : false);
   const [adjustmentCategory, setAdjustmentCategory] = useState(() => {
     if (editingRecord && editingRecord.reserve_holiday) {
@@ -188,7 +188,7 @@ export function AddLeave({
 
       setSignInTime(defaultSignIn || '13:00');
       setSignOutTime(defaultSignOut || '22:30');
-      setLeaveType('Short Leave');
+      setLeaveType('Select');
       setAdjustment(false);
       setAdjustmentCategory('None');
       setAdjustShortLeave(false);
@@ -217,6 +217,10 @@ export function AddLeave({
   // Recalculate leave hour when inputs change
   useEffect(() => {
     if (!targetProfile) return;
+    if (!leaveType || leaveType === 'Select') {
+      setLeaveHour('00:00');
+      return;
+    }
     const shiftStart = defaultSignIn || '13:00';
     const shiftEnd = defaultSignOut || '22:30';
     const workingHours = targetWorkingHours ?? 9.5;
@@ -324,6 +328,7 @@ export function AddLeave({
 
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
+    if (!leaveType || leaveType === 'Select') return false;
     const recordsToCheck = editingRecord
       ? staffRecords.filter(r => r.id !== editingRecord.id && r.status !== 'rejected')
       : staffRecords.filter(r => r.status !== 'rejected');
@@ -386,16 +391,18 @@ export function AddLeave({
     }
   } else if (['Short Leave', 'Early Leave'].includes(leaveType)) {
     const mins = parseHHMMToMinutes(leaveHour);
-    const dayEquivalent = mins / ((targetProfile?.working_hours || 9.5) * 60);
-    if (!adjustment || adjustmentCategory === 'Office Leave') {
-      officeDeduction = dayEquivalent;
-    } else if (adjustment) {
-      if (adjustmentCategory === 'Govt Holiday') {
-        govtDeduction = dayEquivalent;
-      } else if (adjustmentCategory === 'Eid-ul-Fitr') {
-        eidFitrDeduction = dayEquivalent;
-      } else if (adjustmentCategory === 'Eid-ul-Adha') {
-        eidAdhaDeduction = dayEquivalent;
+    if (mins > 0) {
+      const dayEquivalent = mins / ((targetProfile?.working_hours || 9.5) * 60);
+      if (!adjustment || adjustmentCategory === 'Office Leave') {
+        officeDeduction = dayEquivalent;
+      } else if (adjustment) {
+        if (adjustmentCategory === 'Govt Holiday') {
+          govtDeduction = dayEquivalent;
+        } else if (adjustmentCategory === 'Eid-ul-Fitr') {
+          eidFitrDeduction = dayEquivalent;
+        } else if (adjustmentCategory === 'Eid-ul-Adha') {
+          eidAdhaDeduction = dayEquivalent;
+        }
       }
     }
   }
@@ -450,6 +457,10 @@ export function AddLeave({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetProfile) return;
+    if (!leaveType || leaveType === 'Select') {
+      toast.error('Please choose a Leave Type.');
+      return;
+    }
     setSubmitting(true);
 
     if (needsReapproval && !editReason.trim()) {
@@ -1087,7 +1098,7 @@ export function AddLeave({
               <div className="flex gap-3 pt-4 border-t border-theme-border-input">
                 <button
                   type="submit"
-                  disabled={submitting || !!validationError || isDuplicateDate || hasDateError}
+                  disabled={submitting || !leaveType || leaveType === 'Select' || (!isFullLeave && leaveHour === '00:00') || !!validationError || isDuplicateDate || hasDateError}
                   className="w-full sm:w-1/6 min-w-35 flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all gap-1.5"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
