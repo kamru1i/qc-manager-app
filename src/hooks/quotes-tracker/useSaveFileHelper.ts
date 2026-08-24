@@ -5,6 +5,7 @@ import { RecordItem, SavedDocument } from '@/types';
 import { isTauriApp } from '@/utils/apiUrlHelper';
 import { Capacitor } from '@capacitor/core';
 import { sanitizeRichTextHtml } from '@/utils/htmlSanitizer';
+import { isPathContained, sanitizeDocxFilename, isSafeSubdirectory } from '@/utils/pathSecurity';
 
 interface UseSaveFileHelperOptions {
   showToast: (type: 'success' | 'error', text: string) => void;
@@ -246,8 +247,14 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       }
     }
 
-    const cleanName = record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "");
-    const generatedFileName = `${cleanName} ${record.branch_name} ${record.file_type}.docx`;
+    if (subFolder && !isSafeSubdirectory(subFolder)) {
+      showToast("error", "Invalid subfolder path detected.");
+      return;
+    }
+
+    const cleanName = record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "").trim();
+    const rawFileName = `${cleanName} ${record.branch_name} ${record.file_type}.docx`;
+    const generatedFileName = sanitizeDocxFilename(rawFileName);
 
     try {
       const wrappedHtml = wrapHtmlForDocx(editorHtml);
@@ -290,17 +297,28 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
           dialogTitle: 'Save Word Document',
         });
       } else if (isTauri) {
+        if (!currentBaseDir) {
+          showToast("error", "Please select a save directory first.");
+          return;
+        }
+
         const arrayBuffer = await docxBlob.arrayBuffer();
         const bytes = new Uint8Array(arrayBuffer);
         const { join } = await import('@tauri-apps/api/path');
         const { mkdir, writeFile } = await import('@tauri-apps/plugin-fs');
 
-        let targetDir = currentBaseDir || "";
+        let targetDir = currentBaseDir;
         if (subFolder) {
-          targetDir = await join(currentBaseDir || "", subFolder);
+          targetDir = await join(currentBaseDir, subFolder);
+          if (!isPathContained(currentBaseDir, targetDir)) {
+            throw new Error("Target subfolder escapes the authorized save directory.");
+          }
           await mkdir(targetDir, { recursive: true });
         }
         const finalPath = await join(targetDir, generatedFileName);
+        if (!isPathContained(currentBaseDir, finalPath)) {
+          throw new Error("Target file path escapes the authorized save directory.");
+        }
         await writeFile(finalPath, bytes);
         savedPath = finalPath;
       } else {
@@ -338,7 +356,10 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
 
       showToast("success", `File saved successfully!`);
 
-      const newDocId = crypto.randomUUID();
+      const newDocId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).substring(2);
+
       const newDoc = {
         id: newDocId,
         filename: generatedFileName,
@@ -414,6 +435,11 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
         });
         showToast("success", `File updated successfully!`);
       } else if (isTauri) {
+        const todayDir = getTodayDirectory();
+        if (todayDir && !isPathContained(todayDir, savedFilePath)) {
+          console.warn("[useSaveFileHelper] Updating document outside active base directory:", savedFilePath);
+        }
+
         const arrayBuffer = await docxBlob.arrayBuffer();
         const bytes = new Uint8Array(arrayBuffer);
         const { writeFile } = await import('@tauri-apps/plugin-fs');
