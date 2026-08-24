@@ -2,9 +2,10 @@
 
 import React, { useRef } from 'react';
 import { formatTimeToAMPM } from '@/utils/quotesDashboardHelpers';
+import { usePreferredTimeFormat, formatTimeForDisplay } from '@/utils/timeFormatHelpers';
 
 interface TimeInputProps {
-  value: string; // "HH:mm" e.g. "13:00" or "10:30"
+  value: string; // Canonical "HH:mm" e.g. "13:00" or "10:30"
   onChange: (val: string) => void;
   label?: string;
   showAmPmBadge?: boolean;
@@ -22,9 +23,10 @@ export const TimeInput: React.FC<TimeInputProps> = ({
   required = false,
   disabled = false,
   className = '',
-  placeholder = 'Select Time',
+  placeholder,
 }) => {
   const timePickerRef = useRef<HTMLInputElement>(null);
+  const { is24Hour } = usePreferredTimeFormat();
 
   const handleOpenPicker = () => {
     if (disabled) return;
@@ -38,11 +40,17 @@ export const TimeInput: React.FC<TimeInputProps> = ({
         }
       }
     } catch {
-      // Ignore silent picker failures
+      timePickerRef.current?.focus();
     }
   };
 
-  const displayTime = value ? formatTimeToAMPM(value) : '';
+  // Header display badge above the field: ALWAYS in standard AM/PM format (e.g. 02:00 PM)
+  const headerBadgeTime = value ? formatTimeToAMPM(value) : '';
+
+  // Input field display text: locale-aware (24h "14:00" vs 12h "02:00 PM")
+  const displayTime = value ? formatTimeForDisplay(value, is24Hour) : '';
+  const defaultPlaceholder = is24Hour ? 'HH:mm' : 'hh:mm AM/PM';
+  const effectivePlaceholder = placeholder || defaultPlaceholder;
 
   return (
     <div className="w-full font-sans">
@@ -57,13 +65,13 @@ export const TimeInput: React.FC<TimeInputProps> = ({
           )}
           {showAmPmBadge && value ? (
             <span className="text-[10px] font-bold text-blue-450 tracking-wider font-mono">
-              {displayTime}
+              {headerBadgeTime}
             </span>
           ) : null}
         </div>
       )}
       <div className="relative inline-block w-full">
-        {/* Display text field (Strict 12-hour AM/PM e.g. 01:00 PM) with cursor-pointer & no clock icon */}
+        {/* Display text field (Locale-aware: 12h AM/PM or 24h HH:mm) with cursor-pointer */}
         <input
           type="text"
           readOnly
@@ -71,15 +79,15 @@ export const TimeInput: React.FC<TimeInputProps> = ({
           disabled={disabled}
           value={displayTime}
           onClick={handleOpenPicker}
-          placeholder={placeholder}
+          placeholder={effectivePlaceholder}
           className={`block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
         />
 
-        {/* Hidden Native Time Input */}
+        {/* Hidden Native Time Input with canonical HH:mm value */}
         <input
           type="time"
           ref={timePickerRef}
-          value={value || ''}
+          value={value ? value.substring(0, 5) : ''}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0 [&::-webkit-calendar-picker-indicator]:hidden"
