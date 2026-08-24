@@ -32,11 +32,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 }) => {
   const leaveTypeOptions = [
     { value: 'all', label: 'All Categories' },
-    { value: 'Short Leave', label: 'Short Leave' },
     { value: 'Early Leave', label: 'Early Leave' },
-    { value: 'Late Join', label: 'Late Join' },
     { value: 'Full Leave', label: 'Full Leave' },
+    { value: 'Late Join', label: 'Late Join' },
     ...(allowOvertime ? [{ value: 'Overtime', label: 'Overtime' }] : []),
+    { value: 'Short Leave', label: 'Short Leave' },
   ];
 
   return (

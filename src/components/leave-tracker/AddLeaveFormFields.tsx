@@ -134,11 +134,11 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
   const leaveTypeOptions = [
     { value: "Select", label: "Select" },
-    { value: "Short Leave", label: "Short Leave" },
     { value: "Early Leave", label: "Early Leave" },
-    { value: "Late Join", label: "Late Join" },
     { value: "Full Leave", label: "Full Leave" },
+    { value: "Late Join", label: "Late Join" },
     ...(allowOvertime ? [{ value: "Overtime", label: "Overtime" }] : []),
+    { value: "Short Leave", label: "Short Leave" },
   ];
 
   const sameDayRecords = date

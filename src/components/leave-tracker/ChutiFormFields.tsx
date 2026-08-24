@@ -48,9 +48,12 @@ export const ChutiFormFields: React.FC<ChutiFormFieldsProps> = ({
   const showAdjustmentSection = leaveType !== 'Full Leave';
 
   const leaveTypeOptions = [
-    { value: 'Short Leave', label: 'Short Leave' },
+    { value: 'Select', label: 'Select' },
+    { value: 'Early Leave', label: 'Early Leave' },
     { value: 'Full Leave', label: 'Full Leave' },
+    { value: 'Late Join', label: 'Late Join' },
     ...((allowOvertime || leaveType === 'Overtime') ? [{ value: 'Overtime', label: 'Overtime' }] : []),
+    { value: 'Short Leave', label: 'Short Leave' },
   ];
 
   const currentYear = new Date().getFullYear();
