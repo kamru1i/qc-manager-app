@@ -38,30 +38,32 @@ export function useQuotationMistakes({
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
+  const profileId = profile?.id || '';
+  const sessionUserId = sessionUser?.id || '';
+  const isUserRole = profile?.role === 'user';
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 15;
 
   const getCacheKey = useCallback(() => {
-    return `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
-  }, [debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, currentPage]);
+    return `${sessionUserId}_${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+  }, [sessionUserId, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, currentPage]);
 
   const [mistakes, setMistakes] = useState<QuotationMistake[]>(() => {
-    const key = `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+    const key = `${sessionUserId}_${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
     return _mistakesCache?.key === key ? _mistakesCache.data : [];
   });
   
   const [isLoading, setIsLoading] = useState<boolean>(() => {
-    const key = `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+    const key = `${sessionUserId}_${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
     return _mistakesCache?.key !== key;
   });
   
   const [totalCount, setTotalCount] = useState(() => {
-    const key = `${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
+    const key = `${sessionUserId}_${debouncedSearchQuery}_${selectedBranch}_${selectedYear}_${selectedMonth}_${selectedDate}_${currentPage}`;
     return _mistakesCache?.key === key ? _mistakesCache.count : 0;
   });
-
-
 
   // Permission Checks
   const canWrite = useMemo(
@@ -73,10 +75,6 @@ export function useQuotationMistakes({
     () => isFeatureEnabled('quote_mistakes_read', globalSettings, profile),
     [globalSettings, profile]
   );
-
-  const profileId = profile?.id || '';
-  const sessionUserId = sessionUser?.id || '';
-  const isUserRole = profile?.role === 'user';
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearchQuery(searchQuery.trim()), 300);

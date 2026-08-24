@@ -34,30 +34,56 @@ const UkFlagIcon: React.FC<{ className?: string }> = ({ className = "w-4.5 h-3" 
   </svg>
 );
 
-function getTimeComponents(timeZone: string, use24Hour: boolean = false) {
+// Reusable cached DateTimeFormat instances to avoid garbage collection and CPU overhead
+const bdFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Dhaka",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: true,
+});
+
+const ukFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
+function formatClockParts(formatter: Intl.DateTimeFormat, use24Hour: boolean = false) {
   try {
     const d = new Date();
-    const formatter = new Intl.DateTimeFormat("en-GB", {
-      timeZone,
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: !use24Hour,
-    });
-
     const parts = formatter.formatToParts(d);
-    const partMap: Record<string, string> = {};
-    parts.forEach((p) => {
-      partMap[p.type] = p.value;
-    });
+    let day = "";
+    let month = "";
+    let year = "";
+    let hour = "";
+    let minute = "";
+    let second = "";
+    let dayPeriod = "";
 
-    const dateStr = `${partMap.day}-${partMap.month}-${partMap.year}`;
-    let timeStr = `${partMap.hour}:${partMap.minute}:${partMap.second}`;
-    if (!use24Hour && partMap.dayPeriod) {
-      timeStr += ` ${partMap.dayPeriod.toUpperCase()}`;
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (p.type === "day") day = p.value;
+      else if (p.type === "month") month = p.value;
+      else if (p.type === "year") year = p.value;
+      else if (p.type === "hour") hour = p.value;
+      else if (p.type === "minute") minute = p.value;
+      else if (p.type === "second") second = p.value;
+      else if (p.type === "dayPeriod") dayPeriod = p.value;
+    }
+
+    const dateStr = `${day}-${month}-${year}`;
+    let timeStr = `${hour}:${minute}:${second}`;
+    if (!use24Hour && dayPeriod) {
+      timeStr += ` ${dayPeriod.toUpperCase()}`;
     }
 
     return { dateStr, timeStr };
@@ -75,17 +101,29 @@ export const LiveClock: React.FC<LiveClockProps> = ({
 
   useEffect(() => {
     const updateTime = () => {
+      if (typeof document !== "undefined" && document.hidden) return;
       if (showBd) {
-        setBdClock(getTimeComponents("Asia/Dhaka", false));
+        setBdClock(formatClockParts(bdFormatter, false));
       }
       if (showUk) {
-        setUkClock(getTimeComponents("Europe/London", true));
+        setUkClock(formatClockParts(ukFormatter, true));
       }
     };
 
     updateTime();
-    const interval = setInterval(updateTime, 250);
-    return () => clearInterval(interval);
+    const interval = setInterval(updateTime, 1000);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        updateTime();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [showBd, showUk]);
 
   if (!showBd && !showUk) return null;

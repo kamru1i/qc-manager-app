@@ -84,8 +84,9 @@ export function AdjustmentModal({
   const otRemainingSLMins = Math.max(0, availableShortMins - otMins);
   const otRemainingOTMins = Math.max(0, otMins - availableShortMins);
 
-  // For Short Leave adjustment calculations
-  const slMins = adjustmentRecord && adjustmentRecord.leave_type === 'Short Leave'
+  // For Partial Leave (Short Leave, Early Leave, Late Join) adjustment calculations
+  const isPartialLeave = adjustmentRecord && ['Short Leave', 'Early Leave', 'Late Join'].includes(adjustmentRecord.leave_type);
+  const slMins = isPartialLeave
     ? parseIntervalToMinutes(adjustmentRecord.leave_hour)
     : 0;
 
@@ -182,12 +183,12 @@ export function AdjustmentModal({
                 )}
               </div>
             </div>
-          ) : adjustmentRecord.leave_type === 'Short Leave' ? (
+          ) : isPartialLeave ? (
             /* ========================================================================= */
-            /* 2. SHORT LEAVE ADJUSTMENT VIEW                                           */
+            /* 2. PARTIAL LEAVE (SHORT / EARLY / LATE) ADJUSTMENT VIEW                   */
             /* ========================================================================= */
             <div className="space-y-4 font-sans text-xs">
-              <p className="text-xs text-theme-text-muted">Select an adjustment method for this Short Leave:</p>
+              <p className="text-xs text-theme-text-muted">Select an adjustment method for this {adjustmentRecord.leave_type}:</p>
 
               {/* Adjustment Method Selectors */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

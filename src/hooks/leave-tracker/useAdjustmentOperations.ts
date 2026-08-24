@@ -53,7 +53,7 @@ export const useAdjustmentOperations = ({
     } else {
       setAdjustmentRecord(record);
       setAdjustShortLeaveOption(record.adjust_short_leave === true);
-      if (record.leave_type === 'Short Leave') {
+      if (['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
         setAdjustmentType('full');
         setPartialAdjustmentTime(record.leave_hour ? record.leave_hour.toString().split('.')[0].substring(0, 5) : '02:00');
       }
@@ -67,7 +67,7 @@ export const useAdjustmentOperations = ({
     setSubmitting(true);
     const record = cancelAdjustmentRecord;
     try {
-      const isShortOrOvertime = record.leave_type === 'Short Leave' || record.leave_type === 'Overtime';
+      const isShortOrOvertime = ['Short Leave', 'Early Leave', 'Late Join', 'Overtime'].includes(record.leave_type);
       const dateTimeStr = isShortOrOvertime
         ? `${formatDate(record.date)} (${formatTimeToAMPM(record.sign_in_time)} - ${formatTimeToAMPM(record.sign_out_time)})`
         : formatDate(record.date);
@@ -141,7 +141,7 @@ export const useAdjustmentOperations = ({
     setSubmitting(true);
     const record = adjustmentRecord;
     try {
-      const isShortLeave = record.leave_type === 'Short Leave';
+      const isPartialLeave = ['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type);
       const isAdmin = isAdminRole(profile) && adminActiveTab === 'admin';
       const selectedCat = adjustmentCategoryInput || 'None';
 
@@ -152,8 +152,8 @@ export const useAdjustmentOperations = ({
           setSubmitting(false);
           return;
         }
-        if (record.leave_type === 'Short Leave' && !profile?.allow_overtime) {
-          setMessage({ type: 'error', text: 'You do not have permission for Short Leave adjustments.' });
+        if (isPartialLeave && !profile?.allow_overtime) {
+          setMessage({ type: 'error', text: 'You do not have permission for Short Leave / Partial Leave adjustments.' });
           setSubmitting(false);
           return;
         }
@@ -177,7 +177,7 @@ export const useAdjustmentOperations = ({
           reserve_holiday: 'Salary',
           comment: finalComment || null
         };
-      } else if (isShortLeave) {
+      } else if (isPartialLeave) {
         if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
           let cleanComment = record.comment || '';
           cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
@@ -234,7 +234,7 @@ export const useAdjustmentOperations = ({
           notifBody = `Your ${durationText} leave has been adjusted with ${durationText} salary deduction.`;
         } else {
           const leaveLabel = getDetailedLeaveLabel(record);
-          const isShortOrOvertime = record.leave_type === 'Short Leave' || record.leave_type === 'Overtime';
+          const isShortOrOvertime = ['Short Leave', 'Early Leave', 'Late Join', 'Overtime'].includes(record.leave_type);
           const dateTimeStr = isShortOrOvertime
             ? `${formatDate(record.date)} (${formatTimeToAMPM(record.sign_in_time)} - ${formatTimeToAMPM(record.sign_out_time)})`
             : formatDate(record.date);
