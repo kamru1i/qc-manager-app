@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.2.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.3.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,18 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.2.0 — Minor Release (Attendance Feature Complete Removal, Overtime Calculation Precision Fix, Enhanced Leave Adjustments & User Management Polish) (Current)
+### 🚀 v7.3.0 — Minor Release (Late Join Leave Type Addition, Locale-Aware Time Pickers, Performance Cache Optimization & Complete 1:1 Skeleton Loader Modernization) (Current)
+
+- **Late Join Leave Type**: Extended Chuti leave management with a dedicated `Late Join` leave type that automatically aggregates into Short Leave summary balances, history records, and team summaries.
+- **Locale-Aware Time Pickers**: Enhanced sign-in and sign-out time pickers across the app to dynamically follow the client's OS / browser time format preferences (12-hour AM/PM vs 24-hour mode).
+- **Performance & Cache Optimization**: Upgraded SWR in-memory and IndexedDB offline cache architecture across Quotations and Chuti workflows for instant 0ms rendering with zero layout shifts.
+- **Comprehensive Skeleton Modernization**: Designed 1:1 dark glassmorphic skeleton loaders matching production views across:
+  - **Chuti**: Add Leave, Leave History, Team Leave Records, Review & Settlements, and Leave Settings.
+  - **Reports**: Leaderboard, KPI Performance Assessment, My Report, and All Report (including dedicated `ReportsDashboardSkeleton`).
+  - **Todos**: My Tasks & Todos (top input bar, task items list with permanent badges).
+  - **Settings**: Sanitizer (`SanitizerSkeleton`) and Users (`UserManagementSkeleton`).
+
+### 🚀 v7.2.0 — Minor Release (Attendance Feature Complete Removal, Overtime Calculation Precision Fix, Enhanced Leave Adjustments & User Management Polish)
 
 - **Attendance Module Removal**: Completely uninstalled and removed the experimental Home → Attendance & Shift Tracker module from UI, contexts, services, timers, realtime subscriptions, and database migrations.
 - **Overtime Calculation Precision Fix**: Strictly standardized overtime calculation to `MAX(0, Actual Work - Regular Duration)` by deducting the configured working duration across all days.

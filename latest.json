@@ -1,8 +1,8 @@
 {
-  "version": "7.2.0",
-  "notes": "### 🚀 v7.2.0 — Minor Release (Attendance Feature Complete Removal, Overtime Calculation Precision Fix, Enhanced Leave Adjustments & User Management Polish)\n\n- **Attendance Module Removal**: Completely uninstalled and removed the experimental Home → Attendance & Shift Tracker module from UI, contexts, services, timers, realtime subscriptions, and database migrations.\n- **Overtime Calculation Precision Fix**: Strictly standardized overtime calculation to `MAX(0, Actual Work - Regular Duration)` by deducting the configured working duration across all days.\n- **Restricted Self-Service Adjustments**: Disabled self-service adjustment submissions on `Add Leave` and restricted adjustment controls strictly to Admin profile management under `Settings > Users > Leave History`.\n- **Interactive Adjustment Modal**: Enhanced `AdjustmentModal` in Admin Settings with live calculation breakdown between accumulated Short Leave and Overtime, plus direct Salary Deduction (`Salary`) support.\n- **Settings UI Cleanups**: Removed redundant nested card containers in User Profile (`Leave History`, `Quotes History`) for clean edge-to-edge layout.",
-  "pub_date": "2026-08-21T18:10:00.000Z",
-  "releaseDate": "August 21, 2026",
+  "version": "7.3.0",
+  "notes": "### 🚀 v7.3.0 — Minor Release (Late Join Leave Type Addition, Locale-Aware Time Pickers, Performance Cache Optimization & Complete 1:1 Skeleton Loader Modernization)\n\n- **Late Join Leave Type**: Extended Chuti leave management with a dedicated `Late Join` leave type that automatically aggregates into Short Leave summary balances, history records, and team summaries.\n- **Locale-Aware Time Inputs**: Enhanced sign-in/sign-out time pickers across the app to dynamically follow the client's OS / browser time format preferences (12-hour AM/PM vs 24-hour mode).\n- **Performance & Cache Optimization**: Upgraded SWR in-memory and IndexedDB offline cache architecture across Quotations and Chuti workflows for instant 0ms rendering with zero layout shifts.\n- **Comprehensive Skeleton Modernization**: Designed 1:1 dark glassmorphic skeleton loaders matching production views across Chuti (Add Leave, History, Team Records, Settlements, Settings), Reports (Leaderboard, KPI, My Report, All Report), Todos (My Tasks & Todos), and Settings (Sanitizer, Users).",
+  "pub_date": "2026-08-25T20:30:00.000Z",
+  "releaseDate": "August 25, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {
