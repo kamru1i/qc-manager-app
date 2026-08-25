@@ -5,103 +5,90 @@ interface ChutiFormSkeletonProps {
 }
 
 export const ChutiFormSkeleton: React.FC<ChutiFormSkeletonProps> = ({ className = '' }) => {
-  const labelBg = 'bg-slate-850/60 rounded';
-  const inputBg = 'bg-slate-800/40 rounded-xl border border-slate-800/60 h-11 w-full';
-  const cardBg = 'bg-slate-900/20 border border-slate-850 rounded-2xl p-6';
-
   return (
-    <div className={`w-full max-w-4xl mx-auto space-y-6 animate-pulse ${className}`}>
-      {/* Main layout container */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className={`w-full flex flex-col gap-6 animate-pulse font-sans ${className}`}>
+      {/* Main card container */}
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl shadow-2xl rounded-2xl p-6 lg:p-7 flex flex-col gap-6 border border-theme-border-muted/80">
         
-        {/* Left side form - spans 2 cols */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className={cardBg}>
-            {/* Form Title & subtitle */}
-            <div className="space-y-2 pb-2 border-b border-slate-850/40">
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 bg-slate-800 rounded" />
-                <div className="h-5 w-44 bg-slate-800 rounded" />
-              </div>
-              <div className="h-3 w-80 bg-slate-850/50" />
+        {/* Header Title & Subtitle */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 bg-blue-500/20 rounded-md" />
+            <div className="h-5 w-48 bg-theme-border-input/60 rounded-lg" />
+          </div>
+          <div className="h-3.5 w-96 max-w-full bg-theme-border-input/30 rounded" />
+        </div>
+
+        {/* 2-Column Responsive Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+          
+          {/* Left Column Form */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* DATE */}
+            <div className="space-y-1.5">
+              <div className="h-3 w-12 bg-theme-border-input/40 rounded" />
+              <div className="h-10 w-full bg-theme-page-bg/60 border border-theme-border-input/60 rounded-xl" />
             </div>
 
-            {/* Input fields */}
-            <div className="space-y-4 pt-2">
-              {/* Row 1: Date & Leave Type */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className={`h-3 w-12 ${labelBg}`} />
-                  <div className={inputBg} />
-                </div>
-                <div className="space-y-2">
-                  <div className={`h-3.5 w-20 ${labelBg}`} />
-                  <div className={inputBg} />
-                </div>
-              </div>
+            {/* LEAVE TYPE */}
+            <div className="space-y-1.5">
+              <div className="h-3 w-20 bg-theme-border-input/40 rounded" />
+              <div className="h-10 w-full bg-theme-page-bg/60 border border-theme-border-input/60 rounded-xl" />
+            </div>
 
-              {/* Row 2: Sign-In & Sign-Out */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <div className={`h-3.5 w-24 ${labelBg}`} />
-                    <div className="h-3 w-14 bg-slate-850/30 rounded" />
-                  </div>
-                  <div className={inputBg} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <div className={`h-3.5 w-24 ${labelBg}`} />
-                    <div className="h-3 w-14 bg-slate-850/30 rounded" />
-                  </div>
-                  <div className={inputBg} />
-                </div>
-              </div>
-
-              {/* Row 3: Calculated Leave Hours */}
-              <div className="space-y-2">
-                <div className={`h-3.5 w-36 ${labelBg}`} />
-                <div className={inputBg} />
-              </div>
-
-              {/* Row 4: Comment */}
-              <div className="space-y-2">
-                <div className={`h-3.5 w-20 ${labelBg}`} />
-                <div className="h-24 w-full bg-slate-900/30 border border-slate-850 rounded-xl" />
-              </div>
+            {/* COMMENT */}
+            <div className="space-y-1.5">
+              <div className="h-3 w-16 bg-theme-border-input/40 rounded" />
+              <div className="h-20 w-full bg-theme-page-bg/60 border border-theme-border-input/60 rounded-xl" />
             </div>
 
             {/* Submit Button */}
-            <div className="pt-4">
-              <div className="h-11 w-full bg-indigo-600/15 border border-indigo-500/20 rounded-xl" />
+            <div className="pt-4 border-t border-theme-border-input/50">
+              <div className="h-10 w-36 bg-blue-600/30 rounded-xl" />
             </div>
           </div>
-        </div>
 
-        {/* Right side: Leave Usage Summary - spans 1 col */}
-        <div className="lg:col-span-1">
-          <div className="bg-slate-900/20 border border-slate-850 rounded-2xl p-5 space-y-4">
-            <div className="pb-2 border-b border-slate-850/50">
-              <div className="h-4.5 w-48 bg-slate-800/60 rounded" />
-            </div>
+          {/* Right Column: Leave Usage Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-theme-page-bg/50 border border-theme-border-input/80 rounded-2xl p-5 flex flex-col gap-3.5 shadow-lg">
+              {/* Header */}
+              <div className="h-3.5 w-44 bg-theme-border-input/50 rounded pb-3 border-b border-theme-border-muted/70" />
 
-            {/* Leave summary cards */}
-            <div className="space-y-4">
-              {/* Office Leave summary card */}
-              <div className="p-4 bg-slate-950/40 border border-slate-850/60 rounded-xl space-y-2">
-                <div className={`h-2.5 w-32 ${labelBg}`} />
-                <div className="h-6 w-28 bg-slate-800/50 rounded mt-1" />
-                <div className="h-3 w-20 bg-slate-850/40 rounded" />
-                <div className="h-2.5 w-36 bg-slate-850/20 rounded mt-1" />
-              </div>
+              <div className="space-y-3 pt-1">
+                {/* Office Leave */}
+                <div className="bg-theme-card-bg/40 p-3.5 rounded-xl border border-theme-border-input/70 space-y-2">
+                  <div className="h-2.5 w-20 bg-blue-400/30 rounded" />
+                  <div className="h-4 w-32 bg-theme-border-input/50 rounded" />
+                  <div className="h-3 w-24 bg-theme-border-input/30 rounded" />
+                </div>
 
-              {/* Short leave summary card */}
-              <div className="p-4 bg-slate-950/40 border border-slate-850/60 rounded-xl space-y-2">
-                <div className={`h-2.5 w-28 ${labelBg}`} />
-                <div className="h-5 w-20 bg-slate-800/40 rounded mt-1" />
+                {/* Govt Holiday */}
+                <div className="bg-theme-card-bg/40 p-3.5 rounded-xl border border-theme-border-input/70 space-y-2">
+                  <div className="h-2.5 w-20 bg-teal-400/30 rounded" />
+                  <div className="h-4 w-28 bg-theme-border-input/50 rounded" />
+                </div>
+
+                {/* Full Leave Taken */}
+                <div className="bg-theme-card-bg/40 p-3.5 rounded-xl border border-theme-border-input/70 space-y-2">
+                  <div className="h-2.5 w-24 bg-theme-border-input/30 rounded" />
+                  <div className="h-4 w-16 bg-theme-border-input/50 rounded" />
+                </div>
+
+                {/* Short Leave Taken */}
+                <div className="bg-theme-card-bg/40 p-3.5 rounded-xl border border-theme-border-input/70 space-y-2">
+                  <div className="h-2.5 w-28 bg-theme-border-input/30 rounded" />
+                  <div className="h-4 w-20 bg-theme-border-input/50 rounded" />
+                </div>
+
+                {/* Overtime */}
+                <div className="bg-theme-card-bg/40 p-3.5 rounded-xl border border-theme-border-input/70 space-y-2">
+                  <div className="h-2.5 w-24 bg-theme-border-input/30 rounded" />
+                  <div className="h-4 w-20 bg-theme-border-input/50 rounded" />
+                </div>
               </div>
             </div>
           </div>
+
         </div>
 
       </div>

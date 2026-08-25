@@ -985,14 +985,14 @@ export function AddLeave({
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* 2. Main Add Leave entry form grid layout */}
-      <div className="bg-theme-card-bg/40 backdrop-blur-xl shadow-2xl rounded-2xl p-6 flex flex-col gap-6 animate-fade-in border border-theme-border-muted">
+      {/* Main Add Leave entry form grid layout */}
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl shadow-2xl rounded-2xl p-6 lg:p-7 flex flex-col gap-6 animate-fade-in border border-theme-border-muted/80">
         <div>
-          <h3 className="text-md font-bold text-theme-text-primary flex items-center gap-2">
+          <h3 className="text-base font-bold text-theme-text-primary flex items-center gap-2 tracking-tight">
             <Calendar className="h-4.5 w-4.5 text-blue-400" />
             {editingRecord ? 'Edit Leave Entry' : 'New Leave Entry Form'}
           </h3>
-          <p className="text-xs text-theme-text-muted mt-1">
+          <p className="text-xs text-theme-text-muted mt-1 font-sans">
             {editingRecord
               ? 'Update the details of the selected leave entry.'
               : 'Record a new full day leave, short leave, or overtime entry directly into the system.'
@@ -1026,123 +1026,119 @@ export function AddLeave({
           </div>
         )}
 
-        {!initialFetchDone ? (
-          <SkeletonLoader variant="chuti-form" />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            <form onSubmit={handleSubmit} className="md:col-span-2 space-y-4 font-sans text-xs">
-              <AddLeaveFormFields
-                date={date}
-                setDate={setDate}
-                leaveType={leaveType}
-                setLeaveType={setLeaveType}
-                adjustmentCategory={adjustmentCategory}
-                setAdjustmentCategory={setAdjustmentCategory}
-                setAdjustment={setAdjustment}
-                adjustShortLeave={adjustShortLeave}
-                setAdjustShortLeave={setAdjustShortLeave}
-                signInTime={signInTime}
-                setSignInTime={setSignInTime}
-                signOutTime={signOutTime}
-                setSignOutTime={setSignOutTime}
-                leaveHour={leaveHour}
-                setLeaveHour={setLeaveHour}
-                comment={comment}
-                setComment={setComment}
-                bulkDates={bulkDates}
-                bulkAdjustments={bulkAdjustments}
-                handleAddBulkDate={handleAddBulkDate}
-                handleUpdateBulkDate={handleUpdateBulkDate}
-                handleUpdateBulkAdjustment={handleUpdateBulkAdjustment}
-                handleRemoveBulkDate={handleRemoveBulkDate}
-                allowOvertime={targetProfile?.allow_overtime || false}
-                adjustJummah={adjustJummah}
-                setAdjustJummah={setAdjustJummah}
-                jummahEnabled={jummahFeatureOn}
-                leaveAdjustmentsEnabled={leaveAdjustmentsOn}
-                bulkLeaveEnabled={bulkLeaveOn}
-                reserveClaimingEnabled={reserveClaimingOn}
-                breakEligible={breakEligible}
-                breakEnabled={breakEnabled}
-                setBreakEnabled={setBreakEnabled}
-                breakMinutes={breakMinutes}
-                setBreakMinutes={setBreakMinutes}
-                adjustment={adjustment}
-                availableOvertimeMins={parseHHMMToMinutes(stats.overtimeHours)}
-                availableShortLeaveMins={parseHHMMToMinutes(stats.shortHours)}
-                records={staffRecords}
-                govtHolidayRemaining={govtHolidayRemaining}
-                eidFitrRemaining={eidFitrRemaining}
-                eidAdhaRemaining={eidAdhaRemaining}
-                eligibleOfficeLeave={isOfficeLeaveEligible}
-                officeLeaveRemaining={officeLeaveRemaining}
-                workingHours={targetProfile?.working_hours || 9.5}
-                globalSettings={globalSettings}
-                onDateErrorChange={(id, hasError) => {
-                  setDateErrors(prev => {
-                    if (prev[id] === hasError) return prev;
-                    return { ...prev, [id]: hasError };
-                  });
-                }}
-              />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+          <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-4 font-sans text-xs">
+            <AddLeaveFormFields
+              date={date}
+              setDate={setDate}
+              leaveType={leaveType}
+              setLeaveType={setLeaveType}
+              adjustmentCategory={adjustmentCategory}
+              setAdjustmentCategory={setAdjustmentCategory}
+              setAdjustment={setAdjustment}
+              adjustShortLeave={adjustShortLeave}
+              setAdjustShortLeave={setAdjustShortLeave}
+              signInTime={signInTime}
+              setSignInTime={setSignInTime}
+              signOutTime={signOutTime}
+              setSignOutTime={setSignOutTime}
+              leaveHour={leaveHour}
+              setLeaveHour={setLeaveHour}
+              comment={comment}
+              setComment={setComment}
+              bulkDates={bulkDates}
+              bulkAdjustments={bulkAdjustments}
+              handleAddBulkDate={handleAddBulkDate}
+              handleUpdateBulkDate={handleUpdateBulkDate}
+              handleUpdateBulkAdjustment={handleUpdateBulkAdjustment}
+              handleRemoveBulkDate={handleRemoveBulkDate}
+              allowOvertime={targetProfile?.allow_overtime || false}
+              adjustJummah={adjustJummah}
+              setAdjustJummah={setAdjustJummah}
+              jummahEnabled={jummahFeatureOn}
+              leaveAdjustmentsEnabled={leaveAdjustmentsOn}
+              bulkLeaveEnabled={bulkLeaveOn}
+              reserveClaimingEnabled={reserveClaimingOn}
+              breakEligible={breakEligible}
+              breakEnabled={breakEnabled}
+              setBreakEnabled={setBreakEnabled}
+              breakMinutes={breakMinutes}
+              setBreakMinutes={setBreakMinutes}
+              adjustment={adjustment}
+              availableOvertimeMins={parseHHMMToMinutes(stats.overtimeHours)}
+              availableShortLeaveMins={parseHHMMToMinutes(stats.shortHours)}
+              records={staffRecords}
+              govtHolidayRemaining={govtHolidayRemaining}
+              eidFitrRemaining={eidFitrRemaining}
+              eidAdhaRemaining={eidAdhaRemaining}
+              eligibleOfficeLeave={isOfficeLeaveEligible}
+              officeLeaveRemaining={officeLeaveRemaining}
+              workingHours={targetProfile?.working_hours || 9.5}
+              globalSettings={globalSettings}
+              onDateErrorChange={(id, hasError) => {
+                setDateErrors(prev => {
+                  if (prev[id] === hasError) return prev;
+                  return { ...prev, [id]: hasError };
+                });
+              }}
+            />
 
-              {needsReapproval && (
-                <div className="space-y-1 pt-2 border-t border-theme-border-input/50">
-                  <label className="block text-theme-text-muted font-semibold">Reason for Editing (Required)</label>
-                  <textarea
-                    required
-                    rows={2}
-                    value={editReason}
-                    onChange={(e) => setEditReason(e.target.value)}
-                    placeholder="Enter why this approved leave is being modified..."
-                    className="w-full p-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                  />
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-theme-border-input">
-                <button
-                  type="submit"
-                  disabled={submitting || !leaveType || leaveType === 'Select' || (!isFullLeave && leaveHour === '00:00') || !!validationError || isDuplicateDate || hasDateError}
-                  className="w-full sm:w-1/6 min-w-35 flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all gap-1.5"
-                >
-                  {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                  {submitting
-                    ? (editingRecord ? 'Saving...' : 'Submitting...')
-                    : (editingRecord ? 'Save Changes' : 'Submit')}
-                </button>
+            {needsReapproval && (
+              <div className="space-y-1 pt-2 border-t border-theme-border-input/50">
+                <label className="block text-theme-text-muted font-semibold">Reason for Editing (Required)</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  placeholder="Enter why this approved leave is being modified..."
+                  className="w-full p-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                />
               </div>
-            </form>
+            )}
 
-            {/* Right Column: Leave Summary Stats */}
-            <div className="md:col-span-1">
-              <LeaveUsageSummary
-                selectedYear={selectedYear}
-                officeLeaveRemaining={officeLeaveRemaining}
-                officeLeaveTotal={officeLeaveTotal}
-                govtHolidayRemaining={govtHolidayRemaining}
-                govtHolidayTotal={govtHolidayTotal}
-                eidFitrRemaining={eidFitrRemaining}
-                eidFitrTotal={eidFitrTotal}
-                eidAdhaRemaining={eidAdhaRemaining}
-                eidAdhaTotal={eidAdhaTotal}
-                fullLeaves={stats.fullLeaves}
-                shortHours={stats.shortHours}
-                overtimeHours={stats.overtimeHours}
-                allowOvertime={targetProfile?.allow_overtime}
-                eligibleOfficeLeave={isOfficeLeaveEligible}
-                eligibleGovtHoliday={isGovtHolidayEligible}
-                halfYearlyStats={halfYearlyStats}
-                officeDeduction={officeDeduction}
-                govtDeduction={govtDeduction}
-                workingHours={targetProfile?.working_hours || 9.5}
-                eidFitrDeduction={eidFitrDeduction}
-                eidAdhaDeduction={eidAdhaDeduction}
-              />
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t border-theme-border-input/70">
+              <button
+                type="submit"
+                disabled={submitting || !leaveType || leaveType === 'Select' || (!isFullLeave && leaveHour === '00:00') || !!validationError || isDuplicateDate || hasDateError}
+                className="w-full sm:w-auto min-w-36 flex items-center justify-center py-2.5 px-6 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all gap-2"
+              >
+                {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+                {submitting
+                  ? (editingRecord ? 'Saving...' : 'Submitting...')
+                  : (editingRecord ? 'Save Changes' : 'Submit')}
+              </button>
             </div>
+          </form>
+
+          {/* Right Column: Leave Summary Stats */}
+          <div className="lg:col-span-1">
+            <LeaveUsageSummary
+              selectedYear={selectedYear}
+              officeLeaveRemaining={officeLeaveRemaining}
+              officeLeaveTotal={officeLeaveTotal}
+              govtHolidayRemaining={govtHolidayRemaining}
+              govtHolidayTotal={govtHolidayTotal}
+              eidFitrRemaining={eidFitrRemaining}
+              eidFitrTotal={eidFitrTotal}
+              eidAdhaRemaining={eidAdhaRemaining}
+              eidAdhaTotal={eidAdhaTotal}
+              fullLeaves={stats.fullLeaves}
+              shortHours={stats.shortHours}
+              overtimeHours={stats.overtimeHours}
+              allowOvertime={targetProfile?.allow_overtime}
+              eligibleOfficeLeave={isOfficeLeaveEligible}
+              eligibleGovtHoliday={isGovtHolidayEligible}
+              halfYearlyStats={halfYearlyStats}
+              officeDeduction={officeDeduction}
+              govtDeduction={govtDeduction}
+              workingHours={targetProfile?.working_hours || 9.5}
+              eidFitrDeduction={eidFitrDeduction}
+              eidAdhaDeduction={eidAdhaDeduction}
+            />
           </div>
-        )}
+        </div>
       </div>
 
       {/* Multiple Short Leaves Confirmation Warning Modal */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { HalfYearlyOfficeLeaveStats, formatDaysAndHours } from '@/utils/dashboardHelpers';
+import { HalfYearlyOfficeLeaveStats } from '@/utils/dashboardHelpers';
 
 interface LeaveUsageSummaryProps {
   selectedYear: string;
@@ -93,11 +93,11 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
       const ded = formatParts(deduction);
       return (
         <div className="flex flex-col select-none animate-pulse">
-          <span className="text-theme-text-primary text-xs font-bold font-mono">
-            Remaining: {rem.isNegative ? '-' : ''}{rem.dayStr} (-{ded.isNegative ? '-' : ''}{ded.dayStr})
+          <span className="text-theme-text-primary text-sm font-bold font-mono">
+            Remaining: {rem.isNegative ? '-' : ''}{rem.dayStr} <span className="text-xs text-rose-400 font-medium">(-{ded.isNegative ? '-' : ''}{ded.dayStr})</span>
           </span>
           {(rem.timeParts || ded.timeParts) && (
-            <span className="text-[10px] font-medium text-theme-text-muted mt-0.5 block tracking-wide font-sans">
+            <span className="text-[11px] font-medium text-theme-text-muted mt-1 block tracking-wide font-sans">
               {rem.timeParts || '00 hrs'} (-{ded.timeParts || '00 hrs'})
             </span>
           )}
@@ -107,11 +107,11 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
 
     return (
       <div className="flex flex-col select-none">
-        <span className="text-theme-text-primary text-xs font-bold font-mono">
+        <span className="text-theme-text-primary text-sm font-bold font-mono">
           Remaining: {rem.isNegative ? '-' : ''}{rem.dayStr}
         </span>
         {rem.timeParts && (
-          <span className="text-[10px] font-medium text-theme-text-muted mt-0.5 block tracking-wide font-sans">
+          <span className="text-[11px] font-medium text-theme-text-muted mt-1 block tracking-wide font-sans">
             {rem.timeParts}
           </span>
         )}
@@ -120,21 +120,21 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
   };
 
   return (
-    <div className="bg-theme-page-bg/40 border border-theme-border-input/80 rounded-xl p-4 flex flex-col gap-4 font-sans text-xs shrink-0 self-start md:mt-0 mt-4 w-full">
-      <h4 className="font-bold text-theme-text-primary border-b border-theme-border-muted pb-2 mb-1 text-[11px] uppercase tracking-wider">
+    <div className="bg-theme-page-bg/50 border border-theme-border-input/80 rounded-2xl p-5 flex flex-col gap-3.5 font-sans text-xs shrink-0 self-start md:mt-0 mt-4 w-full shadow-lg backdrop-blur-md">
+      <h4 className="font-bold text-theme-text-muted border-b border-theme-border-muted/70 pb-3 mb-1 text-[11px] uppercase tracking-wider">
         Leave Usage Summary ({selectedYear})
       </h4>
 
       <div className="space-y-3">
         {/* Office Leave Balance */}
-        <div className="bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-          <span className="text-blue-400 block text-[9px] uppercase font-semibold">Office Leave</span>
-          <div className="flex justify-between items-start mt-1">
+        <div className="bg-theme-card-bg/40 hover:bg-theme-card-bg/60 p-3.5 rounded-xl border border-theme-border-input/70 transition-all">
+          <span className="text-blue-400 block text-[10px] uppercase font-bold tracking-wider">Office Leave</span>
+          <div className="mt-1.5">
             {renderRemainingNode(finalOfficeRemaining, officeDeduction)}
           </div>
 
           {finalOfficeRemaining < 0 && (
-            <div className="text-[9px] text-red-400 font-semibold font-sans mt-1.5 pt-1 border-t border-theme-border-muted/50 animate-pulse">
+            <div className="text-[10px] text-red-400 font-semibold font-sans mt-2 pt-1.5 border-t border-theme-border-muted/50 animate-pulse">
               ⚠️ Limit exceeded. Extra hours will be adjusted with salary.
             </div>
           )}
@@ -142,15 +142,15 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
 
         {/* Govt Holiday Balance */}
         {eligibleGovtHoliday && govtHolidayTotal > 0 && (
-          <div className="bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-            <span className="text-teal-400 block text-[9px] uppercase font-semibold">Govt Holiday</span>
-            <div className="flex justify-between items-center mt-1">
+          <div className="bg-theme-card-bg/40 hover:bg-theme-card-bg/60 p-3.5 rounded-xl border border-theme-border-input/70 transition-all">
+            <span className="text-teal-400 block text-[10px] uppercase font-bold tracking-wider">Govt Holiday</span>
+            <div className="mt-1.5">
               {isGovtChanged ? (
-                <span className="text-teal-400 text-xs font-bold font-mono animate-pulse">
-                  Remaining: {finalGovtRemaining} days (-{govtDeduction})
+                <span className="text-teal-400 text-sm font-bold font-mono animate-pulse block">
+                  Remaining: {finalGovtRemaining} days <span className="text-xs text-rose-400 font-medium">(-{govtDeduction})</span>
                 </span>
               ) : (
-                <span className="text-theme-text-primary text-xs font-bold font-mono">
+                <span className="text-theme-text-primary text-sm font-bold font-mono block">
                   Remaining: {govtHolidayRemaining} days
                 </span>
               )}
@@ -160,15 +160,15 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
 
         {/* Eid-ul-Fitr Balance */}
         {eidFitrRemaining > 0 && (
-          <div className="bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-            <span className="text-purple-400 block text-[9px] uppercase font-semibold">Eid-ul-Fitr Leave</span>
-            <div className="flex justify-between items-center mt-1">
+          <div className="bg-theme-card-bg/40 hover:bg-theme-card-bg/60 p-3.5 rounded-xl border border-theme-border-input/70 transition-all">
+            <span className="text-purple-400 block text-[10px] uppercase font-bold tracking-wider">Eid-ul-Fitr Leave</span>
+            <div className="mt-1.5">
               {isEidFitrChanged ? (
-                <span className="text-purple-400 text-xs font-bold font-mono animate-pulse">
-                  Remaining: {finalEidFitrRemaining} days (-{eidFitrDeduction})
+                <span className="text-purple-400 text-sm font-bold font-mono animate-pulse block">
+                  Remaining: {finalEidFitrRemaining} days <span className="text-xs text-rose-400 font-medium">(-{eidFitrDeduction})</span>
                 </span>
               ) : (
-                <span className="text-theme-text-primary text-xs font-bold font-mono">
+                <span className="text-theme-text-primary text-sm font-bold font-mono block">
                   Remaining: {eidFitrRemaining} days
                 </span>
               )}
@@ -178,15 +178,15 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
 
         {/* Eid-ul-Adha Balance */}
         {eidAdhaRemaining > 0 && (
-          <div className="bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-            <span className="text-purple-400 block text-[9px] uppercase font-semibold">Eid-ul-Adha Leave</span>
-            <div className="flex justify-between items-center mt-1">
+          <div className="bg-theme-card-bg/40 hover:bg-theme-card-bg/60 p-3.5 rounded-xl border border-theme-border-input/70 transition-all">
+            <span className="text-purple-400 block text-[10px] uppercase font-bold tracking-wider">Eid-ul-Adha Leave</span>
+            <div className="mt-1.5">
               {isEidAdhaChanged ? (
-                <span className="text-purple-400 text-xs font-bold font-mono animate-pulse">
-                  Remaining: {finalEidAdhaRemaining} days (-{eidAdhaDeduction})
+                <span className="text-purple-400 text-sm font-bold font-mono animate-pulse block">
+                  Remaining: {finalEidAdhaRemaining} days <span className="text-xs text-rose-400 font-medium">(-{eidAdhaDeduction})</span>
                 </span>
               ) : (
-                <span className="text-theme-text-primary text-xs font-bold font-mono">
+                <span className="text-theme-text-primary text-sm font-bold font-mono block">
                   Remaining: {eidAdhaRemaining} days
                 </span>
               )}
@@ -196,31 +196,25 @@ export const LeaveUsageSummary: React.FC<LeaveUsageSummaryProps> = ({
 
         {/* Full Leave Stat */}
         {fullLeaves > 0 && (
-          <div className="flex justify-between items-center bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-            <div>
-              <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">Full Leave Taken</span>
-              <span className="text-theme-text-primary text-xs font-bold font-mono">{fullLeaves} days</span>
-            </div>
+          <div className="bg-theme-card-bg/40 hover:bg-theme-card-bg/60 p-3.5 rounded-xl border border-theme-border-input/70 transition-all">
+            <span className="text-theme-text-muted block text-[10px] uppercase font-bold tracking-wider">Full Leave Taken</span>
+            <span className="text-theme-text-primary text-sm font-bold font-mono mt-0.5 block">{fullLeaves} days</span>
           </div>
         )}
 
         {/* Short Leave Stat */}
         {shortHours && shortHours !== '00:00' && shortHours !== '-00:00' && (
-          <div className="flex justify-between items-center bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-            <div>
-              <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">Short Leave Taken</span>
-              <span className="text-theme-text-primary text-xs font-bold font-mono">{shortHours} hrs</span>
-            </div>
+          <div className="bg-theme-card-bg/40 hover:bg-theme-card-bg/60 p-3.5 rounded-xl border border-theme-border-input/70 transition-all">
+            <span className="text-theme-text-muted block text-[10px] uppercase font-bold tracking-wider">Short Leave Taken</span>
+            <span className="text-theme-text-primary text-sm font-bold font-mono mt-0.5 block">{shortHours} hrs</span>
           </div>
         )}
 
         {/* Overtime Stat */}
         {allowOvertime && overtimeHours && overtimeHours !== '00:00' && overtimeHours !== '-00:00' && (
-          <div className="flex justify-between items-center bg-theme-card-bg/30 p-2.5 rounded-lg border border-theme-border-muted">
-            <div>
-              <span className="text-theme-text-muted block text-[9px] uppercase font-semibold">Total Overtime</span>
-              <span className="text-theme-text-primary text-xs font-bold font-mono">{overtimeHours} hrs</span>
-            </div>
+          <div className="bg-theme-card-bg/40 hover:bg-theme-card-bg/60 p-3.5 rounded-xl border border-theme-border-input/70 transition-all">
+            <span className="text-theme-text-muted block text-[10px] uppercase font-bold tracking-wider">Total Overtime</span>
+            <span className="text-theme-text-primary text-sm font-bold font-mono mt-0.5 block">{overtimeHours} hrs</span>
           </div>
         )}
       </div>
