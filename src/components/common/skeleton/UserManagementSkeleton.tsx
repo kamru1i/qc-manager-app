@@ -9,11 +9,11 @@ export const UserManagementSkeleton: React.FC<UserManagementSkeletonProps> = ({
   rows = 8,
   className = "",
 }) => {
-  const bar = "bg-slate-800/50 rounded-lg";
-  const barLight = "bg-slate-800/25 rounded";
+  const bar = "bg-theme-border-input/40 rounded-lg";
+  const barLight = "bg-theme-border-input/25 rounded";
 
   return (
-    <div className={`space-y-5 animate-pulse ${className}`}>
+    <div className={`space-y-5 animate-pulse font-sans ${className}`}>
       {/* Header: Title + Add New Staff button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="space-y-1.5">
@@ -24,15 +24,15 @@ export const UserManagementSkeleton: React.FC<UserManagementSkeletonProps> = ({
       </div>
 
       {/* Search bar + Showing X users */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-955/45 p-4 rounded-xl border border-slate-800/40">
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-theme-card-bg/40 backdrop-blur-xl p-4 rounded-xl border border-theme-border-input/60">
         <div className={`h-9 w-full md:max-w-xs ${bar} rounded-xl`} />
         <div className={`h-3 w-24 ${barLight}`} />
       </div>
 
       {/* Table */}
-      <div className="bg-slate-955/20 rounded-xl border border-slate-850 overflow-hidden">
+      <div className="bg-theme-card-bg/30 backdrop-blur-xl rounded-xl border border-theme-border-input/80 overflow-hidden shadow-xl">
         {/* Table header */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3 border-b border-slate-800 bg-slate-900/40">
+        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3 border-b border-theme-border-input/70 bg-theme-page-bg/60">
           {[
             "NAME / CODENAME",
             "ROLE",
@@ -48,7 +48,7 @@ export const UserManagementSkeleton: React.FC<UserManagementSkeletonProps> = ({
         </div>
 
         {/* Table rows */}
-        <div className="divide-y divide-slate-850">
+        <div className="divide-y divide-theme-border-input/40 bg-theme-card-bg/10">
           {Array.from({ length: rows }).map((_, i) => (
             <div
               key={i}

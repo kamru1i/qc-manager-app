@@ -10,87 +10,65 @@ export const LeaveHistorySkeleton: React.FC<LeaveHistorySkeletonProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`w-full space-y-6 animate-pulse ${className}`}>
-      {/* Top Header Row (Optional back button placeholder) */}
-      <div className="flex justify-between items-center">
-        <div className="h-9 w-32 bg-slate-800 rounded-lg"></div>
-      </div>
-
-      {/* Stats Cards Section */}
-      <div className="flex flex-wrap gap-4 w-full">
-        {Array.from({ length: 4 }).map((_, idx) => (
+    <div className={`w-full space-y-6 animate-pulse font-sans ${className}`}>
+      {/* Stats Cards Section (5 Cards across row) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
+        {Array.from({ length: 5 }).map((_, idx) => (
           <div
             key={idx}
-            className="flex-1 min-w-[200px] bg-slate-900/40 border border-slate-900 rounded-2xl p-5 flex items-center justify-between gap-4 min-h-[102px]"
+            className="bg-theme-card-bg/40 border border-theme-border-muted/80 rounded-2xl p-4 flex items-center gap-3.5 min-h-[88px] shadow-lg"
           >
-            <div className="flex items-center gap-4 flex-1">
-              <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/20 shrink-0 h-12 w-12 flex items-center justify-center">
-                <div className="h-6 w-6 bg-slate-800 rounded-md"></div>
-              </div>
-              <div className="flex-1 flex flex-col gap-1.5">
-                <div className="h-3 w-20 bg-slate-800 rounded"></div>
-                <div className="h-6 w-12 bg-slate-800 rounded mt-0.5"></div>
-              </div>
+            <div className="p-2.5 rounded-xl border border-theme-border-input/50 bg-theme-page-bg/40 shrink-0 h-10 w-10 flex items-center justify-center">
+              <div className="h-5 w-5 bg-theme-border-input/40 rounded"></div>
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <div className="h-2.5 w-24 bg-theme-border-input/40 rounded"></div>
+              <div className="h-5 w-16 bg-theme-border-input/50 rounded mt-0.5"></div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-slate-900/20 border border-slate-850 rounded-2xl overflow-hidden">
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-muted/80 rounded-2xl overflow-hidden shadow-2xl">
         {/* Table Title and Actions */}
-        <div className="px-6 py-5 border-b border-slate-850 bg-slate-900/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="px-6 py-5 border-b border-theme-border-input/70 bg-theme-page-bg/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="space-y-1.5 flex-1">
-            <div className="h-5 w-48 bg-slate-800 rounded"></div>
-            <div className="h-3 w-72 bg-slate-805/60 rounded"></div>
+            <div className="h-4.5 w-48 bg-theme-border-input/50 rounded"></div>
+            <div className="h-3 w-28 bg-theme-border-input/30 rounded"></div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-9 w-20 bg-slate-900/20 border border-slate-850 rounded-lg"></div>
-            <div className="h-9 w-20 bg-slate-900/20 border border-slate-850 rounded-lg"></div>
-          </div>
-        </div>
-
-        {/* Filter Bar Inside Card */}
-        <div className="p-6 border-b border-slate-850">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-3 space-y-2">
-              <div className="h-3 w-48 bg-slate-800 rounded"></div>
-              <div className="h-10 w-full bg-slate-900/20 border border-slate-850 rounded-lg"></div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-3 w-28 bg-slate-800 rounded"></div>
-              <div className="flex gap-2">
-                <div className="h-10 flex-1 bg-slate-900/20 border border-slate-850 rounded-lg"></div>
-                <div className="h-10 w-10 bg-slate-900/20 border border-slate-850 rounded-lg"></div>
-              </div>
-            </div>
+            <div className="h-9 w-28 bg-theme-page-bg/50 border border-theme-border-input/60 rounded-xl"></div>
+            <div className="h-9 w-48 bg-theme-page-bg/50 border border-theme-border-input/60 rounded-xl"></div>
+            <div className="h-9 w-20 bg-theme-page-bg/50 border border-theme-border-input/60 rounded-xl"></div>
+            <div className="h-9 w-20 bg-theme-page-bg/50 border border-theme-border-input/60 rounded-xl"></div>
           </div>
         </div>
 
         {/* Table headers and rows */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-850">
-            <thead className="bg-slate-900/30">
+        <div className="overflow-x-auto p-4">
+          <table className="min-w-full divide-y divide-theme-border-input/60">
+            <thead className="bg-theme-page-bg/60">
               <tr>
-                <th className="px-6 py-3.5 text-center"><div className="h-3 w-16 bg-slate-800 rounded mx-auto"></div></th>
-                <th className="px-6 py-3.5 text-center"><div className="h-3 w-20 bg-slate-800 rounded mx-auto"></div></th>
-                <th className="px-6 py-3.5 text-center"><div className="h-3 w-24 bg-slate-800 rounded mx-auto"></div></th>
-                <th className="px-6 py-3.5 text-center"><div className="h-3 w-28 bg-slate-800 rounded mx-auto"></div></th>
-                {allowOvertime && <th className="px-6 py-3.5 text-center"><div className="h-3 w-16 bg-slate-800 rounded mx-auto"></div></th>}
-                <th className="px-6 py-3.5 text-left"><div className="h-3 w-28 bg-slate-800 rounded"></div></th>
-                <th className="px-6 py-3.5 text-right"><div className="h-3 w-20 bg-slate-800 rounded ml-auto"></div></th>
+                <th className="px-6 py-3.5 text-center"><div className="h-3 w-16 bg-theme-border-input/50 rounded mx-auto"></div></th>
+                <th className="px-6 py-3.5 text-center"><div className="h-3 w-20 bg-theme-border-input/50 rounded mx-auto"></div></th>
+                <th className="px-6 py-3.5 text-center"><div className="h-3 w-24 bg-theme-border-input/50 rounded mx-auto"></div></th>
+                <th className="px-6 py-3.5 text-center"><div className="h-3 w-28 bg-theme-border-input/50 rounded mx-auto"></div></th>
+                {allowOvertime && <th className="px-6 py-3.5 text-center"><div className="h-3 w-16 bg-theme-border-input/50 rounded mx-auto"></div></th>}
+                <th className="px-6 py-3.5 text-left"><div className="h-3 w-28 bg-theme-border-input/50 rounded"></div></th>
+                <th className="px-6 py-3.5 text-right"><div className="h-3 w-20 bg-theme-border-input/50 rounded ml-auto"></div></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-850/60">
-              {Array.from({ length: 4 }).map((_, idx) => (
+            <tbody className="divide-y divide-theme-border-input/40 bg-theme-card-bg/20">
+              {Array.from({ length: 5 }).map((_, idx) => (
                 <tr key={idx}>
-                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-20 bg-slate-800 rounded mx-auto"></div></td>
-                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-slate-800 rounded mx-auto"></div></td>
-                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-slate-800 rounded mx-auto"></div></td>
-                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-28 bg-slate-800 rounded mx-auto"></div></td>
-                  {allowOvertime && <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-12 bg-slate-800 rounded mx-auto"></div></td>}
-                  <td className="px-6 py-4"><div className="h-4 w-44 bg-slate-800 rounded"></div></td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right"><div className="h-4 w-28 bg-slate-800 rounded ml-auto"></div></td>
+                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-20 bg-theme-border-input/40 rounded mx-auto"></div></td>
+                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-theme-border-input/40 rounded mx-auto"></div></td>
+                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-theme-border-input/40 rounded mx-auto"></div></td>
+                  <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-28 bg-theme-border-input/40 rounded mx-auto"></div></td>
+                  {allowOvertime && <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-12 bg-theme-border-input/40 rounded mx-auto"></div></td>}
+                  <td className="px-6 py-4"><div className="h-4 w-44 bg-theme-border-input/40 rounded"></div></td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right"><div className="h-4 w-4 bg-theme-border-input/40 rounded-full ml-auto"></div></td>
                 </tr>
               ))}
             </tbody>
