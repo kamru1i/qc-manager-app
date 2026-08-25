@@ -5,6 +5,7 @@ import { MonthlyListSkeleton } from "@/components/common/skeleton/MonthlyListSke
 import { QuoteRulesSkeleton } from "@/components/common/skeleton/QuoteRulesSkeleton";
 import { LeaderboardSkeleton } from "@/components/common/skeleton/LeaderboardSkeleton";
 import { ReportsDashboardSkeleton } from "@/components/common/skeleton/ReportsDashboardSkeleton";
+import { SanitizerSkeleton } from "@/components/common/skeleton/SanitizerSkeleton";
 
 import { LoginCodesSkeleton } from "@/components/common/skeleton/LoginCodesSkeleton";
 import { AsitisCausalitySkeleton } from "@/components/common/skeleton/AsitisCausalitySkeleton";
@@ -25,6 +26,9 @@ interface SkeletonLoaderProps {
     | "reports"
     | "my_report"
     | "all_report"
+    | "sanitizer"
+    | "file-sanitizer"
+    | "file_sanitizer"
     | "audit-logs"
     | "login_codes"
     | "asitis_causality"
@@ -170,6 +174,10 @@ export function SkeletonLoader({ type, variant, rows = 4 }: SkeletonLoaderProps)
 
   if (activeType === "reports-dashboard" || activeType === "reports" || activeType === "my_report" || activeType === "all_report") {
     return <ReportsDashboardSkeleton />;
+  }
+
+  if (activeType === "sanitizer" || activeType === "file-sanitizer" || activeType === "file_sanitizer") {
+    return <SanitizerSkeleton />;
   }
 
   if (activeType === "login_codes") {
