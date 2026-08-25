@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RecordItem, Profile } from '@/types';
-import { LeaderboardSkeleton } from '@/components/common/skeleton/LeaderboardSkeleton';
+import { ReportsDashboardSkeleton } from '@/components/common/skeleton/ReportsDashboardSkeleton';
 import { ReportsDashboardView } from './ReportsDashboardView';
 import { getCacheData } from '@/utils/quotesOfflineSync';
 import { isAdminRole } from '@/utils/permissionService';
@@ -45,7 +45,7 @@ export const ReportsPanel: React.FC<ReportsPanelProps> = ({
   }, [records]);
 
   if (isLoading && isFirstLoad) {
-    return <LeaderboardSkeleton />;
+    return <ReportsDashboardSkeleton />;
   }
 
   // Determine records based on tab (normal users only get their records)

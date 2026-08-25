@@ -1296,7 +1296,7 @@ export default function QuotesDashboard({
       )}
 
       {(activeTab === "my_report" || activeTab === "reports") && (
-        <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
+        <Suspense fallback={<SkeletonLoader variant="reports-dashboard" />}>
           <ReportsPanel
             records={records}
             profilesList={profilesList}
@@ -1307,7 +1307,7 @@ export default function QuotesDashboard({
       )}
 
       {activeTab === "all_report" && (
-        <Suspense fallback={<SkeletonLoader type="leaderboard" />}>
+        <Suspense fallback={<SkeletonLoader variant="reports-dashboard" />}>
           <ReportsPanel
             records={records}
             profilesList={profilesList}

@@ -16,7 +16,7 @@ export const OperationalInsights: React.FC<OperationalInsightsProps> = ({
   stats,
 }) => {
   return (
-    <div className="bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl shadow-xl flex flex-col justify-between min-h-96">
+    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-5 rounded-2xl shadow-xl flex flex-col justify-between min-h-96">
       <div>
         <h4 className="text-sm font-bold text-theme-text-primary mb-5 flex items-center gap-2">
           <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />

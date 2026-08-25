@@ -102,14 +102,14 @@ export const ReportSummaryCards: React.FC<ReportSummaryCardsProps> = ({
         return (
           <div
             key={def.key}
-            className={`relative overflow-hidden bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl shadow-xl transition-all duration-300 group ${def.hover}`}
+            className={`relative overflow-hidden bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-5 rounded-2xl shadow-xl transition-all duration-300 group ${def.hover}`}
           >
             <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl transition-all duration-300 ${def.glow}`}></div>
             <div className="flex justify-between items-start gap-2">
               <div className="space-y-1.5 min-w-0">
-                <p className="text-xs font-semibold text-slate-400">{def.title}</p>
+                <p className="text-xs font-semibold text-theme-text-muted">{def.title}</p>
                 <div className="space-y-1 mt-1.5">
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all">
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-theme-text-primary tracking-tight break-all font-mono">
                     {stats[def.key]}
                   </h3>
                   <div>
@@ -121,11 +121,11 @@ export const ReportSummaryCards: React.FC<ReportSummaryCardsProps> = ({
                 <Icon className="h-5 w-5" />
               </div>
             </div>
-            <p className="text-[10px] text-slate-500 mt-4 font-medium flex justify-between items-center">
+            <p className="text-[10px] text-theme-text-muted mt-4 font-medium flex justify-between items-center">
               <span>
                 {def.noun} in {scopeLabel}
               </span>
-              <span className="text-[9px] text-slate-500 opacity-80">
+              <span className="text-[9px] text-theme-text-muted opacity-80 font-mono">
                 vs. prev {comparisonLabel}
               </span>
             </p>

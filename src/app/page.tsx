@@ -1502,8 +1502,10 @@ function AppPortalInner({
                   <SkeletonLoader variant="staff-table" rows={8} />
                 ) : activeTab === "todo" ? (
                   <SkeletonLoader variant="todo" />
-                ) : activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report" ? (
+                ) : activeTab === "leaderboard" ? (
                   <SkeletonLoader variant="leaderboard" />
+                ) : activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report" ? (
+                  <SkeletonLoader variant="reports-dashboard" />
                 ) : activeTab === "kpi" ? (
                   <SkeletonLoader variant="kpi" />
                 ) : activeTab === "profile_settings" ? (

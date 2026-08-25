@@ -24,7 +24,7 @@ export const BranchContributionChart: React.FC<BranchContributionChartProps> = (
   scopeLabel,
 }) => {
   return (
-    <div className="bg-slate-950/40 border border-slate-800/85 p-5 rounded-2xl shadow-xl flex flex-col h-full">
+    <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-5 rounded-2xl shadow-xl flex flex-col h-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
         <h4 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
           <MapPin className="h-4.5 w-4.5 text-emerald-400" />

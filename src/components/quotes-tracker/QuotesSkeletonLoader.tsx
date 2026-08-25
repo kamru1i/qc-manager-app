@@ -4,6 +4,7 @@ import { DailyEntrySkeleton } from "@/components/common/skeleton/DailyEntrySkele
 import { MonthlyListSkeleton } from "@/components/common/skeleton/MonthlyListSkeleton";
 import { QuoteRulesSkeleton } from "@/components/common/skeleton/QuoteRulesSkeleton";
 import { LeaderboardSkeleton } from "@/components/common/skeleton/LeaderboardSkeleton";
+import { ReportsDashboardSkeleton } from "@/components/common/skeleton/ReportsDashboardSkeleton";
 
 import { LoginCodesSkeleton } from "@/components/common/skeleton/LoginCodesSkeleton";
 import { AsitisCausalitySkeleton } from "@/components/common/skeleton/AsitisCausalitySkeleton";
@@ -20,8 +21,11 @@ interface SkeletonLoaderProps {
     | "rules"
     | "users"
     | "leaderboard"
+    | "reports-dashboard"
+    | "reports"
+    | "my_report"
+    | "all_report"
     | "audit-logs"
-    | "login_codes"
     | "login_codes"
     | "asitis_causality"
     | "eui_causality"
@@ -29,15 +33,17 @@ interface SkeletonLoaderProps {
     | "copy_helper"
     | "save_file"
     | "generic";
+  variant?: string;
   rows?: number;
 }
 
-export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderProps) {
+export function SkeletonLoader({ type, variant, rows = 4 }: SkeletonLoaderProps) {
+  const activeType = type || variant || "generic";
   // Common skeleton card wrapper style
   const cardBg = "bg-theme-card-bg/30 border border-theme-border-muted/80 backdrop-blur-md rounded-2xl p-5 animate-pulse";
   const innerBg = "bg-theme-border-input/40 rounded-lg";
 
-  if (type === "stats") {
+  if (activeType === "stats") {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
         {[...Array(4)].map((_, i) => (
@@ -51,19 +57,19 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
     );
   }
 
-  if (type === "table") {
+  if (activeType === "table") {
     return <MonthlyListSkeleton rows={rows} />;
   }
 
-  if (type === "form") {
+  if (activeType === "form") {
     return <DailyEntrySkeleton />;
   }
 
-  if (type === "copy-helper" || type === "copy_helper") {
+  if (activeType === "copy-helper" || activeType === "copy_helper") {
     return <CopyHelperSkeleton />;
   }
 
-  if (type === "save-file") {
+  if (activeType === "save-file" || activeType === "save_file") {
     return (
       <div className="bg-theme-page-bg/20 border border-theme-border-muted/80 rounded-2xl p-5 space-y-6 animate-pulse">
         {/* Header */}
@@ -109,11 +115,11 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
     );
   }
 
-  if (type === "rules") {
+  if (activeType === "rules") {
     return <QuoteRulesSkeleton />;
   }
 
-  if (type === "users") {
+  if (activeType === "users") {
     return (
       <div className="space-y-6 w-full">
         <div className="space-y-1 animate-pulse">
@@ -158,17 +164,19 @@ export function SkeletonLoader({ type = "generic", rows = 4 }: SkeletonLoaderPro
     );
   }
 
-  if (type === "leaderboard") {
+  if (activeType === "leaderboard") {
     return <LeaderboardSkeleton />;
   }
 
+  if (activeType === "reports-dashboard" || activeType === "reports" || activeType === "my_report" || activeType === "all_report") {
+    return <ReportsDashboardSkeleton />;
+  }
 
-
-  if (type === "login_codes") {
+  if (activeType === "login_codes") {
     return <LoginCodesSkeleton />;
   }
 
-  if (type === "asitis_causality" || type === "eui_causality" || type === "causality") {
+  if (activeType === "asitis_causality" || activeType === "eui_causality" || activeType === "causality") {
     return <AsitisCausalitySkeleton />;
   }
 

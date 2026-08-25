@@ -32,7 +32,7 @@ export const SubmissionVolumeChart: React.FC<SubmissionVolumeChartProps> = ({
   } | null>(null);
 
   return (
-    <div className="lg:col-span-2 bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl shadow-xl relative min-h-96">
+    <div className="lg:col-span-2 bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-5 rounded-2xl shadow-xl relative min-h-96">
       <h4 className="text-sm font-bold text-theme-text-primary mb-6 flex items-center gap-2">
         <Calendar className="h-4.5 w-4.5 text-blue-400" />
         Monthly Submission Volumes ({selectedYear})

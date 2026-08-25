@@ -261,24 +261,24 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Filter Header (Remove backdrop-blur-md to fix Safari native select dropdown popup glitch) */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/80 p-4 border border-slate-800/60 rounded-2xl">
+      {/* Filter Header */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-theme-card-bg/40 backdrop-blur-xl p-4 border border-theme-border-input/80 rounded-2xl shadow-xl">
         <div>
           <h2 className="text-lg font-bold text-theme-text-primary flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-500" />
             Performance Reports
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5 font-medium">
+          <p className="text-xs text-theme-text-muted mt-0.5 font-medium">
             Detailed volumes, charts, and branch contributions in real-time.
           </p>
         </div>
 
         <div className="flex flex-col items-center sm:flex-row sm:items-center gap-3 w-full lg:w-auto shrink-0">
-          <div className="flex items-center bg-slate-950/60 border border-slate-800 p-1 rounded-xl w-fit">
+          <div className="flex items-center bg-theme-page-bg border border-theme-border-input/60 p-1 rounded-xl w-fit">
             <button
               onClick={() => setMetricsTimeScope('yearly')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                metricsTimeScope === 'yearly' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-theme-text-primary font-medium'
+                metricsTimeScope === 'yearly' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-theme-text-muted hover:text-theme-text-primary font-medium'
               }`}
             >
               Yearly
@@ -286,7 +286,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
             <button
               onClick={() => setMetricsTimeScope('monthly')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                metricsTimeScope === 'monthly' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-theme-text-primary font-medium'
+                metricsTimeScope === 'monthly' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-theme-text-muted hover:text-theme-text-primary font-medium'
               }`}
             >
               Monthly
@@ -294,7 +294,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
           </div>
 
           <div className="flex flex-row items-center gap-2 w-full sm:w-auto relative z-30">
-            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl min-w-25">
+            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-theme-page-bg border border-theme-border-input/60 px-3 py-1.5 rounded-xl min-w-25">
               <CustomSelect
                 value={selectedMonth}
                 onChange={setSelectedMonth}
@@ -306,7 +306,7 @@ export const ReportsDashboardView: React.FC<ReportsDashboardViewProps> = ({
                 className="w-full"
               />
             </div>
-            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl min-w-20">
+            <div className="flex-1 sm:flex-none flex items-center gap-2 bg-theme-page-bg border border-theme-border-input/60 px-3 py-1.5 rounded-xl min-w-20">
               <CustomSelect
                 value={selectedYear}
                 onChange={setSelectedYear}
