@@ -1,6 +1,12 @@
 --
 -- PostgreSQL database dump
 --
+-- NOTE: This file is a REFERENCE SNAPSHOT, not the live source of truth.
+-- The authoritative schema is the live Supabase database.
+-- Attendance module tables (attendance_daily, attendance_breaks) were removed
+-- from this snapshot on 2026-08-25 to match migration 20260821170000.
+-- To regenerate from live DB: supabase db dump --linked -f supabase/schema.sql
+--
 
 \restrict KGgVatirYb3Y1Kz2ZWJ2YZ67B8HHFQkXzCDO3DNWRWxLMSHyKrnizOtueEfnchb
 
@@ -25,13 +31,11 @@ SET row_security = off;
 
 CREATE SCHEMA public;
 
-
 --
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
-
 
 --
 -- Name: admin_insert_chuti_records_bulk(uuid, date[], text, boolean[], boolean, time without time zone, time without time zone, interval, text, text, uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -52,7 +56,6 @@ BEGIN
   );
 END;
 $$;
-
 
 --
 -- Name: admin_insert_chuti_records_bulk_internal(uuid, date[], text, boolean[], boolean, time without time zone, time without time zone, interval, text, text, uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -107,7 +110,6 @@ BEGIN
   END LOOP;
 END;
 $$;
-
 
 --
 -- Name: admin_update_user_credentials(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -208,7 +210,6 @@ BEGIN
   WHERE a.id = auth.uid();
 END;
 $_$;
-
 
 --
 -- Name: archive_and_prune_old_records(text); Type: FUNCTION; Schema: public; Owner: -
@@ -318,7 +319,6 @@ BEGIN
   );
 END;
 $$;
-
 
 --
 -- Name: audit_business_row_change(); Type: FUNCTION; Schema: public; Owner: -
@@ -478,7 +478,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: can_read_profile(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -517,7 +516,6 @@ BEGIN
   RETURN false;
 END;
 $$;
-
 
 --
 -- Name: can_write_quotation_mistakes(); Type: FUNCTION; Schema: public; Owner: -
@@ -583,7 +581,6 @@ EXCEPTION WHEN invalid_datetime_format THEN
 END;
 $$;
 
-
 --
 -- Name: change_default_password(text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -638,7 +635,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: check_profile_role_change(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -676,7 +672,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: check_profile_updates(); Type: FUNCTION; Schema: public; Owner: -
@@ -827,7 +822,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: complete_leave_profile_setup(text, numeric, integer, text, time without time zone, time without time zone); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -888,7 +882,6 @@ BEGIN
   );
 END;
 $$;
-
 
 --
 -- Name: complete_profile_setup(text, text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -956,7 +949,6 @@ BEGIN
 END;
 $_$;
 
-
 --
 -- Name: convert_govt_holiday_response(uuid, date, text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -974,7 +966,6 @@ BEGIN
   );
 END;
 $$;
-
 
 --
 -- Name: convert_govt_holiday_response_internal(uuid, date, text); Type: FUNCTION; Schema: public; Owner: -
@@ -1038,7 +1029,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: convert_short_leave_to_full_leave(uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1056,7 +1046,6 @@ BEGIN
   );
 END;
 $$;
-
 
 --
 -- Name: convert_short_leave_to_full_leave_internal(uuid, text); Type: FUNCTION; Schema: public; Owner: -
@@ -1193,7 +1182,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: create_configured_user(text, text, text, text, text, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1294,7 +1282,6 @@ BEGIN
   RETURN v_user_id;
 END;
 $$;
-
 
 --
 -- Name: create_new_user(text, text, text, text, text, boolean, boolean, boolean, uuid[]); Type: FUNCTION; Schema: public; Owner: -
@@ -1420,7 +1407,6 @@ BEGIN
 END;
 $_$;
 
-
 --
 -- Name: current_user_has_workspace(text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1439,7 +1425,6 @@ CREATE FUNCTION public.current_user_has_workspace(p_workspace text) RETURNS bool
   FROM public.profiles p
   WHERE p.id = auth.uid();
 $$;
-
 
 --
 -- Name: delete_user_by_id(uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -1481,7 +1466,6 @@ BEGIN
   DELETE FROM auth.users WHERE id = p_user_id;
 END;
 $$;
-
 
 --
 -- Name: enforce_chuti_write_permissions(); Type: FUNCTION; Schema: public; Owner: -
@@ -1592,7 +1576,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: enforce_kpi_assessment_permissions(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1682,7 +1665,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: enforce_leave_settlement_permissions(); Type: FUNCTION; Schema: public; Owner: -
@@ -1775,7 +1757,6 @@ BEGIN
 END;
 $_$;
 
-
 --
 -- Name: enforce_quotation_mistake_metadata(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1821,7 +1802,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: get_admin_sales_summary(text, text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1863,7 +1843,6 @@ BEGIN
 END;
 $_$;
 
-
 --
 -- Name: get_available_record_months(uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1892,7 +1871,6 @@ BEGIN
   ORDER BY date_trunc('month', r.submitted_at AT TIME ZONE p_tz);
 END;
 $$;
-
 
 --
 -- Name: get_leaderboard_data(text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -1998,7 +1976,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: get_my_role(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2013,7 +1990,6 @@ CREATE FUNCTION public.get_my_role() RETURNS text
     WHERE p.id = (SELECT auth.uid())
   ), 'none');
 $$;
-
 
 --
 -- Name: get_user_email_by_username(text); Type: FUNCTION; Schema: public; Owner: -
@@ -2034,22 +2010,6 @@ BEGIN
   RETURN v_email;
 END;
 $$;
-
-
---
--- Name: handle_attendance_updated_at(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.handle_attendance_updated_at() RETURNS trigger
-    LANGUAGE plpgsql
-    SET search_path TO 'public', 'pg_temp'
-    AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$;
-
 
 --
 -- Name: handle_new_user(); Type: FUNCTION; Schema: public; Owner: -
@@ -2108,7 +2068,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: has_kpi_access(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2129,7 +2088,6 @@ CREATE FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) RETU
         )
     );
 $$;
-
 
 --
 -- Name: has_leave_access(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -2158,7 +2116,6 @@ CREATE FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) RE
     );
 $$;
 
-
 --
 -- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2169,7 +2126,6 @@ CREATE FUNCTION public.is_admin() RETURNS boolean
     AS $$
   SELECT public.get_my_role() IN ('admin', 'superadmin');
 $$;
-
 
 --
 -- Name: is_admin_or_superadmin(uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -2187,7 +2143,6 @@ CREATE FUNCTION public.is_admin_or_superadmin(user_id uuid) RETURNS boolean
   );
 $_$;
 
-
 --
 -- Name: is_admin_or_supervisor(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2198,7 +2153,6 @@ CREATE FUNCTION public.is_admin_or_supervisor() RETURNS boolean
     AS $$
   SELECT public.get_my_role() IN ('admin', 'supervisor', 'superadmin');
 $$;
-
 
 --
 -- Name: is_superadmin(); Type: FUNCTION; Schema: public; Owner: -
@@ -2211,7 +2165,6 @@ CREATE FUNCTION public.is_superadmin() RETURNS boolean
   SELECT public.get_my_role() = 'superadmin';
 $$;
 
-
 --
 -- Name: is_supervisor(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2222,7 +2175,6 @@ CREATE FUNCTION public.is_supervisor() RETURNS boolean
     AS $$
   SELECT public.get_my_role() = 'supervisor';
 $$;
-
 
 --
 -- Name: reconcile_govt_holiday_adjustments(uuid, integer); Type: FUNCTION; Schema: public; Owner: -
@@ -2269,7 +2221,6 @@ BEGIN
   RETURN v_changed;
 END;
 $$;
-
 
 --
 -- Name: register_active_session(text); Type: FUNCTION; Schema: public; Owner: -
@@ -2338,7 +2289,6 @@ BEGIN
 END;
 $_$;
 
-
 --
 -- Name: request_password_reset(text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2365,7 +2315,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: reset_all_user_feature_flags(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2384,7 +2333,6 @@ BEGIN
   WHERE global_settings ? 'user_feature_flags';
 END;
 $$;
-
 
 --
 -- Name: resolve_password_reset(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
@@ -2427,7 +2375,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: save_global_leave_settings(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2443,7 +2390,6 @@ BEGIN
   PERFORM public.save_global_leave_settings_internal(p_settings);
 END;
 $$;
-
 
 --
 -- Name: save_global_leave_settings_internal(jsonb); Type: FUNCTION; Schema: public; Owner: -
@@ -2633,7 +2579,6 @@ BEGIN
 END;
 $_$;
 
-
 --
 -- Name: set_admin_delegated_flags(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2657,7 +2602,6 @@ BEGIN
   WHERE true;  -- intentional: global_settings is replicated to every row
 END;
 $$;
-
 
 --
 -- Name: set_feature_flags(jsonb); Type: FUNCTION; Schema: public; Owner: -
@@ -2716,7 +2660,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: set_govt_holiday_response_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2730,7 +2673,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: set_role_visibility(jsonb); Type: FUNCTION; Schema: public; Owner: -
@@ -2756,7 +2698,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: set_sanitizer_rules(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2781,7 +2722,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: set_sanitizer_words(text[]); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2805,7 +2745,6 @@ BEGIN
   WHERE true;  -- intentional: global_settings is replicated to every row
 END;
 $$;
-
 
 --
 -- Name: set_supervisor_access_overrides(jsonb); Type: FUNCTION; Schema: public; Owner: -
@@ -2836,7 +2775,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: set_temp_access(jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2861,7 +2799,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: set_user_hidden_tabs(uuid, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2885,7 +2822,6 @@ BEGIN
   WHERE id = p_user_id;
 END;
 $$;
-
 
 --
 -- Name: sync_profile_govt_holiday_entitlements(); Type: FUNCTION; Schema: public; Owner: -
@@ -2972,7 +2908,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: sync_top_performer_badges(); Type: FUNCTION; Schema: public; Owner: -
@@ -3083,7 +3018,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: update_chuti_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -3096,7 +3030,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: update_compliance_rules_updated_at(); Type: FUNCTION; Schema: public; Owner: -
@@ -3112,7 +3045,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: update_global_settings_key(uuid, text, jsonb); Type: FUNCTION; Schema: public; Owner: -
@@ -3146,7 +3078,6 @@ BEGIN
 END;
 $$;
 
-
 --
 -- Name: update_records_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -3160,7 +3091,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 --
 -- Name: update_todos_last_activity(); Type: FUNCTION; Schema: public; Owner: -
@@ -3176,49 +3106,9 @@ BEGIN
 END;
 $$;
 
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
-
---
--- Name: attendance_breaks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.attendance_breaks (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    attendance_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    attendance_date date NOT NULL,
-    type text NOT NULL,
-    start_time timestamp with time zone NOT NULL,
-    end_time timestamp with time zone,
-    duration_minutes numeric(8,2) DEFAULT 0 NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT attendance_breaks_type_check CHECK ((type = ANY (ARRAY['snack'::text, 'prayer'::text])))
-);
-
-
---
--- Name: attendance_daily; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.attendance_daily (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    attendance_date date NOT NULL,
-    join_time timestamp with time zone,
-    close_time timestamp with time zone,
-    status text DEFAULT 'WORKING'::text NOT NULL,
-    total_work_minutes numeric(8,2) DEFAULT 0 NOT NULL,
-    total_break_minutes numeric(8,2) DEFAULT 0 NOT NULL,
-    total_prayer_minutes numeric(8,2) DEFAULT 0 NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT attendance_daily_status_check CHECK ((status = ANY (ARRAY['WORKING'::text, 'SNACK_BREAK'::text, 'PRAYER_BREAK'::text, 'CLOSED'::text, 'DAY_OFF'::text])))
-);
-
 
 --
 -- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
@@ -3235,7 +3125,6 @@ CREATE TABLE public.audit_logs (
     target_user_id uuid,
     metadata jsonb DEFAULT '{}'::jsonb NOT NULL
 );
-
 
 --
 -- Name: chuti; Type: TABLE; Schema: public; Owner: -
@@ -3269,7 +3158,6 @@ CREATE TABLE public.chuti (
     CONSTRAINT chuti_status_check CHECK ((status = ANY (ARRAY['pending_supervisor'::text, 'needs_review'::text, 'approved_by_supervisor'::text, 'approved'::text])))
 );
 
-
 --
 -- Name: compliance_rules; Type: TABLE; Schema: public; Owner: -
 --
@@ -3291,7 +3179,6 @@ CREATE TABLE public.compliance_rules (
     CONSTRAINT compliance_rules_sub_category_check CHECK ((sub_category = ANY (ARRAY['nby_rule'::text, 'general_pricing'::text, 'employment'::text, 'driver_and_usage'::text, 'license_and_residency'::text, 'file_processing'::text, 'branch_priority'::text, 'doc_extensions'::text, 'common_rules'::text])))
 );
 
-
 --
 -- Name: dismissed_notifications; Type: TABLE; Schema: public; Owner: -
 --
@@ -3302,7 +3189,6 @@ CREATE TABLE public.dismissed_notifications (
     notification_id text NOT NULL,
     dismissed_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-
 
 --
 -- Name: govt_holiday_responses; Type: TABLE; Schema: public; Owner: -
@@ -3320,13 +3206,11 @@ CREATE TABLE public.govt_holiday_responses (
     CONSTRAINT govt_holiday_responses_response_check CHECK ((response = ANY (ARRAY['paid'::text, 'reserve'::text])))
 );
 
-
 --
 -- Name: TABLE govt_holiday_responses; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.govt_holiday_responses IS 'Stores user choices (Get Paid vs Reserve) for each government holiday';
-
 
 --
 -- Name: kpi_assessments; Type: TABLE; Schema: public; Owner: -
@@ -3350,7 +3234,6 @@ CREATE TABLE public.kpi_assessments (
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
-
 --
 -- Name: leaderboard_archive; Type: TABLE; Schema: public; Owner: -
 --
@@ -3371,7 +3254,6 @@ CREATE TABLE public.leaderboard_archive (
     rank integer NOT NULL,
     archived_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-
 
 --
 -- Name: leave_settlements; Type: TABLE; Schema: public; Owner: -
@@ -3399,7 +3281,6 @@ CREATE TABLE public.leave_settlements (
     CONSTRAINT leave_settlements_status_check CHECK ((status = ANY (ARRAY['initiated'::text, 'responded'::text, 'processed'::text])))
 );
 
-
 --
 -- Name: login_codes; Type: TABLE; Schema: public; Owner: -
 --
@@ -3410,7 +3291,6 @@ CREATE TABLE public.login_codes (
     name text,
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-
 
 --
 -- Name: mobile_app_versions; Type: TABLE; Schema: public; Owner: -
@@ -3424,7 +3304,6 @@ CREATE TABLE public.mobile_app_versions (
     created_at timestamp with time zone DEFAULT now()
 );
 
-
 --
 -- Name: mobile_app_versions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
@@ -3436,13 +3315,11 @@ CREATE SEQUENCE public.mobile_app_versions_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
 --
 -- Name: mobile_app_versions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.mobile_app_versions_id_seq OWNED BY public.mobile_app_versions.id;
-
 
 --
 -- Name: profiles; Type: TABLE; Schema: public; Owner: -
@@ -3496,13 +3373,11 @@ CREATE TABLE public.profiles (
     CONSTRAINT profiles_username_request_status_check CHECK ((username_request_status = ANY (ARRAY['none'::text, 'pending'::text, 'approved'::text])))
 );
 
-
 --
 -- Name: COLUMN profiles.global_settings; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.profiles.global_settings IS 'Global leave quotas and government holidays list stored in JSON format';
-
 
 --
 -- Name: quotation_mistakes; Type: TABLE; Schema: public; Owner: -
@@ -3523,7 +3398,6 @@ CREATE TABLE public.quotation_mistakes (
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
-
 --
 -- Name: records; Type: TABLE; Schema: public; Owner: -
 --
@@ -3540,7 +3414,6 @@ CREATE TABLE public.records (
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     CONSTRAINT records_file_type_check CHECK ((file_type = ANY (ARRAY['Quote'::text, 'Requote'::text, 'Requote Van'::text, 'Requote Bike'::text, 'Review'::text, 'Review Van'::text, 'Review Bike'::text, 'Individual Review'::text, 'Other Site'::text, 'Van'::text, 'Bike'::text, 'Sale'::text])))
 );
-
 
 --
 -- Name: todos; Type: TABLE; Schema: public; Owner: -
@@ -3560,29 +3433,11 @@ CREATE TABLE public.todos (
     CONSTRAINT todos_status_check CHECK ((status = ANY (ARRAY['Idle'::text, 'Working'::text, 'Completed'::text])))
 );
 
-
 --
 -- Name: mobile_app_versions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.mobile_app_versions ALTER COLUMN id SET DEFAULT nextval('public.mobile_app_versions_id_seq'::regclass);
-
-
---
--- Name: attendance_breaks attendance_breaks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.attendance_breaks
-    ADD CONSTRAINT attendance_breaks_pkey PRIMARY KEY (id);
-
-
---
--- Name: attendance_daily attendance_daily_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.attendance_daily
-    ADD CONSTRAINT attendance_daily_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3591,14 +3446,12 @@ ALTER TABLE ONLY public.attendance_daily
 ALTER TABLE ONLY public.audit_logs
     ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: chuti chuti_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chuti
     ADD CONSTRAINT chuti_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: compliance_rules compliance_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3607,14 +3460,12 @@ ALTER TABLE ONLY public.chuti
 ALTER TABLE ONLY public.compliance_rules
     ADD CONSTRAINT compliance_rules_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: dismissed_notifications dismissed_notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dismissed_notifications
     ADD CONSTRAINT dismissed_notifications_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: govt_holiday_responses govt_holiday_responses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3623,14 +3474,12 @@ ALTER TABLE ONLY public.dismissed_notifications
 ALTER TABLE ONLY public.govt_holiday_responses
     ADD CONSTRAINT govt_holiday_responses_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: kpi_assessments kpi_assessments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.kpi_assessments
     ADD CONSTRAINT kpi_assessments_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: kpi_assessments kpi_assessments_user_id_month_year_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3639,14 +3488,12 @@ ALTER TABLE ONLY public.kpi_assessments
 ALTER TABLE ONLY public.kpi_assessments
     ADD CONSTRAINT kpi_assessments_user_id_month_year_key UNIQUE (user_id, month_year);
 
-
 --
 -- Name: leaderboard_archive leaderboard_archive_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leaderboard_archive
     ADD CONSTRAINT leaderboard_archive_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: leaderboard_archive leaderboard_archive_username_year_unique; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3655,14 +3502,12 @@ ALTER TABLE ONLY public.leaderboard_archive
 ALTER TABLE ONLY public.leaderboard_archive
     ADD CONSTRAINT leaderboard_archive_username_year_unique UNIQUE (username, year);
 
-
 --
 -- Name: leave_settlements leave_settlements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT leave_settlements_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: login_codes login_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3671,14 +3516,12 @@ ALTER TABLE ONLY public.leave_settlements
 ALTER TABLE ONLY public.login_codes
     ADD CONSTRAINT login_codes_pkey PRIMARY KEY (login_id);
 
-
 --
 -- Name: mobile_app_versions mobile_app_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.mobile_app_versions
     ADD CONSTRAINT mobile_app_versions_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: profiles profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3687,14 +3530,12 @@ ALTER TABLE ONLY public.mobile_app_versions
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: profiles profiles_username_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_username_key UNIQUE (username);
-
 
 --
 -- Name: quotation_mistakes quotation_mistakes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3703,14 +3544,12 @@ ALTER TABLE ONLY public.profiles
 ALTER TABLE ONLY public.quotation_mistakes
     ADD CONSTRAINT quotation_mistakes_pkey PRIMARY KEY (id);
 
-
 --
 -- Name: records records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.records
     ADD CONSTRAINT records_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: todos todos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3719,22 +3558,12 @@ ALTER TABLE ONLY public.records
 ALTER TABLE ONLY public.todos
     ADD CONSTRAINT todos_pkey PRIMARY KEY (id);
 
-
---
--- Name: attendance_daily unique_user_attendance_date; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.attendance_daily
-    ADD CONSTRAINT unique_user_attendance_date UNIQUE (user_id, attendance_date);
-
-
 --
 -- Name: govt_holiday_responses unique_user_holiday; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.govt_holiday_responses
     ADD CONSTRAINT unique_user_holiday UNIQUE (user_id, holiday_date);
-
 
 --
 -- Name: dismissed_notifications unique_user_notification; Type: CONSTRAINT; Schema: public; Owner: -
@@ -3743,7 +3572,6 @@ ALTER TABLE ONLY public.govt_holiday_responses
 ALTER TABLE ONLY public.dismissed_notifications
     ADD CONSTRAINT unique_user_notification UNIQUE (user_id, notification_id);
 
-
 --
 -- Name: leave_settlements unique_user_year_period_category; Type: CONSTRAINT; Schema: public; Owner: -
 --
@@ -3751,62 +3579,11 @@ ALTER TABLE ONLY public.dismissed_notifications
 ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT unique_user_year_period_category UNIQUE (user_id, year, period, leave_category);
 
-
---
--- Name: idx_attendance_breaks_attendance_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_attendance_breaks_attendance_id ON public.attendance_breaks USING btree (attendance_id);
-
-
---
--- Name: idx_attendance_breaks_type; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_attendance_breaks_type ON public.attendance_breaks USING btree (type);
-
-
---
--- Name: idx_attendance_breaks_user_date; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_attendance_breaks_user_date ON public.attendance_breaks USING btree (user_id, attendance_date);
-
-
---
--- Name: idx_attendance_breaks_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_attendance_breaks_user_id ON public.attendance_breaks USING btree (user_id);
-
-
---
--- Name: idx_attendance_daily_date; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_attendance_daily_date ON public.attendance_daily USING btree (attendance_date);
-
-
---
--- Name: idx_attendance_daily_user_date; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_attendance_daily_user_date ON public.attendance_daily USING btree (user_id, attendance_date);
-
-
---
--- Name: idx_attendance_daily_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_attendance_daily_user_id ON public.attendance_daily USING btree (user_id);
-
-
 --
 -- Name: idx_audit_logs_action_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_audit_logs_action_created_at ON public.audit_logs USING btree (action_type, created_at DESC);
-
 
 --
 -- Name: idx_audit_logs_created_at; Type: INDEX; Schema: public; Owner: -
@@ -3814,13 +3591,11 @@ CREATE INDEX idx_audit_logs_action_created_at ON public.audit_logs USING btree (
 
 CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created_at DESC);
 
-
 --
 -- Name: idx_audit_logs_target_user_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_audit_logs_target_user_created_at ON public.audit_logs USING btree (target_user_id, created_at DESC) WHERE (target_user_id IS NOT NULL);
-
 
 --
 -- Name: idx_chuti_bulk_id; Type: INDEX; Schema: public; Owner: -
@@ -3828,13 +3603,11 @@ CREATE INDEX idx_audit_logs_target_user_created_at ON public.audit_logs USING bt
 
 CREATE INDEX idx_chuti_bulk_id ON public.chuti USING btree (bulk_id) WHERE (bulk_id IS NOT NULL);
 
-
 --
 -- Name: idx_chuti_deleted_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_chuti_deleted_at ON public.chuti USING btree (deleted_at);
-
 
 --
 -- Name: idx_chuti_pending_adjustments; Type: INDEX; Schema: public; Owner: -
@@ -3842,13 +3615,11 @@ CREATE INDEX idx_chuti_deleted_at ON public.chuti USING btree (deleted_at);
 
 CREATE INDEX idx_chuti_pending_adjustments ON public.chuti USING btree (reserve_adjustment_status, date DESC) WHERE ((deleted_at IS NULL) AND (reserve_adjustment_status = 'pending'::text));
 
-
 --
 -- Name: idx_chuti_pending_status_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_chuti_pending_status_date ON public.chuti USING btree (status, date DESC) WHERE (deleted_at IS NULL);
-
 
 --
 -- Name: idx_chuti_updated_at; Type: INDEX; Schema: public; Owner: -
@@ -3856,13 +3627,11 @@ CREATE INDEX idx_chuti_pending_status_date ON public.chuti USING btree (status, 
 
 CREATE INDEX idx_chuti_updated_at ON public.chuti USING btree (updated_at);
 
-
 --
 -- Name: idx_chuti_user_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_chuti_user_date ON public.chuti USING btree (user_id, date);
-
 
 --
 -- Name: idx_govt_holiday_responses_date_user; Type: INDEX; Schema: public; Owner: -
@@ -3870,13 +3639,11 @@ CREATE INDEX idx_chuti_user_date ON public.chuti USING btree (user_id, date);
 
 CREATE INDEX idx_govt_holiday_responses_date_user ON public.govt_holiday_responses USING btree (holiday_date, user_id);
 
-
 --
 -- Name: idx_leaderboard_archive_year; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_leaderboard_archive_year ON public.leaderboard_archive USING btree (year, rank);
-
 
 --
 -- Name: idx_leave_settlements_user_year; Type: INDEX; Schema: public; Owner: -
@@ -3884,13 +3651,11 @@ CREATE INDEX idx_leaderboard_archive_year ON public.leaderboard_archive USING bt
 
 CREATE INDEX idx_leave_settlements_user_year ON public.leave_settlements USING btree (user_id, year);
 
-
 --
 -- Name: idx_quotation_mistakes_branch; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_quotation_mistakes_branch ON public.quotation_mistakes USING btree (branch);
-
 
 --
 -- Name: idx_quotation_mistakes_branch_date; Type: INDEX; Schema: public; Owner: -
@@ -3898,13 +3663,11 @@ CREATE INDEX idx_quotation_mistakes_branch ON public.quotation_mistakes USING bt
 
 CREATE INDEX idx_quotation_mistakes_branch_date ON public.quotation_mistakes USING btree (branch, date DESC, id DESC);
 
-
 --
 -- Name: idx_quotation_mistakes_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_quotation_mistakes_created_at ON public.quotation_mistakes USING btree (created_at DESC);
-
 
 --
 -- Name: idx_quotation_mistakes_date; Type: INDEX; Schema: public; Owner: -
@@ -3912,13 +3675,11 @@ CREATE INDEX idx_quotation_mistakes_created_at ON public.quotation_mistakes USIN
 
 CREATE INDEX idx_quotation_mistakes_date ON public.quotation_mistakes USING btree (date);
 
-
 --
 -- Name: idx_quotation_mistakes_user_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_quotation_mistakes_user_date ON public.quotation_mistakes USING btree (user_id, date DESC, id DESC);
-
 
 --
 -- Name: idx_quotation_mistakes_user_id; Type: INDEX; Schema: public; Owner: -
@@ -3926,13 +3687,11 @@ CREATE INDEX idx_quotation_mistakes_user_date ON public.quotation_mistakes USING
 
 CREATE INDEX idx_quotation_mistakes_user_id ON public.quotation_mistakes USING btree (user_id);
 
-
 --
 -- Name: idx_records_sale_submitted; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_records_sale_submitted ON public.records USING btree (submitted_at) WHERE (file_type = 'Sale'::text);
-
 
 --
 -- Name: idx_records_submitted_at; Type: INDEX; Schema: public; Owner: -
@@ -3940,13 +3699,11 @@ CREATE INDEX idx_records_sale_submitted ON public.records USING btree (submitted
 
 CREATE INDEX idx_records_submitted_at ON public.records USING btree (submitted_at);
 
-
 --
 -- Name: idx_records_updated_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_records_updated_at ON public.records USING btree (updated_at);
-
 
 --
 -- Name: idx_records_user_id; Type: INDEX; Schema: public; Owner: -
@@ -3954,13 +3711,11 @@ CREATE INDEX idx_records_updated_at ON public.records USING btree (updated_at);
 
 CREATE INDEX idx_records_user_id ON public.records USING btree (user_id);
 
-
 --
 -- Name: idx_records_user_submitted; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_records_user_submitted ON public.records USING btree (user_id, submitted_at);
-
 
 --
 -- Name: idx_todos_last_activity; Type: INDEX; Schema: public; Owner: -
@@ -3968,13 +3723,11 @@ CREATE INDEX idx_records_user_submitted ON public.records USING btree (user_id, 
 
 CREATE INDEX idx_todos_last_activity ON public.todos USING btree (user_id, todo_date, last_activity_at DESC);
 
-
 --
 -- Name: idx_todos_todo_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_todos_todo_date ON public.todos USING btree (todo_date);
-
 
 --
 -- Name: idx_todos_user_id; Type: INDEX; Schema: public; Owner: -
@@ -3982,13 +3735,11 @@ CREATE INDEX idx_todos_todo_date ON public.todos USING btree (todo_date);
 
 CREATE INDEX idx_todos_user_id ON public.todos USING btree (user_id);
 
-
 --
 -- Name: unique_user_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX unique_user_date ON public.chuti USING btree (user_id, date) WHERE (deleted_at IS NULL);
-
 
 --
 -- Name: uq_records_user_file_submitted; Type: INDEX; Schema: public; Owner: -
@@ -3996,13 +3747,11 @@ CREATE UNIQUE INDEX unique_user_date ON public.chuti USING btree (user_id, date)
 
 CREATE UNIQUE INDEX uq_records_user_file_submitted ON public.records USING btree (user_id, file_name, submitted_at);
 
-
 --
 -- Name: chuti audit_chuti_changes; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER audit_chuti_changes AFTER INSERT OR DELETE OR UPDATE ON public.chuti FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
-
 
 --
 -- Name: govt_holiday_responses audit_govt_holiday_response_changes; Type: TRIGGER; Schema: public; Owner: -
@@ -4010,13 +3759,11 @@ CREATE TRIGGER audit_chuti_changes AFTER INSERT OR DELETE OR UPDATE ON public.ch
 
 CREATE TRIGGER audit_govt_holiday_response_changes AFTER INSERT OR DELETE OR UPDATE ON public.govt_holiday_responses FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
 
-
 --
 -- Name: leave_settlements audit_leave_settlement_changes; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER audit_leave_settlement_changes AFTER INSERT OR DELETE OR UPDATE ON public.leave_settlements FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
-
 
 --
 -- Name: quotation_mistakes audit_quotation_mistake_changes; Type: TRIGGER; Schema: public; Owner: -
@@ -4024,13 +3771,11 @@ CREATE TRIGGER audit_leave_settlement_changes AFTER INSERT OR DELETE OR UPDATE O
 
 CREATE TRIGGER audit_quotation_mistake_changes AFTER INSERT OR DELETE OR UPDATE ON public.quotation_mistakes FOR EACH ROW EXECUTE FUNCTION public.audit_business_row_change();
 
-
 --
 -- Name: chuti chuti_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER chuti_set_updated_at BEFORE UPDATE ON public.chuti FOR EACH ROW EXECUTE FUNCTION public.update_chuti_updated_at();
-
 
 --
 -- Name: chuti enforce_chuti_write_permissions_trigger; Type: TRIGGER; Schema: public; Owner: -
@@ -4038,13 +3783,11 @@ CREATE TRIGGER chuti_set_updated_at BEFORE UPDATE ON public.chuti FOR EACH ROW E
 
 CREATE TRIGGER enforce_chuti_write_permissions_trigger BEFORE INSERT OR UPDATE ON public.chuti FOR EACH ROW EXECUTE FUNCTION public.enforce_chuti_write_permissions();
 
-
 --
 -- Name: kpi_assessments enforce_kpi_assessment_permissions_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER enforce_kpi_assessment_permissions_trigger BEFORE INSERT OR UPDATE ON public.kpi_assessments FOR EACH ROW EXECUTE FUNCTION public.enforce_kpi_assessment_permissions();
-
 
 --
 -- Name: leave_settlements enforce_leave_settlement_permissions_trigger; Type: TRIGGER; Schema: public; Owner: -
@@ -4052,13 +3795,11 @@ CREATE TRIGGER enforce_kpi_assessment_permissions_trigger BEFORE INSERT OR UPDAT
 
 CREATE TRIGGER enforce_leave_settlement_permissions_trigger BEFORE INSERT OR UPDATE ON public.leave_settlements FOR EACH ROW EXECUTE FUNCTION public.enforce_leave_settlement_permissions();
 
-
 --
 -- Name: quotation_mistakes enforce_quotation_mistake_metadata_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER enforce_quotation_mistake_metadata_trigger BEFORE INSERT OR UPDATE ON public.quotation_mistakes FOR EACH ROW EXECUTE FUNCTION public.enforce_quotation_mistake_metadata();
-
 
 --
 -- Name: govt_holiday_responses govt_holiday_response_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
@@ -4066,13 +3807,11 @@ CREATE TRIGGER enforce_quotation_mistake_metadata_trigger BEFORE INSERT OR UPDAT
 
 CREATE TRIGGER govt_holiday_response_set_updated_at BEFORE UPDATE ON public.govt_holiday_responses FOR EACH ROW EXECUTE FUNCTION public.set_govt_holiday_response_updated_at();
 
-
 --
 -- Name: profiles on_profile_role_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER on_profile_role_update BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.check_profile_role_change();
-
 
 --
 -- Name: profiles on_profile_update_security; Type: TRIGGER; Schema: public; Owner: -
@@ -4080,13 +3819,11 @@ CREATE TRIGGER on_profile_role_update BEFORE UPDATE ON public.profiles FOR EACH 
 
 CREATE TRIGGER on_profile_update_security BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.check_profile_updates();
 
-
 --
 -- Name: records records_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER records_set_updated_at BEFORE UPDATE ON public.records FOR EACH ROW EXECUTE FUNCTION public.update_records_updated_at();
-
 
 --
 -- Name: profiles sync_profile_govt_holiday_entitlements_trigger; Type: TRIGGER; Schema: public; Owner: -
@@ -4094,58 +3831,17 @@ CREATE TRIGGER records_set_updated_at BEFORE UPDATE ON public.records FOR EACH R
 
 CREATE TRIGGER sync_profile_govt_holiday_entitlements_trigger AFTER INSERT OR UPDATE OF allow_reserve, eligible_govt_holiday ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.sync_profile_govt_holiday_entitlements();
 
-
 --
 -- Name: todos todos_set_last_activity; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER todos_set_last_activity BEFORE UPDATE ON public.todos FOR EACH ROW EXECUTE FUNCTION public.update_todos_last_activity();
 
-
 --
 -- Name: compliance_rules trg_update_compliance_rules_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER trg_update_compliance_rules_updated_at BEFORE UPDATE ON public.compliance_rules FOR EACH ROW EXECUTE FUNCTION public.update_compliance_rules_updated_at();
-
-
---
--- Name: attendance_breaks trigger_attendance_breaks_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trigger_attendance_breaks_updated_at BEFORE UPDATE ON public.attendance_breaks FOR EACH ROW EXECUTE FUNCTION public.handle_attendance_updated_at();
-
-
---
--- Name: attendance_daily trigger_attendance_daily_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trigger_attendance_daily_updated_at BEFORE UPDATE ON public.attendance_daily FOR EACH ROW EXECUTE FUNCTION public.handle_attendance_updated_at();
-
-
---
--- Name: attendance_breaks attendance_breaks_attendance_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.attendance_breaks
-    ADD CONSTRAINT attendance_breaks_attendance_id_fkey FOREIGN KEY (attendance_id) REFERENCES public.attendance_daily(id) ON DELETE CASCADE;
-
-
---
--- Name: attendance_breaks attendance_breaks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.attendance_breaks
-    ADD CONSTRAINT attendance_breaks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
-
---
--- Name: attendance_daily attendance_daily_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.attendance_daily
-    ADD CONSTRAINT attendance_daily_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
 
 --
 -- Name: audit_logs audit_logs_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4154,14 +3850,12 @@ ALTER TABLE ONLY public.attendance_daily
 ALTER TABLE ONLY public.audit_logs
     ADD CONSTRAINT audit_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
-
 --
 -- Name: audit_logs audit_logs_target_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audit_logs
     ADD CONSTRAINT audit_logs_target_user_id_fkey FOREIGN KEY (target_user_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
-
 
 --
 -- Name: chuti chuti_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4170,14 +3864,12 @@ ALTER TABLE ONLY public.audit_logs
 ALTER TABLE ONLY public.chuti
     ADD CONSTRAINT chuti_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
-
 --
 -- Name: compliance_rules compliance_rules_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.compliance_rules
     ADD CONSTRAINT compliance_rules_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
-
 
 --
 -- Name: dismissed_notifications dismissed_notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4186,14 +3878,12 @@ ALTER TABLE ONLY public.compliance_rules
 ALTER TABLE ONLY public.dismissed_notifications
     ADD CONSTRAINT dismissed_notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
-
 --
 -- Name: govt_holiday_responses govt_holiday_responses_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.govt_holiday_responses
     ADD CONSTRAINT govt_holiday_responses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
 
 --
 -- Name: kpi_assessments kpi_assessments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4202,14 +3892,12 @@ ALTER TABLE ONLY public.govt_holiday_responses
 ALTER TABLE ONLY public.kpi_assessments
     ADD CONSTRAINT kpi_assessments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
-
 --
 -- Name: leaderboard_archive leaderboard_archive_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leaderboard_archive
     ADD CONSTRAINT leaderboard_archive_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
-
 
 --
 -- Name: leave_settlements leave_settlements_action_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4218,14 +3906,12 @@ ALTER TABLE ONLY public.leaderboard_archive
 ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT leave_settlements_action_by_fkey FOREIGN KEY (action_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
-
 --
 -- Name: leave_settlements leave_settlements_processed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT leave_settlements_processed_by_fkey FOREIGN KEY (processed_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
-
 
 --
 -- Name: leave_settlements leave_settlements_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4234,14 +3920,12 @@ ALTER TABLE ONLY public.leave_settlements
 ALTER TABLE ONLY public.leave_settlements
     ADD CONSTRAINT leave_settlements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
-
 --
 -- Name: profiles profiles_delegated_kpi_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_delegated_kpi_supervisor_id_fkey FOREIGN KEY (delegated_kpi_supervisor_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
-
 
 --
 -- Name: profiles profiles_delegated_leave_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4250,14 +3934,12 @@ ALTER TABLE ONLY public.profiles
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_delegated_leave_supervisor_id_fkey FOREIGN KEY (delegated_leave_supervisor_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
-
 --
 -- Name: profiles profiles_delegated_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_delegated_supervisor_id_fkey FOREIGN KEY (delegated_supervisor_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
-
 
 --
 -- Name: profiles profiles_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4266,14 +3948,12 @@ ALTER TABLE ONLY public.profiles
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
-
 --
 -- Name: quotation_mistakes quotation_mistakes_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.quotation_mistakes
     ADD CONSTRAINT quotation_mistakes_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
-
 
 --
 -- Name: quotation_mistakes quotation_mistakes_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4282,14 +3962,12 @@ ALTER TABLE ONLY public.quotation_mistakes
 ALTER TABLE ONLY public.quotation_mistakes
     ADD CONSTRAINT quotation_mistakes_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
-
 --
 -- Name: quotation_mistakes quotation_mistakes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.quotation_mistakes
     ADD CONSTRAINT quotation_mistakes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
 
 --
 -- Name: records records_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4298,7 +3976,6 @@ ALTER TABLE ONLY public.quotation_mistakes
 ALTER TABLE ONLY public.records
     ADD CONSTRAINT records_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
-
 --
 -- Name: todos todos_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
@@ -4306,13 +3983,11 @@ ALTER TABLE ONLY public.records
 ALTER TABLE ONLY public.todos
     ADD CONSTRAINT todos_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
-
 --
 -- Name: dismissed_notifications Admins can do everything on dismissed notifications; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Admins can do everything on dismissed notifications" ON public.dismissed_notifications USING (public.is_admin());
-
 
 --
 -- Name: govt_holiday_responses Admins can read all holiday responses; Type: POLICY; Schema: public; Owner: -
@@ -4320,13 +3995,11 @@ CREATE POLICY "Admins can do everything on dismissed notifications" ON public.di
 
 CREATE POLICY "Admins can read all holiday responses" ON public.govt_holiday_responses FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND public.is_admin()));
 
-
 --
 -- Name: govt_holiday_responses Admins can update/delete responses; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Admins can update/delete responses" ON public.govt_holiday_responses TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND public.is_admin())) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND public.is_admin()));
-
 
 --
 -- Name: login_codes Allow admins & supervisors to manage login codes; Type: POLICY; Schema: public; Owner: -
@@ -4334,13 +4007,11 @@ CREATE POLICY "Admins can update/delete responses" ON public.govt_holiday_respon
 
 CREATE POLICY "Allow admins & supervisors to manage login codes" ON public.login_codes TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND (public.is_admin() OR public.is_supervisor()))) WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND (public.is_admin() OR public.is_supervisor())));
 
-
 --
 -- Name: profiles Allow admins to insert profiles; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow admins to insert profiles" ON public.profiles FOR INSERT WITH CHECK (public.is_admin());
-
 
 --
 -- Name: compliance_rules Allow authenticated to read compliance rules; Type: POLICY; Schema: public; Owner: -
@@ -4350,13 +4021,11 @@ CREATE POLICY "Allow authenticated to read compliance rules" ON public.complianc
    FROM public.profiles p
   WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE))))))));
 
-
 --
 -- Name: login_codes Allow authenticated to read login codes; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow authenticated to read login codes" ON public.login_codes FOR SELECT TO authenticated USING (public.current_user_has_workspace('quotes'::text));
-
 
 --
 -- Name: compliance_rules Allow authorized editors to delete rules; Type: POLICY; Schema: public; Owner: -
@@ -4366,7 +4035,6 @@ CREATE POLICY "Allow authorized editors to delete rules" ON public.compliance_ru
    FROM public.profiles p
   WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE)))))));
 
-
 --
 -- Name: compliance_rules Allow authorized editors to insert rules; Type: POLICY; Schema: public; Owner: -
 --
@@ -4374,7 +4042,6 @@ CREATE POLICY "Allow authorized editors to delete rules" ON public.compliance_ru
 CREATE POLICY "Allow authorized editors to insert rules" ON public.compliance_rules FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND (EXISTS ( SELECT 1
    FROM public.profiles p
   WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE)))))));
-
 
 --
 -- Name: compliance_rules Allow authorized editors to update rules; Type: POLICY; Schema: public; Owner: -
@@ -4386,13 +4053,11 @@ CREATE POLICY "Allow authorized editors to update rules" ON public.compliance_ru
    FROM public.profiles p
   WHERE ((p.id = ( SELECT auth.uid() AS uid)) AND ((p.role = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])) OR (p.can_manage_rules IS TRUE)))))));
 
-
 --
 -- Name: mobile_app_versions Allow public read access to mobile_app_versions; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow public read access to mobile_app_versions" ON public.mobile_app_versions FOR SELECT USING (true);
-
 
 --
 -- Name: todos Allow users to delete own todos; Type: POLICY; Schema: public; Owner: -
@@ -4400,13 +4065,11 @@ CREATE POLICY "Allow public read access to mobile_app_versions" ON public.mobile
 
 CREATE POLICY "Allow users to delete own todos" ON public.todos FOR DELETE TO authenticated USING ((auth.uid() = user_id));
 
-
 --
 -- Name: todos Allow users to insert own todos; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow users to insert own todos" ON public.todos FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
-
 
 --
 -- Name: profiles Allow users to insert their own profile; Type: POLICY; Schema: public; Owner: -
@@ -4414,13 +4077,11 @@ CREATE POLICY "Allow users to insert own todos" ON public.todos FOR INSERT TO au
 
 CREATE POLICY "Allow users to insert their own profile" ON public.profiles FOR INSERT WITH CHECK (((auth.uid() = id) AND (role = 'user'::text)));
 
-
 --
 -- Name: todos Allow users to read own todos; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Allow users to read own todos" ON public.todos FOR SELECT TO authenticated USING ((auth.uid() = user_id));
-
 
 --
 -- Name: todos Allow users to update own todos; Type: POLICY; Schema: public; Owner: -
@@ -4428,13 +4089,11 @@ CREATE POLICY "Allow users to read own todos" ON public.todos FOR SELECT TO auth
 
 CREATE POLICY "Allow users to update own todos" ON public.todos FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 
-
 --
 -- Name: leaderboard_archive Authenticated users can read leaderboard archive; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Authenticated users can read leaderboard archive" ON public.leaderboard_archive FOR SELECT TO authenticated USING (true);
-
 
 --
 -- Name: quotation_mistakes Feature-controlled quotation mistake deletes; Type: POLICY; Schema: public; Owner: -
@@ -4442,13 +4101,11 @@ CREATE POLICY "Authenticated users can read leaderboard archive" ON public.leade
 
 CREATE POLICY "Feature-controlled quotation mistake deletes" ON public.quotation_mistakes FOR DELETE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes()));
 
-
 --
 -- Name: quotation_mistakes Feature-controlled quotation mistake inserts; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Feature-controlled quotation mistake inserts" ON public.quotation_mistakes FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes()));
-
 
 --
 -- Name: quotation_mistakes Feature-controlled quotation mistake updates; Type: POLICY; Schema: public; Owner: -
@@ -4456,13 +4113,11 @@ CREATE POLICY "Feature-controlled quotation mistake inserts" ON public.quotation
 
 CREATE POLICY "Feature-controlled quotation mistake updates" ON public.quotation_mistakes FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes())) WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND public.can_write_quotation_mistakes()));
 
-
 --
 -- Name: profiles Role-hierarchical profile deletion; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Role-hierarchical profile deletion" ON public.profiles FOR DELETE TO authenticated USING (((public.is_superadmin() AND (id <> ( SELECT auth.uid() AS uid))) OR ((public.get_my_role() = 'admin'::text) AND (role = ANY (ARRAY['user'::text, 'supervisor'::text])))));
-
 
 --
 -- Name: profiles Role-scoped profile reads; Type: POLICY; Schema: public; Owner: -
@@ -4470,13 +4125,11 @@ CREATE POLICY "Role-hierarchical profile deletion" ON public.profiles FOR DELETE
 
 CREATE POLICY "Role-scoped profile reads" ON public.profiles FOR SELECT TO authenticated USING (public.can_read_profile(id));
 
-
 --
 -- Name: quotation_mistakes Role-scoped quotation mistake reads; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Role-scoped quotation mistake reads" ON public.quotation_mistakes FOR SELECT TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR (public.get_my_role() = ANY (ARRAY['admin'::text, 'superadmin'::text, 'supervisor'::text])))));
-
 
 --
 -- Name: kpi_assessments Scoped KPI assessment deletion; Type: POLICY; Schema: public; Owner: -
@@ -4484,13 +4137,11 @@ CREATE POLICY "Role-scoped quotation mistake reads" ON public.quotation_mistakes
 
 CREATE POLICY "Scoped KPI assessment deletion" ON public.kpi_assessments FOR DELETE TO authenticated USING ((public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
 
-
 --
 -- Name: kpi_assessments Scoped KPI assessment inserts; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped KPI assessment inserts" ON public.kpi_assessments FOR INSERT TO authenticated WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
-
 
 --
 -- Name: kpi_assessments Scoped KPI assessment reads; Type: POLICY; Schema: public; Owner: -
@@ -4498,13 +4149,11 @@ CREATE POLICY "Scoped KPI assessment inserts" ON public.kpi_assessments FOR INSE
 
 CREATE POLICY "Scoped KPI assessment reads" ON public.kpi_assessments FOR SELECT TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
 
-
 --
 -- Name: kpi_assessments Scoped KPI assessment updates; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped KPI assessment updates" ON public.kpi_assessments FOR UPDATE TO authenticated USING (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id)))) WITH CHECK (((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_kpi_access(( SELECT auth.uid() AS uid), user_id))));
-
 
 --
 -- Name: audit_logs Scoped audit log visibility; Type: POLICY; Schema: public; Owner: -
@@ -4512,13 +4161,11 @@ CREATE POLICY "Scoped KPI assessment updates" ON public.kpi_assessments FOR UPDA
 
 CREATE POLICY "Scoped audit log visibility" ON public.audit_logs FOR SELECT TO authenticated USING ((public.is_admin() OR (actor_id = ( SELECT auth.uid() AS uid)) OR (target_user_id = ( SELECT auth.uid() AS uid)) OR (public.is_supervisor() AND (target_user_id IS NOT NULL) AND public.has_leave_access(( SELECT auth.uid() AS uid), target_user_id))));
 
-
 --
 -- Name: chuti Scoped leave deletion; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped leave deletion" ON public.chuti FOR DELETE TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)) OR ((user_id = ( SELECT auth.uid() AS uid)) AND (status = ANY (ARRAY['pending_supervisor'::text, 'approved_by_supervisor'::text, 'needs_review'::text]))))));
-
 
 --
 -- Name: chuti Scoped leave insertion; Type: POLICY; Schema: public; Owner: -
@@ -4526,13 +4173,11 @@ CREATE POLICY "Scoped leave deletion" ON public.chuti FOR DELETE TO authenticate
 
 CREATE POLICY "Scoped leave insertion" ON public.chuti FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
 
-
 --
 -- Name: chuti Scoped leave read access; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped leave read access" ON public.chuti FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
-
 
 --
 -- Name: chuti Scoped leave updates; Type: POLICY; Schema: public; Owner: -
@@ -4540,13 +4185,11 @@ CREATE POLICY "Scoped leave read access" ON public.chuti FOR SELECT TO authentic
 
 CREATE POLICY "Scoped leave updates" ON public.chuti FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id))))) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
 
-
 --
 -- Name: profiles Scoped profile updates; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped profile updates" ON public.profiles FOR UPDATE TO authenticated USING (((id = ( SELECT auth.uid() AS uid)) OR public.is_superadmin() OR ((public.get_my_role() = 'admin'::text) AND (role = ANY (ARRAY['user'::text, 'supervisor'::text]))) OR (public.is_supervisor() AND (role = 'user'::text) AND public.has_leave_access(( SELECT auth.uid() AS uid), id)))) WITH CHECK (((id = ( SELECT auth.uid() AS uid)) OR public.is_superadmin() OR ((public.get_my_role() = 'admin'::text) AND (role = ANY (ARRAY['user'::text, 'supervisor'::text]))) OR (public.is_supervisor() AND (role = 'user'::text) AND public.has_leave_access(( SELECT auth.uid() AS uid), id))));
-
 
 --
 -- Name: records Scoped records deletion; Type: POLICY; Schema: public; Owner: -
@@ -4554,13 +4197,11 @@ CREATE POLICY "Scoped profile updates" ON public.profiles FOR UPDATE TO authenti
 
 CREATE POLICY "Scoped records deletion" ON public.records FOR DELETE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
 
-
 --
 -- Name: records Scoped records insertion; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped records insertion" ON public.records FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
-
 
 --
 -- Name: records Scoped records read access; Type: POLICY; Schema: public; Owner: -
@@ -4568,13 +4209,11 @@ CREATE POLICY "Scoped records insertion" ON public.records FOR INSERT TO authent
 
 CREATE POLICY "Scoped records read access" ON public.records FOR SELECT TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
 
-
 --
 -- Name: records Scoped records updates; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped records updates" ON public.records FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id))))) WITH CHECK ((public.current_user_has_workspace('quotes'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
-
 
 --
 -- Name: leave_settlements Scoped settlement management; Type: POLICY; Schema: public; Owner: -
@@ -4582,13 +4221,11 @@ CREATE POLICY "Scoped records updates" ON public.records FOR UPDATE TO authentic
 
 CREATE POLICY "Scoped settlement management" ON public.leave_settlements TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id))))) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND (public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
 
-
 --
 -- Name: leave_settlements Scoped settlement read access; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Scoped settlement read access" ON public.leave_settlements FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND ((user_id = ( SELECT auth.uid() AS uid)) OR public.is_admin() OR (public.is_supervisor() AND public.has_leave_access(( SELECT auth.uid() AS uid), user_id)))));
-
 
 --
 -- Name: dismissed_notifications Users can delete own dismissed notifications; Type: POLICY; Schema: public; Owner: -
@@ -4596,13 +4233,11 @@ CREATE POLICY "Scoped settlement read access" ON public.leave_settlements FOR SE
 
 CREATE POLICY "Users can delete own dismissed notifications" ON public.dismissed_notifications FOR DELETE USING ((auth.uid() = user_id));
 
-
 --
 -- Name: dismissed_notifications Users can insert own dismissed notifications; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can insert own dismissed notifications" ON public.dismissed_notifications FOR INSERT WITH CHECK ((auth.uid() = user_id));
-
 
 --
 -- Name: dismissed_notifications Users can read own dismissed notifications; Type: POLICY; Schema: public; Owner: -
@@ -4610,13 +4245,11 @@ CREATE POLICY "Users can insert own dismissed notifications" ON public.dismissed
 
 CREATE POLICY "Users can read own dismissed notifications" ON public.dismissed_notifications FOR SELECT USING ((auth.uid() = user_id));
 
-
 --
 -- Name: govt_holiday_responses Users can read own holiday responses; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can read own holiday responses" ON public.govt_holiday_responses FOR SELECT TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid))));
-
 
 --
 -- Name: leave_settlements Users can revise own settlement response; Type: POLICY; Schema: public; Owner: -
@@ -4624,85 +4257,11 @@ CREATE POLICY "Users can read own holiday responses" ON public.govt_holiday_resp
 
 CREATE POLICY "Users can revise own settlement response" ON public.leave_settlements FOR UPDATE TO authenticated USING ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid)) AND (status = ANY (ARRAY['initiated'::text, 'responded'::text])))) WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid)) AND (status = 'responded'::text) AND (processed_by IS NULL) AND (processed_at IS NULL)));
 
-
 --
 -- Name: leave_settlements Users can submit own settlement response; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can submit own settlement response" ON public.leave_settlements FOR INSERT TO authenticated WITH CHECK ((public.current_user_has_workspace('chuti'::text) AND (user_id = ( SELECT auth.uid() AS uid)) AND (status = 'responded'::text) AND (processed_by IS NULL) AND (processed_at IS NULL)));
-
-
---
--- Name: attendance_breaks; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.attendance_breaks ENABLE ROW LEVEL SECURITY;
-
---
--- Name: attendance_breaks attendance_breaks_delete_admin; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_breaks_delete_admin ON public.attendance_breaks FOR DELETE TO authenticated USING (public.is_admin_or_superadmin(auth.uid()));
-
-
---
--- Name: attendance_breaks attendance_breaks_insert_own_or_admin; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_breaks_insert_own_or_admin ON public.attendance_breaks FOR INSERT TO authenticated WITH CHECK ((public.is_admin_or_superadmin(auth.uid()) OR ((auth.uid() = user_id) AND (EXISTS ( SELECT 1
-   FROM public.attendance_daily d
-  WHERE ((d.id = attendance_breaks.attendance_id) AND (d.user_id = attendance_breaks.user_id) AND (d.attendance_date = attendance_breaks.attendance_date)))))));
-
-
---
--- Name: attendance_breaks attendance_breaks_select_scoped; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_breaks_select_scoped ON public.attendance_breaks FOR SELECT TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()) OR public.has_leave_access(auth.uid(), user_id)));
-
-
---
--- Name: attendance_breaks attendance_breaks_update_own_or_admin; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_breaks_update_own_or_admin ON public.attendance_breaks FOR UPDATE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()))) WITH CHECK ((public.is_admin_or_superadmin(auth.uid()) OR ((auth.uid() = user_id) AND (EXISTS ( SELECT 1
-   FROM public.attendance_daily d
-  WHERE ((d.id = attendance_breaks.attendance_id) AND (d.user_id = attendance_breaks.user_id) AND (d.attendance_date = attendance_breaks.attendance_date)))))));
-
-
---
--- Name: attendance_daily; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.attendance_daily ENABLE ROW LEVEL SECURITY;
-
---
--- Name: attendance_daily attendance_daily_delete_admin; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_daily_delete_admin ON public.attendance_daily FOR DELETE TO authenticated USING (public.is_admin_or_superadmin(auth.uid()));
-
-
---
--- Name: attendance_daily attendance_daily_insert_own_or_admin; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_daily_insert_own_or_admin ON public.attendance_daily FOR INSERT TO authenticated WITH CHECK (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid())));
-
-
---
--- Name: attendance_daily attendance_daily_select_scoped; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_daily_select_scoped ON public.attendance_daily FOR SELECT TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()) OR public.has_leave_access(auth.uid(), user_id)));
-
-
---
--- Name: attendance_daily attendance_daily_update_own_or_admin; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY attendance_daily_update_own_or_admin ON public.attendance_daily FOR UPDATE TO authenticated USING (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid()))) WITH CHECK (((auth.uid() = user_id) OR public.is_admin_or_superadmin(auth.uid())));
-
 
 --
 -- Name: audit_logs; Type: ROW SECURITY; Schema: public; Owner: -
@@ -4797,7 +4356,6 @@ GRANT USAGE ON SCHEMA public TO anon;
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT USAGE ON SCHEMA public TO service_role;
 
-
 --
 -- Name: FUNCTION admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid); Type: ACL; Schema: public; Owner: -
 --
@@ -4806,14 +4364,12 @@ REVOKE ALL ON FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_
 GRANT ALL ON FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.admin_insert_chuti_records_bulk(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) TO service_role;
 
-
 --
 -- Name: FUNCTION admin_insert_chuti_records_bulk_internal(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.admin_insert_chuti_records_bulk_internal(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.admin_insert_chuti_records_bulk_internal(p_user_id uuid, p_dates date[], p_leave_type text, p_adjustments boolean[], p_adjust_short_leave boolean, p_sign_in_time time without time zone, p_sign_out_time time without time zone, p_leave_hour interval, p_reserve_holiday text, p_comment text, p_bulk_id uuid) TO service_role;
-
 
 --
 -- Name: FUNCTION admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text); Type: ACL; Schema: public; Owner: -
@@ -4823,7 +4379,6 @@ REVOKE ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_ne
 GRANT ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text) TO authenticated;
 GRANT ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new_username text, p_new_password text) TO service_role;
 
-
 --
 -- Name: FUNCTION archive_and_prune_old_records(p_tz text); Type: ACL; Schema: public; Owner: -
 --
@@ -4831,14 +4386,12 @@ GRANT ALL ON FUNCTION public.admin_update_user_credentials(p_user_id uuid, p_new
 REVOKE ALL ON FUNCTION public.archive_and_prune_old_records(p_tz text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.archive_and_prune_old_records(p_tz text) TO service_role;
 
-
 --
 -- Name: FUNCTION audit_business_row_change(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.audit_business_row_change() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.audit_business_row_change() TO service_role;
-
 
 --
 -- Name: FUNCTION can_read_profile(p_target_id uuid); Type: ACL; Schema: public; Owner: -
@@ -4848,7 +4401,6 @@ REVOKE ALL ON FUNCTION public.can_read_profile(p_target_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.can_read_profile(p_target_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.can_read_profile(p_target_id uuid) TO service_role;
 
-
 --
 -- Name: FUNCTION can_write_quotation_mistakes(); Type: ACL; Schema: public; Owner: -
 --
@@ -4856,7 +4408,6 @@ GRANT ALL ON FUNCTION public.can_read_profile(p_target_id uuid) TO service_role;
 REVOKE ALL ON FUNCTION public.can_write_quotation_mistakes() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.can_write_quotation_mistakes() TO authenticated;
 GRANT ALL ON FUNCTION public.can_write_quotation_mistakes() TO service_role;
-
 
 --
 -- Name: FUNCTION change_default_password(p_new_password text); Type: ACL; Schema: public; Owner: -
@@ -4866,7 +4417,6 @@ REVOKE ALL ON FUNCTION public.change_default_password(p_new_password text) FROM 
 GRANT ALL ON FUNCTION public.change_default_password(p_new_password text) TO authenticated;
 GRANT ALL ON FUNCTION public.change_default_password(p_new_password text) TO service_role;
 
-
 --
 -- Name: FUNCTION check_profile_role_change(); Type: ACL; Schema: public; Owner: -
 --
@@ -4874,14 +4424,12 @@ GRANT ALL ON FUNCTION public.change_default_password(p_new_password text) TO ser
 REVOKE ALL ON FUNCTION public.check_profile_role_change() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.check_profile_role_change() TO service_role;
 
-
 --
 -- Name: FUNCTION check_profile_updates(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.check_profile_updates() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.check_profile_updates() TO service_role;
-
 
 --
 -- Name: FUNCTION complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone); Type: ACL; Schema: public; Owner: -
@@ -4891,7 +4439,6 @@ REVOKE ALL ON FUNCTION public.complete_leave_profile_setup(p_full_name text, p_w
 GRANT ALL ON FUNCTION public.complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone) TO authenticated;
 GRANT ALL ON FUNCTION public.complete_leave_profile_setup(p_full_name text, p_working_hours numeric, p_break_time integer, p_job_role text, p_default_sign_in time without time zone, p_default_sign_out time without time zone) TO service_role;
 
-
 --
 -- Name: FUNCTION complete_profile_setup(p_username text, p_full_name text, p_new_password text); Type: ACL; Schema: public; Owner: -
 --
@@ -4899,7 +4446,6 @@ GRANT ALL ON FUNCTION public.complete_leave_profile_setup(p_full_name text, p_wo
 REVOKE ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text, p_new_password text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text, p_new_password text) TO authenticated;
 GRANT ALL ON FUNCTION public.complete_profile_setup(p_username text, p_full_name text, p_new_password text) TO service_role;
-
 
 --
 -- Name: FUNCTION convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text); Type: ACL; Schema: public; Owner: -
@@ -4909,14 +4455,12 @@ REVOKE ALL ON FUNCTION public.convert_govt_holiday_response(p_user_id uuid, p_ho
 GRANT ALL ON FUNCTION public.convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text) TO authenticated;
 GRANT ALL ON FUNCTION public.convert_govt_holiday_response(p_user_id uuid, p_holiday_date date, p_response text) TO service_role;
 
-
 --
 -- Name: FUNCTION convert_govt_holiday_response_internal(p_user_id uuid, p_holiday_date date, p_response text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.convert_govt_holiday_response_internal(p_user_id uuid, p_holiday_date date, p_response text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.convert_govt_holiday_response_internal(p_user_id uuid, p_holiday_date date, p_response text) TO service_role;
-
 
 --
 -- Name: FUNCTION convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text); Type: ACL; Schema: public; Owner: -
@@ -4926,14 +4470,12 @@ REVOKE ALL ON FUNCTION public.convert_short_leave_to_full_leave(p_user_id uuid, 
 GRANT ALL ON FUNCTION public.convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text) TO authenticated;
 GRANT ALL ON FUNCTION public.convert_short_leave_to_full_leave(p_user_id uuid, p_adjust_category text) TO service_role;
 
-
 --
 -- Name: FUNCTION convert_short_leave_to_full_leave_internal(p_user_id uuid, p_adjust_category text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.convert_short_leave_to_full_leave_internal(p_user_id uuid, p_adjust_category text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.convert_short_leave_to_full_leave_internal(p_user_id uuid, p_adjust_category text) TO service_role;
-
 
 --
 -- Name: FUNCTION create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb); Type: ACL; Schema: public; Owner: -
@@ -4943,14 +4485,12 @@ REVOKE ALL ON FUNCTION public.create_configured_user(p_email text, p_password te
 GRANT ALL ON FUNCTION public.create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.create_configured_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_profile_options jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.create_new_user(p_email text, p_password text, p_username text, p_role text, p_full_name text, p_needs_supervisor_approval boolean, p_allow_reserve boolean, p_allow_overtime boolean, p_supervisor_ids uuid[]) TO service_role;
-
 
 --
 -- Name: FUNCTION current_user_has_workspace(p_workspace text); Type: ACL; Schema: public; Owner: -
@@ -4960,7 +4500,6 @@ REVOKE ALL ON FUNCTION public.current_user_has_workspace(p_workspace text) FROM 
 GRANT ALL ON FUNCTION public.current_user_has_workspace(p_workspace text) TO authenticated;
 GRANT ALL ON FUNCTION public.current_user_has_workspace(p_workspace text) TO service_role;
 
-
 --
 -- Name: FUNCTION delete_user_by_id(p_user_id uuid); Type: ACL; Schema: public; Owner: -
 --
@@ -4969,14 +4508,12 @@ REVOKE ALL ON FUNCTION public.delete_user_by_id(p_user_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.delete_user_by_id(p_user_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.delete_user_by_id(p_user_id uuid) TO service_role;
 
-
 --
 -- Name: FUNCTION enforce_chuti_write_permissions(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.enforce_chuti_write_permissions() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.enforce_chuti_write_permissions() TO service_role;
-
 
 --
 -- Name: FUNCTION enforce_kpi_assessment_permissions(); Type: ACL; Schema: public; Owner: -
@@ -4985,7 +4522,6 @@ GRANT ALL ON FUNCTION public.enforce_chuti_write_permissions() TO service_role;
 REVOKE ALL ON FUNCTION public.enforce_kpi_assessment_permissions() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.enforce_kpi_assessment_permissions() TO service_role;
 
-
 --
 -- Name: FUNCTION enforce_leave_settlement_permissions(); Type: ACL; Schema: public; Owner: -
 --
@@ -4993,14 +4529,12 @@ GRANT ALL ON FUNCTION public.enforce_kpi_assessment_permissions() TO service_rol
 REVOKE ALL ON FUNCTION public.enforce_leave_settlement_permissions() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.enforce_leave_settlement_permissions() TO service_role;
 
-
 --
 -- Name: FUNCTION enforce_quotation_mistake_metadata(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.enforce_quotation_mistake_metadata() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.enforce_quotation_mistake_metadata() TO service_role;
-
 
 --
 -- Name: FUNCTION get_admin_sales_summary(p_today text, p_tz text); Type: ACL; Schema: public; Owner: -
@@ -5010,7 +4544,6 @@ REVOKE ALL ON FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) F
 GRANT ALL ON FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) TO authenticated;
 GRANT ALL ON FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) TO service_role;
 
-
 --
 -- Name: FUNCTION get_available_record_months(p_user_id uuid, p_tz text); Type: ACL; Schema: public; Owner: -
 --
@@ -5018,7 +4551,6 @@ GRANT ALL ON FUNCTION public.get_admin_sales_summary(p_today text, p_tz text) TO
 REVOKE ALL ON FUNCTION public.get_available_record_months(p_user_id uuid, p_tz text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_available_record_months(p_user_id uuid, p_tz text) TO authenticated;
 GRANT ALL ON FUNCTION public.get_available_record_months(p_user_id uuid, p_tz text) TO service_role;
-
 
 --
 -- Name: FUNCTION get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text); Type: ACL; Schema: public; Owner: -
@@ -5028,7 +4560,6 @@ REVOKE ALL ON FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_
 GRANT ALL ON FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text) TO authenticated;
 GRANT ALL ON FUNCTION public.get_leaderboard_data(p_year text, p_month text, p_period text, p_today text, p_tz text) TO service_role;
 
-
 --
 -- Name: FUNCTION get_my_role(); Type: ACL; Schema: public; Owner: -
 --
@@ -5037,7 +4568,6 @@ REVOKE ALL ON FUNCTION public.get_my_role() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_my_role() TO authenticated;
 GRANT ALL ON FUNCTION public.get_my_role() TO service_role;
 
-
 --
 -- Name: FUNCTION get_user_email_by_username(p_username text); Type: ACL; Schema: public; Owner: -
 --
@@ -5045,22 +4575,12 @@ GRANT ALL ON FUNCTION public.get_my_role() TO service_role;
 REVOKE ALL ON FUNCTION public.get_user_email_by_username(p_username text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_user_email_by_username(p_username text) TO service_role;
 
-
---
--- Name: FUNCTION handle_attendance_updated_at(); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.handle_attendance_updated_at() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.handle_attendance_updated_at() TO service_role;
-
-
 --
 -- Name: FUNCTION handle_new_user(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.handle_new_user() TO service_role;
-
 
 --
 -- Name: FUNCTION has_kpi_access(supervisor_id uuid, employee_id uuid); Type: ACL; Schema: public; Owner: -
@@ -5070,7 +4590,6 @@ REVOKE ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uui
 GRANT ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid) TO service_role;
 
-
 --
 -- Name: FUNCTION has_leave_access(supervisor_id uuid, employee_id uuid); Type: ACL; Schema: public; Owner: -
 --
@@ -5078,7 +4597,6 @@ GRANT ALL ON FUNCTION public.has_kpi_access(supervisor_id uuid, employee_id uuid
 REVOKE ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.has_leave_access(supervisor_id uuid, employee_id uuid) TO service_role;
-
 
 --
 -- Name: FUNCTION is_admin(); Type: ACL; Schema: public; Owner: -
@@ -5088,7 +4606,6 @@ REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_admin() TO authenticated;
 GRANT ALL ON FUNCTION public.is_admin() TO service_role;
 
-
 --
 -- Name: FUNCTION is_admin_or_superadmin(user_id uuid); Type: ACL; Schema: public; Owner: -
 --
@@ -5096,7 +4613,6 @@ GRANT ALL ON FUNCTION public.is_admin() TO service_role;
 REVOKE ALL ON FUNCTION public.is_admin_or_superadmin(user_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_admin_or_superadmin(user_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.is_admin_or_superadmin(user_id uuid) TO service_role;
-
 
 --
 -- Name: FUNCTION is_admin_or_supervisor(); Type: ACL; Schema: public; Owner: -
@@ -5106,7 +4622,6 @@ REVOKE ALL ON FUNCTION public.is_admin_or_supervisor() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_admin_or_supervisor() TO authenticated;
 GRANT ALL ON FUNCTION public.is_admin_or_supervisor() TO service_role;
 
-
 --
 -- Name: FUNCTION is_superadmin(); Type: ACL; Schema: public; Owner: -
 --
@@ -5114,7 +4629,6 @@ GRANT ALL ON FUNCTION public.is_admin_or_supervisor() TO service_role;
 REVOKE ALL ON FUNCTION public.is_superadmin() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_superadmin() TO authenticated;
 GRANT ALL ON FUNCTION public.is_superadmin() TO service_role;
-
 
 --
 -- Name: FUNCTION is_supervisor(); Type: ACL; Schema: public; Owner: -
@@ -5124,14 +4638,12 @@ REVOKE ALL ON FUNCTION public.is_supervisor() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_supervisor() TO authenticated;
 GRANT ALL ON FUNCTION public.is_supervisor() TO service_role;
 
-
 --
 -- Name: FUNCTION reconcile_govt_holiday_adjustments(p_user_id uuid, p_year integer); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.reconcile_govt_holiday_adjustments(p_user_id uuid, p_year integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.reconcile_govt_holiday_adjustments(p_user_id uuid, p_year integer) TO service_role;
-
 
 --
 -- Name: FUNCTION register_active_session(p_session_id text); Type: ACL; Schema: public; Owner: -
@@ -5141,14 +4653,12 @@ REVOKE ALL ON FUNCTION public.register_active_session(p_session_id text) FROM PU
 GRANT ALL ON FUNCTION public.register_active_session(p_session_id text) TO authenticated;
 GRANT ALL ON FUNCTION public.register_active_session(p_session_id text) TO service_role;
 
-
 --
 -- Name: FUNCTION request_password_reset(p_username text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.request_password_reset(p_username text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.request_password_reset(p_username text) TO service_role;
-
 
 --
 -- Name: FUNCTION reset_all_user_feature_flags(); Type: ACL; Schema: public; Owner: -
@@ -5158,7 +4668,6 @@ REVOKE ALL ON FUNCTION public.reset_all_user_feature_flags() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.reset_all_user_feature_flags() TO authenticated;
 GRANT ALL ON FUNCTION public.reset_all_user_feature_flags() TO service_role;
 
-
 --
 -- Name: FUNCTION resolve_password_reset(p_user_id uuid, p_approve boolean); Type: ACL; Schema: public; Owner: -
 --
@@ -5166,7 +4675,6 @@ GRANT ALL ON FUNCTION public.reset_all_user_feature_flags() TO service_role;
 REVOKE ALL ON FUNCTION public.resolve_password_reset(p_user_id uuid, p_approve boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.resolve_password_reset(p_user_id uuid, p_approve boolean) TO authenticated;
 GRANT ALL ON FUNCTION public.resolve_password_reset(p_user_id uuid, p_approve boolean) TO service_role;
-
 
 --
 -- Name: FUNCTION save_global_leave_settings(p_settings jsonb); Type: ACL; Schema: public; Owner: -
@@ -5176,14 +4684,12 @@ REVOKE ALL ON FUNCTION public.save_global_leave_settings(p_settings jsonb) FROM 
 GRANT ALL ON FUNCTION public.save_global_leave_settings(p_settings jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.save_global_leave_settings(p_settings jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION save_global_leave_settings_internal(p_settings jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.save_global_leave_settings_internal(p_settings jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.save_global_leave_settings_internal(p_settings jsonb) TO service_role;
-
 
 --
 -- Name: FUNCTION set_admin_delegated_flags(p_flags jsonb); Type: ACL; Schema: public; Owner: -
@@ -5193,7 +4699,6 @@ REVOKE ALL ON FUNCTION public.set_admin_delegated_flags(p_flags jsonb) FROM PUBL
 GRANT ALL ON FUNCTION public.set_admin_delegated_flags(p_flags jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_admin_delegated_flags(p_flags jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION set_feature_flags(p_flags jsonb); Type: ACL; Schema: public; Owner: -
 --
@@ -5202,14 +4707,12 @@ REVOKE ALL ON FUNCTION public.set_feature_flags(p_flags jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_feature_flags(p_flags jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_feature_flags(p_flags jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION set_govt_holiday_response_updated_at(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_govt_holiday_response_updated_at() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_govt_holiday_response_updated_at() TO service_role;
-
 
 --
 -- Name: FUNCTION set_role_visibility(p_visibility jsonb); Type: ACL; Schema: public; Owner: -
@@ -5219,7 +4722,6 @@ REVOKE ALL ON FUNCTION public.set_role_visibility(p_visibility jsonb) FROM PUBLI
 GRANT ALL ON FUNCTION public.set_role_visibility(p_visibility jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_role_visibility(p_visibility jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION set_sanitizer_rules(p_rules jsonb); Type: ACL; Schema: public; Owner: -
 --
@@ -5227,7 +4729,6 @@ GRANT ALL ON FUNCTION public.set_role_visibility(p_visibility jsonb) TO service_
 REVOKE ALL ON FUNCTION public.set_sanitizer_rules(p_rules jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_sanitizer_rules(p_rules jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_sanitizer_rules(p_rules jsonb) TO service_role;
-
 
 --
 -- Name: FUNCTION set_sanitizer_words(p_words text[]); Type: ACL; Schema: public; Owner: -
@@ -5237,7 +4738,6 @@ REVOKE ALL ON FUNCTION public.set_sanitizer_words(p_words text[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_sanitizer_words(p_words text[]) TO authenticated;
 GRANT ALL ON FUNCTION public.set_sanitizer_words(p_words text[]) TO service_role;
 
-
 --
 -- Name: FUNCTION set_supervisor_access_overrides(p_overrides jsonb); Type: ACL; Schema: public; Owner: -
 --
@@ -5245,7 +4745,6 @@ GRANT ALL ON FUNCTION public.set_sanitizer_words(p_words text[]) TO service_role
 REVOKE ALL ON FUNCTION public.set_supervisor_access_overrides(p_overrides jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_supervisor_access_overrides(p_overrides jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_supervisor_access_overrides(p_overrides jsonb) TO service_role;
-
 
 --
 -- Name: FUNCTION set_temp_access(p_entries jsonb); Type: ACL; Schema: public; Owner: -
@@ -5255,7 +4754,6 @@ REVOKE ALL ON FUNCTION public.set_temp_access(p_entries jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_temp_access(p_entries jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_temp_access(p_entries jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb); Type: ACL; Schema: public; Owner: -
 --
@@ -5264,14 +4762,12 @@ REVOKE ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs
 GRANT ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.set_user_hidden_tabs(p_user_id uuid, p_hidden_tabs jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION sync_profile_govt_holiday_entitlements(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.sync_profile_govt_holiday_entitlements() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.sync_profile_govt_holiday_entitlements() TO service_role;
-
 
 --
 -- Name: FUNCTION sync_top_performer_badges(); Type: ACL; Schema: public; Owner: -
@@ -5280,7 +4776,6 @@ GRANT ALL ON FUNCTION public.sync_profile_govt_holiday_entitlements() TO service
 REVOKE ALL ON FUNCTION public.sync_top_performer_badges() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.sync_top_performer_badges() TO service_role;
 
-
 --
 -- Name: FUNCTION update_chuti_updated_at(); Type: ACL; Schema: public; Owner: -
 --
@@ -5288,14 +4783,12 @@ GRANT ALL ON FUNCTION public.sync_top_performer_badges() TO service_role;
 REVOKE ALL ON FUNCTION public.update_chuti_updated_at() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_chuti_updated_at() TO service_role;
 
-
 --
 -- Name: FUNCTION update_compliance_rules_updated_at(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.update_compliance_rules_updated_at() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_compliance_rules_updated_at() TO service_role;
-
 
 --
 -- Name: FUNCTION update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb); Type: ACL; Schema: public; Owner: -
@@ -5305,7 +4798,6 @@ REVOKE ALL ON FUNCTION public.update_global_settings_key(p_user_id uuid, p_key t
 GRANT ALL ON FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.update_global_settings_key(p_user_id uuid, p_key text, p_value jsonb) TO service_role;
 
-
 --
 -- Name: FUNCTION update_records_updated_at(); Type: ACL; Schema: public; Owner: -
 --
@@ -5313,32 +4805,12 @@ GRANT ALL ON FUNCTION public.update_global_settings_key(p_user_id uuid, p_key te
 REVOKE ALL ON FUNCTION public.update_records_updated_at() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_records_updated_at() TO service_role;
 
-
 --
 -- Name: FUNCTION update_todos_last_activity(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.update_todos_last_activity() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.update_todos_last_activity() TO service_role;
-
-
---
--- Name: TABLE attendance_breaks; Type: ACL; Schema: public; Owner: -
---
-
-GRANT ALL ON TABLE public.attendance_breaks TO anon;
-GRANT ALL ON TABLE public.attendance_breaks TO authenticated;
-GRANT ALL ON TABLE public.attendance_breaks TO service_role;
-
-
---
--- Name: TABLE attendance_daily; Type: ACL; Schema: public; Owner: -
---
-
-GRANT ALL ON TABLE public.attendance_daily TO anon;
-GRANT ALL ON TABLE public.attendance_daily TO authenticated;
-GRANT ALL ON TABLE public.attendance_daily TO service_role;
-
 
 --
 -- Name: TABLE audit_logs; Type: ACL; Schema: public; Owner: -
@@ -5348,7 +4820,6 @@ GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.audit_logs TO 
 GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.audit_logs TO authenticated;
 GRANT ALL ON TABLE public.audit_logs TO service_role;
 
-
 --
 -- Name: TABLE chuti; Type: ACL; Schema: public; Owner: -
 --
@@ -5356,7 +4827,6 @@ GRANT ALL ON TABLE public.audit_logs TO service_role;
 GRANT ALL ON TABLE public.chuti TO anon;
 GRANT ALL ON TABLE public.chuti TO authenticated;
 GRANT ALL ON TABLE public.chuti TO service_role;
-
 
 --
 -- Name: TABLE compliance_rules; Type: ACL; Schema: public; Owner: -
@@ -5366,7 +4836,6 @@ GRANT ALL ON TABLE public.compliance_rules TO anon;
 GRANT ALL ON TABLE public.compliance_rules TO authenticated;
 GRANT ALL ON TABLE public.compliance_rules TO service_role;
 
-
 --
 -- Name: TABLE dismissed_notifications; Type: ACL; Schema: public; Owner: -
 --
@@ -5374,7 +4843,6 @@ GRANT ALL ON TABLE public.compliance_rules TO service_role;
 GRANT ALL ON TABLE public.dismissed_notifications TO anon;
 GRANT ALL ON TABLE public.dismissed_notifications TO authenticated;
 GRANT ALL ON TABLE public.dismissed_notifications TO service_role;
-
 
 --
 -- Name: TABLE govt_holiday_responses; Type: ACL; Schema: public; Owner: -
@@ -5384,7 +4852,6 @@ GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.govt_holiday_r
 GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.govt_holiday_responses TO authenticated;
 GRANT ALL ON TABLE public.govt_holiday_responses TO service_role;
 
-
 --
 -- Name: TABLE kpi_assessments; Type: ACL; Schema: public; Owner: -
 --
@@ -5392,7 +4859,6 @@ GRANT ALL ON TABLE public.govt_holiday_responses TO service_role;
 GRANT ALL ON TABLE public.kpi_assessments TO anon;
 GRANT ALL ON TABLE public.kpi_assessments TO authenticated;
 GRANT ALL ON TABLE public.kpi_assessments TO service_role;
-
 
 --
 -- Name: TABLE leaderboard_archive; Type: ACL; Schema: public; Owner: -
@@ -5402,7 +4868,6 @@ GRANT ALL ON TABLE public.leaderboard_archive TO anon;
 GRANT ALL ON TABLE public.leaderboard_archive TO authenticated;
 GRANT ALL ON TABLE public.leaderboard_archive TO service_role;
 
-
 --
 -- Name: TABLE leave_settlements; Type: ACL; Schema: public; Owner: -
 --
@@ -5410,7 +4875,6 @@ GRANT ALL ON TABLE public.leaderboard_archive TO service_role;
 GRANT ALL ON TABLE public.leave_settlements TO anon;
 GRANT ALL ON TABLE public.leave_settlements TO authenticated;
 GRANT ALL ON TABLE public.leave_settlements TO service_role;
-
 
 --
 -- Name: TABLE login_codes; Type: ACL; Schema: public; Owner: -
@@ -5420,7 +4884,6 @@ GRANT ALL ON TABLE public.login_codes TO anon;
 GRANT ALL ON TABLE public.login_codes TO authenticated;
 GRANT ALL ON TABLE public.login_codes TO service_role;
 
-
 --
 -- Name: TABLE mobile_app_versions; Type: ACL; Schema: public; Owner: -
 --
@@ -5428,7 +4891,6 @@ GRANT ALL ON TABLE public.login_codes TO service_role;
 GRANT ALL ON TABLE public.mobile_app_versions TO anon;
 GRANT ALL ON TABLE public.mobile_app_versions TO authenticated;
 GRANT ALL ON TABLE public.mobile_app_versions TO service_role;
-
 
 --
 -- Name: SEQUENCE mobile_app_versions_id_seq; Type: ACL; Schema: public; Owner: -
@@ -5438,7 +4900,6 @@ GRANT ALL ON SEQUENCE public.mobile_app_versions_id_seq TO anon;
 GRANT ALL ON SEQUENCE public.mobile_app_versions_id_seq TO authenticated;
 GRANT ALL ON SEQUENCE public.mobile_app_versions_id_seq TO service_role;
 
-
 --
 -- Name: TABLE profiles; Type: ACL; Schema: public; Owner: -
 --
@@ -5446,7 +4907,6 @@ GRANT ALL ON SEQUENCE public.mobile_app_versions_id_seq TO service_role;
 GRANT ALL ON TABLE public.profiles TO anon;
 GRANT ALL ON TABLE public.profiles TO authenticated;
 GRANT ALL ON TABLE public.profiles TO service_role;
-
 
 --
 -- Name: TABLE quotation_mistakes; Type: ACL; Schema: public; Owner: -
@@ -5456,7 +4916,6 @@ GRANT ALL ON TABLE public.quotation_mistakes TO anon;
 GRANT ALL ON TABLE public.quotation_mistakes TO authenticated;
 GRANT ALL ON TABLE public.quotation_mistakes TO service_role;
 
-
 --
 -- Name: TABLE records; Type: ACL; Schema: public; Owner: -
 --
@@ -5465,7 +4924,6 @@ GRANT ALL ON TABLE public.records TO anon;
 GRANT ALL ON TABLE public.records TO authenticated;
 GRANT ALL ON TABLE public.records TO service_role;
 
-
 --
 -- Name: TABLE todos; Type: ACL; Schema: public; Owner: -
 --
@@ -5473,7 +4931,6 @@ GRANT ALL ON TABLE public.records TO service_role;
 GRANT ALL ON TABLE public.todos TO anon;
 GRANT ALL ON TABLE public.todos TO authenticated;
 GRANT ALL ON TABLE public.todos TO service_role;
-
 
 --
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: -
@@ -5484,7 +4941,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
 
-
 --
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: -
 --
@@ -5494,7 +4950,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON S
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
 
-
 --
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: -
 --
@@ -5502,7 +4957,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON S
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
-
 
 --
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: -
@@ -5513,7 +4967,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON F
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
 
-
 --
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: -
 --
@@ -5522,7 +4975,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO anon;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO service_role;
-
 
 --
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: -
@@ -5533,10 +4985,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
-
 --
 -- PostgreSQL database dump complete
 --
 
 \unrestrict KGgVatirYb3Y1Kz2ZWJ2YZ67B8HHFQkXzCDO3DNWRWxLMSHyKrnizOtueEfnchb
-
