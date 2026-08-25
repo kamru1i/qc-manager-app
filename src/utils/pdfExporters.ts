@@ -221,7 +221,7 @@ export const exportIndividualPDF = (
       </head>
       <body>
         <div class="header">
-          <h1>Staff Leave Attendance Summary Report</h1>
+          <h1>Staff Leave Summary Report</h1>
           <p>Official Report Generated On: ${new Date().toLocaleDateString('en-US')}</p>
         </div>
         
