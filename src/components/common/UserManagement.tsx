@@ -1369,10 +1369,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       ) : isLoading ? (
         <UserManagementSkeleton rows={8} />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-theme-page-bg/45 p-4 rounded-xl border border-theme-border-input/40">
-            <div className="relative w-full md:max-w-xs">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="relative w-full sm:w-80">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-theme-text-muted">
                 <Search className="h-4 w-4" />
               </span>
@@ -1381,7 +1381,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 placeholder="Search by name or codename..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:border-blue-500/50 transition-colors"
+                className="w-full pl-9 pr-8 py-2 bg-theme-page-bg/80 border border-theme-border-input/60 rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:border-blue-500/50 transition-colors"
               />
               {searchQuery && (
                 <button
@@ -1394,7 +1394,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 shrink-0">
               <div className="text-[11px] text-theme-text-muted">
                 Showing <span className="text-theme-text-primary font-semibold">{visibleProfiles.length}</span> users
               </div>
@@ -1404,7 +1404,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   onClick={() => {
                     setIsCreatingNewUser(true);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer font-sans shrink-0"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer font-sans shrink-0"
                 >
                   <UserPlus className="h-4 w-4" />
                   Add New Staff
@@ -1414,16 +1414,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </div>
 
           {/* Users Table */}
-          <div className="bg-theme-page-bg/20 rounded-xl border border-theme-border-muted overflow-hidden">
+          <div className="bg-theme-card-bg/40 backdrop-blur-xl rounded-2xl border border-theme-border-input/80 overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-theme-border-input bg-theme-card-bg/40 text-[10px] uppercase tracking-wider text-theme-text-muted font-semibold">
-                    <th className="py-3 px-4">Name / Codename</th>
-                    <th className="py-3 px-4 text-center">Role</th>
-                    <th className="py-3 px-4 text-center">Leave Tracker</th>
-                    <th className="py-3 px-4 text-center">Quotes Tracker</th>
-                    <th className="py-3 px-4 text-center">File Type</th>
+                  <tr className="border-b border-theme-border-input/60 bg-theme-page-bg/40 text-[10px] uppercase tracking-wider text-theme-text-muted font-bold">
+                    <th className="py-3.5 px-6">Name / Codename</th>
+                    <th className="py-3.5 px-4 text-center">Role</th>
+                    <th className="py-3.5 px-4 text-center">Leave Tracker</th>
+                    <th className="py-3.5 px-4 text-center">Quotes Tracker</th>
+                    <th className="py-3.5 px-6">File Type</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-theme-border-muted text-xs text-theme-text-secondary">
@@ -1449,7 +1449,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                         className="hover:bg-theme-card-bg/25 transition-colors cursor-pointer select-none"
                         title="Double-click to view details"
                       >
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-6">
                           <div className="flex items-center">
                             <UserDisplayName
                               profile={u}
@@ -1462,7 +1462,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                             {u.username.trim()}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3.5 px-4 text-center">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
                             getDisplayRole(u.role, profile) === 'superadmin'
                               ? 'bg-amber-950/40 border-amber-900/50 text-amber-400'
@@ -1476,29 +1476,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                             {getRoleLabel(u.role, profile)}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3.5 px-4 text-center">
                           {u.has_chuti_access ? (
                             <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
                           ) : (
                             <XCircle className="h-4.5 w-4.5 text-theme-text-muted/65 mx-auto" />
                           )}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3.5 px-4 text-center">
                           {u.has_quotes_access ? (
                             <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
                           ) : (
                             <XCircle className="h-4.5 w-4.5 text-theme-text-muted/65 mx-auto" />
                           )}
                         </td>
-                        <td className="py-3 px-4 text-center max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
+                        <td className="py-3.5 px-6 max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
                           {!u.has_quotes_access ? (
                             <span className="text-theme-text-muted/80 italic text-[11px]">No access</span>
                           ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === ALL_FILE_TYPES.length ? (
-                            <span className="text-blue-400 font-medium text-[11px] block text-center">All Categories</span>
+                            <span className="text-blue-400 font-medium text-[11px] block">All Categories</span>
                           ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === 0 ? (
-                            <span className="text-red-400/80 font-medium text-[11px] block text-center">None Allowed</span>
+                            <span className="text-red-400/80 font-medium text-[11px] block">None Allowed</span>
                           ) : (
-                            <span className="text-theme-text-muted text-[11px] block text-center">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
+                            <span className="text-theme-text-muted text-[11px] block">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
                           )}
                         </td>
                       </tr>

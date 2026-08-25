@@ -5,57 +5,48 @@ interface TodoSkeletonProps {
 }
 
 export const TodoSkeleton: React.FC<TodoSkeletonProps> = ({ className = '' }) => {
-  const innerBg = 'bg-slate-800/40 rounded-lg';
-
   return (
-    <div className={`space-y-6 animate-pulse ${className}`}>
-      {/* Header: Title + Sub-tab buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-slate-800 shrink-0">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div className={`w-5 h-5 rounded ${innerBg}`} />
-            <div className={`h-5 w-56 ${innerBg}`} />
+    <div className={`space-y-6 font-sans animate-pulse ${className}`}>
+      {/* Top Input Bar Card */}
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 p-3.5 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-3.5 w-full">
+        {/* Main Input */}
+        <div className="flex-1 min-w-[260px]">
+          <div className="h-10 w-full bg-theme-page-bg/60 border border-theme-border-input/60 rounded-xl" />
+        </div>
+
+        {/* Right Controls: Permanent checkbox + Add button + Copy + Refresh + Daily List / All Logs toggle */}
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 px-2">
+            <div className="h-4 w-4 rounded-full border border-theme-border-input/60 bg-theme-page-bg/40" />
+            <div className="h-3 w-16 bg-theme-border-input/40 rounded" />
           </div>
-          <div className={`h-3 w-72 ${innerBg}`} />
-        </div>
-        {/* Sub-tab toggle pills */}
-        <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 gap-1">
-          <div className={`h-9 w-28 rounded-lg ${innerBg}`} />
-          <div className={`h-9 w-24 rounded-lg bg-slate-850/30 rounded-lg`} />
-        </div>
-      </div>
-
-      {/* Add task form bar */}
-      <div className="flex flex-col md:flex-row items-center gap-4 bg-slate-950/40 p-4 border border-slate-800/60 rounded-xl">
-        <div className="flex-1 w-full flex items-center gap-2.5">
-          <div className={`flex-1 h-10 ${innerBg} rounded-xl`} />
-          <div className={`h-10 w-28 bg-slate-850/30 rounded-xl`} />
-          <div className={`h-10 w-28 bg-indigo-600/15 rounded-xl`} />
-        </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <div className={`h-10 w-36 bg-slate-850/30 rounded-xl`} />
-          <div className={`h-10 w-10 bg-slate-850/30 rounded-xl`} />
+          <div className="h-9 w-9 bg-purple-600/30 border border-purple-500/30 rounded-xl" />
+          <div className="h-9 w-9 bg-theme-page-bg border border-theme-border-input/60 rounded-xl" />
+          <div className="h-9 w-9 bg-theme-page-bg border border-theme-border-input/60 rounded-xl" />
+          <div className="flex items-center bg-theme-page-bg border border-theme-border-input/60 p-1 rounded-xl gap-1">
+            <div className="h-7 w-20 bg-blue-600/30 rounded-lg" />
+            <div className="h-7 w-18 bg-theme-page-bg rounded-lg" />
+          </div>
         </div>
       </div>
 
-      {/* Task items list */}
-      <div className="space-y-0 divide-y divide-slate-800/60">
-        {[...Array(5)].map((_, i) => (
+      {/* Task Items List */}
+      <div className="bg-theme-card-bg/40 backdrop-blur-xl border border-theme-border-input/80 rounded-2xl overflow-hidden shadow-xl divide-y divide-theme-border-input/40">
+        {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
-            className="py-4 px-1 flex items-center justify-between gap-4"
+            className="py-3.5 px-5 flex items-center justify-between gap-4 hover:bg-theme-card-bg/20 transition-all"
           >
-            {/* Left side: status circle + task text + badge */}
-            <div className="flex-1 flex items-center gap-3">
-              <div className="w-5 h-5 rounded-full border border-slate-700/60 bg-slate-800/40 shrink-0" />
+            {/* Left side: status circle + task text + permanent badge */}
+            <div className="flex-1 flex items-center gap-3.5">
+              <div className="w-4.5 h-4.5 rounded-full border border-theme-border-input/70 bg-theme-page-bg/40 shrink-0" />
               <div className="flex-1 flex items-center gap-2.5">
                 <div
-                  className={`h-3.5 rounded-lg ${innerBg}`}
-                  style={{ width: `${45 + ((i * 17) % 35)}%` }}
+                  className="h-3.5 rounded-md bg-theme-border-input/50 italic"
+                  style={{ width: `${35 + ((i * 19) % 40)}%` }}
                 />
-                {/* Permanent badge placeholder (shown on some items) */}
-                {i % 2 === 0 && (
-                  <div className="h-4 w-16 bg-indigo-600/10 border border-indigo-500/15 rounded-full" />
+                {i > 0 && (
+                  <div className="h-4.5 w-18 bg-purple-600/20 border border-purple-500/30 rounded-full shrink-0" />
                 )}
               </div>
             </div>

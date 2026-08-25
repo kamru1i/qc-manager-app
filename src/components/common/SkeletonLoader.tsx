@@ -18,9 +18,10 @@ import { TeamLeaveRecordsSkeleton } from '@/components/common/skeleton/TeamLeave
 import { ProfileSettingsSkeleton } from '@/components/common/skeleton/ProfileSettingsSkeleton';
 import { KpiSkeleton } from '@/components/common/skeleton/KpiSkeleton';
 import { CopyHelperSkeleton } from '@/components/common/skeleton/CopyHelperSkeleton';
+import { SanitizerSkeleton } from '@/components/common/skeleton/SanitizerSkeleton';
 
 interface SkeletonLoaderProps {
-  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'leaderboard' | 'reports-dashboard' | 'team-leaves-report' | 'profile-settings' | 'kpi' | 'copy-helper' | 'save-file';
+  variant?: 'table' | 'stats' | 'list' | 'profile-header' | 'leaves-table' | 'staff-table' | 'responses-table' | 'settlements-table' | 'chuti-form' | 'leave-history' | 'leave-settings' | 'todo' | 'leaderboard' | 'reports-dashboard' | 'team-leaves-report' | 'profile-settings' | 'kpi' | 'copy-helper' | 'save-file' | 'sanitizer' | 'file-sanitizer';
   type?: string;
   rows?: number;
   cards?: number;
@@ -73,6 +74,10 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
     case 'my_report':
     case 'all_report':
       return <ReportsDashboardSkeleton className={className} />;
+    case 'sanitizer':
+    case 'file-sanitizer':
+    case 'file_sanitizer':
+      return <SanitizerSkeleton className={className} />;
 
     case 'team-leaves-report':
       return <TeamLeaveRecordsSkeleton />;
