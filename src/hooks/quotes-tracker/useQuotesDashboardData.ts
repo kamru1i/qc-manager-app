@@ -580,9 +580,9 @@ export const useQuotesDashboardData = (
   // Debounce ref for real-time record change events to prevent double-fetching
   // when user's own mutations already trigger explicit fetchRecords() calls.
   const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Throttle: prevent cascading refetches — minimum 3s between full fetches
+  // Throttle: prevent cascading refetches — minimum 5s between full fetches
   const lastQuotesRealtimeFetchRef = useRef<number>(0);
-  const QUOTES_REALTIME_THROTTLE_MS = 3000;
+  const QUOTES_REALTIME_THROTTLE_MS = 5000;
 
   // ── records handler (via centralized RealtimeProvider) ──
   const handleRecordsRealtime = useCallback(() => {

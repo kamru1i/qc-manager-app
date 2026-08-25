@@ -84,8 +84,10 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     setMounted(true);
     
-    // Initial check
-    checkConnectivity();
+    // Defer the initial connectivity ping by 3s so it doesn't compete with
+    // the critical auth → profile → session startup waterfall.
+    // navigator.onLine provides the initial state until the ping confirms.
+    const initialCheckTimeout = setTimeout(() => checkConnectivity(), 3000);
 
     const handleOnline = () => {
       // Re-verify connection to make sure it's not a false online event
@@ -107,6 +109,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, 45000);
 
     return () => {
+      clearTimeout(initialCheckTimeout);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
       clearInterval(intervalId);

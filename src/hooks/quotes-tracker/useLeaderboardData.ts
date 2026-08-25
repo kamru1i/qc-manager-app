@@ -31,7 +31,7 @@ let _leaderboardCache: {
   data: LeaderboardUser[];
 } | null = null;
 
-const REALTIME_THROTTLE_MS = 2000;
+const REALTIME_THROTTLE_MS = 5000;
 
 const monthsList = [
   { value: '01', name: 'January' },
