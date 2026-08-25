@@ -266,9 +266,9 @@ export const calculateLeaveOrOvertime = (
   actualStart: string,
   actualEnd: string,
   shiftStart: string = '13:00',
-  shiftEnd: string = '22:30',
+  _shiftEnd: string = '22:30',
   workingHours: number = 9.5,
-  isHoliday: boolean = false
+  _isHoliday: boolean = false
 ) => {
   if (type === 'Full Leave' || type === 'Select' || !type) {
     return '00:00';

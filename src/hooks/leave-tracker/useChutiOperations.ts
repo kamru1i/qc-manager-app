@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
+import { CHUTI_COLUMNS } from '@/utils/dbColumns';
 import { Profile, ChutiRecordWithProfile } from '@/types';
 import { 
   ChutiRecord, 
@@ -498,7 +499,7 @@ export const useChutiOperations = ({
         .from('chuti')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', record.id || '')
-        .select();
+        .select(CHUTI_COLUMNS);
       if (error) throw error;
       
       if (!data || data.length === 0) {
@@ -792,7 +793,7 @@ export const useChutiOperations = ({
           .from('chuti')
           .update(updates)
           .eq('id', t.id)
-          .select();
+          .select(CHUTI_COLUMNS);
 
         if (error) throw error;
 
@@ -865,7 +866,7 @@ export const useChutiOperations = ({
           .from('chuti')
           .update(updates)
           .eq('id', t.id)
-          .select();
+          .select(CHUTI_COLUMNS);
 
         if (error) throw error;
 
@@ -945,7 +946,7 @@ export const useChutiOperations = ({
           .from('chuti')
           .update(updates)
           .eq('id', t.id)
-          .select();
+          .select(CHUTI_COLUMNS);
 
         if (error) throw error;
 

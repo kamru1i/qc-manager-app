@@ -624,7 +624,7 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
       const { data, error } = await supabase
         .from("compliance_rules")
         .insert(payload)
-        .select()
+        .select(COMPLIANCE_RULE_COLUMNS)
         .single();
       if (error) throw error;
 

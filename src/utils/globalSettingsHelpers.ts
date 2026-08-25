@@ -89,20 +89,18 @@ export const getInitialGlobalSettings = (): GlobalSettings => {
 
       // 2. Priority: find cached profiles in localStorage (prefer admin role or explicit office_leave_mode)
       let foundSettings: GlobalSettings | null = null;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('cached_profile_')) {
-          const raw = localStorage.getItem(key);
-          if (raw) {
-            const cachedProfile = JSON.parse(raw);
-            if (cachedProfile && cachedProfile.global_settings) {
-              const res = getGlobalSettingsFromProfile(cachedProfile);
-              if (cachedProfile.role === 'admin' || res.office_leave_mode === 'merged') {
-                foundSettings = res;
-                break;
-              }
-              if (!foundSettings) foundSettings = res;
+      const profileKeys = Object.keys(localStorage).filter((k) => k.startsWith('cached_profile_'));
+      for (const key of profileKeys) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const cachedProfile = JSON.parse(raw);
+          if (cachedProfile && cachedProfile.global_settings) {
+            const res = getGlobalSettingsFromProfile(cachedProfile);
+            if (cachedProfile.role === 'admin' || res.office_leave_mode === 'merged') {
+              foundSettings = res;
+              break;
             }
+            if (!foundSettings) foundSettings = res;
           }
         }
       }
