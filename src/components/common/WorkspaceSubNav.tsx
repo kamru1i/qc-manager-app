@@ -142,6 +142,39 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       onClick: () => onQuotesTabChange("entry"),
     });
 
+    if (!tabHidden("copy_helper")) {
+      subTabs.push({
+        id: "copy_helper",
+        label: "Copy Helper",
+        icon: ScrollText,
+        iconColor: "text-amber-400",
+        active: activeQuotesTab === "copy_helper",
+        onClick: () => onQuotesTabChange("copy_helper"),
+      });
+    }
+
+    if (isSuperAdmin && !tabHidden("save_file")) {
+      subTabs.push({
+        id: "save_file",
+        label: "Save File",
+        icon: Save,
+        iconColor: "text-teal-400",
+        active: activeQuotesTab === "save_file",
+        onClick: () => onQuotesTabChange("save_file"),
+      });
+    }
+
+    if (!tabHidden("quick_import")) {
+      subTabs.push({
+        id: "quick_import",
+        label: "Quick Import",
+        icon: Sparkles,
+        iconColor: "text-amber-300",
+        active: activeQuotesTab === "quick_import",
+        onClick: () => onQuotesTabChange("quick_import"),
+      });
+    }
+
     if (!tabHidden("monthly")) {
       subTabs.push({
         id: "monthly",
@@ -175,17 +208,6 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
 
-    if (!tabHidden("quick_import")) {
-      subTabs.push({
-        id: "quick_import",
-        label: "Quick Import",
-        icon: Sparkles,
-        iconColor: "text-amber-300",
-        active: activeQuotesTab === "quick_import",
-        onClick: () => onQuotesTabChange("quick_import"),
-      });
-    }
-
     if (!tabHidden("rules")) {
       subTabs.push({
         id: "rules",
@@ -205,28 +227,6 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         iconColor: "text-purple-400",
         active: activeQuotesTab === "login_codes",
         onClick: () => onQuotesTabChange("login_codes"),
-      });
-    }
-
-    if (!tabHidden("copy_helper")) {
-      subTabs.push({
-        id: "copy_helper",
-        label: "Copy Helper",
-        icon: ScrollText,
-        iconColor: "text-amber-400",
-        active: activeQuotesTab === "copy_helper",
-        onClick: () => onQuotesTabChange("copy_helper"),
-      });
-    }
-
-    if (isSuperAdmin && !tabHidden("save_file")) {
-      subTabs.push({
-        id: "save_file",
-        label: "Save File",
-        icon: Save,
-        iconColor: "text-teal-400",
-        active: activeQuotesTab === "save_file",
-        onClick: () => onQuotesTabChange("save_file"),
       });
     }
   } else if (activeTab === "user_management") {
