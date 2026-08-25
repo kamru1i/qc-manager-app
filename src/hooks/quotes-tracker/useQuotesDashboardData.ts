@@ -118,7 +118,26 @@ export const useQuotesDashboardData = (
   const lastFetchedKeyRef = useRef<string>('');
   const lastFetchedTimeRef = useRef<Map<string, number>>(new Map());
 
-  // Fetch all records for the selected Month & Year
+  // Helper to extract and filter records from cache for current view
+  const getFilteredLocalRecords = useCallback(async (year: string, month: string) => {
+    try {
+      const cached = await getCacheData<RecordItem>('records_cache');
+      const isApproverScope = isAdminRole(profile) || profile?.role === 'supervisor';
+      const filtered = cached.filter(r => {
+        if (!r.submitted_at) return false;
+        if (!isApproverScope && r.user_id !== sessionUser?.id) return false;
+        const date = new Date(r.submitted_at);
+        if (isNaN(date.getTime())) return false;
+        return date.getFullYear().toString() === year && String(date.getMonth() + 1).padStart(2, '0') === month;
+      });
+      filtered.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+      return filtered;
+    } catch {
+      return [];
+    }
+  }, [profile, sessionUser?.id]);
+
+  // Fetch all records for the selected Month & Year with true SWR (instant paint + background sync)
   const fetchRecords = useCallback(async (isSilent: boolean = false, force: boolean = false) => {
     if (!sessionUser || !profile) return;
     
@@ -129,7 +148,18 @@ export const useQuotesDashboardData = (
     // If not forced, not silent, and loaded within 5 mins: skip remote fetch
     const canSkipRemote = (now - lastFetched < CACHE_THROTTLE_MS) && !force && !isSilent;
 
+    // 1. SWR Instant Paint: load cached records immediately without waiting for network
+    const localRecords = await getFilteredLocalRecords(selectedYear, selectedMonth);
+    if (localRecords.length > 0) {
+      setRecords(localRecords);
+      setRecordsLoading(false); // Instant display (0ms)!
+    } else if (!isSilent) {
+      setRecordsLoading(true); // Only show loader if we have zero cached items
+    }
+
     if (lastFetchedKeyRef.current === fetchKey && !force && !isSilent && canSkipRemote) {
+      setRecordsLoading(false);
+      setInitialFetchDone(true);
       return;
     }
 
@@ -137,12 +167,11 @@ export const useQuotesDashboardData = (
       return;
     }
     fetchingRef.current = true;
-    if (!isSilent) setRecordsLoading(true);
 
     try {
       if (navigator.onLine) {
         try {
-          // 0. Self-healing check: if the user switched accounts or local cache was wiped, clear database cache for full fresh sync
+          // 0. Self-healing check: if user switched accounts, clear database cache
           const cachedUserId = await getSyncTimestamp('active_user_id');
           const localCachedItems = await getCacheData<RecordItem>('records_cache');
           
@@ -151,10 +180,6 @@ export const useQuotesDashboardData = (
             await setSyncTimestamp('active_user_id', sessionUser.id);
           }
 
-          // Egress: normal users only ever see their own records (display,
-          // "My Report") — leaderboard data comes from the RPC. So scope all
-          // record sync queries to the logged-in user unless admin/supervisor.
-          // If the scope changes (e.g. role promotion), force a full resync.
           const isApproverScope = isAdminRole(profile) || profile.role === 'supervisor';
           const recordsScope = isApproverScope ? 'all' : 'self';
           const prevRecordsScope = await getSyncTimestamp('records_scope');
@@ -163,7 +188,7 @@ export const useQuotesDashboardData = (
           }
           await setSyncTimestamp('records_scope', recordsScope);
 
-          // 1. Sync pending offline mutations first
+          // 1. Sync pending offline mutations
           try {
             const syncRes = await syncOfflineData();
             if (syncRes.success && syncRes.syncedCount > 0) {
@@ -179,19 +204,7 @@ export const useQuotesDashboardData = (
           }
 
           // 2. Fetch data for the currently selected month and year
-          // SMART CACHE-FIRST & DELTA-ONLY SYNC:
-          // Skip full month query if local IndexedDB cache already contains data for the selected month
-          // and a lastSynced timestamp exists (unless force resync is requested).
-          const lastSynced = await getSyncTimestamp('records');
-          const hasLocalRecordsForMonth = localCachedItems.some(r => {
-            if (!r.submitted_at) return false;
-            const d = new Date(r.submitted_at);
-            return d.getFullYear().toString() === selectedYear && String(d.getMonth() + 1).padStart(2, '0') === selectedMonth;
-          });
-
-          const shouldSkipFullMonthPull = isSilent || canSkipRemote;
-
-          if (!shouldSkipFullMonthPull) {
+          if (!canSkipRemote) {
             const yearNum = parseInt(selectedYear, 10);
             const monthNum = parseInt(selectedMonth, 10);
             const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0).toISOString();
@@ -233,7 +246,7 @@ export const useQuotesDashboardData = (
             // Merge this month's fresh server records into IndexedDB cache
             await mergeCacheData('records_cache', monthlyData);
 
-            // Get cached records for the current user/admin matching selectedMonth & selectedYear for active pruning
+            // Active pruning of deleted records for this month
             const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
             const localMonthRecords = localCachedForPrune.filter(r => {
               if (!isAdminRole(profile) && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
@@ -244,7 +257,6 @@ export const useQuotesDashboardData = (
               return y === selectedYear && m === selectedMonth;
             });
 
-            // Delete cached records that are not on the server (deleted) and not in pending outbox
             const serverIdSet = new Set(monthlyData.map(row => row.id));
             const pending = await getOfflineRecords();
             const pendingInsertIds = new Set(
@@ -256,150 +268,24 @@ export const useQuotesDashboardData = (
                 await deleteCacheItem('records_cache', r.id);
               }
             }
-          }
 
-          // 3. Keep delta pull for other months in the background to keep offline capability working
-          // SKIP if we can skip remote queries due to throttling
-          if (!canSkipRemote) {
-            const lastSynced = await getSyncTimestamp('records');
-
-            if (lastSynced) {
-              // Subtract 30 seconds to account for clock skew/latency between server and client
-              const syncDate = new Date(lastSynced);
-              syncDate.setSeconds(syncDate.getSeconds() - 30);
-              const bufferedSyncTimestamp = syncDate.toISOString();
-
-              // Fetch changes since last sync paginated to bypass the 1000 PostgREST row limit
-              let deltaData: RecordItem[] = [];
-              let deltaPage = 0;
-              const deltaPageSize = 1000;
-              let deltaHasMore = true;
-
-              while (deltaHasMore) {
-                const from = deltaPage * deltaPageSize;
-                const to = from + deltaPageSize - 1;
-
-                let query = supabase
-                  .from('records')
-                  .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
-                  .gte('updated_at', bufferedSyncTimestamp)
-                  .range(from, to);
-                if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
-
-                const { data: pageData, error: pageError } = await query;
-                if (pageError) throw pageError;
-
-                if (pageData && pageData.length > 0) {
-                  deltaData = [...deltaData, ...(pageData as unknown as RecordItem[])];
-                  if (pageData.length < deltaPageSize) {
-                    deltaHasMore = false;
-                  } else {
-                    deltaPage++;
-                  }
-                } else {
-                  deltaHasMore = false;
-                }
-              }
-
-              if (deltaData && deltaData.length > 0) {
-                // Merge delta changes into local IndexedDB cache
-                await mergeCacheData('records_cache', deltaData);
-              }
-              // Set new sync timestamp
-              await setSyncTimestamp('records', new Date().toISOString());
-            } else {
-              // First Sync: Pull all records from database to populate cache
-              let allData: RecordItem[] = [];
-              let page = 0;
-              const pageSize = 1000;
-              let hasMore = true;
-
-              while (hasMore) {
-                const from = page * pageSize;
-                const to = from + pageSize - 1;
-
-                let query = supabase
-                  .from('records')
-                  .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
-                  .gte('submitted_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-                  .order('submitted_at', { ascending: false })
-                  .range(from, to);
-                if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
-
-                const { data, error } = await query;
-                if (error) throw error;
-
-                if (data && data.length > 0) {
-                  allData = [...allData, ...(data as unknown as RecordItem[])];
-                  if (data.length < pageSize) {
-                    hasMore = false;
-                  } else {
-                    page++;
-                  }
-                } else {
-                  hasMore = false;
-                }
-              }
-
-              // Set cache data with full load
-              await setCacheData('records_cache', allData);
-              await setSyncTimestamp('records', new Date().toISOString());
-            }
-          }
-
-          // Clean up cache older than 90 days
-          try {
-            await purgeStaleCacheData('records_cache', 'submitted_at', 90);
-          } catch (purgeErr) {
-            console.error('Failed to purge stale cache:', purgeErr);
-          }
-
-          // R1/R2: profiles list is owned by ProfilesProvider (cache + network)
-
-          // Record this fetch timestamp in our throttling ref
-          if (!canSkipRemote) {
             lastFetchedTimeRef.current.set(fetchKey, now);
+            await setSyncTimestamp('records', new Date().toISOString());
           }
+
+          // Clean up cache older than 90 days in the background
+          purgeStaleCacheData('records_cache', 'submitted_at', 90).catch(() => {});
+
         } catch (netError: unknown) {
           const errMsg = netError instanceof Error ? netError.message : String(netError);
           console.error('Network sync/fetch failed, falling back to cache:', errMsg, netError);
-          showToast('error', 'Network error. Loading offline cache...');
         }
       }
 
-      // 3. Load aggregated records from local IndexedDB cache (works both Online and Offline)
-      const cachedRecords = await getCacheData<RecordItem>('records_cache');
-
-      // The automatic cache-to-server restore that used to live here was removed
-      // on 2026-07-18: a transiently-empty server count triggered it against a
-      // non-empty database and duplicated 4,200 records (cleaned up; backup in
-      // supabase/backups/). Recovery from real data loss must be a deliberate,
-      // manual operation. The records_cache in IndexedDB is still retained for
-      // 90 days and can be exported for that purpose.
-
-      // Filter the cached records in-memory based on selectedMonth/selectedYear and user permissions
-      const filtered = cachedRecords.filter(r => {
-        if (!r.submitted_at) return false;
-        
-        // Check role permission
-        if (!isAdminRole(profile) && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
-        
-        // Check year-month matching
-        const date = new Date(r.submitted_at);
-        if (isNaN(date.getTime())) return false;
-        
-        const y = date.getFullYear().toString();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        return y === selectedYear && m === selectedMonth;
-      });
-
-      // Sort by submitted_at descending
-      filtered.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
-      
-      setRecords(filtered);
+      // 3. Load fresh records from local cache
+      const freshFiltered = await getFilteredLocalRecords(selectedYear, selectedMonth);
+      setRecords(freshFiltered);
       lastFetchedKeyRef.current = fetchKey;
-
-      // R1/R2: offline profiles fallback is handled by ProfilesProvider
 
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
@@ -410,7 +296,7 @@ export const useQuotesDashboardData = (
       setInitialFetchDone(true);
       fetchingRef.current = false;
     }
-  }, [sessionUser, profile, selectedYear, selectedMonth, showToast]);
+  }, [sessionUser, profile, selectedYear, selectedMonth, showToast, getFilteredLocalRecords]);
 
   // Fetch unique month/year dates that contain submitted records for the logged-in user (or anyone if admin)
   const fetchAvailableDates = useCallback(async () => {
@@ -545,13 +431,19 @@ export const useQuotesDashboardData = (
   };
 
 
-  // Fetch records once authenticated & loaded
+  // Fetch available dates once upon authentication
+  useEffect(() => {
+    if (!loading && sessionUser && profile) {
+      fetchAvailableDates();
+    }
+  }, [loading, sessionUser?.id, profile?.role, fetchAvailableDates]);
+
+  // Fetch records when year/month changes or upon authentication
   useEffect(() => {
     if (!loading && sessionUser && profile) {
       fetchRecords();
-      fetchAvailableDates();
     }
-  }, [loading, sessionUser, profile, selectedYear, selectedMonth, fetchRecords, fetchAvailableDates]);
+  }, [loading, sessionUser?.id, selectedYear, selectedMonth, fetchRecords]);
 
 
 

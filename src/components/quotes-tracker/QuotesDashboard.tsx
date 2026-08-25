@@ -630,12 +630,12 @@ export default function QuotesDashboard({
   useEffect(() => {
     const monthValues = dynamicMonths.map((m) => m.val);
     const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
-    if (monthValues.includes(nowMonthStr)) {
-      setSelectedMonth((prev) =>
-        monthValues.includes(prev) ? prev : nowMonthStr,
-      );
-    } else if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
-      setSelectedMonth(monthValues[monthValues.length - 1]);
+    if (!monthValues.includes(selectedMonth)) {
+      if (monthValues.includes(nowMonthStr)) {
+        setSelectedMonth(nowMonthStr);
+      } else if (monthValues.length > 0) {
+        setSelectedMonth(monthValues[monthValues.length - 1]);
+      }
     }
   }, [dynamicMonths, selectedMonth, setSelectedMonth]);
 

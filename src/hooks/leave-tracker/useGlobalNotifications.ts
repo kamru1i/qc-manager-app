@@ -82,160 +82,135 @@ export function useGlobalNotifications(
     if (!sessionUser || !profile || !isChutiLoaded) return;
 
     try {
-      // 1. Fetch user's own chuti records — SKIP if shared data from ChutiDashboard is available
-      if (!hasSharedUserRecords) {
-        const { data: chutiData, error: chutiError } = await supabase
+      // Define concurrent queries
+      const fetchChutiPromise = async () => {
+        if (hasSharedUserRecords) return null;
+        const { data, error } = await supabase
           .from('chuti')
           .select('id, user_id, date, leave_type, leave_hour, status, comment, adjustment, reserve_holiday, reserve_adjustment_status, admin_edit_request, sign_in_time, sign_out_time, created_at, updated_at')
           .eq('user_id', sessionUser.id)
           .is('deleted_at', null)
           .order('date', { ascending: false });
-
-        if (chutiError) {
-          console.error('Failed to fetch user chuti records in useGlobalNotifications:', {
-            code: chutiError.code,
-            message: chutiError.message,
-            details: chutiError.details,
-            hint: chutiError.hint
-          });
-        } else if (chutiData) {
-          setUserRecords(chutiData.map(r => ({ ...r, synced: true })));
+        if (error) {
+          console.error('Failed to fetch user chuti records in useGlobalNotifications:', error);
+          return null;
         }
-      }
+        return data ? data.map(r => ({ ...r, synced: true })) : null;
+      };
 
-      // 2. Fetch holiday responses — SKIP if shared data from ChutiDashboard is available
-      if (!hasSharedHolidayResponses) {
+      const fetchHolidayResponsesPromise = async () => {
+        if (hasSharedHolidayResponses) return null;
         if (isAdminRole(profile)) {
-          const { data: holidayData, error: holidayError } = await supabase
+          const { data, error } = await supabase
             .from('govt_holiday_responses')
             .select('id, user_id, holiday_date, holiday_name, response, created_at')
             .order('created_at', { ascending: false })
             .limit(100);
-
-          if (holidayError) {
-            console.error('Failed to fetch holiday responses in useGlobalNotifications:', {
-              code: holidayError.code,
-              message: holidayError.message,
-              details: holidayError.details,
-              hint: holidayError.hint
-            });
-          } else if (holidayData) {
-            setHolidayResponses(holidayData);
+          if (error) {
+            console.error('Failed to fetch holiday responses in useGlobalNotifications:', error);
+            return null;
           }
+          return (data as unknown as GovtHolidayResponse[]) || null;
         } else {
-          const { data: holidayData, error: holidayError } = await supabase
+          const { data, error } = await supabase
             .from('govt_holiday_responses')
             .select('id, user_id, holiday_date, holiday_name, response, created_at')
             .eq('user_id', sessionUser.id)
             .order('created_at', { ascending: false });
-
-          if (holidayError) {
-            console.error('Failed to fetch holiday responses in useGlobalNotifications:', {
-              code: holidayError.code,
-              message: holidayError.message,
-              details: holidayError.details,
-              hint: holidayError.hint
-            });
-          } else if (holidayData) {
-            setHolidayResponses(holidayData);
+          if (error) {
+            console.error('Failed to fetch holiday responses in useGlobalNotifications:', error);
+            return null;
           }
+          return (data as unknown as GovtHolidayResponse[]) || null;
         }
-      }
+      };
 
-      // 3. Fetch active compliance rules (only if user has quotes workspace access).
-      // Rule notifications are non-actionable and filtered out after 7 days
-      // client-side, so only pull rules touched within the last 7 days —
-      // avoids re-downloading every rule's full content on each refetch.
-      if (profile?.has_quotes_access) {
+      const fetchRulesPromise = async () => {
+        if (!profile?.has_quotes_access) return [];
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { data: rulesData, error: rulesError } = await supabase
+        const { data, error } = await supabase
           .from('compliance_rules')
           .select('id, updated_at, created_at, category, sub_category, content')
           .eq('is_deleted', false)
           .or(`updated_at.gte.${sevenDaysAgo},created_at.gte.${sevenDaysAgo}`);
-
-        if (rulesError) {
-          console.error('Failed to fetch compliance rules in useGlobalNotifications:', {
-            code: rulesError.code,
-            message: rulesError.message,
-            details: rulesError.details,
-            hint: rulesError.hint
-          });
-        } else if (rulesData) {
-          setRulesRecords(rulesData);
+        if (error) {
+          console.error('Failed to fetch compliance rules in useGlobalNotifications:', error);
+          return [];
         }
-      } else {
-        setRulesRecords([]);
-      }
+        return data || [];
+      };
 
-      // 4. Fetch admin/supervisor approvals
-      if (isAdminRole(profile)) {
-        // Only used for the approvals count below (status / leave_type / reserve_adjustment_status),
-        // so select just those columns instead of every chuti field incl. heavy JSON.
-        const { data: adminChutiData, error: adminChutiError } = await supabase
+      const fetchAdminPendingPromise = async () => {
+        if (!isAdminRole(profile)) return [];
+        const { data, error } = await supabase
           .from('chuti')
           .select('id, status, leave_type, reserve_adjustment_status')
           .is('deleted_at', null)
           .or('status.eq.approved_by_supervisor,reserve_adjustment_status.eq.pending');
-
-        if (adminChutiError) {
-          console.error('Failed to fetch admin pending chuti records in useGlobalNotifications:', {
-            code: adminChutiError.code,
-            message: adminChutiError.message,
-            details: adminChutiError.details,
-            hint: adminChutiError.hint
-          });
-        } else if (adminChutiData) {
-          // Partial row (count-only); cast to the state's record type.
-          setAdminPendingRecords(adminChutiData as unknown as Pick<ChutiRecord, 'id' | 'status' | 'leave_type' | 'reserve_adjustment_status'>[]);
+        if (error) {
+          console.error('Failed to fetch admin pending chuti records in useGlobalNotifications:', error);
+          return [];
         }
-      } else {
-        setAdminPendingRecords([]);
-      }
+        return (data as unknown as Pick<ChutiRecord, 'id' | 'status' | 'leave_type' | 'reserve_adjustment_status'>[]) || [];
+      };
 
-      if (profile?.role === 'supervisor') {
-        // Only used for the team-pending count below, which reads admin_edit_request and the
-        // joined profiles.supervisor_ids — so skip the rest of the chuti columns.
-        const { data: supervisorChutiData, error: supervisorChutiError } = await supabase
+      const fetchSupervisorPendingPromise = async () => {
+        if (profile?.role !== 'supervisor') return [];
+        const { data, error } = await supabase
           .from('chuti')
           .select('id, status, admin_edit_request, profiles (username, full_name, role, supervisor_ids)')
           .eq('status', 'pending_supervisor')
           .is('deleted_at', null);
-
-        if (supervisorChutiError) {
-          console.error('Failed to fetch supervisor pending chuti records in useGlobalNotifications:', {
-            code: supervisorChutiError.code,
-            message: supervisorChutiError.message,
-            details: supervisorChutiError.details,
-            hint: supervisorChutiError.hint
-          });
-        } else if (supervisorChutiData) {
-          // Partial row + profiles join (count-only); cast to the state's record type.
-          setSupervisorPendingRecords(supervisorChutiData as unknown as ChutiRecordWithProfile[]);
+        if (error) {
+          console.error('Failed to fetch supervisor pending chuti records in useGlobalNotifications:', error);
+          return [];
         }
-      } else {
-        setSupervisorPendingRecords([]);
-      }
+        return (data as unknown as ChutiRecordWithProfile[]) || [];
+      };
 
-      // 5. Fetch dismissed notification IDs from DB
-      const { data: dismissedData, error: dismissedError } = await supabase
-        .from('dismissed_notifications')
-        .select('notification_id')
-        .eq('user_id', sessionUser.id);
+      const fetchDismissedPromise = async () => {
+        const { data, error } = await supabase
+          .from('dismissed_notifications')
+          .select('notification_id')
+          .eq('user_id', sessionUser.id);
+        if (error) return [];
+        return data ? data.map(d => d.notification_id) : [];
+      };
 
-      if (!dismissedError && dismissedData) {
-        const dbIds = dismissedData.map(d => d.notification_id);
+      // Execute all 6 queries in parallel
+      const [
+        chutiData,
+        holidayData,
+        rulesData,
+        adminChutiData,
+        supervisorChutiData,
+        dismissedIds
+      ] = await Promise.all([
+        fetchChutiPromise(),
+        fetchHolidayResponsesPromise(),
+        fetchRulesPromise(),
+        fetchAdminPendingPromise(),
+        fetchSupervisorPendingPromise(),
+        fetchDismissedPromise(),
+      ]);
+
+      if (chutiData) setUserRecords(chutiData as ChutiRecord[]);
+      if (holidayData) setHolidayResponses(holidayData);
+      setRulesRecords(rulesData);
+      setAdminPendingRecords(adminChutiData);
+      setSupervisorPendingRecords(supervisorChutiData);
+
+      if (dismissedIds && dismissedIds.length > 0) {
         setDismissedNotificationIds(prev => {
           const merged = new Set(prev);
-          dbIds.forEach(id => merged.add(id));
+          dismissedIds.forEach(id => merged.add(id));
           
-          // Sync merged set back to localStorage for faster initial loads on this device
           try {
             const stored = localStorage.getItem('dismissed_notifications');
             const current = stored ? JSON.parse(stored) as Record<string, number> : {};
             const now = Date.now();
             let changed = false;
-            dbIds.forEach(id => {
+            dismissedIds.forEach(id => {
               if (!current[id]) {
                 current[id] = now;
                 changed = true;
@@ -251,6 +226,7 @@ export function useGlobalNotifications(
           return merged;
         });
       }
+
       setIsInitialNotifFetchDone(true);
     } catch (err) {
       console.error('Failed to fetch global notifications data:', err);

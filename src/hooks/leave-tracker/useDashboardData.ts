@@ -93,91 +93,77 @@ export const useDashboardData = (
   // Global Settings state (synchronously loaded from local cache to prevent mode flash on reload)
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(() => getInitialGlobalSettings());
 
-  // Fetch Chuti Records based on Role
+  // Fetch Chuti Records based on Role with SWR and parallel network fetches
   const fetchRecords = useCallback(async () => {
     if (!sessionUser || !profile) return;
-    if (fetchingRef.current) return;
-    fetchingRef.current = true;
 
-    // Check if offline
-    if (typeof window !== 'undefined' && !navigator.onLine) {
-      try {
-        // R1/R2: profiles cache is loaded by ProfilesProvider — only chuti data here
+    // 1. SWR Instant Paint: Load cached data immediately into state (0ms)
+    try {
+      const cachedChuti = await getCacheData('chuti_cache');
+      const unsyncedRecords = await getOfflineRecords();
 
-        // Load chuti records cache
-        const cachedChuti = await getCacheData('chuti_cache');
-        // Retrieve unsynced records
-        const unsyncedRecords = await getOfflineRecords();
+      const deletedIds = new Set(
+        unsyncedRecords.filter(r => r.action === 'delete').map(r => r.id)
+      );
+      const updatedRecordsMap = new Map(
+        unsyncedRecords.filter(r => r.action === 'update').map(r => [r.id, r.data])
+      );
 
-        // Merge them: if we have temp local records, prepend them.
-        // Also, if any of the unsynced records are edits/deletes, handle them:
-        // - For delete: exclude from display.
-        // - For update: merge updates.
-        const deletedIds = new Set(
-          unsyncedRecords.filter(r => r.action === 'delete').map(r => r.id)
-        );
-        const updatedRecordsMap = new Map(
-          unsyncedRecords.filter(r => r.action === 'update').map(r => [r.id, r.data])
-        );
+      const mergedChuti = cachedChuti
+        .filter(r => !deletedIds.has(r.id))
+        .map(r => {
+          const updates = updatedRecordsMap.get(r.id);
+          if (updates) {
+            return { ...r, ...updates };
+          }
+          return r;
+        });
 
-        const mergedChuti = cachedChuti
-          .filter(r => !deletedIds.has(r.id))
-          .map(r => {
-            const updates = updatedRecordsMap.get(r.id);
-            if (updates) {
-              return { ...r, ...updates };
-            }
-            return r;
-          });
+      const pendingInserts = unsyncedRecords.filter(r => r.action === 'insert' || !r.action);
+      const finalChuti = [...pendingInserts, ...mergedChuti];
 
-        // Combine with pending inserts
-        const pendingInserts = unsyncedRecords.filter(r => r.action === 'insert' || !r.action);
-        const finalChuti = [...pendingInserts, ...mergedChuti];
-
+      if (finalChuti.length > 0) {
         if (isAdminRole(profile) || profile.role === 'supervisor') {
           setAdminRecords(sortChutiRecordsDescending(finalChuti as ChutiRecordWithProfile[]));
         }
-
         const loggedInUserChuti = finalChuti.filter(r => r.user_id === sessionUser.id);
         setUserRecords(sortChutiRecordsDescending(loggedInUserChuti));
-
-        // Load holiday responses cache
-        const cachedResponses = await getCacheData('holiday_responses_cache');
-        setHolidayResponses(cachedResponses);
-
-        // Load leave settlements cache
-        const cachedSettlements = await getCacheData('settlements_cache');
-        setLeaveSettlements(cachedSettlements);
-
-        // Load global settings cache
-        const cachedSettings = await getGlobalSettingsCache();
-        if (cachedSettings) {
-          setGlobalSettings(cachedSettings);
-        }
-      } catch (err) {
-        console.error('Error loading offline cache:', err);
-      } finally {
-        setInitialFetchDone(true);
       }
+
+      const cachedResponses = await getCacheData('holiday_responses_cache');
+      if (cachedResponses.length > 0) {
+        setHolidayResponses(cachedResponses);
+      }
+
+      const cachedSettlements = await getCacheData('settlements_cache');
+      if (cachedSettlements.length > 0) {
+        setLeaveSettlements(cachedSettlements);
+      }
+
+      const cachedSettings = await getGlobalSettingsCache();
+      if (cachedSettings) {
+        setGlobalSettings(cachedSettings);
+      }
+    } catch (err) {
+      console.error('Error loading offline cache in SWR phase:', err);
+    } finally {
+      setInitialFetchDone(true);
+    }
+
+    // If offline, we are done
+    if (typeof window !== 'undefined' && !navigator.onLine) {
       return;
     }
 
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+
     try {
-      // Capture the sync timestamp BEFORE issuing queries. Using a post-fetch
-      // timestamp would create a race window where rows modified during the fetch
-      // could be missed by the next delta query.
       const syncStartedAt = new Date().toISOString();
 
-      // R1/R2: profiles are fetched once by ProfilesProvider — read the shared
-      // list here for cache mirroring and globalSettings derivation below.
-      const profilesData: Profile[] = profilesListRef.current;
-      let adminRecordsData: ChutiRecordWithProfile[] = [];
-      let userRecordsData: ChutiRecord[] = [];
-      let responsesData: GovtHolidayResponse[] = [];
-      let settlementsData: LeaveSettlement[] = [];
-
-      // 1. Fetch admin chuti list if admin/supervisor
-      if (isAdminRole(profile) || profile.role === 'supervisor') {
+      // Define parallel promises for Chuti, Holiday Responses, and Settlements
+      const fetchAdminChutiPromise = async (): Promise<ChutiRecordWithProfile[]> => {
+        if (!isAdminRole(profile) && profile.role !== 'supervisor') return [];
         const lastChutiSync = await getSyncTimestamp('chuti');
         if (lastChutiSync) {
           const { data: deltaRaw, error } = await supabase
@@ -195,228 +181,146 @@ export const useDashboardData = (
             if (deletedIds.length > 0) await removeCacheItems('chuti_cache', deletedIds);
 
             const fullCachedChuti = await getCacheData('chuti_cache');
-            setAdminRecords(fullCachedChuti as ChutiRecordWithProfile[]);
-            adminRecordsData = fullCachedChuti as ChutiRecordWithProfile[];
+            return fullCachedChuti as ChutiRecordWithProfile[];
           } else if (!error) {
             const fullCachedChuti = await getCacheData('chuti_cache');
-            if (fullCachedChuti.length > 0) {
-              setAdminRecords(fullCachedChuti as ChutiRecordWithProfile[]);
-              adminRecordsData = fullCachedChuti as ChutiRecordWithProfile[];
-            }
-          } else if (error) {
-            console.error('Delta fetch failed, falling back to full fetch:', error);
-            let allData: ChutiRecordWithProfile[] = [];
-            let page = 0;
-            const pageSize = 1000;
-            let hasMore = true;
-            let syncError = null;
-            // E2 fix: Bound fallback fetch to last 90 days (matches cache purge TTL)
-            const chutiCutoff1 = new Date();
-            chutiCutoff1.setDate(chutiCutoff1.getDate() - 90);
-            const chutiCutoffStr1 = chutiCutoff1.toISOString().split('T')[0];
-
-            while (hasMore) {
-              const from = page * pageSize;
-              const to = from + pageSize - 1;
-
-              const { data, error: fullErr } = await supabase
-                .from('chuti')
-                .select(`${CHUTI_COLUMNS}, profiles (username, full_name, role, supervisor_ids)`)
-                .is('deleted_at', null)
-                .gte('date', chutiCutoffStr1)
-                .order('date', { ascending: false })
-                .range(from, to);
-
-              if (fullErr) {
-                syncError = fullErr;
-                break;
-              }
-
-              if (data && data.length > 0) {
-                allData = [...allData, ...(data as unknown as ChutiRecordWithProfile[])];
-                if (data.length < pageSize) {
-                  hasMore = false;
-                } else {
-                  page++;
-                }
-              } else {
-                hasMore = false;
-              }
-            }
-
-            if (!syncError && allData.length > 0) {
-              setAdminRecords(allData);
-              adminRecordsData = allData;
-            }
-          }
-        } else {
-          let allData: ChutiRecordWithProfile[] = [];
-          let page = 0;
-          const pageSize = 1000;
-          let hasMore = true;
-          let syncError = null;
-          // E2 fix: Bound first-load fetch to last 90 days (matches cache purge TTL)
-          const chutiCutoff = new Date();
-          chutiCutoff.setDate(chutiCutoff.getDate() - 90);
-          const chutiCutoffStr = chutiCutoff.toISOString().split('T')[0];
-
-          while (hasMore) {
-            const from = page * pageSize;
-            const to = from + pageSize - 1;
-
-            const { data, error } = await supabase
-              .from('chuti')
-              .select(`${CHUTI_COLUMNS}, profiles (username, full_name, role, supervisor_ids)`)
-              .is('deleted_at', null)
-              .gte('date', chutiCutoffStr)
-              .order('date', { ascending: false })
-              .range(from, to);
-
-            if (error) {
-              syncError = error;
-              break;
-            }
-
-            if (data && data.length > 0) {
-              allData = [...allData, ...(data as unknown as ChutiRecordWithProfile[])];
-              if (data.length < pageSize) {
-                hasMore = false;
-              } else {
-                page++;
-              }
-            } else {
-              hasMore = false;
-            }
-          }
-
-          if (!syncError && allData.length > 0) {
-            setAdminRecords(allData);
-            adminRecordsData = allData;
+            return fullCachedChuti as ChutiRecordWithProfile[];
           }
         }
-      }
-      // R1/R2: normal users previously fetched a supervisors-only list here.
-      // The shared ProfilesProvider list is a superset (consumers like AddLeave
-      // filter by role === 'supervisor' themselves), so no extra fetch is needed.
 
-      // 2. Fetch logged-in user records
-      const lastUserChutiSync = await getSyncTimestamp('chuti_user');
-      if (lastUserChutiSync) {
-        const { data: deltaRaw2, error } = await supabase
-          .from('chuti')
-          .select(CHUTI_COLUMNS)
-          .eq('user_id', sessionUser.id)
-          .gte('updated_at', lastUserChutiSync)
-          .order('date', { ascending: false });
-        const deltaRecords = deltaRaw2 as unknown as ChutiRecord[] | null;
+        // Bounded fallback fetch to last 90 days
+        let allData: ChutiRecordWithProfile[] = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+        const chutiCutoff = new Date();
+        chutiCutoff.setDate(chutiCutoff.getDate() - 90);
+        const chutiCutoffStr = chutiCutoff.toISOString().split('T')[0];
 
-        if (!error && deltaRecords && deltaRecords.length > 0) {
-          const deletedIds = new Set(
-            deltaRecords.filter(r => r.deleted_at && r.id).map(r => r.id as string),
-          );
-          const cachedUserChuti = (await getCacheData('chuti_cache')).filter(r => r.user_id === sessionUser.id);
-          const mergedMap = new Map(cachedUserChuti.map(r => [r.id, r]));
-          deltaRecords.forEach(r => {
-            if (r.deleted_at) {
-              mergedMap.delete(r.id);
-            } else {
-              mergedMap.set(r.id, r);
-            }
-          });
-          const mergedUserRecords = sortChutiRecordsDescending(Array.from(mergedMap.values()));
-          setUserRecords(mergedUserRecords);
-          userRecordsData = mergedUserRecords;
+        while (hasMore) {
+          const from = page * pageSize;
+          const to = from + pageSize - 1;
 
-          if (deletedIds.size > 0) await removeCacheItems('chuti_cache', Array.from(deletedIds));
-        } else if (!error) {
-          const cachedUserChuti = sortChutiRecordsDescending((await getCacheData('chuti_cache')).filter(r => r.user_id === sessionUser.id));
-          if (cachedUserChuti.length > 0) {
-            setUserRecords(cachedUserChuti);
-            userRecordsData = cachedUserChuti;
+          const { data, error } = await supabase
+            .from('chuti')
+            .select(`${CHUTI_COLUMNS}, profiles (username, full_name, role, supervisor_ids)`)
+            .is('deleted_at', null)
+            .gte('date', chutiCutoffStr)
+            .order('date', { ascending: false })
+            .range(from, to);
+
+          if (error) break;
+          if (data && data.length > 0) {
+            allData = [...allData, ...(data as unknown as ChutiRecordWithProfile[])];
+            if (data.length < pageSize) hasMore = false;
+            else page++;
+          } else {
+            hasMore = false;
           }
-        } else if (error) {
-          console.error('User delta fetch failed, falling back to full fetch:', error);
-          const { data: recordsRaw, error: fullErr } = await supabase
+        }
+        return allData;
+      };
+
+      const fetchUserChutiPromise = async (): Promise<ChutiRecord[]> => {
+        const lastUserChutiSync = await getSyncTimestamp('chuti_user');
+        if (lastUserChutiSync) {
+          const { data: deltaRaw, error } = await supabase
             .from('chuti')
             .select(CHUTI_COLUMNS)
             .eq('user_id', sessionUser.id)
-            .is('deleted_at', null)
+            .gte('updated_at', lastUserChutiSync)
             .order('date', { ascending: false });
-          const records = sortChutiRecordsDescending((recordsRaw as unknown as ChutiRecord[] | null) || []);
-          if (!fullErr && records) {
-            setUserRecords(records);
-            userRecordsData = records;
+          const deltaRecords = deltaRaw as unknown as ChutiRecord[] | null;
+
+          if (!error && deltaRecords && deltaRecords.length > 0) {
+            const deletedIds = new Set(
+              deltaRecords.filter(r => r.deleted_at && r.id).map(r => r.id as string)
+            );
+            const cachedUserChuti = (await getCacheData('chuti_cache')).filter(r => r.user_id === sessionUser.id);
+            const mergedMap = new Map(cachedUserChuti.map(r => [r.id, r]));
+            deltaRecords.forEach(r => {
+              if (r.deleted_at) mergedMap.delete(r.id);
+              else mergedMap.set(r.id, r);
+            });
+            const mergedUserRecords = sortChutiRecordsDescending(Array.from(mergedMap.values()));
+            if (deletedIds.size > 0) await removeCacheItems('chuti_cache', Array.from(deletedIds));
+            return mergedUserRecords;
+          } else if (!error) {
+            return sortChutiRecordsDescending((await getCacheData('chuti_cache')).filter(r => r.user_id === sessionUser.id));
           }
         }
-      } else {
-        const { data: recordsRaw, error } = await supabase
+
+        const { data: recordsRaw, error: fullErr } = await supabase
           .from('chuti')
           .select(CHUTI_COLUMNS)
           .eq('user_id', sessionUser.id)
           .is('deleted_at', null)
           .order('date', { ascending: false });
-        const records = sortChutiRecordsDescending((recordsRaw as unknown as ChutiRecord[] | null) || []);
+        return !fullErr && recordsRaw ? sortChutiRecordsDescending(recordsRaw as unknown as ChutiRecord[]) : [];
+      };
 
-        if (!error && records) {
-          setUserRecords(records);
-          userRecordsData = records;
+      const fetchHolidayResponsesPromise = async (): Promise<GovtHolidayResponse[]> => {
+        if (isAdminRole(profile) || profile.role === 'supervisor') {
+          const { data, error } = await supabase
+            .from('govt_holiday_responses')
+            .select(`${GOVT_HOLIDAY_RESPONSE_COLUMNS}, profiles (full_name, username)`)
+            .order('created_at', { ascending: false })
+            .limit(1000);
+          return !error && data ? (data as unknown as GovtHolidayResponse[]) : [];
+        } else {
+          const { data, error } = await supabase
+            .from('govt_holiday_responses')
+            .select(GOVT_HOLIDAY_RESPONSE_COLUMNS)
+            .eq('user_id', sessionUser.id)
+            .order('created_at', { ascending: false });
+          return !error && data ? (data as unknown as GovtHolidayResponse[]) : [];
         }
-      }
+      };
 
-      // 3. Fetch Govt Holiday Responses and settlements
+      const fetchSettlementsPromise = async (): Promise<LeaveSettlement[]> => {
+        if (isAdminRole(profile) || profile.role === 'supervisor') {
+          const { data, error } = await supabase
+            .from('leave_settlements')
+            .select(`${LEAVE_SETTLEMENT_COLUMNS}, profiles!leave_settlements_user_id_fkey (full_name, username)`)
+            .order('created_at', { ascending: false })
+            .limit(1000);
+          return !error && data ? (data as unknown as LeaveSettlement[]) : [];
+        } else {
+          const { data, error } = await supabase
+            .from('leave_settlements')
+            .select(LEAVE_SETTLEMENT_COLUMNS)
+            .eq('user_id', sessionUser.id)
+            .order('created_at', { ascending: false });
+          return !error && data ? (data as unknown as LeaveSettlement[]) : [];
+        }
+      };
+
+      // 2. Execute all network requests in parallel
+      const [adminRecordsData, userRecordsData, responsesData, settlementsData] = await Promise.all([
+        fetchAdminChutiPromise(),
+        fetchUserChutiPromise(),
+        fetchHolidayResponsesPromise(),
+        fetchSettlementsPromise(),
+      ]);
+
+      // 3. Update React states
       if (isAdminRole(profile) || profile.role === 'supervisor') {
-        // E4 fix: Bound admin responses fetch to prevent unbounded growth
-        const { data: responsesRaw, error: respError } = await supabase
-          .from('govt_holiday_responses')
-          .select(`${GOVT_HOLIDAY_RESPONSE_COLUMNS}, profiles (full_name, username)`)
-          .order('created_at', { ascending: false })
-          .limit(1000);
-        const responses = responsesRaw as unknown as GovtHolidayResponse[] | null;
-        if (!respError && responses) {
-          setHolidayResponses(responses);
-          responsesData = responses;
-        }
-
-        // E4 fix: Bound admin settlements fetch to prevent unbounded growth
-        const { data: settlementsRaw, error: settError } = await supabase
-          .from('leave_settlements')
-          .select(`${LEAVE_SETTLEMENT_COLUMNS}, profiles!leave_settlements_user_id_fkey (full_name, username)`)
-          .order('created_at', { ascending: false })
-          .limit(1000);
-        const settlements = settlementsRaw as unknown as LeaveSettlement[] | null;
-        if (!settError && settlements) {
-          setLeaveSettlements(settlements);
-          settlementsData = settlements;
-        }
-      } else {
-        const { data: responsesRaw, error: respError } = await supabase
-          .from('govt_holiday_responses')
-          .select(GOVT_HOLIDAY_RESPONSE_COLUMNS)
-          .eq('user_id', sessionUser.id)
-          .order('created_at', { ascending: false });
-        const responses = responsesRaw as unknown as GovtHolidayResponse[] | null;
-        if (!respError && responses) {
-          setHolidayResponses(responses);
-          responsesData = responses;
-        }
-
-        const { data: settlementsRaw, error: settError } = await supabase
-          .from('leave_settlements')
-          .select(LEAVE_SETTLEMENT_COLUMNS)
-          .eq('user_id', sessionUser.id)
-          .order('created_at', { ascending: false });
-        const settlements = settlementsRaw as unknown as LeaveSettlement[] | null;
-        if (!settError && settlements) {
-          setLeaveSettlements(settlements);
-          settlementsData = settlements;
+        if (adminRecordsData.length > 0) {
+          setAdminRecords(sortChutiRecordsDescending(adminRecordsData));
         }
       }
+      if (userRecordsData.length > 0) {
+        setUserRecords(sortChutiRecordsDescending(userRecordsData));
+      }
+      if (responsesData.length > 0) {
+        setHolidayResponses(responsesData);
+      }
+      if (settlementsData.length > 0) {
+        setLeaveSettlements(settlementsData);
+      }
 
-      // 4. Asynchronously merge fetched data into IndexedDB cache (non-destructive upsert)
+      // 4. Asynchronously merge fetched data into IndexedDB cache
       try {
-        // R1/R2: profiles_cache is maintained by ProfilesProvider
-
-        // Cache chuti records (merge-based since we use delta sync)
         const recordsToCache = (isAdminRole(profile) || profile.role === 'supervisor')
           ? adminRecordsData
           : userRecordsData;
@@ -442,15 +346,13 @@ export const useDashboardData = (
           await setSyncTimestamp('leave_settlements', syncStartedAt);
         }
 
-        // TTL: Purge chuti records older than 2 years from cache
-        try {
-          await purgeStaleCacheData('chuti_cache', 'date', 90);
-        } catch (ttlErr) {
-        }
+        purgeStaleCacheData('chuti_cache', 'date', 90).catch(() => {});
       } catch (cacheErr) {
+        console.error('Failed to update chuti cache:', cacheErr);
       }
 
     } catch (err) {
+      console.error('Error during chuti parallel fetch:', err);
     } finally {
       fetchingRef.current = false;
       setInitialFetchDone(true);
