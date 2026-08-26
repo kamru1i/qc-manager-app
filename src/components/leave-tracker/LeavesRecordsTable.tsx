@@ -6,7 +6,7 @@ import { Profile } from '@/types';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
-import { sortChutiRecordsDescending } from '@/utils/dashboardHelpers';
+import { sortChutiRecordsDescending, getLatestActionComment, getFullCommentHistory } from '@/utils/dashboardHelpers';
 
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 
@@ -642,7 +642,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                             ? 'bg-emerald-955/50 border border-emerald-800 text-emerald-300'
                             : 'bg-blue-955/50 border border-blue-800 text-blue-300'
                         }`}>
-                          {(r.adjustment || r.adjusted_hour) && (r.comment?.includes('Govt Holiday') || r.reserve_holiday === 'Govt Holiday') ? 'Adjusted Leave' : r.leave_type}
+                          {r.leave_type}
                         </span>
                       </td>
                       {(!hideAdjustmentAndOvertime && (isAdminView || allowOvertime || allowReserve)) && (
@@ -727,8 +727,8 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         </td>
                       )}
                       {/* Comment Column */}
-                      <td className="px-6 py-4 text-sm text-theme-text-muted max-w-37.5 truncate text-center" title={getCleanComment(r.comment)}>
-                        {getCleanComment(r.comment) || '-'}
+                      <td className="px-6 py-4 text-sm text-theme-text-muted max-w-37.5 truncate text-center" title={getFullCommentHistory(r.comment, r)}>
+                        {getLatestActionComment(r.comment, r) || '-'}
                       </td>
                       {/* Animated selection checkbox column in place of Action */}
                       <td

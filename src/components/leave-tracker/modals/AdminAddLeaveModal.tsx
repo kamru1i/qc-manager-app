@@ -121,7 +121,7 @@ export function AdminAddLeaveModal({
   // Jummah is opt-in (never auto-enabled). Only clear a stale ON state when the
   // date is no longer a Friday or the type is no longer Short Leave.
   useEffect(() => {
-    if (adjustJummah && (leaveType !== 'Short Leave' || !isFriday(date))) {
+    if (adjustJummah && (!['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) || !isFriday(date))) {
       setAdjustJummah(false);
     }
   }, [date, leaveType, adjustJummah]);

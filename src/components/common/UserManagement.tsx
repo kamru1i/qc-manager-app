@@ -697,7 +697,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
         if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
           let cleanComment = record.comment || '';
-          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime)(?:\s*\|\s*)?/g, '').trim();
           const finalComment = `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`;
           requestedUpdates = {
             adjustment: true,
@@ -707,13 +707,22 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             comment: finalComment || null
           };
         } else if (staffAdjustmentType === 'full') {
-          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null };
+          let cleanComment = record.comment || '';
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime)(?:\s*\|\s*)?/g, '').trim();
+          const finalComment = `Adjusted: Overtime${cleanComment ? ` | ${cleanComment}` : ''}`;
+          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
         } else {
-          requestedUpdates = { adjustment: false, adjusted_hour: `${staffPartialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null };
+          let cleanComment = record.comment || '';
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime|partial \([0-9:]+\))(?:\s*\|\s*)?/g, '').trim();
+          const finalComment = `Adjusted: partial (${staffPartialAdjustmentTime})${cleanComment ? ` | ${cleanComment}` : ''}`;
+          requestedUpdates = { adjustment: false, adjusted_hour: `${staffPartialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
         }
       } else if (record.leave_type === 'Overtime') {
         const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : staffAdjustShortLeaveOption;
-        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust, reserve_holiday: null };
+        let cleanComment = record.comment || '';
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Short Leave)(?:\s*\|\s*)?/g, '').trim();
+        const finalComment = shouldAdjust ? `Adjusted: Short Leave${cleanComment ? ` | ${cleanComment}` : ''}` : cleanComment;
+        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust, reserve_holiday: null, comment: finalComment || null };
       } else {
         const isCat = selectedCat !== 'None';
         let cleanComment = record.comment || '';

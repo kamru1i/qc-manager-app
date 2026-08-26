@@ -5,6 +5,7 @@ import { calculateStats } from './dashboardHelpers';
 import { formatDate, escapeHtml } from './formatters';
 import { isTauriApp } from './apiUrlHelper';
 import { isAdminRole } from '@/utils/permissionService';
+import { getLatestActionComment, getCleanComment } from './leaveCalculations';
 
 // Helper to save file inside Tauri using Save Dialog and FS API
 export const saveTauriFile = async (
@@ -107,17 +108,6 @@ export const formatTimeToAMPM = (timeStr: string | null | undefined): string => 
   }
 };
 
-// Helper function to clean supervisor/admin approval prefix from comment for table display
-export const getCleanComment = (comment: string | null | undefined): string => {
-  if (!comment) return '';
-  let clean = comment;
-  const regex = /^[A-Za-z0-9_-]+\s+Approved(?:\s*\|\s*)?/;
-  while (regex.test(clean)) {
-    clean = clean.replace(regex, '');
-  }
-  return clean.trim();
-};
-
 export const buildTeamWiseTablesHtml = (
   recordsToExport: ChutiRecord[],
   profilesList: Profile[],
@@ -152,7 +142,7 @@ export const buildTeamWiseTablesHtml = (
           <td>${escapeHtml(r.leave_type)}</td>
           <td>${r.leave_type === 'Full Leave' ? '-' : escapeHtml(`${signInStr} / ${signOutStr}`)}</td>
           <td>${escapeHtml(leaveHourStr)}</td>
-          <td>${escapeHtml(getCleanComment(r.comment))}</td>
+          <td>${escapeHtml(getLatestActionComment(r.comment, r)) || '-'}</td>
           <td>${escapeHtml(r.status || 'pending')}</td>
         </tr>
       `;

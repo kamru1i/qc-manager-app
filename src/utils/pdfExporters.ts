@@ -1,7 +1,7 @@
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile, GovtHolidayResponse } from '../types';
 import { ChutiRecord } from './offlineSync';
-import { calculateStats, formatTimeToAMPM, getCleanComment, formatDate, escapeHtml } from './dashboardHelpers';
+import { calculateStats, formatTimeToAMPM, getCleanComment, getLatestActionComment, formatDate, escapeHtml } from './dashboardHelpers';
 import { printHtml, buildTeamWiseTablesHtml } from './exportCore';
 
 export const exportIndividualPDF = (
@@ -51,7 +51,7 @@ export const exportIndividualPDF = (
           <td>${r.leave_type === 'Full Leave' ? '-' : escapeHtml(`${signInStr} / ${signOutStr}`)}</td>
           <td>${escapeHtml(leaveHourStr)}</td>
           ${showOvertime ? `<td>${escapeHtml(r.leave_type === 'Overtime' ? (r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '-') : '-')}</td>` : ''}
-          <td>${escapeHtml(getCleanComment(r.comment)) || '-'}</td>
+          <td>${escapeHtml(getLatestActionComment(r.comment, r)) || '-'}</td>
           <td><span class="status-badge ${escapeHtml(r.status || '')}">${escapeHtml(r.status)}</span></td>
         </tr>
       `;

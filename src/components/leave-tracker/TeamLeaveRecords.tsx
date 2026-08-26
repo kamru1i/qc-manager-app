@@ -24,6 +24,8 @@ import {
   formatDate,
   formatTimeToAMPM,
   getCleanComment,
+  getLatestActionComment,
+  getFullCommentHistory,
 } from "@/utils/dashboardHelpers";
 import { Modal } from "@/components/common/Modal";
 import { supabase } from "@/utils/supabase";
@@ -120,25 +122,9 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   // Filter dailyRecords by leave_type and search term
   const filteredDailyRecords = useMemo(() => {
     return dailyRecords.filter((r) => {
-      const rType = (r.leave_type || "").toLowerCase();
-      const isShort =
-        rType.includes("short") ||
-        rType.includes("early") ||
-        rType.includes("late") ||
-        (Boolean(r.sign_in_time) && Boolean(r.sign_out_time));
-      const isOvertime = rType.includes("overtime");
-      const isFull = !isShort && !isOvertime;
-
       // 1. Leave type filter
       if (filterType && filterType !== "All" && filterType !== "all") {
-        const selected = filterType.toLowerCase();
-        if (selected === "short leave" || selected === "short") {
-          if (!isShort) return false;
-        } else if (selected === "full leave" || selected === "full") {
-          if (!isFull) return false;
-        } else if (selected === "overtime") {
-          if (!isOvertime) return false;
-        }
+        if (r.leave_type !== filterType) return false;
       }
 
       // 2. Search term filter
@@ -157,14 +143,15 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
           ""
         ).toLowerCase();
         const comment = getCleanComment(r.comment).toLowerCase();
-        const typeLabel = isOvertime ? "overtime" : isShort ? "short leave" : "full leave";
+        const latestComment = getLatestActionComment(r.comment, r).toLowerCase();
+        const typeLabel = (r.leave_type || "").toLowerCase();
 
         const matches =
           fullName.includes(query) ||
           codename.includes(query) ||
           comment.includes(query) ||
-          typeLabel.includes(query) ||
-          rType.includes(query);
+          latestComment.includes(query) ||
+          typeLabel.includes(query);
         if (!matches) return false;
       }
       return true;
@@ -475,8 +462,11 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
             className="bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer font-sans"
           >
             <option value="all">All Categories</option>
-            <option value="full">Full Leave</option>
-            <option value="short">Short Leave</option>
+            <option value="Early Leave">Early Leave</option>
+            <option value="Full Leave">Full Leave</option>
+            <option value="Late Join">Late Join</option>
+            <option value="Overtime">Overtime</option>
+            <option value="Short Leave">Short Leave</option>
           </select>
         </div>
 
@@ -607,13 +597,13 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                              isOvertime
+                              r.leave_type === "Full Leave"
+                                ? "bg-red-955/50 border border-red-800 text-red-300"
+                                : r.leave_type === "Overtime"
                                 ? "bg-emerald-955/50 border border-emerald-800 text-emerald-300"
-                                : isShort
-                                ? "bg-blue-955/50 border border-blue-800 text-blue-300"
-                                : "bg-red-955/50 border border-red-800 text-red-300"
+                                : "bg-blue-955/50 border border-blue-800 text-blue-300"
                             }`}>
-                              {isOvertime ? "Overtime" : isShort ? "Short Leave" : "Full Leave"}
+                              {r.leave_type}
                             </span>
                           </td>
                           <td className="py-3 px-4 font-mono text-xs text-theme-text-secondary text-center">
@@ -622,8 +612,8 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                           <td className="py-3 px-4 font-mono text-xs text-theme-text-primary font-bold text-center">
                             {r.leave_hour ? r.leave_hour : "—"}
                           </td>
-                          <td className="py-3 px-4 text-theme-text-secondary text-xs max-w-xs truncate text-center" title={getCleanComment(r.comment)}>
-                            {getCleanComment(r.comment) || "—"}
+                          <td className="py-3 px-4 text-theme-text-secondary text-xs max-w-xs truncate text-center" title={getFullCommentHistory(r.comment, r)}>
+                            {getLatestActionComment(r.comment, r) || "—"}
                           </td>
                           <td className="py-3 px-4 text-center">
                             <div className="flex justify-center items-center">

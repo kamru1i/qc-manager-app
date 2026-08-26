@@ -1,7 +1,7 @@
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile, GovtHolidayResponse } from '../types';
 import { ChutiRecord } from './offlineSync';
-import { calculateStats, formatTimeToAMPM, getCleanComment, formatDate, escapeHtml } from './dashboardHelpers';
+import { calculateStats, formatTimeToAMPM, getCleanComment, getLatestActionComment, formatDate, escapeHtml } from './dashboardHelpers';
 import { isTauriApp } from './apiUrlHelper';
 import { saveTauriFile, buildTeamWiseTablesHtml } from './exportCore';
 
@@ -73,7 +73,7 @@ export const exportIndividualExcel = (
 
 
       rowsHtml += `
-          <td>${escapeHtml(getCleanComment(r.comment)) || '-'}</td>
+          <td>${escapeHtml(getLatestActionComment(r.comment, r)) || '-'}</td>
           <td>${escapeHtml(r.status)}</td>
         </tr>
       `;

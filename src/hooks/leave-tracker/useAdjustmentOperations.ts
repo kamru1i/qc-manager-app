@@ -180,7 +180,7 @@ export const useAdjustmentOperations = ({
       } else if (isPartialLeave) {
         if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
           let cleanComment = record.comment || '';
-          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime)(?:\s*\|\s*)?/g, '').trim();
           const finalComment = `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`;
           requestedUpdates = {
             adjustment: true,
@@ -190,7 +190,10 @@ export const useAdjustmentOperations = ({
             comment: finalComment || null
           };
         } else if (adjustmentType === 'full') {
-          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null };
+          let cleanComment = record.comment || '';
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime)(?:\s*\|\s*)?/g, '').trim();
+          const finalComment = `Adjusted: Overtime${cleanComment ? ` | ${cleanComment}` : ''}`;
+          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
         } else {
           const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
           if (!timeRegex.test(partialAdjustmentTime)) {
@@ -198,11 +201,17 @@ export const useAdjustmentOperations = ({
             setSubmitting(false);
             return;
           }
-          requestedUpdates = { adjustment: false, adjusted_hour: `${partialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null };
+          let cleanComment = record.comment || '';
+          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime|partial \([0-9:]+\))(?:\s*\|\s*)?/g, '').trim();
+          const finalComment = `Adjusted: partial (${partialAdjustmentTime})${cleanComment ? ` | ${cleanComment}` : ''}`;
+          requestedUpdates = { adjustment: false, adjusted_hour: `${partialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
         }
       } else if (record.leave_type === 'Overtime') {
         const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : adjustShortLeaveOption;
-        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust, reserve_holiday: null };
+        let cleanComment = record.comment || '';
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Short Leave)(?:\s*\|\s*)?/g, '').trim();
+        const finalComment = shouldAdjust ? `Adjusted: Short Leave${cleanComment ? ` | ${cleanComment}` : ''}` : cleanComment;
+        requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust, reserve_holiday: null, comment: finalComment || null };
       } else {
         const isCat = selectedCat !== 'None';
         let cleanComment = record.comment || '';
@@ -215,7 +224,7 @@ export const useAdjustmentOperations = ({
         requestedUpdates = { 
           adjustment: true, 
           adjusted_hour: null, 
-          adjust_short_leave: false,
+          adjust_short_leave: false, 
           reserve_holiday: isCat ? selectedCat : null,
           comment: finalComment || null
         };
@@ -330,7 +339,7 @@ export const useAdjustmentOperations = ({
 
       const adminName = profile?.full_name ? `Admin ${profile.full_name}` : 'Admin';
       const leaveLabel = getDetailedLeaveLabel(record);
-      const isShortOrOvertime = record.leave_type === 'Short Leave' || record.leave_type === 'Overtime';
+      const isShortOrOvertime = ['Short Leave', 'Early Leave', 'Late Join', 'Overtime'].includes(record.leave_type);
       const dateTimeStr = isShortOrOvertime
         ? `${formatDate(record.date)} (${formatTimeToAMPM(record.sign_in_time)} - ${formatTimeToAMPM(record.sign_out_time)})`
         : formatDate(record.date);

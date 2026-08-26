@@ -4,7 +4,7 @@ import React from "react";
 import { Edit, AlertTriangle, RefreshCw } from "lucide-react";
 import { Profile } from "@/types";
 import { ChutiRecord } from "@/utils/offlineSync";
-import { getCleanComment } from "@/utils/dashboardHelpers";
+import { getCleanComment, getFullCommentHistory } from "@/utils/dashboardHelpers";
 import { ChutiFormFields } from "@/components/leave-tracker/ChutiFormFields";
 
 import { Modal } from "@/components/common/Modal";
@@ -105,8 +105,8 @@ export function UserRevisionModal({
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Revision
                 Instructions (Supervisor/Admin Remark):
               </div>
-              <p className="text-theme-text-secondary">
-                {getCleanComment(revisionRecord.comment)}
+              <p className="text-theme-text-secondary whitespace-pre-line">
+                {getFullCommentHistory(revisionRecord.comment, revisionRecord) || getCleanComment(revisionRecord.comment)}
               </p>
             </div>
           )}

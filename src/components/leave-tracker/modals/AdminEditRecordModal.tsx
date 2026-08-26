@@ -1,10 +1,11 @@
 "use client";
 
 import React from "react";
-import { Edit, RefreshCw } from "lucide-react";
+import { Edit, RefreshCw, History } from "lucide-react";
 import { Profile } from "@/types";
 import { ChutiRecord } from "@/utils/offlineSync";
 import { ChutiFormFields } from "@/components/leave-tracker/ChutiFormFields";
+import { getFullCommentHistory } from "@/utils/dashboardHelpers";
 import { Modal } from "@/components/common/Modal";
 import { isAdminRole } from '@/utils/permissionService';
 
@@ -102,6 +103,17 @@ export function AdminEditRecordModal({
           }
           onDateErrorChange={setHasDateError}
         />
+
+        {adminEditRecord.comment && (
+          <div className="mt-2 p-3 bg-theme-page-bg/60 border border-theme-border-input/80 rounded-xl text-xs leading-relaxed font-sans">
+            <div className="font-semibold text-theme-text-muted flex items-center gap-1.5 mb-1.5">
+              <History className="h-3.5 w-3.5 text-blue-400 shrink-0" /> Full History & Audit Trail:
+            </div>
+            <p className="text-theme-text-secondary whitespace-pre-line text-[11px] font-mono bg-theme-card-bg/40 p-2 rounded-lg border border-theme-border-muted/50">
+              {getFullCommentHistory(adminEditRecord.comment, adminEditRecord)}
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-4 border-t border-theme-border-input/80">
           <button

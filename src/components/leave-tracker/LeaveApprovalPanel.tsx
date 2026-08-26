@@ -552,8 +552,7 @@ export function LeaveApprovalPanel({
                   {r.leave_type}
                 </span>
               </p>
-              {(r.leave_type === "Overtime" ||
-                r.leave_type === "Short Leave") && (
+              {r.leave_type !== "Full Leave" && (
                 <p>
                   <span className="text-theme-text-muted font-medium">
                     Time & Hours:
