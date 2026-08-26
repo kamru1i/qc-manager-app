@@ -138,7 +138,7 @@ export function AddLeave({
   // Filter records belonging to the target staff member
   const staffRecords = React.useMemo(() => {
     if (!targetProfile) return [];
-    return records.filter(r => r.user_id === targetProfile.id);
+    return records.filter(r => r.user_id === targetProfile.id && !r.deleted_at);
   }, [records, targetProfile]);
 
   const parseHHMMToMinutes = (str: string) => {
@@ -156,7 +156,8 @@ export function AddLeave({
     return staffRecords.filter(r =>
       r.date === date &&
       (editingRecord ? r.id !== editingRecord.id : true) &&
-      r.status !== 'rejected'
+      r.status !== 'rejected' &&
+      !r.deleted_at
     );
   }, [date, targetProfile, staffRecords, editingRecord]);
 
@@ -333,9 +334,10 @@ export function AddLeave({
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
     if (!leaveType || leaveType === 'Select') return false;
-    const recordsToCheck = editingRecord
-      ? staffRecords.filter(r => r.id !== editingRecord.id && r.status !== 'rejected')
-      : staffRecords.filter(r => r.status !== 'rejected');
+    const recordsToCheck = (editingRecord
+      ? staffRecords.filter(r => r.id !== editingRecord.id)
+      : staffRecords
+    ).filter(r => r.status !== 'rejected' && !r.deleted_at);
 
     if (leaveType === 'Full Leave') {
       const allDates = [date, ...bulkDates.filter(Boolean)];

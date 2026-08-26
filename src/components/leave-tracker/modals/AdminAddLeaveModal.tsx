@@ -128,17 +128,17 @@ export function AdminAddLeaveModal({
 
   const sameDayShortLeaves = React.useMemo(() => {
     if (!date) return [];
-    return records.filter((r) => r.date === date && r.leave_type === "Short Leave" && r.status !== "rejected");
+    return records.filter((r) => r.date === date && r.leave_type === "Short Leave" && r.status !== "rejected" && !r.deleted_at);
   }, [date, records]);
 
   const sameDayEarlyLeaves = React.useMemo(() => {
     if (!date) return [];
-    return records.filter((r) => r.date === date && r.leave_type === "Early Leave" && r.status !== "rejected");
+    return records.filter((r) => r.date === date && r.leave_type === "Early Leave" && r.status !== "rejected" && !r.deleted_at);
   }, [date, records]);
 
   const sameDayLateJoins = React.useMemo(() => {
     if (!date) return [];
-    return records.filter((r) => r.date === date && r.leave_type === "Late Join" && r.status !== "rejected");
+    return records.filter((r) => r.date === date && r.leave_type === "Late Join" && r.status !== "rejected" && !r.deleted_at);
   }, [date, records]);
 
   const existingShortLeaveMinutes = React.useMemo(() => {
@@ -303,7 +303,7 @@ export function AdminAddLeaveModal({
   const isDuplicateDate = React.useMemo(() => {
     if (!date) return false;
     if (!leaveType || leaveType === "Select") return false;
-    const recordsToCheck = records.filter(r => r.status !== 'rejected');
+    const recordsToCheck = records.filter(r => r.status !== 'rejected' && !r.deleted_at);
     if (leaveType === "Full Leave") {
       const allDates = [date, ...bulkDates.filter(Boolean)];
       return allDates.some((bd) => recordsToCheck.some((r) => r.date === bd));
