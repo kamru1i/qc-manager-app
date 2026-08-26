@@ -56,11 +56,6 @@ export default function DownloadsPage() {
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/10">
               v{info.version}
             </span>
-            {info.ota && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/10">
-                OTA: {info.ota}
-              </span>
-            )}
             {info.autoUpdate && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/10">
                 Auto-Update
@@ -173,7 +168,6 @@ export default function DownloadsPage() {
                   downloads.windows.x64,
                   "64-bit (x64) Recommended",
                 )}
-                {renderBuildRow(downloads.windows.arm64, "ARM64 Setup")}
               </div>
             </div>
 
@@ -186,11 +180,6 @@ export default function DownloadsPage() {
                 {renderBuildRow(
                   downloads.macos.appleSilicon,
                   "Apple Silicon (M1/M2/M3/M4/M5 & newer)",
-                )}
-                {renderBuildRow(downloads.macos.intel, "Intel Processor Mac")}
-                {renderBuildRow(
-                  downloads.macos.universal,
-                  "Universal Binary (Intel & Apple Silicon M-Series)",
                 )}
               </div>
             </div>

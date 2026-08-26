@@ -44,9 +44,6 @@
         "installerIcon": "icons/icon.ico",
         "uninstallerIcon": "icons/icon.ico"
       }
-    },
-    "android": {
-      "debugApplicationIdSuffix": ".debug"
     }
   },
   "plugins": {

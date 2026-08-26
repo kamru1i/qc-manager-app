@@ -1,8 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { execSync } = require('child_process');
-const { createClient } = require('@supabase/supabase-js');
 
 // Helper to compute SHA256 of a file
 function computeSha256(filePath) {
@@ -31,8 +29,6 @@ function getReleaseNotesForVersion(version) {
 async function main() {
   const token = process.env.GITHUB_TOKEN;
   const repo = process.env.GITHUB_REPOSITORY; // "owner/repo"
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!token || !repo) {
     console.warn('Warning: GITHUB_TOKEN or GITHUB_REPOSITORY not set. Generating local latest.json manifest for testing...');
@@ -43,8 +39,8 @@ async function main() {
 
     const checksums = {};
     const downloads = {
-      windows: { x64: {}, arm64: {} },
-      macos: { universal: {}, appleSilicon: {}, intel: {} },
+      windows: { x64: {} },
+      macos: { appleSilicon: {} },
       android: { apk: {} }
     };
 
@@ -325,17 +321,6 @@ async function main() {
     await uploadAsset(file.filePath, file.name);
   }
 
-  // 3. Zip Next.js out folder as OTA bundle and upload it
-  const webAssetsZip = path.join(process.cwd(), 'QC-Manager-Web-Assets.zip');
-  console.log('Zipping out/ folder for OTA updates...');
-  if (!fs.existsSync(path.join(process.cwd(), 'out'))) {
-    console.error('Error: out/ folder not found. Make sure Next.js static build has run.');
-    process.exit(1);
-  }
-  
-  execSync(`zip -r "${webAssetsZip}" out/*`);
-  await uploadAsset(webAssetsZip, 'QC-Manager-Web-Assets.zip');
-
   // Refetch assets list from GitHub API to include all uploaded files
   const refetchRes = await fetch(releaseUrl, { headers });
   if (!refetchRes.ok) {
@@ -344,7 +329,7 @@ async function main() {
   }
   assets = (await refetchRes.json()).assets || [];
 
-  // 4. Calculate SHA256 and sizes using local artifacts where possible
+  // 3. Calculate SHA256 and sizes using local artifacts where possible
   const tempDir = path.join(process.cwd(), 'temp_release_assets');
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
@@ -352,9 +337,6 @@ async function main() {
   for (const file of filesToUpload) {
     const dest = path.join(tempDir, file.name);
     fs.copyFileSync(file.filePath, dest);
-  }
-  if (fs.existsSync(webAssetsZip)) {
-    fs.copyFileSync(webAssetsZip, path.join(tempDir, 'QC-Manager-Web-Assets.zip'));
   }
 
   const checksums = {};
@@ -395,18 +377,15 @@ async function main() {
   fs.writeFileSync(sha256sumsPath, shaContent);
   await uploadAsset(sha256sumsPath, 'SHA256SUMS');
 
-  // 4. Parse signatures for Tauri Updater platforms
+  // 4. Parse signatures for Tauri Updater platforms (Windows x64 & macOS Apple Silicon)
   const platforms = {};
   for (const asset of assets) {
     const name = asset.name;
-    const url = asset.browser_download_url;
 
     if (name.endsWith('.sig')) {
       const targetName = name.slice(0, -4);
       const targetAsset = assets.find(a => a.name === targetName);
       if (!targetAsset) continue;
-
-
 
       let platformKey = null;
       if (
@@ -417,26 +396,6 @@ async function main() {
         targetName.includes('x64_setup.exe')
       ) {
         platformKey = 'windows-x86_64';
-      } else if (
-        targetName.includes('x86-setup.nsis.zip') ||
-        targetName.includes('i686-setup.nsis.zip') ||
-        targetName.includes('x86-setup.exe') ||
-        targetName.includes('i686-setup.exe') ||
-        targetName.includes('x86_setup.exe')
-      ) {
-        platformKey = 'windows-i686';
-      } else if (
-        targetName.includes('arm64-setup.nsis.zip') ||
-        targetName.includes('aarch64-setup.nsis.zip') ||
-        targetName.includes('arm64-setup.exe') ||
-        targetName.includes('aarch64-setup.exe') ||
-        targetName.includes('arm64_setup.exe')
-      ) {
-        platformKey = 'windows-aarch64';
-      } else if (targetName.includes('universal.app.tar.gz')) {
-        platformKey = 'darwin-universal';
-      } else if (targetName.includes('x64.app.tar.gz') || targetName.includes('x86_64.app.tar.gz')) {
-        platformKey = 'darwin-x86_64';
       } else if (targetName.includes('aarch64.app.tar.gz') || targetName.includes('arm64.app.tar.gz')) {
         platformKey = 'darwin-aarch64';
       }
@@ -451,17 +410,12 @@ async function main() {
         // Support nsis variants for windows
         if (platformKey === 'windows-x86_64') {
           platforms['windows-x86_64-nsis'] = { signature, url: targetUrl };
-        } else if (platformKey === 'windows-i686') {
-          platforms['windows-i686-nsis'] = { signature, url: targetUrl };
-        } else if (platformKey === 'windows-aarch64') {
-          platforms['windows-aarch64-nsis'] = { signature, url: targetUrl };
         }
       }
     }
   }
 
-
-  // 5. Construct latest.json mapping
+  // 5. Construct latest.json mapping for supported targets: Windows x64, macOS Apple Silicon, Android APK
   const latestJson = {
     version,
     notes: release.body || `Release ${version}`,
@@ -476,28 +430,13 @@ async function main() {
           url: assets.find(a => a.name.includes('x64-setup.exe') || a.name.includes('x64_setup.exe'))?.browser_download_url || '',
           fileSize: fileSizes[assets.find(a => a.name.includes('x64-setup.exe') || a.name.includes('x64_setup.exe'))?.name] || '',
           sha256: checksums[assets.find(a => a.name.includes('x64-setup.exe') || a.name.includes('x64_setup.exe'))?.name] || ''
-        },
-        arm64: {
-          url: assets.find(a => a.name.includes('arm64-setup.exe') || a.name.includes('arm64_setup.exe'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.includes('arm64-setup.exe') || a.name.includes('arm64_setup.exe'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.includes('arm64-setup.exe') || a.name.includes('arm64_setup.exe'))?.name] || ''
         }
       },
       macos: {
-        universal: {
-          url: assets.find(a => a.name.endsWith('.dmg') && a.name.includes('universal'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && a.name.includes('universal'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && a.name.includes('universal'))?.name] || ''
-        },
         appleSilicon: {
           url: assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('aarch64') || a.name.includes('arm64')))?.browser_download_url || '',
           fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('aarch64') || a.name.includes('arm64')))?.name] || '',
           sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('aarch64') || a.name.includes('arm64')))?.name] || ''
-        },
-        intel: {
-          url: assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.browser_download_url || '',
-          fileSize: fileSizes[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.name] || '',
-          sha256: checksums[assets.find(a => a.name.endsWith('.dmg') && (a.name.includes('x64') || a.name.includes('x86_64')) && !a.name.includes('aarch64') && !a.name.includes('arm64') && !a.name.includes('universal'))?.name] || ''
         }
       },
       android: {
@@ -513,59 +452,6 @@ async function main() {
   const latestJsonPath = path.join(process.cwd(), 'latest.json');
   fs.writeFileSync(latestJsonPath, JSON.stringify(latestJson, null, 2));
   await uploadAsset(latestJsonPath, 'latest.json');
-
-  // 6. Automatically register OTA bundle with Supabase Database
-  if (supabaseUrl && serviceKey) {
-    console.log('Connecting to Supabase to register OTA update...');
-    try {
-      const supabase = createClient(supabaseUrl, serviceKey, {
-        auth: { persistSession: false, autoRefreshToken: false }
-      });
-      
-      const otaZipUrl = assets.find(a => a.name === 'QC-Manager-Web-Assets.zip')?.browser_download_url || '';
-      
-      if (!otaZipUrl) {
-        // Same partial-release rule as the catch below: the zip is always
-        // produced by the build job, so its absence means a broken release.
-        console.error('Error: QC-Manager-Web-Assets.zip asset URL not found in release.');
-        process.exit(1);
-      } else {
-        const { data: existing, error: checkError } = await supabase
-          .from('mobile_app_versions')
-          .select('id')
-          .eq('version', version)
-          .maybeSingle();
-
-        if (checkError) throw checkError;
-
-        if (existing) {
-          console.log(`Updating existing OTA version record for version ${version}...`);
-          const { error: updateError } = await supabase
-            .from('mobile_app_versions')
-            .update({ zip_url: otaZipUrl, created_at: new Date().toISOString() })
-            .eq('id', existing.id);
-          if (updateError) throw updateError;
-        } else {
-          console.log(`Inserting new OTA version record for version ${version}...`);
-          const { error: insertError } = await supabase
-            .from('mobile_app_versions')
-            .insert({ version: version, zip_url: otaZipUrl, required: false });
-          if (insertError) throw insertError;
-        }
-        console.log('Supabase OTA release registration complete!');
-      }
-    } catch (err) {
-      // Fail the job: assets are already uploaded at this point, so swallowing
-      // this error would leave a partial release (binaries published, mobile
-      // OTA never registered) behind a green checkmark. The script is
-      // idempotent — re-running the workflow re-uploads assets (duplicate-safe)
-      // and retries this registration.
-      console.error('Error during Supabase OTA registration:', err.message || err);
-      process.exit(1);
-    }
-  } else {
-    console.log('Supabase credentials missing. Skipping automated OTA database registration.');
-  }
 
   console.log('All manifests, checksums, and update endpoints generated successfully!');
 }

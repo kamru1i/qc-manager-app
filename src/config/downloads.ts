@@ -12,7 +12,6 @@ export interface DownloadInfo {
   sha256?: string;
   releaseNotes?: string;
   autoUpdate?: boolean;
-  ota?: string;
 }
 
 export const VERSION = packageJson.version;
@@ -35,31 +34,8 @@ export const DOWNLOADS = {
       minOsVersion: "Windows 10+",
       autoUpdate: true,
     } as DownloadInfo,
-
-    arm64: {
-      platform: "Windows",
-      architecture: "ARM64",
-      version: VERSION,
-      build: VERSION.replace(/\./g, "") + "0",
-      url: getReleaseUrl(`QC.Manager_${VERSION}_arm64-setup.exe`),
-      releaseDate: "",
-      fileSize: "",
-      minOsVersion: "Windows 11 on ARM",
-      autoUpdate: true,
-    } as DownloadInfo,
   },
   macos: {
-    universal: {
-      platform: "macOS",
-      architecture: "Universal Binary (Intel & Apple Silicon M-Series)",
-      version: VERSION,
-      build: VERSION.replace(/\./g, "") + "0",
-      url: getReleaseUrl(`QC.Manager_${VERSION}_universal.dmg`),
-      releaseDate: "",
-      fileSize: "",
-      minOsVersion: "macOS 10.15 Catalina+",
-      autoUpdate: true,
-    } as DownloadInfo,
     appleSilicon: {
       platform: "macOS",
       architecture: "Apple Silicon (M1/M2/M3/M4/M5 & newer)",
@@ -69,17 +45,6 @@ export const DOWNLOADS = {
       releaseDate: "",
       fileSize: "",
       minOsVersion: "macOS 11.0 Big Sur+",
-      autoUpdate: true,
-    } as DownloadInfo,
-    intel: {
-      platform: "macOS",
-      architecture: "Intel Mac",
-      version: VERSION,
-      build: VERSION.replace(/\./g, "") + "0",
-      url: getReleaseUrl(`QC.Manager_${VERSION}_x64.dmg`),
-      releaseDate: "",
-      fileSize: "",
-      minOsVersion: "macOS 10.15 Catalina+",
       autoUpdate: true,
     } as DownloadInfo,
   },
@@ -93,7 +58,7 @@ export const DOWNLOADS = {
       releaseDate: "",
       fileSize: "",
       minOsVersion: "Android 8.0 Oreo (API 26)+",
-      ota: "Capgo",
+      autoUpdate: true,
     } as DownloadInfo,
   },
 };

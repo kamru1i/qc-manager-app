@@ -56,13 +56,10 @@ export function useDeviceInfo(): UseDeviceInfoResult {
 
               const mergedDownloads = {
                 windows: {
-                  x64: { ...DOWNLOADS.windows.x64, ...data.downloads.windows?.x64, version: data.version, releaseDate: dateStr, releaseNotes: notesText },
-                  arm64: { ...DOWNLOADS.windows.arm64, ...data.downloads.windows?.arm64, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
+                  x64: { ...DOWNLOADS.windows.x64, ...data.downloads.windows?.x64, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
                 },
                 macos: {
-                  universal: { ...DOWNLOADS.macos.universal, ...data.downloads.macos?.universal, version: data.version, releaseDate: dateStr, releaseNotes: notesText },
-                  appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...data.downloads.macos?.appleSilicon, version: data.version, releaseDate: dateStr, releaseNotes: notesText },
-                  intel: { ...DOWNLOADS.macos.intel, ...data.downloads.macos?.intel, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
+                  appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...data.downloads.macos?.appleSilicon, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
                 },
                 android: {
                   apk: { ...DOWNLOADS.android.apk, ...data.downloads.android?.apk, version: data.version, releaseDate: dateStr, releaseNotes: notesText }
@@ -105,21 +102,15 @@ export function useDeviceInfo(): UseDeviceInfoResult {
           };
 
           const winX64Info = getAssetInfo(n => n.includes('x64-setup.exe') || n.includes('x64_setup.exe'));
-          const winArmInfo = getAssetInfo(n => n.includes('arm64-setup.exe') || n.includes('arm64_setup.exe'));
-          const macUnivInfo = getAssetInfo(n => n.endsWith('.dmg') && n.includes('universal'));
           const macSiliconInfo = getAssetInfo(n => n.endsWith('.dmg') && (n.includes('aarch64') || n.includes('arm64')));
-          const macIntelInfo = getAssetInfo(n => n.endsWith('.dmg') && (n.includes('x64') || n.includes('x86_64')) && !n.includes('aarch64') && !n.includes('arm64') && !n.includes('universal'));
           const androidApkInfo = getAssetInfo(n => n.endsWith('.apk'));
 
           const mergedDownloads = {
             windows: {
-              x64: { ...DOWNLOADS.windows.x64, ...(winX64Info || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
-              arm64: { ...DOWNLOADS.windows.arm64, ...(winArmInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText }
+              x64: { ...DOWNLOADS.windows.x64, ...(winX64Info || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText }
             },
             macos: {
-              universal: { ...DOWNLOADS.macos.universal, ...(macUnivInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
-              appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...(macSiliconInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText },
-              intel: { ...DOWNLOADS.macos.intel, ...(macIntelInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText }
+              appleSilicon: { ...DOWNLOADS.macos.appleSilicon, ...(macSiliconInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText }
             },
             android: {
               apk: { ...DOWNLOADS.android.apk, ...(androidApkInfo || {}), version: releaseVersion, releaseDate: dateStr, releaseNotes: notesText }
@@ -165,19 +156,10 @@ export function useDeviceInfo(): UseDeviceInfoResult {
 function getRecommendation(info: DeviceInfo, currentDownloads: typeof DOWNLOADS): DownloadInfo | null {
   switch (info.os) {
     case 'Windows':
-      if (info.architecture === 'ARM64') {
-        return currentDownloads.windows.arm64;
-      }
-      return currentDownloads.windows.x64; // Default recommended Windows build
+      return currentDownloads.windows.x64; // Default recommended Windows build (64-bit x64)
       
     case 'macOS':
-      if (info.architecture === 'Apple Silicon' || info.architecture === 'ARM64') {
-        return currentDownloads.macos.appleSilicon;
-      }
-      if (info.architecture === 'x64') {
-        return currentDownloads.macos.intel;
-      }
-      return currentDownloads.macos.universal;
+      return currentDownloads.macos.appleSilicon; // Default recommended macOS build (Apple Silicon)
       
     case 'Android':
       return currentDownloads.android.apk;
