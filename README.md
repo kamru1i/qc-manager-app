@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.3.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.3.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.3.1 — Patch Release (Leave Type Consistency, Soft-Delete Conflict Resolution & Build System Optimization) (Current)
+### 🚀 v7.3.2 — Patch Release (Leave Type Consistency, Soft-Delete Conflict Resolution, Multiplatform Cleanup & Vercel Sync) (Current)
+
+- **Soft-Delete Same-Day Conflict Fix**: Resolved database trigger `enforce_chuti_same_day_conflicts()` and client-side validation logic to strictly ignore soft-deleted and rejected records (`AND deleted_at IS NULL`), preventing false conflict blocks when adding Full Day Leave.
+- **Exact Leave Type Consistency**: Hardened `LeavesRecordsTable`, `TeamLeaveRecords`, and export handlers to preserve exact leave types (`Late Join`, `Early Leave`, `Short Leave`, `Full Leave`, and `Overtime`) without collapsing or overwriting.
+- **Auditable Comment Display**: Standardized table Comment columns to display only the latest action/adjustment note while preserving complete audit logs in tooltips and modals.
+- **Multiplatform Release System Cleanup**: Streamlined distribution targets to strictly Windows x64, macOS Apple Silicon (ARM64), and Android APK, completely removing deprecated build matrices and legacy OTA web-bundle artifacts for faster CI/CD.
+
+### 🚀 v7.3.1 — Patch Release (Leave Type Consistency & Conflict Resolution Baseline)
 
 - **Soft-Delete Same-Day Conflict Fix**: Resolved database trigger `enforce_chuti_same_day_conflicts()` and client-side validation logic to strictly ignore soft-deleted and rejected records (`AND deleted_at IS NULL`), preventing false conflict blocks when adding Full Day Leave.
 - **Exact Leave Type Consistency**: Hardened `LeavesRecordsTable`, `TeamLeaveRecords`, and export handlers to preserve exact leave types (`Late Join`, `Early Leave`, `Short Leave`, `Full Leave`, and `Overtime`) without collapsing or overwriting.
