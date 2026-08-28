@@ -263,8 +263,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
           </div>
         )}
 
-        {/* Workspace: Todos (Only for superadmin Kamrul) */}
-        {canAccessModule(profile, null, 'todo') && !tabHidden('todo') && (
+        {/* Workspace: Todos (Superadmin or explicitly granted View-Only users) */}
+        {canAccessModule(profile, null, 'todo') && (
           <div className="space-y-1">
             <button
               onClick={handleTodoNav}

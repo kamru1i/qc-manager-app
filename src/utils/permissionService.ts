@@ -256,6 +256,13 @@ export const isTabVisibleForRole = (
 ): boolean => {
   if (!user) return false;
 
+  if (isSuperadmin(user)) return true; // superadmin always sees everything
+
+  // Superadmin's explicit Todo View Access grant bypasses general role visibility & feature flags
+  if (tabKey === 'todo') {
+    return user.has_todo_access === true;
+  }
+
   const gs = getEffectiveGlobalSettings(user, globalSettings, profilesList);
 
   // Check mapped feature flag first
@@ -263,8 +270,6 @@ export const isTabVisibleForRole = (
   if (mappedFlag && !isFeatureEnabled(mappedFlag, gs, user)) {
     return false;
   }
-
-  if (isSuperadmin(user)) return true; // superadmin always sees everything
 
   const roleVis = gs?.role_visibility?.[user.role];
   let base: boolean;
