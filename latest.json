@@ -1,8 +1,8 @@
 {
-  "version": "7.3.2",
-  "notes": "### 🚀 v7.3.2 — Patch Release (Leave Type Consistency, Soft-Delete Conflict Resolution, Multiplatform Cleanup & Vercel Sync) (Current)\n\n- **Soft-Delete Same-Day Conflict Fix**: Resolved database trigger `enforce_chuti_same_day_conflicts()` and client-side validation logic to strictly ignore soft-deleted and rejected records (`AND deleted_at IS NULL`), preventing false conflict blocks when adding Full Day Leave.\n- **Exact Leave Type Consistency**: Hardened `LeavesRecordsTable`, `TeamLeaveRecords`, and export handlers to preserve exact leave types (`Late Join`, `Early Leave`, `Short Leave`, `Full Leave`, and `Overtime`) without collapsing or overwriting.\n- **Auditable Comment Display**: Standardized table Comment columns to display only the latest action/adjustment note while preserving complete audit logs in tooltips and modals.\n- **Multiplatform Release System Cleanup**: Streamlined distribution targets to strictly Windows x64, macOS Apple Silicon (ARM64), and Android APK, completely removing deprecated build matrices and legacy OTA web-bundle artifacts for faster CI/CD.",
-  "pub_date": "2026-08-27T16:10:00.000Z",
-  "releaseDate": "August 27, 2026",
+  "version": "7.4.0",
+  "notes": "### 🚀 v7.4.0 — Feature Release (Granular Todo View Access Control & Permission Hardening) (Current)\n\n- **Granular Todo View Access**: Superadmins can now grant view-only access to specific registered users via the new Todo View Access modal on the Todo workspace.\n- **Read-Only Mode for Granted Users**: Authorized users can view the Daily List, browse historical All Logs, and copy task checklists without write permissions.\n- **Database & RLS Hardening**: Enforced robust PostgreSQL Row Level Security policies on `todos` and `todo_access`, backed by the `sync_profile_todo_access` trigger for real-time permission sync.\n- **Instant Revocation & Realtime Sync**: Immediate revocation and real-time subscription propagation ensure unauthorized sessions are terminated without stale cache bypass.",
+  "pub_date": "2026-08-28T15:00:00.000Z",
+  "releaseDate": "August 28, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {

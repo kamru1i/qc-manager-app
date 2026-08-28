@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.3.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.4.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.3.2 — Patch Release (Leave Type Consistency, Soft-Delete Conflict Resolution, Multiplatform Cleanup & Vercel Sync) (Current)
+### 🚀 v7.4.0 — Feature Release (Granular Todo View Access Control & Permission Hardening) (Current)
+
+- **Granular Todo View Access**: Superadmins can now selectively grant view-only access to specific registered users via the new Todo View Access modal on the Todo workspace.
+- **Read-Only Mode for Granted Users**: Authorized users can view the Daily List, browse historical All Logs, and copy task checklists without write permissions or mutation capabilities.
+- **Database & RLS Hardening**: Enforced robust PostgreSQL Row Level Security policies on `todos` and `todo_access`, backed by the `sync_profile_todo_access` trigger for real-time permission sync.
+- **Instant Revocation & Realtime Sync**: Immediate revocation and real-time subscription propagation ensure unauthorized sessions are terminated without stale cache bypass.
+
+### 🚀 v7.3.2 — Patch Release (Leave Type Consistency, Soft-Delete Conflict Resolution, Multiplatform Cleanup & Vercel Sync)
 
 - **Soft-Delete Same-Day Conflict Fix**: Resolved database trigger `enforce_chuti_same_day_conflicts()` and client-side validation logic to strictly ignore soft-deleted and rejected records (`AND deleted_at IS NULL`), preventing false conflict blocks when adding Full Day Leave.
 - **Exact Leave Type Consistency**: Hardened `LeavesRecordsTable`, `TeamLeaveRecords`, and export handlers to preserve exact leave types (`Late Join`, `Early Leave`, `Short Leave`, `Full Leave`, and `Overtime`) without collapsing or overwriting.
