@@ -1,6 +1,6 @@
 [package]
 name = "qc-manager"
-version = "7.4.1"
+version = "7.4.2"
 description = "A Office Quotes, Sales & Leave Tracker App by Kamrul Islam"
 authors = ["Kamrul Islam, IT Officer, B&F Corporate"]
 license = ""

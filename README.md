@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.4.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.4.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.4.1 — Patch Release (Todo View Access Query Optimization, Modal Stability & DNS Alignment) (Current)
+### 🚀 v7.4.2 — Patch Release (Granted Todo View Permission Decoupling & Sidebar Visibility Fix) (Current)
+
+- **Superadmin Todo View Access Decoupling**: Decoupled granted view-only Todo access (`has_todo_access`) from generic personal feature flags and role visibility settings, ensuring the Todos tab displays immediately for granted users.
+- **Sidebar Navigation Alignment**: Simplified `UnifiedSidebar` workspace checks to use `canAccessModule(profile, null, 'todo')` directly, preventing false positive tab hiding.
+- **Real-Time Permission Propagation**: Ensured immediate workspace appearance and seamless navigation upon Superadmin grant without requiring full page refresh.
+
+### 🚀 v7.4.1 — Patch Release (Todo View Access Query Optimization, Modal Stability & DNS Alignment)
 
 - **Todo View Access Query Fix**: Streamlined `todoAccessService.getTodoAccessList()` to query direct columns without ambiguous table joins, eliminating schema cache resolution errors when opening the access modal.
 - **Modal Permission Sync**: Enhanced real-time synchronization between `todo_access` records and client-side cached profiles.
