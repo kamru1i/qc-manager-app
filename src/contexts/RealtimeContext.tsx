@@ -17,6 +17,7 @@ export type RealtimeTable =
   | 'govt_holiday_responses'
   | 'dismissed_notifications'
   | 'todos'
+  | 'todo_access'
   | 'quotation_mistakes'
   | 'compliance_rules';
 
@@ -203,7 +204,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
         );
       }
 
-      // ── todos (superadmin-only) — always user-scoped ──
+      // ── todos (superadmin & view-only users) ──
       if (hasTodoAccess) {
         channel.on(
           'postgres_changes',
@@ -211,11 +212,24 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             event: '*',
             schema: 'public',
             table: 'todos',
-            filter: `user_id=eq.${sessionUser.id}`,
           },
           (payload) => dispatch('todos', payload as unknown as RealtimePayload)
         );
       }
+
+      // ── todo_access (granular access grants/revocations) ──
+      channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'todo_access',
+        },
+        (payload) => {
+          dispatch('todo_access', payload as unknown as RealtimePayload);
+          emit('profile-access-updated', { table: 'todo_access', payload });
+        }
+      );
 
       channel.subscribe((status, err) => {
           if (!active || stale) return;
@@ -268,7 +282,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
     };
     // Only re-create when user identity or role changes — not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionUser?.id, profile?.role, profile?.has_chuti_access, profile?.has_quotes_access]);
+  }, [sessionUser?.id, profile?.role, profile?.has_chuti_access, profile?.has_quotes_access, profile?.has_todo_access]);
 
   const value = React.useMemo(() => ({ registerHandler }), [registerHandler]);
 

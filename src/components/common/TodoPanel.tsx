@@ -15,13 +15,17 @@ import {
   ChevronDown,
   StickyNote,
   X,
+  Users,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
+import { TodoAccessModal } from "@/components/common/modals/TodoAccessModal";
 import { createPortal } from "react-dom";
 import { TodoSkeleton } from "@/components/common/skeleton/TodoSkeleton";
 import { sortTodosByActivity } from "@/utils/todoSort";
 import { todosService } from "@/services";
+import { isSuperadmin } from "@/utils/permissionService";
 import {
   useRealtimeHandler,
   RealtimePayload,
@@ -73,6 +77,9 @@ const updateArchiveCache = (
 // All-time tasks are dynamically managed by the user using the "All-Time" checkbox when adding a task.
 
 export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
+  const isSuperAdmin = isSuperadmin(profile);
+  const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+
   const [subTab, setSubTab] = useState<"daily" | "all">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("todoTabPrefs");
@@ -197,13 +204,20 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         // 1. Fetch today's existing todos — most recently active first
         const { data: todayData, error: todayErr } =
           await todosService.getTodos({
-            userId: profileId,
+            userId: isSuperAdmin ? profileId : undefined,
             todoDate: todayStr,
           });
 
         if (todayErr) throw todayErr;
 
         let currentTodayTodos = (todayData || []) as unknown as TodoItem[];
+
+        // View-only users do not execute DB cleanups or carry-over mutations
+        if (!isSuperAdmin) {
+          setAndCacheTodos(currentTodayTodos);
+          setLoading(false);
+          return;
+        }
 
         // A. Check for existing duplicates in today's list and clean them up
         const uniqueTodayMap = new Map<string, TodoItem>();
@@ -324,7 +338,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setLoading(false);
       }
     },
-    [profileId, profileUsername, todayStr, setAndCacheTodos],
+    [profileId, profileUsername, todayStr, isSuperAdmin, setAndCacheTodos],
   );
 
   // Fetch Archive (All) Todos based on selected Month/Year
@@ -341,7 +355,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
 
         const { data, error } = await todosService.getTodos({
-          userId: profileId,
+          userId: isSuperAdmin ? profileId : undefined,
           gteDate: startDate,
           lteDate: endDate,
           excludeStatus: "Idle",
@@ -360,7 +374,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setArchiveLoading(false);
       }
     },
-    [profileId, selectedYear, selectedMonth, setAndCacheArchiveTodos],
+    [profileId, selectedYear, selectedMonth, isSuperAdmin, setAndCacheArchiveTodos],
   );
 
   // Handle Mounting state for Portals
@@ -431,7 +445,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Add a new Daily Todo Item
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile || !newTask.trim()) return;
+    if (!isSuperAdmin || !profile || !newTask.trim()) return;
 
     try {
       const { data, error } = await todosService.createTodo({
@@ -459,6 +473,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Toggle Todo Status (Idle -> Working -> Completed -> Idle)
   const handleToggleStatus = async (todo: TodoItem) => {
+    if (!isSuperAdmin) return;
     let nextStatus: "Idle" | "Working" | "Completed";
     if (todo.status === "Idle") {
       nextStatus = "Working";
@@ -493,6 +508,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Toggle All-Time Status for a task
   const handleToggleAllTime = async (todo: TodoItem) => {
+    if (!isSuperAdmin) return;
     const nextAllTime = !todo.is_all_time;
     try {
       const { error } = await todosService.updateTodo(todo.id, {
@@ -527,6 +543,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Update Task Comment from the Notes modal
   const handleUpdateComment = async (id: string, commentVal: string) => {
+    if (!isSuperAdmin) return;
     // Skip no-op saves — an UPDATE would bump last_activity_at (reordering
     // the task) and emit a realtime message for nothing.
     const current = todos.find((t) => t.id === id);
@@ -566,6 +583,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Context Menu trigger
   const handleContextMenu = (e: React.MouseEvent, todoId: string) => {
     e.preventDefault();
+    if (!isSuperAdmin) return;
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
@@ -576,6 +594,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Double click / consecutive click edit handler
   const handleTaskClick = React.useCallback(
     (todo: TodoItem) => {
+      if (!isSuperAdmin) return;
       const now = Date.now();
       if (
         lastClickTime &&
@@ -589,11 +608,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setLastClickTime({ id: todo.id, time: now });
       }
     },
-    [lastClickTime],
+    [isSuperAdmin, lastClickTime],
   );
 
   // Save inline edit
   const handleSaveEdit = async (todoId: string) => {
+    if (!isSuperAdmin) return;
     if (!editingTaskText.trim()) {
       setEditingTodoId(null);
       return;
@@ -629,6 +649,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Toggle selection for bulk actions
   const handleToggleSelect = (todoId: string) => {
+    if (!isSuperAdmin) return;
     setSelectedTodoIds((prev) =>
       prev.includes(todoId)
         ? prev.filter((id) => id !== todoId)
@@ -638,7 +659,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Bulk Delete implementation
   const handleBulkDelete = async () => {
-    if (selectedTodoIds.length === 0) return;
+    if (!isSuperAdmin || selectedTodoIds.length === 0) return;
     try {
       const { error } = await todosService.deleteTodo(selectedTodoIds);
 
@@ -659,6 +680,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   // Delete a Todo Item
   const handleDeleteTodo = async (id: string) => {
+    if (!isSuperAdmin) return;
     try {
       const { error } = await todosService.deleteTodo(id);
 
@@ -765,152 +787,231 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             <TodoSkeleton />
           ) : (
             <>
-              {/* Add task form and copy options */}
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-theme-card-container/40 p-3 border border-theme-border-input/60 rounded-xl">
-                <form
-                  onSubmit={handleAddTodo}
-                  className="flex-1 w-full flex items-center gap-2"
-                >
-                  <input
-                    type="text"
-                    required
-                    placeholder="What task are you working on today? "
-                    value={newTask}
-                    onChange={(e) => setNewTask(e.target.value)}
-                    disabled={loading}
-                    className="flex-1 min-w-0 px-3.5 py-2 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
-                  />
-                  <label className="flex items-center gap-2 px-3 py-2 bg-theme-card-bg/40 border border-theme-border-input/80 rounded-xl cursor-pointer select-none hover:bg-theme-card-bg transition-colors shrink-0">
+              {/* Add task form (Superadmin) or View-Only Banner (Granted Users) */}
+              {isSuperAdmin ? (
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-theme-card-container/40 p-3 border border-theme-border-input/60 rounded-xl">
+                  <form
+                    onSubmit={handleAddTodo}
+                    className="flex-1 w-full flex items-center gap-2"
+                  >
                     <input
-                      type="checkbox"
-                      checked={isAllTime}
-                      onChange={(e) => setIsAllTime(e.target.checked)}
+                      type="text"
+                      required
+                      placeholder="What task are you working on today? "
+                      value={newTask}
+                      onChange={(e) => setNewTask(e.target.value)}
                       disabled={loading}
-                      className="sr-only"
+                      className="flex-1 min-w-0 px-3.5 py-2 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
                     />
+                    <label className="flex items-center gap-2 px-3 py-2 bg-theme-card-bg/40 border border-theme-border-input/80 rounded-xl cursor-pointer select-none hover:bg-theme-card-bg transition-colors shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={isAllTime}
+                        onChange={(e) => setIsAllTime(e.target.checked)}
+                        disabled={loading}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all ${
+                          isAllTime
+                            ? "bg-indigo-500/20 border-indigo-500 text-indigo-400"
+                            : "border-theme-border-active hover:border-theme-border-active bg-theme-card-container/40"
+                        }`}
+                      >
+                        {isAllTime && <Check className="w-2.5 h-2.5 stroke-3" />}
+                      </div>
+                      <span className="text-[11px] text-theme-text-secondary hover:text-theme-text-primary font-bold tracking-wide transition-colors">
+                        Permanent
+                      </span>
+                    </label>
+                    <button
+                      type="submit"
+                      disabled={loading || !newTask.trim()}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 text-center shadow-lg shadow-indigo-650/10"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </form>
+
+                  <div className="shrink-0 flex items-center gap-2 w-full lg:w-auto justify-end">
+                    {/* Bulk Selection Actions - Inline placement matching RecordsTable with select animations */}
                     <div
-                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all ${
-                        isAllTime
-                          ? "bg-indigo-500/20 border-indigo-500 text-indigo-400"
-                          : "border-theme-border-active hover:border-theme-border-active bg-theme-card-container/40"
+                      className={`flex items-center gap-2 transition-all duration-300 transform ${
+                        selectedTodoIds.length > 0
+                          ? "scale-100 opacity-100 w-auto mr-1"
+                          : "scale-0 opacity-0 w-0 pointer-events-none mr-0"
                       }`}
                     >
-                      {isAllTime && <Check className="w-2.5 h-2.5 stroke-3" />}
-                    </div>
-                    <span className="text-[11px] text-theme-text-secondary hover:text-theme-text-primary font-bold tracking-wide transition-colors">
-                      Permanent
-                    </span>
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={loading || !newTask.trim()}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 text-center shadow-lg shadow-indigo-650/10"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </form>
-
-                <div className="shrink-0 flex items-center gap-2 w-full lg:w-auto justify-end">
-                  {/* Bulk Selection Actions - Inline placement matching RecordsTable with select animations */}
-                  <div
-                    className={`flex items-center gap-2 transition-all duration-300 transform ${
-                      selectedTodoIds.length > 0
-                        ? "scale-100 opacity-100 w-auto mr-1"
-                        : "scale-0 opacity-0 w-0 pointer-events-none mr-0"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setTodoToDelete("bulk")}
-                      className="p-2 text-rose-500 hover:text-rose-450 hover:bg-theme-card-bg border border-theme-border-muted hover:border-theme-border-input rounded-xl cursor-pointer flex items-center justify-center shrink-0 transition-all"
-                      title={`Delete ${selectedTodoIds.length} selected tasks`}
-                    >
-                      <Trash2 className="h-4 w-4 text-rose-500 stroke-[2.5]" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (
+                      <button
+                        type="button"
+                        onClick={() => setTodoToDelete("bulk")}
+                        className="p-2 text-rose-500 hover:text-rose-450 hover:bg-theme-card-bg border border-theme-border-muted hover:border-theme-border-input rounded-xl cursor-pointer flex items-center justify-center shrink-0 transition-all"
+                        title={`Delete ${selectedTodoIds.length} selected tasks`}
+                      >
+                        <Trash2 className="h-4 w-4 text-rose-500 stroke-[2.5]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (
+                            sortedTodos.every((t) =>
+                              selectedTodoIds.includes(t.id),
+                            )
+                          ) {
+                            setSelectedTodoIds([]);
+                          } else {
+                            setSelectedTodoIds(sortedTodos.map((t) => t.id));
+                          }
+                        }}
+                        className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 shrink-0 ${
+                          sortedTodos.length > 0 &&
+                          sortedTodos.every((t) => selectedTodoIds.includes(t.id))
+                            ? "bg-indigo-500 border-indigo-500"
+                            : ""
+                        }`}
+                        title="Select/Deselect All Tasks"
+                      >
+                        {sortedTodos.length > 0 &&
                           sortedTodos.every((t) =>
                             selectedTodoIds.includes(t.id),
-                          )
-                        ) {
-                          setSelectedTodoIds([]);
-                        } else {
-                          setSelectedTodoIds(sortedTodos.map((t) => t.id));
-                        }
-                      }}
-                      className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 shrink-0 ${
-                        sortedTodos.length > 0 &&
-                        sortedTodos.every((t) => selectedTodoIds.includes(t.id))
-                          ? "bg-indigo-500 border-indigo-500"
-                          : ""
-                      }`}
-                      title="Select/Deselect All Tasks"
-                    >
-                      {sortedTodos.length > 0 &&
-                        sortedTodos.every((t) =>
-                          selectedTodoIds.includes(t.id),
-                        ) && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                        )}
-                    </button>
-                    <div className="h-5 w-px bg-theme-border-input mx-1" />
-                  </div>
+                          ) && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                          )}
+                      </button>
+                      <div className="h-5 w-px bg-theme-border-input mx-1" />
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={handleCopyTodos}
-                    disabled={loading || todos.length === 0}
-                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                    title="Copy formatted checklist to clipboard"
-                  >
-                    {copied ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5 text-theme-text-muted" />
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => fetchDailyTodos(false)}
-                    disabled={loading}
-                    className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
-                    title="Refresh today's list"
-                  >
-                    <RefreshCw
-                      className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
-                    />
-                  </button>
-
-                  {/* Sub-tabs Selector (Daily List | All Logs) */}
-                  <div className="flex bg-theme-card-container p-1 rounded-xl border border-theme-border-input text-xs shrink-0 ml-1">
                     <button
-                      onClick={() => setSubTab("daily")}
-                      className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                        (subTab as string) === "daily"
-                          ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                          : "text-theme-text-muted hover:text-theme-text-primary"
-                      }`}
+                      type="button"
+                      onClick={() => setIsAccessModalOpen(true)}
+                      className="px-3 py-2 bg-theme-card-bg border border-theme-border-input hover:border-indigo-500/50 text-theme-text-muted hover:text-indigo-400 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-1.5 shrink-0"
+                      title="Manage Todo View Access for Registered Users"
                     >
-                      <Clock className="w-3.5 h-3.5" />
-                      Daily List
+                      <Users className="w-3.5 h-3.5 text-indigo-400" />
+                      <span className="hidden sm:inline">Give Access</span>
                     </button>
+
                     <button
-                      onClick={() => setSubTab("all")}
-                      className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                        (subTab as string) === "all"
-                          ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
-                          : "text-theme-text-muted hover:text-theme-text-primary"
-                      }`}
+                      type="button"
+                      onClick={handleCopyTodos}
+                      disabled={loading || todos.length === 0}
+                      className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      title="Copy formatted checklist to clipboard"
                     >
-                      <CalendarDays className="w-3.5 h-3.5" />
-                      All Logs
+                      {copied ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-theme-text-muted" />
+                      )}
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fetchDailyTodos(false)}
+                      disabled={loading}
+                      className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                      title="Refresh today's list"
+                    >
+                      <RefreshCw
+                        className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+                      />
+                    </button>
+
+                    {/* Sub-tabs Selector (Daily List | All Logs) */}
+                    <div className="flex bg-theme-card-container p-1 rounded-xl border border-theme-border-input text-xs shrink-0 ml-1">
+                      <button
+                        onClick={() => setSubTab("daily")}
+                        className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          (subTab as string) === "daily"
+                            ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                            : "text-theme-text-muted hover:text-theme-text-primary"
+                        }`}
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        Daily List
+                      </button>
+                      <button
+                        onClick={() => setSubTab("all")}
+                        className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          (subTab as string) === "all"
+                            ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                            : "text-theme-text-muted hover:text-theme-text-primary"
+                        }`}
+                      >
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        All Logs
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* View-Only Header for Granted Users */
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-theme-card-container/40 p-3 border border-theme-border-input/60 rounded-xl">
+                  <div className="flex items-center gap-2.5 text-xs">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-semibold text-[11px]">
+                      <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                      View-Only Access
+                    </span>
+                    <span className="text-theme-text-muted text-[11px] hidden sm:inline">
+                      Office Daily Tasks & Checklist
+                    </span>
+                  </div>
+
+                  <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={handleCopyTodos}
+                      disabled={loading || todos.length === 0}
+                      className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      title="Copy formatted checklist to clipboard"
+                    >
+                      {copied ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-theme-text-muted" />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fetchDailyTodos(false)}
+                      disabled={loading}
+                      className="p-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                      title="Refresh today's list"
+                    >
+                      <RefreshCw
+                        className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+                      />
+                    </button>
+
+                    {/* Sub-tabs Selector (Daily List | All Logs) */}
+                    <div className="flex bg-theme-card-container p-1 rounded-xl border border-theme-border-input text-xs shrink-0 ml-1">
+                      <button
+                        onClick={() => setSubTab("daily")}
+                        className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          (subTab as string) === "daily"
+                            ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                            : "text-theme-text-muted hover:text-theme-text-primary"
+                        }`}
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        Daily List
+                      </button>
+                      <button
+                        onClick={() => setSubTab("all")}
+                        className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          (subTab as string) === "all"
+                            ? "bg-blue-600/15 border border-blue-500/20 text-blue-400"
+                            : "text-theme-text-muted hover:text-theme-text-primary"
+                        }`}
+                      >
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        All Logs
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* List display */}
               {todos.length === 0 ? (
@@ -921,15 +1022,16 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                       No tasks listed for today
                     </p>
                     <p className="text-xs text-theme-text-muted max-w-sm mt-1 leading-relaxed">
-                      Start your day by adding tasks above, or check back later
-                      to sync database lists.
+                      {isSuperAdmin
+                        ? "Start your day by adding tasks above, or check back later to sync database lists."
+                        : "There are currently no tasks listed for today."}
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-1 custom-scrollbar">
                   {sortedTodos.map((todo) => {
-                    const isSelected = selectedTodoIds.includes(todo.id);
+                    const isSelected = isSuperAdmin && selectedTodoIds.includes(todo.id);
                     return (
                       <div
                         key={todo.id}
@@ -946,30 +1048,50 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                       >
                         {/* Task and Status Layout: Status Icon immediately before the Todo Name */}
                         <div className="flex-1 min-w-0 flex items-center gap-3">
-                          {/* Interactive status toggle icon - moved to the LEFT before task name */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(todo)}
-                            className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                              todo.status === "Completed"
-                                ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
-                                : todo.status === "Working"
-                                  ? "bg-purple-500/20 border-purple-500/50 text-purple-400"
-                                  : "border-theme-border-active text-transparent hover:border-theme-border-active hover:bg-theme-border-input/40"
-                            }`}
-                            title={`Status: ${todo.status}. Click to cycle status.`}
-                          >
-                            {todo.status === "Completed" ? (
-                              <Check className="w-3.5 h-3.5 stroke-3" />
-                            ) : todo.status === "Working" ? (
-                              <Clock className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-                            ) : (
-                              <Check className="w-3.5 h-3.5 opacity-0 hover:opacity-40 transition-opacity stroke-3" />
-                            )}
-                          </button>
+                          {isSuperAdmin ? (
+                            /* Interactive status toggle icon for Superadmin */
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(todo)}
+                              className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                                todo.status === "Completed"
+                                  ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                                  : todo.status === "Working"
+                                    ? "bg-purple-500/20 border-purple-500/50 text-purple-400"
+                                    : "border-theme-border-active text-transparent hover:border-theme-border-active hover:bg-theme-border-input/40"
+                              }`}
+                              title={`Status: ${todo.status}. Click to cycle status.`}
+                            >
+                              {todo.status === "Completed" ? (
+                                <Check className="w-3.5 h-3.5 stroke-3" />
+                              ) : todo.status === "Working" ? (
+                                <Clock className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5 opacity-0 hover:opacity-40 transition-opacity stroke-3" />
+                              )}
+                            </button>
+                          ) : (
+                            /* Static status badge for View-Only users */
+                            <div
+                              className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                                todo.status === "Completed"
+                                  ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                                  : todo.status === "Working"
+                                    ? "bg-purple-500/20 border-purple-500/50 text-purple-400"
+                                    : "border-theme-border-active bg-theme-card-container/20 text-transparent"
+                              }`}
+                              title={`Status: ${todo.status} (View-Only)`}
+                            >
+                              {todo.status === "Completed" ? (
+                                <Check className="w-3.5 h-3.5 stroke-3" />
+                              ) : todo.status === "Working" ? (
+                                <Clock className="w-3.5 h-3.5 text-purple-400" />
+                              ) : null}
+                            </div>
+                          )}
 
                           <div className="flex-1 min-w-0">
-                            {editingTodoId === todo.id ? (
+                            {isSuperAdmin && editingTodoId === todo.id ? (
                               <input
                                 type="text"
                                 value={editingTaskText}
@@ -989,30 +1111,48 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                             ) : (
                               <div className="flex items-center gap-2 flex-wrap min-w-0">
                                 <p
-                                  onClick={() => handleTaskClick(todo)}
+                                  onClick={() => isSuperAdmin && handleTaskClick(todo)}
                                   onDoubleClick={() => {
-                                    setEditingTodoId(todo.id);
-                                    setEditingTaskText(todo.task);
+                                    if (isSuperAdmin) {
+                                      setEditingTodoId(todo.id);
+                                      setEditingTaskText(todo.task);
+                                    }
                                   }}
-                                  className={`text-xs font-semibold leading-relaxed cursor-text select-none truncate ${
+                                  className={`text-xs font-semibold leading-relaxed select-none truncate ${
+                                    isSuperAdmin ? "cursor-text" : "cursor-default"
+                                  } ${
                                     todo.status === "Completed"
                                       ? "text-theme-text-muted"
                                       : todo.status === "Idle"
                                         ? "text-theme-text-muted italic font-medium"
                                         : "text-theme-text-primary"
                                   }`}
-                                  title="Click twice or double-click to edit name"
+                                  title={
+                                    isSuperAdmin
+                                      ? "Click twice or double-click to edit name"
+                                      : todo.task
+                                  }
                                 >
                                   {todo.task}
                                 </p>
                                 {todo.is_all_time && (
                                   <span
                                     onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleToggleAllTime(todo);
+                                      if (isSuperAdmin) {
+                                        e.stopPropagation();
+                                        handleToggleAllTime(todo);
+                                      }
                                     }}
-                                    className="px-1.5 py-0.5 rounded-full text-[7.5px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 tracking-wider shrink-0 select-none uppercase cursor-pointer hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 hover:scale-95 transition-all"
-                                    title="Click to remove from Permanent routine"
+                                    className={`px-1.5 py-0.5 rounded-full text-[7.5px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 tracking-wider shrink-0 select-none uppercase ${
+                                      isSuperAdmin
+                                        ? "cursor-pointer hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 hover:scale-95 transition-all"
+                                        : "cursor-default"
+                                    }`}
+                                    title={
+                                      isSuperAdmin
+                                        ? "Click to remove from Permanent routine"
+                                        : "Permanent task"
+                                    }
                                   >
                                     Permanent
                                   </span>
@@ -1038,26 +1178,28 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                           </div>
                         </div>
 
-                        {/* Right Side: Bulk Selection Checkbox */}
-                        <div className="flex items-center shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSelect(todo.id)}
-                            className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
-                              isSelected
-                                ? "bg-indigo-500 border-indigo-500"
-                                : ""
-                            } ${
-                              selectedTodoIds.length > 0
-                                ? "scale-100 opacity-100 w-4 ml-1"
-                                : "scale-0 opacity-0 w-0 pointer-events-none ml-0"
-                            }`}
-                          >
-                            {isSelected && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                            )}
-                          </button>
-                        </div>
+                        {/* Right Side: Bulk Selection Checkbox (Superadmin Only) */}
+                        {isSuperAdmin && (
+                          <div className="flex items-center shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSelect(todo.id)}
+                              className={`rounded-full border border-theme-border-active bg-theme-page-bg cursor-pointer h-4 w-4 flex items-center justify-center transition-all duration-300 transform shrink-0 ${
+                                isSelected
+                                  ? "bg-indigo-500 border-indigo-500"
+                                  : ""
+                              } ${
+                                selectedTodoIds.length > 0
+                                  ? "scale-100 opacity-100 w-4 ml-1"
+                                  : "scale-0 opacity-0 w-0 pointer-events-none ml-0"
+                              }`}
+                            >
+                              {isSelected && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                              )}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1116,6 +1258,18 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
             </div>
 
             <div className="ml-auto flex items-center gap-2 mt-4 sm:mt-0 shrink-0">
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setIsAccessModalOpen(true)}
+                  className="px-3 py-2 bg-theme-card-bg border border-theme-border-input hover:border-indigo-500/50 text-theme-text-muted hover:text-indigo-400 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-1.5 shrink-0"
+                  title="Manage Todo View Access for Registered Users"
+                >
+                  <Users className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="hidden sm:inline">Give Access</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => fetchArchiveTodos(false)}
@@ -1335,7 +1489,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-bold text-theme-text-primary leading-6">
-                    Task Notes
+                    {isSuperAdmin ? "Task Notes" : "Task Note (View-Only)"}
                   </h3>
                   <p
                     className="text-xs text-theme-text-muted mt-0.5 truncate max-w-[280px]"
@@ -1348,50 +1502,72 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 </div>
               </div>
 
-              <textarea
-                autoFocus
-                rows={4}
-                placeholder="Need time, will finish tomorrow..."
-                value={notesModal.draft}
-                onChange={(e) =>
-                  setNotesModal((prev) =>
-                    prev ? { ...prev, draft: e.target.value } : prev,
-                  )
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setNotesModal(null);
-                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                    handleUpdateComment(notesModal.todoId, notesModal.draft);
-                    setNotesModal(null);
+              {isSuperAdmin ? (
+                <textarea
+                  autoFocus
+                  rows={4}
+                  placeholder="Need time, will finish tomorrow..."
+                  value={notesModal.draft}
+                  onChange={(e) =>
+                    setNotesModal((prev) =>
+                      prev ? { ...prev, draft: e.target.value } : prev,
+                    )
                   }
-                }}
-                className="w-full px-3 py-2.5 bg-theme-page-bg/60 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-none custom-scrollbar"
-              />
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setNotesModal(null);
+                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                      handleUpdateComment(notesModal.todoId, notesModal.draft);
+                      setNotesModal(null);
+                    }
+                  }}
+                  className="w-full px-3 py-2.5 bg-theme-page-bg/60 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/50 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-none custom-scrollbar"
+                />
+              ) : (
+                <div className="w-full min-h-[100px] p-3 bg-theme-page-bg/60 border border-theme-border-input rounded-xl text-xs text-theme-text-secondary leading-relaxed select-text whitespace-pre-wrap">
+                  {notesModal.draft && notesModal.draft.trim() ? (
+                    notesModal.draft
+                  ) : (
+                    <span className="text-theme-text-muted italic">No notes entered for this task.</span>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-2.5 pt-4">
-                <button
-                  onClick={() => setNotesModal(null)}
-                  className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    handleUpdateComment(notesModal.todoId, notesModal.draft);
-                    setNotesModal(null);
-                  }}
-                  className="flex-1 py-2 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] bg-linear-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 shadow-md shadow-blue-950/20"
-                >
-                  Save Note
-                </button>
+                {isSuperAdmin ? (
+                  <>
+                    <button
+                      onClick={() => setNotesModal(null)}
+                      className="flex-1 py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleUpdateComment(notesModal.todoId, notesModal.draft);
+                        setNotesModal(null);
+                      }}
+                      className="flex-1 py-2 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] bg-linear-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 shadow-md shadow-blue-950/20"
+                    >
+                      Save Note
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setNotesModal(null)}
+                    className="w-full py-2 bg-theme-page-bg border border-theme-border-input hover:bg-theme-border-input/80 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200"
+                  >
+                    Close
+                  </button>
+                )}
               </div>
             </div>
           </div>,
           document.body,
         )}
 
-      {/* Premium Glassmorphic Context Menu */}
-      {contextMenu &&
+      {/* Premium Glassmorphic Context Menu (Superadmin Only) */}
+      {isSuperAdmin &&
+        contextMenu &&
         isMounted &&
         createPortal(
           <div
@@ -1460,6 +1636,16 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
           </div>,
           document.body,
         )}
+
+      {/* Superadmin Todo View Access Management Modal */}
+      {isSuperAdmin && (
+        <TodoAccessModal
+          isOpen={isAccessModalOpen}
+          onClose={() => setIsAccessModalOpen(false)}
+          currentUser={profile}
+        />
+      )}
+
       <style
         dangerouslySetInnerHTML={{
           __html: `

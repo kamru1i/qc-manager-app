@@ -1432,13 +1432,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     <th className="py-3.5 px-4 text-center">Role</th>
                     <th className="py-3.5 px-4 text-center">Leave Tracker</th>
                     <th className="py-3.5 px-4 text-center">Quotes Tracker</th>
+                    <th className="py-3.5 px-4 text-center">Todo Access</th>
                     <th className="py-3.5 px-6">File Type</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-theme-border-muted text-xs text-theme-text-secondary">
                   {visibleProfiles.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-theme-text-muted">
+                      <td colSpan={6} className="py-12 text-center text-theme-text-muted">
                         No users found.
                       </td>
                     </tr>
@@ -1494,6 +1495,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           {u.has_quotes_access ? (
+                            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
+                          ) : (
+                            <XCircle className="h-4.5 w-4.5 text-theme-text-muted/65 mx-auto" />
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          {u.role === 'superadmin' || u.has_todo_access ? (
                             <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 mx-auto" />
                           ) : (
                             <XCircle className="h-4.5 w-4.5 text-theme-text-muted/65 mx-auto" />

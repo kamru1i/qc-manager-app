@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   graphql_public: {
     Tables: {
@@ -47,7 +47,9 @@ export type Database = {
           created_at: string
           details: string
           id: string
+          metadata: Json
           target_id: string | null
+          target_user_id: string | null
         }
         Insert: {
           action_type: string
@@ -56,7 +58,9 @@ export type Database = {
           created_at?: string
           details: string
           id?: string
+          metadata?: Json
           target_id?: string | null
+          target_user_id?: string | null
         }
         Update: {
           action_type?: string
@@ -65,12 +69,21 @@ export type Database = {
           created_at?: string
           details?: string
           id?: string
+          metadata?: Json
           target_id?: string | null
+          target_user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "audit_logs_actor_id_fkey"
             columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_target_user_id_fkey"
+            columns: ["target_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -246,7 +259,7 @@ export type Database = {
           holiday_name: string
           id: string
           response: string
-          updated_at: string | null
+          updated_at: string
           updated_by_admin: boolean | null
           user_id: string
         }
@@ -256,7 +269,7 @@ export type Database = {
           holiday_name: string
           id?: string
           response: string
-          updated_at?: string | null
+          updated_at?: string
           updated_by_admin?: boolean | null
           user_id: string
         }
@@ -266,7 +279,7 @@ export type Database = {
           holiday_name?: string
           id?: string
           response?: string
-          updated_at?: string | null
+          updated_at?: string
           updated_by_admin?: boolean | null
           user_id?: string
         }
@@ -545,6 +558,7 @@ export type Database = {
           has_chuti_access: boolean | null
           has_edited_profile: boolean
           has_quotes_access: boolean | null
+          has_todo_access: boolean
           id: string
           is_setup_completed: boolean | null
           job_role: string | null
@@ -588,6 +602,7 @@ export type Database = {
           has_chuti_access?: boolean | null
           has_edited_profile?: boolean
           has_quotes_access?: boolean | null
+          has_todo_access?: boolean
           id: string
           is_setup_completed?: boolean | null
           job_role?: string | null
@@ -631,6 +646,7 @@ export type Database = {
           has_chuti_access?: boolean | null
           has_edited_profile?: boolean
           has_quotes_access?: boolean | null
+          has_todo_access?: boolean
           id?: string
           is_setup_completed?: boolean | null
           job_role?: string | null
@@ -676,6 +692,73 @@ export type Database = {
           },
         ]
       }
+      quotation_mistakes: {
+        Row: {
+          branch: string
+          codename: string
+          created_at: string
+          created_by: string | null
+          date: string
+          filename: string
+          id: string
+          mistake_details: string
+          penalty: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          branch: string
+          codename: string
+          created_at?: string
+          created_by?: string | null
+          date: string
+          filename: string
+          id?: string
+          mistake_details: string
+          penalty: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          branch?: string
+          codename?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          filename?: string
+          id?: string
+          mistake_details?: string
+          penalty?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_mistakes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_mistakes_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_mistakes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       records: {
         Row: {
           branch_name: string
@@ -713,6 +796,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      todo_access: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          permission: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_access_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_access_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -788,6 +913,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_insert_chuti_records_bulk_internal: {
+        Args: {
+          p_adjust_short_leave: boolean
+          p_adjustments: boolean[]
+          p_bulk_id?: string
+          p_comment?: string
+          p_dates: string[]
+          p_leave_hour?: string
+          p_leave_type: string
+          p_reserve_holiday?: string
+          p_sign_in_time?: string
+          p_sign_out_time?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       admin_update_user_credentials: {
         Args: {
           p_new_password?: string
@@ -796,11 +937,59 @@ export type Database = {
         }
         Returns: undefined
       }
-      archive_and_prune_old_records: {
-        Args: { p_tz?: string }
+      archive_and_prune_old_records: { Args: { p_tz?: string }; Returns: Json }
+      can_read_profile: { Args: { p_target_id: string }; Returns: boolean }
+      can_write_quotation_mistakes: { Args: never; Returns: boolean }
+      change_default_password: {
+        Args: { p_new_password: string }
         Returns: Json
       }
-      cleanup_old_audit_logs: { Args: never; Returns: undefined }
+      complete_leave_profile_setup: {
+        Args: {
+          p_break_time: number
+          p_default_sign_in: string
+          p_default_sign_out: string
+          p_full_name: string
+          p_job_role: string
+          p_working_hours: number
+        }
+        Returns: Json
+      }
+      complete_profile_setup: {
+        Args: {
+          p_full_name: string
+          p_new_password: string
+          p_username: string
+        }
+        Returns: Json
+      }
+      convert_govt_holiday_response: {
+        Args: { p_holiday_date: string; p_response: string; p_user_id: string }
+        Returns: undefined
+      }
+      convert_govt_holiday_response_internal: {
+        Args: { p_holiday_date: string; p_response: string; p_user_id: string }
+        Returns: undefined
+      }
+      convert_short_leave_to_full_leave: {
+        Args: { p_adjust_category?: string; p_user_id: string }
+        Returns: Json
+      }
+      convert_short_leave_to_full_leave_internal: {
+        Args: { p_adjust_category?: string; p_user_id: string }
+        Returns: Json
+      }
+      create_configured_user: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_password: string
+          p_profile_options?: Json
+          p_role: string
+          p_username: string
+        }
+        Returns: string
+      }
       create_new_user: {
         Args: {
           p_allow_overtime?: boolean
@@ -815,7 +1004,26 @@ export type Database = {
         }
         Returns: string
       }
+      current_user_has_workspace: {
+        Args: { p_workspace: string }
+        Returns: boolean
+      }
       delete_user_by_id: { Args: { p_user_id: string }; Returns: undefined }
+      get_admin_sales_summary: {
+        Args: { p_today: string; p_tz?: string }
+        Returns: {
+          total_attempts: number
+          total_sold: number
+          total_unsold: number
+        }[]
+      }
+      get_available_record_months: {
+        Args: { p_tz?: string; p_user_id?: string }
+        Returns: {
+          month: string
+          year: string
+        }[]
+      }
       get_leaderboard_data: {
         Args: {
           p_month: string
@@ -844,6 +1052,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_my_role: { Args: never; Returns: string }
       get_user_email_by_username: {
         Args: { p_username: string }
         Returns: string
@@ -857,27 +1066,51 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_admin_or_superadmin: { Args: { user_id: string }; Returns: boolean }
       is_admin_or_supervisor: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       is_supervisor: { Args: never; Returns: boolean }
-      is_supervisor_of: {
-        Args: { employee_id: string; supervisor_id: string }
-        Returns: boolean
+      reconcile_govt_holiday_adjustments: {
+        Args: { p_user_id: string; p_year: number }
+        Returns: number
       }
-      is_user_in_top_5_for_month: {
-        Args: { p_month: number; p_user_id: string; p_year: number }
-        Returns: boolean
+      register_active_session: { Args: { p_session_id: string }; Returns: Json }
+      request_password_reset: {
+        Args: { p_username: string }
+        Returns: undefined
+      }
+      reset_all_user_feature_flags: { Args: never; Returns: undefined }
+      resolve_password_reset: {
+        Args: { p_approve: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      save_global_leave_settings: {
+        Args: { p_settings: Json }
+        Returns: undefined
+      }
+      save_global_leave_settings_internal: {
+        Args: { p_settings: Json }
+        Returns: undefined
       }
       set_admin_delegated_flags: { Args: { p_flags: Json }; Returns: undefined }
       set_feature_flags: { Args: { p_flags: Json }; Returns: undefined }
       set_role_visibility: { Args: { p_visibility: Json }; Returns: undefined }
       set_sanitizer_rules: { Args: { p_rules: Json }; Returns: undefined }
+      set_sanitizer_words: { Args: { p_words: string[] }; Returns: undefined }
+      set_supervisor_access_overrides: {
+        Args: { p_overrides: Json }
+        Returns: undefined
+      }
       set_temp_access: { Args: { p_entries: Json }; Returns: undefined }
       set_user_hidden_tabs: {
         Args: { p_hidden_tabs: Json; p_user_id: string }
         Returns: undefined
       }
       sync_top_performer_badges: { Args: never; Returns: undefined }
+      update_global_settings_key: {
+        Args: { p_key: string; p_user_id: string; p_value: Json }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

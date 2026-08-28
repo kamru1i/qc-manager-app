@@ -506,8 +506,12 @@ function AppPortalInner({
     } else if (activeTab === "quotes" && !hasQuotesWorkspace && hasLeaveWorkspace) {
       setActiveTab("chuti");
       localStorage.setItem("last_active_dashboard", "chuti");
+    } else if (activeTab === "todo" && !canAccessModule(profile, null, "todo")) {
+      const fallback = hasLeaveWorkspace ? "chuti" : hasQuotesWorkspace ? "quotes" : "profile_settings";
+      setActiveTab(fallback as any);
+      localStorage.setItem("last_active_dashboard", fallback);
     }
-  }, [activeTab, hasLeaveWorkspace, hasQuotesWorkspace]);
+  }, [activeTab, hasLeaveWorkspace, hasQuotesWorkspace, profile]);
 
   // Defer the heavy quotes dashboard until it is first visited, then keep it
   // mounted so tab switches remain instant without paying its initial queries

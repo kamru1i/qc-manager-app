@@ -10,6 +10,18 @@ export const isSuperadmin = (user: Profile | null): boolean =>
   user?.role === 'superadmin';
 
 /**
+ * True if user has access to view the Todo page (Superadmin or explicitly granted user).
+ */
+export const hasTodoAccess = (user: Profile | null): boolean =>
+  isSuperadmin(user) || user?.has_todo_access === true;
+
+/**
+ * True if user has View-Only access to the Todo page (granted user, but not superadmin).
+ */
+export const hasTodoViewOnly = (user: Profile | null): boolean =>
+  !isSuperadmin(user) && user?.has_todo_access === true;
+
+/**
  * True for admin OR superadmin. Superadmin is a strict superset of admin, so
  * every admin-level capability check should use this to let superadmin inherit.
  */
@@ -428,6 +440,7 @@ export const canAccessModule = (
   // takes effect both in the UI and for direct Supabase requests.
   if (module === 'leave' && currentUser.has_chuti_access !== true) return false;
   if (module === 'quotes' && currentUser.has_quotes_access !== true) return false;
+  if (module === 'todo') return currentUser.has_todo_access === true;
 
   // Single source of truth: Tab Access (per role) configuration in global_settings
   const gs = globalSettings || currentUser.global_settings;

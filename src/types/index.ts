@@ -46,7 +46,23 @@ export interface Profile {
   can_manage_rules?: boolean;
   has_chuti_access?: boolean;
   has_quotes_access?: boolean;
+  has_todo_access?: boolean;
   created_at?: string;
+}
+
+export interface TodoAccessRecord {
+  id: string;
+  user_id: string;
+  permission: 'TODO_VIEW';
+  granted_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    username: string;
+    full_name?: string | null;
+    codename?: string | null;
+    role: string;
+  } | null;
 }
 
 export interface ChutiRecordWithProfile extends ChutiRecord {

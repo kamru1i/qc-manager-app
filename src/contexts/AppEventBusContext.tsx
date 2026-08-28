@@ -39,6 +39,7 @@ export interface AppEventMap {
   'open-supervisor-approvals-modal': void;
   'open-user-notifications-modal': void;
   'profile-updated': object;
+  'profile-access-updated': { table?: string; userIds?: string[]; payload?: unknown } | unknown;
 
   // THEME
   'theme-change': { theme: 'dark' | 'light' } | string;

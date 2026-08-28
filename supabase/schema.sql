@@ -5507,8 +5507,40 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 
 
 --
+-- Name: todo_access; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE IF NOT EXISTS public.todo_access (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    permission text DEFAULT 'TODO_VIEW' NOT NULL,
+    granted_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_user_todo_permission UNIQUE (user_id, permission),
+    CONSTRAINT check_todo_permission CHECK (permission IN ('TODO_VIEW'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_todo_access_user_id ON public.todo_access USING btree (user_id);
+CREATE INDEX IF NOT EXISTS idx_todo_access_permission ON public.todo_access USING btree (permission);
+
+ALTER TABLE public.todo_access ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Superadmin full access on todo_access" ON public.todo_access
+FOR ALL TO authenticated
+USING (public.is_superadmin())
+WITH CHECK (public.is_superadmin());
+
+CREATE POLICY "Users can read own todo_access" ON public.todo_access
+FOR SELECT TO authenticated
+USING (auth.uid() = user_id);
+
+GRANT ALL ON TABLE public.todo_access TO authenticated, service_role;
+
+--
 -- PostgreSQL database dump complete
 --
 
 \unrestrict sFDf9elcJj6SmJNf0MEdbmyZwJq0BC57RRe62WI0zsff27Umx5be6EcCKbuRZzU
+
 

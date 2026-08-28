@@ -16,7 +16,7 @@
 // All live columns — full row is genuinely consumed by profile settings forms,
 // permission checks, and global_settings (badges / sessions / password_reset_status).
 export const PROFILE_COLUMNS =
-  'id, username, full_name, role, job_role, created_at, global_settings, allowed_types, allow_overtime, allow_reserve, break_time, can_manage_rules, converted_short_leaves_days, converted_short_leaves_hours, default_sign_in, default_sign_out, delegated_kpi_supervisor_id, delegated_leave_supervisor_id, delegated_supervisor_id, eligible_govt_holiday, eligible_office_leave, has_changed_password, has_chuti_access, has_edited_profile, has_quotes_access, is_setup_completed, max_full_leaves, max_short_leaves, needs_supervisor_approval, profile_change_status, quotes_role, requested_break_time, requested_default_sign_in, requested_default_sign_out, requested_full_name, requested_job_role, requested_working_hours, supervisor_ids, username_changes, username_request_status, working_hours';
+  'id, username, full_name, role, job_role, created_at, global_settings, allowed_types, allow_overtime, allow_reserve, break_time, can_manage_rules, converted_short_leaves_days, converted_short_leaves_hours, default_sign_in, default_sign_out, delegated_kpi_supervisor_id, delegated_leave_supervisor_id, delegated_supervisor_id, eligible_govt_holiday, eligible_office_leave, has_changed_password, has_chuti_access, has_edited_profile, has_quotes_access, has_todo_access, is_setup_completed, max_full_leaves, max_short_leaves, needs_supervisor_approval, profile_change_status, quotes_role, requested_break_time, requested_default_sign_in, requested_default_sign_out, requested_full_name, requested_job_role, requested_working_hours, supervisor_ids, username_changes, username_request_status, working_hours';
 
 export const RECORD_COLUMNS =
   'id, user_id, file_name, branch_name, codename, file_type, submitted_at, created_at, updated_at';
@@ -38,6 +38,9 @@ export const AUDIT_LOG_COLUMNS =
 
 export const TODO_COLUMNS =
   'id, user_id, codename, task, todo_date, status, comment, is_all_time, created_at, last_activity_at';
+
+export const TODO_ACCESS_COLUMNS =
+  'id, user_id, permission, granted_by, created_at, updated_at';
 
 export const LOGIN_CODE_COLUMNS = 'login_id, code, name, updated_at';
 
