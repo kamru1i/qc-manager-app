@@ -9,7 +9,7 @@ export const todoAccessService = {
   async getTodoAccessList() {
     const { data, error } = await supabase
       .from('todo_access')
-      .select(`${TODO_ACCESS_COLUMNS}, profiles:user_id(id, username, full_name, codename, role)`)
+      .select(TODO_ACCESS_COLUMNS)
       .order('created_at', { ascending: false });
 
     return {
