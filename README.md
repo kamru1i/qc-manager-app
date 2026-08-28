@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.4.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.4.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.4.0 — Feature Release (Granular Todo View Access Control & Permission Hardening) (Current)
+### 🚀 v7.4.1 — Patch Release (Todo View Access Query Optimization, Modal Stability & DNS Alignment) (Current)
+
+- **Todo View Access Query Fix**: Streamlined `todoAccessService.getTodoAccessList()` to query direct columns without ambiguous table joins, eliminating schema cache resolution errors when opening the access modal.
+- **Modal Permission Sync**: Enhanced real-time synchronization between `todo_access` records and client-side cached profiles.
+- **Infrastructure & DNS Alignment**: Documented direct Anycast A-record alignment (`76.76.21.21`) for high-availability production web deployments.
+
+### 🚀 v7.4.0 — Feature Release (Granular Todo View Access Control & Permission Hardening)
 
 - **Granular Todo View Access**: Superadmins can now selectively grant view-only access to specific registered users via the new Todo View Access modal on the Todo workspace.
 - **Read-Only Mode for Granted Users**: Authorized users can view the Daily List, browse historical All Logs, and copy task checklists without write permissions or mutation capabilities.
