@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.4.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.4.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.4.2 — Patch Release (Granted Todo View Permission Decoupling & Sidebar Visibility Fix) (Current)
+### 🚀 v7.4.3 — Patch Release (Workspace-Based Access Control Hardening for Quotations, Chuti & Reports) (Current)
+
+- **Target User Workspace Boundary**: Enforced target user workspace permissions (`targetUser.has_chuti_access` and `targetUser.has_quotes_access`) when Admins and Supervisors inspect user profiles, ensuring revoked workspace data remains completely hidden.
+- **Independent KPI Report Visibility**: Decoupled KPI Report from the Quotes Workspace so that users with Quotes Workspace disabled can still access their KPI & Performance evaluations while Leaderboard and My Report are securely hidden.
+- **Navigation & Routing Hardening**: Streamlined multi-workspace router fallback ladders across `page.tsx`, `WorkspaceSubNav`, and `UnifiedSidebar`, preventing unauthorized route landing and dead link states.
+- **Zero Overhead Background Optimization**: Guarded background ranking and notification queries to skip execution when workspace access is disabled, reducing Supabase egress.
+
+### 🚀 v7.4.2 — Patch Release (Granted Todo View Permission Decoupling & Sidebar Visibility Fix)
 
 - **Superadmin Todo View Access Decoupling**: Decoupled granted view-only Todo access (`has_todo_access`) from generic personal feature flags and role visibility settings, ensuring the Todos tab displays immediately for granted users.
 - **Sidebar Navigation Alignment**: Simplified `UnifiedSidebar` workspace checks to use `canAccessModule(profile, null, 'todo')` directly, preventing false positive tab hiding.
