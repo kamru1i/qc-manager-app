@@ -444,7 +444,12 @@ export const canAccessModule = (
   // If target user's workspace is OFF, nobody (even Admin/Superadmin) can access that user's workspace/history.
   if (targetUser && targetUser.id !== currentUser.id) {
     if (module === 'leave' && targetUser.has_chuti_access !== true) return false;
-    if (module === 'quotes' && targetUser.has_quotes_access !== true) return false;
+    if (
+      (module === 'quotes' || module === 'leaderboard' || module === 'my_report' || module === 'all_report') &&
+      targetUser.has_quotes_access !== true
+    ) {
+      return false;
+    }
     if (module === 'todo' && !isSuperadmin(targetUser) && targetUser.has_todo_access !== true) return false;
   }
 
@@ -454,7 +459,12 @@ export const canAccessModule = (
   // preference. Keep this check aligned with database RLS so revoked access
   // takes effect both in the UI and for direct Supabase requests.
   if (module === 'leave' && currentUser.has_chuti_access !== true) return false;
-  if (module === 'quotes' && currentUser.has_quotes_access !== true) return false;
+  if (
+    (module === 'quotes' || module === 'leaderboard' || module === 'my_report' || module === 'all_report') &&
+    currentUser.has_quotes_access !== true
+  ) {
+    return false;
+  }
   if (module === 'todo') return currentUser.has_todo_access === true;
 
   // Single source of truth: Tab Access (per role) configuration in global_settings

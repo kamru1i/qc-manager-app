@@ -26,7 +26,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Profile } from "@/types";
-import { isSuperadmin, isTabVisibleForRole, isAdminRole } from "@/utils/permissionService";
+import { isSuperadmin, isTabVisibleForRole, isAdminRole, canAccessModule } from "@/utils/permissionService";
 import { useProfiles } from "@/contexts/ProfilesContext";
 
 interface WorkspaceSubNavProps {
@@ -264,31 +264,38 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
     activeTab === "my_report" ||
     activeTab === "all_report"
   ) {
-    subTabs.push({
-      id: "leaderboard",
-      label: "Leaderboard",
-      icon: Trophy,
-      iconColor: "text-amber-400",
-      active: activeTab === "leaderboard",
-      onClick: () => onQuotesTabChange?.("leaderboard" as any),
-    });
-    subTabs.push({
-      id: "kpi",
-      label: "KPI Report",
-      icon: TrendingUp,
-      iconColor: "text-emerald-400",
-      active: activeTab === "kpi" || activeTab === "reports",
-      onClick: () => onQuotesTabChange?.("kpi" as any),
-    });
-    subTabs.push({
-      id: "my_report",
-      label: "My Report",
-      icon: FileText,
-      iconColor: "text-sky-400",
-      active: activeTab === "my_report",
-      onClick: () => onQuotesTabChange?.("my_report" as any),
-    });
-    if (isAdminRole(profile) || profile?.role === "supervisor") {
+    const hasQuotes = canAccessModule(profile, null, "quotes");
+    if (hasQuotes && canAccessModule(profile, null, "leaderboard")) {
+      subTabs.push({
+        id: "leaderboard",
+        label: "Leaderboard",
+        icon: Trophy,
+        iconColor: "text-amber-400",
+        active: activeTab === "leaderboard",
+        onClick: () => onQuotesTabChange?.("leaderboard" as any),
+      });
+    }
+    if (canAccessModule(profile, null, "kpi")) {
+      subTabs.push({
+        id: "kpi",
+        label: "KPI Report",
+        icon: TrendingUp,
+        iconColor: "text-emerald-400",
+        active: activeTab === "kpi" || activeTab === "reports",
+        onClick: () => onQuotesTabChange?.("kpi" as any),
+      });
+    }
+    if (hasQuotes && canAccessModule(profile, null, "my_report")) {
+      subTabs.push({
+        id: "my_report",
+        label: "My Report",
+        icon: FileText,
+        iconColor: "text-sky-400",
+        active: activeTab === "my_report",
+        onClick: () => onQuotesTabChange?.("my_report" as any),
+      });
+    }
+    if (hasQuotes && (isAdminRole(profile) || profile?.role === "supervisor") && canAccessModule(profile, null, "all_report")) {
       subTabs.push({
         id: "all_report",
         label: "All Report",

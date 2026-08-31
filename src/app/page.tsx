@@ -534,10 +534,9 @@ function AppPortalInner({
       localStorage.setItem("last_active_dashboard", fallback);
     } else if (
       (activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report") &&
-      !hasQuotesWorkspace &&
-      !canAccessModule(profile, null, "kpi")
+      !hasQuotesWorkspace
     ) {
-      const fallback = resolveFallbackTab();
+      const fallback = canAccessModule(profile, null, "kpi") ? "kpi" : resolveFallbackTab();
       setActiveTab(fallback as any);
       localStorage.setItem("last_active_dashboard", fallback);
     } else if (activeTab === "kpi" && !canAccessModule(profile, null, "kpi")) {
@@ -672,12 +671,17 @@ function AppPortalInner({
       tab === "reports" ||
       tab === "kpi"
     ) {
-      let targetTab = tab;
+      let targetTab: typeof activeTab = tab;
       if (tab === "reports") {
-        targetTab = (localStorage.getItem("last_active_reports_subtab") as any) || "leaderboard";
+        targetTab = ((localStorage.getItem("last_active_reports_subtab") as any) || (hasQuotesWorkspace ? "leaderboard" : "kpi")) as typeof activeTab;
       }
-      setActiveTab(targetTab as any);
-      localStorage.setItem("last_active_dashboard", targetTab);
+      if ((targetTab === "leaderboard" || targetTab === "my_report" || targetTab === "all_report") && !hasQuotesWorkspace) {
+        targetTab = canAccessModule(profile, null, "kpi") ? "kpi" : "profile_settings";
+      }
+      setActiveTab(targetTab);
+      if (targetTab) {
+        localStorage.setItem("last_active_dashboard", targetTab);
+      }
       if (targetTab === "leaderboard" || targetTab === "kpi" || targetTab === "my_report" || targetTab === "all_report") {
         localStorage.setItem("last_active_reports_subtab", targetTab);
       }
@@ -1064,17 +1068,26 @@ function AppPortalInner({
     } else if (targetWorkspace === "todo" && !canAccessModule(profile, null, "todo")) {
       targetWorkspace = resolveFallbackTab();
     } else if (
+      targetWorkspace === "leaderboard" ||
+      targetWorkspace === "my_report" ||
+      targetWorkspace === "all_report"
+    ) {
+      if (!hasQuotesWorkspace || !canAccessModule(profile, null, targetWorkspace)) {
+        targetWorkspace = canAccessModule(profile, null, "kpi") ? "kpi" : resolveFallbackTab();
+      }
+    } else if (targetWorkspace === "reports") {
+      if (!hasQuotesWorkspace) {
+        targetWorkspace = canAccessModule(profile, null, "kpi") ? "kpi" : resolveFallbackTab();
+      }
+    } else if (
       targetWorkspace !== "chuti" &&
       targetWorkspace !== "quotes" &&
       targetWorkspace !== "user_management" &&
       targetWorkspace !== "todo" &&
+      targetWorkspace !== "kpi" &&
       targetWorkspace !== "profile_settings"
     ) {
-      const checkModule =
-        targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report" || targetWorkspace === "reports"
-          ? (hasQuotesWorkspace ? "quotes" : "kpi")
-          : targetWorkspace;
-      if (!canAccessModule(profile, null, checkModule)) {
+      if (!canAccessModule(profile, null, targetWorkspace)) {
         targetWorkspace = resolveFallbackTab();
       }
     }
@@ -1093,6 +1106,7 @@ function AppPortalInner({
   }, [setProfile]);
 
   const fetchAndCacheGlobalRankings = useCallback(async () => {
+    if (profile && !canAccessModule(profile, null, "quotes")) return;
     try {
       const todayStr = new Date().toLocaleDateString('en-CA');
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';

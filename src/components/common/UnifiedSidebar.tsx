@@ -29,8 +29,8 @@ import {
 } from 'lucide-react';
 
 interface UnifiedSidebarProps {
-  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings';
-  onSectionChange?: (section: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings') => void;
+  activeSection: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings' | 'my_report' | 'all_report';
+  onSectionChange?: (section: 'chuti' | 'quotes' | 'user_management' | 'todo' | 'leaderboard' | 'reports' | 'kpi' | 'profile_settings' | 'my_report' | 'all_report') => void;
   profile: Profile | null;
   activeQuotesTab?: 'entry' | 'monthly' | 'sale_summary' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import' | 'mistakes';
   onQuotesTabChange?: (tab: 'entry' | 'monthly' | 'leaderboard' | 'reports' | 'rules' | 'login_codes' | 'causality' | 'copy_helper' | 'save_file' | 'quick_import' | 'mistakes') => void;
@@ -145,10 +145,27 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   };
 
   const handleReportsNav = () => {
-    const savedSubtab = localStorage.getItem('last_active_reports_subtab');
-    const target = (savedSubtab === 'leaderboard' || savedSubtab === 'kpi' || savedSubtab === 'my_report' || savedSubtab === 'all_report')
-      ? savedSubtab
-      : 'leaderboard';
+    const hasQuotes = canAccessModule(profile, null, 'quotes');
+    const canKpi = canAccessModule(profile, null, 'kpi') && !tabHidden('kpi');
+    const canLeaderboard = hasQuotes && canAccessModule(profile, null, 'leaderboard');
+    const canMyReport = hasQuotes && canAccessModule(profile, null, 'my_report');
+    const canAllReport = hasQuotes && (isAdminRole(profile) || profile?.role === 'supervisor') && canAccessModule(profile, null, 'all_report');
+
+    let savedSubtab = localStorage.getItem('last_active_reports_subtab');
+    if (savedSubtab === 'leaderboard' && !canLeaderboard) savedSubtab = null;
+    if (savedSubtab === 'my_report' && !canMyReport) savedSubtab = null;
+    if (savedSubtab === 'all_report' && !canAllReport) savedSubtab = null;
+    if (savedSubtab === 'kpi' && !canKpi) savedSubtab = null;
+
+    let target = savedSubtab;
+    if (!target) {
+      if (canLeaderboard) target = 'leaderboard';
+      else if (canKpi) target = 'kpi';
+      else if (canMyReport) target = 'my_report';
+      else if (canAllReport) target = 'all_report';
+      else target = 'kpi';
+    }
+
     localStorage.setItem('last_active_dashboard', target);
     emit('workspace-change', target);
     router.push('/');
@@ -244,7 +261,10 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         )}
 
         {/* Workspace: Reports (KPI Report & Leaderboard) */}
-        {(canAccessModule(profile, null, 'kpi') || canAccessModule(profile, null, 'reports') || canAccessModule(profile, null, 'leaderboard')) && !tabHidden('kpi') && (
+        {(
+          (canAccessModule(profile, null, 'kpi') && !tabHidden('kpi')) ||
+          (canAccessModule(profile, null, 'quotes') && (canAccessModule(profile, null, 'reports') || canAccessModule(profile, null, 'leaderboard')))
+        ) && (
           <div className="space-y-1">
             <button
               onClick={handleReportsNav}
@@ -252,7 +272,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
               className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
                 isSidebarCollapsed ? 'justify-center p-3' : 'justify-start px-4 py-3 gap-3'
               } ${
-                activeSection === 'kpi' || activeSection === 'leaderboard' || activeSection === 'reports'
+                activeSection === 'kpi' || activeSection === 'leaderboard' || activeSection === 'reports' || activeSection === 'my_report' || activeSection === 'all_report'
                   ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-900/5'
                   : 'text-theme-text-secondary hover:bg-theme-border-active/80 hover:text-theme-text-inverse border border-transparent'
               }`}
