@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Fetch through the caller-scoped client so RLS remains part of enforcement.
     const { data: requesterProfile, error: rpError } = await supabaseWithAuth
       .from('profiles')
-      .select('id, role')
+      .select('id, role, has_chuti_access')
       .eq('id', user.id)
       .single();
 
@@ -60,13 +60,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const isSuperadmin = requesterProfile.role === 'superadmin';
     const isSupervisor = requesterProfile.role === 'supervisor';
     // Superadmin inherits all admin capability.
-    const isAdmin = requesterProfile.role === 'admin' || requesterProfile.role === 'superadmin';
+    const isAdmin = requesterProfile.role === 'admin' || isSuperadmin;
 
     if (!isSupervisor && !isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden: Access denied' },
+        { status: 403, headers: getCorsHeaders(request) }
+      );
+    }
+
+    if (!isSuperadmin && requesterProfile.has_chuti_access === false) {
+      return NextResponse.json(
+        { error: 'Forbidden: Leave workspace is disabled for your account' },
         { status: 403, headers: getCorsHeaders(request) }
       );
     }

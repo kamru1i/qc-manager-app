@@ -84,6 +84,7 @@ export function useGlobalNotifications(
     try {
       // Define concurrent queries
       const fetchChutiPromise = async () => {
+        if (!profile?.has_chuti_access) return [];
         if (hasSharedUserRecords) return null;
         const { data, error } = await supabase
           .from('chuti')
@@ -99,6 +100,7 @@ export function useGlobalNotifications(
       };
 
       const fetchHolidayResponsesPromise = async () => {
+        if (!profile?.has_chuti_access && !isAdminRole(profile)) return [];
         if (hasSharedHolidayResponses) return null;
         if (isAdminRole(profile)) {
           const { data, error } = await supabase
@@ -155,7 +157,7 @@ export function useGlobalNotifications(
       };
 
       const fetchSupervisorPendingPromise = async () => {
-        if (profile?.role !== 'supervisor') return [];
+        if (profile?.role !== 'supervisor' || !profile?.has_chuti_access) return [];
         const { data, error } = await supabase
           .from('chuti')
           .select('id, status, admin_edit_request, profiles (username, full_name, role, supervisor_ids)')

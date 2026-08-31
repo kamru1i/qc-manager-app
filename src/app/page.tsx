@@ -86,9 +86,19 @@ function getInitialState() {
         lastActive = null;
       }
       if (!lastActive) {
-        lastActive = canAccessModule(cachedProfile, null, "leave")
-          ? "chuti"
-          : "quotes";
+        if (canAccessModule(cachedProfile, null, "leave")) {
+          lastActive = "chuti";
+        } else if (canAccessModule(cachedProfile, null, "quotes")) {
+          lastActive = "quotes";
+        } else if (canAccessModule(cachedProfile, null, "todo")) {
+          lastActive = "todo";
+        } else if (canAccessModule(cachedProfile, null, "user_management")) {
+          lastActive = "user_management";
+        } else if (canAccessModule(cachedProfile, null, "kpi")) {
+          lastActive = "kpi";
+        } else {
+          lastActive = "profile_settings";
+        }
       }
       return {
         sessionUser: authUser,
@@ -491,23 +501,55 @@ function AppPortalInner({
     if (typeof window !== "undefined") {
       let cached = _cachedInitialState?.initialTab;
       if (cached === "analytics") cached = "leaderboard";
-      if (cached) return cached as any;
+      if (cached && canAccessModule(profile, null, cached)) return cached as any;
     }
-    return canAccessModule(profile, null, "leave") ? "chuti" : "quotes";
+    if (canAccessModule(profile, null, "leave")) return "chuti";
+    if (canAccessModule(profile, null, "quotes")) return "quotes";
+    if (canAccessModule(profile, null, "todo")) return "todo";
+    if (canAccessModule(profile, null, "user_management")) return "user_management";
+    if (canAccessModule(profile, null, "kpi")) return "kpi";
+    return "profile_settings";
   });
 
   const hasLeaveWorkspace = canAccessModule(profile, null, "leave");
   const hasQuotesWorkspace = canAccessModule(profile, null, "quotes");
 
   useEffect(() => {
-    if (activeTab === "chuti" && !hasLeaveWorkspace && hasQuotesWorkspace) {
-      setActiveTab("quotes");
-      localStorage.setItem("last_active_dashboard", "quotes");
-    } else if (activeTab === "quotes" && !hasQuotesWorkspace && hasLeaveWorkspace) {
-      setActiveTab("chuti");
-      localStorage.setItem("last_active_dashboard", "chuti");
+    const resolveFallbackTab = () => {
+      if (canAccessModule(profile, null, "leave")) return "chuti";
+      if (canAccessModule(profile, null, "quotes")) return "quotes";
+      if (canAccessModule(profile, null, "todo")) return "todo";
+      if (canAccessModule(profile, null, "user_management")) return "user_management";
+      if (canAccessModule(profile, null, "kpi")) return "kpi";
+      return "profile_settings";
+    };
+
+    if (activeTab === "chuti" && !hasLeaveWorkspace) {
+      const fallback = resolveFallbackTab();
+      setActiveTab(fallback as any);
+      localStorage.setItem("last_active_dashboard", fallback);
+    } else if (activeTab === "quotes" && !hasQuotesWorkspace) {
+      const fallback = resolveFallbackTab();
+      setActiveTab(fallback as any);
+      localStorage.setItem("last_active_dashboard", fallback);
+    } else if (
+      (activeTab === "leaderboard" || activeTab === "reports" || activeTab === "my_report" || activeTab === "all_report") &&
+      !hasQuotesWorkspace &&
+      !canAccessModule(profile, null, "kpi")
+    ) {
+      const fallback = resolveFallbackTab();
+      setActiveTab(fallback as any);
+      localStorage.setItem("last_active_dashboard", fallback);
+    } else if (activeTab === "kpi" && !canAccessModule(profile, null, "kpi")) {
+      const fallback = resolveFallbackTab();
+      setActiveTab(fallback as any);
+      localStorage.setItem("last_active_dashboard", fallback);
     } else if (activeTab === "todo" && !canAccessModule(profile, null, "todo")) {
-      const fallback = hasLeaveWorkspace ? "chuti" : hasQuotesWorkspace ? "quotes" : "profile_settings";
+      const fallback = resolveFallbackTab();
+      setActiveTab(fallback as any);
+      localStorage.setItem("last_active_dashboard", fallback);
+    } else if (activeTab === "user_management" && !canAccessModule(profile, null, "user_management")) {
+      const fallback = resolveFallbackTab();
       setActiveTab(fallback as any);
       localStorage.setItem("last_active_dashboard", fallback);
     }
@@ -1004,14 +1046,24 @@ function AppPortalInner({
     let targetWorkspace = typeof payload === 'string' ? payload : payload?.target;
     if (!targetWorkspace) return;
 
-    if (targetWorkspace === "user_management" && !canAccessModule(profile, null, "user_management")) {
-      targetWorkspace = "chuti";
-    }
-    if (targetWorkspace === "todo" && !canAccessModule(profile, null, "todo")) {
-      targetWorkspace = "chuti";
-    }
+    const resolveFallbackTab = () => {
+      if (canAccessModule(profile, null, "leave")) return "chuti";
+      if (canAccessModule(profile, null, "quotes")) return "quotes";
+      if (canAccessModule(profile, null, "todo")) return "todo";
+      if (canAccessModule(profile, null, "user_management")) return "user_management";
+      if (canAccessModule(profile, null, "kpi")) return "kpi";
+      return "profile_settings";
+    };
 
-    if (
+    if (targetWorkspace === "chuti" && !canAccessModule(profile, null, "leave")) {
+      targetWorkspace = resolveFallbackTab();
+    } else if (targetWorkspace === "quotes" && !canAccessModule(profile, null, "quotes")) {
+      targetWorkspace = resolveFallbackTab();
+    } else if (targetWorkspace === "user_management" && !canAccessModule(profile, null, "user_management")) {
+      targetWorkspace = resolveFallbackTab();
+    } else if (targetWorkspace === "todo" && !canAccessModule(profile, null, "todo")) {
+      targetWorkspace = resolveFallbackTab();
+    } else if (
       targetWorkspace !== "chuti" &&
       targetWorkspace !== "quotes" &&
       targetWorkspace !== "user_management" &&
@@ -1020,11 +1072,11 @@ function AppPortalInner({
     ) {
       const checkModule =
         targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report" || targetWorkspace === "reports"
-          ? "quotes"
-          : targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report"
-            ? "kpi"
-            : targetWorkspace;
-      if (!canAccessModule(profile, null, checkModule)) return;
+          ? (hasQuotesWorkspace ? "quotes" : "kpi")
+          : targetWorkspace;
+      if (!canAccessModule(profile, null, checkModule)) {
+        targetWorkspace = resolveFallbackTab();
+      }
     }
 
     if (targetWorkspace === "leaderboard" || targetWorkspace === "kpi" || targetWorkspace === "my_report" || targetWorkspace === "all_report") {
@@ -1032,7 +1084,7 @@ function AppPortalInner({
     }
 
     setActiveTab(targetWorkspace as typeof activeTab);
-  }, [profile]);
+  }, [profile, hasQuotesWorkspace]);
 
   useAppEvent('profile-updated', (payload) => {
     if (payload) {

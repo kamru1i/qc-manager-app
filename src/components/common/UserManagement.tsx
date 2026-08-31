@@ -382,7 +382,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   // Redirect to an authorized subtab if the current subtab is restricted
   useEffect(() => {
     if (viewingStaff) {
-      const isLeaveAllowed = canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles);
+      const isLeaveAllowed = viewingStaff.has_chuti_access && canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles);
       const isQuotesAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_quotes', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles);
       const isAnalyticsAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_analytics', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles);
       const isKpiAllowed = canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'kpi', profiles);
@@ -1097,7 +1097,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
             {!isCreatingNewUser && viewingStaff && (
               <div className="flex border-b border-theme-border-input gap-1 mt-2 overflow-x-auto whitespace-nowrap scrollbar-none pb-px max-w-full">
-                {canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles) && (
+                {viewingStaff.has_chuti_access && canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('leave')}
@@ -1263,7 +1263,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 />
               )}
 
-              {activeSubTab === 'leave' && viewingStaff && canAccessModule(profile, viewingStaff, 'leave', profiles) && (
+              {activeSubTab === 'leave' && viewingStaff && viewingStaff.has_chuti_access && canAccessModule(profile, viewingStaff, 'leave', profiles) && (
                 (showAddLeaveForStaff || editingLeaveRecord) && (profile?.role === 'supervisor' || isAdminRole(profile)) && globalSettings ? (
                   // Full-page AddLeave view for supervisor/admin adding on behalf or editing
                   <div className="space-y-4">
@@ -1449,10 +1449,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                         key={u.id} 
                         onDoubleClick={() => {
                           const isSupervisedByMe = hasStaffAccess(u);
-                          if (isSupervisedByMe) {
+                          if (isSupervisedByMe && u.has_chuti_access) {
                             handleSetActiveSubTab('leave');
+                          } else if (u.has_quotes_access) {
+                            handleSetActiveSubTab('quotes');
+                          } else if (canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles)) {
+                            handleSetActiveSubTab('kpi');
                           } else {
-                            handleSetActiveSubTab(u.has_quotes_access ? 'quotes' : 'profile');
+                            handleSetActiveSubTab('profile');
                           }
                           updateViewingStaff(u);
                         }}

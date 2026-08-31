@@ -438,6 +438,16 @@ export const canAccessModule = (
   globalSettings?: VisibilitySettings | null
 ): boolean => {
   if (!currentUser) return false;
+
+  // 1. Target User Workspace Authorization Boundary:
+  // When targetUser is passed (and is not currentUser), check that targetUser has the workspace enabled.
+  // If target user's workspace is OFF, nobody (even Admin/Superadmin) can access that user's workspace/history.
+  if (targetUser && targetUser.id !== currentUser.id) {
+    if (module === 'leave' && targetUser.has_chuti_access !== true) return false;
+    if (module === 'quotes' && targetUser.has_quotes_access !== true) return false;
+    if (module === 'todo' && !isSuperadmin(targetUser) && targetUser.has_todo_access !== true) return false;
+  }
+
   if (isSuperadmin(currentUser)) return true;
 
   // Workspace assignment is an authorization boundary, not merely a menu
