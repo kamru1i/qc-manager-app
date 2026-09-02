@@ -773,6 +773,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                 </td>
               </tr>
             ) : (
+              // eslint-disable-next-line react-hooks/refs
               displayedRecords.map((r) => (
                 <tr
                   key={r.id}

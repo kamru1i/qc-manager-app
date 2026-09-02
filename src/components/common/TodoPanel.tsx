@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Profile, TodoItem } from "@/types";
+import { Profile, TodoItem, TodoStatus } from "@/types";
 import {
   Check,
+  Circle,
   Copy,
   Plus,
   Trash2,
@@ -75,6 +76,34 @@ const updateArchiveCache = (
 };
 
 // All-time tasks are dynamically managed by the user using the "All-Time" checkbox when adding a task.
+
+const TODO_STATUS_OPTIONS: {
+  status: TodoStatus;
+  label: string;
+  icon: (className?: string) => React.ReactNode;
+}[] = [
+  {
+    status: "Working",
+    label: "Working",
+    icon: (className = "w-3.5 h-3.5 text-purple-400 shrink-0") => (
+      <Clock className={className} />
+    ),
+  },
+  {
+    status: "Completed",
+    label: "Completed",
+    icon: (className = "w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-3") => (
+      <Check className={className} />
+    ),
+  },
+  {
+    status: "Idle",
+    label: "Idle",
+    icon: (className = "w-3.5 h-3.5 text-theme-text-muted shrink-0") => (
+      <Circle className={className} />
+    ),
+  },
+];
 
 export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   const isSuperAdmin = isSuperadmin(profile);
@@ -151,6 +180,24 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   const [newTask, setNewTask] = useState("");
   const [isAllTime, setIsAllTime] = useState(false);
+  const [newStatus, setNewStatus] = useState<TodoStatus>("Working");
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const statusDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Close status selector dropdown on click outside
+  useEffect(() => {
+    if (!isStatusDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isStatusDropdownOpen]);
   const [copied, setCopied] = useState(false);
   const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
 
@@ -447,12 +494,14 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     e.preventDefault();
     if (!isSuperAdmin || !profile || !newTask.trim()) return;
 
+    const statusToCreate = newStatus || "Working";
+
     try {
       const { data, error } = await todosService.createTodo({
         user_id: profile.id,
         codename: (profile.username || "").toUpperCase(),
         task: newTask.trim(),
-        status: "Idle",
+        status: statusToCreate,
         comment: "",
         todo_date: todayStr,
         is_all_time: isAllTime,
@@ -463,6 +512,8 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setAndCacheTodos((prev) => [...prev, data]);
         setNewTask("");
         setIsAllTime(false);
+        setNewStatus("Working");
+        setIsStatusDropdownOpen(false);
         toast.success("Task added successfully!");
       }
     } catch (err: unknown) {
@@ -803,6 +854,74 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                       disabled={loading}
                       className="flex-1 min-w-0 px-3.5 py-2 bg-theme-card-bg/60 border border-theme-border-input rounded-xl text-theme-text-primary placeholder-theme-text-muted/50 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-60"
                     />
+
+                    {/* Status Selector Dropdown */}
+                    <div className="relative shrink-0" ref={statusDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsStatusDropdownOpen((prev) => !prev)}
+                        disabled={loading}
+                        className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-semibold cursor-pointer select-none transition-all ${
+                          newStatus === "Working"
+                            ? "bg-purple-500/15 border-purple-500/40 text-purple-300 hover:bg-purple-500/25 shadow-sm shadow-purple-500/10"
+                            : newStatus === "Completed"
+                              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 shadow-sm shadow-emerald-500/10"
+                              : "bg-theme-card-bg/40 border-theme-border-input/80 text-theme-text-secondary hover:bg-theme-card-bg hover:text-theme-text-primary"
+                        }`}
+                        title={`Initial task status: ${newStatus} (Click to change)`}
+                      >
+                        {newStatus === "Working" ? (
+                          <Clock className="w-3.5 h-3.5 text-purple-400 shrink-0 animate-pulse" />
+                        ) : newStatus === "Completed" ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-3" />
+                        ) : (
+                          <Circle className="w-3.5 h-3.5 text-theme-text-muted shrink-0" />
+                        )}
+                        <span className="text-[11px] font-bold tracking-wide">
+                          {newStatus}
+                        </span>
+                        <ChevronDown
+                          className={`w-3 h-3 transition-transform duration-200 opacity-60 ml-0.5 ${
+                            isStatusDropdownOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {isStatusDropdownOpen && (
+                        <div className="absolute left-0 top-full mt-1.5 w-36 bg-theme-card-container border border-theme-border-input rounded-xl shadow-xl z-50 p-1 space-y-0.5 backdrop-blur-xl animate-fade-in">
+                          {TODO_STATUS_OPTIONS.map((opt) => {
+                            const isSelected = newStatus === opt.status;
+                            return (
+                              <button
+                                key={opt.status}
+                                type="button"
+                                onClick={() => {
+                                  setNewStatus(opt.status);
+                                  setIsStatusDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                                  isSelected
+                                    ? opt.status === "Working"
+                                      ? "bg-purple-500/20 text-purple-200 font-bold"
+                                      : opt.status === "Completed"
+                                        ? "bg-emerald-500/20 text-emerald-200 font-bold"
+                                        : "bg-theme-card-bg text-theme-text-primary font-bold"
+                                    : "text-theme-text-secondary hover:bg-theme-card-bg/70 hover:text-theme-text-primary"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {opt.icon()}
+                                  <span className="text-[11px]">{opt.label}</span>
+                                </div>
+                                {isSelected && (
+                                  <Check className="w-3 h-3 text-indigo-400 stroke-3 ml-1" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                     <label className="flex items-center gap-2 px-3 py-2 bg-theme-card-bg/40 border border-theme-border-input/80 rounded-xl cursor-pointer select-none hover:bg-theme-card-bg transition-colors shrink-0">
                       <input
                         type="checkbox"
@@ -1395,8 +1514,10 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                               <div className="flex items-center gap-2">
                                 {item.status === "Completed" ? (
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                ) : (
+                                ) : item.status === "Working" ? (
                                   <Clock className="w-3.5 h-3.5 text-purple-500 shrink-0 animate-pulse" />
+                                ) : (
+                                  <Circle className="w-3.5 h-3.5 text-theme-text-muted shrink-0" />
                                 )}
                                 <span
                                   className="truncate max-w-[400px]"
@@ -1411,7 +1532,9 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                                 className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wider border ${
                                   item.status === "Completed"
                                     ? "bg-emerald-600/10 text-emerald-400 border-emerald-500/10"
-                                    : "bg-purple-600/10 text-purple-400 border-purple-500/10"
+                                    : item.status === "Working"
+                                      ? "bg-purple-600/10 text-purple-400 border-purple-500/10"
+                                      : "bg-theme-card-bg/60 text-theme-text-muted border-theme-border-input/60"
                                 }`}
                               >
                                 {item.status}

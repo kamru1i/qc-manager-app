@@ -781,7 +781,7 @@ export const useChutiOperations = ({
       if (!isSuperadmin(profile)) {
         const approvalsPrefix = getApprovalsPrefix(adminEditRecord.comment);
         const cleanEnteredComment = adminEditComment.trim();
-        let baseComment = cleanEnteredComment
+        const baseComment = cleanEnteredComment
           ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
           : (approvalsPrefix || '');
 

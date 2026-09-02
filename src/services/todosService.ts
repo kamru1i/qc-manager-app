@@ -1,6 +1,12 @@
 import { supabase } from '@/utils/supabase';
 import { TODO_COLUMNS } from '@/utils/dbColumns';
-import type { TodoItem } from '@/types';
+import type { TodoItem, TodoStatus } from '@/types';
+
+export const VALID_TODO_STATUSES: readonly TodoStatus[] = ['Working', 'Completed', 'Idle'] as const;
+
+export const isValidTodoStatus = (status: unknown): status is TodoStatus => {
+  return typeof status === 'string' && VALID_TODO_STATUSES.includes(status as TodoStatus);
+};
 
 export const todosService = {
   /**
@@ -76,24 +82,34 @@ export const todosService = {
   },
 
   /**
-   * Create a new todo item
+   * Create a new todo item.
+   * Defaults to 'Working' if no valid status is provided.
    */
   async createTodo(todo: Partial<TodoItem>) {
+    const status: TodoStatus = isValidTodoStatus(todo.status) ? todo.status : 'Working';
     const { data, error } = await supabase
       .from('todos')
-      .insert(todo as any)
+      .insert({
+        ...todo,
+        status,
+      } as any)
       .select(TODO_COLUMNS)
       .single();
     return { data: data as unknown as TodoItem | null, error };
   },
 
   /**
-   * Bulk create todo items
+   * Bulk create todo items.
+   * Defaults each item to 'Working' if status is omitted.
    */
   async bulkCreateTodos(todos: Partial<TodoItem>[]) {
+    const withDefaults = todos.map((t) => ({
+      ...t,
+      status: isValidTodoStatus(t.status) ? t.status : 'Working',
+    }));
     const { data, error } = await supabase
       .from('todos')
-      .insert(todos as any)
+      .insert(withDefaults as any)
       .select(TODO_COLUMNS);
     return { data: (data || []) as unknown as TodoItem[], error };
   },

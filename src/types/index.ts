@@ -194,12 +194,14 @@ export interface LoginCode {
   updated_at?: string;
 }
 
+export type TodoStatus = 'Working' | 'Completed' | 'Idle';
+
 export interface TodoItem {
   id: string;
   user_id: string;
   codename: string;
   task: string;
-  status: 'Working' | 'Completed' | 'Idle';
+  status: TodoStatus;
   comment?: string | null;
   todo_date: string; // Format: 'YYYY-MM-DD'
   is_all_time: boolean;
