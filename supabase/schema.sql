@@ -3640,7 +3640,7 @@ CREATE TABLE public.todos (
     user_id uuid NOT NULL,
     codename text NOT NULL,
     task text NOT NULL,
-    status text DEFAULT 'Idle'::text NOT NULL,
+    status text DEFAULT 'Working'::text NOT NULL,
     comment text,
     todo_date date DEFAULT CURRENT_DATE NOT NULL,
     is_all_time boolean DEFAULT false NOT NULL,
