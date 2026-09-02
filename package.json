@@ -1,6 +1,6 @@
 {
   "name": "qc-manager",
-  "version": "7.4.3",
+  "version": "7.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

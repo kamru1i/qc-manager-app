@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.4.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.5.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.4.3 — Patch Release (Workspace-Based Access Control Hardening for Quotations, Chuti & Reports) (Current)
+### 🚀 v7.5.0 — Minor Release (Superadmin Trace-Free Comment Control, Read-Only Leave Comments & Hierarchical Re-Approval Flow) (Current)
+
+- **Superadmin Trace-Free Comment Control**: Provided Superadmin with full direct visibility of stored comments and logs in edit mode, enabling seamless alterations, additions, or complete wipes with zero trace (no edit reason requirement and no forced actor attribution).
+- **Read-Only Comment Locking for Roles**: Enforced read-only display of previous comments for Admins, Supervisors, and Users during leave edits, preventing tampering while ensuring historical context is fully legible.
+- **Mandatory Edit Reason Appending**: Standardized the `Reason for Editing (Required)` field across all leave editing views, automatically appending newly entered reasons/remarks directly to the previous comment (`Previous Comment | New Reason`).
+- **Hierarchical Re-Approval Routing**: Hardened the leave re-approval workflow so user leave modifications correctly route to their assigned Supervisor first (`pending_supervisor`), transitioning to the Admin queue (`approved_by_supervisor`) only upon supervisor approval.
+- **Report Analytics Header Cleanup**: Removed redundant "Report Summary" banner from the User Profile Analytics panel (`UserAnalyticsPanel`), delivering a clean, unobstructed view of performance reports and charts.
+
+### 🚀 v7.4.3 — Patch Release (Workspace-Based Access Control Hardening for Quotations, Chuti & Reports)
 
 - **Target User Workspace Boundary**: Enforced target user workspace permissions (`targetUser.has_chuti_access` and `targetUser.has_quotes_access`) when Admins and Supervisors inspect user profiles, ensuring revoked workspace data remains completely hidden.
 - **Independent KPI Report Visibility**: Decoupled KPI Report from the Quotes Workspace so that users with Quotes Workspace disabled can still access their KPI & Performance evaluations while Leaderboard and My Report are securely hidden.
