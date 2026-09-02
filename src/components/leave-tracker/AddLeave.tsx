@@ -677,6 +677,7 @@ export function AddLeave({
         adjusted_hour: canSubmitAdjustment ? finalAdjustedHour : null,
         adjust_short_leave: canSubmitAdjustment ? finalAdjustShortLeave : false,
         reserve_holiday: canSubmitAdjustment ? (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null)) : null,
+        reserve_adjustment_status: 'none',
       };
 
       try {

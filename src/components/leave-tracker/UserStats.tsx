@@ -178,7 +178,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
     return (userLeaves || [])
       .filter((r: any) => {
         if (r.leave_type !== "Full Leave") return false;
-        if (!r.adjustment && !r.reserve_holiday) return false;
+        if (!r.adjustment) return false;
         return true;
       })
       .sort((a: any, b: any) => {

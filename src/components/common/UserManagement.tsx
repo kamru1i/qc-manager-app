@@ -636,7 +636,21 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       if (record.adjustment || record.adjusted_hour) {
         // Toggle OFF directly
         try {
-          setViewingStaffRecords(prev => prev.map(r => r.id === record.id ? { ...r, adjustment: false, adjusted_hour: null, reserve_holiday: null } : r));
+          const cleanComment = getCleanComment(record.comment);
+          const approvalsPrefix = getApprovalsPrefix(record.comment);
+          const restoredComment = cleanComment
+            ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanComment}` : cleanComment)
+            : (approvalsPrefix || null);
+
+          setViewingStaffRecords(prev => prev.map(r => r.id === record.id ? { 
+            ...r, 
+            adjustment: false, 
+            adjusted_hour: null, 
+            adjust_short_leave: false, 
+            reserve_holiday: null, 
+            comment: restoredComment 
+          } : r));
+
           const existingNotifications = getExistingNotifications(record);
           const leaveLabel = getDetailedLeaveLabel(record);
           const dateTimeStr = formatDate(record.date);
@@ -651,7 +665,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               adjustment: false,
               adjusted_hour: null,
               adjust_short_leave: false,
+              reserve_holiday: null,
               reserve_adjustment_status: 'none',
+              comment: restoredComment,
               admin_edit_request: {
                 notifications: [...existingNotifications, newNotification]
               }

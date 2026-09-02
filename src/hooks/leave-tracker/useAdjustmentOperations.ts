@@ -85,11 +85,19 @@ export const useAdjustmentOperations = ({
           `Your adjustment for ${leaveLabel} on date ${dateTimeStr} has been cancelled.`
         );
 
+        const cleanComment = getCleanComment(record.comment);
+        const approvalsPrefix = getApprovalsPrefix(record.comment);
+        const restoredComment = cleanComment
+          ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanComment}` : cleanComment)
+          : (approvalsPrefix || null);
+
         updates = { 
           adjustment: false, 
           adjusted_hour: null, 
           adjust_short_leave: false,
+          reserve_holiday: null,
           reserve_adjustment_status: 'none',
+          comment: restoredComment,
           admin_edit_request: {
             notifications: [...existingNotifications, newNotification]
           }
@@ -370,10 +378,18 @@ export const useAdjustmentOperations = ({
 
       if (isCancelRequest) {
         if (approve) {
+          const cleanComment = getCleanComment(record.comment);
+          const approvalsPrefix = getApprovalsPrefix(record.comment);
+          const restoredComment = cleanComment
+            ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanComment}` : cleanComment)
+            : (approvalsPrefix || null);
+
           updates.reserve_adjustment_status = 'none';
           updates.adjustment = false;
           updates.adjusted_hour = null;
           updates.adjust_short_leave = false;
+          updates.reserve_holiday = null;
+          updates.comment = restoredComment;
         } else {
           updates.reserve_adjustment_status = 'approved';
         }
@@ -389,9 +405,17 @@ export const useAdjustmentOperations = ({
             updates.adjusted_hour = null;
           }
         } else {
+          const cleanComment = getCleanComment(record.comment);
+          const approvalsPrefix = getApprovalsPrefix(record.comment);
+          const restoredComment = cleanComment
+            ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanComment}` : cleanComment)
+            : (approvalsPrefix || null);
+
           updates.adjustment = false;
           updates.adjusted_hour = null;
           updates.adjust_short_leave = false;
+          updates.reserve_holiday = null;
+          updates.comment = restoredComment;
         }
       }
 
