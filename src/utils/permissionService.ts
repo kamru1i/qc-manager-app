@@ -455,6 +455,12 @@ export const canAccessModule = (
 
   if (isSuperadmin(currentUser)) return true;
 
+  // When an Admin is inspecting another user's profile (targetUser !== currentUser):
+  // Admin has full management access over that user's data (subject to targetUser's workspace boundary checked above).
+  if (currentUser.role === 'admin' && targetUser && targetUser.id !== currentUser.id) {
+    return true;
+  }
+
   // Admin reports restriction: Admin (non-superadmin) should ONLY see all_report in reports, NOT leaderboard, my_report, or kpi
   if (currentUser.role === 'admin') {
     if (module === 'leaderboard' || module === 'my_report' || module === 'kpi') {
