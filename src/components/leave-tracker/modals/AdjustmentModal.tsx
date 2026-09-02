@@ -827,7 +827,7 @@ export function AdjustmentModal({
                     rows={2}
                     value={generalAdjustmentReason}
                     onChange={(e) => setGeneralAdjustmentReason(e.target.value)}
-                    placeholder="Enter what this full leave is being adjusted against (e.g. Adjusted against extra shift on 15-08-2026 / Management adjustment)..."
+                    placeholder="e.g. Adjusted against Govt Holiday, Date 15-08-2026 ..."
                     className="w-full p-2.5 bg-theme-page-bg/80 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none font-sans"
                     required
                   />

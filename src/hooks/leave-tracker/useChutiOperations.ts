@@ -853,15 +853,22 @@ export const useChutiOperations = ({
       extraFields?: Record<string, unknown>;
     }
   ) => {
-    const updatedComment = t.comment?.includes(opts.commentPrefix)
-      ? t.comment
-      : (t.comment ? `${opts.commentPrefix} | ${t.comment}` : opts.commentPrefix);
+    let cleanBaseComment = t.comment || '';
+    if (!t.adjustment && !t.adjusted_hour) {
+      const cleanHuman = getCleanComment(t.comment);
+      const approvals = getApprovalsPrefix(t.comment);
+      cleanBaseComment = cleanHuman ? (approvals ? `${approvals} | ${cleanHuman}` : cleanHuman) : (approvals || '');
+    }
+    const updatedComment = cleanBaseComment.includes(opts.commentPrefix)
+      ? cleanBaseComment
+      : (cleanBaseComment ? `${opts.commentPrefix} | ${cleanBaseComment}` : opts.commentPrefix);
     const newNotification = createNotification(opts.notifType, opts.notifTitle, opts.notifBody);
     const existingNotifications = getExistingNotifications(t);
     return {
       status: opts.status,
+      ...(!t.adjustment && !t.adjusted_hour ? { reserve_holiday: null, reserve_adjustment_status: 'none' } : {}),
       ...(opts.extraFields || {}),
-      comment: updatedComment,
+      comment: updatedComment || null,
       admin_edit_request: {
         ...(t.admin_edit_request || {}),
         notifications: [...existingNotifications, newNotification]

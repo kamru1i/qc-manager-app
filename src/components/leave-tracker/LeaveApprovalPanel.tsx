@@ -7,7 +7,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Profile, ChutiRecordWithProfile, BulkRepresentative } from "@/types";
-import { formatDate, formatTimeToAMPM } from "@/utils/dashboardHelpers";
+import { formatDate, formatTimeToAMPM, getLeaveDisplayComment, getFullCommentHistory } from "@/utils/dashboardHelpers";
 import { CustomSelect } from "@/components/common/CustomSelect";
 import { supabase } from "@/utils/supabase";
 
@@ -457,8 +457,11 @@ export function LeaveApprovalPanel({
                 <span className="text-theme-text-muted font-medium">
                   Reason/Comment:
                 </span>{" "}
-                <span className="italic text-theme-text-secondary font-medium">
-                  {r.comment || "-"}
+                <span
+                  className="italic text-theme-text-secondary font-medium"
+                  title={getFullCommentHistory(r.comment, r)}
+                >
+                  {getLeaveDisplayComment(r) || "-"}
                 </span>
               </p>
             </div>
@@ -746,8 +749,11 @@ export function LeaveApprovalPanel({
                 <span className="text-theme-text-muted font-medium">
                   Reason/Comment:
                 </span>{" "}
-                <span className="italic text-theme-text-secondary font-medium">
-                  {r.comment || "-"}
+                <span
+                  className="italic text-theme-text-secondary font-medium"
+                  title={getFullCommentHistory(r.comment, r)}
+                >
+                  {getLeaveDisplayComment(r) || "-"}
                 </span>
               </p>
             </div>
