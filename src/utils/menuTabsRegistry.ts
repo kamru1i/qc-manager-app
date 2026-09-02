@@ -95,9 +95,15 @@ export const getDefaultRoleVisibility = (
     case 'user_profile_settings':
       return role === 'supervisor' || role === 'admin';
 
-    case 'settings_profile':
-    case 'kpi':
+    case 'all_report':
+      return role === 'admin' || role === 'supervisor';
+
     case 'leaderboard':
+    case 'kpi':
+    case 'my_report':
+      return role !== 'admin';
+
+    case 'settings_profile':
     case 'copy_helper':
     case 'monthly':
     case 'sale_summary':

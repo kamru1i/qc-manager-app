@@ -356,27 +356,63 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
     }
   }, [availableYears, selectedYear]);
 
-  // Period-adjusted ranking. Monthly = server order (RPC dense rank on
-  // months_count). Yearly = re-ranked client-side by overall_score (the
-  // selected year's total submissions, already in the same RPC payload) —
+  // Filter rawLeaderboardData to include ONLY users whose Quotes Workspace is ON (has_quotes_access === true).
+  // Calculate dense rank dynamically among eligible participants so there are no rank gaps.
+  const eligibleRawData = useMemo(() => {
+    let eligible = rawLeaderboardData;
+    if (profilesList && profilesList.length > 0) {
+      const eligibleUserIds = new Set(
+        profilesList.filter((p) => p.has_quotes_access === true).map((p) => p.id)
+      );
+      eligible = rawLeaderboardData.filter((u) => eligibleUserIds.has(u.user_id));
+    }
+
+    const sorted = [...eligible].sort((a, b) => {
+      if (b.months_count !== a.months_count) {
+        return b.months_count - a.months_count;
+      }
+      if (a.earliest_achievement_timestamp && b.earliest_achievement_timestamp) {
+        return (
+          new Date(a.earliest_achievement_timestamp).getTime() -
+          new Date(b.earliest_achievement_timestamp).getTime()
+        );
+      }
+      if (a.earliest_achievement_timestamp) return -1;
+      if (b.earliest_achievement_timestamp) return 1;
+      return a.username.localeCompare(b.username);
+    });
+
+    let rank = 0;
+    let prevMonthsCount: number | null = null;
+    return sorted.map((user) => {
+      if (user.months_count !== prevMonthsCount) {
+        rank += 1;
+        prevMonthsCount = user.months_count;
+      }
+      return { ...user, rank };
+    });
+  }, [rawLeaderboardData, profilesList]);
+
+  // Period-adjusted ranking. Monthly = eligibleRawData (with dense ranks).
+  // Yearly = re-ranked client-side by overall_score among eligible users —
   // top yearly submitter first, dense ranks, no extra fetch needed.
   const periodRankedData = useMemo(() => {
-    if (leaderboardPeriod === 'monthly') return rawLeaderboardData;
+    if (leaderboardPeriod === 'monthly') return eligibleRawData;
 
-    const sorted = [...rawLeaderboardData].sort(
+    const sorted = [...eligibleRawData].sort(
       (a, b) =>
         b.overall_score - a.overall_score || a.username.localeCompare(b.username)
     );
     let rank = 0;
     let prevScore: number | null = null;
-    return sorted.map(user => {
+    return sorted.map((user) => {
       if (user.overall_score !== prevScore) {
         rank += 1;
         prevScore = user.overall_score;
       }
       return { ...user, rank };
     });
-  }, [rawLeaderboardData, leaderboardPeriod]);
+  }, [eligibleRawData, leaderboardPeriod]);
 
   // Filtered list
   const leaderboardData = useMemo(() => {

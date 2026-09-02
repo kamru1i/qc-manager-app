@@ -455,6 +455,13 @@ export const canAccessModule = (
 
   if (isSuperadmin(currentUser)) return true;
 
+  // Admin reports restriction: Admin (non-superadmin) should ONLY see all_report in reports, NOT leaderboard, my_report, or kpi
+  if (currentUser.role === 'admin') {
+    if (module === 'leaderboard' || module === 'my_report' || module === 'kpi') {
+      return false;
+    }
+  }
+
   // Workspace assignment is an authorization boundary, not merely a menu
   // preference. Keep this check aligned with database RLS so revoked access
   // takes effect both in the UI and for direct Supabase requests.

@@ -673,10 +673,33 @@ function AppPortalInner({
     ) {
       let targetTab: typeof activeTab = tab;
       if (tab === "reports") {
-        targetTab = ((localStorage.getItem("last_active_reports_subtab") as any) || (hasQuotesWorkspace ? "leaderboard" : "kpi")) as typeof activeTab;
+        const saved = localStorage.getItem("last_active_reports_subtab");
+        if (saved && canAccessModule(profile, null, saved)) {
+          targetTab = saved as typeof activeTab;
+        } else if (profile?.role === "admin" && canAccessModule(profile, null, "all_report")) {
+          targetTab = "all_report";
+        } else if (hasQuotesWorkspace && canAccessModule(profile, null, "leaderboard")) {
+          targetTab = "leaderboard";
+        } else if (canAccessModule(profile, null, "kpi")) {
+          targetTab = "kpi";
+        } else if (canAccessModule(profile, null, "all_report")) {
+          targetTab = "all_report";
+        } else {
+          targetTab = "profile_settings";
+        }
       }
-      if ((targetTab === "leaderboard" || targetTab === "my_report" || targetTab === "all_report") && !hasQuotesWorkspace) {
-        targetTab = canAccessModule(profile, null, "kpi") ? "kpi" : "profile_settings";
+      if (!targetTab || !canAccessModule(profile, null, targetTab)) {
+        if (profile?.role === "admin" && canAccessModule(profile, null, "all_report")) {
+          targetTab = "all_report";
+        } else if (canAccessModule(profile, null, "kpi")) {
+          targetTab = "kpi";
+        } else if (canAccessModule(profile, null, "all_report")) {
+          targetTab = "all_report";
+        } else if (hasQuotesWorkspace && canAccessModule(profile, null, "leaderboard")) {
+          targetTab = "leaderboard";
+        } else {
+          targetTab = "profile_settings";
+        }
       }
       setActiveTab(targetTab);
       if (targetTab) {
