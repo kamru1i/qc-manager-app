@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.5.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.5.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.5.2 — Patch Release (Global Leaderboard Visibility Scoping Fix & Admin Reports Subtab Alignment) (Current)
+### 🚀 v7.5.3 — Patch Release (Leaderboard & Navbar Rank Consistency with Yearly Tie-Breaker) (Current)
+
+- **Yearly Tie-Breaker Ordering**: When monthly file submissions are equal, ranking now automatically evaluates yearly submissions (`overall_score`) so that users with higher yearly file counts take precedence in the leaderboard order.
+- **Leaderboard & Navbar Rank Consistency**: Synchronized the server-side RPC `get_leaderboard_data` and client-side rank caching so the user rank displayed in the Leaderboard table and next to the user's name in the Navbar are 100% identical.
+- **Live Cache Synchronization**: Integrated dynamic rank cache updates on monthly leaderboard evaluation, ensuring instant navbar rank alignment whenever leaderboard data loads or refreshes.
+
+### 🚀 v7.5.2 — Patch Release (Global Leaderboard Visibility Scoping Fix & Admin Reports Subtab Alignment)
 
 - **Global Leaderboard Scope Fix**: Resolved a client-side cross-filtering regression where `rawLeaderboardData` was filtered against RLS-scoped `profilesList`, ensuring all eligible participants across the entire company are visible to all authorized viewers.
 - **Admin Reports Subtabs Alignment**: Configured Reports subtab permissions so Admins can access **Leaderboard** and **All Report** seamlessly, while keeping personal `My Report` and `KPI Report` properly disabled.
