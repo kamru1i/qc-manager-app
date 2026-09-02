@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.5.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.5.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.5.0 — Minor Release (Superadmin Trace-Free Comment Control, Read-Only Leave Comments & Hierarchical Re-Approval Flow) (Current)
+### 🚀 v7.5.1 — Patch Release (Todo Default Working Status, Initial Status Selector & Database Alignment) (Current)
+
+- **Default Working Status on Todo Creation**: Newly created Todo items now automatically default to `Working` upon submission, eliminating the redundant step of manually toggling status after creation.
+- **Interactive Creation Status Selector**: Integrated an intuitive status selector (`Working`, `Completed`, `Idle`) directly within the creation bar, enabling optional selection before creation and resetting to `Working` after submission.
+- **Database & Service Layer Hardening**: Standardized canonical `Working` default status in `todosService.createTodo` / `bulkCreateTodos` and applied migration `20260902193000_default_todo_status_working.sql` setting Postgres column default to `'Working'`.
+- **Archive Logs Idle Support**: Updated historical Todo logs and badges to render the neutral circle icon and muted tag for `Idle` tasks alongside `Working` and `Completed`.
+- **Compiler & Code Quality Cleanup**: Resolved React 19 compiler ref access warnings and enforced clean linting across all components.
+
+### 🚀 v7.5.0 — Minor Release (Superadmin Trace-Free Comment Control, Read-Only Leave Comments & Hierarchical Re-Approval Flow)
 
 - **Superadmin Trace-Free Comment Control**: Provided Superadmin with full direct visibility of stored comments and logs in edit mode, enabling seamless alterations, additions, or complete wipes with zero trace (no edit reason requirement and no forced actor attribution).
 - **Read-Only Comment Locking for Roles**: Enforced read-only display of previous comments for Admins, Supervisors, and Users during leave edits, preventing tampering while ensuring historical context is fully legible.
