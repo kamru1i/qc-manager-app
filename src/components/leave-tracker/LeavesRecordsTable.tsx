@@ -791,25 +791,25 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
         createPortal(
           <div
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-            className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-36 select-none animate-fadeIn"
+            className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-44 select-none animate-fadeIn"
           >
             {isRecordDeletable(contextMenu.record) && (
               selectedIds.includes(contextMenu.record.id || '') ? (
                 <button
                   type="button"
                   onClick={() => handleContextDeselect(contextMenu.record)}
-                  className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap"
                 >
-                  <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse" />
+                  <div className="h-2 w-2 rounded-full bg-slate-500 animate-pulse shrink-0" />
                   Deselect
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => handleContextSelect(contextMenu.record)}
-                  className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap"
                 >
-                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
                   Select
                 </button>
               )
@@ -818,16 +818,16 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               <button
                 type="button"
                 onClick={() => handleContextEdit(contextMenu.record)}
-                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap"
               >
-                <Edit className="h-3.5 w-3.5 text-theme-text-muted" />
+                <Edit className="h-3.5 w-3.5 text-theme-text-muted shrink-0" />
                 Edit
               </button>
             )}
             {onRequestRemovalClick && contextMenu.record.status === 'approved' && !isAdminView ? (
               (contextMenu.record.admin_edit_request as Record<string, unknown>)?.delete_requested ? (
-                <div className="w-full text-left px-3 py-2 text-xs font-semibold text-purple-400 bg-purple-955/20 rounded-lg flex items-center gap-2 select-none">
-                  <div className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
+                <div className="w-full text-left px-3 py-2 text-xs font-semibold text-purple-400 bg-purple-955/20 rounded-lg flex items-center gap-2 select-none whitespace-nowrap">
+                  <div className="h-2 w-2 rounded-full bg-purple-400 animate-pulse shrink-0" />
                   Removal Pending
                 </div>
               ) : (
@@ -838,9 +838,9 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                     setContextMenu(null);
                     onRequestRemovalClick(rec);
                   }}
-                  className="w-full text-left px-3 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-rose-500 stroke-2" />
+                  <Trash2 className="h-3.5 w-3.5 text-rose-500 stroke-2 shrink-0" />
                   Request Removal
                 </button>
               )
@@ -848,9 +848,9 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
               <button
                 type="button"
                 onClick={() => handleContextDelete(contextMenu.record)}
-                className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap"
               >
-                <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2" />
+                <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2 shrink-0" />
                 Delete
               </button>
             ) : null}
