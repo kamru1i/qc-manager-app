@@ -133,6 +133,8 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
   } else if (activeTab === "quotes" && onQuotesTabChange) {
+    const isQuotesOffAdmin = profile?.role === "admin" && profile?.has_quotes_access !== true;
+
     subTabs.push({
       id: "entry",
       label: "Daily Entry",
@@ -142,7 +144,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       onClick: () => onQuotesTabChange("entry"),
     });
 
-    if (!tabHidden("copy_helper")) {
+    if (!isQuotesOffAdmin && !tabHidden("copy_helper")) {
       subTabs.push({
         id: "copy_helper",
         label: "Copy Helper",
@@ -153,7 +155,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
 
-    if (isSuperAdmin && !tabHidden("save_file")) {
+    if (!isQuotesOffAdmin && isSuperAdmin && !tabHidden("save_file")) {
       subTabs.push({
         id: "save_file",
         label: "Save File",
@@ -164,7 +166,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
 
-    if (!tabHidden("quick_import")) {
+    if (!isQuotesOffAdmin && !tabHidden("quick_import")) {
       subTabs.push({
         id: "quick_import",
         label: "Quick Import",
@@ -208,7 +210,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
 
-    if (!tabHidden("rules")) {
+    if (!isQuotesOffAdmin && !tabHidden("rules")) {
       subTabs.push({
         id: "rules",
         label: "Quote Rules",
@@ -219,7 +221,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
 
-    if (!tabHidden("login_codes")) {
+    if (!isQuotesOffAdmin && !tabHidden("login_codes")) {
       subTabs.push({
         id: "login_codes",
         label: "Login Codes",

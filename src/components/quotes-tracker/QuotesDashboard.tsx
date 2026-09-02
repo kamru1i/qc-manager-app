@@ -268,6 +268,23 @@ export default function QuotesDashboard({
   );
   const [fileType, setFileType] = useState<FileType>("Quote");
 
+  const isQuotesOffAdmin = profile?.role === "admin" && profile?.has_quotes_access !== true;
+
+  // Auto-redirect if an invalid subtab is loaded for an Admin with Quotes Workspace OFF
+  useEffect(() => {
+    if (isQuotesOffAdmin) {
+      if (
+        activeTab === "copy_helper" ||
+        activeTab === "quick_import" ||
+        activeTab === "rules" ||
+        activeTab === "login_codes" ||
+        activeTab === "save_file"
+      ) {
+        onTabChange("entry");
+      }
+    }
+  }, [isQuotesOffAdmin, activeTab, onTabChange]);
+
   // Admin View Toggle on Tables: 'all' or 'mine'
   const [adminViewMode, setAdminViewMode] = useState<"all" | "mine">("mine");
 
@@ -735,6 +752,7 @@ export default function QuotesDashboard({
   const monthlyFilteredRecords = useMemo(() => {
     return records.filter((r) => {
       if (
+        !isQuotesOffAdmin &&
         (isAdminRole(profile) || profile?.role === "supervisor") &&
         adminViewMode === "mine" &&
         r.user_id !== sessionUser?.id
@@ -786,6 +804,7 @@ export default function QuotesDashboard({
     uniqueBranches,
     selectedYear,
     selectedMonth,
+    isQuotesOffAdmin,
   ]);
 
   // Filtered records for Sale Summary Tab
@@ -795,6 +814,7 @@ export default function QuotesDashboard({
         return false;
       }
       if (
+        !isQuotesOffAdmin &&
         (isAdminRole(profile) || profile?.role === "supervisor") &&
         saleAdminViewMode === "mine" &&
         r.user_id !== sessionUser?.id
@@ -841,6 +861,7 @@ export default function QuotesDashboard({
     saleSearchQuery,
     saleSelectedYear,
     saleSelectedMonth,
+    isQuotesOffAdmin,
   ]);
 
   // Sale Summary Stats
@@ -870,6 +891,7 @@ export default function QuotesDashboard({
     const todayStr = new Date().toLocaleDateString("en-CA");
     return records.filter((r) => {
       if (
+        !isQuotesOffAdmin &&
         (isAdminRole(profile) || profile?.role === "supervisor") &&
         todayAdminViewMode === "mine" &&
         r.user_id !== sessionUser?.id
@@ -879,7 +901,7 @@ export default function QuotesDashboard({
       const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
       return recordDate === todayStr;
     });
-  }, [records, todayAdminViewMode, profile, sessionUser]);
+  }, [records, todayAdminViewMode, profile, sessionUser, isQuotesOffAdmin]);
 
   // Filtered entries for Today's list table
   const todayFilteredRecords = useMemo(() => {
@@ -1239,8 +1261,8 @@ export default function QuotesDashboard({
           uniqueBranches={uniqueBranches}
           handleClearTodayFilters={handleClearTodayFilters}
           handleExportTodayExcel={handleExportTodayExcel}
-          isAdmin={isAdmin}
-          todayAdminViewMode={todayAdminViewMode}
+          isAdmin={isAdmin && !isQuotesOffAdmin}
+          todayAdminViewMode={isQuotesOffAdmin ? "all" : todayAdminViewMode}
           setTodayAdminViewMode={setTodayAdminViewMode}
           todayStats={todayStats}
           recordsLoading={recordsLoading}
@@ -1277,8 +1299,8 @@ export default function QuotesDashboard({
           specificDateRef={specificDateRef}
           handleDateFilterChange={handleDateFilterChange}
           handleExportMonthlyExcel={handleExportMonthlyExcel}
-          isAdmin={isAdmin}
-          adminViewMode={adminViewMode}
+          isAdmin={isAdmin && !isQuotesOffAdmin}
+          adminViewMode={isQuotesOffAdmin ? "all" : adminViewMode}
           handleAdminViewModeChange={handleAdminViewModeChange}
           monthlyStats={monthlyStats}
           recordsLoading={recordsLoading}
@@ -1317,8 +1339,8 @@ export default function QuotesDashboard({
           specificSaleDateRef={specificSaleDateRef}
           handleSaleDateFilterChange={handleSaleDateFilterChange}
           handleExportSaleSummaryExcel={handleExportSaleSummaryExcel}
-          isAdmin={isAdmin}
-          saleAdminViewMode={saleAdminViewMode}
+          isAdmin={isAdmin && !isQuotesOffAdmin}
+          saleAdminViewMode={isQuotesOffAdmin ? "all" : saleAdminViewMode}
           setSaleAdminViewMode={setSaleAdminViewMode}
           saleSummaryStats={saleSummaryStats}
           recordsLoading={recordsLoading}

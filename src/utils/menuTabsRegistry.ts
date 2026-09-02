@@ -48,7 +48,7 @@ export const MENU_TABS: MenuTabDef[] = [
   // User Profile View Subtabs (Supervisor Access)
   { key: 'user_profile_leave', label: 'User Management > User Profile > Leave History', category: 'User Profile View Subtabs' },
   { key: 'user_profile_quotes', label: 'User Management > User Profile > Quotes History', category: 'User Profile View Subtabs' },
-  { key: 'user_profile_analytics', label: 'User Management > User Profile > Analytics', category: 'User Profile View Subtabs' },
+  { key: 'user_profile_analytics', label: 'User Management > User Profile > Report', category: 'User Profile View Subtabs' },
   { key: 'user_profile_kpi', label: 'User Management > User Profile > KPI & Performance', category: 'User Profile View Subtabs' },
   { key: 'user_profile_settings', label: 'User Management > User Profile > Profile Settings', category: 'User Profile View Subtabs' },
 

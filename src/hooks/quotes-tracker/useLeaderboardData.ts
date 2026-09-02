@@ -382,15 +382,17 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       return a.username.localeCompare(b.username);
     });
 
-    let rank = 0;
+    const rankedList: LeaderboardUser[] = [];
+    let currentRank = 0;
     let prevMonthsCount: number | null = null;
-    return sorted.map((user) => {
+    for (const user of sorted) {
       if (user.months_count !== prevMonthsCount) {
-        rank += 1;
+        currentRank += 1;
         prevMonthsCount = user.months_count;
       }
-      return { ...user, rank };
-    });
+      rankedList.push({ ...user, rank: currentRank });
+    }
+    return rankedList;
   }, [rawLeaderboardData, profilesList]);
 
   // Period-adjusted ranking. Monthly = eligibleRawData (with dense ranks).
@@ -403,15 +405,17 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       (a, b) =>
         b.overall_score - a.overall_score || a.username.localeCompare(b.username)
     );
-    let rank = 0;
+    const rankedList: LeaderboardUser[] = [];
+    let currentRank = 0;
     let prevScore: number | null = null;
-    return sorted.map((user) => {
+    for (const user of sorted) {
       if (user.overall_score !== prevScore) {
-        rank += 1;
+        currentRank += 1;
         prevScore = user.overall_score;
       }
-      return { ...user, rank };
-    });
+      rankedList.push({ ...user, rank: currentRank });
+    }
+    return rankedList;
   }, [eligibleRawData, leaderboardPeriod]);
 
   // Filtered list

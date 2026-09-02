@@ -385,7 +385,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       const isLeaveAllowed = viewingStaff.has_chuti_access && canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles);
       const isQuotesAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_quotes', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles);
       const isAnalyticsAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_analytics', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles);
-      const isKpiAllowed = canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'kpi', profiles);
+      const isKpiAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'kpi', profiles);
       const isProfileSettingsAllowed = canAccessUserProfileSubtab(profile, 'user_profile_settings', globalSettings, profiles);
       
       if (activeSubTab === 'leave' && !isLeaveAllowed) {
@@ -1133,10 +1133,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                         : 'border-transparent text-theme-text-muted hover:text-theme-text-primary'
                     }`}
                   >
-                    <TrendingUp className="h-3.5 w-3.5 text-indigo-400" /> Analytics
+                    <TrendingUp className="h-3.5 w-3.5 text-indigo-400" /> Report
                   </button>
                 )}
-                {canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
+                {viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('kpi')}

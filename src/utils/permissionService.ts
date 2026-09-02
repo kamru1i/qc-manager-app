@@ -445,7 +445,7 @@ export const canAccessModule = (
   if (targetUser && targetUser.id !== currentUser.id) {
     if (module === 'leave' && targetUser.has_chuti_access !== true) return false;
     if (
-      (module === 'quotes' || module === 'leaderboard' || module === 'my_report' || module === 'all_report') &&
+      (module === 'quotes' || module === 'leaderboard' || module === 'my_report' || module === 'all_report' || module === 'kpi' || module === 'user_profile_kpi') &&
       targetUser.has_quotes_access !== true
     ) {
       return false;
@@ -467,9 +467,13 @@ export const canAccessModule = (
   // takes effect both in the UI and for direct Supabase requests.
   if (module === 'leave' && currentUser.has_chuti_access !== true) return false;
   if (
-    (module === 'quotes' || module === 'leaderboard' || module === 'my_report' || module === 'all_report') &&
+    (module === 'leaderboard' || module === 'my_report' || module === 'all_report') &&
     currentUser.has_quotes_access !== true
   ) {
+    return false;
+  }
+  // For quotes workspace: Admin retains administrative submission/review access even if has_quotes_access is false
+  if (module === 'quotes' && currentUser.has_quotes_access !== true && currentUser.role !== 'admin') {
     return false;
   }
   if (module === 'todo') return currentUser.has_todo_access === true;

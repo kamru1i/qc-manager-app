@@ -709,10 +709,22 @@ function AppPortalInner({
         localStorage.setItem("last_active_reports_subtab", targetTab);
       }
     } else {
+      const isQuotesOffAdmin = profile?.role === "admin" && profile?.has_quotes_access !== true;
+      let targetQuotesTab = tab;
+      if (
+        isQuotesOffAdmin &&
+        (tab === "copy_helper" ||
+          tab === "quick_import" ||
+          tab === "rules" ||
+          tab === "login_codes" ||
+          tab === "save_file")
+      ) {
+        targetQuotesTab = "entry";
+      }
       setActiveTab("quotes");
       localStorage.setItem("last_active_dashboard", "quotes");
-      setActiveQuotesTab(tab as any);
-      localStorage.setItem("quotes_sales_active_tab", tab);
+      setActiveQuotesTab(targetQuotesTab as any);
+      localStorage.setItem("quotes_sales_active_tab", targetQuotesTab);
     }
   };
 
