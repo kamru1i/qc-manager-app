@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.5.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.5.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.5.1 — Patch Release (Todo Default Working Status, Initial Status Selector & Database Alignment) (Current)
+### 🚀 v7.5.2 — Patch Release (Global Leaderboard Visibility Scoping Fix & Admin Reports Subtab Alignment) (Current)
+
+- **Global Leaderboard Scope Fix**: Resolved a client-side cross-filtering regression where `rawLeaderboardData` was filtered against RLS-scoped `profilesList`, ensuring all eligible participants across the entire company are visible to all authorized viewers.
+- **Admin Reports Subtabs Alignment**: Configured Reports subtab permissions so Admins can access **Leaderboard** and **All Report** seamlessly, while keeping personal `My Report` and `KPI Report` properly disabled.
+- **Workspace Boundary Integrity**: Enforced strict workspace boundaries so users with Quotes Workspace = OFF cannot access or view Reports or Leaderboard, while Admins retain administrative access to Leaderboard and All Report regardless of their personal quotes submission status.
+- **Dense Ranking & Tie-Handling**: Maintained dynamic dense ranking with continuous rank positions (1, 2, 3...) and exact tie preservation across both Monthly and Yearly views.
+
+### 🚀 v7.5.1 — Patch Release (Todo Default Working Status, Initial Status Selector & Database Alignment)
 
 - **Default Working Status on Todo Creation**: Newly created Todo items now automatically default to `Working` upon submission, eliminating the redundant step of manually toggling status after creation.
 - **Interactive Creation Status Selector**: Integrated an intuitive status selector (`Working`, `Completed`, `Idle`) directly within the creation bar, enabling optional selection before creation and resetting to `Working` after submission.
