@@ -15,7 +15,7 @@ import {
 import { generateUUID } from '@/utils/idbStoreFactory';
 import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError, getMaxDaysInMonth, getCleanComment, getApprovalsPrefix } from '@/utils/dashboardHelpers';
 import { toast } from 'sonner';
-import { isAdminRole } from '@/utils/permissionService';
+import { isAdminRole, isSuperadmin } from '@/utils/permissionService';
 import { chutiService } from '@/services/chutiService';
 
 interface useChutiOperationsParams {
@@ -793,8 +793,12 @@ export const useChutiOperations = ({
       changeDescription = changeDescription.replace(/,\s*$/, '');
       let finalCommentWithLog = baseComment;
       if (changeDescription) {
-        const adminName = profile?.username?.toUpperCase() || 'ADMIN';
-        finalCommentWithLog = baseComment + `\n[Admin Edit by ${adminName}: ${changeDescription}]`;
+        if (isSuperadmin(profile)) {
+          finalCommentWithLog = baseComment;
+        } else {
+          const adminName = profile?.username?.toUpperCase() || 'ADMIN';
+          finalCommentWithLog = baseComment + `\n[Admin Edit by ${adminName}: ${changeDescription}]`;
+        }
       }
 
       const updates = {
@@ -922,7 +926,9 @@ export const useChutiOperations = ({
       if (targets.length === 0) throw new Error('Record not found.');
 
       const isSupervisor = revisionPromptIsSupervisor;
-      const senderName = profile?.username || (isSupervisor ? 'Supervisor' : 'Admin');
+      const senderName = isSuperadmin(profile)
+        ? 'Admin'
+        : (profile?.username || (isSupervisor ? 'Supervisor' : 'Admin'));
       const senderRole = isSupervisor ? 'supervisor' : 'admin';
 
       await Promise.all(targets.map(async (t) => {
@@ -1080,7 +1086,7 @@ export const useChutiOperations = ({
 
       if (targets.length === 0) throw new Error('Record not found.');
 
-      const adminUsername = profile?.username || 'Admin';
+      const adminUsername = isSuperadmin(profile) ? 'Admin' : (profile?.username || 'Admin');
       const buildApprovalUpdates = (t: ChutiRecordWithProfile) => buildStatusUpdatePayload(t, {
         status: 'approved',
         commentPrefix: `${adminUsername} Approved`,

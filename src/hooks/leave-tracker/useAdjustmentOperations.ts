@@ -5,7 +5,7 @@ import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord, saveOfflineUpdate } from '@/utils/offlineSync';
 import { formatDate, formatTimeToAMPM, getDetailedLeaveLabel, getExistingNotifications, createNotification, formatLeaveDuration, getCleanComment, getApprovalsPrefix } from '@/utils/dashboardHelpers';
-import { isAdminRole } from '@/utils/permissionService';
+import { isAdminRole, isSuperadmin } from '@/utils/permissionService';
 
 interface useAdjustmentOperationsParams {
   profile: Profile | null;
@@ -419,7 +419,9 @@ export const useAdjustmentOperations = ({
         }
       }
 
-      const adminName = profile?.full_name ? `Admin ${profile.full_name}` : 'Admin';
+      const adminName = isSuperadmin(profile)
+        ? 'Admin'
+        : (profile?.full_name ? `Admin ${profile.full_name}` : 'Admin');
       const leaveLabel = getDetailedLeaveLabel(record);
       const isShortOrOvertime = ['Short Leave', 'Early Leave', 'Late Join', 'Overtime'].includes(record.leave_type);
       const dateTimeStr = isShortOrOvertime

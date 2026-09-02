@@ -33,8 +33,7 @@ import { getApiUrl } from '@/utils/apiUrlHelper';
 import { toast } from 'sonner';
 import { AddLeaveFormFields } from '@/components/leave-tracker/AddLeaveFormFields';
 import { LeaveUsageSummary } from '@/components/leave-tracker/LeaveUsageSummary';
-import { SkeletonLoader } from '@/components/common/SkeletonLoader';
-import { isAdminRole, isFeatureEnabled } from '@/utils/permissionService';
+import { isAdminRole, isSuperadmin, isFeatureEnabled } from '@/utils/permissionService';
 
 interface AddLeaveProps {
   profile: Profile | null;
@@ -62,7 +61,6 @@ export function AddLeave({
   leaveSettlements = [],
   onSuccess,
   holidayResponses = [],
-  initialFetchDone = true,
   targetUser = null,
   addedBySupervisor = false,
   editingRecord = null,
@@ -550,9 +548,13 @@ export function AddLeave({
         if (oldCleanComment !== cleanEnteredComment) changeDescription += `Comment updated, `;
         changeDescription = changeDescription.replace(/,\s*$/, '');
         if (changeDescription) {
-          const adminName = profile?.username?.toUpperCase() || 'ADMIN';
-          const editLog = `\n[Admin Edit by ${adminName}: ${changeDescription}]`;
-          commentWithCategory = baseComment + editLog;
+          if (isSuperadmin(profile)) {
+            commentWithCategory = baseComment;
+          } else {
+            const adminName = profile?.username?.toUpperCase() || 'ADMIN';
+            const editLog = `\n[Admin Edit by ${adminName}: ${changeDescription}]`;
+            commentWithCategory = baseComment + editLog;
+          }
         } else {
           commentWithCategory = baseComment;
         }
@@ -599,13 +601,17 @@ export function AddLeave({
         }
 
         changeDescription = changeDescription.replace(/,\s*$/, '');
-        const editorName = isAdminRole(profile)
-          ? (profile?.username?.toUpperCase() || 'ADMIN')
-          : isSupervisorRole
-          ? (profile?.username?.toUpperCase() || 'SUPERVISOR')
-          : (profile?.username?.toUpperCase() || 'USER');
-        const editLog = `\n[Edited by ${editorName}: ${changeDescription}. Reason: ${editReason}]`;
-        commentWithCategory = baseComment + editLog;
+        if (isSuperadmin(profile)) {
+          commentWithCategory = baseComment;
+        } else {
+          const editorName = isAdminRole(profile)
+            ? (profile?.username?.toUpperCase() || 'ADMIN')
+            : isSupervisorRole
+            ? (profile?.username?.toUpperCase() || 'SUPERVISOR')
+            : (profile?.username?.toUpperCase() || 'USER');
+          const editLog = `\n[Edited by ${editorName}: ${changeDescription}. Reason: ${editReason}]`;
+          commentWithCategory = baseComment + editLog;
+        }
 
         // Reset status for re-approval -> goes to admin approval queue
         if (isSupervisorRole || isAdminRole(profile)) {
@@ -858,7 +864,7 @@ export function AddLeave({
 
       // Prepend admin/supervisor signature
       if (profile && isAdminRole(profile) && targetProfile.id !== profile.id) {
-        const adminUsername = profile?.username || 'Admin';
+        const adminUsername = isSuperadmin(profile) ? 'Admin' : (profile?.username || 'Admin');
         const updatedCommentPrefix = `${adminUsername} Approved`;
         commentWithCategory = commentWithCategory
           ? `${updatedCommentPrefix} | ${commentWithCategory}`
@@ -1119,7 +1125,7 @@ export function AddLeave({
               <button
                 type="submit"
                 disabled={submitting || !leaveType || leaveType === 'Select' || (!isFullLeave && leaveHour === '00:00') || !!validationError || isDuplicateDate || hasDateError}
-                className="w-full sm:w-auto min-w-36 flex items-center justify-center py-2.5 px-6 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all gap-2"
+                className="w-full sm:w-auto min-w-36 flex items-center justify-center py-2.5 px-6 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-xs font-bold text-white bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-theme-card-container cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all gap-2"
               >
                 {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                 {submitting
