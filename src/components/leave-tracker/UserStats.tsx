@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CustomSelect } from "@/components/common/CustomSelect";
 
 interface UserStatsProps {
   stats: {
@@ -58,6 +59,8 @@ interface UserStatsProps {
     holidayDate: string,
     holidayName: string,
     response: "paid" | "reserve",
+    salaryMonth?: string,
+    salaryYear?: string,
   ) => Promise<boolean>;
 
   // Eid Holiday props
@@ -131,6 +134,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
   workingHours = 9.5,
 }) => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showFullLeaveHistoryModal, setShowFullLeaveHistoryModal] = useState(false);
   const [showOfficeDetailsModal, setShowOfficeDetailsModal] = useState(false);
   const [updatingHolidayDate, setUpdatingHolidayDate] = useState<string | null>(
     null,
@@ -140,6 +144,47 @@ export const UserStats: React.FC<UserStatsProps> = ({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Pay conversion month/year state
+  const [paySalaryMonth, setPaySalaryMonth] = useState<string>(() =>
+    new Date().toLocaleString("en-US", { month: "long" })
+  );
+  const [paySalaryYear, setPaySalaryYear] = useState<string>(() =>
+    new Date().getFullYear().toString()
+  );
+
+  const monthOptions = React.useMemo(
+    () => [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ].map((m) => ({ value: m, label: m })),
+    []
+  );
+
+  const yearOptions = React.useMemo(
+    () => [
+      { value: "2024", label: "2024" },
+      { value: "2025", label: "2025" },
+      { value: "2026", label: "2026" },
+      { value: "2027", label: "2027" },
+    ],
+    []
+  );
+
+  // Adjusted Full Leaves for history modal (ordered latest first)
+  const adjustedFullLeaves = React.useMemo(() => {
+    return (userLeaves || [])
+      .filter((r: any) => {
+        if (r.leave_type !== "Full Leave") return false;
+        if (!r.adjustment && !r.reserve_holiday) return false;
+        return true;
+      })
+      .sort((a: any, b: any) => {
+        const timeA = new Date(a.updated_at || a.created_at || a.date).getTime();
+        const timeB = new Date(b.updated_at || b.created_at || b.date).getTime();
+        return timeB - timeA;
+      });
+  }, [userLeaves]);
 
   // Edit preference modal states
   const [showEditPrefModal, setShowEditPrefModal] = useState(false);
@@ -379,6 +424,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
               ? `Added from Short: +${convertedDays}d`
               : undefined
           }
+          onIconClick={
+            adjustedFullLeaves.length > 0
+              ? () => setShowFullLeaveHistoryModal(true)
+              : undefined
+          }
+          iconTooltip={
+            adjustedFullLeaves.length > 0
+              ? "View Full Leave Adjustment History"
+              : undefined
+          }
           loading={!initialFetchDone}
         />
 
@@ -594,6 +649,145 @@ export const UserStats: React.FC<UserStatsProps> = ({
           document.body,
         )}
 
+      {/* Full Leave Adjustment History Modal */}
+      {showFullLeaveHistoryModal &&
+        isMounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-2xl p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+              <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
+
+              <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4 shrink-0">
+                <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
+                  <History className="h-4.5 w-4.5 text-blue-500" />
+                  Full Leave Adjustment History
+                </h3>
+                <button
+                  onClick={() => setShowFullLeaveHistoryModal(false)}
+                  className="text-theme-text-muted hover:text-theme-text-primary text-sm cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 pr-1 space-y-3">
+                {adjustedFullLeaves.length === 0 ? (
+                  <div className="py-8 text-center text-theme-text-muted text-xs">
+                    No adjusted Full Leave records found for this employee.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-theme-border-input/80 rounded-xl bg-theme-page-bg/40">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-theme-border-input/80 text-[10px] text-theme-text-muted uppercase font-bold tracking-wider bg-theme-card-container/50">
+                          <th className="py-2.5 px-3">Leave Date</th>
+                          <th className="py-2.5 px-3">Adjusted</th>
+                          <th className="py-2.5 px-3">Adjustment Source</th>
+                          <th className="py-2.5 px-3">Action Date</th>
+                          <th className="py-2.5 px-3">Details / Comment</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-theme-border-input/40 font-mono">
+                        {adjustedFullLeaves.map((r: any) => {
+                          const isGovt =
+                            r.reserve_holiday &&
+                            (r.reserve_holiday.includes("—") ||
+                              r.reserve_holiday === "Govt Holiday" ||
+                              r.comment?.includes("Govt Holiday") ||
+                              r.comment?.includes("Government Holiday"));
+                          const isSalary =
+                            r.reserve_holiday === "Salary" ||
+                            r.comment?.toLowerCase().includes("salary");
+                          const isEid =
+                            r.reserve_holiday === "Eid-ul-Fitr" ||
+                            r.reserve_holiday === "Eid-ul-Adha";
+
+                          let sourceBadge = (
+                            <Badge
+                              variant="default"
+                              className="text-[10px] font-semibold bg-blue-500/10 text-blue-400 border-blue-500/30"
+                            >
+                              {r.reserve_holiday || "Adjusted"}
+                            </Badge>
+                          );
+
+                          if (isGovt) {
+                            sourceBadge = (
+                              <Badge
+                                variant="success"
+                                className="text-[10px] font-semibold bg-teal-500/10 text-teal-300 border-teal-500/30"
+                              >
+                                {r.reserve_holiday?.includes("—")
+                                  ? `Govt Holiday (${r.reserve_holiday})`
+                                  : "Govt Holiday"}
+                              </Badge>
+                            );
+                          } else if (isSalary) {
+                            const salaryLabel = r.admin_edit_request?.salary_month
+                              ? `${r.admin_edit_request.salary_month} ${r.admin_edit_request.salary_year || ""} Salary`
+                              : "Salary Deduction";
+                            sourceBadge = (
+                              <Badge
+                                variant="warning"
+                                className="text-[10px] font-semibold bg-amber-500/10 text-amber-300 border-amber-500/30"
+                              >
+                                {salaryLabel}
+                              </Badge>
+                            );
+                          } else if (isEid) {
+                            sourceBadge = (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-semibold bg-purple-500/10 text-purple-300 border-purple-500/30"
+                              >
+                                {r.reserve_holiday}
+                              </Badge>
+                            );
+                          }
+
+                          return (
+                            <tr
+                              key={r.id}
+                              className="hover:bg-theme-card-bg/20 transition-colors"
+                            >
+                              <td className="py-2.5 px-3 font-bold text-theme-text-primary whitespace-nowrap">
+                                {formatDate(r.date)}
+                              </td>
+                              <td className="py-2.5 px-3 font-semibold text-emerald-400 whitespace-nowrap">
+                                1 Day
+                              </td>
+                              <td className="py-2.5 px-3 whitespace-nowrap">
+                                {sourceBadge}
+                              </td>
+                              <td className="py-2.5 px-3 text-theme-text-muted text-[11px] whitespace-nowrap">
+                                {formatDate(r.updated_at || r.created_at)}
+                              </td>
+                              <td className="py-2.5 px-3 text-theme-text-secondary text-[11px] font-sans">
+                                {r.comment || "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-theme-border-input/80 flex justify-end shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFullLeaveHistoryModal(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
       {/* Verbal Agreement Confirmation Modal for Admin */}
       {pendingVerbalAgreement &&
         isMounted &&
@@ -605,7 +799,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4">
                 <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
                   <AlertTriangle className="h-4.5 w-4.5 text-amber-400" />{" "}
-                  Confirm Verbal Agreement
+                  Confirm Verbal Agreement & Salary Month
                 </h3>
                 <button
                   onClick={() => setPendingVerbalAgreement(null)}
@@ -615,12 +809,12 @@ export const UserStats: React.FC<UserStatsProps> = ({
                 </button>
               </div>
 
-              <p className="text-xs text-theme-text-secondary mb-4 leading-relaxed font-medium">
+              <p className="text-xs text-theme-text-secondary mb-3 leading-relaxed font-medium">
                 Has a verbal agreement been made with the user to convert this
-                reserved holiday date to payment?
+                reserved holiday date to payment? Select which salary month this payment is associated with.
               </p>
 
-              <div className="bg-theme-page-bg/60 border border-theme-border-muted p-3.5 rounded-xl mb-5 space-y-1.5 font-mono text-xs">
+              <div className="bg-theme-page-bg/60 border border-theme-border-muted p-3.5 rounded-xl mb-4 space-y-1.5 font-mono text-xs">
                 <div>
                   Date:{" "}
                   <strong className="text-teal-400">
@@ -632,6 +826,30 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   <strong className="text-theme-text-primary">
                     {pendingVerbalAgreement.name}
                   </strong>
+                </div>
+              </div>
+
+              {/* Salary Month & Year Selector */}
+              <div className="space-y-1.5 mb-5">
+                <label className="block text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider">
+                  Associated Salary Month
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <CustomSelect
+                    value={paySalaryMonth}
+                    onChange={setPaySalaryMonth}
+                    options={monthOptions}
+                    className="w-full"
+                  />
+                  <CustomSelect
+                    value={paySalaryYear}
+                    onChange={setPaySalaryYear}
+                    options={yearOptions}
+                    className="w-full"
+                  />
+                </div>
+                <div className="text-[10px] text-theme-text-muted mt-1">
+                  Will be recorded as payment with <strong className="text-amber-400">{paySalaryMonth} {paySalaryYear}</strong> salary.
                 </div>
               </div>
 
@@ -657,9 +875,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
                     setPendingVerbalAgreement(null);
                     setUpdatingHolidayDate(date);
                     try {
-                      await onUpdateHolidayResponse(userId, date, name, "paid");
+                      await onUpdateHolidayResponse(
+                        userId,
+                        date,
+                        name,
+                        "paid",
+                        paySalaryMonth,
+                        paySalaryYear
+                      );
                       toast.success(
-                        "Converted reserve holiday to payment based on verbal agreement!",
+                        `Converted reserve holiday to payment with ${paySalaryMonth} ${paySalaryYear} salary!`,
                       );
                     } catch (err) {
                       console.error("Failed to convert holiday response:", err);
@@ -668,9 +893,10 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       setUpdatingHolidayDate(null);
                     }
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                  disabled={!paySalaryMonth}
+                  className="bg-amber-600 hover:bg-amber-500 text-white font-semibold"
                 >
-                  Yes, Pay
+                  Confirm Payment
                 </Button>
               </div>
             </div>

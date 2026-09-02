@@ -6,7 +6,7 @@ import { Profile, GovtHolidayResponse, ComplianceRule, ChutiRecordWithProfile } 
 import { ChutiRecord } from '@/utils/offlineSync';
 import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
 import { toast } from 'sonner';
-import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
+import { parseHolidayItem, getGlobalSettingsFromProfile, defaultGlobalSettings, findAdminProfileWithGlobalSettings, formatDate } from '@/utils/dashboardHelpers';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
@@ -27,6 +27,7 @@ export function useGlobalNotifications(
   const [rulesRecords, setRulesRecords] = useState<Pick<ComplianceRule, 'id' | 'updated_at' | 'created_at' | 'category' | 'sub_category' | 'content'>[]>([]);
   const [adminPendingRecords, setAdminPendingRecords] = useState<Pick<ChutiRecord, 'id' | 'status' | 'leave_type' | 'reserve_adjustment_status'>[]>([]);
   const [supervisorPendingRecords, setSupervisorPendingRecords] = useState<ChutiRecordWithProfile[]>([]);
+  const [deleteRequests, setDeleteRequests] = useState<any[]>([]);
   const [isInitialNotifFetchDone, setIsInitialNotifFetchDone] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
@@ -179,14 +180,43 @@ export function useGlobalNotifications(
         return data ? data.map(d => d.notification_id) : [];
       };
 
-      // Execute all 6 queries in parallel
+      const fetchDeleteRequestsPromise = async () => {
+        if (!profile?.has_chuti_access && !isAdminRole(profile)) return [];
+        if (isAdminRole(profile)) {
+          const { data, error } = await supabase
+            .from('leave_delete_requests')
+            .select('id, leave_id, requester_id, reason, status, reviewed_by, reviewed_at, created_at, updated_at, chuti:leave_id (id, date, leave_type, leave_hour, user_id)')
+            .order('created_at', { ascending: false })
+            .limit(50);
+          if (error) {
+            console.error('Failed to fetch delete requests for admin:', error);
+            return [];
+          }
+          return data || [];
+        } else {
+          const { data, error } = await supabase
+            .from('leave_delete_requests')
+            .select('id, leave_id, requester_id, reason, status, reviewed_by, reviewed_at, created_at, updated_at, chuti:leave_id (id, date, leave_type, leave_hour, user_id)')
+            .eq('requester_id', sessionUser.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+          if (error) {
+            console.error('Failed to fetch delete requests for user:', error);
+            return [];
+          }
+          return data || [];
+        }
+      };
+
+      // Execute all 7 queries in parallel
       const [
         chutiData,
         holidayData,
         rulesData,
         adminChutiData,
         supervisorChutiData,
-        dismissedIds
+        dismissedIds,
+        deleteReqsData,
       ] = await Promise.all([
         fetchChutiPromise(),
         fetchHolidayResponsesPromise(),
@@ -194,6 +224,7 @@ export function useGlobalNotifications(
         fetchAdminPendingPromise(),
         fetchSupervisorPendingPromise(),
         fetchDismissedPromise(),
+        fetchDeleteRequestsPromise(),
       ]);
 
       if (chutiData) setUserRecords(chutiData as ChutiRecord[]);
@@ -201,6 +232,7 @@ export function useGlobalNotifications(
       setRulesRecords(rulesData);
       setAdminPendingRecords(adminChutiData);
       setSupervisorPendingRecords(supervisorChutiData);
+      if (deleteReqsData) setDeleteRequests(deleteReqsData);
 
       if (dismissedIds && dismissedIds.length > 0) {
         setDismissedNotificationIds(prev => {
@@ -351,6 +383,21 @@ export function useGlobalNotifications(
       },
       [setDismissedNotificationIds]
     )
+  );
+
+  useRealtimeHandler(
+    'leave_delete_requests',
+    useCallback((payload) => {
+      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        const newReq = payload.new;
+        setDeleteRequests((prev) => {
+          const without = prev.filter((r) => r.id !== newReq.id);
+          return [newReq, ...without];
+        });
+      } else if (payload.eventType === 'DELETE') {
+        setDeleteRequests((prev) => prev.filter((r) => r.id !== payload.old.id));
+      }
+    }, [])
   );
 
   // Load last viewed time and clean up dismissed notifications on mount
@@ -508,6 +555,31 @@ export function useGlobalNotifications(
       });
     });
 
+    // 4. Leave Removal / Deletion Notifications (Approved / Rejected)
+    deleteRequests.forEach(dr => {
+      if (dr.status === 'approved') {
+        const leaveType = dr.chuti?.leave_type || 'Leave';
+        const dateFormatted = dr.chuti?.date ? formatDate(dr.chuti.date) : 'requested date';
+        list.push({
+          id: `leave-removed-${dr.id}`,
+          type: 'leave_removed',
+          timestamp: dr.reviewed_at || dr.updated_at || dr.created_at || currentSessionTime,
+          title: 'Leave Record Removed 🗑️',
+          body: `Your ${leaveType} request for ${dateFormatted} has been removed by Admin.`
+        });
+      } else if (dr.status === 'rejected') {
+        const leaveType = dr.chuti?.leave_type || 'Leave';
+        const dateFormatted = dr.chuti?.date ? formatDate(dr.chuti.date) : 'requested date';
+        list.push({
+          id: `leave-removal-rejected-${dr.id}`,
+          type: 'leave_removal_rejected',
+          timestamp: dr.reviewed_at || dr.updated_at || currentSessionTime,
+          title: 'Leave Removal Rejected ❌',
+          body: `Your removal request for ${leaveType} (${dateFormatted}) was rejected.`
+        });
+      }
+    });
+
     const filtered = list.filter(n => {
       // 1. Filter out dismissed notifications
       if (dismissedNotificationIds?.has(n.id)) return false;
@@ -530,6 +602,7 @@ export function useGlobalNotifications(
     userRecords, 
     holidayResponses, 
     rulesRecords, 
+    deleteRequests,
     globalSettings.govt_holidays, 
     currentSessionTime, 
     dismissedNotificationIds,
@@ -555,10 +628,11 @@ export function useGlobalNotifications(
       
       const profileChangeCount = profilesList.filter(p => p.profile_change_status === 'pending').length;
       const passwordResetCount = profilesList.filter(p => p.password_reset_status === 'pending').length;
+      const pendingRemovalCount = deleteRequests.filter(dr => dr.status === 'pending').length;
       
       // Government-holiday entitlements are created automatically and are not
       // pending user choices, so they must not inflate the approval badge.
-      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount;
+      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount + pendingRemovalCount;
     }
     
     if (profile?.role === 'supervisor') {

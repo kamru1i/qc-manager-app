@@ -136,7 +136,12 @@ export const useAdjustmentOperations = ({
   };
 
   // Save Adjustment details
-  const handleSaveAdjustment = async (overrideAdjustShortLeave?: boolean, adjustmentCategoryInput?: string) => {
+  const handleSaveAdjustment = async (
+    overrideAdjustShortLeave?: boolean,
+    adjustmentCategoryInput?: string,
+    specificHoliday?: { date: string; name: string } | null,
+    salaryInfo?: { month: string; year: string } | null
+  ) => {
     if (!adjustmentRecord || submitting) return;
     setSubmitting(true);
     const record = adjustmentRecord;
@@ -167,15 +172,37 @@ export const useAdjustmentOperations = ({
       let requestedUpdates: Record<string, unknown> = {};
 
       if (selectedCat === 'Salary') {
+        const salaryLabel = salaryInfo ? `${salaryInfo.month} ${salaryInfo.year}` : `${new Date().toLocaleString('en-US', { month: 'long' })} ${new Date().getFullYear()}`;
         let cleanComment = record.comment || '';
         cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
-        const finalComment = `Adjusted: Salary${cleanComment ? ` | ${cleanComment}` : ''}`;
+        cleanComment = cleanComment.replace(/Leave dated [^\n|\]]+ was adjusted with[^\n|\]]*(?:\s*\|\s*)?/i, '').trim();
+        const finalComment = `Leave dated ${formatDate(record.date)} was adjusted with ${salaryLabel} salary deduction.${cleanComment ? ` | ${cleanComment}` : ''}`;
         requestedUpdates = { 
           adjustment: true, 
           adjusted_hour: null, 
           adjust_short_leave: false,
           reserve_holiday: 'Salary',
-          comment: finalComment || null
+          comment: finalComment || null,
+          admin_edit_request: {
+            salary_month: salaryInfo?.month || null,
+            salary_year: salaryInfo?.year || null,
+          }
+        };
+      } else if (selectedCat === 'Govt Holiday' && specificHoliday) {
+        let cleanComment = record.comment || '';
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+        cleanComment = cleanComment.replace(/Adjusted with Government Holiday[^\n|\]]*(?:\s*\|\s*)?/i, '').trim();
+        const finalComment = `Adjusted with Government Holiday on ${formatDate(specificHoliday.date)} — ${specificHoliday.name}${cleanComment ? ` | ${cleanComment}` : ''}`;
+        requestedUpdates = {
+          adjustment: true,
+          adjusted_hour: null,
+          adjust_short_leave: false,
+          reserve_holiday: `${specificHoliday.date} — ${specificHoliday.name}`,
+          comment: finalComment || null,
+          admin_edit_request: {
+            holiday_date: specificHoliday.date,
+            holiday_name: specificHoliday.name,
+          }
         };
       } else if (isPartialLeave) {
         if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
@@ -238,9 +265,12 @@ export const useAdjustmentOperations = ({
         let notifBody = '';
 
         if (selectedCat === 'Salary') {
-          const durationText = formatLeaveDuration(record);
+          const salaryLabel = salaryInfo ? `${salaryInfo.month} ${salaryInfo.year}` : `${new Date().toLocaleString('en-US', { month: 'long' })} ${new Date().getFullYear()}`;
           notifTitle = 'Salary Adjustment Applied 💸';
-          notifBody = `Your ${durationText} leave has been adjusted with ${durationText} salary deduction.`;
+          notifBody = `Your leave for ${formatDate(record.date)} has been adjusted with ${salaryLabel} salary deduction.`;
+        } else if (selectedCat === 'Govt Holiday' && specificHoliday) {
+          notifTitle = 'Government Holiday Adjustment Applied 📅';
+          notifBody = `Your leave for ${formatDate(record.date)} has been adjusted with the Government Holiday of ${formatDate(specificHoliday.date)} — ${specificHoliday.name}.`;
         } else {
           const leaveLabel = getDetailedLeaveLabel(record);
           const isShortOrOvertime = ['Short Leave', 'Early Leave', 'Late Join', 'Overtime'].includes(record.leave_type);
@@ -256,20 +286,28 @@ export const useAdjustmentOperations = ({
           notifBody
         );
 
+        const mergedMeta = {
+          ...((record.admin_edit_request as Record<string, unknown>) || {}),
+          ...((requestedUpdates.admin_edit_request as Record<string, unknown>) || {}),
+          notifications: [...existingNotifications, newNotification]
+        };
+
         updates = {
           ...requestedUpdates,
           reserve_adjustment_status: 'none',
-          admin_edit_request: {
-            notifications: [...existingNotifications, newNotification]
-          }
+          admin_edit_request: mergedMeta
         };
       } else {
+        const mergedMeta = {
+          ...((record.admin_edit_request as Record<string, unknown>) || {}),
+          ...((requestedUpdates.admin_edit_request as Record<string, unknown>) || {}),
+          notifications: existingNotifications
+        };
+
         updates = {
+          ...requestedUpdates,
           reserve_adjustment_status: 'pending',
-          admin_edit_request: {
-            ...requestedUpdates,
-            notifications: existingNotifications
-          }
+          admin_edit_request: mergedMeta
         };
       }
 

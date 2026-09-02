@@ -14,6 +14,7 @@ import { UserManagementSkeleton } from '@/components/common/skeleton/UserManagem
 import { toast } from 'sonner';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
+import { chutiService } from '@/services/chutiService';
 import {
   Search,
   UserPlus,
@@ -581,7 +582,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
   }, [viewingStaff, debouncedFetchStaffLeaveData, hasStaffAccess]);
 
-  const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, _holidayName: string, response: 'paid' | 'reserve') => {
+  const handleAdminUpdateHolidayResponse = useCallback(async (
+    targetUserId: string,
+    holidayDate: string,
+    holidayName: string,
+    response: 'paid' | 'reserve',
+    salaryMonth?: string,
+    salaryYear?: string
+  ) => {
     if (!profile || !isAdminRole(profile)) return false;
 
     const { error } = await holidaysService.convertGovtHolidayResponse(
@@ -593,6 +601,25 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     if (error) {
       toast.error('Failed to update holiday response: ' + error.message);
       return false;
+    }
+
+    if (response === 'paid' && salaryMonth) {
+      const year = salaryYear || new Date().getFullYear().toString();
+      try {
+        await chutiService.createLeaveSettlement({
+          user_id: targetUserId,
+          year,
+          period: 'Instant',
+          leave_category: 'Govt Holiday',
+          remaining_days: 1,
+          action_type: 'payment',
+          payment_days: 1,
+          status: 'processed',
+          action_by: `Government Holiday dated ${formatDate(holidayDate)} (${holidayName || 'Govt Holiday'}) was converted to payment with ${salaryMonth} ${year} salary.`,
+        });
+      } catch (e) {
+        console.error('Failed to create payment settlement log:', e);
+      }
     }
 
     toast.success('Updated holiday response!');
@@ -675,7 +702,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   };
 
   // Save Staff Adjustment handler from modal
-  const handleSaveStaffAdjustment = async (overrideAdjustShortLeave?: boolean, adjustmentCategoryInput?: string) => {
+  const handleSaveStaffAdjustment = async (
+    overrideAdjustShortLeave?: boolean,
+    adjustmentCategoryInput?: string,
+    specificHoliday?: { date: string; name: string } | null,
+    salaryInfo?: { month: string; year: string } | null
+  ) => {
     if (!staffAdjustmentRecord || staffAdjustmentSubmitting) return;
     setStaffAdjustmentSubmitting(true);
     const record = staffAdjustmentRecord;
@@ -684,15 +716,37 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       let requestedUpdates: Record<string, unknown> = {};
 
       if (selectedCat === 'Salary') {
+        const salaryLabel = salaryInfo ? `${salaryInfo.month} ${salaryInfo.year}` : `${new Date().toLocaleString('en-US', { month: 'long' })} ${new Date().getFullYear()}`;
         let cleanComment = record.comment || '';
         cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
-        const finalComment = `Adjusted: Salary${cleanComment ? ` | ${cleanComment}` : ''}`;
+        cleanComment = cleanComment.replace(/Leave dated [^\n|\]]+ was adjusted with[^\n|\]]*(?:\s*\|\s*)?/i, '').trim();
+        const finalComment = `Leave dated ${formatDate(record.date)} was adjusted with ${salaryLabel} salary deduction.${cleanComment ? ` | ${cleanComment}` : ''}`;
         requestedUpdates = {
           adjustment: true,
           adjusted_hour: null,
           adjust_short_leave: false,
           reserve_holiday: 'Salary',
-          comment: finalComment || null
+          comment: finalComment || null,
+          admin_edit_request: {
+            salary_month: salaryInfo?.month || null,
+            salary_year: salaryInfo?.year || null,
+          }
+        };
+      } else if (selectedCat === 'Govt Holiday' && specificHoliday) {
+        let cleanComment = record.comment || '';
+        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+        cleanComment = cleanComment.replace(/Adjusted with Government Holiday[^\n|\]]*(?:\s*\|\s*)?/i, '').trim();
+        const finalComment = `Adjusted with Government Holiday on ${formatDate(specificHoliday.date)} — ${specificHoliday.name}${cleanComment ? ` | ${cleanComment}` : ''}`;
+        requestedUpdates = {
+          adjustment: true,
+          adjusted_hour: null,
+          adjust_short_leave: false,
+          reserve_holiday: `${specificHoliday.date} — ${specificHoliday.name}`,
+          comment: finalComment || null,
+          admin_edit_request: {
+            holiday_date: specificHoliday.date,
+            holiday_name: specificHoliday.name,
+          }
         };
       } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
         if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
@@ -742,9 +796,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       let notifBody = '';
 
       if (selectedCat === 'Salary') {
-        const durationText = formatLeaveDuration(record);
+        const salaryLabel = salaryInfo ? `${salaryInfo.month} ${salaryInfo.year}` : `${new Date().toLocaleString('en-US', { month: 'long' })} ${new Date().getFullYear()}`;
         notifTitle = 'Salary Adjustment Applied 💸';
-        notifBody = `Your ${durationText} leave has been adjusted with ${durationText} salary deduction.`;
+        notifBody = `Your leave for ${formatDate(record.date)} has been adjusted with ${salaryLabel} salary deduction.`;
+      } else if (selectedCat === 'Govt Holiday' && specificHoliday) {
+        notifTitle = 'Government Holiday Adjustment Applied 📅';
+        notifBody = `Your leave for ${formatDate(record.date)} has been adjusted with the Government Holiday of ${formatDate(specificHoliday.date)} — ${specificHoliday.name}.`;
       } else {
         const leaveLabel = getDetailedLeaveLabel(record);
         const dateTimeStr = formatDate(record.date);
@@ -753,12 +810,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
       const newNotification = createNotification('adjusted', notifTitle, notifBody);
 
+      const mergedMeta = {
+        ...((record.admin_edit_request as Record<string, unknown>) || {}),
+        ...((requestedUpdates.admin_edit_request as Record<string, unknown>) || {}),
+        notifications: [...existingNotifications, newNotification]
+      };
+
       const updates = {
         ...requestedUpdates,
         reserve_adjustment_status: 'none',
-        admin_edit_request: {
-          notifications: [...existingNotifications, newNotification]
-        }
+        admin_edit_request: mergedMeta
       };
 
       setViewingStaffRecords(prev => prev.map(r => r.id === record.id ? { ...r, ...updates } : r));
@@ -795,6 +856,23 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         .eq('id', record.id);
 
       if (error) throw error;
+
+      // Log direct deletion so the affected employee receives a notification
+      if (sessionUser && record.id && record.user_id) {
+        try {
+          await supabase.from('leave_delete_requests').insert({
+            leave_id: record.id,
+            requester_id: record.user_id,
+            status: 'approved',
+            reason: 'Direct deletion by Admin',
+            reviewed_by: sessionUser.id,
+            reviewed_at: new Date().toISOString(),
+          } as any);
+        } catch (e) {
+          console.error('Failed to log admin direct delete event:', e);
+        }
+      }
+
       toast.success('Leave entry deleted successfully.');
       if (viewingStaff) {
         debouncedFetchStaffLeaveData(viewingStaff.id, true);

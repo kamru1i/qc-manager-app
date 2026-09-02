@@ -16,6 +16,7 @@ import { generateUUID } from '@/utils/idbStoreFactory';
 import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError, getMaxDaysInMonth } from '@/utils/dashboardHelpers';
 import { toast } from 'sonner';
 import { isAdminRole } from '@/utils/permissionService';
+import { chutiService } from '@/services/chutiService';
 
 interface useChutiOperationsParams {
   sessionUser: any;
@@ -93,6 +94,11 @@ export const useChutiOperations = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<ChutiRecord | null>(null);
   const [deletingRecord, setDeletingRecord] = useState(false);
+
+  // --- Request Removal States (for approved user leaves) ---
+  const [showRequestRemovalModal, setShowRequestRemovalModal] = useState(false);
+  const [removalRecord, setRemovalRecord] = useState<ChutiRecord | null>(null);
+  const [submittingRemoval, setSubmittingRemoval] = useState(false);
 
   // --- Admin Edit States ---
   const [showAdminEditModal, setShowAdminEditModal] = useState(false);
@@ -531,6 +537,23 @@ export const useChutiOperations = ({
         throw new Error('You do not have permission to delete this record or it was not found in the database.');
       }
       
+      // If an Admin directly deleted another user's leave, log to leave_delete_requests
+      // so the affected user receives a persistent notification
+      if (isAdminRole(profile) && record.user_id && record.user_id !== sessionUser.id && record.id) {
+        try {
+          await supabase.from('leave_delete_requests').insert({
+            leave_id: record.id,
+            requester_id: record.user_id,
+            status: 'approved',
+            reason: 'Direct deletion by Admin',
+            reviewed_by: sessionUser.id,
+            reviewed_at: new Date().toISOString(),
+          } as any);
+        } catch (e) {
+          console.error('Failed to log admin direct delete event:', e);
+        }
+      }
+
       setUserRecords(prev => prev.filter(r => r.id !== record.id));
       setAdminRecords(prev => prev.filter(r => r.id !== record.id));
       
@@ -540,6 +563,105 @@ export const useChutiOperations = ({
       setMessage({ type: 'error', text: (err as Error).message || 'An error occurred while deleting the record.' });
     } finally {
       setDeletingRecord(false);
+    }
+  };
+
+  // Open user request removal modal
+  const handleOpenRequestRemoval = (record: ChutiRecord) => {
+    setRemovalRecord(record);
+    setShowRequestRemovalModal(true);
+  };
+
+  // User submits removal request for an approved leave
+  const handleUserSubmitRemoval = async (record: ChutiRecord, reason: string) => {
+    if (!sessionUser || !record.id) return;
+    setSubmittingRemoval(true);
+    try {
+      const { error } = await chutiService.requestLeaveRemoval(record.id, sessionUser.id, reason);
+      if (error) throw error;
+
+      // Optimistic update of local records
+      setUserRecords(prev => prev.map(r => {
+        if (r.id === record.id) {
+          const meta = (r.admin_edit_request as Record<string, unknown>) || {};
+          return {
+            ...r,
+            admin_edit_request: {
+              ...meta,
+              delete_requested: true,
+              delete_reason: reason,
+              delete_requested_at: new Date().toISOString(),
+              delete_requester_id: sessionUser.id,
+            }
+          };
+        }
+        return r;
+      }));
+
+      setMessage({ type: 'success', text: 'Leave removal request submitted to Admin for approval.' });
+      toast.success('Leave removal request submitted for Admin approval.');
+      fetchRecords();
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: 'error', text: 'Failed to request removal: ' + ((err as Error).message || 'unknown error') });
+      toast.error('Failed to request leave removal.');
+    } finally {
+      setSubmittingRemoval(false);
+      setShowRequestRemovalModal(false);
+      setRemovalRecord(null);
+    }
+  };
+
+  // Admin approves or rejects a leave removal request
+  const handleApproveLeaveRemoval = async (record: ChutiRecord, approve: boolean) => {
+    if (!sessionUser || !record.id) return;
+    try {
+      const { error } = await chutiService.reviewLeaveRemoval(
+        record.id,
+        record.id,
+        approve,
+        sessionUser.id
+      );
+      if (error) throw error;
+
+      if (approve) {
+        setUserRecords(prev => prev.filter(r => r.id !== record.id));
+        setAdminRecords(prev => prev.filter(r => r.id !== record.id));
+        toast.success(`Leave removal approved for ${formatDate(record.date)}.`);
+      } else {
+        // Clear delete_requested
+        setUserRecords(prev => prev.map(r => {
+          if (r.id === record.id) {
+            const meta = (r.admin_edit_request as Record<string, unknown>) || {};
+            return {
+              ...r,
+              admin_edit_request: {
+                ...meta,
+                delete_requested: false,
+              }
+            };
+          }
+          return r;
+        }));
+        setAdminRecords(prev => prev.map(r => {
+          if (r.id === record.id) {
+            const meta = (r.admin_edit_request as Record<string, unknown>) || {};
+            return {
+              ...r,
+              admin_edit_request: {
+                ...meta,
+                delete_requested: false,
+              }
+            };
+          }
+          return r;
+        }));
+        toast.success(`Leave removal rejected for ${formatDate(record.date)}.`);
+      }
+      fetchRecords();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to process removal review: ' + ((err as Error).message || 'unknown error'));
     }
   };
 
@@ -1074,6 +1196,16 @@ export const useChutiOperations = ({
     approvingIds,
     reviewingIds,
     approvedIds,
+
+    // removal states & handlers
+    showRequestRemovalModal,
+    setShowRequestRemovalModal,
+    removalRecord,
+    setRemovalRecord,
+    submittingRemoval,
+    handleOpenRequestRemoval,
+    handleUserSubmitRemoval,
+    handleApproveLeaveRemoval,
 
     // handlers
     handleAddBulkDate,

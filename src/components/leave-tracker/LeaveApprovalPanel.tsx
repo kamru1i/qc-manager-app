@@ -33,6 +33,8 @@ interface LeaveApprovalPanelProps {
   pendingPasswordResetRequests?: Profile[];
   handleApprovePasswordResetRequest?: (id: string, approve: boolean) => void;
   adminHolidayNotifications?: any[];
+  pendingRemovalRequests?: any[];
+  handleApproveLeaveRemoval?: (record: any, approve: boolean) => void;
 }
 
 export function LeaveApprovalPanel({
@@ -50,6 +52,8 @@ export function LeaveApprovalPanel({
   pendingPasswordResetRequests = [],
   handleApprovePasswordResetRequest = () => {},
   adminHolidayNotifications = [],
+  pendingRemovalRequests = [],
+  handleApproveLeaveRemoval = () => {},
 }: LeaveApprovalPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationTypeFilter, setNotificationTypeFilter] = useState("all");
@@ -106,6 +110,7 @@ export function LeaveApprovalPanel({
     return [
       { value: "all", label: "All Types" },
       { value: "leave_request", label: "Leave Requests (All)" },
+      { value: "removal_request", label: "Leave Removal Requests" },
       { value: "short_leave", label: "Short Leave Requests" },
       { value: "reserve_adjustment", label: "Reserve & Adjustments" },
       { value: "profile_change", label: "Profile Changes" },
@@ -217,12 +222,33 @@ export function LeaveApprovalPanel({
     );
   }, [adminHolidayNotifications, searchQuery, role]);
 
+  const filteredRemovalRequests = useMemo(() => {
+    if (role === "supervisor") return [];
+    return (pendingRemovalRequests || []).filter((req) => {
+      const r = req.chuti || req;
+      const user = profilesList.find((p) => p.id === (req.requester_id || r.user_id));
+      const name = (user?.full_name || "").toLowerCase();
+      const username = (user?.username || "").toLowerCase();
+      const query = searchQuery.toLowerCase().trim();
+
+      const matchesSearch =
+        !query || name.includes(query) || username.includes(query);
+
+      const matchesType =
+        notificationTypeFilter === "all" ||
+        notificationTypeFilter === "removal_request";
+
+      return matchesSearch && matchesType;
+    });
+  }, [pendingRemovalRequests, profilesList, searchQuery, notificationTypeFilter, role]);
+
   // Combine and sort all notifications
   const combinedNotifications = useMemo(() => {
     const list: Array<{
       id: string;
       type:
         | "leave_request"
+        | "removal_request"
         | "holiday_response"
         | "reserve_adjustment"
         | "profile_change"
@@ -251,6 +277,20 @@ export function LeaveApprovalPanel({
     }
 
     if (role === "admin") {
+      // Removal Requests
+      if (
+        notificationTypeFilter === "all" ||
+        notificationTypeFilter === "removal_request"
+      ) {
+        filteredRemovalRequests.forEach((req) => {
+          list.push({
+            id: `removal_${req.id}`,
+            type: "removal_request",
+            timestamp: req.created_at || "",
+            data: req,
+          });
+        });
+      }
       // 2. Govt Holiday History
       if (
         notificationTypeFilter === "all" ||
@@ -504,6 +544,92 @@ export function LeaveApprovalPanel({
                 className="px-3.5 py-1.5 bg-theme-border-muted border border-theme-border-active hover:bg-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 shrink-0 font-sans"
               >
                 {isApproving ? 'Approving...' : 'Approve'}
+              </button>
+            </div>
+          </div>
+        );
+      }
+      case "removal_request": {
+        const req = item.data;
+        const r = req.chuti || req;
+        const user = profilesList.find((p) => p.id === (req.requester_id || r.user_id));
+        const removalReason = req.reason || (r.admin_edit_request as Record<string, unknown>)?.delete_reason;
+        return (
+          <div
+            key={item.id}
+            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500" />
+            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="font-bold text-theme-text-primary text-sm">
+                  {user?.full_name || "No Name"}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono font-bold">
+                  @{(user?.username || "").toUpperCase()}
+                </span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-950/60 border border-rose-900/60 text-rose-400 font-bold tracking-wide uppercase">
+                  Removal Request
+                </span>
+                {item.timestamp && (
+                  <span className="text-[9px] text-theme-text-muted font-mono">
+                    {new Date(item.timestamp).toLocaleString("en-US", {
+                      hour12: true,
+                    })}
+                  </span>
+                )}
+              </div>
+              <p>
+                <span className="text-theme-text-muted font-medium">Date:</span>{" "}
+                <span className="font-semibold text-theme-text-primary">
+                  {formatDate(r.date)}
+                </span>
+              </p>
+              <p>
+                <span className="text-theme-text-muted font-medium">Leave Type:</span>{" "}
+                <span className="font-bold text-rose-400">{r.leave_type}</span>
+              </p>
+              {r.leave_type !== "Full Leave" && r.leave_hour && (
+                <p>
+                  <span className="text-theme-text-muted font-medium">Duration:</span>{" "}
+                  <span className="font-mono text-theme-text-secondary">
+                    {r.leave_hour ? r.leave_hour.substring(0, 5) : "-"} hrs
+                  </span>
+                </p>
+              )}
+              {r.comment && (
+                <p>
+                  <span className="text-theme-text-muted font-medium">Original Comment:</span>{" "}
+                  <span className="italic text-theme-text-secondary">{r.comment}</span>
+                </p>
+              )}
+              {removalReason && (
+                <div className="mt-1.5 p-2 bg-rose-955/40 border border-rose-900/40 rounded-lg text-rose-300 text-xs flex flex-col gap-0.5">
+                  <span className="font-bold text-rose-200">Removal Reason:</span>
+                  <span className="text-theme-text-primary">{removalReason}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex md:flex-col justify-end items-end gap-2 shrink-0 font-sans pl-2">
+              <button
+                onClick={() => handleApproveLeaveRemoval?.(r, false)}
+                disabled={approvingIds.has(r.id)}
+                className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50"
+              >
+                Reject Removal
+              </button>
+              <button
+                onClick={() => handleApproveLeaveRemoval?.(r, true)}
+                disabled={approvingIds.has(r.id)}
+                className="px-3 py-1.5 border border-rose-500/30 hover:border-rose-500 bg-rose-900/20 hover:bg-rose-900/50 text-rose-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
+              >
+                {approvingIds.has(r.id) ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-3.5 w-3.5 text-rose-400" />
+                )}
+                Approve Removal
               </button>
             </div>
           </div>

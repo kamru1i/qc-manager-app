@@ -9,12 +9,13 @@ import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { ChutiRecord, SyncConflict, getOfflineRecords, syncOfflineData, getCacheData, setCacheData, mergeCacheData, removeCacheItems, getGlobalSettingsCache, setGlobalSettingsCache, getSyncTimestamp, setSyncTimestamp, purgeStaleCacheData } from '@/utils/offlineSync';
 
-import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings } from '@/utils/dashboardHelpers';
+import { getGlobalSettingsFromProfile, defaultGlobalSettings, getInitialGlobalSettings, GlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings, formatDate } from '@/utils/dashboardHelpers';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { CHUTI_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS, LEAVE_SETTLEMENT_COLUMNS } from '@/utils/dbColumns';
 import { isAdminRole } from '@/utils/permissionService';
 import { holidaysService } from '@/services/holidaysService';
+import { chutiService } from '@/services/chutiService';
 
 export const useDashboardData = (
   sessionUser: SupabaseUser,
@@ -412,7 +413,14 @@ export const useDashboardData = (
     return true;
   }, [profile, sessionUser, fetchRecords, setMessage, setProfile, setProfilesList]);
 
-  const handleAdminUpdateHolidayResponse = useCallback(async (targetUserId: string, holidayDate: string, _holidayName: string, response: 'paid' | 'reserve') => {
+  const handleAdminUpdateHolidayResponse = useCallback(async (
+    targetUserId: string,
+    holidayDate: string,
+    holidayName: string,
+    response: 'paid' | 'reserve',
+    salaryMonth?: string,
+    salaryYear?: string
+  ) => {
     if (!profile || !isAdminRole(profile)) return false;
 
     setLoading(true);
@@ -426,6 +434,25 @@ export const useDashboardData = (
       setMessage({ type: 'error', text: 'Failed to update response: ' + error.message });
       setLoading(false);
       return false;
+    }
+
+    if (response === 'paid' && salaryMonth) {
+      const year = salaryYear || new Date().getFullYear().toString();
+      try {
+        await chutiService.createLeaveSettlement({
+          user_id: targetUserId,
+          year,
+          period: 'Instant',
+          leave_category: 'Govt Holiday',
+          remaining_days: 1,
+          action_type: 'payment',
+          payment_days: 1,
+          status: 'processed',
+          action_by: `Government Holiday dated ${formatDate(holidayDate)} (${holidayName || 'Govt Holiday'}) was converted to payment with ${salaryMonth} ${year} salary.`,
+        });
+      } catch (e) {
+        console.error('Failed to create payment settlement log:', e);
+      }
     }
 
     setMessage({ type: 'success', text: 'Holiday response updated successfully!' });

@@ -26,6 +26,7 @@ interface LeavesRecordsTableProps {
   onExportPDF?: (filtered: ChutiRecord[], searchTerm: string) => void;
   onToggleAdjustment: (r: ChutiRecord) => void;
   onDeleteClick: (r: ChutiRecord) => void;
+  onRequestRemovalClick?: (r: ChutiRecord) => void;
   onEditClick?: (r: ChutiRecord) => void;
   onRevisionClick?: (r: ChutiRecord) => void;
   formatDate: (d: string) => string;
@@ -71,6 +72,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   onExportPDF,
   onToggleAdjustment,
   onDeleteClick,
+  onRequestRemovalClick,
   onEditClick,
   formatDate,
   formatTimeToAMPM,
@@ -822,7 +824,27 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 Edit
               </button>
             )}
-            {isRecordDeletable(contextMenu.record) && (
+            {onRequestRemovalClick && contextMenu.record.status === 'approved' && !isAdminView ? (
+              (contextMenu.record.admin_edit_request as Record<string, unknown>)?.delete_requested ? (
+                <div className="w-full text-left px-3 py-2 text-xs font-semibold text-purple-400 bg-purple-955/20 rounded-lg flex items-center gap-2 select-none">
+                  <div className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
+                  Removal Pending
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rec = contextMenu.record;
+                    setContextMenu(null);
+                    onRequestRemovalClick(rec);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-955/20 rounded-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-rose-500 stroke-2" />
+                  Request Removal
+                </button>
+              )
+            ) : isRecordDeletable(contextMenu.record) ? (
               <button
                 type="button"
                 onClick={() => handleContextDelete(contextMenu.record)}
@@ -831,7 +853,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                 <Trash2 className="h-3.5 w-3.5 text-red-500 stroke-2" />
                 Delete
               </button>
-            )}
+            ) : null}
           </div>,
           document.body
         )}

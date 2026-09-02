@@ -51,6 +51,7 @@ interface UserDashboardViewProps {
   onAddLeaveClick: () => void;
   onToggleAdjustment: (r: ChutiRecord) => void;
   onDeleteClick: (r: ChutiRecord) => void;
+  onRequestRemovalClick?: (r: ChutiRecord) => void;
   onEditClick?: (r: ChutiRecord) => void;
   canDeleteRecord?: (r: ChutiRecord) => boolean;
   canEditRecord?: (r: ChutiRecord) => boolean;
@@ -94,6 +95,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   onAddLeaveClick,
   onToggleAdjustment,
   onDeleteClick,
+  onRequestRemovalClick,
   onEditClick,
   canDeleteRecord,
   canEditRecord,
@@ -363,6 +365,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         onAddLeaveClick={onAddLeaveClick}
         onToggleAdjustment={onToggleAdjustment}
         onDeleteClick={onDeleteClick}
+        onRequestRemovalClick={onRequestRemovalClick}
         onEditClick={onEditClick}
         canDeleteRecord={canDeleteRecord}
         canEditRecord={canEditRecord}

@@ -10,6 +10,14 @@ export interface AdminEditRequest {
   adjustment?: boolean;
   notifications?: any[];
   supervisor_ids?: string[];
+  delete_requested?: boolean;
+  delete_reason?: string;
+  delete_requested_at?: string;
+  delete_requester_id?: string;
+  salary_month?: string;
+  salary_year?: string;
+  govt_holiday_date?: string;
+  govt_holiday_name?: string;
 }
 
 export interface ChutiRecord {

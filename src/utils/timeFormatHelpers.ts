@@ -110,3 +110,65 @@ export function usePreferredTimeFormat(): { is24Hour: boolean } {
 
   return { is24Hour };
 }
+
+// Reusable formatters for BD and UK timezone display
+const bdTimeFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Dhaka',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: true,
+});
+
+const ukTimeFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: true,
+});
+
+/**
+ * Formats a submission timestamp into both BD (Asia/Dhaka) and UK (Europe/London) 12-hour AM/PM times.
+ * Display-only: does not modify the underlying instant.
+ */
+export function formatBdAndUkTime(timestampStr: string | null | undefined): {
+  bdTime: string;
+  ukTime: string;
+  displayStr: string;
+} {
+  if (!timestampStr) return { bdTime: '-', ukTime: '-', displayStr: '-' };
+  try {
+    const raw = String(timestampStr).trim();
+    const d = new Date(raw.includes('T') ? raw : (raw.includes('-') || raw.includes(':') ? (raw.length <= 8 ? `1970-01-01T${raw}` : raw) : raw));
+    if (isNaN(d.getTime())) return { bdTime: raw, ukTime: '-', displayStr: raw };
+
+    const formatFromParts = (formatter: Intl.DateTimeFormat) => {
+      const parts = formatter.formatToParts(d);
+      let hour = '';
+      let minute = '';
+      let second = '';
+      let dayPeriod = '';
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        if (p.type === 'hour') hour = p.value;
+        else if (p.type === 'minute') minute = p.value;
+        else if (p.type === 'second') second = p.value;
+        else if (p.type === 'dayPeriod') dayPeriod = p.value.toUpperCase();
+      }
+      return `${hour}:${minute}:${second} ${dayPeriod}`.trim();
+    };
+
+    const bdTime = formatFromParts(bdTimeFormatter);
+    const ukTime = formatFromParts(ukTimeFormatter);
+
+    return {
+      bdTime,
+      ukTime,
+      displayStr: `BD: ${bdTime} | UK: ${ukTime}`,
+    };
+  } catch {
+    return { bdTime: String(timestampStr), ukTime: '-', displayStr: String(timestampStr) };
+  }
+}
+

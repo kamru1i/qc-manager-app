@@ -120,6 +120,25 @@ export interface LeaveSettlement {
   } | null;
 }
 
+export interface LeaveDeleteRequest {
+  id: string;
+  leave_id: string;
+  requester_id: string;
+  reason?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    full_name: string | null;
+    username: string;
+    codename?: string | null;
+    role?: string | null;
+  } | null;
+  chuti?: ChutiRecord | null;
+}
+
 export type FileType = 'Quote' | 'Requote' | 'Requote Van' | 'Requote Bike' | 'Review' | 'Review Van' | 'Review Bike' | 'Individual Review' | 'Other Site' | 'Van' | 'Bike' | 'Sale';
 
 export interface RecordItem {

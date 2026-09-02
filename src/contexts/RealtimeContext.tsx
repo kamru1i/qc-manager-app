@@ -15,6 +15,7 @@ export type RealtimeTable =
   | 'leave_settlements'
   | 'records'
   | 'govt_holiday_responses'
+  | 'leave_delete_requests'
   | 'dismissed_notifications'
   | 'todos'
   | 'todo_access'

@@ -26,6 +26,8 @@ interface AdminLeaveApprovalModalProps {
   adminHolidayNotifications?: any[];
   pendingPasswordResetRequests?: Profile[];
   handleApprovePasswordResetRequest?: (id: string, approve: boolean) => void;
+  pendingRemovalRequests?: any[];
+  handleApproveLeaveRemoval?: (record: any, approve: boolean) => void;
   onSwitchToUserPanel?: () => void;
   userNotificationsCount?: number;
 }
@@ -47,6 +49,8 @@ export function AdminLeaveApprovalModal({
   pendingPasswordResetRequests = [],
   handleApprovePasswordResetRequest = () => {},
   adminHolidayNotifications = [],
+  pendingRemovalRequests = [],
+  handleApproveLeaveRemoval = () => {},
   onSwitchToUserPanel,
   userNotificationsCount = 0,
 }: AdminLeaveApprovalModalProps) {
@@ -95,6 +99,8 @@ export function AdminLeaveApprovalModal({
         pendingPasswordResetRequests={pendingPasswordResetRequests}
         handleApprovePasswordResetRequest={handleApprovePasswordResetRequest}
         adminHolidayNotifications={adminHolidayNotifications}
+        pendingRemovalRequests={pendingRemovalRequests}
+        handleApproveLeaveRemoval={handleApproveLeaveRemoval}
       />
     </Modal>
   );

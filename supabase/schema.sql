@@ -5536,7 +5536,75 @@ CREATE POLICY "Users can read own todo_access" ON public.todo_access
 FOR SELECT TO authenticated
 USING (auth.uid() = user_id);
 
-GRANT ALL ON TABLE public.todo_access TO authenticated, service_role;
+--
+-- Name: leave_delete_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE IF NOT EXISTS public.leave_delete_requests (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    leave_id uuid NOT NULL REFERENCES public.chuti(id) ON DELETE CASCADE,
+    requester_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    reason text,
+    status text DEFAULT 'pending' NOT NULL,
+    reviewed_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    reviewed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT check_delete_request_status CHECK (status IN ('pending', 'approved', 'rejected'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_leave_delete_requests_leave_id ON public.leave_delete_requests USING btree (leave_id);
+CREATE INDEX IF NOT EXISTS idx_leave_delete_requests_requester_id ON public.leave_delete_requests USING btree (requester_id);
+CREATE INDEX IF NOT EXISTS idx_leave_delete_requests_status ON public.leave_delete_requests USING btree (status);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_leave_delete_requests_pending ON public.leave_delete_requests (leave_id) WHERE status = 'pending';
+
+ALTER TABLE public.leave_delete_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "leave_delete_requests_select" ON public.leave_delete_requests
+    FOR SELECT TO authenticated
+    USING (
+      requester_id = auth.uid() OR
+      EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+      )
+    );
+
+CREATE POLICY "leave_delete_requests_insert" ON public.leave_delete_requests
+    FOR INSERT TO authenticated
+    WITH CHECK (
+      requester_id = auth.uid() OR
+      EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+      )
+    );
+
+CREATE POLICY "leave_delete_requests_update" ON public.leave_delete_requests
+    FOR UPDATE TO authenticated
+    USING (
+      EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+      )
+    )
+    WITH CHECK (
+      EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+      )
+    );
+
+CREATE POLICY "leave_delete_requests_delete" ON public.leave_delete_requests
+    FOR DELETE TO authenticated
+    USING (
+      EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+      )
+    );
+
+GRANT ALL ON TABLE public.leave_delete_requests TO authenticated, service_role;
 
 --
 -- PostgreSQL database dump complete

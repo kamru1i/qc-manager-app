@@ -14,6 +14,7 @@ import { AdjustmentModal } from '@/components/leave-tracker/modals/AdjustmentMod
 import { SupervisorApprovalModal } from '@/components/leave-tracker/modals/SupervisorApprovalModal';
 import { RevisionPromptModal } from '@/components/leave-tracker/modals/RevisionPromptModal';
 import { AdminLeaveApprovalModal } from '@/components/leave-tracker/modals/AdminLeaveApprovalModal';
+import { RequestRemovalModal } from '@/components/leave-tracker/modals/RequestRemovalModal';
 import { AdminEditRecordModal } from '@/components/leave-tracker/modals/AdminEditRecordModal';
 import { AdminCancelAdjustmentModal } from '@/components/leave-tracker/modals/AdminCancelAdjustmentModal';
 import { AdminCreateUserModal } from '@/components/leave-tracker/modals/AdminCreateUserModal';
@@ -131,6 +132,12 @@ export const DashboardModals = () => {
     submitRevisionWithReason,
     showAdminAddLeaveModal,
     setShowAdminAddLeaveModal,
+    showRequestRemovalModal,
+    setShowRequestRemovalModal,
+    removalRecord,
+    handleUserSubmitRemoval,
+    submittingRemoval,
+    handleApproveLeaveRemoval,
   } = chutiOps;
 
   const {
@@ -394,6 +401,7 @@ export const DashboardModals = () => {
         adminHolidayNotifications={adminHolidayNotifications}
         pendingPasswordResetRequests={pendingPasswordResetRequests}
         handleApprovePasswordResetRequest={handleApprovePasswordResetRequest}
+        handleApproveLeaveRemoval={handleApproveLeaveRemoval}
         onSwitchToUserPanel={() => {
           sessionStorage.setItem('adminNotificationMode', 'user');
           setShowLeaveApprovalModal(false);
@@ -402,6 +410,14 @@ export const DashboardModals = () => {
           }, 50);
         }}
         userNotificationsCount={unreadUserNotificationsCount}
+      />
+
+      <RequestRemovalModal
+        isOpen={showRequestRemovalModal}
+        onClose={() => setShowRequestRemovalModal(false)}
+        record={removalRecord}
+        onSubmit={handleUserSubmitRemoval}
+        submitting={submittingRemoval}
       />
 
       <AdminEditRecordModal

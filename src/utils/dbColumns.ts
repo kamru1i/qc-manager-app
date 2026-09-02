@@ -53,3 +53,6 @@ export const LEADERBOARD_ARCHIVE_COLUMNS =
 export const QUOTATION_MISTAKE_COLUMNS =
   'id, date, filename, branch, user_id, codename, mistake_details, penalty, created_by, updated_by, created_at, updated_at';
 
+export const LEAVE_DELETE_REQUEST_COLUMNS =
+  'id, leave_id, requester_id, reason, status, reviewed_by, reviewed_at, created_at, updated_at';
+

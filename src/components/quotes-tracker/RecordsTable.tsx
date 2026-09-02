@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { RecordItem } from "@/types";
 import { formatDate, formatDateToYYYYMMDD, formatTimeToAMPM, formatTimeToHHMM } from "@/utils/quotesDashboardHelpers";
+import { formatBdAndUkTime } from "@/utils/timeFormatHelpers";
 
 interface RecordsTableProps {
   records: RecordItem[];
@@ -912,23 +913,27 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                           className="bg-theme-card-container border border-theme-border-active rounded px-1 py-0.5 text-theme-text-primary text-[11px] w-[82px] max-w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold mt-0.5 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
                         />
                       ) : (
-                        <span
-                          onClick={(e) =>
-                            handleCellClick(r, "submitted_time", e)
-                          }
-                          className={`text-[10px] text-theme-text-muted px-1 py-0.5 rounded transition-colors whitespace-nowrap ${
-                            isAdmin || r.user_id === currentUserId
-                              ? "cursor-text hover:bg-theme-border/20"
-                              : ""
-                          }`}
-                          title={
-                            isAdmin || r.user_id === currentUserId
-                              ? "Triple-click to edit time"
-                              : ""
-                          }
-                        >
-                          {formatTimeToAMPM(getCellValue(r, "submitted_at"))}
-                        </span>
+                        (() => {
+                          const timeInfo = formatBdAndUkTime(getCellValue(r, "submitted_at"));
+                          return (
+                            <div
+                              onClick={(e) =>
+                                handleCellClick(r, "submitted_time", e)
+                              }
+                              className={`text-[10px] text-theme-text-muted px-1 py-0.5 rounded transition-colors whitespace-nowrap flex flex-col items-start leading-tight ${
+                                isAdmin || r.user_id === currentUserId
+                                  ? "cursor-text hover:bg-theme-border/20"
+                                  : ""
+                              }`}
+                              title={
+                                `${timeInfo.displayStr}${isAdmin || r.user_id === currentUserId ? "\nTriple-click to edit time" : ""}`
+                              }
+                            >
+                              <span className="font-medium text-theme-text-secondary">BD: {timeInfo.bdTime}</span>
+                              <span className="text-[9px] text-theme-text-muted/75 font-mono">UK: {timeInfo.ukTime}</span>
+                            </div>
+                          );
+                        })()
                       )}
                     </div>
                   </td>

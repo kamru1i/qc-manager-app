@@ -54,7 +54,7 @@ const ukFormatter = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
-  hour12: false,
+  hour12: true,
 });
 
 function formatClockParts(formatter: Intl.DateTimeFormat, use24Hour: boolean = false) {
@@ -106,7 +106,7 @@ export const LiveClock: React.FC<LiveClockProps> = ({
         setBdClock(formatClockParts(bdFormatter, false));
       }
       if (showUk) {
-        setUkClock(formatClockParts(ukFormatter, true));
+        setUkClock(formatClockParts(ukFormatter, false));
       }
     };
 

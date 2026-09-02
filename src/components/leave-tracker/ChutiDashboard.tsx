@@ -405,6 +405,7 @@ export default function ChutiDashboard({
     handleSupervisorApproveChuti,
     handleApproveChutiRequest,
     triggerDeleteRecord,
+    handleOpenRequestRemoval,
   } = chutiOps;
 
   // Adjustment operations controller
@@ -875,6 +876,7 @@ export default function ChutiDashboard({
             }}
             onToggleAdjustment={handleToggleAdjustmentClick}
             onDeleteClick={triggerDeleteRecord}
+            onRequestRemovalClick={handleOpenRequestRemoval}
             onEditClick={(record) => {
               setEditingRecord(record);
               onChutiTabChange('add_leave');

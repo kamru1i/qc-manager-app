@@ -57,6 +57,17 @@ export const getAdjustedLeaveStats = (
 export const getLatestActionComment = (comment: string | null | undefined, record?: Partial<ChutiRecord>): string => {
   // If record has an active adjustment, show the latest adjustment action
   if (record && (record.adjustment || record.adjusted_hour)) {
+    if (comment) {
+      const matchWithGovt = comment.match(/Adjusted with Government Holiday[^\n|\]]+/i);
+      if (matchWithGovt) return matchWithGovt[0].trim();
+      const matchWithSalary = comment.match(/(?:Adjusted with|adjusted with)\s+([A-Za-z]+\s+\d{4}\s+salary(?:[^\n|\]]*))/i);
+      if (matchWithSalary) return `Adjusted with ${matchWithSalary[1].trim()}`;
+      const matchSalaryGeneric = comment.match(/Adjusted with [^|\n\]]+/i);
+      if (matchSalaryGeneric) return matchSalaryGeneric[0].trim();
+    }
+    if (record.reserve_holiday && record.reserve_holiday.includes('—')) {
+      return `Adjusted with Govt Holiday — ${record.reserve_holiday.split('—')[0].trim()}`;
+    }
     if (record.reserve_holiday === 'Salary' || (comment && /Adjusted:\s*Salary|Adjusted with Salary/i.test(comment))) {
       return 'Adjusted with Salary';
     }
@@ -246,18 +257,37 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
       const isOfficeLeave = r.adjustment && (r.comment?.includes("Office Leave") || r.reserve_holiday === "Office Leave" || false);
       const isEidFitr = r.adjustment && (r.comment?.includes("Eid-ul-Fitr") || r.reserve_holiday === "Eid-ul-Fitr" || false);
       const isEidAdha = r.adjustment && (r.comment?.includes("Eid-ul-Adha") || r.reserve_holiday === "Eid-ul-Adha" || false);
-      const isGovtHoliday = r.adjustment && (r.comment?.includes("Govt Holiday") || r.reserve_holiday === "Govt Holiday" || false);
-      const hasCategoryAdj = isOfficeLeave || isEidFitr || isEidAdha || isGovtHoliday;
+      const isGovtHoliday = r.adjustment && (
+        r.comment?.includes("Govt Holiday") || 
+        r.comment?.includes("Government Holiday") || 
+        r.reserve_holiday === "Govt Holiday" || 
+        (typeof r.reserve_holiday === 'string' && r.reserve_holiday.includes('—')) || 
+        false
+      );
+      const isSalary = r.adjustment && (
+        r.comment?.toLowerCase().includes("salary") || 
+        r.reserve_holiday === "Salary" || 
+        false
+      );
+      const hasCategoryAdj = isOfficeLeave || isEidFitr || isEidAdha || isGovtHoliday || isSalary;
 
       if (r.leave_type === 'Full Leave') {
-        totalFullLeaves++;
-        if (hasCategoryAdj) {
-          if (isOfficeLeave) officeLeavesTaken++;
-          else if (isEidFitr) eidFitrTaken++;
-          else if (isEidAdha) eidAdhaTaken++;
-          else if (isGovtHoliday) govtHolidaysTaken++;
-        } else if (!r.adjustment) {
+        if (!r.adjustment) {
+          totalFullLeaves++;
           officeLeavesTaken++;
+        } else if (hasCategoryAdj) {
+          if (isOfficeLeave) {
+            totalFullLeaves++;
+            officeLeavesTaken++;
+          } else if (isEidFitr) {
+            eidFitrTaken++;
+          } else if (isEidAdha) {
+            eidAdhaTaken++;
+          } else if (isGovtHoliday) {
+            govtHolidaysTaken++;
+          } else if (isSalary) {
+            // Salary-adjusted full leave: does not consume office leave / full leave quota
+          }
         }
       } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type)) {
         if (r.leave_hour) {
