@@ -1125,7 +1125,7 @@ export function AddLeave({
                   <span className="block text-[11px] font-semibold text-theme-text-muted">
                     Database Stored Comment:
                   </span>
-                  <p className="text-xs text-theme-text-primary whitespace-pre-wrap font-mono break-words">
+                  <p className="text-xs text-theme-text-primary whitespace-pre-wrap font-mono wrap-break-word">
                     {editingRecord.comment ? editingRecord.comment : <span className="text-theme-text-muted italic">(No previous comment recorded)</span>}
                   </p>
                 </div>
