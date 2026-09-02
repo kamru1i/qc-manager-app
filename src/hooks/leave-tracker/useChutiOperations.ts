@@ -776,26 +776,26 @@ export const useChutiOperations = ({
       );
       const existingNotifications = getExistingNotifications(adminEditRecord);
 
-      const approvalsPrefix = getApprovalsPrefix(adminEditRecord.comment);
-      const cleanEnteredComment = adminEditComment.trim();
-      let baseComment = cleanEnteredComment
-        ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
-        : (approvalsPrefix || '');
+      let finalCommentWithLog: string | null = adminEditComment.trim() || null;
 
-      let changeDescription = '';
-      if (adminEditRecord.date !== adminEditDate) changeDescription += `Date (${adminEditRecord.date} -> ${adminEditDate}), `;
-      if (adminEditRecord.leave_type !== adminEditLeaveType) changeDescription += `Leave Type (${adminEditRecord.leave_type} -> ${adminEditLeaveType}), `;
-      const formattedLeaveHour = isFullLeave ? '00:00' : adminEditLeaveHour;
-      const originalLeaveHourStr = adminEditRecord.leave_hour ? adminEditRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00';
-      if (originalLeaveHourStr !== formattedLeaveHour) changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
-      const oldCleanComment = getCleanComment(adminEditRecord.comment);
-      if (oldCleanComment !== cleanEnteredComment) changeDescription += `Comment updated, `;
-      changeDescription = changeDescription.replace(/,\s*$/, '');
-      let finalCommentWithLog = baseComment;
-      if (changeDescription) {
-        if (isSuperadmin(profile)) {
-          finalCommentWithLog = baseComment;
-        } else {
+      if (!isSuperadmin(profile)) {
+        const approvalsPrefix = getApprovalsPrefix(adminEditRecord.comment);
+        const cleanEnteredComment = adminEditComment.trim();
+        let baseComment = cleanEnteredComment
+          ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
+          : (approvalsPrefix || '');
+
+        let changeDescription = '';
+        if (adminEditRecord.date !== adminEditDate) changeDescription += `Date (${adminEditRecord.date} -> ${adminEditDate}), `;
+        if (adminEditRecord.leave_type !== adminEditLeaveType) changeDescription += `Leave Type (${adminEditRecord.leave_type} -> ${adminEditLeaveType}), `;
+        const formattedLeaveHour = isFullLeave ? '00:00' : adminEditLeaveHour;
+        const originalLeaveHourStr = adminEditRecord.leave_hour ? adminEditRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00';
+        if (originalLeaveHourStr !== formattedLeaveHour) changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
+        const oldCleanComment = getCleanComment(adminEditRecord.comment);
+        if (oldCleanComment !== cleanEnteredComment) changeDescription += `Comment updated, `;
+        changeDescription = changeDescription.replace(/,\s*$/, '');
+        finalCommentWithLog = baseComment;
+        if (changeDescription) {
           const adminName = profile?.username?.toUpperCase() || 'ADMIN';
           finalCommentWithLog = baseComment + `\n[Admin Edit by ${adminName}: ${changeDescription}]`;
         }

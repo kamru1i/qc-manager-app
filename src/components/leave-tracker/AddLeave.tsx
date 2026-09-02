@@ -79,10 +79,11 @@ export function AddLeave({
     return 'None';
   });
   const [adjustShortLeave, setAdjustShortLeave] = useState(() => editingRecord ? !!editingRecord.adjust_short_leave : false);
+  const isSuperAdminUser = isSuperadmin(profile);
   const [signInTime, setSignInTime] = useState(() => editingRecord?.sign_in_time ? editingRecord.sign_in_time.substring(0, 5) : '13:00');
   const [signOutTime, setSignOutTime] = useState(() => editingRecord?.sign_out_time ? editingRecord.sign_out_time.substring(0, 5) : '22:30');
   const [leaveHour, setLeaveHour] = useState(() => editingRecord?.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00');
-  const [comment, setComment] = useState(() => getCleanComment(editingRecord?.comment) || '');
+  const [comment, setComment] = useState(() => (isSuperAdminUser ? (editingRecord?.comment || '') : (getCleanComment(editingRecord?.comment) || '')));
   const [adjustJummah, setAdjustJummah] = useState(() => {
     if (editingRecord) {
       return !!editingRecord.comment?.includes('20 Min Adjusted with Jummah Prayer');
@@ -113,7 +114,7 @@ export function AddLeave({
   const isSupervisorRole = profile?.role === 'supervisor';
   const isUserRole = profile?.role === 'user';
   // Admin direct edit: no re-approval needed. Any edit on an approved record in dashboard requires re-approval and goes to approval queue.
-  const needsReapproval = !adminDirectEdit && !!editingRecord && (editingRecord.status === 'approved' || editingRecord.status === 'settled');
+  const needsReapproval = !adminDirectEdit && !isSuperAdminUser && !!editingRecord && (editingRecord.status === 'approved' || editingRecord.status === 'settled');
 
   const targetProfileId = targetProfile?.id;
   const defaultSignIn = targetProfile?.default_sign_in;
@@ -513,7 +514,11 @@ export function AddLeave({
 
       let finalStatus = editingRecord.status;
 
-      if (adminDirectEdit) {
+      if (isSuperAdminUser) {
+        // ─── SUPERADMIN DIRECT EDIT — Zero trace, save exactly what superadmin wrote ───
+        commentWithCategory = comment.trim();
+        // Keep finalStatus unchanged — superadmin edit doesn't require re-approval
+      } else if (adminDirectEdit) {
         // ─── ADMIN DIRECT EDIT — no re-approval, status stays as-is ───
         const approvalsPrefix = getApprovalsPrefix(editingRecord.comment);
         const cleanEnteredComment = comment.trim();
@@ -1105,6 +1110,45 @@ export function AddLeave({
                 });
               }}
             />
+
+            {isSuperAdminUser && editingRecord && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-2 mt-2 font-sans">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                    🛡️ Superadmin Direct Comment Control (Trace-Free)
+                  </span>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setComment(getCleanComment(editingRecord.comment) || '')}
+                      className="px-2 py-0.5 text-[11px] bg-theme-card-bg/80 hover:bg-theme-card-bg text-theme-text-secondary border border-theme-border-input rounded-md cursor-pointer transition-all"
+                      title="Strip all edit logs and keep only clean comment text"
+                    >
+                      Keep Clean Only
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComment(editingRecord.comment || '')}
+                      className="px-2 py-0.5 text-[11px] bg-theme-card-bg/80 hover:bg-theme-card-bg text-theme-text-secondary border border-theme-border-input rounded-md cursor-pointer transition-all"
+                      title="Restore full stored comment including all previous lines"
+                    >
+                      Restore Raw
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComment('')}
+                      className="px-2 py-0.5 text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded-md cursor-pointer transition-all"
+                      title="Completely wipe comment"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-theme-text-muted leading-relaxed">
+                  You are viewing and editing all previous comment lines. You can edit, add, or remove any part of the comment without leaving any trace or audit log on the record.
+                </p>
+              </div>
+            )}
 
             {needsReapproval && (
               <div className="space-y-1 pt-2 border-t border-theme-border-input/50">

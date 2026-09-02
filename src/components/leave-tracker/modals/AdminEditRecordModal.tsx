@@ -5,9 +5,9 @@ import { Edit, RefreshCw, History } from "lucide-react";
 import { Profile } from "@/types";
 import { ChutiRecord } from "@/utils/offlineSync";
 import { ChutiFormFields } from "@/components/leave-tracker/ChutiFormFields";
-import { getFullCommentHistory } from "@/utils/dashboardHelpers";
+import { getFullCommentHistory, getCleanComment } from "@/utils/dashboardHelpers";
 import { Modal } from "@/components/common/Modal";
-import { isAdminRole } from '@/utils/permissionService';
+import { isAdminRole, isSuperadmin } from '@/utils/permissionService';
 
 interface AdminEditRecordModalProps {
   showAdminEditModal: boolean;
@@ -104,7 +104,38 @@ export function AdminEditRecordModal({
           onDateErrorChange={setHasDateError}
         />
 
-        {adminEditRecord.comment && (
+        {isSuperadmin(profile) && (
+          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-2 font-sans">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                🛡️ Superadmin Direct Comment Control (Trace-Free)
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setAdminEditComment(getCleanComment(adminEditRecord.comment) || '')}
+                  className="px-2 py-0.5 text-[11px] bg-theme-card-bg/80 hover:bg-theme-card-bg text-theme-text-secondary border border-theme-border-input rounded-md cursor-pointer transition-all"
+                  title="Strip all edit logs and keep only clean comment text"
+                >
+                  Keep Clean Only
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminEditComment('')}
+                  className="px-2 py-0.5 text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded-md cursor-pointer transition-all"
+                  title="Completely wipe all comments and logs"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+            <p className="text-[11px] text-theme-text-muted leading-relaxed">
+              You are viewing and editing the full comment history. You can edit, add, or remove any part of the comment without leaving any trace or audit log on the record.
+            </p>
+          </div>
+        )}
+
+        {!isSuperadmin(profile) && adminEditRecord.comment && (
           <div className="mt-2 p-3 bg-theme-page-bg/60 border border-theme-border-input/80 rounded-xl text-xs leading-relaxed font-sans">
             <div className="font-semibold text-theme-text-muted flex items-center gap-1.5 mb-1.5">
               <History className="h-3.5 w-3.5 text-blue-400 shrink-0" /> Full History & Audit Trail:
