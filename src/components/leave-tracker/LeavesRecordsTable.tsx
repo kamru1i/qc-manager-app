@@ -6,7 +6,7 @@ import { Profile } from '@/types';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
-import { sortChutiRecordsDescending, getLatestActionComment, getFullCommentHistory } from '@/utils/dashboardHelpers';
+import { sortChutiRecordsDescending, getLatestActionComment, getLeaveDisplayComment, getFullCommentHistory } from '@/utils/dashboardHelpers';
 
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 
@@ -730,7 +730,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                       )}
                       {/* Comment Column */}
                       <td className="px-6 py-4 text-sm text-theme-text-muted max-w-37.5 truncate text-center" title={getFullCommentHistory(r.comment, r)}>
-                        {getLatestActionComment(r.comment, r) || '-'}
+                        {getLeaveDisplayComment(r) || '-'}
                       </td>
                       {/* Animated selection checkbox column in place of Action */}
                       <td

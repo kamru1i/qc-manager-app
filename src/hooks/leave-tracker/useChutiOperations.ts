@@ -13,7 +13,7 @@ import {
   removeCacheItems
 } from '@/utils/offlineSync';
 import { generateUUID } from '@/utils/idbStoreFactory';
-import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError, getMaxDaysInMonth } from '@/utils/dashboardHelpers';
+import { formatDate, calculateLeaveOrOvertime, getExistingNotifications, createNotification, calculateStats, parseIntervalToMinutes, GlobalSettings, checkIfHolidayOrWeekend, getLeaveValidationError, getMaxDaysInMonth, getCleanComment, getApprovalsPrefix } from '@/utils/dashboardHelpers';
 import { toast } from 'sonner';
 import { isAdminRole } from '@/utils/permissionService';
 import { chutiService } from '@/services/chutiService';
@@ -776,6 +776,27 @@ export const useChutiOperations = ({
       );
       const existingNotifications = getExistingNotifications(adminEditRecord);
 
+      const approvalsPrefix = getApprovalsPrefix(adminEditRecord.comment);
+      const cleanEnteredComment = adminEditComment.trim();
+      let baseComment = cleanEnteredComment
+        ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
+        : (approvalsPrefix || '');
+
+      let changeDescription = '';
+      if (adminEditRecord.date !== adminEditDate) changeDescription += `Date (${adminEditRecord.date} -> ${adminEditDate}), `;
+      if (adminEditRecord.leave_type !== adminEditLeaveType) changeDescription += `Leave Type (${adminEditRecord.leave_type} -> ${adminEditLeaveType}), `;
+      const formattedLeaveHour = isFullLeave ? '00:00' : adminEditLeaveHour;
+      const originalLeaveHourStr = adminEditRecord.leave_hour ? adminEditRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00';
+      if (originalLeaveHourStr !== formattedLeaveHour) changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
+      const oldCleanComment = getCleanComment(adminEditRecord.comment);
+      if (oldCleanComment !== cleanEnteredComment) changeDescription += `Comment updated, `;
+      changeDescription = changeDescription.replace(/,\s*$/, '');
+      let finalCommentWithLog = baseComment;
+      if (changeDescription) {
+        const adminName = profile?.username?.toUpperCase() || 'ADMIN';
+        finalCommentWithLog = baseComment + `\n[Admin Edit by ${adminName}: ${changeDescription}]`;
+      }
+
       const updates = {
         date: adminEditDate,
         leave_type: adminEditLeaveType,
@@ -786,7 +807,7 @@ export const useChutiOperations = ({
         leave_hour: isFullLeave ? null : `${adminEditLeaveHour}:00`,
         reserve_holiday: null,
         reserve_adjustment_status: 'none',
-        comment: adminEditComment || null,
+        comment: finalCommentWithLog || null,
         is_edited: true,
         admin_edit_request: {
           notifications: [...existingNotifications, newNotification]

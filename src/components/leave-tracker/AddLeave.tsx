@@ -23,7 +23,9 @@ import {
   addBreakToShortLeave,
   applyBreakComment,
   parseBreakMinutesFromComment,
-  getMaxDaysInMonth
+  getMaxDaysInMonth,
+  getCleanComment,
+  getApprovalsPrefix
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 
@@ -82,7 +84,7 @@ export function AddLeave({
   const [signInTime, setSignInTime] = useState(() => editingRecord?.sign_in_time ? editingRecord.sign_in_time.substring(0, 5) : '13:00');
   const [signOutTime, setSignOutTime] = useState(() => editingRecord?.sign_out_time ? editingRecord.sign_out_time.substring(0, 5) : '22:30');
   const [leaveHour, setLeaveHour] = useState(() => editingRecord?.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00');
-  const [comment, setComment] = useState(() => editingRecord?.comment || '');
+  const [comment, setComment] = useState(() => getCleanComment(editingRecord?.comment) || '');
   const [adjustJummah, setAdjustJummah] = useState(() => {
     if (editingRecord) {
       return !!editingRecord.comment?.includes('20 Min Adjusted with Jummah Prayer');
@@ -515,7 +517,12 @@ export function AddLeave({
 
       if (adminDirectEdit) {
         // ─── ADMIN DIRECT EDIT — no re-approval, status stays as-is ───
-        let baseComment = editingRecord.comment || '';
+        const approvalsPrefix = getApprovalsPrefix(editingRecord.comment);
+        const cleanEnteredComment = comment.trim();
+        let baseComment = cleanEnteredComment
+          ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
+          : (approvalsPrefix || '');
+
         if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && isFriday(date) && adjustJummah) {
           if (!baseComment.includes(jummahMsg)) {
             baseComment = baseComment ? `${baseComment} | ${jummahMsg}` : jummahMsg;
@@ -539,7 +546,8 @@ export function AddLeave({
         const formattedLeaveHour = leaveType === 'Full Leave' ? '00:00' : leaveHour;
         const originalLeaveHourStr = editingRecord.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00';
         if (originalLeaveHourStr !== formattedLeaveHour) changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
-        if (editingRecord.comment !== comment) changeDescription += `Comment updated, `;
+        const oldCleanComment = getCleanComment(editingRecord.comment);
+        if (oldCleanComment !== cleanEnteredComment) changeDescription += `Comment updated, `;
         changeDescription = changeDescription.replace(/,\s*$/, '');
         if (changeDescription) {
           const adminName = profile?.username?.toUpperCase() || 'ADMIN';
@@ -551,7 +559,12 @@ export function AddLeave({
         // Keep finalStatus unchanged — admin edit doesn't require re-approval
       } else if (needsReapproval) {
         // ─── SUPERVISOR / USER re-approval flow ───
-        let baseComment = editingRecord.comment || '';
+        const approvalsPrefix = getApprovalsPrefix(editingRecord.comment);
+        const cleanEnteredComment = comment.trim();
+        let baseComment = cleanEnteredComment
+          ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
+          : (approvalsPrefix || '');
+
         if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && isFriday(date) && adjustJummah) {
           if (!baseComment.includes(jummahMsg)) {
             baseComment = baseComment ? `${baseComment} | ${jummahMsg}` : jummahMsg;
@@ -580,8 +593,9 @@ export function AddLeave({
         if (originalLeaveHourStr !== formattedLeaveHour) {
           changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
         }
-        if (editingRecord.comment !== comment) {
-          changeDescription += `Original Comment (${editingRecord.comment || ''} -> ${comment || ''}), `;
+        const oldCleanComment = getCleanComment(editingRecord.comment);
+        if (oldCleanComment !== cleanEnteredComment) {
+          changeDescription += `Comment updated (${oldCleanComment || 'None'} -> ${cleanEnteredComment || 'None'}), `;
         }
 
         changeDescription = changeDescription.replace(/,\s*$/, '');

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord, saveOfflineUpdate } from '@/utils/offlineSync';
-import { formatDate, formatTimeToAMPM, getDetailedLeaveLabel, getExistingNotifications, createNotification, formatLeaveDuration } from '@/utils/dashboardHelpers';
+import { formatDate, formatTimeToAMPM, getDetailedLeaveLabel, getExistingNotifications, createNotification, formatLeaveDuration, getCleanComment, getApprovalsPrefix } from '@/utils/dashboardHelpers';
 import { isAdminRole } from '@/utils/permissionService';
 
 interface useAdjustmentOperationsParams {
@@ -140,7 +140,8 @@ export const useAdjustmentOperations = ({
     overrideAdjustShortLeave?: boolean,
     adjustmentCategoryInput?: string,
     specificHoliday?: { date: string; name: string } | null,
-    salaryInfo?: { month: string; year: string } | null
+    salaryInfo?: { month: string; year: string } | null,
+    generalDetails?: string | null
   ) => {
     if (!adjustmentRecord || submitting) return;
     setSubmitting(true);
@@ -173,14 +174,14 @@ export const useAdjustmentOperations = ({
 
       if (selectedCat === 'Salary') {
         const salaryLabel = salaryInfo ? `${salaryInfo.month} ${salaryInfo.year}` : `${new Date().toLocaleString('en-US', { month: 'long' })} ${new Date().getFullYear()}`;
-        let cleanComment = record.comment || '';
-        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
-        cleanComment = cleanComment.replace(/Leave dated [^\n|\]]+ was adjusted with[^\n|\]]*(?:\s*\|\s*)?/i, '').trim();
-        const finalComment = `Leave dated ${formatDate(record.date)} was adjusted with ${salaryLabel} salary deduction.${cleanComment ? ` | ${cleanComment}` : ''}`;
+        const cleanComment = getCleanComment(record.comment);
+        const approvalsPrefix = getApprovalsPrefix(record.comment);
+        const adjMessage = `Adjusted with ${salaryLabel} salary deduction.`;
+        const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}${adjMessage}${cleanComment ? ` | ${cleanComment}` : ''}`;
         requestedUpdates = { 
           adjustment: true, 
           adjusted_hour: null, 
-          adjust_short_leave: false,
+          adjust_short_leave: false, 
           reserve_holiday: 'Salary',
           comment: finalComment || null,
           admin_edit_request: {
@@ -189,10 +190,10 @@ export const useAdjustmentOperations = ({
           }
         };
       } else if (selectedCat === 'Govt Holiday' && specificHoliday) {
-        let cleanComment = record.comment || '';
-        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
-        cleanComment = cleanComment.replace(/Adjusted with Government Holiday[^\n|\]]*(?:\s*\|\s*)?/i, '').trim();
-        const finalComment = `Adjusted with Government Holiday on ${formatDate(specificHoliday.date)} — ${specificHoliday.name}${cleanComment ? ` | ${cleanComment}` : ''}`;
+        const cleanComment = getCleanComment(record.comment);
+        const approvalsPrefix = getApprovalsPrefix(record.comment);
+        const adjMessage = `Adjusted with Government Holiday on ${formatDate(specificHoliday.date)} — ${specificHoliday.name}`;
+        const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}${adjMessage}${cleanComment ? ` | ${cleanComment}` : ''}`;
         requestedUpdates = {
           adjustment: true,
           adjusted_hour: null,
@@ -204,11 +205,28 @@ export const useAdjustmentOperations = ({
             holiday_name: specificHoliday.name,
           }
         };
+      } else if (selectedCat === 'General Adjustment' || (record.leave_type === 'Full Leave' && selectedCat === 'None')) {
+        const reason = generalDetails?.trim() || '';
+        const cleanComment = getCleanComment(record.comment);
+        const approvalsPrefix = getApprovalsPrefix(record.comment);
+        const adjMessage = reason ? `Adjusted with General Adjustment — ${reason}` : 'Adjusted with General Adjustment';
+        const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}${adjMessage}${cleanComment ? ` | ${cleanComment}` : ''}`;
+        requestedUpdates = {
+          adjustment: true,
+          adjusted_hour: null,
+          adjust_short_leave: false,
+          reserve_holiday: 'General Adjustment',
+          comment: finalComment || null,
+          admin_edit_request: {
+            adjustment_source: 'General Adjustment',
+            adjustment_reason: reason,
+          }
+        };
       } else if (isPartialLeave) {
         if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
-          let cleanComment = record.comment || '';
-          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime)(?:\s*\|\s*)?/g, '').trim();
-          const finalComment = `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`;
+          const cleanComment = getCleanComment(record.comment);
+          const approvalsPrefix = getApprovalsPrefix(record.comment);
+          const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`;
           requestedUpdates = {
             adjustment: true,
             adjusted_hour: null,
@@ -217,9 +235,9 @@ export const useAdjustmentOperations = ({
             comment: finalComment || null
           };
         } else if (adjustmentType === 'full') {
-          let cleanComment = record.comment || '';
-          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime)(?:\s*\|\s*)?/g, '').trim();
-          const finalComment = `Adjusted: Overtime${cleanComment ? ` | ${cleanComment}` : ''}`;
+          const cleanComment = getCleanComment(record.comment);
+          const approvalsPrefix = getApprovalsPrefix(record.comment);
+          const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: Overtime${cleanComment ? ` | ${cleanComment}` : ''}`;
           requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
         } else {
           const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
@@ -228,25 +246,24 @@ export const useAdjustmentOperations = ({
             setSubmitting(false);
             return;
           }
-          let cleanComment = record.comment || '';
-          cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime|partial \([0-9:]+\))(?:\s*\|\s*)?/g, '').trim();
-          const finalComment = `Adjusted: partial (${partialAdjustmentTime})${cleanComment ? ` | ${cleanComment}` : ''}`;
+          const cleanComment = getCleanComment(record.comment);
+          const approvalsPrefix = getApprovalsPrefix(record.comment);
+          const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: partial (${partialAdjustmentTime})${cleanComment ? ` | ${cleanComment}` : ''}`;
           requestedUpdates = { adjustment: false, adjusted_hour: `${partialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
         }
       } else if (record.leave_type === 'Overtime') {
         const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : adjustShortLeaveOption;
-        let cleanComment = record.comment || '';
-        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Short Leave)(?:\s*\|\s*)?/g, '').trim();
-        const finalComment = shouldAdjust ? `Adjusted: Short Leave${cleanComment ? ` | ${cleanComment}` : ''}` : cleanComment;
+        const cleanComment = getCleanComment(record.comment);
+        const approvalsPrefix = getApprovalsPrefix(record.comment);
+        const finalComment = shouldAdjust ? `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: Short Leave${cleanComment ? ` | ${cleanComment}` : ''}` : (cleanComment ? `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}${cleanComment}` : (approvalsPrefix || null));
         requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: shouldAdjust, reserve_holiday: null, comment: finalComment || null };
       } else {
         const isCat = selectedCat !== 'None';
-        let cleanComment = record.comment || '';
-        // Clean any existing prefixes
-        cleanComment = cleanComment.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary)(?:\s*\|\s*)?/g, '').trim();
+        const cleanComment = getCleanComment(record.comment);
+        const approvalsPrefix = getApprovalsPrefix(record.comment);
         const finalComment = isCat 
-          ? `Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`
-          : cleanComment;
+          ? `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`
+          : (cleanComment ? `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}${cleanComment}` : (approvalsPrefix || null));
 
         requestedUpdates = { 
           adjustment: true, 
@@ -271,6 +288,9 @@ export const useAdjustmentOperations = ({
         } else if (selectedCat === 'Govt Holiday' && specificHoliday) {
           notifTitle = 'Government Holiday Adjustment Applied 📅';
           notifBody = `Your leave for ${formatDate(record.date)} has been adjusted with the Government Holiday of ${formatDate(specificHoliday.date)} — ${specificHoliday.name}.`;
+        } else if (selectedCat === 'General Adjustment' || (record.leave_type === 'Full Leave' && selectedCat === 'None')) {
+          notifTitle = 'Leave Adjusted (General) ⚙️';
+          notifBody = `Your Full Leave on ${formatDate(record.date)} has been adjusted: ${generalDetails?.trim() || 'General Adjustment'}.`;
         } else {
           const leaveLabel = getDetailedLeaveLabel(record);
           const isShortOrOvertime = ['Short Leave', 'Early Leave', 'Late Join', 'Overtime'].includes(record.leave_type);

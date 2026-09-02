@@ -52,7 +52,40 @@ export const getAdjustedLeaveStats = (
   };
 };
 
-// Extracts only the latest action/comment for concise table display
+export const getApprovalsPrefix = (comment: string | null | undefined): string => {
+  if (!comment) return '';
+  const approvals: string[] = [];
+  const appRegex = /([A-Za-z0-9_-]+\s+(?:Approved|Added))/g;
+  let match;
+  while ((match = appRegex.exec(comment)) !== null) {
+    approvals.push(match[1]);
+  }
+  return approvals.join(' | ');
+};
+
+// Helper function to clean supervisor/admin approval prefix, system adjustments, and edit logs from comment
+export const getCleanComment = (comment: string | null | undefined): string => {
+  if (!comment) return '';
+  let clean = comment;
+  
+  // Clean approval/added/revision prefixes (e.g. "YK920 Approved | NS720 Added | ")
+  const prefixRegex = /^(?:[A-Za-z0-9_-]+\s+(?:Approved|Added|Revision:[^|\n\]]+))(?:\s*\|\s*)?/;
+  while (prefixRegex.test(clean)) {
+    clean = clean.replace(prefixRegex, '');
+  }
+  
+  // Clean system adjustment prefixes
+  clean = clean.replace(/^Adjusted:\s*(?:Office Leave|Eid-ul-Fitr|Eid-ul-Adha|Govt Holiday|Salary|Overtime|Short Leave|General Adjustment|[^\n|\]]+)(?:\s*\|\s*)?/i, '');
+  clean = clean.replace(/^Adjusted with\s+[^\n|\]]+(?:\s*\|\s*)?/i, '');
+  clean = clean.replace(/^Leave dated [^\n|\]]+ was adjusted with[^\n|\]]*(?:\s*\|\s*)?/i, '');
+  
+  // Clean trailing or embedded edit log blocks
+  clean = clean.replace(/\n?\[(?:Admin )?Edit(?:ed)? by [^\]]+\]/g, '');
+
+  return clean.trim();
+};
+
+// Extracts concise adjustment or edit description
 export const getLatestActionComment = (comment: string | null | undefined, record?: Partial<ChutiRecord>): string => {
   // If record has an active adjustment, show the latest adjustment action
   if (record && (record.adjustment || record.adjusted_hour)) {
@@ -61,6 +94,8 @@ export const getLatestActionComment = (comment: string | null | undefined, recor
       if (matchWithGovt) return matchWithGovt[0].trim();
       const matchWithSalary = comment.match(/(?:Adjusted with|adjusted with)\s+([A-Za-z]+\s+\d{4}\s+salary(?:[^\n|\]]*))/i);
       if (matchWithSalary) return `Adjusted with ${matchWithSalary[1].trim()}`;
+      const matchWithGeneral = comment.match(/Adjusted with General Adjustment[^\n|\]]+/i);
+      if (matchWithGeneral) return matchWithGeneral[0].trim();
       const matchSalaryGeneric = comment.match(/Adjusted with [^|\n\]]+/i);
       if (matchSalaryGeneric) return matchSalaryGeneric[0].trim();
     }
@@ -72,6 +107,9 @@ export const getLatestActionComment = (comment: string | null | undefined, recor
     }
     if (record.reserve_holiday === 'Govt Holiday' || (comment && /Adjusted:\s*Govt Holiday|Adjusted with Govt Holiday/i.test(comment))) {
       return 'Adjusted with Govt Holiday';
+    }
+    if (record.reserve_holiday === 'General Adjustment') {
+      return 'Adjusted with General Adjustment';
     }
     if (record.reserve_holiday === 'Eid-ul-Fitr' || (comment && /Adjusted:\s*Eid-ul-Fitr|Adjusted with Eid-ul-Fitr/i.test(comment))) {
       return 'Adjusted with Eid-ul-Fitr';
@@ -104,16 +142,26 @@ export const getLatestActionComment = (comment: string | null | undefined, recor
   if (!comment) return '';
 
   // If there are edit logs, extract the latest edit reason/action
-  const editMatch = comment.match(/\[Edited by [^\]]+Reason:\s*([^\]\n]+)\]/);
+  const editMatch = comment.match(/\[(?:Admin )?Edit(?:ed)? by [^\]]+Reason:\s*([^\]\n]+)\]/);
   if (editMatch && editMatch[1]) {
     return editMatch[1].trim();
   }
 
-  // Fallback to clean base comment
   return getCleanComment(comment);
 };
 
-// Provides full historical audit trail for tooltips, modals, and detailed views
+// Returns ONE clean human comment for the main table; falls back to concise adjustment note if no human comment
+export const getLeaveDisplayComment = (record?: Partial<ChutiRecord> | null): string => {
+  if (!record) return '';
+  const cleanHuman = getCleanComment(record.comment);
+  if (cleanHuman) return cleanHuman;
+  if (record.adjustment || record.adjusted_hour) {
+    return getLatestActionComment(record.comment, record);
+  }
+  return '';
+};
+
+// Provides full historical audit trail for tooltips, modals, and detailed views without duplicated tags
 export const getFullCommentHistory = (comment: string | null | undefined, record?: Partial<ChutiRecord>): string => {
   if (!comment && !record?.adjustment && !record?.adjusted_hour) return '';
   
@@ -122,13 +170,21 @@ export const getFullCommentHistory = (comment: string | null | undefined, record
   // 1. Adjustment Action (if active)
   if (record && (record.adjustment || record.adjusted_hour)) {
     const adjText = getLatestActionComment(comment, record);
-    sections.push(`Action: ${adjText}`);
+    if (adjText) {
+      sections.push(`Adjustment: ${adjText}`);
+    }
+  }
+
+  // 2. Clean Human Comment (without "Original:" or "Action:" prefix)
+  const cleanHuman = getCleanComment(comment);
+  if (cleanHuman) {
+    sections.push(`Comment: ${cleanHuman}`);
   }
   
   if (comment) {
-    // 2. Approvals
+    // 3. Approvals
     const approvals: string[] = [];
-    const appRegex = /([A-Za-z0-9_-]+\s+Approved)/g;
+    const appRegex = /([A-Za-z0-9_-]+\s+(?:Approved|Added))/g;
     let match;
     while ((match = appRegex.exec(comment)) !== null) {
       approvals.push(match[1]);
@@ -137,51 +193,18 @@ export const getFullCommentHistory = (comment: string | null | undefined, record
       sections.push(`Approvals: ${approvals.join(' | ')}`);
     }
 
-    // 3. Clean Original Comment
-    let original = comment;
-    original = original.replace(/^[A-Za-z0-9_-]+\s+Approved(?:\s*\|\s*)?/g, '');
-    original = original.replace(/Adjusted:\s*(?:Govt Holiday|Eid-ul-Fitr|Eid-ul-Adha|Office Leave|Salary|Overtime|Short Leave|partial \([0-9:]+\))(?:\s*\|\s*)?/g, '');
-    original = original.replace(/\n?\[Edited by [^\]]+\]/g, '');
-    original = original.trim();
-    if (original) {
-      sections.push(`Original: ${original}`);
-    }
-
     // 4. Edit Logs
-    const editMatches = comment.match(/\[Edited by [^\]]+\]/g);
+    const editMatches = comment.match(/\[(?:Admin )?Edit(?:ed)? by [^\]]+\]/g);
     if (editMatches && editMatches.length > 0) {
       sections.push(`Edits:\n${editMatches.join('\n')}`);
     }
   }
   
-  return sections.join('\n') || (comment || '');
-};
-
-// Helper function to clean supervisor/admin approval prefix and adjustments from comment
-export const getCleanComment = (comment: string | null | undefined): string => {
-  if (!comment) return '';
-  let clean = comment;
-  
-  // Clean approval prefixes
-  const regex = /^[A-Za-z0-9_-]+\s+Approved(?:\s*\|\s*)?/;
-  while (regex.test(clean)) {
-    clean = clean.replace(regex, '');
-  }
-  
-  // Clean adjustment prefixes
-  const adjRegex = /^Adjusted:\s*(?:Office Leave|Eid-ul-Fitr|Eid-ul-Adha|Govt Holiday|Salary|Overtime|Short Leave)(?:\s*\|\s*)?/;
-  while (adjRegex.test(clean)) {
-    clean = clean.replace(adjRegex, '');
-  }
-  
-  // Clean trailing edit block for base display
-  clean = clean.replace(/\n?\[Edited by [^\]]+\]/g, '');
-
-  return clean.trim();
+  return sections.join('\n') || cleanHuman || '';
 };
 
 // Helper function to format date from YYYY-MM-DD to DD-MM-YYYY
-export { formatDate, escapeHtml } from './formatters';
+export { formatDate, formatDateTime, escapeHtml } from './formatters';
 
 // Helper functions for time parsing and formatting
 export const parseTimeToMinutes = (timeStr: string) => {

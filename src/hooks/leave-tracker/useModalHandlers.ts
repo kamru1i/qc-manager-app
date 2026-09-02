@@ -3,6 +3,7 @@ import { Profile } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { isAdminRole } from '@/utils/permissionService';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import { getCleanComment } from '@/utils/dashboardHelpers';
 
 interface UseModalHandlersParams {
   profile: Profile | null;
@@ -172,7 +173,7 @@ export function useModalHandlers({
     setAdminEditSignInTime(r.sign_in_time ? r.sign_in_time.substring(0, 5) : '13:00');
     setAdminEditSignOutTime(r.sign_out_time ? r.sign_out_time.substring(0, 5) : '22:30');
     setAdminEditLeaveHour(r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00');
-    setAdminEditComment(r.comment || '');
+    setAdminEditComment(getCleanComment(r.comment) || '');
     setShowAdminEditModal(true);
   }, [setAdminEditRecord, setAdminEditDate, setAdminEditLeaveType, setAdminEditAdjustment, setAdminEditAdjustShortLeave, setAdminEditSignInTime, setAdminEditSignOutTime, setAdminEditLeaveHour, setAdminEditComment, setShowAdminEditModal]);
 

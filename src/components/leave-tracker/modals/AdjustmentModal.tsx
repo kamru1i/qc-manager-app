@@ -24,7 +24,8 @@ interface AdjustmentModalProps {
     adjustSL?: boolean,
     category?: string,
     specificHoliday?: { date: string; name: string } | null,
-    salaryInfo?: { month: string; year: string } | null
+    salaryInfo?: { month: string; year: string } | null,
+    generalDetails?: string | null
   ) => void;
   records: ChutiRecord[];
   holidayResponses: any[];
@@ -59,6 +60,7 @@ export function AdjustmentModal({
   const [selectedCategory, setSelectedCategory] = useState('None');
   const [selectedHolidayDate, setSelectedHolidayDate] = useState<string>('');
   const [selectedHolidayName, setSelectedHolidayName] = useState<string>('');
+  const [generalAdjustmentReason, setGeneralAdjustmentReason] = useState<string>('');
   const [selectedSalaryMonth, setSelectedSalaryMonth] = useState<string>(() =>
     new Date().toLocaleString('en-US', { month: 'long' })
   );
@@ -74,6 +76,7 @@ export function AdjustmentModal({
       setPartialAdjustmentTime('');
       setSelectedHolidayDate('');
       setSelectedHolidayName('');
+      setGeneralAdjustmentReason('');
       setSelectedSalaryMonth(new Date().toLocaleString('en-US', { month: 'long' }));
       setSelectedSalaryYear(new Date().getFullYear().toString());
     }
@@ -185,6 +188,7 @@ export function AdjustmentModal({
         undefined,
         'Govt Holiday',
         { date: selectedHolidayDate, name: selectedHolidayName },
+        null,
         null
       );
     } else if (selectedCategory === 'Salary') {
@@ -196,7 +200,20 @@ export function AdjustmentModal({
         undefined,
         'Salary',
         null,
-        { month: selectedSalaryMonth, year: selectedSalaryYear }
+        { month: selectedSalaryMonth, year: selectedSalaryYear },
+        null
+      );
+    } else if (selectedCategory === 'None' && adjustmentRecord?.leave_type === 'Full Leave') {
+      if (!generalAdjustmentReason.trim()) {
+        toast.error('Please enter adjustment details / reason.');
+        return;
+      }
+      handleSaveAdjustment(
+        undefined,
+        'General Adjustment',
+        null,
+        null,
+        generalAdjustmentReason.trim()
       );
     } else {
       handleSaveAdjustment(undefined, selectedCategory);
@@ -206,7 +223,8 @@ export function AdjustmentModal({
   const isConfirmDisabled =
     submitting ||
     (selectedCategory === 'Govt Holiday' && !selectedHolidayDate) ||
-    (selectedCategory === 'Salary' && !selectedSalaryMonth);
+    (selectedCategory === 'Salary' && !selectedSalaryMonth) ||
+    (adjustmentRecord?.leave_type === 'Full Leave' && selectedCategory === 'None' && !generalAdjustmentReason.trim());
 
   return (
     <Modal
@@ -799,6 +817,26 @@ export function AdjustmentModal({
                 </div>
               </div>
 
+              {/* General Adjustment Details Input */}
+              {selectedCategory === 'None' && (
+                <div className="space-y-2 p-3.5 bg-blue-955/20 border border-blue-500/40 rounded-xl">
+                  <label className="block text-[11px] font-semibold text-blue-300 uppercase tracking-wider">
+                    Adjustment Details / Reason <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={generalAdjustmentReason}
+                    onChange={(e) => setGeneralAdjustmentReason(e.target.value)}
+                    placeholder="Enter what this full leave is being adjusted against (e.g. Adjusted against extra shift on 15-08-2026 / Management adjustment)..."
+                    className="w-full p-2.5 bg-theme-page-bg/80 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none font-sans"
+                    required
+                  />
+                  <p className="text-[11px] text-theme-text-muted">
+                    This adjustment reason will be recorded in the full leave adjustment history.
+                  </p>
+                </div>
+              )}
+
               {/* Govt Holiday Specific Selection */}
               {selectedCategory === 'Govt Holiday' && (
                 <div className="space-y-2 p-3 bg-teal-955/20 border border-teal-500/40 rounded-xl">
@@ -830,7 +868,7 @@ export function AdjustmentModal({
                             <span className="text-xs font-bold">
                               {formatDate(h.date)} — {h.name}
                             </span>
-                            <div className={`w-3 h-3 rounded-full border flex items-center justify-center shrink-0 ${
+                            <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                               isSelected ? 'border-teal-400 bg-teal-500' : 'border-theme-border-input'
                             }`}>
                               {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -870,7 +908,7 @@ export function AdjustmentModal({
               )}
 
               {/* Review summary box */}
-              {(selectedCategory === 'Govt Holiday' && selectedHolidayDate) || (selectedCategory === 'Salary' && selectedSalaryMonth) ? (
+              {(selectedCategory === 'Govt Holiday' && selectedHolidayDate) || (selectedCategory === 'Salary' && selectedSalaryMonth) || (selectedCategory === 'None' && generalAdjustmentReason.trim()) ? (
                 <div className="p-3 bg-theme-page-bg/80 border border-theme-border-muted rounded-xl text-xs space-y-1">
                   <div className="text-[10px] uppercase font-bold text-theme-text-muted tracking-wider">Adjustment Review</div>
                   <div className="flex justify-between text-theme-text-secondary">
@@ -880,7 +918,11 @@ export function AdjustmentModal({
                   <div className="flex justify-between text-theme-text-secondary">
                     <span>Adjust With:</span>
                     <span className="font-bold text-blue-400">
-                      {selectedCategory === 'Govt Holiday' ? `Govt Holiday (${formatDate(selectedHolidayDate)} — ${selectedHolidayName})` : `${selectedSalaryMonth} ${selectedSalaryYear} Salary`}
+                      {selectedCategory === 'Govt Holiday'
+                        ? `Govt Holiday (${formatDate(selectedHolidayDate)} — ${selectedHolidayName})`
+                        : selectedCategory === 'Salary'
+                        ? `${selectedSalaryMonth} ${selectedSalaryYear} Salary`
+                        : `General Adjustment (${generalAdjustmentReason.trim()})`}
                     </span>
                   </div>
                 </div>

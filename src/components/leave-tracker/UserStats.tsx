@@ -12,6 +12,8 @@ import {
 import { StatCard } from "@/components/common/StatCard";
 import {
   formatDate,
+  formatDateTime,
+  getCleanComment,
   HalfYearlyOfficeLeaveStats,
   formatDaysAndHours,
 } from "@/utils/dashboardHelpers";
@@ -654,7 +656,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
         isMounted &&
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
-            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-2xl p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-3xl p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
               <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
 
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4 shrink-0">
@@ -677,17 +679,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
                   </div>
                 ) : (
                   <div className="overflow-x-auto border border-theme-border-input/80 rounded-xl bg-theme-page-bg/40">
-                    <table className="w-full text-left text-xs border-collapse">
+                    <table className="w-full text-left text-xs border-collapse table-auto">
                       <thead>
                         <tr className="border-b border-theme-border-input/80 text-[10px] text-theme-text-muted uppercase font-bold tracking-wider bg-theme-card-container/50">
-                          <th className="py-2.5 px-3">Leave Date</th>
-                          <th className="py-2.5 px-3">Adjusted</th>
-                          <th className="py-2.5 px-3">Adjustment Source</th>
-                          <th className="py-2.5 px-3">Action Date</th>
-                          <th className="py-2.5 px-3">Details / Comment</th>
+                          <th className="py-2.5 px-3 whitespace-nowrap w-[110px]">Leave Date</th>
+                          <th className="py-2.5 px-3 whitespace-nowrap w-[180px]">Adjustment Source</th>
+                          <th className="py-2.5 px-3 whitespace-nowrap w-[160px]">Action Date</th>
+                          <th className="py-2.5 px-4 min-w-[200px]">Details / Comment</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-theme-border-input/40 font-mono">
+                      <tbody className="divide-y divide-theme-border-input/40">
                         {adjustedFullLeaves.map((r: any) => {
                           const isGovt =
                             r.reserve_holiday &&
@@ -701,13 +702,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
                           const isEid =
                             r.reserve_holiday === "Eid-ul-Fitr" ||
                             r.reserve_holiday === "Eid-ul-Adha";
+                          const isGeneral =
+                            r.reserve_holiday === "General Adjustment" ||
+                            (!isGovt && !isSalary && !isEid);
 
                           let sourceBadge = (
                             <Badge
                               variant="default"
-                              className="text-[10px] font-semibold bg-blue-500/10 text-blue-400 border-blue-500/30"
+                              className="text-[10px] font-semibold bg-blue-500/10 text-blue-400 border-blue-500/30 whitespace-nowrap"
                             >
-                              {r.reserve_holiday || "Adjusted"}
+                              {r.reserve_holiday || "General Adjustment"}
                             </Badge>
                           );
 
@@ -715,7 +719,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             sourceBadge = (
                               <Badge
                                 variant="success"
-                                className="text-[10px] font-semibold bg-teal-500/10 text-teal-300 border-teal-500/30"
+                                className="text-[10px] font-semibold bg-teal-500/10 text-teal-300 border-teal-500/30 whitespace-nowrap"
                               >
                                 {r.reserve_holiday?.includes("—")
                                   ? `Govt Holiday (${r.reserve_holiday})`
@@ -729,7 +733,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             sourceBadge = (
                               <Badge
                                 variant="warning"
-                                className="text-[10px] font-semibold bg-amber-500/10 text-amber-300 border-amber-500/30"
+                                className="text-[10px] font-semibold bg-amber-500/10 text-amber-300 border-amber-500/30 whitespace-nowrap"
                               >
                                 {salaryLabel}
                               </Badge>
@@ -738,11 +742,41 @@ export const UserStats: React.FC<UserStatsProps> = ({
                             sourceBadge = (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] font-semibold bg-purple-500/10 text-purple-300 border-purple-500/30"
+                                className="text-[10px] font-semibold bg-purple-500/10 text-purple-300 border-purple-500/30 whitespace-nowrap"
                               >
                                 {r.reserve_holiday}
                               </Badge>
                             );
+                          } else if (isGeneral) {
+                            sourceBadge = (
+                              <Badge
+                                variant="default"
+                                className="text-[10px] font-semibold bg-blue-500/10 text-blue-400 border-blue-500/30 whitespace-nowrap"
+                              >
+                                General Adjustment
+                              </Badge>
+                            );
+                          }
+
+                          // Calculate formatted comment/details for history
+                          let detailText = "—";
+                          if (r.admin_edit_request?.adjustment_reason) {
+                            detailText = r.admin_edit_request.adjustment_reason;
+                          } else if (isSalary) {
+                            const salaryLabel = r.admin_edit_request?.salary_month
+                              ? `${r.admin_edit_request.salary_month} ${r.admin_edit_request.salary_year || ""} salary deduction.`
+                              : "salary deduction.";
+                            detailText = `Adjusted with ${salaryLabel}`;
+                          } else if (isGovt && r.reserve_holiday?.includes("—")) {
+                            detailText = `Adjusted with Government Holiday — ${r.reserve_holiday}`;
+                          } else {
+                            const matchGeneral = r.comment?.match(/Adjusted with General Adjustment\s*—\s*([^|\n\]]+)/i);
+                            if (matchGeneral) {
+                              detailText = matchGeneral[1].trim();
+                            } else {
+                              const clean = getCleanComment(r.comment);
+                              detailText = clean || r.comment || "—";
+                            }
                           }
 
                           return (
@@ -750,20 +784,17 @@ export const UserStats: React.FC<UserStatsProps> = ({
                               key={r.id}
                               className="hover:bg-theme-card-bg/20 transition-colors"
                             >
-                              <td className="py-2.5 px-3 font-bold text-theme-text-primary whitespace-nowrap">
+                              <td className="py-2.5 px-3 font-bold text-theme-text-primary whitespace-nowrap font-mono">
                                 {formatDate(r.date)}
-                              </td>
-                              <td className="py-2.5 px-3 font-semibold text-emerald-400 whitespace-nowrap">
-                                1 Day
                               </td>
                               <td className="py-2.5 px-3 whitespace-nowrap">
                                 {sourceBadge}
                               </td>
-                              <td className="py-2.5 px-3 text-theme-text-muted text-[11px] whitespace-nowrap">
-                                {formatDate(r.updated_at || r.created_at)}
+                              <td className="py-2.5 px-3 text-theme-text-muted text-[11px] whitespace-nowrap font-mono">
+                                {formatDateTime(r.updated_at || r.created_at)}
                               </td>
-                              <td className="py-2.5 px-3 text-theme-text-secondary text-[11px] font-sans">
-                                {r.comment || "—"}
+                              <td className="py-2.5 px-4 text-theme-text-secondary text-[11px] font-sans break-words whitespace-normal leading-relaxed">
+                                {detailText}
                               </td>
                             </tr>
                           );
