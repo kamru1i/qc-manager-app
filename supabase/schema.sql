@@ -2111,6 +2111,7 @@ BEGIN
   LEFT JOIN selected_year_stats sys ON p.id = sys.user_id
   LEFT JOIN today_stats ts ON p.id = ts.user_id
   LEFT JOIN user_branches ub ON p.id = ub.user_id
+  WHERE p.has_quotes_access IS TRUE
   ORDER BY rank ASC;
 END;
 $$;
