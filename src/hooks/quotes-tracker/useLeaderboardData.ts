@@ -356,18 +356,11 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
     }
   }, [availableYears, selectedYear]);
 
-  // Filter rawLeaderboardData to include ONLY users whose Quotes Workspace is ON (has_quotes_access === true).
-  // Calculate dense rank dynamically among eligible participants so there are no rank gaps.
+  // The server-side RPC get_leaderboard_data is SECURITY DEFINER and already filters
+  // strictly WHERE p.has_quotes_access IS TRUE globally across all employees.
+  // Calculate dense rank dynamically among all eligible participants with proper tie-handling.
   const eligibleRawData = useMemo(() => {
-    let eligible = rawLeaderboardData;
-    if (profilesList && profilesList.length > 0) {
-      const eligibleUserIds = new Set(
-        profilesList.filter((p) => p.has_quotes_access === true).map((p) => p.id)
-      );
-      eligible = rawLeaderboardData.filter((u) => eligibleUserIds.has(u.user_id));
-    }
-
-    const sorted = [...eligible].sort((a, b) => {
+    const sorted = [...rawLeaderboardData].sort((a, b) => {
       if (b.months_count !== a.months_count) {
         return b.months_count - a.months_count;
       }
@@ -393,7 +386,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       rankedList.push({ ...user, rank: currentRank });
     }
     return rankedList;
-  }, [rawLeaderboardData, profilesList]);
+  }, [rawLeaderboardData]);
 
   // Period-adjusted ranking. Monthly = eligibleRawData (with dense ranks).
   // Yearly = re-ranked client-side by overall_score among eligible users —
