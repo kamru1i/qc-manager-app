@@ -25,6 +25,7 @@ import {
   parseBreakMinutesFromComment,
   getMaxDaysInMonth,
   getCleanComment,
+  getLeaveDisplayComment,
   getApprovalsPrefix
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
@@ -80,10 +81,21 @@ export function AddLeave({
   });
   const [adjustShortLeave, setAdjustShortLeave] = useState(() => editingRecord ? !!editingRecord.adjust_short_leave : false);
   const isSuperAdminUser = isSuperadmin(profile);
+  const isCommentReadOnly = !!editingRecord && !isSuperAdminUser;
+  const showEditReason = !!editingRecord && !isSuperAdminUser;
+
   const [signInTime, setSignInTime] = useState(() => editingRecord?.sign_in_time ? editingRecord.sign_in_time.substring(0, 5) : '13:00');
   const [signOutTime, setSignOutTime] = useState(() => editingRecord?.sign_out_time ? editingRecord.sign_out_time.substring(0, 5) : '22:30');
   const [leaveHour, setLeaveHour] = useState(() => editingRecord?.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00');
-  const [comment, setComment] = useState(() => (isSuperAdminUser ? (editingRecord?.comment || '') : (getCleanComment(editingRecord?.comment) || '')));
+  const [comment, setComment] = useState(() => {
+    if (!editingRecord) return '';
+    if (isSuperAdminUser) return editingRecord.comment || '';
+    const displayComment = getLeaveDisplayComment(editingRecord);
+    if (displayComment) return displayComment;
+    const clean = getCleanComment(editingRecord.comment);
+    if (clean) return clean;
+    return editingRecord.comment || '';
+  });
   const [adjustJummah, setAdjustJummah] = useState(() => {
     if (editingRecord) {
       return !!editingRecord.comment?.includes('20 Min Adjusted with Jummah Prayer');
@@ -471,7 +483,7 @@ export function AddLeave({
     }
     setSubmitting(true);
 
-    if (needsReapproval && !editReason.trim()) {
+    if (showEditReason && !editReason.trim()) {
       toast.error('Please enter a reason for this edit.');
       setSubmitting(false);
       return;
@@ -519,12 +531,18 @@ export function AddLeave({
         // ─── SUPERADMIN DIRECT EDIT — Zero trace, save exactly what superadmin wrote ───
         commentWithCategory = comment.trim();
         // Keep finalStatus unchanged — superadmin edit doesn't require re-approval
-      } else if (adminDirectEdit) {
-        // ─── ADMIN DIRECT EDIT — no re-approval, status stays as-is ───
+      } else {
+        // ─── ADMIN / SUPERVISOR / USER EDIT ───
+        // Append new editReason to previous comment
+        const prevComment = comment.trim();
+        const enteredReason = editReason.trim();
+        const combinedComment = prevComment
+          ? (enteredReason ? `${prevComment} | ${enteredReason}` : prevComment)
+          : enteredReason;
+
         const approvalsPrefix = getApprovalsPrefix(editingRecord.comment);
-        const cleanEnteredComment = comment.trim();
-        let baseComment = cleanEnteredComment
-          ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
+        let baseComment = combinedComment
+          ? (approvalsPrefix ? `${approvalsPrefix} | ${combinedComment}` : combinedComment)
           : (approvalsPrefix || '');
 
         if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && isFriday(date) && adjustJummah) {
@@ -550,90 +568,27 @@ export function AddLeave({
         const formattedLeaveHour = leaveType === 'Full Leave' ? '00:00' : leaveHour;
         const originalLeaveHourStr = editingRecord.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00';
         if (originalLeaveHourStr !== formattedLeaveHour) changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
-        const oldCleanComment = getCleanComment(editingRecord.comment);
-        if (oldCleanComment !== cleanEnteredComment) changeDescription += `Comment updated, `;
         changeDescription = changeDescription.replace(/,\s*$/, '');
-        if (changeDescription) {
-          if (isSuperadmin(profile)) {
-            commentWithCategory = baseComment;
-          } else {
-            const adminName = profile?.username?.toUpperCase() || 'ADMIN';
-            const editLog = `\n[Admin Edit by ${adminName}: ${changeDescription}]`;
-            commentWithCategory = baseComment + editLog;
-          }
-        } else {
-          commentWithCategory = baseComment;
-        }
-        // Keep finalStatus unchanged — admin edit doesn't require re-approval
-      } else if (needsReapproval) {
-        // ─── SUPERVISOR / USER re-approval flow ───
-        const approvalsPrefix = getApprovalsPrefix(editingRecord.comment);
-        const cleanEnteredComment = comment.trim();
-        let baseComment = cleanEnteredComment
-          ? (approvalsPrefix ? `${approvalsPrefix} | ${cleanEnteredComment}` : cleanEnteredComment)
-          : (approvalsPrefix || '');
 
-        if (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && isFriday(date) && adjustJummah) {
-          if (!baseComment.includes(jummahMsg)) {
-            baseComment = baseComment ? `${baseComment} | ${jummahMsg}` : jummahMsg;
-          }
+        if (adminDirectEdit) {
+          const adminName = profile?.username?.toUpperCase() || 'ADMIN';
+          const editLog = `\n[Admin Edit by ${adminName}: ${changeDescription ? changeDescription + '. ' : ''}Reason: ${enteredReason}]`;
+          commentWithCategory = baseComment + editLog;
+          // Keep finalStatus unchanged — admin edit doesn't require re-approval
         } else {
-          baseComment = baseComment
-            .replace(new RegExp(`\\s*\\|\\s*${jummahMsg}`), '')
-            .replace(jummahMsg, '')
-            .trim();
-        }
-        baseComment = applyBreakComment(
-          baseComment,
-          breakMinutes,
-          ['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && breakEligible && breakEnabled,
-        );
-
-        let changeDescription = '';
-        if (editingRecord.date !== date) {
-          changeDescription += `Date (${editingRecord.date} -> ${date}), `;
-        }
-        if (editingRecord.leave_type !== leaveType) {
-          changeDescription += `Leave Type (${editingRecord.leave_type} -> ${leaveType}), `;
-        }
-        const formattedLeaveHour = leaveType === 'Full Leave' ? '00:00' : leaveHour;
-        const originalLeaveHourStr = editingRecord.leave_hour ? editingRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00';
-        if (originalLeaveHourStr !== formattedLeaveHour) {
-          changeDescription += `Hours (${originalLeaveHourStr} -> ${formattedLeaveHour}), `;
-        }
-        const oldCleanComment = getCleanComment(editingRecord.comment);
-        if (oldCleanComment !== cleanEnteredComment) {
-          changeDescription += `Comment updated (${oldCleanComment || 'None'} -> ${cleanEnteredComment || 'None'}), `;
-        }
-
-        changeDescription = changeDescription.replace(/,\s*$/, '');
-        if (isSuperadmin(profile)) {
-          commentWithCategory = baseComment;
-        } else {
-          const editorName = isAdminRole(profile)
-            ? (profile?.username?.toUpperCase() || 'ADMIN')
-            : isSupervisorRole
+          const editorName = isSupervisorRole
             ? (profile?.username?.toUpperCase() || 'SUPERVISOR')
             : (profile?.username?.toUpperCase() || 'USER');
-          const editLog = `\n[Edited by ${editorName}: ${changeDescription}. Reason: ${editReason}]`;
+          const editLog = `\n[Edited by ${editorName}: ${changeDescription ? changeDescription + '. ' : ''}Reason: ${enteredReason}]`;
           commentWithCategory = baseComment + editLog;
-        }
 
-        // Reset status for re-approval -> goes to admin approval queue
-        if (isSupervisorRole || isAdminRole(profile)) {
-          finalStatus = 'approved_by_supervisor';
-        } else if (isUserRole) {
-          // If user has no supervisor assigned, skip to admin approval directly
-          const hasSupervisors = targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0;
-          finalStatus = hasSupervisors ? 'pending_supervisor' : 'approved_by_supervisor';
-        }
-      } else {
-        // If not approved yet, set to approved_by_supervisor for supervisor/admin, or pending_supervisor for user
-        if (isSupervisorRole || isAdminRole(profile)) {
-          finalStatus = 'approved_by_supervisor';
-        } else if (isUserRole) {
-          const hasSupervisors = targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0;
-          finalStatus = hasSupervisors ? 'pending_supervisor' : 'approved_by_supervisor';
+          // Reset status for re-approval -> goes to supervisor first if under supervisor, else admin queue
+          if (isSupervisorRole) {
+            finalStatus = 'approved_by_supervisor';
+          } else {
+            const hasSupervisors = targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0;
+            finalStatus = hasSupervisors ? 'pending_supervisor' : 'approved_by_supervisor';
+          }
         }
       }
 
@@ -677,7 +632,9 @@ export function AddLeave({
         finalAdjustShortLeave = false;
       }
 
-      const updateData = {
+      const isUserUnderSupervisor = !adminDirectEdit && !isSupervisorRole && !isSuperAdminUser && !!(targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0);
+
+      const updateData: Record<string, unknown> = {
         date: date,
         leave_type: leaveType,
         sign_in_time: leaveType === 'Full Leave' ? null : `${signInTime}:00`,
@@ -690,7 +647,26 @@ export function AddLeave({
         adjust_short_leave: canSubmitAdjustment ? finalAdjustShortLeave : false,
         reserve_holiday: canSubmitAdjustment ? (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null)) : null,
         reserve_adjustment_status: 'none',
+        is_edited: true,
       };
+
+      if (!adminDirectEdit && !isSuperAdminUser) {
+        const existingMeta = (typeof editingRecord.admin_edit_request === 'object' && editingRecord.admin_edit_request !== null)
+          ? (editingRecord.admin_edit_request as Record<string, unknown>)
+          : {};
+        if (isUserUnderSupervisor) {
+          updateData.admin_edit_request = {
+            ...existingMeta,
+            supervisor_ids: targetProfile.supervisor_ids,
+            is_reapproval: true,
+          };
+        } else {
+          updateData.admin_edit_request = {
+            ...existingMeta,
+            is_reapproval: true,
+          };
+        }
+      }
 
       try {
         const { data: updatedData, error: updateError } = await supabase
@@ -704,12 +680,10 @@ export function AddLeave({
         toast.success(
           adminDirectEdit
             ? 'Leave updated by admin.'
-            : needsReapproval
-            ? 'Leave updated. Admin re-approval is required.'
-            : 'Leave updated successfully.'
+            : finalStatus === 'pending_supervisor'
+            ? 'Leave updated. Supervisor re-approval is required.'
+            : 'Leave updated. Admin re-approval is required.'
         );
-
-
 
         onSuccess(updatedData || undefined);
       } catch (err: unknown) {
@@ -1075,6 +1049,7 @@ export function AddLeave({
               setLeaveHour={setLeaveHour}
               comment={comment}
               setComment={setComment}
+              isCommentReadOnly={isCommentReadOnly}
               bulkDates={bulkDates}
               bulkAdjustments={bulkAdjustments}
               handleAddBulkDate={handleAddBulkDate}
@@ -1196,15 +1171,22 @@ export function AddLeave({
               </div>
             )}
 
-            {needsReapproval && (
+            {showEditReason && (
               <div className="space-y-1 pt-2 border-t border-theme-border-input/50">
-                <label className="block text-theme-text-muted font-semibold">Reason for Editing (Required)</label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-theme-text-muted font-semibold text-xs">
+                    Reason for Editing (Required)
+                  </label>
+                  <span className="text-[10px] text-theme-text-muted font-normal">
+                    Will be appended to previous comment
+                  </span>
+                </div>
                 <textarea
                   required
                   rows={2}
                   value={editReason}
                   onChange={(e) => setEditReason(e.target.value)}
-                  placeholder="Enter why this approved leave is being modified..."
+                  placeholder="Enter reason or new remarks for this edit..."
                   className="w-full p-2.5 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-xs placeholder-theme-text-muted/60 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
               </div>

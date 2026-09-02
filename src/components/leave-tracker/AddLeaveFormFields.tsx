@@ -32,6 +32,7 @@ interface AddLeaveFormFieldsProps {
   setLeaveHour: (val: string) => void;
   comment: string;
   setComment: (val: string) => void;
+  isCommentReadOnly?: boolean;
   bulkDates: string[];
   bulkAdjustments: boolean[];
   handleAddBulkDate: () => void;
@@ -85,6 +86,7 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   setLeaveHour,
   comment,
   setComment,
+  isCommentReadOnly = false,
   bulkDates,
   handleAddBulkDate,
   handleUpdateBulkDate,
@@ -884,16 +886,28 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
 
       {/* Comment Box */}
       <div>
-        <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
-          Comment
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
+            Comment
+          </label>
+          {isCommentReadOnly && (
+            <span className="text-[10px] text-theme-text-muted font-normal lowercase">
+              (previous comment - read only)
+            </span>
+          )}
+        </div>
         <textarea
           rows={2}
-          placeholder="Write a brief description..."
+          placeholder={isCommentReadOnly ? "(No previous comment recorded)" : "Write a brief description..."}
           disabled={isDateBlocked}
+          readOnly={isCommentReadOnly}
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+          onChange={(e) => !isCommentReadOnly && setComment(e.target.value)}
+          className={`mt-1 block w-full px-3 py-2 border rounded-lg text-xs focus:outline-none transition-all ${
+            isCommentReadOnly
+              ? "bg-theme-page-bg/70 border-theme-border-input/70 text-theme-text-secondary cursor-not-allowed select-text opacity-90 focus:ring-0"
+              : "bg-theme-page-bg border-theme-border-input text-theme-text-primary focus:ring-2 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+          }`}
         />
       </div>
 
