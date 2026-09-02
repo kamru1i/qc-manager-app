@@ -84,7 +84,7 @@ export const RequestRemovalModal: React.FC<RequestRemovalModalProps> = ({
           {record.comment && (
             <div className="pt-1">
               <span className="text-theme-text-muted font-sans block text-[10px]">Comment:</span>
-              <span className="text-theme-text-secondary text-[11px] font-sans break-words">{record.comment}</span>
+              <span className="text-theme-text-secondary text-[11px] font-sans wrap-break-word">{record.comment}</span>
             </div>
           )}
         </div>
