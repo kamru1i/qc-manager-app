@@ -25,9 +25,8 @@ export const applyLeaveFilters = <T extends ChutiRecord>(
       if (!commentMatch && !typeMatch) return false;
     }
 
-    // Only keep legacy Govt Holiday records if they are an adjustment
-    const isGovtHolidayRecord = r.leave_type === 'Govt Holiday' || r.reserve_holiday === 'Govt Holiday';
-    if (isGovtHolidayRecord && !r.adjustment) {
+    // Only drop legacy standalone Govt Holiday records if they are not an adjustment
+    if (r.leave_type === 'Govt Holiday' && !r.adjustment) {
       return false;
     }
 
