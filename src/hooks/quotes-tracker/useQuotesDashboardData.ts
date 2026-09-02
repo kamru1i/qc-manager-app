@@ -14,7 +14,7 @@ import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
 import { toast } from 'sonner';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
-import { fetchSubmittedMonths, buildAvailableDates } from '@/utils/availableDatesHelper';
+import { fetchSubmittedMonths, extractAvailableDatesFromRecords } from '@/utils/availableDatesHelper';
 import { PROFILE_COLUMNS, RECORD_COLUMNS } from '@/utils/dbColumns';
 import { isAdminRole } from '@/utils/permissionService';
 import {
@@ -302,51 +302,23 @@ export const useQuotesDashboardData = (
   const fetchAvailableDates = useCallback(async () => {
     if (!sessionUser || !profile) return;
     try {
-      let earliestDate: Date | null = null;
-      let latestDate: Date | null = null;
-
       if (navigator.onLine) {
         try {
-          // Fetch only grouped year/month values. The former two ORDER BY/LIMIT
-          // probes were historically among the most expensive repeated record
-          // queries and also invented empty months between distant records.
           const scopeUserId =
             !isAdminRole(profile) && profile.role !== 'supervisor' ? sessionUser.id : undefined;
-          setAvailableDates(await fetchSubmittedMonths(scopeUserId));
+          const remoteDates = await fetchSubmittedMonths(scopeUserId);
+          setAvailableDates(remoteDates);
           return;
         } catch (netError: unknown) {
           const errMsg = netError instanceof Error ? netError.message : String(netError);
           console.error('Failed to fetch available dates online, falling back to cache:', errMsg, netError);
-          // Offline: read min/max from IndexedDB cache
-          const cached = await getCacheData<RecordItem>('records_cache');
-          const userRecords = cached.filter(r => (isAdminRole(profile) || profile.role === 'supervisor') || r.user_id === sessionUser.id);
-          if (userRecords.length > 0) {
-            const dates = userRecords
-              .map(r => r.submitted_at ? new Date(r.submitted_at).getTime() : 0)
-              .filter(t => t > 0);
-            if (dates.length > 0) {
-              earliestDate = new Date(Math.min(...dates));
-              latestDate = new Date(Math.max(...dates));
-            }
-          }
-        }
-      } else {
-        // Offline: read min/max from IndexedDB cache
-        const cached = await getCacheData<RecordItem>('records_cache');
-        const userRecords = cached.filter(r => (isAdminRole(profile) || profile.role === 'supervisor') || r.user_id === sessionUser.id);
-        if (userRecords.length > 0) {
-          const dates = userRecords
-            .map(r => r.submitted_at ? new Date(r.submitted_at).getTime() : 0)
-            .filter(t => t > 0);
-          if (dates.length > 0) {
-            earliestDate = new Date(Math.min(...dates));
-            latestDate = new Date(Math.max(...dates));
-          }
         }
       }
 
-      // Shared logic: current month + backfill month + full [earliest, latest] range
-      setAvailableDates(buildAvailableDates(earliestDate, latestDate));
+      // Offline / network fallback: derive distinct year/month pairs directly from cached records
+      const cached = await getCacheData<RecordItem>('records_cache');
+      const userRecords = cached.filter(r => (isAdminRole(profile) || profile.role === 'supervisor') || r.user_id === sessionUser.id);
+      setAvailableDates(extractAvailableDatesFromRecords(userRecords));
     } catch (err) {
       console.error('Error fetching available dates:', err);
     }

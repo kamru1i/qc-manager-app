@@ -122,12 +122,18 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
   ];
 
   const availableYears = useMemo(() => {
-    const years = new Set([new Date().getFullYear().toString()]);
+    const years = new Set<string>();
     records.forEach(r => {
       if (r.submitted_at) {
-        years.add(new Date(r.submitted_at).getFullYear().toString());
+        const d = new Date(r.submitted_at);
+        if (!isNaN(d.getTime())) {
+          years.add(d.getFullYear().toString());
+        }
       }
     });
+    if (years.size === 0) {
+      years.add(new Date().getFullYear().toString());
+    }
     return Array.from(years).sort().reverse();
   }, [records]);
 
@@ -147,17 +153,41 @@ export const UserQuotesHistoryPanel: React.FC<UserQuotesHistoryPanelProps> = ({ 
       }
     });
 
-    const now = new Date();
-    if (selectedYear === now.getFullYear().toString()) {
-      monthsSet.add(String(now.getMonth() + 1).padStart(2, '0'));
+    if (monthsSet.size === 0) {
+      const now = new Date();
+      if (selectedYear === now.getFullYear().toString()) {
+        monthsSet.add(String(now.getMonth() + 1).padStart(2, '0'));
+      }
     }
 
     const filteredList = availableMonths.filter((m) => monthsSet.has(m.value));
-    const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
-    return filteredList.length > 0
-      ? filteredList
-      : availableMonths.filter((m) => m.value === currentMonthStr);
+    return filteredList;
   }, [records, selectedYear]);
+
+  // Adjust selectedMonth if it's no longer valid for selected year
+  useEffect(() => {
+    const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
+    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+    if (!monthValues.includes(selectedMonth)) {
+      if (monthValues.includes(nowMonthStr)) {
+        setSelectedMonth(nowMonthStr);
+      } else if (monthValues.length > 0) {
+        setSelectedMonth(monthValues[monthValues.length - 1]);
+      }
+    }
+  }, [availableMonthsForSelectedYear, selectedMonth]);
+
+  // Adjust selectedYear if it's no longer valid
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      const curYear = new Date().getFullYear().toString();
+      if (availableYears.includes(curYear)) {
+        setSelectedYear(curYear);
+      } else {
+        setSelectedYear(availableYears[0]);
+      }
+    }
+  }, [availableYears, selectedYear]);
 
   // Filtered records for selected Month and Year
   const monthlyFilteredRecords = useMemo(() => {

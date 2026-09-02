@@ -65,6 +65,7 @@ export interface QuotesModalsGroupProps {
   addRecord: (fileName: string, branchName: string, codename: string, fileType: FileType, userId?: string, submittedAt?: string, options?: any) => Promise<boolean>;
   showToast: (type: "success" | "error", message: string) => void;
   fetchRecords: () => Promise<void>;
+  fetchAvailableDates?: () => Promise<void>;
 }
 
 export const QuotesModalsGroup = React.memo((props: QuotesModalsGroupProps) => {
@@ -191,6 +192,7 @@ export const QuotesModalsGroup = React.memo((props: QuotesModalsGroupProps) => {
             `Successfully submitted ${count} Files!`,
           );
           props.fetchRecords();
+          props.fetchAvailableDates?.();
         }}
       />
 

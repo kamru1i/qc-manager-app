@@ -298,42 +298,63 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // Derived filter options based on availableDates + archived years
   const availableYears = useMemo(() => {
     const years = new Set<string>();
-    years.add(new Date().getFullYear().toString());
-    availableDates.forEach(d => years.add(d.year));
-    archiveYears.forEach(y => years.add(y));
+    availableDates.forEach(d => {
+      if (d.year && /^\d{4}$/.test(d.year)) {
+        years.add(d.year);
+      }
+    });
+    archiveYears.forEach(y => {
+      if (y && /^\d{4}$/.test(y)) {
+        years.add(y);
+      }
+    });
+    if (years.size === 0) {
+      years.add(new Date().getFullYear().toString());
+    }
     return Array.from(years).sort((a, b) => b.localeCompare(a));
   }, [availableDates, archiveYears]);
 
   const availableMonthsForSelectedYear = useMemo(() => {
     const months = availableDates
-      .filter((d) => d.year === selectedYear)
+      .filter((d) => d.year === selectedYear && d.month && /^\d{2}$/.test(d.month))
       .map((d) => d.month);
 
-    const now = new Date();
-    const currentYearStr = now.getFullYear().toString();
-    const currentMonthStr = String(now.getMonth() + 1).padStart(2, "0");
-
     const monthsSet = new Set<string>(months);
-    if (selectedYear === currentYearStr) {
-      monthsSet.add(currentMonthStr);
+    if (monthsSet.size === 0) {
+      const now = new Date();
+      if (selectedYear === now.getFullYear().toString()) {
+        monthsSet.add(String(now.getMonth() + 1).padStart(2, "0"));
+      }
     }
 
     const filteredList = monthsList.filter((m) => monthsSet.has(m.value));
-    return filteredList.length > 0
-      ? filteredList
-      : monthsList.filter((m) => m.value === currentMonthStr);
+    return filteredList;
   }, [availableDates, selectedYear]);
 
   // Adjust selectedMonth: default to current month if available
   useEffect(() => {
     const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
     const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
-    if (monthValues.includes(nowMonthStr)) {
-      setSelectedMonth((prev) => (monthValues.includes(prev) ? prev : nowMonthStr));
-    } else if (monthValues.length > 0 && !monthValues.includes(selectedMonth)) {
-      setSelectedMonth(monthValues[monthValues.length - 1]);
+    if (!monthValues.includes(selectedMonth)) {
+      if (monthValues.includes(nowMonthStr)) {
+        setSelectedMonth(nowMonthStr);
+      } else if (monthValues.length > 0) {
+        setSelectedMonth(monthValues[monthValues.length - 1]);
+      }
     }
   }, [availableMonthsForSelectedYear, selectedMonth]);
+
+  // Adjust selectedYear if it's no longer valid
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      const curYear = new Date().getFullYear().toString();
+      if (availableYears.includes(curYear)) {
+        setSelectedYear(curYear);
+      } else {
+        setSelectedYear(availableYears[0]);
+      }
+    }
+  }, [availableYears, selectedYear]);
 
   // Period-adjusted ranking. Monthly = server order (RPC dense rank on
   // months_count). Yearly = re-ranked client-side by overall_score (the

@@ -199,6 +199,7 @@ export default function QuotesDashboard({
     selectedMonth,
     setSelectedMonth,
     availableDates,
+    fetchAvailableDates,
     addRecord,
     deleteRecord,
     deleteRecords,
@@ -559,17 +560,23 @@ export default function QuotesDashboard({
     }
   }, [profile, codenameInput, ownCodename, ownFullName, fileType]);
 
-  // Dynamic Year and Month Options
+  // Dynamic Year Options strictly derived from availableDates
   const dynamicYears = useMemo(() => {
     const yearsSet = new Set<string>();
     availableDates.forEach((d) => {
-      yearsSet.add(d.year);
+      if (d.year && /^\d{4}$/.test(d.year)) {
+        yearsSet.add(d.year);
+      }
     });
+    if (yearsSet.size === 0) {
+      yearsSet.add(new Date().getFullYear().toString());
+    }
     return Array.from(yearsSet).sort(
       (a, b) => parseInt(b, 10) - parseInt(a, 10),
     );
   }, [availableDates]);
 
+  // Dynamic Month Options for Monthly Summary tab (selectedYear)
   const dynamicMonths = useMemo(() => {
     const allMonthsMap: { [key: string]: string } = {
       "01": "January",
@@ -586,35 +593,18 @@ export default function QuotesDashboard({
       "12": "December",
     };
 
-    const now = new Date();
-    const currentYearStr = now.getFullYear().toString();
-    const currentMonthNum = now.getMonth() + 1;
-
-    let minMonth = 12;
-    let hasRecordsInYear = false;
-
+    const monthsSet = new Set<string>();
     availableDates.forEach((d) => {
-      if (d.year === selectedYear) {
-        hasRecordsInYear = true;
-        const m = parseInt(d.month, 10);
-        if (m < minMonth) minMonth = m;
+      if (d.year === selectedYear && d.month && /^\d{2}$/.test(d.month)) {
+        monthsSet.add(d.month);
       }
     });
 
-    const monthsSet = new Set<string>();
-
-    if (selectedYear === currentYearStr) {
-      const startMonth = hasRecordsInYear ? Math.min(minMonth, 6) : 6;
-      const endMonth = Math.max(startMonth, currentMonthNum);
-      for (let m = startMonth; m <= endMonth; m++) {
-        monthsSet.add(String(m).padStart(2, "0"));
+    if (monthsSet.size === 0) {
+      const now = new Date();
+      if (selectedYear === now.getFullYear().toString()) {
+        monthsSet.add(String(now.getMonth() + 1).padStart(2, "0"));
       }
-    } else if (hasRecordsInYear) {
-      for (let m = minMonth; m <= 12; m++) {
-        monthsSet.add(String(m).padStart(2, "0"));
-      }
-    } else {
-      monthsSet.add(String(currentMonthNum).padStart(2, "0"));
     }
 
     const allKeys = Array.from(monthsSet).sort(
@@ -625,6 +615,46 @@ export default function QuotesDashboard({
       name: allMonthsMap[m] || m,
     }));
   }, [availableDates, selectedYear]);
+
+  // Dynamic Month Options for Sale Summary tab (saleSelectedYear)
+  const saleDynamicMonths = useMemo(() => {
+    const allMonthsMap: { [key: string]: string } = {
+      "01": "January",
+      "02": "February",
+      "03": "March",
+      "04": "April",
+      "05": "May",
+      "06": "June",
+      "07": "July",
+      "08": "August",
+      "09": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December",
+    };
+
+    const monthsSet = new Set<string>();
+    availableDates.forEach((d) => {
+      if (d.year === saleSelectedYear && d.month && /^\d{2}$/.test(d.month)) {
+        monthsSet.add(d.month);
+      }
+    });
+
+    if (monthsSet.size === 0) {
+      const now = new Date();
+      if (saleSelectedYear === now.getFullYear().toString()) {
+        monthsSet.add(String(now.getMonth() + 1).padStart(2, "0"));
+      }
+    }
+
+    const allKeys = Array.from(monthsSet).sort(
+      (a, b) => parseInt(a, 10) - parseInt(b, 10),
+    );
+    return allKeys.map((m) => ({
+      val: m,
+      name: allMonthsMap[m] || m,
+    }));
+  }, [availableDates, saleSelectedYear]);
 
   // Adjust selected month when selected year/dynamicMonths updates
   useEffect(() => {
@@ -651,6 +681,32 @@ export default function QuotesDashboard({
       }
     }
   }, [dynamicYears, selectedYear, setSelectedYear]);
+
+  // Adjust sale selected month when saleSelectedYear/saleDynamicMonths updates
+  useEffect(() => {
+    const monthValues = saleDynamicMonths.map((m) => m.val);
+    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
+    if (!monthValues.includes(saleSelectedMonth)) {
+      if (monthValues.includes(nowMonthStr)) {
+        setSaleSelectedMonth(nowMonthStr);
+      } else if (monthValues.length > 0) {
+        setSaleSelectedMonth(monthValues[monthValues.length - 1]);
+      }
+    }
+  }, [saleDynamicMonths, saleSelectedMonth, setSaleSelectedMonth]);
+
+  // Adjust sale selected year if it's no longer valid
+  useEffect(() => {
+    const isValid = dynamicYears.includes(saleSelectedYear);
+    if (!isValid && dynamicYears.length > 0) {
+      const curYear = new Date().getFullYear().toString();
+      if (dynamicYears.includes(curYear)) {
+        setSaleSelectedYear(curYear);
+      } else {
+        setSaleSelectedYear(dynamicYears[0]);
+      }
+    }
+  }, [dynamicYears, saleSelectedYear, setSaleSelectedYear]);
 
   // Unique branches extracted dynamically from all records and normalized
   const uniqueBranches = useMemo(() => {
@@ -1253,7 +1309,7 @@ export default function QuotesDashboard({
           dynamicYears={dynamicYears}
           saleSelectedMonth={saleSelectedMonth}
           setSaleSelectedMonth={setSaleSelectedMonth}
-          dynamicMonths={dynamicMonths}
+          dynamicMonths={saleDynamicMonths}
           saleDateInputVal={saleDateInputVal}
           setSaleDateInputVal={setSaleDateInputVal}
           handleSaleDateInputChange={handleSaleDateInputChange}
@@ -1444,6 +1500,7 @@ export default function QuotesDashboard({
               `Successfully submitted ${count} Files!`,
             );
             fetchRecords();
+            fetchAvailableDates();
           }}
         />
       )}
@@ -1499,6 +1556,7 @@ export default function QuotesDashboard({
         addRecord={addRecord}
         showToast={showToast}
         fetchRecords={fetchRecords}
+        fetchAvailableDates={fetchAvailableDates}
       />
     </>
   );
