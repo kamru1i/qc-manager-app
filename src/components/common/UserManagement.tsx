@@ -568,7 +568,22 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   useRealtimeHandler('govt_holiday_responses', handleHolidayResponseRealtime);
 
-  // ── chuti + leave_settlements (via DOM events from dashboard) ──
+  // ── chuti + leave_settlements direct realtime handlers ──
+  const handleChutiRealtime = useCallback((payload: RealtimePayload) => {
+    if (!viewingStaff) return;
+    const isSupervisedByMe = hasStaffAccess(viewingStaff);
+    if (!isSupervisedByMe) return;
+
+    const rec = payload?.new || payload?.old;
+    if (rec?.user_id === viewingStaff.id) {
+      debouncedFetchStaffLeaveData(viewingStaff.id);
+    }
+  }, [viewingStaff, debouncedFetchStaffLeaveData, hasStaffAccess]);
+
+  useRealtimeHandler('chuti', handleChutiRealtime);
+  useRealtimeHandler('leave_settlements', handleChutiRealtime);
+
+  // ── chuti + leave_settlements (also forward via DOM events from dashboard) ──
   useAppEvent('realtime-table-payload', (payloadData) => {
     if (!viewingStaff) return;
     const isSupervisedByMe = hasStaffAccess(viewingStaff);

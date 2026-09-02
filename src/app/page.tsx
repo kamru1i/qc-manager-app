@@ -1648,7 +1648,7 @@ function AppPortalInner({
               />
             </div>}
             {/* ChutiDashboard: always mounted to keep global event listeners (like open-profile-settings) and approval modals active on all tabs */}
-            {hasLeaveWorkspace && <div className={activeTab !== "chuti" ? "hidden" : undefined}>
+            {(hasLeaveWorkspace || isAdminRole(profile) || profile?.role === 'supervisor') && <div className={activeTab !== "chuti" ? "hidden" : undefined}>
               <ChutiDashboard
                 sessionUser={sessionUser}
                 profile={profile}

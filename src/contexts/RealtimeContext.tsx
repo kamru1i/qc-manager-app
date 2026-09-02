@@ -142,7 +142,7 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
           (payload) => dispatch('dismissed_notifications', payload as unknown as RealtimePayload)
         );
 
-      if (hasChutiAccess) {
+      if (hasChutiAccess || isApprover) {
         // Users receive only their own leave rows; RLS scopes approvers.
         channel.on(
           'postgres_changes',
@@ -173,6 +173,16 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             ...(isHolidayAdmin ? {} : { filter: `user_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('govt_holiday_responses', payload as unknown as RealtimePayload)
+        );
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'leave_delete_requests',
+            ...(isApprover ? {} : { filter: `requester_id=eq.${sessionUser.id}` }),
+          },
+          (payload) => dispatch('leave_delete_requests', payload as unknown as RealtimePayload)
         );
       }
 
