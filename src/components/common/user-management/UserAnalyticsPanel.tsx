@@ -74,14 +74,6 @@ export const UserAnalyticsPanel: React.FC<UserAnalyticsPanelProps> = ({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-theme-card-bg/20 border border-theme-border-muted rounded-2xl p-5 backdrop-blur-md shadow-lg">
-        <h3 className="text-base font-bold text-theme-text-primary tracking-wide">
-          Report Summary
-        </h3>
-        <p className="text-xs text-theme-text-muted mt-1">
-          Detailed performance metrics, category breakdown, and trends for {viewingStaff.full_name}.
-        </p>
-      </div>
 
       <ReportsDashboardView
         records={records}
