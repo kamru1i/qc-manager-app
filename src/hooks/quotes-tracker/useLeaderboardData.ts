@@ -5,6 +5,7 @@ import { useProfiles } from '@/contexts/ProfilesContext';
 import { Profile } from '@/types';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { fetchSubmittedMonths } from '@/utils/availableDatesHelper';
+import { updateGlobalRankCacheDirect } from '@/components/common/UserDisplayName';
 
 export interface LeaderboardUser {
   user_id: string;
@@ -358,11 +359,18 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
 
   // The server-side RPC get_leaderboard_data is SECURITY DEFINER and already filters
   // strictly WHERE p.has_quotes_access IS TRUE globally across all employees.
-  // Calculate dense rank dynamically among all eligible participants with proper tie-handling.
+  // Sequential ranking:
+  // 1. Primary: Monthly file submissions (months_count DESC)
+  // 2. Secondary: Yearly file submissions (overall_score DESC) as tie-breaker
+  // 3. Tertiary: earliest_achievement_timestamp ASC
+  // 4. Quaternary: username ASC
   const eligibleRawData = useMemo(() => {
     const sorted = [...rawLeaderboardData].sort((a, b) => {
       if (b.months_count !== a.months_count) {
         return b.months_count - a.months_count;
+      }
+      if (b.overall_score !== a.overall_score) {
+        return b.overall_score - a.overall_score;
       }
       if (a.earliest_achievement_timestamp && b.earliest_achievement_timestamp) {
         return (
@@ -375,40 +383,47 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       return a.username.localeCompare(b.username);
     });
 
-    const rankedList: LeaderboardUser[] = [];
-    let currentRank = 0;
-    let prevMonthsCount: number | null = null;
-    for (const user of sorted) {
-      if (user.months_count !== prevMonthsCount) {
-        currentRank += 1;
-        prevMonthsCount = user.months_count;
-      }
-      rankedList.push({ ...user, rank: currentRank });
-    }
-    return rankedList;
+    return sorted.map((user, idx) => ({
+      ...user,
+      rank: idx + 1,
+    }));
   }, [rawLeaderboardData]);
 
-  // Period-adjusted ranking. Monthly = eligibleRawData (with dense ranks).
+  // Sync current monthly ranks to global rank cache so Navbar name rank always matches Leaderboard table
+  useEffect(() => {
+    if (leaderboardPeriod === 'monthly') {
+      const curYear = new Date().getFullYear().toString();
+      const curMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+      if (selectedYear === curYear && selectedMonth === curMonth && eligibleRawData.length > 0) {
+        const ranks: Record<string, number> = {};
+        eligibleRawData.forEach((u) => {
+          ranks[u.user_id] = u.rank;
+        });
+        updateGlobalRankCacheDirect(ranks);
+      }
+    }
+  }, [eligibleRawData, leaderboardPeriod, selectedYear, selectedMonth]);
+
+  // Period-adjusted ranking. Monthly = eligibleRawData (with sequential ranks).
   // Yearly = re-ranked client-side by overall_score among eligible users —
-  // top yearly submitter first, dense ranks, no extra fetch needed.
+  // top yearly submitter first, sequential ranks, no extra fetch needed.
   const periodRankedData = useMemo(() => {
     if (leaderboardPeriod === 'monthly') return eligibleRawData;
 
-    const sorted = [...eligibleRawData].sort(
-      (a, b) =>
-        b.overall_score - a.overall_score || a.username.localeCompare(b.username)
-    );
-    const rankedList: LeaderboardUser[] = [];
-    let currentRank = 0;
-    let prevScore: number | null = null;
-    for (const user of sorted) {
-      if (user.overall_score !== prevScore) {
-        currentRank += 1;
-        prevScore = user.overall_score;
+    const sorted = [...eligibleRawData].sort((a, b) => {
+      if (b.overall_score !== a.overall_score) {
+        return b.overall_score - a.overall_score;
       }
-      rankedList.push({ ...user, rank: currentRank });
-    }
-    return rankedList;
+      if (b.months_count !== a.months_count) {
+        return b.months_count - a.months_count;
+      }
+      return a.username.localeCompare(b.username);
+    });
+
+    return sorted.map((user, idx) => ({
+      ...user,
+      rank: idx + 1,
+    }));
   }, [eligibleRawData, leaderboardPeriod]);
 
   // Filtered list

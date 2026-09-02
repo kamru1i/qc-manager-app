@@ -2103,6 +2103,7 @@ BEGIN
     DENSE_RANK() OVER (
       ORDER BY
         COALESCE(sms.months_count, 0) DESC,
+        COALESCE(sys.years_count, 0) DESC,
         sms.earliest_achievement_timestamp ASC NULLS LAST,
         p.username ASC
     )::INT AS rank
