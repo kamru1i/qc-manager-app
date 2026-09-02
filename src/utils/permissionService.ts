@@ -461,9 +461,9 @@ export const canAccessModule = (
     return true;
   }
 
-  // Admin reports restriction: Admin (non-superadmin) should ONLY see all_report in reports, NOT leaderboard, my_report, or kpi
+  // Admin reports restriction: Admin (non-superadmin) should ONLY see leaderboard and all_report in reports, NOT my_report or kpi
   if (currentUser.role === 'admin') {
-    if (module === 'leaderboard' || module === 'my_report' || module === 'kpi') {
+    if (module === 'my_report' || module === 'kpi') {
       return false;
     }
   }
@@ -471,11 +471,16 @@ export const canAccessModule = (
   // Workspace assignment is an authorization boundary, not merely a menu
   // preference. Keep this check aligned with database RLS so revoked access
   // takes effect both in the UI and for direct Supabase requests.
+  // For quotes reports: Admin retains administrative access to leaderboard and all_report even if has_quotes_access is false.
   if (module === 'leave' && currentUser.has_chuti_access !== true) return false;
   if (
-    (module === 'leaderboard' || module === 'my_report' || module === 'all_report') &&
-    currentUser.has_quotes_access !== true
+    (module === 'leaderboard' || module === 'all_report') &&
+    currentUser.has_quotes_access !== true &&
+    currentUser.role !== 'admin'
   ) {
+    return false;
+  }
+  if (module === 'my_report' && currentUser.has_quotes_access !== true) {
     return false;
   }
   // For quotes workspace: Admin retains administrative submission/review access even if has_quotes_access is false

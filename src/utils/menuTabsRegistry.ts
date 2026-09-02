@@ -96,9 +96,9 @@ export const getDefaultRoleVisibility = (
       return role === 'supervisor' || role === 'admin';
 
     case 'all_report':
-      return role === 'admin' || role === 'supervisor';
-
     case 'leaderboard':
+      return role === 'admin' || role === 'supervisor' || role === 'user';
+
     case 'kpi':
     case 'my_report':
       return role !== 'admin';
