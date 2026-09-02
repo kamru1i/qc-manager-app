@@ -101,6 +101,7 @@ export function AddLeave({
   const [bulkAdjustments, setBulkAdjustments] = useState<boolean[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [editReason, setEditReason] = useState('');
+  const [superadminNewNote, setSuperadminNewNote] = useState('');
   const [dateErrors, setDateErrors] = useState<Record<string, boolean>>({});
   const [showMultipleShortLeaveModal, setShowMultipleShortLeaveModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -1095,7 +1096,7 @@ export function AddLeave({
               adjustment={adjustment}
               availableOvertimeMins={parseHHMMToMinutes(stats.overtimeHours)}
               availableShortLeaveMins={parseHHMMToMinutes(stats.shortHours)}
-              records={staffRecords}
+              records={editingRecord ? staffRecords.filter(r => r.id !== editingRecord.id) : staffRecords}
               govtHolidayRemaining={govtHolidayRemaining}
               eidFitrRemaining={eidFitrRemaining}
               eidAdhaRemaining={eidAdhaRemaining}
@@ -1112,7 +1113,7 @@ export function AddLeave({
             />
 
             {isSuperAdminUser && editingRecord && (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-2 mt-2 font-sans">
+              <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-3 mt-2 font-sans">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-bold text-amber-400 flex items-center gap-1.5">
                     🛡️ Superadmin Direct Comment Control (Trace-Free)
@@ -1121,7 +1122,7 @@ export function AddLeave({
                     <button
                       type="button"
                       onClick={() => setComment(getCleanComment(editingRecord.comment) || '')}
-                      className="px-2 py-0.5 text-[11px] bg-theme-card-bg/80 hover:bg-theme-card-bg text-theme-text-secondary border border-theme-border-input rounded-md cursor-pointer transition-all"
+                      className="px-2.5 py-1 text-[11px] bg-theme-card-bg/80 hover:bg-theme-card-bg text-theme-text-secondary border border-theme-border-input rounded-md cursor-pointer transition-all font-medium"
                       title="Strip all edit logs and keep only clean comment text"
                     >
                       Keep Clean Only
@@ -1129,7 +1130,7 @@ export function AddLeave({
                     <button
                       type="button"
                       onClick={() => setComment(editingRecord.comment || '')}
-                      className="px-2 py-0.5 text-[11px] bg-theme-card-bg/80 hover:bg-theme-card-bg text-theme-text-secondary border border-theme-border-input rounded-md cursor-pointer transition-all"
+                      className="px-2.5 py-1 text-[11px] bg-theme-card-bg/80 hover:bg-theme-card-bg text-theme-text-secondary border border-theme-border-input rounded-md cursor-pointer transition-all font-medium"
                       title="Restore full stored comment including all previous lines"
                     >
                       Restore Raw
@@ -1137,15 +1138,60 @@ export function AddLeave({
                     <button
                       type="button"
                       onClick={() => setComment('')}
-                      className="px-2 py-0.5 text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded-md cursor-pointer transition-all"
+                      className="px-2.5 py-1 text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded-md cursor-pointer transition-all font-medium"
                       title="Completely wipe comment"
                     >
                       Clear All
                     </button>
                   </div>
                 </div>
+
+                <div className="p-2.5 bg-theme-card-bg/60 border border-theme-border-input/70 rounded-lg space-y-1">
+                  <span className="block text-[11px] font-semibold text-theme-text-muted">
+                    Database Stored Comment:
+                  </span>
+                  <p className="text-xs text-theme-text-primary whitespace-pre-wrap font-mono break-words">
+                    {editingRecord.comment ? editingRecord.comment : <span className="text-theme-text-muted italic">(No previous comment recorded)</span>}
+                  </p>
+                </div>
+
+                <div className="pt-1 border-t border-amber-500/20">
+                  <label className="block text-[11px] font-semibold text-amber-300 mb-1">
+                    + Append New Note / Comment (Optional):
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={superadminNewNote}
+                      onChange={(e) => setSuperadminNewNote(e.target.value)}
+                      placeholder="Type a new remark to append to the comment box above..."
+                      className="flex-1 px-3 py-1.5 bg-theme-page-bg border border-theme-border-input rounded-lg text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (superadminNewNote.trim()) {
+                            setComment(prev => prev.trim() ? `${prev.trim()} | ${superadminNewNote.trim()}` : superadminNewNote.trim());
+                            setSuperadminNewNote('');
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!superadminNewNote.trim()) return;
+                        setComment(prev => prev.trim() ? `${prev.trim()} | ${superadminNewNote.trim()}` : superadminNewNote.trim());
+                        setSuperadminNewNote('');
+                      }}
+                      className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all shrink-0"
+                    >
+                      Append
+                    </button>
+                  </div>
+                </div>
+
                 <p className="text-[11px] text-theme-text-muted leading-relaxed">
-                  You are viewing and editing all previous comment lines. You can edit, add, or remove any part of the comment without leaving any trace or audit log on the record.
+                  You are viewing and editing all comment lines directly. You can edit the box above, append notes, or wipe lines. Saving will record exactly what is in the comment box with <strong>zero trace</strong>.
                 </p>
               </div>
             )}

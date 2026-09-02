@@ -891,8 +891,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
           rows={2}
           placeholder="Write a brief description..."
           disabled={isDateBlocked}
-          value={isDateBlocked ? "" : comment}
-          onChange={(e) => !isDateBlocked && setComment(e.target.value)}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
           className="mt-1 block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
         />
       </div>
