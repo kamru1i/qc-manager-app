@@ -89,6 +89,37 @@ export const getCleanComment = (comment: string | null | undefined): string => {
 export const getLatestActionComment = (comment: string | null | undefined, record?: Partial<ChutiRecord>): string => {
   // If record has an active adjustment, show the latest adjustment action
   if (record && (record.adjustment || record.adjusted_hour)) {
+    const editReq = record.admin_edit_request as Record<string, unknown> | undefined;
+
+    if (record.reserve_holiday === 'General Adjustment' || editReq?.adjustment_source === 'General Adjustment') {
+      const reason = (editReq?.adjustment_reason as string)?.trim();
+      if (reason) {
+        return `Adjusted with General Adjustment — ${reason}`;
+      }
+      if (comment) {
+        const matchWithGeneral = comment.match(/Adjusted with General Adjustment\s*—\s*([^|\n\]]+)/i);
+        if (matchWithGeneral) return `Adjusted with General Adjustment — ${matchWithGeneral[1].trim()}`;
+      }
+      return 'Adjusted with General Adjustment';
+    }
+
+    if (record.reserve_holiday === 'Salary') {
+      const sMonth = editReq?.salary_month as string | undefined;
+      const sYear = editReq?.salary_year as string | undefined;
+      if (sMonth) {
+        return `Adjusted with ${sMonth} ${sYear || ''} salary deduction.`.replace(/\s+/g, ' ');
+      }
+      if (comment) {
+        const matchWithSalary = comment.match(/(?:Adjusted with|adjusted with)\s+([A-Za-z]+\s+\d{4}\s+salary(?:[^\n|\]]*))/i);
+        if (matchWithSalary) return `Adjusted with ${matchWithSalary[1].trim()}`;
+      }
+      return 'Adjusted with Salary deduction';
+    }
+
+    if (record.reserve_holiday && typeof record.reserve_holiday === 'string' && record.reserve_holiday.includes('—')) {
+      return `Adjusted with Government Holiday on ${record.reserve_holiday}`;
+    }
+
     if (comment) {
       const matchWithGovt = comment.match(/Adjusted with Government Holiday[^\n|\]]+/i);
       if (matchWithGovt) return matchWithGovt[0].trim();
@@ -99,17 +130,9 @@ export const getLatestActionComment = (comment: string | null | undefined, recor
       const matchSalaryGeneric = comment.match(/Adjusted with [^|\n\]]+/i);
       if (matchSalaryGeneric) return matchSalaryGeneric[0].trim();
     }
-    if (record.reserve_holiday && record.reserve_holiday.includes('—')) {
-      return `Adjusted with Govt Holiday — ${record.reserve_holiday.split('—')[0].trim()}`;
-    }
-    if (record.reserve_holiday === 'Salary' || (comment && /Adjusted:\s*Salary|Adjusted with Salary/i.test(comment))) {
-      return 'Adjusted with Salary';
-    }
+
     if (record.reserve_holiday === 'Govt Holiday' || (comment && /Adjusted:\s*Govt Holiday|Adjusted with Govt Holiday/i.test(comment))) {
       return 'Adjusted with Govt Holiday';
-    }
-    if (record.reserve_holiday === 'General Adjustment') {
-      return 'Adjusted with General Adjustment';
     }
     if (record.reserve_holiday === 'Eid-ul-Fitr' || (comment && /Adjusted:\s*Eid-ul-Fitr|Adjusted with Eid-ul-Fitr/i.test(comment))) {
       return 'Adjusted with Eid-ul-Fitr';
@@ -150,15 +173,22 @@ export const getLatestActionComment = (comment: string | null | undefined, recor
   return getCleanComment(comment);
 };
 
-// Returns ONE clean human comment for the main table; falls back to concise adjustment note if no human comment
+// Returns formatted display comment:
+// If adjusted: "[Adjustment Note] | [Human Comment]" or just "[Adjustment Note]"
+// If unadjusted: "[Human Comment]" (or "" if none)
 export const getLeaveDisplayComment = (record?: Partial<ChutiRecord> | null): string => {
   if (!record) return '';
   const cleanHuman = getCleanComment(record.comment);
-  if (cleanHuman) return cleanHuman;
+  
   if (record.adjustment || record.adjusted_hour) {
-    return getLatestActionComment(record.comment, record);
+    const adjNote = getLatestActionComment(record.comment, record);
+    if (adjNote && cleanHuman && cleanHuman !== adjNote) {
+      return `${adjNote} | ${cleanHuman}`;
+    }
+    if (adjNote) return adjNote;
   }
-  return '';
+  
+  return cleanHuman || '';
 };
 
 // Provides full historical audit trail for tooltips, modals, and detailed views without duplicated tags

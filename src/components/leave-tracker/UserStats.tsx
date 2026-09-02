@@ -760,21 +760,25 @@ export const UserStats: React.FC<UserStatsProps> = ({
 
                           // Calculate formatted comment/details for history
                           let detailText = "—";
+                          const clean = getCleanComment(r.comment);
                           if (r.admin_edit_request?.adjustment_reason) {
-                            detailText = r.admin_edit_request.adjustment_reason;
+                            const reason = r.admin_edit_request.adjustment_reason;
+                            detailText = clean && clean !== reason ? `${reason} | ${clean}` : reason;
                           } else if (isSalary) {
                             const salaryLabel = r.admin_edit_request?.salary_month
                               ? `${r.admin_edit_request.salary_month} ${r.admin_edit_request.salary_year || ""} salary deduction.`
                               : "salary deduction.";
-                            detailText = `Adjusted with ${salaryLabel}`;
+                            detailText = clean ? `Adjusted with ${salaryLabel} | ${clean}` : `Adjusted with ${salaryLabel}`;
                           } else if (isGovt && r.reserve_holiday?.includes("—")) {
-                            detailText = `Adjusted with Government Holiday — ${r.reserve_holiday}`;
+                            detailText = clean
+                              ? `Adjusted with Government Holiday — ${r.reserve_holiday} | ${clean}`
+                              : `Adjusted with Government Holiday — ${r.reserve_holiday}`;
                           } else {
                             const matchGeneral = r.comment?.match(/Adjusted with General Adjustment\s*—\s*([^|\n\]]+)/i);
                             if (matchGeneral) {
-                              detailText = matchGeneral[1].trim();
+                              const reason = matchGeneral[1].trim();
+                              detailText = clean && clean !== reason ? `${reason} | ${clean}` : reason;
                             } else {
-                              const clean = getCleanComment(r.comment);
                               detailText = clean || r.comment || "—";
                             }
                           }
