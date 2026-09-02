@@ -67,7 +67,7 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
       toast.error("Please select at least one permitted file type for Quotes.");
       return;
     }
-    if (!hasChutiAccess && !hasQuotesAccess) {
+    if (newRole !== 'admin' && newRole !== 'superadmin' && !hasChutiAccess && !hasQuotesAccess) {
       toast.error(
         "Please select at least one workspace access (Leave or Quotes Tracker).",
       );

@@ -955,7 +955,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       toast.error('Please select at least one permitted file type for Quotes.');
       return;
     }
-    if (isAdminRole(profile) && !editHasChutiAccess && !editHasQuotesAccess) {
+    if (editUserRole !== 'admin' && editUserRole !== 'superadmin' && !editHasChutiAccess && !editHasQuotesAccess) {
       toast.error('Please select at least one workspace access.');
       return;
     }

@@ -263,7 +263,7 @@ export default function AppPortal() {
       const hasChuti = !!userProfile.has_chuti_access;
       const hasQuotes = !!userProfile.has_quotes_access;
 
-      if (!hasChuti && !hasQuotes) {
+      if (userProfile.role !== 'admin' && userProfile.role !== 'superadmin' && !hasChuti && !hasQuotes) {
         setErrorMsg(
           "You do not have access to any workspace. Please contact your manager.",
         );
