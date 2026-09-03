@@ -53,11 +53,11 @@ export function AddEditMistakeModal({
         const userCodename = p.codename || p.username;
         return {
           value: p.id,
-          label: `${userCodename}${p.full_name ? ` (${p.full_name})` : ''}`,
+          label: userCodename,
           codename: userCodename,
         };
       })
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .sort((a, b) => a.codename.localeCompare(b.codename));
   }, [profilesList]);
 
   // Branch Options using DEFAULT_BRANCHES
@@ -163,6 +163,7 @@ export function AddEditMistakeModal({
               onErrorChange={setDateInputHasError}
               disabled={isSubmitting}
               required
+              className={`h-9 px-3 py-2 ${errors.date ? 'border-red-500/80' : ''}`}
             />
             {errors.date && <p className="text-[11px] text-red-400 mt-1">{errors.date}</p>}
           </div>
@@ -173,6 +174,10 @@ export function AddEditMistakeModal({
               Branch <span className="text-red-400">*</span>
             </label>
             <CustomSelect
+              className="w-full"
+              buttonClassName={`w-full flex items-center justify-between gap-2 bg-theme-page-bg border ${
+                errors.branch ? 'border-red-500/80' : 'border-theme-border-input'
+              } text-theme-text-primary rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer text-xs h-9 disabled:opacity-50 disabled:cursor-not-allowed text-left select-none`}
               value={branch}
               onChange={(val) => {
                 setBranch(val);
@@ -214,6 +219,10 @@ export function AddEditMistakeModal({
               Codename (Employee) <span className="text-red-400">*</span>
             </label>
             <CustomSelect
+              className="w-full"
+              buttonClassName={`w-full flex items-center justify-between gap-2 bg-theme-page-bg border ${
+                errors.userId ? 'border-red-500/80' : 'border-theme-border-input'
+              } text-theme-text-primary rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer text-xs h-9 disabled:opacity-50 disabled:cursor-not-allowed text-left select-none`}
               value={userId}
               onChange={handleUserChange}
               options={userOptions}
