@@ -30,7 +30,6 @@ import { AddEditMistakeModal } from './modals/AddEditMistakeModal';
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
 import { DateInput } from '@/components/common/DateInput';
 import { CustomSelect } from '@/components/common/CustomSelect';
-import { DEFAULT_BRANCHES } from '@/utils/bulkQuoteParser';
 
 interface QuotationMistakesPanelProps {
   sessionUser: SupabaseUser | null;
@@ -71,13 +70,18 @@ export function QuotationMistakesPanel({
     selectedBranch,
     setSelectedBranch,
     selectedYear,
-    setSelectedYear,
     selectedMonth,
-    setSelectedMonth,
     selectedDate,
-    setSelectedDate,
+    handleYearChange,
+    handleMonthChange,
+    handleDateChange,
     isFilterActive,
     resetFilters,
+
+    // Dynamic Filter Options
+    branchOptions,
+    yearOptions,
+    monthOptions,
 
     // Pagination
     currentPage,
@@ -113,44 +117,6 @@ export function QuotationMistakesPanel({
   } | null>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  // Branch options
-  const branchOptions = useMemo(() => {
-    return [
-      { value: '', label: 'All Branches' },
-      ...DEFAULT_BRANCHES.map((b) => ({ value: b, label: b })),
-    ];
-  }, []);
-
-  // Year options
-  const yearOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years = [{ value: '', label: 'All Years' }];
-    for (let y = currentYear; y >= currentYear - 5; y--) {
-      years.push({ value: String(y), label: String(y) });
-    }
-    return years;
-  }, []);
-
-  // Month options
-  const monthOptions = useMemo(
-    () => [
-      { value: '', label: 'All Months' },
-      { value: '01', label: 'January' },
-      { value: '02', label: 'February' },
-      { value: '03', label: 'March' },
-      { value: '04', label: 'April' },
-      { value: '05', label: 'May' },
-      { value: '06', label: 'June' },
-      { value: '07', label: 'July' },
-      { value: '08', label: 'August' },
-      { value: '09', label: 'September' },
-      { value: '10', label: 'October' },
-      { value: '11', label: 'November' },
-      { value: '12', label: 'December' },
-    ],
-    []
-  );
 
   const showActionColumn = isSelectionMode;
 
@@ -366,7 +332,7 @@ export function QuotationMistakesPanel({
               <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Year</label>
               <CustomSelect
                 value={selectedYear}
-                onChange={setSelectedYear}
+                onChange={handleYearChange}
                 options={yearOptions}
               />
             </div>
@@ -376,10 +342,7 @@ export function QuotationMistakesPanel({
               <label className="block text-[11px] font-bold text-theme-text-muted mb-1">Month</label>
               <CustomSelect
                 value={selectedMonth}
-                onChange={(month) => {
-                  setSelectedMonth(month);
-                  if (month && !selectedYear) setSelectedYear(String(new Date().getFullYear()));
-                }}
+                onChange={handleMonthChange}
                 options={monthOptions}
               />
             </div>
@@ -390,7 +353,7 @@ export function QuotationMistakesPanel({
               <div className="flex items-center gap-2">
                 <DateInput
                   value={selectedDate}
-                  onChange={setSelectedDate}
+                  onChange={handleDateChange}
                   placeholder="DD-MM-YYYY"
                 />
                 {isFilterActive && (

@@ -14,6 +14,21 @@ let _mistakesCache: {
   count: number;
 } | null = null;
 
+const MONTH_NAMES: Record<string, string> = {
+  '01': 'January',
+  '02': 'February',
+  '03': 'March',
+  '04': 'April',
+  '05': 'May',
+  '06': 'June',
+  '07': 'July',
+  '08': 'August',
+  '09': 'September',
+  '10': 'October',
+  '11': 'November',
+  '12': 'December',
+};
+
 interface UseQuotationMistakesOptions {
   sessionUser: SupabaseUser | null;
   profile: Profile | null;
@@ -30,13 +45,21 @@ export function useQuotationMistakes({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter States
+  const now = new Date();
+  const currentYearStr = now.getFullYear().toString();
+  const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
+
+  // Filter States (defaults to current year + current month, all branches, empty search & date)
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>('');
-  const [selectedYear, setSelectedYear] = useState<string>('');
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<string>(() => currentYearStr);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => currentMonthStr);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  // Available metadata derived dynamically from actual quotation mistake records
+  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
+  const [availableDates, setAvailableDates] = useState<Array<{ year: string; month: string }>>([]);
 
   const profileId = profile?.id || '';
   const sessionUserId = sessionUser?.id || '';
@@ -76,6 +99,36 @@ export function useQuotationMistakes({
     [globalSettings, profile]
   );
 
+  // Fetch distinct available branches and year/month dates from actual mistake data
+  const fetchAvailableFilters = useCallback(async () => {
+    if (!sessionUserId || !profileId || !canRead) return;
+    try {
+      const scopeUserId = isUserRole ? sessionUserId : undefined;
+      const { data, error: rpcErr } = await mistakesService.getAvailableMistakeFilters(scopeUserId);
+      if (!rpcErr && data) {
+        setAvailableBranches(data.branches || []);
+        setAvailableDates(data.dates || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch available mistake filters:', err);
+    }
+  }, [sessionUserId, profileId, canRead, isUserRole]);
+
+  useEffect(() => {
+    void fetchAvailableFilters();
+  }, [fetchAvailableFilters]);
+
+  const availableYearsWithThisMonth = useMemo(() => {
+    if (!selectedMonth) return [];
+    return Array.from(
+      new Set(
+        availableDates
+          .filter((d) => d.month === selectedMonth)
+          .map((d) => d.year)
+      )
+    );
+  }, [availableDates, selectedMonth]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearchQuery(searchQuery.trim()), 300);
     return () => window.clearTimeout(timer);
@@ -102,6 +155,7 @@ export function useQuotationMistakes({
         year: selectedYear,
         month: selectedMonth,
         date: selectedDate,
+        availableYearsForMonth: !selectedYear && selectedMonth ? availableYearsWithThisMonth : undefined,
         signal,
       });
 
@@ -128,7 +182,7 @@ export function useQuotationMistakes({
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
-  }, [sessionUserId, profileId, canRead, isUserRole, currentPage, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, getCacheKey]);
+  }, [sessionUserId, profileId, canRead, isUserRole, currentPage, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, availableYearsWithThisMonth, getCacheKey]);
 
   // Initial Fetch
   useEffect(() => {
@@ -146,10 +200,11 @@ export function useQuotationMistakes({
       if (Date.now() < suppressRealtimeUntilRef.current) return;
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
       realtimeDebounceRef.current = setTimeout(() => {
-        fetchMistakes(true);
+        void fetchMistakes(true);
+        void fetchAvailableFilters();
       }, 350);
     },
-    [fetchMistakes]
+    [fetchMistakes, fetchAvailableFilters]
   );
 
   useRealtimeHandler('quotation_mistakes', handleRealtimePayload);
@@ -158,6 +213,131 @@ export function useQuotationMistakes({
     return () => {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
     };
+  }, []);
+
+  // Dynamic Branch Options (only branches with actual mistake data + All Branches)
+  const branchOptions = useMemo(() => {
+    return [
+      { value: '', label: 'All Branches' },
+      ...availableBranches.map((b) => ({ value: b, label: b })),
+    ];
+  }, [availableBranches]);
+
+  // Dynamic Year Options (only years with actual mistake data + All Years)
+  const dynamicYears = useMemo(() => {
+    const yearsSet = new Set<string>();
+    availableDates.forEach((d) => {
+      if (d.year && /^\d{4}$/.test(d.year)) {
+        yearsSet.add(d.year);
+      }
+    });
+    return Array.from(yearsSet).sort(
+      (a, b) => parseInt(b, 10) - parseInt(a, 10)
+    );
+  }, [availableDates]);
+
+  const yearOptions = useMemo(() => {
+    const opts = [{ value: '', label: 'All Years' }];
+    dynamicYears.forEach((y) => {
+      opts.push({ value: y, label: y });
+    });
+    // Retain selectedYear if currently active so CustomSelect displays it correctly
+    if (selectedYear && !dynamicYears.includes(selectedYear)) {
+      opts.push({ value: selectedYear, label: selectedYear });
+    }
+    return opts;
+  }, [dynamicYears, selectedYear]);
+
+  // Dynamic Month Options (Year-Aware!)
+  // If a year is selected, only show months that have mistakes in that year.
+  // If "All Years" is selected, show all months with mistakes across all years.
+  const dynamicMonths = useMemo(() => {
+    const monthsSet = new Set<string>();
+    availableDates.forEach((d) => {
+      if (!selectedYear || d.year === selectedYear) {
+        if (d.month && /^\d{2}$/.test(d.month)) {
+          monthsSet.add(d.month);
+        }
+      }
+    });
+
+    const sortedKeys = Array.from(monthsSet).sort(
+      (a, b) => parseInt(a, 10) - parseInt(b, 10)
+    );
+
+    return sortedKeys.map((m) => ({
+      value: m,
+      label: MONTH_NAMES[m] || m,
+    }));
+  }, [availableDates, selectedYear]);
+
+  const monthOptions = useMemo(() => {
+    const opts = [{ value: '', label: 'All Months' }, ...dynamicMonths];
+    // Retain selectedMonth if currently active so CustomSelect displays it correctly
+    if (selectedMonth && !dynamicMonths.some((m) => m.value === selectedMonth)) {
+      opts.push({
+        value: selectedMonth,
+        label: MONTH_NAMES[selectedMonth] || selectedMonth,
+      });
+    }
+    return opts;
+  }, [dynamicMonths, selectedMonth]);
+
+  // Month Revalidation when Year changes:
+  // If selectedMonth has no data in the newly selected year, reset to "All Months"
+  const prevYearRef = useRef<string>(selectedYear);
+  useEffect(() => {
+    if (prevYearRef.current !== selectedYear) {
+      prevYearRef.current = selectedYear;
+      if (selectedMonth) {
+        const availableMonthsForNewYear = availableDates
+          .filter((d) => !selectedYear || d.year === selectedYear)
+          .map((d) => d.month);
+        if (availableMonthsForNewYear.length > 0 && !availableMonthsForNewYear.includes(selectedMonth)) {
+          setSelectedMonth('');
+        }
+      }
+    }
+  }, [selectedYear, selectedMonth, availableDates]);
+
+  // Branch Revalidation:
+  // If selectedBranch is deleted/edited away, reset to "All Branches"
+  useEffect(() => {
+    if (selectedBranch && availableBranches.length > 0 && !availableBranches.includes(selectedBranch)) {
+      setSelectedBranch('');
+    }
+  }, [availableBranches, selectedBranch]);
+
+  // Synchronized Filter Handlers
+  const handleYearChange = useCallback((year: string) => {
+    setSelectedYear(year);
+    if (selectedDate) {
+      const parts = selectedDate.split('-');
+      if (year && parts[0] !== year) {
+        setSelectedDate('');
+      }
+    }
+  }, [selectedDate]);
+
+  const handleMonthChange = useCallback((month: string) => {
+    setSelectedMonth(month);
+    if (selectedDate) {
+      const parts = selectedDate.split('-');
+      if (month && parts[1] !== month) {
+        setSelectedDate('');
+      }
+    }
+  }, [selectedDate]);
+
+  const handleDateChange = useCallback((dateStr: string) => {
+    setSelectedDate(dateStr);
+    if (dateStr) {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        setSelectedYear(parts[0]);
+        setSelectedMonth(parts[1]);
+      }
+    }
   }, []);
 
   // Reset page when filters change
@@ -172,7 +352,7 @@ export function useQuotationMistakes({
     return Boolean(searchQuery || selectedBranch || selectedYear || selectedMonth || selectedDate);
   }, [searchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate]);
 
-  // Reset all filters
+  // Reset all filters to "All"
   const resetFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedBranch('');
@@ -224,6 +404,7 @@ export function useQuotationMistakes({
 
         suppressRealtimeUntilRef.current = Date.now() + 1000;
         toast.success('Quotation mistake added successfully!');
+        void fetchAvailableFilters();
         await fetchMistakes();
         return true;
       } catch (err: any) {
@@ -234,7 +415,7 @@ export function useQuotationMistakes({
         setIsSubmitting(false);
       }
     },
-    [canWrite, sessionUser, fetchMistakes]
+    [canWrite, sessionUser, fetchMistakes, fetchAvailableFilters]
   );
 
   // EDIT MISTAKE
@@ -280,6 +461,7 @@ export function useQuotationMistakes({
 
         suppressRealtimeUntilRef.current = Date.now() + 1000;
         toast.success('Quotation mistake updated successfully!');
+        void fetchAvailableFilters();
         await fetchMistakes();
         return true;
       } catch (err: any) {
@@ -290,7 +472,7 @@ export function useQuotationMistakes({
         setIsSubmitting(false);
       }
     },
-    [canWrite, sessionUser, fetchMistakes]
+    [canWrite, sessionUser, fetchMistakes, fetchAvailableFilters]
   );
 
   // DELETE MISTAKE
@@ -313,6 +495,7 @@ export function useQuotationMistakes({
 
         suppressRealtimeUntilRef.current = Date.now() + 1000;
         toast.success('Quotation mistake deleted successfully!');
+        void fetchAvailableFilters();
         await fetchMistakes();
         return true;
       } catch (err: any) {
@@ -323,7 +506,7 @@ export function useQuotationMistakes({
         setIsSubmitting(false);
       }
     },
-    [canWrite, fetchMistakes]
+    [canWrite, fetchMistakes, fetchAvailableFilters]
   );
 
   // BULK DELETE MISTAKES
@@ -347,6 +530,7 @@ export function useQuotationMistakes({
 
         suppressRealtimeUntilRef.current = Date.now() + 1000;
         toast.success(`Successfully deleted ${ids.length} mistakes!`);
+        void fetchAvailableFilters();
         await fetchMistakes();
         return true;
       } catch (err: any) {
@@ -357,7 +541,7 @@ export function useQuotationMistakes({
         setIsSubmitting(false);
       }
     },
-    [canWrite, fetchMistakes]
+    [canWrite, fetchMistakes, fetchAvailableFilters]
   );
 
   return {
@@ -382,8 +566,18 @@ export function useQuotationMistakes({
     setSelectedMonth,
     selectedDate,
     setSelectedDate,
+    handleYearChange,
+    handleMonthChange,
+    handleDateChange,
     isFilterActive,
     resetFilters,
+
+    // Dynamic Filter Options
+    branchOptions,
+    yearOptions,
+    monthOptions,
+    availableBranches,
+    availableDates,
 
     // Pagination
     currentPage,
@@ -393,6 +587,7 @@ export function useQuotationMistakes({
 
     // Actions
     fetchMistakes,
+    fetchAvailableFilters,
     addMistake,
     updateMistake,
     deleteMistake,

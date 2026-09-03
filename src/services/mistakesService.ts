@@ -15,6 +15,7 @@ export const mistakesService = {
     year?: string;
     month?: string;
     date?: string;
+    availableYearsForMonth?: string[];
     signal?: AbortSignal;
   }) {
     const page = Math.max(1, options?.page ?? 1);
@@ -40,20 +41,47 @@ export const mistakesService = {
     if (options?.branch) query = query.eq('branch', options.branch);
     if (options?.date) {
       query = query.eq('date', options.date);
-    } else if (options?.year) {
-      const month = options.month || '01';
-      const start = `${options.year}-${month}-01`;
-      const endDate = options.month
-        ? new Date(Date.UTC(Number(options.year), Number(options.month), 1))
-        : new Date(Date.UTC(Number(options.year) + 1, 0, 1));
+    } else if (options?.year && options?.month) {
+      const start = `${options.year}-${options.month}-01`;
+      const endDate = new Date(Date.UTC(Number(options.year), Number(options.month), 1));
       query = query
         .gte('date', start)
         .lt('date', endDate.toISOString().slice(0, 10));
+    } else if (options?.year) {
+      const start = `${options.year}-01-01`;
+      const endDate = `${Number(options.year) + 1}-01-01`;
+      query = query
+        .gte('date', start)
+        .lt('date', endDate);
+    } else if (options?.month && options?.availableYearsForMonth && options.availableYearsForMonth.length > 0) {
+      const orClauses = options.availableYearsForMonth.map((y) => {
+        const start = `${y}-${options.month}-01`;
+        const end = new Date(Date.UTC(Number(y), Number(options.month), 1)).toISOString().slice(0, 10);
+        return `and(date.gte.${start},date.lt.${end})`;
+      });
+      query = query.or(orClauses.join(','));
     }
     if (options?.signal) query = query.abortSignal(options.signal);
 
     const { data, error, count } = await query;
     return { data: (data || []) as unknown as QuotationMistake[], count: count ?? 0, error };
+  },
+
+  /**
+   * Fetch distinct branches and { year, month } pairs present in quotation mistakes
+   */
+  async getAvailableMistakeFilters(userId?: string, timeZone = 'Asia/Dhaka') {
+    const { data, error } = await supabase.rpc('get_available_mistake_filters' as any, {
+      p_user_id: userId ?? null,
+      p_tz: timeZone,
+    });
+    return {
+      data: (data || { branches: [], dates: [] }) as {
+        branches: string[];
+        dates: Array<{ year: string; month: string }>;
+      },
+      error,
+    };
   },
 
   /**
