@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.5.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.5.4** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,16 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.5.3 — Patch Release (Leaderboard & Navbar Rank Consistency with Yearly Tie-Breaker) (Current)
+### 🚀 v7.5.4 — Patch Release (Dynamic Mistakes Filters, Add Mistake Modal UI & Codename Label Cleanup) (Current)
+
+- **Dynamic Mistakes Filter Options**: Branch, Year, and Month filters in `Quotations → Mistakes` are now derived dynamically from actual submitted records via an optimized metadata RPC (`get_available_mistake_filters`), eliminating hardcoded dropdowns.
+- **Default Current Period & Graceful Empty State**: Initial load defaults to Current Year and Current Month with an intuitive empty state when no records exist, without jumping to earlier periods.
+- **Viewer-Scoped Filtering & RLS**: Normal users only see filter options derived from their own accessible mistake records, while admins and supervisors maintain company-wide range.
+- **Filter Consistency & Month Revalidation**: Changing the selected year automatically revalidates and resets unavailable months to All Months. Specific date selection synchronizes cleanly with Year and Month without conflicts.
+- **Add Mistake Modal UI Consistency**: Standardized Branch and Codename selectors to full column width with uniform 36px field heights matching Date and Filename inputs.
+- **Codename Option Cleanup**: Cleaned employee selector labels to display strictly the Codename (e.g. `AAN425`), preserving 100% underlying data integrity, user ID association, and type-ahead functionality.
+
+### 🚀 v7.5.3 — Patch Release (Leaderboard & Navbar Rank Consistency with Yearly Tie-Breaker)
 
 - **Yearly Tie-Breaker Ordering**: When monthly file submissions are equal, ranking now automatically evaluates yearly submissions (`overall_score`) so that users with higher yearly file counts take precedence in the leaderboard order.
 - **Leaderboard & Navbar Rank Consistency**: Synchronized the server-side RPC `get_leaderboard_data` and client-side rank caching so the user rank displayed in the Leaderboard table and next to the user's name in the Navbar are 100% identical.

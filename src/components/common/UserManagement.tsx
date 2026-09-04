@@ -1565,7 +1565,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     <th className="py-3.5 px-4 text-center">Leave Tracker</th>
                     <th className="py-3.5 px-4 text-center">Quotes Tracker</th>
                     <th className="py-3.5 px-4 text-center">Todo Access</th>
-                    <th className="py-3.5 px-6">File Type</th>
+                    <th className="py-3.5 px-6 w-64 max-w-[260px]">File Type</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-theme-border-muted text-xs text-theme-text-secondary">
@@ -1643,17 +1643,50 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                             <XCircle className="h-4.5 w-4.5 text-theme-text-muted/65 mx-auto" />
                           )}
                         </td>
-                        <td className="py-3.5 px-6 max-w-xs truncate" title={(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}>
-                          {!u.has_quotes_access ? (
-                            <span className="text-theme-text-muted/80 italic text-[11px]">No access</span>
-                          ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === ALL_FILE_TYPES.length ? (
-                            <span className="text-blue-400 font-medium text-[11px] block">All Categories</span>
-                          ) : (u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').length === 0 ? (
-                            <span className="text-red-400/80 font-medium text-[11px] block">None Allowed</span>
-                          ) : (
-                            <span className="text-theme-text-muted text-[11px] block">{(u.allowed_types || []).filter(t => t !== 'Review Van' && t !== 'Review Bike').join(', ')}</span>
-                          )}
-                        </td>
+                        {(() => {
+                          const cleanTypes = (u.allowed_types || []).filter(
+                            (t) => t !== 'Review Van' && t !== 'Review Bike'
+                          );
+                          const isAllCategories =
+                            cleanTypes.length === ALL_FILE_TYPES.length ||
+                            (cleanTypes.length > 0 && ALL_FILE_TYPES.every((t) => cleanTypes.includes(t)));
+
+                          const fullTypesList = cleanTypes.join(', ');
+                          const tooltipText = !u.has_quotes_access
+                            ? 'Quotes Workspace access is disabled'
+                            : isAllCategories
+                            ? `All Categories (${cleanTypes.length}):\n• ${cleanTypes.join('\n• ')}`
+                            : cleanTypes.length === 0
+                            ? 'No quotation categories assigned'
+                            : `Allowed Categories (${cleanTypes.length}):\n• ${cleanTypes.join('\n• ')}`;
+
+                          return (
+                            <td
+                              className="py-3.5 px-6 w-64 max-w-[260px] min-w-0 overflow-hidden"
+                              title={tooltipText}
+                            >
+                              {!u.has_quotes_access ? (
+                                <span className="text-theme-text-muted/80 italic text-[11px] block truncate">
+                                  No access
+                                </span>
+                              ) : isAllCategories ? (
+                                <span className="text-blue-400 font-medium text-[11px] block truncate">
+                                  All Categories
+                                </span>
+                              ) : cleanTypes.length === 0 ? (
+                                <span className="text-red-400/80 font-medium text-[11px] block truncate">
+                                  None Allowed
+                                </span>
+                              ) : (
+                                <div className="w-full max-w-[210px] min-w-0">
+                                  <span className="text-theme-text-muted text-[11px] block truncate font-normal">
+                                    {fullTypesList}
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })()}
                       </tr>
                     ))
                   )}

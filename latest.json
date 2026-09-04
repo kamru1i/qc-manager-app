@@ -1,8 +1,8 @@
 {
-  "version": "7.5.3",
-  "notes": "### 🚀 v7.5.3 — Patch Release (Leaderboard & Navbar Rank Consistency with Yearly Tie-Breaker) (Current)\n\n- **Yearly Tie-Breaker Ordering**: When monthly file submissions are equal, ranking now automatically compares yearly file submissions (`overall_score`) to determine the higher position.\n- **Leaderboard & Navbar Rank Consistency**: Synchronized the server-side RPC `get_leaderboard_data` and client-side rank caching so the user rank displayed in the Leaderboard table and next to the name in the Navbar are 100% identical.\n- **Real-Time Global Rank Cache**: Ensured real-time rank synchronization between monthly leaderboard views and the global navbar user display cache.",
-  "pub_date": "2026-09-02T21:16:00.000Z",
-  "releaseDate": "September 02, 2026",
+  "version": "7.5.4",
+  "notes": "### 🚀 v7.5.4 — Patch Release (Dynamic Mistakes Filters, Add Mistake Modal UI & Codename Label Cleanup) (Current)\n\n- **Dynamic Mistakes Filter Options**: Branch, Year, and Month filters in Quotations → Mistakes are now derived dynamically from actual submitted records via an optimized metadata RPC (`get_available_mistake_filters`), eliminating hardcoded dropdowns.\n- **Default Current Period & Graceful Empty State**: Initial load defaults to Current Year and Current Month with an intuitive empty state when no records exist, without jumping to earlier periods.\n- **Viewer-Scoped Filtering & RLS**: Normal users only see filter options derived from their own accessible mistake records, while admins and supervisors maintain company-wide range.\n- **Filter Consistency & Month Revalidation**: Changing the selected year automatically revalidates and resets unavailable months to All Months. Specific date selection synchronizes cleanly with Year and Month without conflicts.\n- **Add Mistake Modal UI Consistency**: Standardized Branch and Codename selectors to full column width with uniform 36px field heights matching Date and Filename inputs.\n- **Codename Option Cleanup**: Cleaned employee selector labels to display strictly the Codename (e.g. `AAN425`), preserving 100% underlying data integrity, user ID association, and type-ahead functionality.",
+  "pub_date": "2026-09-04T08:35:00.000Z",
+  "releaseDate": "September 04, 2026",
   "platforms": {},
   "checksums": {},
   "downloads": {
