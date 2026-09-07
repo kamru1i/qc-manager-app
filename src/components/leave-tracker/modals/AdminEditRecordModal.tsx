@@ -74,7 +74,7 @@ export function AdminEditRecordModal({
     <Modal
       isOpen={showAdminEditModal}
       onClose={handleClose}
-      title="Edit Leave Entry (Admin Edit)"
+      title={isSuperadmin(profile) ? "Edit Leave Entry" : "Edit Leave Entry (Admin Edit)"}
       icon={<Edit className="h-5 w-5 text-blue-500" />}
       maxWidthClass="max-w-md"
       glowClass="bg-blue-900/10"

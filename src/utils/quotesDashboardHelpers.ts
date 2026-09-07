@@ -120,11 +120,11 @@ export const formatTimeToHHMM = (val: string | null | undefined): string => {
 export const calculateSummaryStats = (records: RecordItem[]) => {
   let quote = 0;
   let requote = 0;
-  let requoteVan = 0;
-  let requoteBike = 0;
+  const requoteVan = 0;
+  const requoteBike = 0;
   let review = 0;
-  let reviewVan = 0;
-  let reviewBike = 0;
+  const reviewVan = 0;
+  const reviewBike = 0;
   let individualReview = 0;
   let otherSite = 0;
   let van = 0;

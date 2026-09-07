@@ -634,6 +634,12 @@ export function AddLeave({
 
       const isUserUnderSupervisor = !adminDirectEdit && !isSupervisorRole && !isSuperAdminUser && !!(targetProfile?.supervisor_ids && targetProfile.supervisor_ids.length > 0);
 
+      // For Superadmin: suppress user-facing Edited mark and keep actions unattributed
+      // If the record had prior legitimate edit history (from Admin/Supervisor/User), retain it; otherwise false.
+      const hasPriorLegitimateEditLog = Boolean(
+        editingRecord?.comment && /\[(?:Admin )?Edit(?:ed)? by [^\]]+\]/i.test(editingRecord.comment)
+      );
+
       const updateData: Record<string, unknown> = {
         date: date,
         leave_type: leaveType,
@@ -647,7 +653,7 @@ export function AddLeave({
         adjust_short_leave: canSubmitAdjustment ? finalAdjustShortLeave : false,
         reserve_holiday: canSubmitAdjustment ? (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && finalAdjustment ? adjustmentCategory : (leaveType === 'Full Leave' && (adjustmentCategory !== 'None') ? adjustmentCategory : null)) : null,
         reserve_adjustment_status: 'none',
-        is_edited: true,
+        is_edited: isSuperAdminUser ? (hasPriorLegitimateEditLog ? (editingRecord.is_edited ?? false) : false) : true,
       };
 
       if (!adminDirectEdit && !isSuperAdminUser) {
@@ -678,7 +684,9 @@ export function AddLeave({
         if (updateError) throw updateError;
 
         toast.success(
-          adminDirectEdit
+          isSuperAdminUser
+            ? 'Leave updated successfully.'
+            : adminDirectEdit
             ? 'Leave updated by admin.'
             : finalStatus === 'pending_supervisor'
             ? 'Leave updated. Supervisor re-approval is required.'

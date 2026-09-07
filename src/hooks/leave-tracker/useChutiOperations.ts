@@ -801,6 +801,11 @@ export const useChutiOperations = ({
         }
       }
 
+      const isSuperAdminUser = isSuperadmin(profile);
+      const hasPriorLegitimateEditLog = Boolean(
+        adminEditRecord?.comment && /\[(?:Admin )?Edit(?:ed)? by [^\]]+\]/i.test(adminEditRecord.comment)
+      );
+
       const updates = {
         date: adminEditDate,
         leave_type: adminEditLeaveType,
@@ -812,10 +817,12 @@ export const useChutiOperations = ({
         reserve_holiday: null,
         reserve_adjustment_status: 'none',
         comment: finalCommentWithLog || null,
-        is_edited: true,
-        admin_edit_request: {
-          notifications: [...existingNotifications, newNotification]
-        },
+        is_edited: isSuperAdminUser ? (hasPriorLegitimateEditLog ? (adminEditRecord.is_edited ?? false) : false) : true,
+        admin_edit_request: isSuperAdminUser
+          ? (adminEditRecord.admin_edit_request ?? null)
+          : {
+              notifications: [...existingNotifications, newNotification]
+            },
         admin_edit_status: 'none'
       };
 
