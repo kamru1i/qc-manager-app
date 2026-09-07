@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.5.4** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.6.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,16 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.5.4 — Patch Release (Dynamic Mistakes Filters, Add Mistake Modal UI & Codename Label Cleanup) (Current)
+### 🚀 v7.6.0 — Minor Release (Supervisor Account Creation Workflow, Requote Normalization & Superadmin Edit Privacy) (Current)
+
+- **Supervisor User Account Creation & Admin Approval Flow**: Restored controlled user account creation capability for Supervisors under a secure dual-phase approval flow. Supervisors submit requests (requiring `user` role and Quotes + Leave Workspace access); Admins review, approve, send back with revision feedback, or reject.
+- **Optimistic Concurrency & Resubmission**: Supervisors can review admin feedback, update user details, and resubmit with automated revision version tracking and concurrency conflict detection.
+- **Database RPC & RLS Security**: Backed by secure PostgreSQL functions (`submit_user_creation_request`, `review_user_creation_request`, `resubmit_user_creation_request`, `approve_user_creation_request`), strict RLS policies, and tamper-evident audit logs.
+- **Quotes Requote Normalization**: Removed obsolete Requote Van and Requote Bike as new input options in Daily Entry and Quick Import while preserving 100% of historical records and reporting compatibility.
+- **Quotes Workspace Category Overflow Fix**: Restructured multi-category tag display in Settings → Users to eliminate horizontal text clipping and container overflows.
+- **Superadmin Leave Edit Privacy**: Eliminated user-facing Edited badge/mark when Superadmin modifies leave records, ensuring completely anonymous and untraced administrative adjustments.
+
+### 🚀 v7.5.4 — Patch Release (Dynamic Mistakes Filters, Add Mistake Modal UI & Codename Label Cleanup)
 
 - **Dynamic Mistakes Filter Options**: Branch, Year, and Month filters in `Quotations → Mistakes` are now derived dynamically from actual submitted records via an optimized metadata RPC (`get_available_mistake_filters`), eliminating hardcoded dropdowns.
 - **Default Current Period & Graceful Empty State**: Initial load defaults to Current Year and Current Month with an intuitive empty state when no records exist, without jumping to earlier periods.
