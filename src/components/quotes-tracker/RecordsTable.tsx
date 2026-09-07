@@ -1168,11 +1168,15 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                             "Bike",
                             "Sale",
                           ];
-                          // Filter out "Review Van" and "Review Bike"
+                          // Filter out legacy types ("Review Van", "Review Bike", "Requote Van", "Requote Bike")
                           const filtered = baseCategories.filter(
-                            (type) => type !== "Review Van" && type !== "Review Bike"
+                            (type) =>
+                              type !== "Review Van" &&
+                              type !== "Review Bike" &&
+                              type !== "Requote Van" &&
+                              type !== "Requote Bike"
                           );
-                          // Preserve current type if it's already Review Van/Bike
+                          // Preserve current type if the record already has a legacy type (e.g. Requote Van)
                           if (r.file_type && !filtered.includes(r.file_type)) {
                             filtered.push(r.file_type);
                           }

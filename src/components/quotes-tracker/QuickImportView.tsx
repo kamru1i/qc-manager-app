@@ -81,10 +81,20 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
   );
 
   // File Types list: restrict strictly to allowedTypes permissions for this user (falls back to ALL_10_FILE_TYPES if empty)
-  const typesList = React.useMemo(
-    () => allowedTypes && allowedTypes.length > 0 ? allowedTypes : ALL_10_FILE_TYPES,
-    [allowedTypes],
-  );
+  // Requote Van and Requote Bike are excluded from new selectable import options
+  const typesList = React.useMemo(() => {
+    const raw = allowedTypes && allowedTypes.length > 0 ? allowedTypes : ALL_10_FILE_TYPES;
+    const filtered = raw.filter(
+      (t) => t !== "Requote Van" && t !== "Requote Bike" && t !== "Review Van" && t !== "Review Bike"
+    );
+    if (
+      !filtered.includes("Requote") &&
+      (raw.includes("Requote") || raw.includes("Requote Van") || raw.includes("Requote Bike"))
+    ) {
+      filtered.push("Requote");
+    }
+    return filtered;
+  }, [allowedTypes]);
 
   const branchSelectOptions = React.useMemo(
     () => branchesList.map((b) => ({ value: b, label: b })),
@@ -216,11 +226,16 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
           }
         }
 
+        const finalFileType =
+          item.file_type === "Requote Van" || item.file_type === "Requote Bike"
+            ? "Requote"
+            : item.file_type;
+
         const ok = await onSubmitRecord({
           file_name: finalFileName,
           branch_name: item.branch_name,
           codename: codename || "ANON",
-          file_type: item.file_type,
+          file_type: finalFileType,
           entry_date: item.entry_date || new Date().toISOString().split("T")[0],
         });
 

@@ -134,12 +134,8 @@ export const calculateSummaryStats = (records: RecordItem[]) => {
   records.forEach(r => {
     const type = r.file_type;
     if (type === 'Quote') quote++;
-    else if (type === 'Requote') requote++;
-    else if (type === 'Requote Van') requoteVan++;
-    else if (type === 'Requote Bike') requoteBike++;
-    else if (type === 'Review') review++;
-    else if (type === 'Review Van') reviewVan++;
-    else if (type === 'Review Bike') reviewBike++;
+    else if (type === 'Requote' || type === 'Requote Van' || type === 'Requote Bike') requote++;
+    else if (type === 'Review' || type === 'Review Van' || type === 'Review Bike') review++;
     else if (type === 'Individual Review') individualReview++;
     else if (type === 'Other Site') otherSite++;
     else if (type === 'Van') van++;

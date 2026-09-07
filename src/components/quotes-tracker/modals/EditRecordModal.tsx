@@ -139,7 +139,20 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
               onChange={(e) => setEditFileType(e.target.value as FileType)}
               className="block w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
             >
-              {allowedCategories.map((type) => (
+              {(() => {
+                const filtered = allowedCategories.filter(
+                  (type) =>
+                    type !== "Review Van" &&
+                    type !== "Review Bike" &&
+                    type !== "Requote Van" &&
+                    type !== "Requote Bike"
+                );
+                // Preserve current type if the record already has a legacy type (e.g. Requote Van)
+                if (editFileType && !filtered.includes(editFileType)) {
+                  filtered.push(editFileType);
+                }
+                return filtered;
+              })().map((type) => (
                 <option key={type} value={type}>
                   {type}
                 </option>

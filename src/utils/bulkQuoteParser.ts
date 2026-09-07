@@ -60,8 +60,8 @@ const BRANCH_PATTERNS: Array<{ key: string; regex: RegExp }> = [
 const FILE_TYPE_PATTERNS: Array<{ type: string; regex: RegExp }> = [
   { type: 'Individual Review', regex: /\bindividual[\s-_]*review\b/i },
   { type: 'Other Site', regex: /\bother[\s-_]*site\b/i },
-  { type: 'Requote Van', regex: /\brequote[\s-_]*van\b/i },
-  { type: 'Requote Bike', regex: /\brequote[\s-_]*bike\b/i },
+  { type: 'Requote', regex: /\brequote[\s-_]*van\b/i },
+  { type: 'Requote', regex: /\brequote[\s-_]*bike\b/i },
   { type: 'Review Van', regex: /\breview[\s-_]*van\b/i },
   { type: 'Review Bike', regex: /\breview[\s-_]*bike\b/i },
   { type: 'Requote', regex: /\brequote\b/i },

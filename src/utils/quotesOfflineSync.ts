@@ -205,12 +205,17 @@ export const syncOfflineData = async (onSyncSuccess?: (syncedCount: number) => v
 
       } else {
         // Sync offline insert
+        const syncedFileType =
+          record.file_type === 'Requote Van' || record.file_type === 'Requote Bike'
+            ? 'Requote'
+            : record.file_type;
+
         const { error: insertError } = await supabase.from('records').insert({
           user_id: record.user_id,
           file_name: record.file_name,
           branch_name: record.branch_name,
           codename: record.codename,
-          file_type: record.file_type,
+          file_type: syncedFileType,
           submitted_at: record.submitted_at,
         });
 

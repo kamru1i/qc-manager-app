@@ -69,6 +69,8 @@ export const useRecordActions = ({
     try {
       const targetUserId = customUserId || sessionUser.id;
       const targetSubmittedAt = customSubmittedAt || new Date().toISOString();
+      const effectiveFileType: FileType =
+        fileType === 'Requote Van' || fileType === 'Requote Bike' ? 'Requote' : fileType;
 
       if (!navigator.onLine) {
         // Save to offline outbox queue
@@ -77,7 +79,7 @@ export const useRecordActions = ({
           file_name: fileName,
           branch_name: branchName.toUpperCase().trim(),
           codename: codename.toUpperCase().trim(),
-          file_type: fileType,
+          file_type: effectiveFileType,
           submitted_at: targetSubmittedAt
         };
 
@@ -112,7 +114,7 @@ export const useRecordActions = ({
           file_name: fileName,
           branch_name: branchName.toUpperCase().trim(),
           codename: codename.toUpperCase().trim(),
-          file_type: fileType,
+          file_type: effectiveFileType,
           submitted_at: targetSubmittedAt
         });
 

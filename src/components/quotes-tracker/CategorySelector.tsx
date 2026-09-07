@@ -13,7 +13,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   setSelectedType,
   allowedCategories
 }) => {
-  const isRequoteActive = selectedType === 'Requote' || selectedType === 'Requote Van' || selectedType === 'Requote Bike';
+  const isRequoteActive = selectedType === 'Requote';
   const isReviewActive = selectedType === 'Review';
 
   const isRequoteAllowed =
@@ -24,19 +24,11 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   const isReviewAllowed = allowedCategories.includes('Review');
 
   const handleRequoteClick = () => {
-    if (allowedCategories.includes('Requote')) {
-      setSelectedType('Requote');
-    } else if (allowedCategories.includes('Requote Van')) {
-      setSelectedType('Requote Van');
-    } else if (allowedCategories.includes('Requote Bike')) {
-      setSelectedType('Requote Bike');
-    }
+    setSelectedType('Requote');
   };
 
   const handleReviewClick = () => {
-    if (allowedCategories.includes('Review')) {
-      setSelectedType('Review');
-    }
+    setSelectedType('Review');
   };
 
   const mainCategories = [
@@ -66,8 +58,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
           >
             <div className="flex items-center justify-between w-full gap-1">
               <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-                {cat.id === 'Requote' && selectedType.startsWith('Requote ') ? selectedType :
-                 cat.label}
+                {cat.label}
               </span>
               <span className={`h-4.5 w-4.5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                 cat.active
@@ -77,51 +68,6 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
                 {cat.active && <Check className="h-3 w-3" />}
               </span>
             </div>
-
-            {/* Suboptions for Requote (Van / Bike) inside the card */}
-            {cat.id === 'Requote' && cat.active && (
-              <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-blue-950/40" onClick={(e) => e.stopPropagation()}>
-                {allowedCategories.includes('Requote') && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedType('Requote')}
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] cursor-pointer border ${
-                      selectedType === 'Requote'
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-950/10'
-                        : 'bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input'
-                    }`}
-                  >
-                    Only Requote
-                  </button>
-                )}
-                {allowedCategories.includes('Requote Van') && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedType('Requote Van')}
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] cursor-pointer border ${
-                      selectedType === 'Requote Van'
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-950/10'
-                        : 'bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input'
-                    }`}
-                  >
-                    + Van
-                  </button>
-                )}
-                {allowedCategories.includes('Requote Bike') && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedType('Requote Bike')}
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] cursor-pointer border ${
-                      selectedType === 'Requote Bike'
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-950/10'
-                        : 'bg-theme-card-bg border-theme-border-input text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input'
-                    }`}
-                  >
-                    + Bike
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         ))
       }

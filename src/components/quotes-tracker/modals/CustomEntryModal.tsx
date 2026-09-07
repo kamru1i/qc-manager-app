@@ -186,7 +186,9 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
       if (!targetAllowedCategories.includes(customFileType)) {
         // Fallback checks
         if (customFileType.startsWith("Requote") && isRequoteAllowed) {
-          // Keep it if requote variants are allowed, let standard selection adjust
+          if (customFileType !== "Requote") {
+            setCustomFileType("Requote");
+          }
         } else if (customFileType.startsWith("Review") && isReviewAllowed) {
           // Keep review
         } else {
@@ -206,10 +208,14 @@ export const CustomEntryModal: React.FC<CustomEntryModalProps> = ({
     e.preventDefault();
     const cleaned = cleanFileName(customFileName);
     setCustomFileName(cleaned);
+    const finalFileType =
+      customFileType === "Requote Van" || customFileType === "Requote Bike"
+        ? ("Requote" as FileType)
+        : customFileType;
     const success = await onSubmit(
       cleaned,
       customBranchName,
-      customFileType,
+      finalFileType,
       customUserId,
       customDate,
     );

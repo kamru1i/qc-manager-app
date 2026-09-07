@@ -38,9 +38,13 @@ export const recordsService = {
    * Insert a new record
    */
   async createRecord(record: Partial<RecordItem>) {
+    const payload = { ...record };
+    if (payload.file_type === 'Requote Van' || payload.file_type === 'Requote Bike') {
+      payload.file_type = 'Requote';
+    }
     const { data, error } = await supabase
       .from('records')
-      .insert(record as any)
+      .insert(payload as any)
       .select(RECORD_COLUMNS)
       .single();
     return { data: data as unknown as RecordItem | null, error };
