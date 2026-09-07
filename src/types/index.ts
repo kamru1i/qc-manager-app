@@ -228,3 +228,90 @@ export interface QuotationMistake {
     codename?: string | null;
   } | null;
 }
+
+export interface UserCreationSubmittedData {
+  codename: string;
+  fullName?: string;
+  full_name?: string;
+  role: 'user';
+  allowedTypes?: string[];
+  allowed_types?: string[];
+  canManageRules?: boolean;
+  can_manage_rules?: boolean;
+  hasChutiAccess?: boolean;
+  has_chuti_access?: boolean;
+  hasQuotesAccess?: boolean;
+  has_quotes_access?: boolean;
+  needsApproval?: boolean;
+  needs_supervisor_approval?: boolean;
+  supervisorIds?: string[];
+  supervisor_ids?: string[];
+  assigned_supervisor_id?: string;
+  assigned_supervisor_name?: string;
+  eligibleGovtHoliday?: boolean;
+  eligible_govt_holiday?: boolean;
+  eligibleOfficeLeave?: boolean;
+  eligible_office_leave?: boolean;
+  allowOvertime?: boolean;
+  allow_overtime?: boolean;
+  allowReserve?: boolean;
+  allow_reserve?: boolean;
+  jobRole?: string;
+  job_role?: string;
+  workingHours?: number;
+  working_hours?: number;
+  breakTime?: number;
+  break_time?: number;
+  signInTime?: string;
+  default_sign_in?: string;
+  signOutTime?: string;
+  default_sign_out?: string;
+  kpiSkills?: string[];
+  kpi_skills?: string[];
+  kpiDeptIndicators?: string[];
+  kpi_dept_indicators?: string[];
+  kpiOtherDeptIndicators?: string[];
+  kpi_other_dept_indicators?: string[];
+  performsDataEntry?: boolean;
+  performs_data_entry?: boolean;
+  department?: string;
+  performsOtherDeptTasks?: boolean;
+  performs_other_dept_tasks?: boolean;
+  otherDepartment?: string;
+  other_department?: string;
+  password?: string;
+}
+
+export interface UserCreationRequest {
+  id: string;
+  requester_id: string;
+  submitted_by_id?: string;
+  requester_role: string;
+  status: 'pending_admin_approval' | 'needs_review' | 'approved' | 'rejected';
+  submitted_data: UserCreationSubmittedData;
+  data?: UserCreationSubmittedData;
+  submitted_by_name?: string | null;
+  review_notes?: string | null;
+  admin_review_notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  created_user_id?: string | null;
+  version: number;
+  history?: Array<{
+    action: string;
+    actor_id: string;
+    actor_name?: string;
+    timestamp: string;
+    notes?: string;
+    version: number;
+  }>;
+  created_at: string;
+  updated_at: string;
+  requester?: {
+    id?: string;
+    username?: string;
+    full_name?: string | null;
+    role?: string;
+  };
+}
+

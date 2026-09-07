@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Bell, Edit, RefreshCw, CheckCircle, XCircle } from "lucide-react";
+import { Bell, Edit, RefreshCw, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import { Profile, ChutiRecordWithProfile } from "@/types";
 import { ChutiRecord } from "@/utils/offlineSync";
 import { Modal } from "@/components/common/Modal";
 import { isAdminRole } from '@/utils/permissionService';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 
 interface UserNotificationsModalProps {
   showUserNotificationsModal: boolean;
@@ -53,6 +54,7 @@ export function UserNotificationsModal({
   onDismissAll,
   approvalsCount = 0,
 }: UserNotificationsModalProps) {
+  const { emit } = useAppEventBus();
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
 
@@ -162,26 +164,29 @@ export function UserNotificationsModal({
                                     ? "bg-blue-955 border border-blue-900/50 text-blue-300"
                                     : n.type === "pending_admin_chuti_request"
                                       ? "bg-blue-955 border border-blue-900/50 text-blue-300"
-                                      : n.type ===
-                                          "pending_admin_reserve_request"
+                                      : n.type === "pending_admin_reserve_request"
                                         ? "bg-emerald-955 border border-emerald-900/50 text-emerald-300"
-                                        : n.type ===
-                                            "pending_admin_profile_request"
+                                        : n.type === "pending_admin_profile_request"
                                           ? "bg-cyan-955 border border-cyan-900/50 text-cyan-300"
-                                          : n.type ===
-                                              "pending_admin_password_request"
+                                          : n.type === "pending_admin_password_request"
                                             ? "bg-red-955 border border-red-900/50 text-red-300"
-                                            : n.type === "supervisor_approved"
-                                              ? "bg-emerald-955 border border-emerald-900/50 text-emerald-300"
-                                              : n.record?.leave_type ===
-                                                  "Full Leave"
-                                                ? "bg-red-955 border border-red-900 text-red-400"
-                                                : n.record?.leave_type ===
-                                                    "Overtime"
-                                                  ? "bg-blue-955 border border-blue-900 text-blue-400"
-                                                  : ['Short Leave', 'Early Leave', 'Late Join'].includes(n.record?.leave_type || '')
-                                                    ? "bg-purple-955 border border-purple-900 text-purple-400"
-                                                    : "bg-theme-page-bg border border-theme-card-bg text-theme-text-muted"
+                                            : n.type === "user_creation_review"
+                                              ? "bg-amber-955 border border-amber-900/50 text-amber-300"
+                                              : n.type === "user_creation_approved"
+                                                ? "bg-emerald-955 border border-emerald-900/50 text-emerald-300"
+                                                : n.type === "user_creation_rejected"
+                                                  ? "bg-red-955 border border-red-900/50 text-red-300"
+                                                  : n.type === "pending_user_creation_request"
+                                                    ? "bg-blue-955 border border-blue-900/50 text-blue-300"
+                                                    : n.type === "supervisor_approved"
+                                                      ? "bg-emerald-955 border border-emerald-900/50 text-emerald-300"
+                                                      : n.record?.leave_type === "Full Leave"
+                                                        ? "bg-red-955 border border-red-900 text-red-400"
+                                                        : n.record?.leave_type === "Overtime"
+                                                          ? "bg-blue-955 border border-blue-900 text-blue-400"
+                                                          : ['Short Leave', 'Early Leave', 'Late Join'].includes(n.record?.leave_type || '')
+                                                            ? "bg-purple-955 border border-purple-900 text-purple-400"
+                                                            : "bg-theme-page-bg border border-theme-card-bg text-theme-text-muted"
                     }`}
                   >
                     {n.type === "compliance_rule"
@@ -202,16 +207,21 @@ export function UserNotificationsModal({
                                     ? "Leave Approval"
                                     : n.type === "pending_admin_reserve_request"
                                       ? "Reserve / Adjustment"
-                                      : n.type ===
-                                          "pending_admin_profile_request"
+                                      : n.type === "pending_admin_profile_request"
                                         ? "Profile Edit"
-                                        : n.type ===
-                                            "pending_admin_password_request"
+                                        : n.type === "pending_admin_password_request"
                                           ? "Password Reset"
-                                          : n.type === "supervisor_approved"
-                                            ? "Supervisor Verified"
-                                            : n.record?.leave_type ||
-                                              "Notification"}
+                                          : n.type === "user_creation_review"
+                                            ? "Account Review Required"
+                                            : n.type === "user_creation_approved"
+                                              ? "Account Approved"
+                                              : n.type === "user_creation_rejected"
+                                                ? "Account Rejected"
+                                                : n.type === "pending_user_creation_request"
+                                                  ? "User Creation Request"
+                                                  : n.type === "supervisor_approved"
+                                                    ? "Supervisor Verified"
+                                                    : n.record?.leave_type || "Notification"}
                   </span>
                 </div>
 
@@ -227,6 +237,31 @@ export function UserNotificationsModal({
                       className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all border border-purple-700 shadow-md shrink-0 font-sans"
                     >
                       <Edit className="h-3.5 w-3.5" /> Modify
+                    </button>
+                  )}
+                  {n.type === "user_creation_review" && n.data && (
+                    <button
+                      onClick={() => {
+                        setShowUserNotificationsModal(false);
+                        emit('workspace-change', 'user_management');
+                        setTimeout(() => {
+                          emit('open-user-creation-review', n.data);
+                        }, 100);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all border border-amber-700 shadow-md shrink-0 font-sans"
+                    >
+                      <Edit className="h-3.5 w-3.5" /> Review & Update
+                    </button>
+                  )}
+                  {n.type === "pending_user_creation_request" && onSwitchToAdminPanel && (
+                    <button
+                      onClick={() => {
+                        setShowUserNotificationsModal(false);
+                        onSwitchToAdminPanel();
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all border border-blue-700 shadow-md shrink-0 font-sans"
+                    >
+                      <ArrowRight className="h-3.5 w-3.5" /> View in Panel
                     </button>
                   )}
                   <button

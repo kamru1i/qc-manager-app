@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell } from "lucide-react";
-import { Profile, ChutiRecordWithProfile, BulkRepresentative } from "@/types";
+import { Profile, ChutiRecordWithProfile, BulkRepresentative, UserCreationRequest } from "@/types";
 import { Modal } from "@/components/common/Modal";
 import { LeaveApprovalPanel } from "@/components/leave-tracker/LeaveApprovalPanel";
 import { isAdminRole } from '@/utils/permissionService';
@@ -28,6 +28,9 @@ interface AdminLeaveApprovalModalProps {
   handleApprovePasswordResetRequest?: (id: string, approve: boolean) => void;
   pendingRemovalRequests?: any[];
   handleApproveLeaveRemoval?: (record: any, approve: boolean) => void;
+  pendingUserCreationRequests?: UserCreationRequest[];
+  handleApproveUserCreationRequest?: (req: UserCreationRequest) => void;
+  handleReviewUserCreationRequest?: (req: UserCreationRequest, notes: string) => void;
   onSwitchToUserPanel?: () => void;
   userNotificationsCount?: number;
 }
@@ -51,6 +54,9 @@ export function AdminLeaveApprovalModal({
   adminHolidayNotifications = [],
   pendingRemovalRequests = [],
   handleApproveLeaveRemoval = () => {},
+  pendingUserCreationRequests = [],
+  handleApproveUserCreationRequest = () => {},
+  handleReviewUserCreationRequest = () => {},
   onSwitchToUserPanel,
   userNotificationsCount = 0,
 }: AdminLeaveApprovalModalProps) {
@@ -101,6 +107,9 @@ export function AdminLeaveApprovalModal({
         adminHolidayNotifications={adminHolidayNotifications}
         pendingRemovalRequests={pendingRemovalRequests}
         handleApproveLeaveRemoval={handleApproveLeaveRemoval}
+        pendingUserCreationRequests={pendingUserCreationRequests}
+        handleApproveUserCreationRequest={handleApproveUserCreationRequest}
+        handleReviewUserCreationRequest={handleReviewUserCreationRequest}
       />
     </Modal>
   );

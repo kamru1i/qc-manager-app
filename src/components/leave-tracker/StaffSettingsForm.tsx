@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Check, Settings, AlertTriangle, UserCheck } from "lucide-react";
+import { Check, Settings, AlertTriangle, UserCheck, Users } from "lucide-react";
 import { TimeInput } from "@/components/common/TimeInput";
 import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
@@ -184,11 +184,14 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   const showKpiSettings = isTabVisibleForRole(currentUser || null, 'profile_component_kpi_settings', currentUser?.global_settings) && (isNewUser ? (isAdmin || isSupervisor) : (canAccessProfileSection(currentUser || null, viewingStaff, 'kpi_settings') && !!setKpiSkills));
   const { profilesList } = useProfiles();
   const [showAssignSupervisorPrompt, setShowAssignSupervisorPrompt] = React.useState(false);
+  const [showSelectOtherSupervisorModal, setShowSelectOtherSupervisorModal] = React.useState(false);
+  const [selectedOtherSupervisorId, setSelectedOtherSupervisorId] = React.useState<string>("");
 
   const hasAssignedSupervisor = needsApproval && (supervisorIds.length > 0 || (viewingStaff?.supervisor_ids && viewingStaff.supervisor_ids.length > 0));
   const isCurrentSuperadmin = isSuperadmin(currentUser || null);
   const isSelfEdit = Boolean(currentUser && viewingStaff && currentUser.id === viewingStaff.id);
   const canEditShift = isAdmin || isSelfEdit || isSupervisor;
+  const canEditLeaveOptions = isAdmin || (isNewUser && isSupervisor);
   const isCurrentAssignedSupervisor = React.useMemo(() => {
     if (!currentUser) return false;
     if (isAdminRole(currentUser)) return true;
@@ -213,11 +216,12 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
   // Permitted File Entry Types (Categories) Editing Lock
   const isFiletypeDisabled = React.useMemo(() => {
+    if (isNewUser) return false; // During new user creation, creator can configure permitted categories
     if (isCurrentSuperadmin) return false;
     if (isCurrentAssignedSupervisor) return false;
     if (hasAssignedSupervisor) return true; // Locked for Admin when supervisor is assigned
     return !isAdmin;
-  }, [isCurrentSuperadmin, isCurrentAssignedSupervisor, hasAssignedSupervisor, isAdmin]);
+  }, [isNewUser, isCurrentSuperadmin, isCurrentAssignedSupervisor, hasAssignedSupervisor, isAdmin]);
 
   // KPI & Performance Settings Editing Lock
   const isKpiSettingsDisabled = React.useMemo(() => {
@@ -318,7 +322,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                 placeholder="e.g. KI1024"
                 value={codename}
                 onChange={(e) => setCodename(e.target.value.toUpperCase())}
-                disabled={!isAdmin}
+                disabled={!isAdmin && !(isNewUser && isSupervisor)}
                 className="block w-full h-[36px] px-3 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder-theme-text-muted/70 text-xs focus:outline-none focus:border-blue-500/50 disabled:opacity-50"
               />
             </div>
@@ -653,13 +657,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
               {/* Office Leave Eligible */}
               <label
-                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+                className={`flex items-start gap-2.5 select-none ${canEditLeaveOptions ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
               >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
                     checked={eligibleOfficeLeave}
-                    disabled={!isAdmin}
+                    disabled={!canEditLeaveOptions}
                     onChange={(e) => setEligibleOfficeLeave(e.target.checked)}
                     className="sr-only"
                   />
@@ -687,13 +691,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
               {/* Govt Holiday Eligible */}
               <label
-                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+                className={`flex items-start gap-2.5 select-none ${canEditLeaveOptions ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
               >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
                     checked={eligibleGovtHoliday}
-                    disabled={!isAdmin}
+                    disabled={!canEditLeaveOptions}
                     onChange={(e) => setEligibleGovtHoliday(e.target.checked)}
                     className="sr-only"
                   />
@@ -721,13 +725,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
               {/* Overtime Category */}
               <label
-                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+                className={`flex items-start gap-2.5 select-none ${canEditLeaveOptions ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
               >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
                     checked={allowOvertime}
-                    disabled={!isAdmin}
+                    disabled={!canEditLeaveOptions}
                     onChange={(e) => setAllowOvertime(e.target.checked)}
                     className="sr-only"
                   />
@@ -755,13 +759,13 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
               {/* Reserve Govt Holiday */}
               <label
-                className={`flex items-start gap-2.5 select-none ${isAdmin ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
+                className={`flex items-start gap-2.5 select-none ${canEditLeaveOptions ? "cursor-pointer group" : "opacity-80 pointer-events-none"}`}
               >
                 <div className="relative flex items-center mt-0.5">
                   <input
                     type="checkbox"
                     checked={allowReserve}
-                    disabled={!isAdmin}
+                    disabled={!canEditLeaveOptions}
                     onChange={(e) => setAllowReserve(e.target.checked)}
                     className="sr-only"
                   />
@@ -784,6 +788,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   </span>
                 </div>
               </label>
+
             </div>
           )}
           {!hasChutiAccess && (
@@ -830,7 +835,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   Quotes Manager Workspace
                 </h3>
               </div>
-              {isAdmin && (
+              {(isAdmin || (isNewUser && isSupervisor)) && (
                 <Toggle
                   checked={hasQuotesAccess}
                   onChange={(checked) => {
@@ -857,6 +862,34 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     Permitted file entry types are managed by the assigned supervisor.
                   </p>
+                )}
+
+                {/* Supervisor Assignment Summary */}
+                {needsApproval && supervisorIds.length > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-blue-950/20 border border-blue-900/40 rounded-xl text-xs mt-2">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-blue-400 shrink-0" />
+                      <span className="text-theme-text-secondary">
+                        Assigned Supervisor:{" "}
+                        <strong className="text-theme-text-primary">
+                          {supervisorIds.includes(currentUser?.id || "")
+                            ? "Managed by you"
+                            : supervisors.find((s) => supervisorIds.includes(s.id))?.full_name ||
+                              supervisors.find((s) => supervisorIds.includes(s.id))?.username ||
+                              "Assigned Supervisor"}
+                        </strong>
+                      </span>
+                    </div>
+                    {isNewUser && (isSupervisor || isAdmin) && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAssignSupervisorPrompt(true)}
+                        className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold underline cursor-pointer"
+                      >
+                        Change
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Can Manage Quote Rules (Only Admin edits) */}
@@ -1577,7 +1610,7 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
 
       {/* Assign Supervisor Confirmation Modal */}
       {showAssignSupervisorPrompt && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 font-sans">
           <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
             <div className="flex items-start gap-3.5">
               <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
@@ -1588,34 +1621,155 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
                   Assign a Supervisor?
                 </h3>
                 <p className="text-xs text-theme-text-secondary leading-relaxed">
-                  Quotes Manager Workspace has been enabled. Would you like to assign a supervisor for this staff member?
+                  {isSupervisor || currentUser?.role === "supervisor"
+                    ? "Quotes Manager Workspace has been enabled. Should this user be managed by you or another supervisor?"
+                    : "Quotes Manager Workspace has been enabled. Would you like to assign a supervisor for this staff member?"}
                 </p>
               </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2 border-t border-theme-border-muted/50">
+              {isSupervisor || currentUser?.role === "supervisor" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (currentUser?.id) {
+                        setSupervisorIds([currentUser.id]);
+                        setNeedsApproval(true);
+                        setHasChutiAccess(true);
+                      }
+                      setShowAssignSupervisorPrompt(false);
+                    }}
+                    className="px-4 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <UserCheck className="h-3.5 w-3.5" />
+                    Manage by me
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAssignSupervisorPrompt(false);
+                      setShowSelectOtherSupervisorModal(true);
+                    }}
+                    className="px-4 py-2.5 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    Assign to another Supervisor
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowAssignSupervisorPrompt(false)}
+                    className="px-4 py-2 bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs font-semibold rounded-xl hover:bg-theme-border-input/50 transition-colors cursor-pointer"
+                  >
+                    No, I'll Manage Directly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNeedsApproval(true);
+                      setShowAssignSupervisorPrompt(false);
+                    }}
+                    className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
+                  >
+                    Yes, Assign Supervisor
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Select Other Supervisor Modal */}
+      {showSelectOtherSupervisorModal && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 font-sans">
+          <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+                <Users className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-theme-text-primary">
+                  Select Assigned Supervisor
+                </h3>
+                <p className="text-xs text-theme-text-secondary leading-relaxed">
+                  Select the supervisor who will manage this staff member. Leave Tracker Workspace will automatically be enabled.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {supervisors.length === 0 ? (
+                <div className="text-xs text-theme-text-muted italic p-3 text-center">
+                  No active supervisor accounts found.
+                </div>
+              ) : (
+                supervisors.map((s) => {
+                  const isSelected = selectedOtherSupervisorId === s.id;
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedOtherSupervisorId(s.id)}
+                      className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                        isSelected
+                          ? "bg-blue-950/40 border-blue-600 text-blue-300 shadow-md"
+                          : "bg-theme-card-container/60 border-theme-border-muted hover:border-theme-border-input text-theme-text-secondary"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-lg bg-theme-card-bg border border-theme-border-muted flex items-center justify-center text-xs font-bold text-theme-text-primary">
+                          {(s.username || "S").substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-theme-text-primary">
+                            {s.full_name || s.username}
+                          </p>
+                          <p className="text-[10px] text-theme-text-muted font-mono">
+                            @{s.username.toUpperCase()}
+                          </p>
+                        </div>
+                      </div>
+                      {isSelected && <Check className="h-4 w-4 text-blue-400" />}
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-theme-border-muted/50">
               <button
                 type="button"
-                onClick={() => setShowAssignSupervisorPrompt(false)}
+                onClick={() => setShowSelectOtherSupervisorModal(false)}
                 className="px-4 py-2 bg-theme-card-container border border-theme-border-input text-theme-text-primary text-xs font-semibold rounded-xl hover:bg-theme-border-input/50 transition-colors cursor-pointer"
               >
-                No, I'll Manage Directly
+                Cancel
               </button>
               <button
                 type="button"
+                disabled={!selectedOtherSupervisorId}
                 onClick={() => {
-                  setNeedsApproval(true);
-                  setShowAssignSupervisorPrompt(false);
+                  if (selectedOtherSupervisorId) {
+                    setSupervisorIds([selectedOtherSupervisorId]);
+                    setNeedsApproval(true);
+                    setHasChutiAccess(true);
+                    setShowSelectOtherSupervisorModal(false);
+                  }
                 }}
-                className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
+                className="px-4 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50"
               >
-                Yes, Assign Supervisor
+                Confirm Assignment
               </button>
             </div>
           </div>
         </div>,
         document.body
       )}
+
     </div>
   );
 };

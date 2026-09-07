@@ -20,7 +20,8 @@ export type RealtimeTable =
   | 'todos'
   | 'todo_access'
   | 'quotation_mistakes'
-  | 'compliance_rules';
+  | 'compliance_rules'
+  | 'user_creation_requests';
 
 /** Minimal interface for Supabase postgres_changes payloads */
 export interface RealtimePayload {
@@ -183,6 +184,18 @@ export function RealtimeProvider({ children, sessionUser, profile }: RealtimePro
             ...(isApprover ? {} : { filter: `requester_id=eq.${sessionUser.id}` }),
           },
           (payload) => dispatch('leave_delete_requests', payload as unknown as RealtimePayload)
+        );
+      }
+
+      if (isApprover) {
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_creation_requests',
+          },
+          (payload) => dispatch('user_creation_requests', payload as unknown as RealtimePayload)
         );
       }
 

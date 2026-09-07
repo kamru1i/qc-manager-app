@@ -6,7 +6,7 @@ import {
   RefreshCw,
   CheckCircle,
 } from "lucide-react";
-import { Profile, ChutiRecordWithProfile, BulkRepresentative } from "@/types";
+import { Profile, ChutiRecordWithProfile, BulkRepresentative, UserCreationRequest } from "@/types";
 import { formatDate, formatTimeToAMPM, getLeaveDisplayComment, getFullCommentHistory } from "@/utils/dashboardHelpers";
 import { CustomSelect } from "@/components/common/CustomSelect";
 import { supabase } from "@/utils/supabase";
@@ -35,6 +35,9 @@ interface LeaveApprovalPanelProps {
   adminHolidayNotifications?: any[];
   pendingRemovalRequests?: any[];
   handleApproveLeaveRemoval?: (record: any, approve: boolean) => void;
+  pendingUserCreationRequests?: UserCreationRequest[];
+  handleApproveUserCreationRequest?: (req: UserCreationRequest) => void;
+  handleReviewUserCreationRequest?: (req: UserCreationRequest, notes: string) => void;
 }
 
 export function LeaveApprovalPanel({
@@ -54,10 +57,15 @@ export function LeaveApprovalPanel({
   adminHolidayNotifications = [],
   pendingRemovalRequests = [],
   handleApproveLeaveRemoval = () => {},
+  pendingUserCreationRequests = [],
+  handleApproveUserCreationRequest = () => {},
+  handleReviewUserCreationRequest = () => {},
 }: LeaveApprovalPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationTypeFilter, setNotificationTypeFilter] = useState("all");
   const [localApprovingIds, setLocalApprovingIds] = useState<Set<string>>(new Set());
+  const [reviewRequestPrompt, setReviewRequestPrompt] = useState<UserCreationRequest | null>(null);
+  const [reviewPromptNotes, setReviewPromptNotes] = useState("");
 
   const handleApproveResponse = async (nId: string, itemType: string) => {
     setLocalApprovingIds(prev => {
@@ -109,6 +117,7 @@ export function LeaveApprovalPanel({
     }
     return [
       { value: "all", label: "All Types" },
+      { value: "user_creation", label: "User Creation Requests" },
       { value: "leave_request", label: "Leave Requests (All)" },
       { value: "removal_request", label: "Leave Removal Requests" },
       { value: "short_leave", label: "Short Leave Requests" },
@@ -242,6 +251,25 @@ export function LeaveApprovalPanel({
     });
   }, [pendingRemovalRequests, profilesList, searchQuery, notificationTypeFilter, role]);
 
+  const filteredUserCreationRequests = useMemo(() => {
+    if (role === "supervisor") return [];
+    return (pendingUserCreationRequests || []).filter((req) => {
+      const name = (req.data?.full_name || "").toLowerCase();
+      const codename = (req.data?.codename || "").toLowerCase();
+      const supervisor = (req.submitted_by_name || "").toLowerCase();
+      const query = searchQuery.toLowerCase().trim();
+
+      const matchesSearch =
+        !query || name.includes(query) || codename.includes(query) || supervisor.includes(query);
+
+      const matchesType =
+        notificationTypeFilter === "all" ||
+        notificationTypeFilter === "user_creation";
+
+      return matchesSearch && matchesType;
+    });
+  }, [pendingUserCreationRequests, searchQuery, notificationTypeFilter, role]);
+
   // Combine and sort all notifications
   const combinedNotifications = useMemo(() => {
     const list: Array<{
@@ -252,7 +280,8 @@ export function LeaveApprovalPanel({
         | "holiday_response"
         | "reserve_adjustment"
         | "profile_change"
-        | "password_reset";
+        | "password_reset"
+        | "user_creation";
       timestamp: string;
       data: any;
     }> = [];
@@ -353,6 +382,21 @@ export function LeaveApprovalPanel({
           });
         });
       }
+
+      // 6. User Creation Requests
+      if (
+        notificationTypeFilter === "all" ||
+        notificationTypeFilter === "user_creation"
+      ) {
+        filteredUserCreationRequests.forEach((req) => {
+          list.push({
+            id: `user_creation_${req.id}`,
+            type: "user_creation",
+            timestamp: req.created_at || "",
+            data: req,
+          });
+        });
+      }
     }
 
     // Sort descending (newest first)
@@ -367,6 +411,8 @@ export function LeaveApprovalPanel({
     filteredReserveRequests,
     filteredProfileRequests,
     filteredPasswordResetRequests,
+    filteredRemovalRequests,
+    filteredUserCreationRequests,
     notificationTypeFilter,
     role,
   ]);
@@ -1089,6 +1135,160 @@ export function LeaveApprovalPanel({
           </div>
         );
       }
+      case "user_creation": {
+        const req = item.data as UserCreationRequest;
+        const d = req.data;
+        const isApproving = approvingIds.has(req.id) || localApprovingIds.has(req.id);
+        const isReviewing = reviewingIds.has(req.id);
+        const isDone = approvedIds.has(req.id);
+
+        return (
+          <div
+            key={item.id}
+            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
+            <div className="flex justify-between items-start pl-2 font-sans">
+              <div>
+                <h4 className="text-xs font-bold text-theme-text-primary flex flex-wrap items-center gap-2">
+                  <span>{d?.full_name || "Unnamed"}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">
+                    @{d?.codename || "—"}
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-900/60 text-blue-400 font-bold tracking-wide uppercase">
+                    New Account Request
+                  </span>
+                  {item.timestamp && (
+                    <span className="text-[9px] text-theme-text-muted font-mono">
+                      {new Date(item.timestamp).toLocaleString("en-US", {
+                        hour12: true,
+                      })}
+                    </span>
+                  )}
+                </h4>
+                <p className="text-[11px] text-theme-text-secondary mt-1 font-medium font-sans">
+                  Submitted by Supervisor:{" "}
+                  <strong className="text-theme-text-primary">
+                    {req.submitted_by_name || "Supervisor"}
+                  </strong>
+                </p>
+              </div>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
+                Pending Approval
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] pl-2 font-sans">
+              <div className="bg-theme-card-bg/40 p-2.5 rounded-lg border border-theme-border-muted">
+                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1">
+                  Account & Workspace
+                </span>
+                <div className="space-y-1 text-theme-text-secondary font-medium">
+                  <p>
+                    <span className="text-theme-text-muted font-sans">Role:</span>{" "}
+                    User
+                  </p>
+                  <p>
+                    <span className="text-theme-text-muted font-sans">Manager / Supervisor:</span>{" "}
+                    <span className="text-blue-400 font-semibold">{d?.assigned_supervisor_name || "Self"}</span>
+                  </p>
+                  <p>
+                    <span className="text-theme-text-muted font-sans">Leave Tracker:</span>{" "}
+                    <span className="text-emerald-400 font-semibold">Enabled</span>
+                  </p>
+                  <p>
+                    <span className="text-theme-text-muted font-sans">Quotes Tracker:</span>{" "}
+                    {d?.has_quotes_access ? (
+                      <span className="text-emerald-400 font-semibold">Enabled</span>
+                    ) : (
+                      <span className="text-theme-text-muted">Disabled</span>
+                    )}
+                  </p>
+                  {d?.has_quotes_access && (
+                    <p>
+                      <span className="text-theme-text-muted font-sans">Categories:</span>{" "}
+                      <span className="text-theme-text-primary text-[10px]">
+                        {d?.allowed_types && d.allowed_types.length > 0
+                          ? d.allowed_types.join(", ")
+                          : "None"}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-theme-card-bg/40 p-2.5 rounded-lg border border-theme-border-muted">
+                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1">
+                  Work & Leave Settings
+                </span>
+                <div className="space-y-1 text-theme-text-secondary font-medium">
+                  <p>
+                    <span className="text-theme-text-muted font-sans">Hours & Break:</span>{" "}
+                    {d?.working_hours ?? 9.5} hrs / {d?.break_time ?? 0} mins
+                  </p>
+                  <p>
+                    <span className="text-theme-text-muted font-sans">Default Shift:</span>{" "}
+                    {formatTimeToAMPM(d?.default_sign_in || null) || "09:00 AM"} –{" "}
+                    {formatTimeToAMPM(d?.default_sign_out || null) || "06:30 PM"}
+                  </p>
+                  <p>
+                    <span className="text-theme-text-muted font-sans">Eligible Leaves:</span>{" "}
+                    {[
+                      d?.eligible_office_leave !== false ? "Office" : null,
+                      d?.eligible_govt_holiday !== false ? "Govt Holiday" : null,
+                      d?.allow_overtime ? "Overtime" : null,
+                      d?.allow_reserve ? "Reserve" : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "None"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-theme-border-muted pl-2">
+              {isDone ? (
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 py-1.5 px-3">
+                  <CheckCircle className="h-4 w-4" /> Account Approved & Provisioned
+                </span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReviewRequestPrompt(req);
+                      setReviewPromptNotes("");
+                    }}
+                    disabled={isReviewing || isApproving}
+                    className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 flex items-center gap-1.5 font-sans"
+                  >
+                    {isReviewing && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+                    Send for Review
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApproveUserCreationRequest(req)}
+                    disabled={isReviewing || isApproving}
+                    className="px-3.5 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 flex items-center gap-1.5 font-sans"
+                  >
+                    {isApproving ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        Approving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                        Approve Account
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      }
       default:
         return null;
     }
@@ -1171,6 +1371,60 @@ export function LeaveApprovalPanel({
           </div>
         )}
       </div>
+
+      {/* Review Notes Prompt Modal */}
+      {reviewRequestPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 font-sans">
+            <h3 className="text-sm font-bold text-theme-text-primary">
+              Send Account Request Back for Review
+            </h3>
+            <p className="text-xs text-theme-text-muted leading-relaxed">
+              Provide feedback or specify required changes for Supervisor{' '}
+              <strong className="text-theme-text-primary">
+                {reviewRequestPrompt.submitted_by_name || 'the supervisor'}
+              </strong>
+              . They will be notified and can update the request.
+            </p>
+            <div>
+              <label className="block text-xs font-semibold text-theme-text-secondary mb-1.5">
+                Review Notes / Instructions *
+              </label>
+              <textarea
+                value={reviewPromptNotes}
+                onChange={(e) => setReviewPromptNotes(e.target.value)}
+                rows={3}
+                placeholder="e.g. Please adjust allowed quotation categories or verify shift timings..."
+                className="w-full p-2.5 text-xs bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:border-purple-500/50"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setReviewRequestPrompt(null);
+                  setReviewPromptNotes("");
+                }}
+                className="px-3.5 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary bg-theme-border-input/50 hover:bg-theme-border-input rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!reviewPromptNotes.trim()}
+                onClick={() => {
+                  handleReviewUserCreationRequest(reviewRequestPrompt, reviewPromptNotes.trim());
+                  setReviewRequestPrompt(null);
+                  setReviewPromptNotes("");
+                }}
+                className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send for Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

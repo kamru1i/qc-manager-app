@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useRef, useCallback, useEffect, useMemo } from 'react';
+import { UserCreationRequest } from '@/types';
 
 // Event type map — all custom app events with their typed payloads
 export interface AppEventMap {
@@ -38,6 +39,8 @@ export interface AppEventMap {
   'open-admin-approvals-modal': void;
   'open-supervisor-approvals-modal': void;
   'open-user-notifications-modal': void;
+  'user-creation-requests-updated': void;
+  'open-user-creation-review': UserCreationRequest;
   'profile-updated': object;
   'profile-access-updated': { table?: string; userIds?: string[]; payload?: unknown } | unknown;
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
-import { Profile, GovtHolidayResponse, ComplianceRule, ChutiRecordWithProfile } from '@/types';
+import { Profile, GovtHolidayResponse, ComplianceRule, ChutiRecordWithProfile, UserCreationRequest } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { NotificationItem } from '@/hooks/leave-tracker/useDerivedState';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ export function useGlobalNotifications(
   const [adminPendingRecords, setAdminPendingRecords] = useState<Pick<ChutiRecord, 'id' | 'status' | 'leave_type' | 'reserve_adjustment_status'>[]>([]);
   const [supervisorPendingRecords, setSupervisorPendingRecords] = useState<ChutiRecordWithProfile[]>([]);
   const [deleteRequests, setDeleteRequests] = useState<any[]>([]);
+  const [userCreationRequests, setUserCreationRequests] = useState<UserCreationRequest[]>([]);
   const [isInitialNotifFetchDone, setIsInitialNotifFetchDone] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [lastViewedTime, setLastViewedTime] = useState<string>('');
@@ -208,7 +209,35 @@ export function useGlobalNotifications(
         }
       };
 
-      // Execute all 7 queries in parallel
+      const fetchUserCreationRequestsPromise = async () => {
+        if (isAdminRole(profile)) {
+          const { data, error } = await supabase
+            .from('user_creation_requests')
+            .select('*')
+            .eq('status', 'pending_admin_approval')
+            .order('created_at', { ascending: false });
+          if (error) {
+            console.error('Failed to fetch pending user creation requests:', error);
+            return [];
+          }
+          return (data as unknown as UserCreationRequest[]) || [];
+        } else if (profile?.role === 'supervisor') {
+          const { data, error } = await supabase
+            .from('user_creation_requests')
+            .select('*')
+            .eq('submitted_by_id', sessionUser.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+          if (error) {
+            console.error('Failed to fetch supervisor user creation requests:', error);
+            return [];
+          }
+          return (data as unknown as UserCreationRequest[]) || [];
+        }
+        return [];
+      };
+
+      // Execute all 8 queries in parallel
       const [
         chutiData,
         holidayData,
@@ -217,6 +246,7 @@ export function useGlobalNotifications(
         supervisorChutiData,
         dismissedIds,
         deleteReqsData,
+        userCreationReqsData,
       ] = await Promise.all([
         fetchChutiPromise(),
         fetchHolidayResponsesPromise(),
@@ -225,6 +255,7 @@ export function useGlobalNotifications(
         fetchSupervisorPendingPromise(),
         fetchDismissedPromise(),
         fetchDeleteRequestsPromise(),
+        fetchUserCreationRequestsPromise(),
       ]);
 
       if (chutiData) setUserRecords(chutiData as ChutiRecord[]);
@@ -233,6 +264,7 @@ export function useGlobalNotifications(
       setAdminPendingRecords(adminChutiData);
       setSupervisorPendingRecords(supervisorChutiData);
       if (deleteReqsData) setDeleteRequests(deleteReqsData);
+      if (userCreationReqsData) setUserCreationRequests(userCreationReqsData);
 
       if (dismissedIds && dismissedIds.length > 0) {
         setDismissedNotificationIds(prev => {
@@ -398,6 +430,33 @@ export function useGlobalNotifications(
         setDeleteRequests((prev) => prev.filter((r) => r.id !== payload.old.id));
       }
     }, [])
+  );
+
+  useRealtimeHandler(
+    'user_creation_requests',
+    useCallback((payload) => {
+      const id = String(payload.eventType === 'DELETE' ? payload.old.id ?? '' : payload.new.id ?? '');
+      if (!id) return;
+      const incoming = payload.new as unknown as UserCreationRequest;
+
+      if (isAdminRole(profile)) {
+        setUserCreationRequests((prev) => {
+          const without = prev.filter((r) => r.id !== id);
+          if (payload.eventType === 'DELETE' || incoming.status !== 'pending_admin_approval') {
+            return without;
+          }
+          return [incoming, ...without];
+        });
+      } else if (profile?.role === 'supervisor') {
+        setUserCreationRequests((prev) => {
+          const without = prev.filter((r) => r.id !== id);
+          if (payload.eventType === 'DELETE' || incoming.submitted_by_id !== sessionUser?.id) {
+            return without;
+          }
+          return [incoming, ...without];
+        });
+      }
+    }, [profile, sessionUser])
   );
 
   // Load last viewed time and clean up dismissed notifications on mount
@@ -580,12 +639,61 @@ export function useGlobalNotifications(
       }
     });
 
+    // 5. User Creation Request Notifications
+    if (isAdminRole(profile)) {
+      userCreationRequests
+        .filter((r) => r.status === 'pending_admin_approval')
+        .forEach((r) => {
+          list.push({
+            id: `pending-user-creation-${r.id}`,
+            type: 'pending_user_creation_request',
+            timestamp: r.created_at || currentSessionTime,
+            title: 'User Account Creation Request 👤',
+            body: `Supervisor ${r.submitted_by_name || 'A supervisor'} requested account creation for "${r.data?.full_name || r.data?.codename}" (@${r.data?.codename || '—'}).`,
+            data: r,
+          });
+        });
+    }
+
+    if (profile?.role === 'supervisor') {
+      userCreationRequests.forEach((r) => {
+        if (r.status === 'needs_review') {
+          list.push({
+            id: `user-req-review-${r.id}`,
+            type: 'user_creation_review',
+            timestamp: r.updated_at || r.created_at || currentSessionTime,
+            title: 'User Account Request Needs Review ⚠️',
+            body: `Account request for "${r.data?.full_name || r.data?.codename}" requires revision.\nAdmin notes: ${r.admin_review_notes || 'Please check and update.'}`,
+            data: r,
+          });
+        } else if (r.status === 'approved') {
+          list.push({
+            id: `user-req-approved-${r.id}`,
+            type: 'user_creation_approved',
+            timestamp: r.reviewed_at || r.updated_at || currentSessionTime,
+            title: 'User Account Created & Approved ✅',
+            body: `Account for "${r.data?.full_name || r.data?.codename}" has been approved by Admin and is now active.`,
+            data: r,
+          });
+        } else if (r.status === 'rejected') {
+          list.push({
+            id: `user-req-rejected-${r.id}`,
+            type: 'user_creation_rejected',
+            timestamp: r.reviewed_at || r.updated_at || currentSessionTime,
+            title: 'User Account Request Rejected ❌',
+            body: `Account request for "${r.data?.full_name || r.data?.codename}" was rejected.${r.admin_review_notes ? `\nReason: ${r.admin_review_notes}` : ''}`,
+            data: r,
+          });
+        }
+      });
+    }
+
     const filtered = list.filter(n => {
       // 1. Filter out dismissed notifications
       if (dismissedNotificationIds?.has(n.id)) return false;
 
       // 2. Filter out non-actionable notifications older than 7 days
-      const isActionable = n.type === 'govt_holiday_prompt' || (n.type === 'revision' && n.record?.status === 'needs_review');
+      const isActionable = n.type === 'govt_holiday_prompt' || (n.type === 'revision' && n.record?.status === 'needs_review') || n.type === 'user_creation_review';
       if (!isActionable && n.timestamp) {
         const ageMs = new Date(currentSessionTime).getTime() - new Date(n.timestamp).getTime();
         const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
@@ -603,6 +711,7 @@ export function useGlobalNotifications(
     holidayResponses, 
     rulesRecords, 
     deleteRequests,
+    userCreationRequests,
     globalSettings.govt_holidays, 
     currentSessionTime, 
     dismissedNotificationIds,
@@ -629,10 +738,11 @@ export function useGlobalNotifications(
       const profileChangeCount = profilesList.filter(p => p.profile_change_status === 'pending').length;
       const passwordResetCount = profilesList.filter(p => p.password_reset_status === 'pending').length;
       const pendingRemovalCount = deleteRequests.filter(dr => dr.status === 'pending').length;
+      const pendingCreationCount = userCreationRequests.filter(r => r.status === 'pending_admin_approval').length;
       
       // Government-holiday entitlements are created automatically and are not
       // pending user choices, so they must not inflate the approval badge.
-      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount + pendingRemovalCount;
+      count += adminPendingChutiCount + adminPendingReserveCount + profileChangeCount + passwordResetCount + pendingRemovalCount + pendingCreationCount;
     }
     
     if (profile?.role === 'supervisor') {
@@ -658,7 +768,7 @@ export function useGlobalNotifications(
       count += myTeamPendingCount;
     }
     return count;
-  }, [syncedApprovalsCount, profile, adminPendingRecords, supervisorPendingRecords, profilesList, holidayResponses, dismissedNotificationIds]);
+  }, [syncedApprovalsCount, profile, adminPendingRecords, supervisorPendingRecords, profilesList, holidayResponses, deleteRequests, userCreationRequests, dismissedNotificationIds]);
 
   // Compute unread count
   const unreadCount = useMemo(() => {

@@ -6,7 +6,11 @@ import { ChutiRecord } from '@/utils/offlineSync';
 import { isAdminRole } from '@/utils/permissionService';
 
 import { WelcomeModals } from '@/components/common/modals/WelcomeModals';
-import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import { useAppEventBus, useAppEvent } from '@/contexts/AppEventBusContext';
+import { useRealtimeHandler } from '@/contexts/RealtimeContext';
+import { toast } from 'sonner';
+import { userCreationRequestService } from '@/services/userCreationRequestService';
+import { UserCreationRequest } from '@/types';
 import { AdminAddLeaveModal } from '@/components/leave-tracker/modals/AdminAddLeaveModal';
 import { UserRevisionModal } from '@/components/leave-tracker/modals/UserRevisionModal';
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
@@ -239,6 +243,99 @@ export const DashboardModals = () => {
     setNewStaffSupervisorIds,
   } = adminStaffOps;
 
+  // User Creation Requests management
+  const [pendingUserCreationRequests, setPendingUserCreationRequests] = React.useState<UserCreationRequest[]>([]);
+  const [approvingUserReqIds, setApprovingUserReqIds] = React.useState<Set<string>>(new Set());
+  const [reviewingUserReqIds, setReviewingUserReqIds] = React.useState<Set<string>>(new Set());
+
+  const fetchPendingUserCreationRequests = React.useCallback(async () => {
+    if (!isAdminRole(profile)) return;
+    try {
+      const { data } = await userCreationRequestService.fetchRequests({
+        status: 'pending_admin_approval',
+      });
+      if (data) {
+        setPendingUserCreationRequests(data);
+      }
+    } catch (err) {
+      console.error('Error fetching user creation requests in DashboardModals:', err);
+    }
+  }, [profile]);
+
+  React.useEffect(() => {
+    fetchPendingUserCreationRequests();
+  }, [fetchPendingUserCreationRequests]);
+
+  useAppEvent('user-creation-requests-updated', () => {
+    fetchPendingUserCreationRequests();
+  }, [fetchPendingUserCreationRequests]);
+
+  useRealtimeHandler(
+    'user_creation_requests',
+    React.useCallback(() => {
+      fetchPendingUserCreationRequests();
+    }, [fetchPendingUserCreationRequests])
+  );
+
+  const handleApproveUserCreationRequest = async (req: UserCreationRequest) => {
+    setApprovingUserReqIds(prev => new Set(prev).add(req.id));
+    try {
+      const { success, error } = await userCreationRequestService.approveRequest(req.id, req.version);
+      if (error) {
+        toast.error(error.message || 'Failed to approve user creation request.');
+        return;
+      }
+      toast.success(`User account for "${req.data?.full_name || req.data?.codename}" approved & created!`);
+      fetchPendingUserCreationRequests();
+      emit('profile-updated', {});
+      emit('user-creation-requests-updated');
+    } catch (err: any) {
+      toast.error(err?.message || 'Error approving user request');
+    } finally {
+      setApprovingUserReqIds(prev => {
+        const next = new Set(prev);
+        next.delete(req.id);
+        return next;
+      });
+    }
+  };
+
+  const handleReviewUserCreationRequest = async (req: UserCreationRequest, notes: string) => {
+    setReviewingUserReqIds(prev => new Set(prev).add(req.id));
+    try {
+      const { success, error } = await userCreationRequestService.reviewRequest(req.id, notes);
+      if (error) {
+        toast.error(error.message || 'Failed to send request back for review.');
+        return;
+      }
+      toast.success(`Account request sent back to supervisor with review notes.`);
+      fetchPendingUserCreationRequests();
+      emit('user-creation-requests-updated');
+    } catch (err: any) {
+      toast.error(err?.message || 'Error sending request for review');
+    } finally {
+      setReviewingUserReqIds(prev => {
+        const next = new Set(prev);
+        next.delete(req.id);
+        return next;
+      });
+    }
+  };
+
+  const effectiveApprovingIds = React.useMemo<Set<string>>(() => {
+    return new Set<string>([
+      ...Array.from(approvingIds || []).map(String),
+      ...Array.from(approvingUserReqIds),
+    ]);
+  }, [approvingIds, approvingUserReqIds]);
+
+  const effectiveReviewingIds = React.useMemo<Set<string>>(() => {
+    return new Set<string>([
+      ...Array.from(reviewingIds || []).map(String),
+      ...Array.from(reviewingUserReqIds),
+    ]);
+  }, [reviewingIds, reviewingUserReqIds]);
+
   if (!mounted || typeof window === 'undefined') return null;
   const portalTarget = document.getElementById('root-modals-portal');
   if (!portalTarget) return null;
@@ -390,9 +487,9 @@ export const DashboardModals = () => {
         profile={profile}
         groupedChutiRequests={groupedChutiRequests}
         profilesList={profilesList}
-        reviewingIds={reviewingIds}
+        reviewingIds={effectiveReviewingIds}
         approvedIds={approvedIds}
-        approvingIds={approvingIds}
+        approvingIds={effectiveApprovingIds}
         handleApproveChutiRequest={handleApproveChutiRequest}
         pendingReserveRequests={pendingReserveRequests}
         handleApproveReserveAdjustment={handleApproveReserveAdjustment}
@@ -402,6 +499,9 @@ export const DashboardModals = () => {
         pendingPasswordResetRequests={pendingPasswordResetRequests}
         handleApprovePasswordResetRequest={handleApprovePasswordResetRequest}
         handleApproveLeaveRemoval={handleApproveLeaveRemoval}
+        pendingUserCreationRequests={pendingUserCreationRequests}
+        handleApproveUserCreationRequest={handleApproveUserCreationRequest}
+        handleReviewUserCreationRequest={handleReviewUserCreationRequest}
         onSwitchToUserPanel={() => {
           sessionStorage.setItem('adminNotificationMode', 'user');
           setShowLeaveApprovalModal(false);

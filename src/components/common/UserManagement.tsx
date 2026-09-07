@@ -29,11 +29,16 @@ import {
   Calendar,
   BarChart2,
   FileText,
-  TrendingUp
+  TrendingUp,
+  Clock,
+  AlertTriangle,
+  Edit
 } from 'lucide-react';
 import { UserDisplayName } from '@/components/common/UserDisplayName';
 import { UserAnalyticsPanel } from '@/components/common/user-management/UserAnalyticsPanel';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
+import { userCreationRequestService } from '@/services/userCreationRequestService';
+import { UserCreationRequest, UserCreationSubmittedData } from '@/types';
 
 // Extracted Subtabs Panels
 import { CreateUserPanel } from '@/components/common/user-management/CreateUserPanel';
@@ -100,6 +105,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   // Add User State
   const [isCreatingNewUser, setIsCreatingNewUser] = useState(false);
+  const [pendingUserRequests, setPendingUserRequests] = useState<UserCreationRequest[]>([]);
+  const [editingUserCreationRequest, setEditingUserCreationRequest] = useState<UserCreationRequest | null>(null);
 
   // Edit User State
   const [editUserCodename, setEditUserCodename] = useState('');
@@ -1074,6 +1081,80 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     return pw;
   };
 
+  const fetchUserCreationRequests = useCallback(async () => {
+    if (!profile) return;
+    const { data } = await userCreationRequestService.fetchRequests({
+      requesterId: profile.role === 'supervisor' ? profile.id : undefined,
+    });
+    if (data) {
+      setPendingUserRequests(data);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    fetchUserCreationRequests();
+  }, [fetchUserCreationRequests]);
+
+  useAppEvent('user-creation-requests-updated', () => {
+    fetchUserCreationRequests();
+  }, [fetchUserCreationRequests]);
+
+  useAppEvent('open-user-creation-review', (req: UserCreationRequest) => {
+    if (req) {
+      setEditingUserCreationRequest(req);
+      setIsCreatingNewUser(true);
+    }
+  }, []);
+
+  const handleSubmitRequestWrapper = async (data: UserCreationSubmittedData) => {
+    setSubmitting(true);
+    try {
+      const { data: reqId, error } = await userCreationRequestService.submitRequest(data);
+      if (error) {
+        toast.error(error.message || 'Failed to submit account creation request.');
+        setSubmitting(false);
+        return null;
+      }
+      toast.success('User creation request submitted for Admin approval!');
+      setSubmitting(false);
+      fetchUserCreationRequests();
+      return reqId;
+    } catch (err: any) {
+      toast.error(err?.message || 'Error submitting request');
+      setSubmitting(false);
+      return null;
+    }
+  };
+
+  const handleResubmitRequestWrapper = async (
+    requestId: string,
+    data: UserCreationSubmittedData,
+    expectedVersion: number
+  ) => {
+    setSubmitting(true);
+    try {
+      const { success, error } = await userCreationRequestService.resubmitRequest(
+        requestId,
+        data,
+        expectedVersion
+      );
+      if (error) {
+        toast.error(error.message || 'Failed to resubmit account creation request.');
+        setSubmitting(false);
+        return false;
+      }
+      toast.success('User creation request resubmitted for Admin approval!');
+      setSubmitting(false);
+      setEditingUserCreationRequest(null);
+      fetchUserCreationRequests();
+      return true;
+    } catch (err: any) {
+      toast.error(err?.message || 'Error resubmitting request');
+      setSubmitting(false);
+      return false;
+    }
+  };
+
   const handleUpdateUser = async () => {
     if (!viewingStaff) return;
 
@@ -1205,7 +1286,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 <div className="min-w-0 flex-1">
                   <h2 className="text-lg sm:text-xl font-bold text-theme-text-primary flex items-center flex-wrap gap-y-1 break-words max-w-full">
                     {isCreatingNewUser ? (
-                      'Add New Staff'
+                      editingUserCreationRequest ? (
+                        'Review & Resubmit Account Request'
+                      ) : profile?.role === 'supervisor' ? (
+                        'Request New User Account'
+                      ) : (
+                        'Add New Staff'
+                      )
                     ) : (
                       viewingStaff && (
                         <UserDisplayName
@@ -1305,11 +1392,19 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               currentUser={profile}
               profiles={profiles}
               submitting={submitting}
-              onCancel={() => setIsCreatingNewUser(false)}
+              editingRequest={editingUserCreationRequest}
+              onCancel={() => {
+                setIsCreatingNewUser(false);
+                setEditingUserCreationRequest(null);
+              }}
               onCreateUser={handleCreateUserWrapper}
+              onSubmitRequest={handleSubmitRequestWrapper}
+              onResubmitRequest={handleResubmitRequestWrapper}
               onSuccess={() => {
                 setIsCreatingNewUser(false);
+                setEditingUserCreationRequest(null);
                 fetchProfiles();
+                fetchUserCreationRequests();
               }}
             />
           ) : (
@@ -1540,19 +1635,120 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 Showing <span className="text-theme-text-primary font-semibold">{visibleProfiles.length}</span> users
               </div>
 
-              {isAdmin && (
+              {(isAdmin || profile?.role === 'supervisor') && (
                 <button
                   onClick={() => {
+                    setEditingUserCreationRequest(null);
                     setIsCreatingNewUser(true);
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/20 active:scale-95 transition-all cursor-pointer font-sans shrink-0"
                 >
                   <UserPlus className="h-4 w-4" />
-                  Add New Staff
+                  {isAdmin ? 'Add New Staff' : 'Request New User'}
                 </button>
               )}
             </div>
           </div>
+
+          {/* Supervisor Account Creation Requests Section */}
+          {profile?.role === 'supervisor' && pendingUserRequests.length > 0 && (
+            <div className="bg-theme-card-bg/40 backdrop-blur-xl rounded-2xl border border-theme-border-input/80 overflow-hidden shadow-xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4 text-blue-400" />
+                  <h3 className="text-sm font-bold text-theme-text-primary">
+                    My Account Creation Requests
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    {pendingUserRequests.length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {pendingUserRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className={`p-4 rounded-xl border transition-all ${
+                      req.status === 'needs_review'
+                        ? 'bg-amber-500/5 border-amber-500/30'
+                        : req.status === 'approved'
+                        ? 'bg-emerald-500/5 border-emerald-500/20'
+                        : req.status === 'rejected'
+                        ? 'bg-rose-500/5 border-rose-500/20'
+                        : 'bg-theme-page-bg/40 border-theme-border-input/60'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <div className="font-semibold text-xs text-theme-text-primary">
+                          {req.data?.full_name || 'Unnamed'}
+                        </div>
+                        <div className="text-[11px] font-mono text-theme-text-muted">
+                          @{req.data?.codename || '—'}
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
+                          req.status === 'pending_admin_approval'
+                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                            : req.status === 'needs_review'
+                            ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+                            : req.status === 'approved'
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                        }`}
+                      >
+                        {req.status === 'pending_admin_approval'
+                          ? 'Pending'
+                          : req.status === 'needs_review'
+                          ? 'Needs Review'
+                          : req.status === 'approved'
+                          ? 'Approved'
+                          : 'Rejected'}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-theme-text-muted space-y-1 mb-3">
+                      <div>
+                        Manager:{' '}
+                        <span className="text-theme-text-secondary">
+                          {req.data?.assigned_supervisor_name || 'Self'}
+                        </span>
+                      </div>
+                      <div>
+                        Submitted:{' '}
+                        <span className="text-theme-text-secondary">
+                          {new Date(req.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {req.admin_review_notes && (
+                        <div className="mt-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-300 text-[11px] leading-relaxed">
+                          <strong className="block text-[10px] uppercase font-bold text-amber-400 mb-0.5">
+                            Admin Note:
+                          </strong>
+                          {req.admin_review_notes}
+                        </div>
+                      )}
+                    </div>
+
+                    {req.status === 'needs_review' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingUserCreationRequest(req);
+                          setIsCreatingNewUser(true);
+                        }}
+                        className="w-full mt-1 py-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        Review & Resubmit
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Users Table */}
           <div className="bg-theme-card-bg/40 backdrop-blur-xl rounded-2xl border border-theme-border-input/80 overflow-hidden shadow-xl">
