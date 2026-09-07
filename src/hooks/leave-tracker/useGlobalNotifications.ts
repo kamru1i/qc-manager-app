@@ -11,6 +11,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
 import { useAppEventBus, useAppEvent } from '@/contexts/AppEventBusContext';
+import { userCreationRequestService } from '@/services/userCreationRequestService';
 
 export function useGlobalNotifications(
   sessionUser: SupabaseUser | null,
@@ -211,28 +212,24 @@ export function useGlobalNotifications(
 
       const fetchUserCreationRequestsPromise = async () => {
         if (isAdminRole(profile)) {
-          const { data, error } = await supabase
-            .from('user_creation_requests')
-            .select('*')
-            .eq('status', 'pending_admin_approval')
-            .order('created_at', { ascending: false });
+          const { data, error } = await userCreationRequestService.fetchRequests({
+            status: 'pending_admin_approval',
+          });
           if (error) {
             console.error('Failed to fetch pending user creation requests:', error);
             return [];
           }
-          return (data as unknown as UserCreationRequest[]) || [];
+          return data || [];
         } else if (profile?.role === 'supervisor') {
-          const { data, error } = await supabase
-            .from('user_creation_requests')
-            .select('*')
-            .eq('submitted_by_id', sessionUser.id)
-            .order('created_at', { ascending: false })
-            .limit(20);
+          if (!sessionUser?.id) return [];
+          const { data, error } = await userCreationRequestService.fetchRequests({
+            requesterId: sessionUser.id,
+          });
           if (error) {
             console.error('Failed to fetch supervisor user creation requests:', error);
             return [];
           }
-          return (data as unknown as UserCreationRequest[]) || [];
+          return data || [];
         }
         return [];
       };
@@ -435,14 +432,29 @@ export function useGlobalNotifications(
   useRealtimeHandler(
     'user_creation_requests',
     useCallback((payload) => {
-      const id = String(payload.eventType === 'DELETE' ? payload.old.id ?? '' : payload.new.id ?? '');
+      const id = String(payload.eventType === 'DELETE' ? payload.old?.id ?? '' : payload.new?.id ?? '');
       if (!id) return;
-      const incoming = payload.new as unknown as UserCreationRequest;
+
+      if (payload.eventType === 'DELETE') {
+        setUserCreationRequests((prev) => prev.filter((r) => r.id !== id));
+        return;
+      }
+
+      const raw = payload.new as any;
+      if (!raw) return;
+
+      const incoming: UserCreationRequest = {
+        ...raw,
+        data: raw.submitted_data,
+        submitted_by_id: raw.requester_id,
+        submitted_by_name: raw.submitted_data?.fullName || raw.submitted_data?.full_name || raw.submitted_data?.codename || 'Supervisor',
+        admin_review_notes: raw.review_notes,
+      };
 
       if (isAdminRole(profile)) {
         setUserCreationRequests((prev) => {
           const without = prev.filter((r) => r.id !== id);
-          if (payload.eventType === 'DELETE' || incoming.status !== 'pending_admin_approval') {
+          if (incoming.status !== 'pending_admin_approval') {
             return without;
           }
           return [incoming, ...without];
@@ -450,7 +462,7 @@ export function useGlobalNotifications(
       } else if (profile?.role === 'supervisor') {
         setUserCreationRequests((prev) => {
           const without = prev.filter((r) => r.id !== id);
-          if (payload.eventType === 'DELETE' || incoming.submitted_by_id !== sessionUser?.id) {
+          if (raw.requester_id !== sessionUser?.id && incoming.submitted_by_id !== sessionUser?.id) {
             return without;
           }
           return [incoming, ...without];
