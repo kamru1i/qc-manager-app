@@ -8,7 +8,7 @@ export const userCreationRequestService = {
    * Supervisors fetch their own requests.
    */
   async fetchRequests(params?: {
-    status?: 'pending_admin_approval' | 'needs_review' | 'approved' | 'rejected' | 'all';
+    status?: 'pending_admin_approval' | 'needs_review' | 'approved' | 'rejected' | 'all' | string[];
     requesterId?: string;
   }): Promise<{ data: UserCreationRequest[] | null; error: any }> {
     try {
@@ -42,7 +42,11 @@ export const userCreationRequestService = {
       }
 
       if (params?.status && params.status !== 'all') {
-        query = query.eq('status', params.status);
+        if (Array.isArray(params.status)) {
+          query = query.in('status', params.status);
+        } else {
+          query = query.eq('status', params.status);
+        }
       }
 
       const { data, error } = await query;

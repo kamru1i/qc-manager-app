@@ -172,13 +172,19 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   });
   const prevViewingStaffRef = useRef<Profile | null>(null);
 
+  // Active supervisor creation requests (strictly non-terminal, actionable states: pending_admin_approval, needs_review)
+  const activeUserCreationRequests = useMemo(() => {
+    return pendingUserRequests.filter(
+      (req) => req.status === 'pending_admin_approval' || req.status === 'needs_review'
+    );
+  }, [pendingUserRequests]);
+
   // Synthesize pending display profiles from supervisor creation requests (dimmed profiles)
   const pendingDisplayProfiles = useMemo(() => {
     const activeCodenames = new Set(profiles.map(p => (p.username || '').toLowerCase().trim()));
     const activeIds = new Set(profiles.map(p => p.id));
 
-    return pendingUserRequests
-      .filter(req => (req.status === 'pending_admin_approval' || req.status === 'needs_review'))
+    return activeUserCreationRequests
       .filter(req => {
         const data = req.data || req.submitted_data || {};
         const codename = (data.codename || '').toLowerCase().trim();
@@ -230,7 +236,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         };
         return syntheticProfile;
       });
-  }, [pendingUserRequests, profiles]);
+  }, [activeUserCreationRequests, profiles]);
 
   // Combined list of active profiles + dimmed pending profiles, sorted alphabetically
   const allDisplayProfiles = useMemo(() => {
@@ -1220,6 +1226,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       toast.success('User creation request submitted for Admin approval!');
       setSubmitting(false);
       fetchUserCreationRequests();
+      emit('user-creation-requests-updated');
       return reqId;
     } catch (err: any) {
       toast.error(err?.message || 'Error submitting request');
@@ -1249,6 +1256,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       setSubmitting(false);
       setEditingUserCreationRequest(null);
       fetchUserCreationRequests();
+      emit('user-creation-requests-updated');
       return true;
     } catch (err: any) {
       toast.error(err?.message || 'Error resubmitting request');
@@ -1270,6 +1278,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       setSubmitting(false);
       await fetchProfiles();
       await fetchUserCreationRequests();
+      emit('profile-updated', {});
+      emit('user-creation-requests-updated');
     } catch (err: any) {
       toast.error(err?.message || 'Error approving request');
       setSubmitting(false);
@@ -1295,6 +1305,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         setReviewModalRequest(null);
         setReviewNotesInput('');
         fetchUserCreationRequests();
+        emit('user-creation-requests-updated');
       }
     } catch (err: any) {
       toast.error(err?.message || 'Error returning request for review');
@@ -1308,72 +1319,133 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
     const canEdit = isAdmin || profile?.role === 'supervisor';
     if (!canEdit) {
-      toast.error('You do not have permission to update this profile.');
-      return;
-    }
-
-    if (editHasQuotesAccess && editUserAllowedTypes.length === 0) {
-      toast.error('Please select at least one permitted file type for Quotes.');
-      return;
-    }
-    if (editUserRole !== 'admin' && editUserRole !== 'superadmin' && !editHasChutiAccess && !editHasQuotesAccess) {
-      toast.error('Please select at least one workspace access.');
+      toast.error('You do not have permission to edit user profiles.');
       return;
     }
 
     setSubmitting(true);
-    const success = await adminUpdateUserProfile(
-      viewingStaff.id,
-      editUserFullName,
-      editUserRole,
-      editHasQuotesAccess ? editUserAllowedTypes : [],
-      editUserCanManageRules,
-      editHasChutiAccess,
-      editHasQuotesAccess,
-      profile?.role === 'supervisor' ? 'supervisor' : 'admin',
-      editNeedsApproval,
-      editNeedsApproval ? editSupervisorIds : [],
-      editEligibleGovtHoliday,
-      editEligibleOfficeLeave,
-      editAllowOvertime,
-      editAllowReserve,
-      editUserCodename,
-      editUserJobRole,
-      parseFloat(editUserWorkingHours) || 9.5,
-      parseInt(editUserBreakTime) || 0,
-      editUserSignInTime,
-      editUserSignOutTime,
-      editUserKpiSkills,
-      editUserKpiDeptIndicators,
-      editUserPerformsDataEntry,
-      editUserDepartment,
-      editUserPerformsOtherDeptTasks,
-      editUserOtherDepartment,
-      editUserKpiOtherDeptIndicators,
-      editDelegatedLeaveSupervisorId,
-      editDelegatedKpiSupervisorId,
-      editUserFeatureFlags
-    );
+    try {
+      if (viewingStaff.is_pending_approval && viewingStaff.pending_request) {
+        // Pending approval user edited by supervisor/admin
+        const req = viewingStaff.pending_request;
+        const currentData = req.data || req.submitted_data || {};
+        const updatedData: UserCreationSubmittedData = {
+          ...currentData,
+          fullName: editUserFullName.trim(),
+          allowedTypes: editUserAllowedTypes,
+          canManageRules: editUserCanManageRules,
+          hasChutiAccess: editHasChutiAccess,
+          hasQuotesAccess: editHasQuotesAccess,
+          needsApproval: editNeedsApproval,
+          supervisorIds: editSupervisorIds,
+          eligibleGovtHoliday: editEligibleGovtHoliday,
+          eligibleOfficeLeave: editEligibleOfficeLeave,
+          allowOvertime: editAllowOvertime,
+          allowReserve: editAllowReserve,
+          jobRole: editUserJobRole,
+          workingHours: parseFloat(editUserWorkingHours) || 9.5,
+          breakTime: parseInt(editUserBreakTime) || 0,
+          signInTime: editUserSignInTime,
+          signOutTime: editUserSignOutTime,
+          kpiSkills: editUserKpiSkills,
+          kpiDeptIndicators: editUserKpiDeptIndicators,
+          kpiOtherDeptIndicators: editUserKpiOtherDeptIndicators,
+          performsDataEntry: editUserPerformsDataEntry,
+          department: editUserDepartment,
+          performsOtherDeptTasks: editUserPerformsOtherDeptTasks,
+          otherDepartment: editUserOtherDepartment,
+        };
 
-    setSubmitting(false);
+        const { success, error } = await userCreationRequestService.resubmitRequest(
+          req.id,
+          updatedData,
+          req.version
+        );
 
-    if (success) {
-      // adminUpdateUserProfile already refreshed the shared profiles list via
-      // ProfilesProvider — only the updated row is needed here to sync the
-      // viewingStaff panel (single-row select, not another full-table fetch).
-      const { data } = await supabase
-        .from('profiles')
-        .select(PROFILE_COLUMNS)
-        .eq('id', viewingStaff.id)
-        .maybeSingle();
-      if (data) {
-        const updated = mapProfilePasswordResetStatus(data as unknown as Profile);
-        updateViewingStaff(updated);
-        if (updated.id === profile?.id) {
-          localStorage.setItem(`cached_profile_${profile.id}`, JSON.stringify(updated));
+        if (error || !success) {
+          toast.error(error?.message || 'Failed to update pending request.');
+        } else {
+          toast.success('Pending account request updated successfully!');
+          fetchUserCreationRequests();
+          emit('user-creation-requests-updated');
+        }
+      } else {
+        const success = await adminUpdateUserProfile(
+          viewingStaff.id,
+          editUserFullName.trim(),
+          editUserRole,
+          editUserAllowedTypes,
+          editUserCanManageRules,
+          editHasChutiAccess,
+          editHasQuotesAccess,
+          isAdmin ? 'admin' : 'supervisor',
+          editNeedsApproval,
+          editSupervisorIds,
+          editEligibleGovtHoliday,
+          editEligibleOfficeLeave,
+          editAllowOvertime,
+          editAllowReserve,
+          editUserCodename.trim().toUpperCase(),
+          editUserJobRole,
+          parseFloat(editUserWorkingHours) || 9.5,
+          parseInt(editUserBreakTime) || 0,
+          editUserSignInTime,
+          editUserSignOutTime,
+          editUserKpiSkills,
+          editUserKpiDeptIndicators,
+          editUserPerformsDataEntry,
+          editUserDepartment,
+          editUserPerformsOtherDeptTasks,
+          editUserOtherDepartment,
+          editUserKpiOtherDeptIndicators,
+          editDelegatedLeaveSupervisorId,
+          editDelegatedKpiSupervisorId,
+          editUserFeatureFlags
+        );
+
+        if (success) {
+          const updated = {
+            ...viewingStaff,
+            username: editUserCodename.trim().toUpperCase(),
+            full_name: editUserFullName.trim(),
+            role: editUserRole,
+            allowed_types: editUserAllowedTypes,
+            can_manage_rules: editUserCanManageRules,
+            has_chuti_access: editHasChutiAccess,
+            has_quotes_access: editHasQuotesAccess,
+            needs_supervisor_approval: editNeedsApproval,
+            supervisor_ids: editSupervisorIds,
+            eligible_govt_holiday: editEligibleGovtHoliday,
+            eligible_office_leave: editEligibleOfficeLeave,
+            allow_overtime: editAllowOvertime,
+            allow_reserve: editAllowReserve,
+            job_role: editUserJobRole,
+            working_hours: parseFloat(editUserWorkingHours) || 9.5,
+            break_time: parseInt(editUserBreakTime) || 0,
+            default_sign_in: editUserSignInTime,
+            default_sign_out: editUserSignOutTime,
+            delegated_leave_supervisor_id: editDelegatedLeaveSupervisorId,
+            delegated_kpi_supervisor_id: editDelegatedKpiSupervisorId,
+            global_settings: {
+              ...viewingStaff.global_settings,
+              kpi_skills: editUserKpiSkills,
+              kpi_dept_indicators: editUserKpiDeptIndicators,
+              kpi_other_dept_indicators: editUserKpiOtherDeptIndicators,
+              performs_data_entry: editUserPerformsDataEntry,
+              department: editUserDepartment,
+              performs_other_dept_tasks: editUserPerformsOtherDeptTasks,
+              other_department: editUserOtherDepartment,
+              user_feature_flags: editUserFeatureFlags,
+            },
+          };
+          updateViewingStaff(updated);
           emit('profile-updated', updated);
         }
       }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error updating profile');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1390,10 +1462,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             updateViewingStaff(null);
           }
           fetchUserCreationRequests();
+          emit('user-creation-requests-updated');
         }
       } else {
         await deleteUser(deletingUserAccount.id);
         fetchProfiles();
+        emit('profile-updated', {});
       }
       setDeletingUserAccount(null);
     }
@@ -1929,8 +2003,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             </div>
           </div>
 
-          {/* Supervisor Account Creation Requests Section */}
-          {profile?.role === 'supervisor' && pendingUserRequests.length > 0 && (
+          {/* Supervisor Account Creation Requests Section (Active: Pending & Needs Review) */}
+          {profile?.role === 'supervisor' && activeUserCreationRequests.length > 0 && (
             <div className="bg-theme-card-bg/40 backdrop-blur-xl rounded-2xl border border-theme-border-input/80 overflow-hidden shadow-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1939,13 +2013,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     My Account Creation Requests
                   </h3>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    {pendingUserRequests.length}
+                    {activeUserCreationRequests.length}
                   </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {pendingUserRequests.map((req) => {
+                {activeUserCreationRequests.map((req) => {
                   const sup = resolveAssignedSupervisor(req, profiles);
                   return (
                     <div

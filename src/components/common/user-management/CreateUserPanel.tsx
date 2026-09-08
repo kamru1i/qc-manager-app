@@ -184,6 +184,13 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
       toast.error("Codename can only contain letters, numbers, - and _.");
       return;
     }
+
+    // Duplicate codename safety check against active profiles
+    const existingCodename = (editingRequest?.data?.codename || editingRequest?.submitted_data?.codename || '').trim().toUpperCase();
+    if (cleanCodename !== existingCodename && profiles.some(p => (p.username || '').trim().toUpperCase() === cleanCodename)) {
+      toast.error(`A user with codename @${cleanCodename} already exists.`);
+      return;
+    }
     if (hasQuotesAccess && allowedTypes.length === 0) {
       toast.error("Please select at least one permitted file type for Quotes.");
       return;
