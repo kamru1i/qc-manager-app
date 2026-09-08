@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.6.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.6.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.6.1 — Patch Release (Late Join Sign-Out Compensatory Offset & Settings Pending User Profiles) (Current)
+### 🚀 v7.6.2 — Patch Release (Supervisor Codename Display in Admin Approval Panel & Payload Completeness) (Current)
+
+- **Admin Approval Panel Supervisor Codename Display**: Fixed `Manager / Supervisor` field in user creation approval cards to dynamically resolve and display the selected Supervisor's Codename (e.g. `@NS720`) in blue font-mono format with full-name tooltip, eliminating stale default to `Self`.
+- **Search by Supervisor Codename in Approvals**: Extended Admin Approval Panel search to support querying by the assigned supervisor's codename and full name.
+- **User Creation Request Payload Completeness**: Enhanced `CreateUserPanel` to explicitly save `assigned_supervisor_codename`, `assigned_supervisor_name`, and `assigned_supervisor_id` in `UserCreationSubmittedData` upon submission.
+- **Settings → Users Pending Card Alignment**: Synchronized the supervisor display in pending request cards in `Settings → Users` to reflect the resolved supervisor codename.
+
+### 🚀 v7.6.1 — Patch Release (Late Join Sign-Out Compensatory Offset & Settings Pending User Profiles)
 
 - **Chuti Late Join Sign-Out Compensatory Offset**: Fixed Late Join leave duration calculation when employees work extra time past scheduled shift end. Missed arrival time is now dynamically offset by extra minutes worked after 10:30 PM (e.g. 05:20 PM in with 10:35 PM out now accurately evaluates to 04:15 instead of being stuck at 04:20), clamped cleanly at 00:00 without negative durations.
 - **Early Leave Early Arrival Offset**: Enhanced Early Leave calculation to symmetrically offset early departures when employees arrive earlier than scheduled shift start.
