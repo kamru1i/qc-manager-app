@@ -146,8 +146,8 @@ export function AddLeave({
   const bulkLeaveOn = isFeatureEnabled('bulk_leave_submission', globalSettings, effectiveProfileForFlags);
   const reserveClaimingOn = canSubmitAdjustment && isFeatureEnabled('reserve_holiday_claiming', globalSettings, effectiveProfileForFlags);
 
-  // Break time is only offered for Short Leave when signed in more than 1 hour late.
-  const breakEligible = breakFeatureOn && isBreakEligible(leaveType, signInTime, defaultSignIn || '13:00');
+  // Break time is only offered for Short Leave / Late Join when signed in more than 1 hour late.
+  const breakEligible = breakFeatureOn && isBreakEligible(leaveType, signInTime, defaultSignIn || '13:00', defaultSignOut || '22:30');
 
   // Filter records belonging to the target staff member
   const staffRecords = React.useMemo(() => {
@@ -339,7 +339,15 @@ export function AddLeave({
   const eidAdhaRemaining = Math.max(0, eidAdhaTotal - (stats.eidAdhaTaken ?? 0) - activeEidAdhaSettled);
 
   const isHoliday = checkIfHolidayOrWeekend(date, globalSettings);
-  const validationError = getLeaveValidationError(leaveType, signInTime, signOutTime, targetProfile?.working_hours || 9.5, isHoliday);
+  const validationError = getLeaveValidationError(
+    leaveType,
+    signInTime,
+    signOutTime,
+    targetProfile?.working_hours || 9.5,
+    isHoliday,
+    defaultSignIn || '13:00',
+    defaultSignOut || '22:30'
+  );
 
   const isAdminAddingForStaff = Boolean(
     profile && isAdminRole(profile) && targetProfile && targetProfile.id !== profile.id
@@ -1086,6 +1094,8 @@ export function AddLeave({
               eligibleOfficeLeave={isOfficeLeaveEligible}
               officeLeaveRemaining={officeLeaveRemaining}
               workingHours={targetProfile?.working_hours || 9.5}
+              shiftStart={defaultSignIn || '13:00'}
+              shiftEnd={defaultSignOut || '22:30'}
               globalSettings={globalSettings}
               onDateErrorChange={(id, hasError) => {
                 setDateErrors(prev => {

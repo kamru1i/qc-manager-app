@@ -261,7 +261,15 @@ export const useChutiOperations = ({
 
     if (!isFullLeave) {
       const isHoliday = checkIfHolidayOrWeekend(date, globalSettings);
-      const valError = getLeaveValidationError(leaveType, signInTime, signOutTime, profile?.working_hours || 9.5, isHoliday);
+      const valError = getLeaveValidationError(
+        leaveType,
+        signInTime,
+        signOutTime,
+        profile?.working_hours || 9.5,
+        isHoliday,
+        profile?.default_sign_in || '13:00',
+        profile?.default_sign_out || '22:30'
+      );
       if (valError) {
         setMessage({ type: 'error', text: valError });
         setSubmitting(false);
@@ -690,7 +698,15 @@ export const useChutiOperations = ({
 
       if (!isFullLeave) {
         const isHoliday = checkIfHolidayOrWeekend(revisionDate, globalSettings);
-        const valError = getLeaveValidationError(revisionLeaveType, revisionSignInTime, revisionSignOutTime, profile?.working_hours || 9.5, isHoliday);
+        const valError = getLeaveValidationError(
+          revisionLeaveType,
+          revisionSignInTime,
+          revisionSignOutTime,
+          profile?.working_hours || 9.5,
+          isHoliday,
+          profile?.default_sign_in || '13:00',
+          profile?.default_sign_out || '22:30'
+        );
         if (valError) {
           setMessage({ type: 'error', text: valError });
           setSubmitting(false);
@@ -761,7 +777,15 @@ export const useChutiOperations = ({
       if (!isFullLeave) {
         const targetProfile = profilesList.find(p => p.id === adminEditRecord.user_id) || profile;
         const isHoliday = checkIfHolidayOrWeekend(adminEditDate, globalSettings);
-        const valError = getLeaveValidationError(adminEditLeaveType, adminEditSignInTime, adminEditSignOutTime, targetProfile?.working_hours || 9.5, isHoliday);
+        const valError = getLeaveValidationError(
+          adminEditLeaveType,
+          adminEditSignInTime,
+          adminEditSignOutTime,
+          targetProfile?.working_hours || 9.5,
+          isHoliday,
+          targetProfile?.default_sign_in || '13:00',
+          targetProfile?.default_sign_out || '22:30'
+        );
         if (valError) {
           setMessage({ type: 'error', text: valError });
           setSubmitting(false);

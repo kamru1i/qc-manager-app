@@ -66,6 +66,8 @@ interface AddLeaveFormFieldsProps {
   bulkLeaveEnabled?: boolean;
   reserveClaimingEnabled?: boolean;
   onDateErrorChange?: (id: string, hasError: boolean) => void;
+  shiftStart?: string;
+  shiftEnd?: string;
 }
 
 export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
@@ -115,6 +117,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
   leaveAdjustmentsEnabled = true,
   bulkLeaveEnabled = true,
   reserveClaimingEnabled = true,
+  shiftStart = '13:00',
+  shiftEnd = '22:30',
 }) => {
   const isHoliday = globalSettings
     ? checkIfHolidayOrWeekend(date, globalSettings)
@@ -125,6 +129,8 @@ export const AddLeaveFormFields: React.FC<AddLeaveFormFieldsProps> = ({
     signOutTime,
     workingHours,
     isHoliday,
+    shiftStart,
+    shiftEnd,
   );
 
   const isFullLeave = leaveType === "Full Leave";

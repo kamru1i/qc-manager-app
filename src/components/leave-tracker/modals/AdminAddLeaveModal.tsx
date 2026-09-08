@@ -171,18 +171,19 @@ export function AdminAddLeaveModal({
     const jummahApplied = (['Short Leave', 'Early Leave', 'Late Join'].includes(leaveType) && isFriday(date))
       ? adjustShortLeaveForJummah(calc, adjustJummah)
       : calc;
-    const breakEligibleNow = isBreakEligible(leaveType, signInTime, shiftStart);
+    const breakEligibleNow = isBreakEligible(leaveType, signInTime, shiftStart, shiftEnd);
     const finalCalc = breakEligibleNow
       ? addBreakToShortLeave(jummahApplied, breakMinutes, breakEnabled)
       : jummahApplied;
     setLeaveHour(finalCalc);
   }, [signInTime, signOutTime, leaveType, date, staffProfile, globalSettings, adjustJummah, breakEnabled, breakMinutes]);
 
-  // Break time eligibility (Short Leave, signed in more than 1 hour late)
+  // Break time eligibility (Short Leave / Late Join, signed in more than 1 hour late)
   const breakEligible = isBreakEligible(
     leaveType,
     signInTime,
     staffProfile?.default_sign_in || "13:00",
+    staffProfile?.default_sign_out || "22:30",
   );
 
   // Clear a stale break toggle if it stops being applicable
@@ -258,6 +259,8 @@ export function AdminAddLeaveModal({
     signOutTime,
     staffProfile?.working_hours || 9.5,
     isHoliday,
+    staffProfile?.default_sign_in || "13:00",
+    staffProfile?.default_sign_out || "22:30",
   );
 
   // Real-time deduction preview logic based on modal state
@@ -591,6 +594,8 @@ export function AdminAddLeaveModal({
                   eligibleOfficeLeave={isOfficeLeaveEligible}
                   officeLeaveRemaining={officeLeaveRemaining}
                   workingHours={staffProfile?.working_hours || 9.5}
+                  shiftStart={staffProfile.default_sign_in || "13:00"}
+                  shiftEnd={staffProfile.default_sign_out || "22:30"}
                   isAdmin={true}
                   globalSettings={globalSettings}
                 />

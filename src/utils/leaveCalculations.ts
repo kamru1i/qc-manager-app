@@ -1,5 +1,6 @@
 import { ChutiRecord } from '@/utils/offlineSync';
 import { GlobalSettings } from './globalSettingsHelpers';
+import { parseToCanonicalTime } from './timeFormatHelpers';
 
 export const applyLeaveFilters = <T extends ChutiRecord>(
   records: T[],
@@ -236,10 +237,16 @@ export const getFullCommentHistory = (comment: string | null | undefined, record
 // Helper function to format date from YYYY-MM-DD to DD-MM-YYYY
 export { formatDate, formatDateTime, escapeHtml } from './formatters';
 
-// Helper functions for time parsing and formatting
-export const parseTimeToMinutes = (timeStr: string) => {
+// Helper functions for time parsing and formatting (supports both 12h AM/PM and canonical 24h)
+export const parseTimeToMinutes = (timeStr: string | null | undefined): number => {
   if (!timeStr) return 0;
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  const canonical = parseToCanonicalTime(timeStr);
+  if (!canonical) return 0;
+  const parts = canonical.split(':');
+  if (parts.length < 2) return 0;
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  if (isNaN(hours) || isNaN(minutes)) return 0;
   return hours * 60 + minutes;
 };
 
@@ -445,52 +452,77 @@ export const calculateLeaveOrOvertime = (
   actualStart: string,
   actualEnd: string,
   shiftStart: string = '13:00',
-  _shiftEnd: string = '22:30',
+  shiftEnd: string = '22:30',
   workingHours: number = 9.5,
   _isHoliday: boolean = false
-) => {
+): string => {
   if (type === 'Full Leave' || type === 'Select' || !type) {
     return '00:00';
   }
+
+  // Late Join: Actual Sign-In vs Regular Scheduled Sign-In (Sign-Out does NOT participate in Late Join calculation)
+  if (type === 'Late Join') {
+    if (!actualStart) return '00:00';
+    const shiftStartMins = parseTimeToMinutes(shiftStart || '13:00');
+    let actualStartMins = parseTimeToMinutes(actualStart);
+    const shiftEndMins = parseTimeToMinutes(shiftEnd || '22:30');
+
+    // Handle overnight shifts where shift crosses midnight (e.g. 22:00 to 06:00)
+    if (shiftEndMins < shiftStartMins && actualStartMins < shiftStartMins && actualStartMins <= shiftEndMins) {
+      actualStartMins += 24 * 60;
+    }
+
+    // Arriving at or before scheduled shift start produces zero late duration (safe minimum 00:00, no negative duration)
+    if (actualStartMins <= shiftStartMins) {
+      return '00:00';
+    }
+
+    const lateDuration = actualStartMins - shiftStartMins;
+    return formatDuration(Math.max(0, lateDuration));
+  }
+
+  // Early Leave: Regular Scheduled Sign-Out vs Actual Sign-Out (Sign-In does NOT participate in Early Leave calculation)
+  if (type === 'Early Leave') {
+    if (!actualEnd) return '00:00';
+    const shiftStartMins = parseTimeToMinutes(shiftStart || '13:00');
+    let shiftEndMins = parseTimeToMinutes(shiftEnd || '22:30');
+    let actualEndMins = parseTimeToMinutes(actualEnd);
+
+    // If shift crosses midnight (e.g. 14:00 to 00:00, or 22:00 to 06:00)
+    if (shiftEndMins < shiftStartMins) {
+      shiftEndMins += 24 * 60;
+      if (actualEndMins < shiftStartMins) {
+        actualEndMins += 24 * 60;
+      }
+    }
+
+    // Leaving at or after scheduled shift end produces zero early leave duration
+    if (actualEndMins >= shiftEndMins) {
+      return '00:00';
+    }
+
+    const earlyDuration = shiftEndMins - actualEndMins;
+    return formatDuration(Math.max(0, earlyDuration));
+  }
+
+  // Short Leave and Overtime require both actual start and actual end
   if (!actualStart || !actualEnd) return '00:00';
 
-  const shiftStartMins = parseTimeToMinutes(shiftStart);
-  
-  const getShiftRelativeMins = (t: string) => {
-    let m = parseTimeToMinutes(t);
-    if (m < shiftStartMins - 4 * 60) {
-      m += 24 * 60;
-    }
-    return m;
-  };
-
-  const actualStartMins = getShiftRelativeMins(actualStart);
-  const actualEndMins = getShiftRelativeMins(actualEnd);
+  const startMins = parseTimeToMinutes(actualStart);
+  let endMins = parseTimeToMinutes(actualEnd);
+  if (endMins < startMins) {
+    endMins += 24 * 60;
+  }
 
   if (type === 'Short Leave') {
-    let leaveDuration = actualEndMins - actualStartMins;
-    if (leaveDuration < 0) {
-      leaveDuration += 24 * 60;
-    }
-    return formatDuration(leaveDuration);
-  } else if (type === 'Early Leave') {
-    let worked = actualEndMins - actualStartMins;
-    if (worked < 0) {
-      worked += 24 * 60;
-    }
-    const required = workingHours * 60;
-    return formatDuration(Math.max(0, required - worked));
-  } else if (type === 'Late Join') {
-    const lateDuration = Math.max(0, actualStartMins - shiftStartMins);
-    return formatDuration(lateDuration);
+    const leaveDuration = endMins - startMins;
+    return formatDuration(Math.max(0, leaveDuration));
   } else if (type === 'Overtime') {
-    let worked = actualEndMins - actualStartMins;
-    if (worked < 0) {
-      worked += 24 * 60;
-    }
-    const regular = workingHours * 60;
+    const worked = endMins - startMins;
+    const regular = Math.round(workingHours * 60);
     return formatDuration(Math.max(0, worked - regular));
   }
+
   return '00:00';
 };
 
@@ -500,9 +532,39 @@ export const getLeaveValidationError = (
   signOutTime: string,
   workingHours: number = 9.5,
   _isHoliday: boolean = false,
-  shiftStart: string = '13:00'
+  shiftStart: string = '13:00',
+  shiftEnd: string = '22:30'
 ): string | null => {
   if (type === 'Full Leave' || !type || type === 'Select') return null;
+
+  if (type === 'Late Join') {
+    if (!signInTime) return null;
+    const startMins = parseTimeToMinutes(signInTime);
+    const shiftStartMins = parseTimeToMinutes(shiftStart || '13:00');
+    if (startMins <= shiftStartMins) {
+      return `Sign-in time must be later than shift start (${formatTimeToAMPM(shiftStart)})`;
+    }
+    return null;
+  }
+
+  if (type === 'Early Leave') {
+    if (!signOutTime) return null;
+    const endMins = parseTimeToMinutes(signOutTime);
+    let shiftEndMins = parseTimeToMinutes(shiftEnd || '22:30');
+    const shiftStartMins = parseTimeToMinutes(shiftStart || '13:00');
+    let effectiveEndMins = endMins;
+    if (shiftEndMins < shiftStartMins) {
+      shiftEndMins += 24 * 60;
+      if (effectiveEndMins < shiftStartMins) {
+        effectiveEndMins += 24 * 60;
+      }
+    }
+    if (effectiveEndMins >= shiftEndMins) {
+      return `Sign-out time must be earlier than shift end (${formatTimeToAMPM(shiftEnd)})`;
+    }
+    return null;
+  }
+
   if (!signInTime || !signOutTime) return null;
 
   const startMins = parseTimeToMinutes(signInTime);
@@ -512,16 +574,15 @@ export const getLeaveValidationError = (
   }
   
   const workedMins = endMins - startMins;
-  const regularMins = workingHours * 60;
+  const regularMins = Math.round(workingHours * 60);
 
   if (type === 'Overtime') {
     if (workedMins <= regularMins) {
       return 'Overtime must be extra from working hour';
     }
-  } else if (type === 'Late Join') {
-    const shiftStartMins = parseTimeToMinutes(shiftStart);
-    if (startMins <= shiftStartMins) {
-      return `Sign-in time must be later than shift start (${formatTimeToAMPM(shiftStart)})`;
+  } else if (type === 'Short Leave') {
+    if (endMins === startMins) {
+      return 'Leave start and end times cannot be identical';
     }
   }
 
@@ -549,7 +610,19 @@ export const formatTimeToAMPM = (timeStr: string | null | undefined): string => 
   const str = String(timeStr).trim();
   if (!str) return '-';
 
-  // 1. Check if it is a HH:mm or HH:mm:ss string e.g. "13:00" or "22:30"
+  // 1. If string already contains AM/PM designation
+  if (/AM|PM/i.test(str)) {
+    const canonical = parseToCanonicalTime(str);
+    if (canonical && canonical.includes(':')) {
+      const [hStr, mStr] = canonical.split(':');
+      let hours = parseInt(hStr, 10);
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      return `${String(hours).padStart(2, '0')}:${mStr} ${ampm}`;
+    }
+  }
+
+  // 2. Check if it is a HH:mm or HH:mm:ss string e.g. "13:00" or "22:30"
   const hhmmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
   if (hhmmMatch) {
     let hours = parseInt(hhmmMatch[1], 10);

@@ -47,27 +47,42 @@ const BREAK_COMMENT_MARKER_RE = /(\d{1,2})\s*Min Break Added/;
 const BREAK_COMMENT_STRIP_RE = /\s*\|?\s*\d{1,2}\s*Min Break Added/g;
 
 /**
- * Minutes the user signed in AFTER their shift start. Mirrors the shift-relative
- * wrap handling in calculateLeaveOrOvertime so late nights aren't misread.
+ * Minutes the user signed in AFTER their shift start. Handles overnight shifts
+ * safely without misclassifying early morning arrivals as 19+ hours late.
  */
-export const getShortLeaveLateMinutes = (signInTime: string, shiftStart: string): number => {
+export const getShortLeaveLateMinutes = (
+  signInTime: string,
+  shiftStart: string,
+  shiftEnd?: string
+): number => {
   if (!signInTime || !shiftStart) return 0;
   const shiftMins = parseTimeToMinutes(shiftStart);
   let signMins = parseTimeToMinutes(signInTime);
-  if (signMins < shiftMins - 4 * 60) {
-    signMins += 24 * 60;
+
+  // Handle overnight shifts where shift crosses midnight (e.g. 22:00 to 06:00)
+  if (shiftEnd) {
+    const shiftEndMins = parseTimeToMinutes(shiftEnd);
+    if (shiftEndMins < shiftMins && signMins < shiftMins && signMins <= shiftEndMins) {
+      signMins += 24 * 60;
+    }
+  }
+
+  // Arriving at or before scheduled shift start produces zero late minutes
+  if (signMins <= shiftMins) {
+    return 0;
   }
   return signMins - shiftMins;
 };
 
-/** Break option is offered only for Short Leave when signed in MORE than 1 hour late (e.g. shift 1PM → shows at 2:01PM+, not at exactly 2PM). */
+/** Break option is offered only for Short Leave / Late Join when signed in MORE than 1 hour late (e.g. shift 1PM → shows at 2:01PM+, not at exactly 2PM). */
 export const isBreakEligible = (
   leaveType: string,
   signInTime: string,
   shiftStart: string,
+  shiftEnd?: string
 ): boolean => {
   if (!['Short Leave', 'Late Join'].includes(leaveType)) return false;
-  return getShortLeaveLateMinutes(signInTime, shiftStart) > 60;
+  return getShortLeaveLateMinutes(signInTime, shiftStart, shiftEnd) > 60;
 };
 
 /** Adds the break minutes (clamped 0–40) to a short-leave duration string. */
