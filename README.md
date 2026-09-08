@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.6.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.6.1** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,13 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.6.0 — Minor Release (Supervisor Account Creation Workflow, Requote Normalization & Superadmin Edit Privacy) (Current)
+### 🚀 v7.6.1 — Patch Release (Late Join Sign-Out Compensatory Offset & Settings Pending User Profiles) (Current)
+
+- **Chuti Late Join Sign-Out Compensatory Offset**: Fixed Late Join leave duration calculation when employees work extra time past scheduled shift end. Missed arrival time is now dynamically offset by extra minutes worked after 10:30 PM (e.g. 05:20 PM in with 10:35 PM out now accurately evaluates to 04:15 instead of being stuck at 04:20), clamped cleanly at 00:00 without negative durations.
+- **Early Leave Early Arrival Offset**: Enhanced Early Leave calculation to symmetrically offset early departures when employees arrive earlier than scheduled shift start.
+- **Supervisor Pending Profiles in Settings → Users**: Newly submitted Supervisor user creation requests immediately appear in Settings → Users in a dimmed/pending badge state and automatically transition to active profiles upon Admin approval.
+
+### 🚀 v7.6.0 — Minor Release (Supervisor Account Creation Workflow, Requote Normalization & Superadmin Edit Privacy)
 
 - **Supervisor User Account Creation & Admin Approval Flow**: Restored controlled user account creation capability for Supervisors under a secure dual-phase approval flow. Supervisors submit requests (requiring `user` role and Quotes + Leave Workspace access); Admins review, approve, send back with revision feedback, or reject.
 - **Optimistic Concurrency & Resubmission**: Supervisors can review admin feedback, update user details, and resubmit with automated revision version tracking and concurrency conflict detection.
