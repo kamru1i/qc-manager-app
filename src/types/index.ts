@@ -48,6 +48,12 @@ export interface Profile {
   has_quotes_access?: boolean;
   has_todo_access?: boolean;
   created_at?: string;
+
+  // Pending Supervisor User Creation Request workflow
+  is_pending_approval?: boolean;
+  pending_request_status?: 'pending_admin_approval' | 'needs_review' | 'approved' | 'rejected';
+  pending_request_id?: string;
+  pending_request?: UserCreationRequest;
 }
 
 export interface TodoAccessRecord {

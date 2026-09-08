@@ -165,4 +165,26 @@ export const userCreationRequestService = {
       return { success: false, data: null, error: err };
     }
   },
+
+  /**
+   * Admin dismisses / deletes a user creation request.
+   */
+  async deleteRequest(requestId: string): Promise<{ success: boolean; error: any }> {
+    try {
+      const { error } = await supabase
+        .from('user_creation_requests')
+        .delete()
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('Failed to delete user creation request:', error);
+        return { success: false, error };
+      }
+
+      return { success: true, error: null };
+    } catch (err) {
+      console.error('Error in deleteRequest:', err);
+      return { success: false, error: err };
+    }
+  },
 };

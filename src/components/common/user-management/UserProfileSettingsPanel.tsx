@@ -11,6 +11,8 @@ import {
   Check,
   Loader2,
   AlertTriangle,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 
 interface UserProfileSettingsPanelProps {
@@ -247,62 +249,84 @@ export const UserProfileSettingsPanel: React.FC<
         onResetAllUserFlags={onResetAllUserFlags}
       />
 
-      <div className="bg-theme-card-bg/20 border border-theme-border-muted/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
-        <div className="flex flex-wrap gap-2.5">
+      {viewingStaff.is_pending_approval ? (
+        <div className="bg-amber-500/10 border border-amber-500/30 p-5 rounded-2xl flex flex-wrap items-center justify-between gap-4 mt-6 font-sans">
+          <div className="flex items-center gap-2.5 text-xs text-amber-300">
+            <Clock className="h-4 w-4 text-amber-400 shrink-0" />
+            <span>
+              {viewingStaff.pending_request_status === 'needs_review'
+                ? 'This account request has been returned for review. Account-level actions are locked until resubmitted and approved.'
+                : 'This user account is pending Admin approval. Account-level actions and profile modifications will be unlocked once approved.'}
+            </span>
+          </div>
           {isAdmin && (
             <button
               type="button"
-              onClick={onResetPasswordClick}
-              className="px-4 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-            >
-              <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset
-              Password?
-            </button>
-          )}
-
-          {!showSupervisorWarning && (
-            <button
-              type="button"
-              onClick={onChangePasswordClick}
-              className="px-4 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
-            >
-              <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
-            </button>
-          )}
-
-          {isAdmin && viewingStaff.role !== "admin" && (
-            <button
-              type="button"
               onClick={onDeleteAccountClick}
-              className="px-4 py-2.5 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+              className="px-4 py-2 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5 shrink-0"
             >
-              <Trash2 className="h-3.5 w-3.5" /> Delete Account
+              <Trash2 className="h-3.5 w-3.5" /> Dismiss Request
             </button>
           )}
         </div>
+      ) : (
+        <div className="bg-theme-card-bg/20 border border-theme-border-muted/60 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4 mt-6 font-sans">
+          <div className="flex flex-wrap gap-2.5">
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={onResetPasswordClick}
+                className="px-4 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5 text-purple-500" /> Reset
+                Password?
+              </button>
+            )}
 
-        {(isAdmin || isSupervisor) && (
-          <div>
-            <button
-              type="button"
-              disabled={submitting || hasChanges === false}
-              onClick={onSaveProfileClick}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
-                submitting || hasChanges === false
-                  ? 'border-theme-border-input bg-theme-border-input/40 text-theme-text-muted/60 cursor-not-allowed opacity-50'
-                  : 'bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white cursor-pointer shadow-lg shadow-blue-950/20 border-blue-700/30 hover:scale-[1.01] active:scale-[0.99]'
-              }`}
-            >
-              {submitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-              {submitting ? "Saving..." : "Save Changes"}
-            </button>
+            {!showSupervisorWarning && (
+              <button
+                type="button"
+                onClick={onChangePasswordClick}
+                className="px-4 py-2 bg-theme-border-muted hover:bg-theme-border-active border border-theme-border-active text-theme-text-secondary rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+              >
+                <KeyRound className="h-3.5 w-3.5 text-blue-400" /> Change Password
+              </button>
+            )}
+
+            {isAdmin && viewingStaff.role !== "admin" && (
+              <button
+                type="button"
+                onClick={onDeleteAccountClick}
+                className="px-4 py-2.5 bg-red-950/20 hover:bg-red-900/30 border border-red-900/50 text-red-400 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-1.5"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delete Account
+              </button>
+            )}
           </div>
-        )}
-      </div>
+
+          {(isAdmin || isSupervisor) && (
+            <div>
+              <button
+                type="button"
+                disabled={submitting || hasChanges === false}
+                onClick={onSaveProfileClick}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                  submitting || hasChanges === false
+                    ? 'border-theme-border-input bg-theme-border-input/40 text-theme-text-muted/60 cursor-not-allowed opacity-50'
+                    : 'bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white cursor-pointer shadow-lg shadow-blue-950/20 border-blue-700/30 hover:scale-[1.01] active:scale-[0.99]'
+                }`}
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                {submitting ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -32,6 +32,9 @@ import {
   TrendingUp,
   Clock,
   AlertTriangle,
+  AlertCircle,
+  Check,
+  Trash2,
   Edit
 } from 'lucide-react';
 import { UserDisplayName } from '@/components/common/UserDisplayName';
@@ -107,6 +110,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [isCreatingNewUser, setIsCreatingNewUser] = useState(false);
   const [pendingUserRequests, setPendingUserRequests] = useState<UserCreationRequest[]>([]);
   const [editingUserCreationRequest, setEditingUserCreationRequest] = useState<UserCreationRequest | null>(null);
+  const [reviewModalRequest, setReviewModalRequest] = useState<UserCreationRequest | null>(null);
+  const [reviewNotesInput, setReviewNotesInput] = useState('');
 
   // Edit User State
   const [editUserCodename, setEditUserCodename] = useState('');
@@ -166,18 +171,75 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   });
   const prevViewingStaffRef = useRef<Profile | null>(null);
 
-  // Restore viewingStaff on page reload/mount when profiles list is loaded
-  useEffect(() => {
-    if (profiles.length > 0 && !viewingStaff) {
-      const savedStaffId = localStorage.getItem('user_management_viewing_staff_id');
-      if (savedStaffId) {
-        const found = profiles.find(p => p.id === savedStaffId);
-        if (found) {
-          setViewingStaff(found);
-        }
-      }
-    }
-  }, [profiles, viewingStaff]);
+  // Synthesize pending display profiles from supervisor creation requests (dimmed profiles)
+  const pendingDisplayProfiles = useMemo(() => {
+    const activeCodenames = new Set(profiles.map(p => (p.username || '').toLowerCase().trim()));
+    const activeIds = new Set(profiles.map(p => p.id));
+
+    return pendingUserRequests
+      .filter(req => (req.status === 'pending_admin_approval' || req.status === 'needs_review'))
+      .filter(req => {
+        const data = req.data || req.submitted_data || {};
+        const codename = (data.codename || '').toLowerCase().trim();
+        if (!codename) return false;
+        if (activeCodenames.has(codename)) return false;
+        if (req.created_user_id && activeIds.has(req.created_user_id)) return false;
+        return true;
+      })
+      .map(req => {
+        const data = req.data || req.submitted_data || {};
+        const syntheticProfile: Profile = {
+          id: `pending-${req.id}`,
+          username: (data.codename || '').toLowerCase().trim(),
+          codename: (data.codename || '').toLowerCase().trim(),
+          full_name: data.fullName || data.full_name || data.codename || 'Unnamed',
+          role: (data.role as any) || 'user',
+          allowed_types: data.allowedTypes || data.allowed_types || [],
+          can_manage_rules: !!(data.canManageRules ?? data.can_manage_rules),
+          has_chuti_access: data.hasChutiAccess ?? data.has_chuti_access ?? true,
+          has_quotes_access: data.hasQuotesAccess ?? data.has_quotes_access ?? false,
+          needs_supervisor_approval: data.needsApproval ?? data.needs_supervisor_approval ?? true,
+          supervisor_ids: data.supervisorIds || data.supervisor_ids || (req.requester_id ? [req.requester_id] : []),
+          eligible_govt_holiday: data.eligibleGovtHoliday ?? data.eligible_govt_holiday ?? true,
+          eligible_office_leave: data.eligibleOfficeLeave ?? data.eligible_office_leave ?? true,
+          allow_overtime: !!(data.allowOvertime ?? data.allow_overtime),
+          allow_reserve: !!(data.allowReserve ?? data.allow_reserve),
+          default_sign_in: data.signInTime || data.default_sign_in || '',
+          default_sign_out: data.signOutTime || data.default_sign_out || '',
+          job_role: data.jobRole || data.job_role || '',
+          working_hours: parseFloat(String(data.workingHours ?? data.working_hours ?? 9.5)) || 9.5,
+          break_time: parseInt(String(data.breakTime ?? data.break_time ?? 0)) || 0,
+          global_settings: {
+            kpi_skills: data.kpiSkills || data.kpi_skills || [],
+            kpi_dept_indicators: data.kpiDeptIndicators || data.kpi_dept_indicators || [],
+            kpi_other_dept_indicators: data.kpiOtherDeptIndicators || data.kpi_other_dept_indicators || [],
+            performs_data_entry: data.performsDataEntry ?? data.performs_data_entry ?? true,
+            department: data.department || 'Data Entry',
+            performs_other_dept_tasks: !!(data.performsOtherDeptTasks ?? data.performs_other_dept_tasks),
+            other_department: data.otherDepartment || data.other_department || 'IT',
+          },
+          delegated_supervisor_id: null,
+          delegated_leave_supervisor_id: null,
+          delegated_kpi_supervisor_id: null,
+          has_todo_access: false,
+          is_pending_approval: true,
+          pending_request_status: req.status,
+          pending_request_id: req.id,
+          pending_request: req,
+        };
+        return syntheticProfile;
+      });
+  }, [pendingUserRequests, profiles]);
+
+  // Combined list of active profiles + dimmed pending profiles, sorted alphabetically
+  const allDisplayProfiles = useMemo(() => {
+    const combined = [...profiles, ...pendingDisplayProfiles];
+    return combined.sort((a, b) => {
+      const nameA = (a.full_name || a.username || '').toLowerCase();
+      const nameB = (b.full_name || b.username || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [profiles, pendingDisplayProfiles]);
 
   const handleSetActiveSubTab = (tab: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi') => {
     setActiveSubTab(tab);
@@ -220,6 +282,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     if (isAdminRole(profile)) return true;
     if (viewingStaffProfile.id === profile.id) return true;
     
+    // For pending profiles, requester supervisor has access to view/manage
+    if (viewingStaffProfile.is_pending_approval) {
+      if (viewingStaffProfile.pending_request?.requester_id === profile.id) return true;
+      return false;
+    }
+
     if (profile.role === 'supervisor') {
       const supervisorIds = viewingStaffProfile.supervisor_ids || [];
       // 1. Direct supervision
@@ -273,20 +341,37 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   // Load saved viewingStaff on mount or when profiles finish loading
   useEffect(() => {
-    if (profiles.length > 0) {
+    if ((profiles.length > 0 || pendingDisplayProfiles.length > 0) && !viewingStaff) {
       const savedStaffId = localStorage.getItem('user_management_viewing_staff_id');
       if (savedStaffId) {
-        const staff = profiles.find(p => p.id === savedStaffId);
+        const staff = allDisplayProfiles.find(p => p.id === savedStaffId);
         if (staff && hasStaffAccess(staff)) {
           setViewingStaff(staff);
         }
       }
     }
-  }, [profiles, hasStaffAccess]);
+  }, [allDisplayProfiles, viewingStaff, hasStaffAccess, profiles.length, pendingDisplayProfiles.length]);
 
-  // Synchronize viewingStaff with latest data from profiles list (only if data changed)
+  // Synchronize viewingStaff with latest data from profiles or pending list (only if data changed)
   useEffect(() => {
     if (viewingStaff) {
+      if (viewingStaff.is_pending_approval) {
+        const updated = pendingDisplayProfiles.find(p => p.id === viewingStaff.id);
+        if (!updated) {
+          // If the pending request was approved, it transitions into profiles:
+          const approvedProfile = profiles.find(
+            p => (p.username || '').toLowerCase().trim() === viewingStaff.username.toLowerCase().trim()
+          );
+          if (approvedProfile) {
+            updateViewingStaff(approvedProfile);
+          } else {
+            updateViewingStaff(null);
+          }
+        } else if (JSON.stringify(updated) !== JSON.stringify(viewingStaff)) {
+          updateViewingStaff(updated);
+        }
+        return;
+      }
       const updated = profiles.find(p => p.id === viewingStaff.id);
       if (!updated) {
         updateViewingStaff(null); // User was deleted
@@ -294,7 +379,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         updateViewingStaff(updated);
       }
     }
-  }, [profiles, viewingStaff, updateViewingStaff]);
+  }, [profiles, pendingDisplayProfiles, viewingStaff, updateViewingStaff]);
 
   // Pre-select staff member from sessionStorage when redirected from other pages
   useEffect(() => {
@@ -390,6 +475,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   // Redirect to an authorized subtab if the current subtab is restricted
   useEffect(() => {
     if (viewingStaff) {
+      if (viewingStaff.is_pending_approval) {
+        if (activeSubTab !== 'profile') {
+          handleSetActiveSubTab('profile');
+        }
+        return;
+      }
       const isLeaveAllowed = viewingStaff.has_chuti_access && canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles);
       const isQuotesAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_quotes', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles);
       const isAnalyticsAllowed = viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_analytics', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles);
@@ -545,6 +636,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   // Fetch leave data on mount/change of selected staff member
   useEffect(() => {
     if (viewingStaff) {
+      if (viewingStaff.is_pending_approval) {
+        setViewingStaffRecords([]);
+        setViewingStaffSettlements([]);
+        setViewingStaffHolidayResponses([]);
+        return;
+      }
       const isSupervisedByMe = hasStaffAccess(viewingStaff);
       if (isSupervisedByMe) {
         fetchStaffLeaveData(viewingStaff.id);
@@ -566,7 +663,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   // ── govt_holiday_responses handler ──
   const handleHolidayResponseRealtime = useCallback((payload: RealtimePayload) => {
-    if (!viewingStaff) return;
+    if (!viewingStaff || viewingStaff.is_pending_approval) return;
     const rec = payload?.new || payload?.old;
     if (rec?.user_id === viewingStaff.id) {
       debouncedFetchStaffLeaveData(viewingStaff.id);
@@ -577,7 +674,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   // ── chuti + leave_settlements direct realtime handlers ──
   const handleChutiRealtime = useCallback((payload: RealtimePayload) => {
-    if (!viewingStaff) return;
+    if (!viewingStaff || viewingStaff.is_pending_approval) return;
     const isSupervisedByMe = hasStaffAccess(viewingStaff);
     if (!isSupervisedByMe) return;
 
@@ -592,7 +689,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   // ── chuti + leave_settlements (also forward via DOM events from dashboard) ──
   useAppEvent('realtime-table-payload', (payloadData) => {
-    if (!viewingStaff) return;
+    if (!viewingStaff || viewingStaff.is_pending_approval) return;
     const isSupervisedByMe = hasStaffAccess(viewingStaff);
     if (!isSupervisedByMe) return;
 
@@ -1099,6 +1196,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     fetchUserCreationRequests();
   }, [fetchUserCreationRequests]);
 
+  useRealtimeHandler('user_creation_requests', useCallback(() => {
+    fetchUserCreationRequests();
+  }, [fetchUserCreationRequests]));
+
   useAppEvent('open-user-creation-review', (req: UserCreationRequest) => {
     if (req) {
       setEditingUserCreationRequest(req);
@@ -1152,6 +1253,52 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       toast.error(err?.message || 'Error resubmitting request');
       setSubmitting(false);
       return false;
+    }
+  };
+
+  const handleApprovePendingRequest = async (requestId: string) => {
+    setSubmitting(true);
+    try {
+      const { success, error } = await userCreationRequestService.approveRequest(requestId);
+      if (error || !success) {
+        toast.error(error?.message || 'Failed to approve user creation request.');
+        setSubmitting(false);
+        return;
+      }
+      toast.success('User account approved and activated successfully!');
+      setSubmitting(false);
+      await fetchProfiles();
+      await fetchUserCreationRequests();
+    } catch (err: any) {
+      toast.error(err?.message || 'Error approving request');
+      setSubmitting(false);
+    }
+  };
+
+  const handleSendReviewRequest = async () => {
+    if (!reviewModalRequest || !reviewNotesInput.trim()) {
+      toast.error('Please enter review notes explaining what needs to be corrected.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { success, error } = await userCreationRequestService.reviewRequest(
+        reviewModalRequest.id,
+        reviewNotesInput.trim(),
+        reviewModalRequest.version
+      );
+      if (error || !success) {
+        toast.error(error?.message || 'Failed to send review request.');
+      } else {
+        toast.success('Request returned to supervisor for review.');
+        setReviewModalRequest(null);
+        setReviewNotesInput('');
+        fetchUserCreationRequests();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error returning request for review');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1231,25 +1378,36 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   const handleDeleteConfirm = async () => {
     if (deletingUserAccount) {
-      await deleteUser(deletingUserAccount.id);
+      if (deletingUserAccount.id.startsWith('pending-')) {
+        const reqId = deletingUserAccount.id.replace('pending-', '');
+        const { success, error } = await userCreationRequestService.deleteRequest(reqId);
+        if (error || !success) {
+          toast.error(error?.message || 'Failed to dismiss request.');
+        } else {
+          toast.success('Account creation request dismissed.');
+          if (viewingStaff?.id === deletingUserAccount.id) {
+            updateViewingStaff(null);
+          }
+          fetchUserCreationRequests();
+        }
+      } else {
+        await deleteUser(deletingUserAccount.id);
+        fetchProfiles();
+      }
       setDeletingUserAccount(null);
-      fetchProfiles();
     }
   };
 
-  const visibleProfiles = profiles
-    .filter(() => {
-      // Supervisors and Admins can see all users in the list
-      return true;
-    })
-    .filter((u) => {
-      const q = searchQuery.toLowerCase().trim();
+  const visibleProfiles = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return allDisplayProfiles.filter((u) => {
       if (!q) return true;
       return (
         u.username.toLowerCase().includes(q) ||
         (u.full_name || '').toLowerCase().includes(q)
       );
     });
+  }, [allDisplayProfiles, searchQuery]);
 
   const isAdmin = isAdminRole(profile);
 
@@ -1295,11 +1453,27 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       )
                     ) : (
                       viewingStaff && (
-                        <UserDisplayName
-                          profile={viewingStaff}
-                          badge={effectiveBadges[viewingStaff.id] || (viewingStaff.global_settings?.top_performer_badge as BadgeInfo) || null}
-                          tooltipPosition="bottom"
-                        />
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <UserDisplayName
+                            profile={viewingStaff}
+                            badge={effectiveBadges[viewingStaff.id] || (viewingStaff.global_settings?.top_performer_badge as BadgeInfo) || null}
+                            tooltipPosition="bottom"
+                          />
+                          {viewingStaff.is_pending_approval && (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                viewingStaff.pending_request_status === 'needs_review'
+                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                  : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                              }`}
+                            >
+                              <Clock className="h-3 w-3" />
+                              {viewingStaff.pending_request_status === 'needs_review'
+                                ? 'Needs Review'
+                                : 'Pending Approval'}
+                            </span>
+                          )}
+                        </div>
                       )
                     )}
                   </h2>
@@ -1313,10 +1487,114 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               </div>
             </div>
 
+            {/* Pending Approval Notice / Action Banner for Employee 360 Hub */}
+            {!isCreatingNewUser && viewingStaff && viewingStaff.is_pending_approval && (
+              <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2 ${
+                viewingStaff.pending_request_status === 'needs_review'
+                  ? 'bg-amber-500/10 border-amber-500/30'
+                  : 'bg-amber-500/5 border-amber-500/20'
+              }`}>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-amber-400 shrink-0" />
+                    <span className="font-bold text-sm text-theme-text-primary">
+                      {viewingStaff.pending_request_status === 'needs_review'
+                        ? 'Account Creation Needs Review'
+                        : 'Account Creation Pending Admin Approval'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-theme-text-muted">
+                    {viewingStaff.pending_request_status === 'needs_review'
+                      ? 'Admin requested adjustments to this user creation request before it can be activated.'
+                      : 'This user profile is currently pending approval. Once approved by an Admin, the account will become fully active.'}
+                  </p>
+                  {viewingStaff.pending_request?.admin_review_notes && (
+                    <div className="mt-2 p-2.5 bg-amber-950/40 border border-amber-500/30 rounded-lg text-xs text-amber-200">
+                      <strong className="block text-[10px] uppercase font-bold text-amber-400 mb-0.5">Admin Review Notes:</strong>
+                      {viewingStaff.pending_request.admin_review_notes}
+                    </div>
+                  )}
+                  {viewingStaff.pending_request?.submitted_by_name && (
+                    <div className="text-[11px] text-theme-text-muted">
+                      Submitted by: <strong className="text-theme-text-secondary">{viewingStaff.pending_request.submitted_by_name}</strong>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick Action Buttons */}
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {isAdmin && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => handleApprovePendingRequest(viewingStaff.pending_request_id!)}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                        Approve & Activate
+                      </button>
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => {
+                          setReviewModalRequest(viewingStaff.pending_request!);
+                          setReviewNotesInput('');
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold shadow transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        Request Review
+                      </button>
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => setDeletingUserAccount({ id: viewingStaff.id, username: viewingStaff.username })}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-800/40 rounded-xl text-xs font-semibold shadow transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Dismiss
+                      </button>
+                    </>
+                  )}
+
+                  {profile?.role === 'supervisor' && viewingStaff.pending_request?.requester_id === profile.id && (
+                    viewingStaff.pending_request_status === 'needs_review' ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingUserCreationRequest(viewingStaff.pending_request!);
+                          updateViewingStaff(null);
+                          setIsCreatingNewUser(true);
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold shadow transition-all cursor-pointer"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                        Review & Resubmit
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingUserCreationRequest(viewingStaff.pending_request!);
+                          updateViewingStaff(null);
+                          setIsCreatingNewUser(true);
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow transition-all cursor-pointer"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                        Edit Request
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Employee 360 Hub Subtabs (Horizontal Top Tabs) */}
             {!isCreatingNewUser && viewingStaff && (
               <div className="flex border-b border-theme-border-input gap-1 mt-2 overflow-x-auto whitespace-nowrap scrollbar-none pb-px max-w-full">
-                {viewingStaff.has_chuti_access && canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles) && (
+                {!viewingStaff.is_pending_approval && viewingStaff.has_chuti_access && canAccessUserProfileSubtab(profile, 'user_profile_leave', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'leave', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('leave')}
@@ -1329,7 +1607,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     <Calendar className="h-3.5 w-3.5" /> Leave History
                   </button>
                 )}
-                {viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_quotes', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
+                {!viewingStaff.is_pending_approval && viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_quotes', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('quotes')}
@@ -1342,7 +1620,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     <FileText className="h-3.5 w-3.5 text-purple-400" /> Quotes History
                   </button>
                 )}
-                {viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_analytics', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
+                {!viewingStaff.is_pending_approval && viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_analytics', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'quotes', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('analytics')}
@@ -1355,7 +1633,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     <TrendingUp className="h-3.5 w-3.5 text-indigo-400" /> Report
                   </button>
                 )}
-                {viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
+                {!viewingStaff.is_pending_approval && viewingStaff.has_quotes_access && canAccessUserProfileSubtab(profile, 'user_profile_kpi', globalSettings, profiles) && canAccessModule(profile, viewingStaff, 'kpi', profiles) && (
                   <button
                     type="button"
                     onClick={() => handleSetActiveSubTab('kpi')}
@@ -1776,6 +2054,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       <tr 
                         key={u.id} 
                         onDoubleClick={() => {
+                          if (u.is_pending_approval) {
+                            handleSetActiveSubTab('profile');
+                            updateViewingStaff(u);
+                            return;
+                          }
                           const isSupervisedByMe = hasStaffAccess(u);
                           if (isSupervisedByMe && u.has_chuti_access) {
                             handleSetActiveSubTab('leave');
@@ -1788,17 +2071,34 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                           }
                           updateViewingStaff(u);
                         }}
-                        className="hover:bg-theme-card-bg/25 transition-colors cursor-pointer select-none"
-                        title="Double-click to view details"
+                        className={`transition-colors cursor-pointer select-none ${
+                          u.is_pending_approval
+                            ? 'opacity-60 hover:opacity-85 bg-amber-500/[0.03] border-l-2 border-l-amber-500/50 hover:bg-amber-500/[0.07]'
+                            : 'hover:bg-theme-card-bg/25'
+                        }`}
+                        title={u.is_pending_approval ? "Double-click to view pending creation request" : "Double-click to view details"}
                       >
                         <td className="py-3.5 px-6">
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <UserDisplayName
                               profile={u}
                               badge={effectiveBadges[u.id] || (u.global_settings?.top_performer_badge as BadgeInfo) || null}
                               tooltipPosition="top"
                               showRank={false}
                             />
+                            {u.is_pending_approval && (
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                                  u.pending_request_status === 'needs_review'
+                                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                                    : 'bg-amber-500/10 text-amber-500/90 border border-amber-500/20'
+                                }`}
+                                title={u.pending_request_status === 'needs_review' ? 'Sent back for review' : 'Awaiting admin approval'}
+                              >
+                                <Clock className="h-2.5 w-2.5" />
+                                {u.pending_request_status === 'needs_review' ? 'Needs Review' : 'Pending Approval'}
+                              </span>
+                            )}
                           </div>
                           <div className="text-[10px] text-theme-text-muted uppercase mt-0.5 tracking-wider font-mono">
                             {u.username.trim()}
@@ -1806,7 +2106,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
-                            getDisplayRole(u.role, profile) === 'superadmin'
+                            u.is_pending_approval
+                              ? 'bg-theme-border-muted/40 border-theme-border-active/40 text-theme-text-muted'
+                              : getDisplayRole(u.role, profile) === 'superadmin'
                               ? 'bg-amber-950/40 border-amber-900/50 text-amber-400'
                               : getDisplayRole(u.role, profile) === 'admin'
                               ? 'bg-red-950/40 border-red-900/50 text-red-400'
@@ -1994,20 +2296,82 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               isAdmin={isAdminRole(profile)}
             />
 
+            {/* Review Notes Input Modal for Admin */}
+            {reviewModalRequest && (
+              <Modal
+                isOpen={!!reviewModalRequest}
+                onClose={() => setReviewModalRequest(null)}
+                title="Request Review & Corrections"
+                icon={<AlertCircle className="h-5 w-5 text-amber-500" />}
+                maxWidthClass="max-w-md"
+                glowClass="bg-amber-900/10"
+              >
+                <div className="space-y-4 font-sans">
+                  <div className="p-3 bg-amber-955/20 border border-amber-900/30 rounded-xl text-xs text-amber-300 leading-relaxed">
+                    <p>
+                      Send this account creation request back to <strong>{reviewModalRequest.submitted_by_name || 'the supervisor'}</strong> with specific feedback or required corrections.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-theme-text-muted uppercase tracking-wider mb-1.5">
+                      Review Feedback / Notes <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      rows={4}
+                      placeholder="e.g. Please update working hours to 9.0 and assign to correct department..."
+                      value={reviewNotesInput}
+                      onChange={(e) => setReviewNotesInput(e.target.value)}
+                      className="w-full px-3 py-2 bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-3 border-t border-theme-border-input/80">
+                    <button
+                      type="button"
+                      onClick={() => setReviewModalRequest(null)}
+                      className="flex-1 py-2 px-4 border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-muted hover:text-theme-text-secondary bg-theme-page-bg hover:bg-theme-card-bg cursor-pointer transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={submitting || !reviewNotesInput.trim()}
+                      onClick={handleSendReviewRequest}
+                      className="flex-1 py-2 px-4 rounded-xl shadow-sm text-xs font-semibold text-slate-950 bg-amber-500 hover:bg-amber-400 cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                      {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      {submitting ? 'Sending...' : 'Send for Review'}
+                    </button>
+                  </div>
+                </div>
+              </Modal>
+            )}
+
             {/* Delete User Confirmation Modal */}
             <ConfirmModal
               isOpen={!!deletingUserAccount}
               onClose={() => setDeletingUserAccount(null)}
               onConfirm={handleDeleteConfirm}
-              title="Delete User Account"
+              title={deletingUserAccount?.id.startsWith('pending-') ? "Dismiss Creation Request" : "Delete User Account"}
               message={
                 <div>
-                  Are you sure you want to permanently delete the user account{' '}
-                  <strong className="text-theme-text-primary">{(deletingUserAccount?.username || '').toUpperCase()}</strong>?
-                  This will delete all corresponding profile info, leaves, and activity records. This action cannot be undone.
+                  {deletingUserAccount?.id.startsWith('pending-') ? (
+                    <>
+                      Are you sure you want to dismiss the user creation request for{' '}
+                      <strong className="text-theme-text-primary">{(deletingUserAccount?.username || '').toUpperCase()}</strong>?
+                      This will remove the pending request.
+                    </>
+                  ) : (
+                    <>
+                      Are you sure you want to permanently delete the user account{' '}
+                      <strong className="text-theme-text-primary">{(deletingUserAccount?.username || '').toUpperCase()}</strong>?
+                      This will delete all corresponding profile info, leaves, and activity records. This action cannot be undone.
+                    </>
+                  )}
                 </div>
               }
-              confirmText="Permanently Delete"
+              confirmText={deletingUserAccount?.id.startsWith('pending-') ? "Dismiss Request" : "Permanently Delete"}
               cancelText="Cancel"
               isDanger={true}
             />
