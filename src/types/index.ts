@@ -254,6 +254,7 @@ export interface UserCreationSubmittedData {
   supervisor_ids?: string[];
   assigned_supervisor_id?: string;
   assigned_supervisor_name?: string;
+  assigned_supervisor_codename?: string;
   eligibleGovtHoliday?: boolean;
   eligible_govt_holiday?: boolean;
   eligibleOfficeLeave?: boolean;

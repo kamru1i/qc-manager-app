@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Profile, ChutiRecordWithProfile, BulkRepresentative, UserCreationRequest } from "@/types";
 import { formatDate, formatTimeToAMPM, getLeaveDisplayComment, getFullCommentHistory } from "@/utils/dashboardHelpers";
+import { resolveAssignedSupervisor } from "@/utils/profileHelpers";
 import { CustomSelect } from "@/components/common/CustomSelect";
 import { supabase } from "@/utils/supabase";
 
@@ -257,10 +258,18 @@ export function LeaveApprovalPanel({
       const name = (req.data?.full_name || "").toLowerCase();
       const codename = (req.data?.codename || "").toLowerCase();
       const supervisor = (req.submitted_by_name || "").toLowerCase();
+      const supData = resolveAssignedSupervisor(req, profilesList);
+      const supCodename = (supData.codename || "").toLowerCase();
+      const supFullName = (supData.fullName || "").toLowerCase();
       const query = searchQuery.toLowerCase().trim();
 
       const matchesSearch =
-        !query || name.includes(query) || codename.includes(query) || supervisor.includes(query);
+        !query ||
+        name.includes(query) ||
+        codename.includes(query) ||
+        supervisor.includes(query) ||
+        supCodename.includes(query) ||
+        supFullName.includes(query);
 
       const matchesType =
         notificationTypeFilter === "all" ||
@@ -268,7 +277,7 @@ export function LeaveApprovalPanel({
 
       return matchesSearch && matchesType;
     });
-  }, [pendingUserCreationRequests, searchQuery, notificationTypeFilter, role]);
+  }, [pendingUserCreationRequests, searchQuery, notificationTypeFilter, role, profilesList]);
 
   // Combine and sort all notifications
   const combinedNotifications = useMemo(() => {
@@ -1141,6 +1150,7 @@ export function LeaveApprovalPanel({
         const isApproving = approvingIds.has(req.id) || localApprovingIds.has(req.id);
         const isReviewing = reviewingIds.has(req.id);
         const isDone = approvedIds.has(req.id);
+        const assignedSupervisor = resolveAssignedSupervisor(req, profilesList);
 
         return (
           <div
@@ -1190,7 +1200,20 @@ export function LeaveApprovalPanel({
                   </p>
                   <p>
                     <span className="text-theme-text-muted font-sans">Manager / Supervisor:</span>{" "}
-                    <span className="text-blue-400 font-semibold">{d?.assigned_supervisor_name || "Self"}</span>
+                    {assignedSupervisor.codename ? (
+                      <span
+                        className="text-blue-400 font-semibold font-mono"
+                        title={
+                          assignedSupervisor.fullName
+                            ? `${assignedSupervisor.fullName} (${assignedSupervisor.codename})`
+                            : assignedSupervisor.codename
+                        }
+                      >
+                        {assignedSupervisor.codename}
+                      </span>
+                    ) : (
+                      <span className="text-theme-text-muted">None</span>
+                    )}
                   </p>
                   <p>
                     <span className="text-theme-text-muted font-sans">Leave Tracker:</span>{" "}

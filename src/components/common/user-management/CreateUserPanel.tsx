@@ -205,6 +205,14 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
       return;
     }
 
+    const assignedSupProfiles = profiles.filter((p) => newSupervisorIds.includes(p.id));
+    const assignedSupCodename = assignedSupProfiles.length > 0
+      ? assignedSupProfiles.map((p) => p.username).filter(Boolean).join(", ")
+      : (currentUser && newSupervisorIds.includes(currentUser.id) ? currentUser.username : "");
+    const assignedSupName = assignedSupProfiles.length > 0
+      ? assignedSupProfiles.map((p) => p.full_name || p.username).filter(Boolean).join(", ")
+      : (currentUser && newSupervisorIds.includes(currentUser.id) ? (currentUser.full_name || currentUser.username) : "");
+
     const payload: UserCreationSubmittedData = {
       codename: cleanCodename,
       role: isSupervisor ? "user" : newRole as 'user',
@@ -223,6 +231,9 @@ export const CreateUserPanel: React.FC<CreateUserPanelProps> = ({
       needs_supervisor_approval: newNeedsApproval,
       supervisorIds: newNeedsApproval ? newSupervisorIds : [],
       supervisor_ids: newNeedsApproval ? newSupervisorIds : [],
+      assigned_supervisor_id: newNeedsApproval && newSupervisorIds.length > 0 ? newSupervisorIds[0] : undefined,
+      assigned_supervisor_name: newNeedsApproval && assignedSupName ? assignedSupName : undefined,
+      assigned_supervisor_codename: newNeedsApproval && assignedSupCodename ? assignedSupCodename : undefined,
       eligibleGovtHoliday: newEligibleGovtHoliday,
       eligible_govt_holiday: newEligibleGovtHoliday,
       eligibleOfficeLeave: newEligibleOfficeLeave,

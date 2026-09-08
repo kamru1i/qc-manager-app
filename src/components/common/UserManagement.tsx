@@ -42,6 +42,7 @@ import { UserAnalyticsPanel } from '@/components/common/user-management/UserAnal
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { userCreationRequestService } from '@/services/userCreationRequestService';
 import { UserCreationRequest, UserCreationSubmittedData } from '@/types';
+import { resolveAssignedSupervisor } from '@/utils/profileHelpers';
 
 // Extracted Subtabs Panels
 import { CreateUserPanel } from '@/components/common/user-management/CreateUserPanel';
@@ -1944,86 +1945,96 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {pendingUserRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className={`p-4 rounded-xl border transition-all ${
-                      req.status === 'needs_review'
-                        ? 'bg-amber-500/5 border-amber-500/30'
-                        : req.status === 'approved'
-                        ? 'bg-emerald-500/5 border-emerald-500/20'
-                        : req.status === 'rejected'
-                        ? 'bg-rose-500/5 border-rose-500/20'
-                        : 'bg-theme-page-bg/40 border-theme-border-input/60'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
-                        <div className="font-semibold text-xs text-theme-text-primary">
-                          {req.data?.full_name || 'Unnamed'}
-                        </div>
-                        <div className="text-[11px] font-mono text-theme-text-muted">
-                          @{req.data?.codename || '—'}
-                        </div>
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
-                          req.status === 'pending_admin_approval'
-                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                            : req.status === 'needs_review'
-                            ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                            : req.status === 'approved'
-                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                        }`}
-                      >
-                        {req.status === 'pending_admin_approval'
-                          ? 'Pending'
-                          : req.status === 'needs_review'
-                          ? 'Needs Review'
+                {pendingUserRequests.map((req) => {
+                  const sup = resolveAssignedSupervisor(req, profiles);
+                  return (
+                    <div
+                      key={req.id}
+                      className={`p-4 rounded-xl border transition-all ${
+                        req.status === 'needs_review'
+                          ? 'bg-amber-500/5 border-amber-500/30'
                           : req.status === 'approved'
-                          ? 'Approved'
-                          : 'Rejected'}
-                      </span>
-                    </div>
-
-                    <div className="text-[11px] text-theme-text-muted space-y-1 mb-3">
-                      <div>
-                        Manager:{' '}
-                        <span className="text-theme-text-secondary">
-                          {req.data?.assigned_supervisor_name || 'Self'}
-                        </span>
-                      </div>
-                      <div>
-                        Submitted:{' '}
-                        <span className="text-theme-text-secondary">
-                          {new Date(req.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {req.admin_review_notes && (
-                        <div className="mt-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-300 text-[11px] leading-relaxed">
-                          <strong className="block text-[10px] uppercase font-bold text-amber-400 mb-0.5">
-                            Admin Note:
-                          </strong>
-                          {req.admin_review_notes}
+                          ? 'bg-emerald-500/5 border-emerald-500/20'
+                          : req.status === 'rejected'
+                          ? 'bg-rose-500/5 border-rose-500/20'
+                          : 'bg-theme-page-bg/40 border-theme-border-input/60'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                          <div className="font-semibold text-xs text-theme-text-primary">
+                            {req.data?.full_name || 'Unnamed'}
+                          </div>
+                          <div className="text-[11px] font-mono text-theme-text-muted">
+                            @{req.data?.codename || '—'}
+                          </div>
                         </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
+                            req.status === 'pending_admin_approval'
+                              ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                              : req.status === 'needs_review'
+                              ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+                              : req.status === 'approved'
+                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                          }`}
+                        >
+                          {req.status === 'pending_admin_approval'
+                            ? 'Pending'
+                            : req.status === 'needs_review'
+                            ? 'Needs Review'
+                            : req.status === 'approved'
+                            ? 'Approved'
+                            : 'Rejected'}
+                        </span>
+                      </div>
+
+                      <div className="text-[11px] text-theme-text-muted space-y-1 mb-3">
+                        <div>
+                          Manager:{' '}
+                          {sup.codename ? (
+                            <span
+                              className="text-theme-text-secondary font-mono font-semibold"
+                              title={sup.fullName ? `${sup.fullName} (${sup.codename})` : sup.codename}
+                            >
+                              {sup.codename}
+                            </span>
+                          ) : (
+                            <span className="text-theme-text-muted">None</span>
+                          )}
+                        </div>
+                        <div>
+                          Submitted:{' '}
+                          <span className="text-theme-text-secondary">
+                            {new Date(req.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {req.admin_review_notes && (
+                          <div className="mt-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-300 text-[11px] leading-relaxed">
+                            <strong className="block text-[10px] uppercase font-bold text-amber-400 mb-0.5">
+                              Admin Note:
+                            </strong>
+                            {req.admin_review_notes}
+                          </div>
+                        )}
+                      </div>
+
+                      {req.status === 'needs_review' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingUserCreationRequest(req);
+                            setIsCreatingNewUser(true);
+                          }}
+                          className="w-full mt-1 py-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          Review & Resubmit
+                        </button>
                       )}
                     </div>
-
-                    {req.status === 'needs_review' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingUserCreationRequest(req);
-                          setIsCreatingNewUser(true);
-                        }}
-                        className="w-full mt-1 py-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        Review & Resubmit
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
