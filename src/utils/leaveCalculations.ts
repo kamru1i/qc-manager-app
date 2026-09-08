@@ -460,33 +460,60 @@ export const calculateLeaveOrOvertime = (
     return '00:00';
   }
 
-  // Late Join: Actual Sign-In vs Regular Scheduled Sign-In (Sign-Out does NOT participate in Late Join calculation)
+  // Late Join:
+  // Baseline: missed working time between scheduled shiftStart and actualStart (assuming scheduled shiftEnd sign-out).
+  // When actualEnd is provided and employee stays past scheduled shiftEnd, that extra time ("barti time")
+  // offsets and is subtracted from the late join duration.
+  // When actualEnd is earlier than scheduled shiftEnd, that additional shortfall is added to the late join duration.
   if (type === 'Late Join') {
     if (!actualStart) return '00:00';
     const shiftStartMins = parseTimeToMinutes(shiftStart || '13:00');
+    let shiftEndMins = parseTimeToMinutes(shiftEnd || '22:30');
     let actualStartMins = parseTimeToMinutes(actualStart);
-    const shiftEndMins = parseTimeToMinutes(shiftEnd || '22:30');
+    const cleanActualEnd = actualEnd && actualEnd.trim() && actualEnd !== 'Select' ? actualEnd.trim() : '';
+    let actualEndMins = cleanActualEnd ? parseTimeToMinutes(cleanActualEnd) : shiftEndMins;
 
-    // Handle overnight shifts where shift crosses midnight (e.g. 22:00 to 06:00)
-    if (shiftEndMins < shiftStartMins && actualStartMins < shiftStartMins && actualStartMins <= shiftEndMins) {
+    // Handle overnight shifts where scheduled shift crosses midnight (e.g. 22:00 to 06:00)
+    if (shiftEndMins < shiftStartMins) {
+      shiftEndMins += 24 * 60;
+    }
+
+    // Handle actual start crossing midnight in an overnight shift
+    if (actualStartMins < shiftStartMins && actualStartMins <= (shiftEndMins % (24 * 60))) {
       actualStartMins += 24 * 60;
     }
 
-    // Arriving at or before scheduled shift start produces zero late duration (safe minimum 00:00, no negative duration)
+    // Handle actualEnd crossing midnight (e.g. 00:05 AM after a 17:20 PM start)
+    if (actualEndMins < actualStartMins) {
+      actualEndMins += 24 * 60;
+    } else if (shiftEndMins >= 24 * 60 && actualEndMins < shiftStartMins) {
+      actualEndMins += 24 * 60;
+    }
+
+    // Arriving at or before scheduled shift start produces zero late duration
     if (actualStartMins <= shiftStartMins) {
       return '00:00';
     }
 
-    const lateDuration = actualStartMins - shiftStartMins;
-    return formatDuration(Math.max(0, lateDuration));
+    const scheduledShiftDuration = shiftEndMins - shiftStartMins;
+    const actualWorkedDuration = actualEndMins - actualStartMins;
+
+    // Late Join duration = scheduled shift duration - actual worked duration
+    // (e.g. Shift 13:00 - 22:30 (570m). Arrived 17:20, signed out 22:35 (worked 315m) -> 570 - 315 = 255m = 04:15.
+    //  e.g. Arrived 17:20, signed out 22:40 (worked 320m) -> 570 - 320 = 250m = 04:10.
+    //  e.g. Arrived 17:20, signed out 22:30 (worked 310m) -> 570 - 310 = 260m = 04:20.)
+    const lateDuration = Math.max(0, scheduledShiftDuration - actualWorkedDuration);
+    return formatDuration(lateDuration);
   }
 
-  // Early Leave: Regular Scheduled Sign-Out vs Actual Sign-Out (Sign-In does NOT participate in Early Leave calculation)
+  // Early Leave: Regular Scheduled Sign-Out vs Actual Sign-Out
   if (type === 'Early Leave') {
     if (!actualEnd) return '00:00';
     const shiftStartMins = parseTimeToMinutes(shiftStart || '13:00');
     let shiftEndMins = parseTimeToMinutes(shiftEnd || '22:30');
     let actualEndMins = parseTimeToMinutes(actualEnd);
+    const cleanActualStart = actualStart && actualStart.trim() && actualStart !== 'Select' ? actualStart.trim() : '';
+    let actualStartMins = cleanActualStart ? parseTimeToMinutes(cleanActualStart) : shiftStartMins;
 
     // If shift crosses midnight (e.g. 14:00 to 00:00, or 22:00 to 06:00)
     if (shiftEndMins < shiftStartMins) {
@@ -501,7 +528,14 @@ export const calculateLeaveOrOvertime = (
       return '00:00';
     }
 
-    const earlyDuration = shiftEndMins - actualEndMins;
+    let earlyDuration = shiftEndMins - actualEndMins;
+
+    // If employee signed in earlier than scheduled shift start, early arrival can offset early leave
+    if (actualStartMins < shiftStartMins) {
+      const extraEarlyMins = shiftStartMins - actualStartMins;
+      earlyDuration = Math.max(0, earlyDuration - extraEarlyMins);
+    }
+
     return formatDuration(Math.max(0, earlyDuration));
   }
 
