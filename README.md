@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.6.2** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.6.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,14 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.6.2 — Patch Release (Supervisor Codename Display in Admin Approval Panel & Payload Completeness) (Current)
+### 🚀 v7.6.3 — Patch Release (Clear Approved User Requests & Fix User Deletion FK Constraint Error) (Current)
+
+- **Settings → Users: Clear Approved User Creation Requests**: Excluded approved and rejected user creation requests from the Supervisor's active 'My Account Creation Requests' panel and badge counts while preserving complete historical request records in the database. Approved requests transition seamlessly into active profiles without lingering in the action panel.
+- **User Deletion FK Constraint Fix**: Resolved `audit_logs_target_user_id_fkey` constraint violation during user account deletion. Updated `audit_business_row_change()` trigger function to safely handle foreign key references during cascade deletion while retaining actor and target identification in JSONB metadata indefinitely.
+- **Audit Metadata Retention**: Updated `delete_user_by_id` RPC to write a privileged `DELETE_USER` audit log capturing actor, target codename, target role, and target user ID before removing the record from `auth.users`.
+- **Realtime State Synchronization**: Integrated `user-creation-requests-updated` and `profile-updated` AppEventBus dispatches across all request transitions and account deletion pathways.
+
+### 🚀 v7.6.2 — Patch Release (Supervisor Codename Display in Admin Approval Panel & Payload Completeness)
 
 - **Admin Approval Panel Supervisor Codename Display**: Fixed `Manager / Supervisor` field in user creation approval cards to dynamically resolve and display the selected Supervisor's Codename (e.g. `@NS720`) in blue font-mono format with full-name tooltip, eliminating stale default to `Self`.
 - **Search by Supervisor Codename in Approvals**: Extended Admin Approval Panel search to support querying by the assigned supervisor's codename and full name.
