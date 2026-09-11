@@ -57,7 +57,7 @@ export function AdjustmentModal({
   targetProfile,
   isAdmin = false,
 }: AdjustmentModalProps) {
-  const [selectedCategory, setSelectedCategory] = useState('None');
+  const [selectedCategory, setSelectedCategory] = useState('General Adjustment');
   const [selectedHolidayDate, setSelectedHolidayDate] = useState<string>('');
   const [selectedHolidayName, setSelectedHolidayName] = useState<string>('');
   const [generalAdjustmentReason, setGeneralAdjustmentReason] = useState<string>('');
@@ -71,7 +71,7 @@ export function AdjustmentModal({
   // Reset selected category and adjustment state when opening the modal
   useEffect(() => {
     if (showAdjustmentModal) {
-      setSelectedCategory('None');
+      setSelectedCategory('General Adjustment');
       setAdjustmentType('full');
       setPartialAdjustmentTime('');
       setSelectedHolidayDate('');
@@ -256,6 +256,10 @@ export function AdjustmentModal({
       }
       handleSaveAdjustment(undefined, 'Overtime');
     } else if (isPartialLeave && (selectedCategory === 'None' || selectedCategory === 'General Adjustment')) {
+      if (!generalAdjustmentReason.trim()) {
+        toast.error('Please enter adjustment details / reason.');
+        return;
+      }
       if (adjustmentType === 'partial') {
         const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
         const timeToUse = partialAdjustmentTime || formatDuration(activeAdjustMins);
@@ -268,7 +272,7 @@ export function AdjustmentModal({
           return;
         }
       }
-      handleSaveAdjustment(undefined, 'General Adjustment', null, null, generalAdjustmentReason.trim() || null);
+      handleSaveAdjustment(undefined, 'General Adjustment', null, null, generalAdjustmentReason.trim());
     } else {
       handleSaveAdjustment(undefined, selectedCategory);
     }
@@ -278,7 +282,7 @@ export function AdjustmentModal({
     submitting ||
     (selectedCategory === 'Govt Holiday' && !selectedHolidayDate) ||
     (selectedCategory === 'Salary' && !selectedSalaryMonth) ||
-    (adjustmentRecord?.leave_type === 'Full Leave' && (selectedCategory === 'None' || selectedCategory === 'General Adjustment') && !generalAdjustmentReason.trim()) ||
+    ((selectedCategory === 'None' || selectedCategory === 'General Adjustment') && !generalAdjustmentReason.trim()) ||
     (isPartialLeave && selectedCategory === 'Overtime' && availableOvertimeMins <= 0) ||
     (isPartialLeave && selectedCategory === 'Overtime' && adjustmentType === 'partial' && (!parsedPartialTime || parsedPartialTime <= 0 || parsedPartialTime > maxOtAdjust)) ||
     (isPartialLeave && (selectedCategory === 'None' || selectedCategory === 'General Adjustment') && adjustmentType === 'partial' && (!parsedPartialTime || parsedPartialTime <= 0 || parsedPartialTime > remainingSlMins))
@@ -745,8 +749,30 @@ export function AdjustmentModal({
                 </div>
               )}
 
+              {/* General Adjustment Details Input */}
+              {(selectedCategory === 'None' || selectedCategory === 'General Adjustment') && (
+                <div className="space-y-2 p-3.5 bg-blue-955/20 border border-blue-500/40 rounded-xl">
+                  <label className="block text-[11px] font-semibold text-blue-300 uppercase tracking-wider">
+                    Adjustment Details / Reason <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={generalAdjustmentReason}
+                    onChange={(e) => setGeneralAdjustmentReason(e.target.value)}
+                    placeholder="e.g. Adjusted against Govt Holiday, Date 15-08-2026 ..."
+                    className="w-full p-2.5 bg-theme-page-bg/80 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder-theme-text-muted/60 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none font-sans"
+                    required
+                  />
+                  <p className="text-[11px] text-theme-text-muted">
+                    This adjustment reason will be recorded in the short leave adjustment history.
+                  </p>
+                </div>
+              )}
+
               {/* Review summary box */}
-              {(selectedCategory === 'Govt Holiday' && selectedHolidayDate) || (selectedCategory === 'Salary' && selectedSalaryMonth) ? (
+              {(selectedCategory === 'Govt Holiday' && selectedHolidayDate) ||
+              (selectedCategory === 'Salary' && selectedSalaryMonth) ||
+              ((selectedCategory === 'None' || selectedCategory === 'General Adjustment') && generalAdjustmentReason.trim()) ? (
                 <div className="p-3 bg-theme-page-bg/80 border border-theme-border-muted rounded-xl text-xs space-y-1">
                   <div className="text-[10px] uppercase font-bold text-theme-text-muted tracking-wider">Adjustment Review</div>
                   <div className="flex justify-between text-theme-text-secondary">
@@ -756,7 +782,11 @@ export function AdjustmentModal({
                   <div className="flex justify-between text-theme-text-secondary">
                     <span>Adjust With:</span>
                     <span className="font-bold text-blue-400">
-                      {selectedCategory === 'Govt Holiday' ? `Govt Holiday (${formatDate(selectedHolidayDate)} — ${selectedHolidayName})` : `${selectedSalaryMonth} ${selectedSalaryYear} Salary`}
+                      {selectedCategory === 'Govt Holiday'
+                        ? `Govt Holiday (${formatDate(selectedHolidayDate)} — ${selectedHolidayName})`
+                        : selectedCategory === 'Salary'
+                        ? `${selectedSalaryMonth} ${selectedSalaryYear} Salary`
+                        : `General Adjustment (${generalAdjustmentReason.trim()})`}
                     </span>
                   </div>
                 </div>
@@ -934,7 +964,7 @@ export function AdjustmentModal({
               </div>
 
               {/* General Adjustment Details Input */}
-              {selectedCategory === 'None' && (
+              {(selectedCategory === 'None' || selectedCategory === 'General Adjustment') && (
                 <div className="space-y-2 p-3.5 bg-blue-955/20 border border-blue-500/40 rounded-xl">
                   <label className="block text-[11px] font-semibold text-blue-300 uppercase tracking-wider">
                     Adjustment Details / Reason <span className="text-red-400">*</span>
@@ -1024,7 +1054,7 @@ export function AdjustmentModal({
               )}
 
               {/* Review summary box */}
-              {(selectedCategory === 'Govt Holiday' && selectedHolidayDate) || (selectedCategory === 'Salary' && selectedSalaryMonth) || (selectedCategory === 'None' && generalAdjustmentReason.trim()) ? (
+              {(selectedCategory === 'Govt Holiday' && selectedHolidayDate) || (selectedCategory === 'Salary' && selectedSalaryMonth) || ((selectedCategory === 'None' || selectedCategory === 'General Adjustment') && generalAdjustmentReason.trim()) ? (
                 <div className="p-3 bg-theme-page-bg/80 border border-theme-border-muted rounded-xl text-xs space-y-1">
                   <div className="text-[10px] uppercase font-bold text-theme-text-muted tracking-wider">Adjustment Review</div>
                   <div className="flex justify-between text-theme-text-secondary">
