@@ -513,7 +513,7 @@ export const calculateLeaveOrOvertime = (
     let shiftEndMins = parseTimeToMinutes(shiftEnd || '22:30');
     let actualEndMins = parseTimeToMinutes(actualEnd);
     const cleanActualStart = actualStart && actualStart.trim() && actualStart !== 'Select' ? actualStart.trim() : '';
-    let actualStartMins = cleanActualStart ? parseTimeToMinutes(cleanActualStart) : shiftStartMins;
+    const actualStartMins = cleanActualStart ? parseTimeToMinutes(cleanActualStart) : shiftStartMins;
 
     // If shift crosses midnight (e.g. 14:00 to 00:00, or 22:00 to 06:00)
     if (shiftEndMins < shiftStartMins) {

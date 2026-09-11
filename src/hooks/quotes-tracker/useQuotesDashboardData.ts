@@ -98,12 +98,41 @@ export const useQuotesDashboardData = (
 
 
 
+// Helper to merge a specific month's records into the in-memory records list
+const mergeMonthRecords = (
+  prev: RecordItem[],
+  freshMonthRecords: RecordItem[],
+  year: string,
+  month: string
+): RecordItem[] => {
+  const freshIds = new Set(freshMonthRecords.map(r => r.id));
+  const remaining = prev.filter(r => {
+    if (freshIds.has(r.id)) return false;
+    if (!r.submitted_at) return true;
+    const d = new Date(r.submitted_at);
+    if (isNaN(d.getTime())) return true;
+    const rYear = d.getFullYear().toString();
+    const rMonth = String(d.getMonth() + 1).padStart(2, '0');
+    return !(rYear === year && rMonth === month);
+  });
+
+  const combined = [...remaining, ...freshMonthRecords];
+  combined.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+  return combined;
+};
+
   // Theme (extracted hook)
   const { theme, toggleTheme } = useQuotesTheme();
 
-  // Filter States
+  // Filter States - Monthly Tab
   const [selectedYear, setSelectedYear] = useState<string>(() => new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+
+  // Filter States - Sale Summary Tab
+  const [saleSelectedYear, setSaleSelectedYear] = useState<string>(() => new Date().getFullYear().toString());
+  const [saleSelectedMonth, setSaleSelectedMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+
+  const [saleRecordsLoading, setSaleRecordsLoading] = useState(false);
 
   // Show a message using sonner
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
@@ -114,8 +143,7 @@ export const useQuotesDashboardData = (
     }
   }, []);
 
-  const fetchingRef = useRef(false);
-  const lastFetchedKeyRef = useRef<string>('');
+  const fetchingKeysRef = useRef<Set<string>>(new Set());
   const lastFetchedTimeRef = useRef<Map<string, number>>(new Map());
 
   // Helper to extract and filter records from cache for current view
@@ -137,11 +165,17 @@ export const useQuotesDashboardData = (
     }
   }, [profile, sessionUser?.id]);
 
-  // Fetch all records for the selected Month & Year with true SWR (instant paint + background sync)
-  const fetchRecords = useCallback(async (isSilent: boolean = false, force: boolean = false) => {
+  // Fetch all records for a specific Month & Year with true SWR (instant paint + background sync)
+  const fetchRecordsForMonth = useCallback(async (
+    targetYear: string,
+    targetMonth: string,
+    isSilent: boolean = false,
+    force: boolean = false,
+    isSale: boolean = false
+  ) => {
     if (!sessionUser || !profile) return;
     
-    const fetchKey = `${selectedYear}-${selectedMonth}-${sessionUser.id}`;
+    const fetchKey = `${targetYear}-${targetMonth}-${sessionUser.id}`;
     const now = Date.now();
     const lastFetched = lastFetchedTimeRef.current.get(fetchKey) || 0;
     
@@ -149,24 +183,33 @@ export const useQuotesDashboardData = (
     const canSkipRemote = (now - lastFetched < CACHE_THROTTLE_MS) && !force && !isSilent;
 
     // 1. SWR Instant Paint: load cached records immediately without waiting for network
-    const localRecords = await getFilteredLocalRecords(selectedYear, selectedMonth);
+    const localRecords = await getFilteredLocalRecords(targetYear, targetMonth);
     if (localRecords.length > 0) {
-      setRecords(localRecords);
-      setRecordsLoading(false); // Instant display (0ms)!
+      setRecords(prev => mergeMonthRecords(prev, localRecords, targetYear, targetMonth));
+      if (isSale) {
+        setSaleRecordsLoading(false);
+      } else {
+        setRecordsLoading(false);
+      }
     } else if (!isSilent) {
-      setRecordsLoading(true); // Only show loader if we have zero cached items
+      if (isSale) {
+        setSaleRecordsLoading(true);
+      } else {
+        setRecordsLoading(true);
+      }
     }
 
-    if (lastFetchedKeyRef.current === fetchKey && !force && !isSilent && canSkipRemote) {
-      setRecordsLoading(false);
+    if (canSkipRemote) {
+      if (isSale) setSaleRecordsLoading(false);
+      else setRecordsLoading(false);
       setInitialFetchDone(true);
       return;
     }
 
-    if (fetchingRef.current) {
+    if (fetchingKeysRef.current.has(fetchKey)) {
       return;
     }
-    fetchingRef.current = true;
+    fetchingKeysRef.current.add(fetchKey);
 
     try {
       if (navigator.onLine) {
@@ -203,100 +246,115 @@ export const useQuotesDashboardData = (
             console.error('Failed to sync offline data before fetch:', syncErr);
           }
 
-          // 2. Fetch data for the currently selected month and year
-          if (!canSkipRemote) {
-            const yearNum = parseInt(selectedYear, 10);
-            const monthNum = parseInt(selectedMonth, 10);
-            const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0).toISOString();
-            const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999).toISOString();
+          // 2. Fetch data for the target month and year
+          const yearNum = parseInt(targetYear, 10);
+          const monthNum = parseInt(targetMonth, 10);
+          const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0).toISOString();
+          const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999).toISOString();
 
-            let monthlyData: RecordItem[] = [];
-            let mPage = 0;
-            const mPageSize = 1000;
-            let mHasMore = true;
+          let monthlyData: RecordItem[] = [];
+          let mPage = 0;
+          const mPageSize = 1000;
+          let mHasMore = true;
 
-            while (mHasMore) {
-              const from = mPage * mPageSize;
-              const to = from + mPageSize - 1;
+          while (mHasMore) {
+            const from = mPage * mPageSize;
+            const to = from + mPageSize - 1;
 
-              let query = supabase
-                .from('records')
-                .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
-                .gte('submitted_at', startDate)
-                .lte('submitted_at', endDate)
-                .order('submitted_at', { ascending: false })
-                .range(from, to);
-              if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
+            let query = supabase
+              .from('records')
+              .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
+              .gte('submitted_at', startDate)
+              .lte('submitted_at', endDate)
+              .order('submitted_at', { ascending: false })
+              .range(from, to);
+            if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
 
-              const { data, error } = await query;
-              if (error) throw error;
+            const { data, error } = await query;
+            if (error) throw error;
 
-              if (data && data.length > 0) {
-                monthlyData = [...monthlyData, ...(data as unknown as RecordItem[])];
-                if (data.length < mPageSize) {
-                  mHasMore = false;
-                } else {
-                  mPage++;
-                }
-              } else {
+            if (data && data.length > 0) {
+              monthlyData = [...monthlyData, ...(data as unknown as RecordItem[])];
+              if (data.length < mPageSize) {
                 mHasMore = false;
+              } else {
+                mPage++;
               }
+            } else {
+              mHasMore = false;
             }
-
-            // Merge this month's fresh server records into IndexedDB cache
-            await mergeCacheData('records_cache', monthlyData);
-
-            // Active pruning of deleted records for this month
-            const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
-            const localMonthRecords = localCachedForPrune.filter(r => {
-              if (!isAdminRole(profile) && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
-              if (!r.submitted_at) return false;
-              const date = new Date(r.submitted_at);
-              const y = date.getFullYear().toString();
-              const m = String(date.getMonth() + 1).padStart(2, '0');
-              return y === selectedYear && m === selectedMonth;
-            });
-
-            const serverIdSet = new Set(monthlyData.map(row => row.id));
-            const pending = await getOfflineRecords();
-            const pendingInsertIds = new Set(
-              pending.filter(p => p.action === 'insert').map(p => p.localId)
-            );
-
-            for (const r of localMonthRecords) {
-              if (!serverIdSet.has(r.id) && !pendingInsertIds.has(r.id)) {
-                await deleteCacheItem('records_cache', r.id);
-              }
-            }
-
-            lastFetchedTimeRef.current.set(fetchKey, now);
-            await setSyncTimestamp('records', new Date().toISOString());
           }
+
+          // Merge this month's fresh server records into IndexedDB cache
+          await mergeCacheData('records_cache', monthlyData);
+
+          // Active pruning of deleted records for this month
+          const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
+          const localMonthRecords = localCachedForPrune.filter(r => {
+            if (!isAdminRole(profile) && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
+            if (!r.submitted_at) return false;
+            const date = new Date(r.submitted_at);
+            const y = date.getFullYear().toString();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            return y === targetYear && m === targetMonth;
+          });
+
+          const serverIdSet = new Set(monthlyData.map(row => row.id));
+          const pending = await getOfflineRecords();
+          const pendingInsertIds = new Set(
+            pending.filter(p => p.action === 'insert').map(p => p.localId)
+          );
+
+          for (const r of localMonthRecords) {
+            if (!serverIdSet.has(r.id) && !pendingInsertIds.has(r.id)) {
+              await deleteCacheItem('records_cache', r.id);
+            }
+          }
+
+          lastFetchedTimeRef.current.set(fetchKey, Date.now());
+          await setSyncTimestamp('records', new Date().toISOString());
 
           // Clean up cache older than 90 days in the background
           purgeStaleCacheData('records_cache', 'submitted_at', 90).catch(() => {});
 
         } catch (netError: unknown) {
           const errMsg = netError instanceof Error ? netError.message : String(netError);
-          console.error('Network sync/fetch failed, falling back to cache:', errMsg, netError);
+          console.error(`Network sync/fetch failed for ${targetYear}-${targetMonth}, falling back to cache:`, errMsg, netError);
         }
       }
 
       // 3. Load fresh records from local cache
-      const freshFiltered = await getFilteredLocalRecords(selectedYear, selectedMonth);
-      setRecords(freshFiltered);
-      lastFetchedKeyRef.current = fetchKey;
+      const freshFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
+      setRecords(prev => mergeMonthRecords(prev, freshFiltered, targetYear, targetMonth));
 
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.error('Error fetching records:', errMsg);
+      console.error(`Error fetching records for ${targetYear}-${targetMonth}:`, errMsg);
       showToast('error', 'Error loading data: ' + errMsg);
+      // Fallback to local cache
+      const fallbackFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
+      setRecords(prev => mergeMonthRecords(prev, fallbackFiltered, targetYear, targetMonth));
     } finally {
-      setRecordsLoading(false);
+      fetchingKeysRef.current.delete(fetchKey);
+      if (isSale) {
+        setSaleRecordsLoading(false);
+      } else {
+        setRecordsLoading(false);
+      }
       setInitialFetchDone(true);
-      fetchingRef.current = false;
     }
-  }, [sessionUser, profile, selectedYear, selectedMonth, showToast, getFilteredLocalRecords]);
+  }, [sessionUser, profile, showToast, getFilteredLocalRecords]);
+
+  // Fetch all active records (Monthly tab and Sale Summary tab if different) with true SWR
+  const fetchRecords = useCallback(async (isSilent: boolean = false, force: boolean = false) => {
+    const p1 = fetchRecordsForMonth(selectedYear, selectedMonth, isSilent, force, false);
+    if (saleSelectedYear !== selectedYear || saleSelectedMonth !== selectedMonth) {
+      const p2 = fetchRecordsForMonth(saleSelectedYear, saleSelectedMonth, isSilent, force, true);
+      await Promise.all([p1, p2]);
+    } else {
+      await p1;
+    }
+  }, [selectedYear, selectedMonth, saleSelectedYear, saleSelectedMonth, fetchRecordsForMonth]);
 
   // Fetch unique month/year dates that contain submitted records for the logged-in user (or anyone if admin)
   const fetchAvailableDates = useCallback(async () => {
@@ -403,6 +461,34 @@ export const useQuotesDashboardData = (
   };
 
 
+  // Populate initial in-memory records from all cached records in IndexedDB
+  useEffect(() => {
+    let isMounted = true;
+    const loadInitialCache = async () => {
+      try {
+        const cached = await getCacheData<RecordItem>('records_cache');
+        if (isMounted && cached && cached.length > 0) {
+          const isApproverScope = isAdminRole(profile) || profile?.role === 'supervisor';
+          const filtered = cached.filter(r => {
+            if (!r.submitted_at) return false;
+            if (!isApproverScope && r.user_id !== sessionUser?.id) return false;
+            return true;
+          });
+          filtered.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+          setRecords(prev => (prev.length === 0 ? filtered : prev));
+        }
+      } catch (err) {
+        console.error('Initial cache load error:', err);
+      }
+    };
+    if (sessionUser && profile) {
+      loadInitialCache();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [sessionUser?.id, profile?.role]);
+
   // Fetch available dates once upon authentication
   useEffect(() => {
     if (!loading && sessionUser && profile) {
@@ -410,12 +496,19 @@ export const useQuotesDashboardData = (
     }
   }, [loading, sessionUser?.id, profile?.role, fetchAvailableDates]);
 
-  // Fetch records when year/month changes or upon authentication
+  // Fetch records when year/month changes for Monthly Tab
   useEffect(() => {
     if (!loading && sessionUser && profile) {
-      fetchRecords();
+      fetchRecordsForMonth(selectedYear, selectedMonth, false, false, false);
     }
-  }, [loading, sessionUser?.id, selectedYear, selectedMonth, fetchRecords]);
+  }, [loading, sessionUser?.id, selectedYear, selectedMonth, fetchRecordsForMonth]);
+
+  // Fetch records when year/month changes for Sale Summary Tab
+  useEffect(() => {
+    if (!loading && sessionUser && profile) {
+      fetchRecordsForMonth(saleSelectedYear, saleSelectedMonth, false, false, true);
+    }
+  }, [loading, sessionUser?.id, saleSelectedYear, saleSelectedMonth, fetchRecordsForMonth]);
 
 
 
@@ -502,7 +595,7 @@ export const useQuotesDashboardData = (
   }, []);
 
   const handleLogout = async () => {
-    lastFetchedKeyRef.current = '';
+    lastFetchedTimeRef.current.clear();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('quotes_sales_profile');
     }
@@ -533,9 +626,15 @@ export const useQuotesDashboardData = (
     setSelectedYear,
     selectedMonth,
     setSelectedMonth,
+    saleSelectedYear,
+    setSaleSelectedYear,
+    saleSelectedMonth,
+    setSaleSelectedMonth,
+    saleRecordsLoading,
     availableDates,
     fetchAvailableDates,
     fetchRecords,
+    fetchRecordsForMonth,
     addRecord,
     deleteRecord,
     deleteRecords,

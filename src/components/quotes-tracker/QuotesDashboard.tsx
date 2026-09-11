@@ -198,6 +198,11 @@ export default function QuotesDashboard({
     setSelectedYear,
     selectedMonth,
     setSelectedMonth,
+    saleSelectedYear,
+    setSaleSelectedYear,
+    saleSelectedMonth,
+    setSaleSelectedMonth,
+    saleRecordsLoading,
     availableDates,
     fetchAvailableDates,
     addRecord,
@@ -357,15 +362,16 @@ export default function QuotesDashboard({
     setSaleSearchQuery,
     saleSelectedBranch,
     setSaleSelectedBranch,
-    saleSelectedYear,
-    setSaleSelectedYear,
-    saleSelectedMonth,
-    setSaleSelectedMonth,
     saleDateFilter,
     saleAdminViewMode,
     setSaleAdminViewMode,
     handleClearTodayFilters,
-  } = useQuotesPageFilters(setSelectedYear, setSelectedMonth);
+  } = useQuotesPageFilters(setSelectedYear, setSelectedMonth, {
+    saleSelectedYear,
+    setSaleSelectedYear,
+    saleSelectedMonth,
+    setSaleSelectedMonth,
+  });
 
   const {
     selectedDate,
@@ -764,6 +770,12 @@ export default function QuotesDashboard({
         if (recordDate !== selectedDate) {
           return false;
         }
+      } else {
+        const recordYear = String(new Date(r.submitted_at).getFullYear());
+        const recordMonth = String(new Date(r.submitted_at).getMonth() + 1).padStart(2, "0");
+        if (recordYear !== selectedYear || recordMonth !== selectedMonth) {
+          return false;
+        }
       }
       if (selectedBranch) {
         if (
@@ -984,6 +996,12 @@ export default function QuotesDashboard({
             if (recordDate !== selectedDate) {
               return false;
             }
+          } else {
+            const recordYear = String(new Date(r.submitted_at).getFullYear());
+            const recordMonth = String(new Date(r.submitted_at).getMonth() + 1).padStart(2, "0");
+            if (recordYear !== selectedYear || recordMonth !== selectedMonth) {
+              return false;
+            }
           }
           if (selectedBranch) {
             if (
@@ -1010,6 +1028,8 @@ export default function QuotesDashboard({
     adminViewMode,
     selectedDate,
     selectedBranch,
+    selectedYear,
+    selectedMonth,
     profile,
     sessionUser,
   ]);
@@ -1028,6 +1048,8 @@ export default function QuotesDashboard({
     saleSummaryRecords,
     selectedYear,
     selectedMonth,
+    saleSelectedYear,
+    saleSelectedMonth,
     logActivity,
     showToast,
     addRecord,
@@ -1343,7 +1365,7 @@ export default function QuotesDashboard({
           saleAdminViewMode={isQuotesOffAdmin ? "all" : saleAdminViewMode}
           setSaleAdminViewMode={setSaleAdminViewMode}
           saleSummaryStats={saleSummaryStats}
-          recordsLoading={recordsLoading}
+          recordsLoading={saleRecordsLoading}
           saleSummaryRecords={saleSummaryRecords}
           handleOpenEditRecord={handleOpenEditRecord}
           setDeletingRecordId={setDeletingRecordId}

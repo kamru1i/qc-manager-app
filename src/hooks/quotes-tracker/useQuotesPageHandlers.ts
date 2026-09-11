@@ -9,6 +9,8 @@ interface HandlersProps {
   saleSummaryRecords: any[];
   selectedYear: string;
   selectedMonth: string;
+  saleSelectedYear?: string;
+  saleSelectedMonth?: string;
   logActivity: (action: string, target: any, details: string) => void;
   showToast: (type: "success" | "error", message: string) => void;
   addRecord: (fileName: string, branchName: string, codename: string, fileType: FileType, userId?: string, submittedAt?: string) => Promise<boolean>;
@@ -36,6 +38,8 @@ export function useQuotesPageHandlers({
   saleSummaryRecords,
   selectedYear,
   selectedMonth,
+  saleSelectedYear,
+  saleSelectedMonth,
   logActivity,
   showToast,
   addRecord,
@@ -84,19 +88,21 @@ export function useQuotesPageHandlers({
   };
 
   const handleExportSaleSummaryExcel = () => {
+    const yearToUse = saleSelectedYear || selectedYear;
+    const monthToUse = saleSelectedMonth || selectedMonth;
     const monthName = new Date(
-      parseInt(selectedYear),
-      parseInt(selectedMonth) - 1,
+      parseInt(yearToUse),
+      parseInt(monthToUse) - 1,
       1,
     ).toLocaleString("en-US", { month: "long" });
     exportToCSV(
       saleSummaryRecords,
-      `Sale_Summary_${monthName}_${selectedYear}`,
+      `Sale_Summary_${monthName}_${yearToUse}`,
     );
     logActivity(
       "EXPORT_EXCEL",
       null,
-      `Exported sale summary records for ${monthName} ${selectedYear} (Count: ${saleSummaryRecords.length}) to Excel`,
+      `Exported sale summary records for ${monthName} ${yearToUse} (Count: ${saleSummaryRecords.length}) to Excel`,
     );
   };
 

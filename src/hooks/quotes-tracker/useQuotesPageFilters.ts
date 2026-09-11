@@ -3,7 +3,13 @@ import { useDateFilter } from "./useDateFilter";
 
 export function useQuotesPageFilters(
   setSelectedYear: (val: string) => void,
-  setSelectedMonth: (val: string) => void
+  setSelectedMonth: (val: string) => void,
+  saleYearOptions?: {
+    saleSelectedYear?: string;
+    setSaleSelectedYear?: (val: string) => void;
+    saleSelectedMonth?: string;
+    setSaleSelectedMonth?: (val: string) => void;
+  }
 ) {
   // Monthly Table Search Query
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,12 +31,18 @@ export function useQuotesPageFilters(
   // Sale Summary Independent Filters State
   const [saleSearchQuery, setSaleSearchQuery] = useState("");
   const [saleSelectedBranch, setSaleSelectedBranch] = useState("");
-  const [saleSelectedYear, setSaleSelectedYear] = useState<string>(
+  const [internalSaleSelectedYear, setInternalSaleSelectedYear] = useState<string>(
     () => new Date().getFullYear().toString(),
   );
-  const [saleSelectedMonth, setSaleSelectedMonth] = useState<string>(
+  const [internalSaleSelectedMonth, setInternalSaleSelectedMonth] = useState<string>(
     () => String(new Date().getMonth() + 1).padStart(2, "0"),
   );
+
+  const saleSelectedYear = saleYearOptions?.saleSelectedYear ?? internalSaleSelectedYear;
+  const setSaleSelectedYear = saleYearOptions?.setSaleSelectedYear ?? setInternalSaleSelectedYear;
+  const saleSelectedMonth = saleYearOptions?.saleSelectedMonth ?? internalSaleSelectedMonth;
+  const setSaleSelectedMonth = saleYearOptions?.setSaleSelectedMonth ?? setInternalSaleSelectedMonth;
+
   const saleDateFilter = useDateFilter({
     onYearChange: setSaleSelectedYear,
     onMonthChange: setSaleSelectedMonth,
