@@ -222,25 +222,101 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
   const [copiedDates, setCopiedDates] = useState<Record<string, boolean>>({});
 
-  const yearsList = React.useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: 5 }, (_, i) => String(currentYear - i));
-  }, []);
+  const ALL_MONTHS = React.useMemo(
+    () => [
+      { val: "01", name: "January" },
+      { val: "02", name: "February" },
+      { val: "03", name: "March" },
+      { val: "04", name: "April" },
+      { val: "05", name: "May" },
+      { val: "06", name: "June" },
+      { val: "07", name: "July" },
+      { val: "08", name: "August" },
+      { val: "09", name: "September" },
+      { val: "10", name: "October" },
+      { val: "11", name: "November" },
+      { val: "12", name: "December" },
+    ],
+    [],
+  );
 
-  const monthsList = [
-    { val: "01", name: "January" },
-    { val: "02", name: "February" },
-    { val: "03", name: "March" },
-    { val: "04", name: "April" },
-    { val: "05", name: "May" },
-    { val: "06", name: "June" },
-    { val: "07", name: "July" },
-    { val: "08", name: "August" },
-    { val: "09", name: "September" },
-    { val: "10", name: "October" },
-    { val: "11", name: "November" },
-    { val: "12", name: "December" },
-  ];
+  const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
+  const [hasLoadedPeriods, setHasLoadedPeriods] = useState(false);
+
+  // Fetch available archive periods (YYYY-MM) from DB where data exists
+  const fetchAvailableArchivePeriods = useCallback(async () => {
+    if (!profileId) return;
+    try {
+      const { data, error } = await todosService.getAvailableArchivePeriods({
+        userId: isSuperAdmin ? profileId : undefined,
+      });
+      if (!error && data) {
+        setAvailablePeriods(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch available archive periods:", err);
+    } finally {
+      setHasLoadedPeriods(true);
+    }
+  }, [profileId, isSuperAdmin]);
+
+  // Derived available years: only years that have submitted data in DB
+  const yearsList = React.useMemo(() => {
+    if (!hasLoadedPeriods) {
+      return [new Date().getFullYear().toString()];
+    }
+    const years = Array.from(
+      new Set(availablePeriods.map((p) => p.split("-")[0]).filter(Boolean)),
+    ).sort((a, b) => b.localeCompare(a));
+
+    if (years.length === 0) {
+      return [new Date().getFullYear().toString()];
+    }
+    return years;
+  }, [availablePeriods, hasLoadedPeriods]);
+
+  // Derived available months: only months for the selectedYear that have submitted data in DB
+  const monthsList = React.useMemo(() => {
+    if (!hasLoadedPeriods) {
+      const curMonthVal = String(new Date().getMonth() + 1).padStart(2, "0");
+      return ALL_MONTHS.filter((m) => m.val === curMonthVal);
+    }
+
+    const availableMonthsForYear = new Set(
+      availablePeriods
+        .filter((p) => p.startsWith(`${selectedYear}-`))
+        .map((p) => p.split("-")[1]),
+    );
+
+    const matched = ALL_MONTHS.filter((m) => availableMonthsForYear.has(m.val));
+
+    if (matched.length === 0) {
+      const curMonthVal = String(new Date().getMonth() + 1).padStart(2, "0");
+      const fallback = ALL_MONTHS.filter((m) => m.val === curMonthVal);
+      return fallback.length > 0 ? fallback : [ALL_MONTHS[0]];
+    }
+
+    return matched;
+  }, [availablePeriods, selectedYear, hasLoadedPeriods, ALL_MONTHS]);
+
+  // Auto-sync selectedYear if yearsList changes and selectedYear is not valid
+  useEffect(() => {
+    if (hasLoadedPeriods && yearsList.length > 0 && !yearsList.includes(selectedYear)) {
+      setSelectedYear(yearsList[0]);
+    }
+  }, [hasLoadedPeriods, yearsList, selectedYear]);
+
+  // Auto-sync selectedMonth if monthsList changes and selectedMonth is not in the list
+  useEffect(() => {
+    if (hasLoadedPeriods && monthsList.length > 0 && !monthsList.some((m) => m.val === selectedMonth)) {
+      const curMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+      if (monthsList.some((m) => m.val === curMonth)) {
+        setSelectedMonth(curMonth);
+      } else {
+        setSelectedMonth(monthsList[monthsList.length - 1].val);
+      }
+    }
+  }, [hasLoadedPeriods, monthsList, selectedMonth]);
 
   // Fetch Daily Todos and Handle Carry-Over / All-Time auto-population
   const fetchDailyTodos = useCallback(
@@ -430,6 +506,13 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     return () => setIsMounted(false);
   }, []);
 
+  // Fetch available archive periods on mount and whenever archive tab is opened
+  useEffect(() => {
+    if (profileId) {
+      fetchAvailableArchivePeriods();
+    }
+  }, [profileId, subTab, fetchAvailableArchivePeriods]);
+
   // Handle Initial Load and Sub-tab toggle updates
   useEffect(() => {
     if (!profileId) return;
@@ -514,6 +597,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
         setIsAllTime(false);
         setNewStatus("Working");
         setIsStatusDropdownOpen(false);
+        fetchAvailableArchivePeriods();
         toast.success("Task added successfully!");
       }
     } catch (err: unknown) {
@@ -1391,7 +1475,10 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
               <button
                 type="button"
-                onClick={() => fetchArchiveTodos(false)}
+                onClick={() => {
+                  fetchAvailableArchivePeriods();
+                  fetchArchiveTodos(false);
+                }}
                 disabled={archiveLoading}
                 className="px-4 py-2 bg-theme-card-bg border border-theme-border-input hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
@@ -1448,7 +1535,9 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
                 </p>
                 <p className="text-xs text-theme-text-muted max-w-sm mt-1 leading-relaxed">
                   There are no saved todos for the selected timeframe:{" "}
-                  {monthsList.find((m) => m.val === selectedMonth)?.name}{" "}
+                  {monthsList.find((m) => m.val === selectedMonth)?.name ||
+                    ALL_MONTHS.find((m) => m.val === selectedMonth)?.name ||
+                    selectedMonth}{" "}
                   {selectedYear}.
                 </p>
               </div>

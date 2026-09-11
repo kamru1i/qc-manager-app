@@ -142,4 +142,51 @@ export const todosService = {
       return { data, error };
     }
   },
+
+  /**
+   * Fetch distinct YYYY-MM periods that have submitted (non-idle) todos
+   */
+  async getAvailableArchivePeriods(options?: { userId?: string }) {
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_todo_archive_periods', {
+        p_user_id: options?.userId || null,
+      });
+      if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+        const periods = rpcData
+          .map((r: any) => (typeof r === 'string' ? r : r.period))
+          .filter((s: string) => typeof s === 'string' && /^\d{4}-\d{2}$/.test(s));
+        return { data: periods, error: null };
+      }
+    } catch {
+      // Fall back to table query
+    }
+
+    let query = supabase
+      .from('todos')
+      .select('todo_date')
+      .neq('status', 'Idle')
+      .order('todo_date', { ascending: false });
+
+    if (options?.userId) {
+      query = query.eq('user_id', options.userId);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) {
+      return { data: [] as string[], error };
+    }
+
+    const uniquePeriods = Array.from(
+      new Set(
+        data
+          .map((row: any) =>
+            typeof row.todo_date === 'string' ? row.todo_date.substring(0, 7) : ''
+          )
+          .filter((s: string) => /^\d{4}-\d{2}$/.test(s))
+      )
+    ).sort((a, b) => b.localeCompare(a));
+
+    return { data: uniquePeriods, error: null };
+  },
 };
+
