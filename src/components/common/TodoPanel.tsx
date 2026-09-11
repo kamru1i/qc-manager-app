@@ -291,9 +291,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
     const matched = ALL_MONTHS.filter((m) => availableMonthsForYear.has(m.val));
 
     if (matched.length === 0) {
-      const curMonthVal = String(new Date().getMonth() + 1).padStart(2, "0");
-      const fallback = ALL_MONTHS.filter((m) => m.val === curMonthVal);
-      return fallback.length > 0 ? fallback : [ALL_MONTHS[0]];
+      if (availablePeriods.length === 0) {
+        const curMonthVal = String(new Date().getMonth() + 1).padStart(2, "0");
+        const fallback = ALL_MONTHS.filter((m) => m.val === curMonthVal);
+        return fallback.length > 0 ? fallback : [ALL_MONTHS[0]];
+      }
+      return [];
     }
 
     return matched;

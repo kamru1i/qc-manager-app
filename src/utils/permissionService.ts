@@ -471,10 +471,11 @@ export const canAccessModule = (
   // Workspace assignment is an authorization boundary, not merely a menu
   // preference. Keep this check aligned with database RLS so revoked access
   // takes effect both in the UI and for direct Supabase requests.
-  // For quotes reports: Admin retains administrative access to leaderboard and all_report even if has_quotes_access is false.
+  // For quotes reports: Leaderboard viewing is open to authorized roles regardless of personal quotes access,
+  // while all_report requires quotes workspace access (or admin role).
   if (module === 'leave' && currentUser.has_chuti_access !== true) return false;
   if (
-    (module === 'leaderboard' || module === 'all_report') &&
+    module === 'all_report' &&
     currentUser.has_quotes_access !== true &&
     currentUser.role !== 'admin'
   ) {

@@ -267,7 +267,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
     activeTab === "all_report"
   ) {
     const hasQuotes = canAccessModule(profile, null, "quotes");
-    if (hasQuotes && canAccessModule(profile, null, "leaderboard")) {
+    if (canAccessModule(profile, null, "leaderboard")) {
       subTabs.push({
         id: "leaderboard",
         label: "Leaderboard",

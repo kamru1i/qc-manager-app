@@ -48,7 +48,7 @@ export const useAdminSalesSummary = ({ enabled, records, targetDateStr }: UseAdm
         ? `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`
         : new Date().toLocaleDateString('en-CA');
 
-      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const timeZone = 'Asia/Dhaka';
       const { data: row, error } = await recordsService.getAdminSalesSummary(dateIso, timeZone);
       if (error) throw error;
       if (row) {

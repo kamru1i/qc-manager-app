@@ -15,6 +15,7 @@ import {
   getApprovalsPrefix,
   parseIntervalToMinutes,
   formatDuration,
+  calculateStats,
   getRecordAdjustedMinutes,
   getRecordRemainingMinutes,
   getRecordAdjustmentEntries,
@@ -282,6 +283,33 @@ export const useAdjustmentOperations = ({
 
         if (selectedCat === 'Overtime') {
           adjSource = 'Overtime';
+
+          // Query approved records for this user in the relevant year to obtain available Overtime balance
+          const recordYear = record.date ? record.date.substring(0, 4) : new Date().getFullYear().toString();
+          let availableOvertimeMins = 0;
+          try {
+            const { data: userApprovedRecords, error: fetchErr } = await supabase
+              .from('chuti')
+              .select('*')
+              .eq('user_id', record.user_id)
+              .eq('status', 'approved')
+              .gte('date', `${recordYear}-01-01`)
+              .lte('date', `${recordYear}-12-31`);
+
+            if (!fetchErr && userApprovedRecords) {
+              const userStats = calculateStats(userApprovedRecords as ChutiRecord[], profile?.working_hours || 9.5);
+              availableOvertimeMins = parseIntervalToMinutes(userStats.overtimeHours);
+            }
+          } catch (e) {
+            console.error('Failed to compute available overtime balance:', e);
+          }
+
+          if (availableOvertimeMins <= 0) {
+            setMessage({ type: 'error', text: 'No available Overtime balance to adjust.' });
+            setSubmitting(false);
+            return;
+          }
+
           if (adjustmentType === 'partial') {
             const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
             if (!timeRegex.test(partialAdjustmentTime)) {
@@ -291,7 +319,8 @@ export const useAdjustmentOperations = ({
             }
             amountToAdjust = parseIntervalToMinutes(partialAdjustmentTime);
           } else {
-            amountToAdjust = remainingMins;
+            // Full adjustment: Cap to available Overtime balance
+            amountToAdjust = Math.min(remainingMins, availableOvertimeMins);
           }
 
           if (amountToAdjust <= 0) {
@@ -301,6 +330,11 @@ export const useAdjustmentOperations = ({
           }
           if (amountToAdjust > remainingMins) {
             setMessage({ type: 'error', text: `Adjustment amount (${formatDuration(amountToAdjust)}) cannot exceed remaining leave duration (${formatDuration(remainingMins)}).` });
+            setSubmitting(false);
+            return;
+          }
+          if (amountToAdjust > availableOvertimeMins) {
+            setMessage({ type: 'error', text: `Adjustment amount (${formatDuration(amountToAdjust)}) cannot exceed available Overtime (${formatDuration(availableOvertimeMins)}).` });
             setSubmitting(false);
             return;
           }

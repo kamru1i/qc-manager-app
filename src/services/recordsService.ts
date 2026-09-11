@@ -86,7 +86,7 @@ export const recordsService = {
       p_month: params.p_month,
       p_period: params.p_period,
       p_today: params.p_today,
-      p_tz: params.p_tz || 'UTC',
+      p_tz: params.p_tz || 'Asia/Dhaka',
     });
     return { data: (data || []) as unknown as any[], error };
   },
@@ -94,7 +94,7 @@ export const recordsService = {
   /**
    * RPC: Fetch admin sales summary
    */
-  async getAdminSalesSummary(todayStr: string, timeZone = 'UTC') {
+  async getAdminSalesSummary(todayStr: string, timeZone = 'Asia/Dhaka') {
     const { data, error } = await supabase.rpc('get_admin_sales_summary' as any, {
       p_today: todayStr,
       p_tz: timeZone,

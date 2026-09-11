@@ -147,7 +147,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   const handleReportsNav = () => {
     const hasQuotes = canAccessModule(profile, null, 'quotes');
     const canKpi = canAccessModule(profile, null, 'kpi') && !tabHidden('kpi');
-    const canLeaderboard = hasQuotes && canAccessModule(profile, null, 'leaderboard');
+    const canLeaderboard = canAccessModule(profile, null, 'leaderboard');
     const canMyReport = hasQuotes && canAccessModule(profile, null, 'my_report');
     const canAllReport = hasQuotes && (isAdminRole(profile) || profile?.role === 'supervisor') && canAccessModule(profile, null, 'all_report');
 
@@ -263,7 +263,8 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         {/* Workspace: Reports (KPI Report & Leaderboard) */}
         {(
           (canAccessModule(profile, null, 'kpi') && !tabHidden('kpi')) ||
-          (canAccessModule(profile, null, 'quotes') && (canAccessModule(profile, null, 'reports') || canAccessModule(profile, null, 'leaderboard')))
+          canAccessModule(profile, null, 'leaderboard') ||
+          (canAccessModule(profile, null, 'quotes') && canAccessModule(profile, null, 'reports'))
         ) && (
           <div className="space-y-1">
             <button

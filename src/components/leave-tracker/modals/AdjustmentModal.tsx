@@ -238,6 +238,10 @@ export function AdjustmentModal({
         generalAdjustmentReason.trim()
       );
     } else if (isPartialLeave && selectedCategory === 'Overtime') {
+      if (availableOvertimeMins <= 0) {
+        toast.error('No available Overtime balance to adjust.');
+        return;
+      }
       if (adjustmentType === 'partial') {
         const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
         const timeToUse = partialAdjustmentTime || formatDuration(activeAdjustMins);

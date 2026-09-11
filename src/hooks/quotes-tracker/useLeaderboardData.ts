@@ -110,7 +110,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
 
     try {
       const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local format
-      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const timeZone = 'Asia/Dhaka';
 
       const { data, error: rpcError } = await recordsService.getLeaderboardData({
         p_year: selectedYear,

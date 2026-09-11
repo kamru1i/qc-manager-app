@@ -241,12 +241,8 @@ export function useQuotationMistakes({
     dynamicYears.forEach((y) => {
       opts.push({ value: y, label: y });
     });
-    // Retain selectedYear if currently active so CustomSelect displays it correctly
-    if (selectedYear && !dynamicYears.includes(selectedYear)) {
-      opts.push({ value: selectedYear, label: selectedYear });
-    }
     return opts;
-  }, [dynamicYears, selectedYear]);
+  }, [dynamicYears]);
 
   // Dynamic Month Options (Year-Aware!)
   // If a year is selected, only show months that have mistakes in that year.
@@ -272,16 +268,16 @@ export function useQuotationMistakes({
   }, [availableDates, selectedYear]);
 
   const monthOptions = useMemo(() => {
-    const opts = [{ value: '', label: 'All Months' }, ...dynamicMonths];
-    // Retain selectedMonth if currently active so CustomSelect displays it correctly
-    if (selectedMonth && !dynamicMonths.some((m) => m.value === selectedMonth)) {
-      opts.push({
-        value: selectedMonth,
-        label: MONTH_NAMES[selectedMonth] || selectedMonth,
-      });
+    return [{ value: '', label: 'All Months' }, ...dynamicMonths];
+  }, [dynamicMonths]);
+
+  // Year Auto-Revalidation:
+  // If dynamicYears have loaded and selectedYear has no data, fall back to first available year or All Years
+  useEffect(() => {
+    if (availableDates.length > 0 && selectedYear && !dynamicYears.includes(selectedYear)) {
+      setSelectedYear(dynamicYears[0] || '');
     }
-    return opts;
-  }, [dynamicMonths, selectedMonth]);
+  }, [availableDates, dynamicYears, selectedYear]);
 
   // Month Revalidation when Year changes:
   // If selectedMonth has no data in the newly selected year, reset to "All Months"

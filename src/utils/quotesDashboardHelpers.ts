@@ -52,12 +52,22 @@ export const getDhakaDateParts = (dateStr: string | null | undefined): { year: s
 export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
   try {
+    // If already formatted as DD-MM-YYYY
+    const ddmmyyyyMatch = String(dateStr).match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (ddmmyyyyMatch) return dateStr;
+
+    // Interpret ISO timestamps in Asia/Dhaka (+06:00)
+    const { day, month, year } = getDhakaDateParts(dateStr);
+    if (day && month && year) {
+      return `${day}-${month}-${year}`;
+    }
+
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    const dayFallback = String(date.getDate()).padStart(2, '0');
+    const monthFallback = String(date.getMonth() + 1).padStart(2, '0');
+    const yearFallback = date.getFullYear();
+    return `${dayFallback}-${monthFallback}-${yearFallback}`;
   } catch {
     return dateStr;
   }
@@ -98,7 +108,7 @@ export const formatDateToYYYYMMDD = (val: string | null | undefined): string => 
   return '';
 };
 
-// Helper function to format ISO timestamp to 12-hour AM/PM format (e.g. 03:04 PM)
+// Helper function to format ISO timestamp to 12-hour AM/PM format in Asia/Dhaka (e.g. 03:04 PM)
 export const formatTimeToAMPM = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '-';
   const str = String(dateStr).trim();
@@ -116,17 +126,17 @@ export const formatTimeToAMPM = (dateStr: string | null | undefined): string => 
     return `${strHours}:${minutes} ${ampm}`;
   }
 
-  // 2. Fallback to ISO timestamp Date parsing
+  // 2. Format ISO timestamp in Asia/Dhaka (+06:00)
   try {
     const d = new Date(str.includes('T') ? str : `1970-01-01T${str}`);
     if (!isNaN(d.getTime())) {
-      let hours = d.getHours();
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      const strHours = String(hours).padStart(2, '0');
-      return `${strHours}:${minutes} ${ampm}`;
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Dhaka',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+      return formatter.format(d);
     }
   } catch {}
 
