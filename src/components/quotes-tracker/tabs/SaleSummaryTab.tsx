@@ -228,17 +228,25 @@ export const SaleSummaryTab = React.memo(
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
-          <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
-            Total Sales: <strong className="text-theme-text-primary text-sm">{saleSummaryStats.total}</strong>
+        {recordsLoading ? (
+          <div className="flex flex-wrap gap-2.5">
+            <div className="bg-theme-card-bg/60 border border-theme-border-muted rounded-xl px-4 py-2 w-28 h-9 animate-pulse" />
+            <div className="bg-theme-card-bg/60 border border-theme-border-muted rounded-xl px-4 py-2 w-24 h-9 animate-pulse" />
+            <div className="bg-theme-card-bg/60 border border-theme-border-muted rounded-xl px-4 py-2 w-24 h-9 animate-pulse" />
           </div>
-          <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
-            Sold: <strong className="text-emerald-400 text-sm">{saleSummaryStats.soldFormatted}</strong>
+        ) : (
+          <div className="flex flex-wrap gap-2.5">
+            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
+              Total Sales: <strong className="text-theme-text-primary text-sm">{saleSummaryStats.total}</strong>
+            </div>
+            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
+              Sold: <strong className="text-emerald-400 text-sm">{saleSummaryStats.soldFormatted}</strong>
+            </div>
+            <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
+              Unsold: <strong className="text-red-400 text-sm">{saleSummaryStats.unsoldFormatted}</strong>
+            </div>
           </div>
-          <div className="bg-theme-card-bg border border-theme-border-input rounded-xl px-4 py-2 text-xs text-theme-text-secondary shadow-sm flex items-center gap-2 min-h-9">
-            Unsold: <strong className="text-red-400 text-sm">{saleSummaryStats.unsoldFormatted}</strong>
-          </div>
-        </div>
+        )}
 
         <Suspense fallback={<SkeletonLoader type="table" />}>
           <RecordsTable

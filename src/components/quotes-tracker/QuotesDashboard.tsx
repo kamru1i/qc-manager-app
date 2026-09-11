@@ -205,6 +205,7 @@ export default function QuotesDashboard({
     setSaleSelectedMonth,
     saleRecordsLoading,
     availableDates,
+    fetchedPeriods,
     fetchAvailableDates,
     addRecord,
     deleteRecord,
@@ -895,6 +896,33 @@ export default function QuotesDashboard({
     };
   }, [saleSummaryRecords]);
 
+  // Determine robust loading states for Monthly and Sale Summary views
+  const hasMonthlyRecordsInState = useMemo(() => {
+    return records.some((r) => {
+      if (!r.submitted_at) return false;
+      const { year: rYear, month: rMonth } = getDhakaDateParts(r.submitted_at);
+      return rYear === selectedYear && rMonth === selectedMonth;
+    });
+  }, [records, selectedYear, selectedMonth]);
+
+  const isMonthlyLoading =
+    recordsLoading ||
+    (!hasMonthlyRecordsInState &&
+      !fetchedPeriods.has(`${selectedYear}-${selectedMonth}`));
+
+  const hasSaleMonthRecordsInState = useMemo(() => {
+    return records.some((r) => {
+      if (!r.submitted_at) return false;
+      const { year: rYear, month: rMonth } = getDhakaDateParts(r.submitted_at);
+      return rYear === saleSelectedYear && rMonth === saleSelectedMonth;
+    });
+  }, [records, saleSelectedYear, saleSelectedMonth]);
+
+  const isSaleLoading =
+    saleRecordsLoading ||
+    (!hasSaleMonthRecordsInState &&
+      !fetchedPeriods.has(`${saleSelectedYear}-${saleSelectedMonth}`));
+
   // Today's entries
   const todayRecords = useMemo(() => {
     const todayStr = new Date().toLocaleDateString("en-CA");
@@ -1322,7 +1350,7 @@ export default function QuotesDashboard({
           adminViewMode={isQuotesOffAdmin ? "all" : adminViewMode}
           handleAdminViewModeChange={handleAdminViewModeChange}
           monthlyStats={monthlyStats}
-          recordsLoading={recordsLoading}
+          recordsLoading={isMonthlyLoading}
           monthlyFilteredRecords={monthlyFilteredRecords}
           handleOpenEditRecord={handleOpenEditRecord}
           setDeletingRecordId={setDeletingRecordId}
@@ -1362,7 +1390,7 @@ export default function QuotesDashboard({
           saleAdminViewMode={isQuotesOffAdmin ? "all" : saleAdminViewMode}
           setSaleAdminViewMode={setSaleAdminViewMode}
           saleSummaryStats={saleSummaryStats}
-          recordsLoading={saleRecordsLoading}
+          recordsLoading={isSaleLoading}
           saleSummaryRecords={saleSummaryRecords}
           handleOpenEditRecord={handleOpenEditRecord}
           setDeletingRecordId={setDeletingRecordId}

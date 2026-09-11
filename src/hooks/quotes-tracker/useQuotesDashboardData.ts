@@ -123,14 +123,117 @@ const mergeMonthRecords = (
   const { theme, toggleTheme } = useQuotesTheme();
 
   // Filter States - Monthly Tab
-  const [selectedYear, setSelectedYear] = useState<string>(() => new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [selectedYear, setSelectedYearState] = useState<string>(() => new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonthState] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
 
   // Filter States - Sale Summary Tab
-  const [saleSelectedYear, setSaleSelectedYear] = useState<string>(() => new Date().getFullYear().toString());
-  const [saleSelectedMonth, setSaleSelectedMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [saleSelectedYear, setSaleSelectedYearState] = useState<string>(() => new Date().getFullYear().toString());
+  const [saleSelectedMonth, setSaleSelectedMonthState] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
 
-  const [saleRecordsLoading, setSaleRecordsLoading] = useState(false);
+  const [saleRecordsLoading, setSaleRecordsLoading] = useState(true);
+
+  // Synchronous refs for accurate closure-free state inspection
+  const recordsRef = useRef<RecordItem[]>([]);
+  useEffect(() => {
+    recordsRef.current = records;
+  }, [records]);
+
+  const selectedYearRef = useRef(selectedYear);
+  useEffect(() => {
+    selectedYearRef.current = selectedYear;
+  }, [selectedYear]);
+
+  const selectedMonthRef = useRef(selectedMonth);
+  useEffect(() => {
+    selectedMonthRef.current = selectedMonth;
+  }, [selectedMonth]);
+
+  const saleSelectedYearRef = useRef(saleSelectedYear);
+  useEffect(() => {
+    saleSelectedYearRef.current = saleSelectedYear;
+  }, [saleSelectedYear]);
+
+  const saleSelectedMonthRef = useRef(saleSelectedMonth);
+  useEffect(() => {
+    saleSelectedMonthRef.current = saleSelectedMonth;
+  }, [saleSelectedMonth]);
+
+  // Track periods (YYYY-MM) that have completed at least one fetch/cache check
+  const fetchedPeriodsRef = useRef<Set<string>>(new Set());
+  const [fetchedPeriods, setFetchedPeriods] = useState<Set<string>>(() => new Set());
+
+  const markPeriodFetched = useCallback((year: string, month: string) => {
+    const key = `${year}-${month}`;
+    fetchedPeriodsRef.current.add(key);
+    setFetchedPeriods(prev => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
+
+  const hasRecordsInState = useCallback((year: string, month: string) => {
+    return recordsRef.current.some(r => {
+      if (!r.submitted_at) return false;
+      const { year: rYear, month: rMonth } = getDhakaDateParts(r.submitted_at);
+      return rYear === year && rMonth === month;
+    });
+  }, []);
+
+  // Synchronous setters: if target period is not in state and not yet fetched, immediately set loading true
+  // to eliminate any 1-frame flash of 'no data' before async fetch starts
+  const setSelectedYear = useCallback((year: string) => {
+    setSelectedYearState(year);
+    selectedYearRef.current = year;
+    const month = selectedMonthRef.current;
+    const key = `${year}-${month}`;
+    const hasData = hasRecordsInState(year, month);
+    if (!hasData && !fetchedPeriodsRef.current.has(key)) {
+      setRecordsLoading(true);
+    } else {
+      setRecordsLoading(false);
+    }
+  }, [hasRecordsInState]);
+
+  const setSelectedMonth = useCallback((month: string) => {
+    setSelectedMonthState(month);
+    selectedMonthRef.current = month;
+    const year = selectedYearRef.current;
+    const key = `${year}-${month}`;
+    const hasData = hasRecordsInState(year, month);
+    if (!hasData && !fetchedPeriodsRef.current.has(key)) {
+      setRecordsLoading(true);
+    } else {
+      setRecordsLoading(false);
+    }
+  }, [hasRecordsInState]);
+
+  const setSaleSelectedYear = useCallback((year: string) => {
+    setSaleSelectedYearState(year);
+    saleSelectedYearRef.current = year;
+    const month = saleSelectedMonthRef.current;
+    const key = `${year}-${month}`;
+    const hasData = hasRecordsInState(year, month);
+    if (!hasData && !fetchedPeriodsRef.current.has(key)) {
+      setSaleRecordsLoading(true);
+    } else {
+      setSaleRecordsLoading(false);
+    }
+  }, [hasRecordsInState]);
+
+  const setSaleSelectedMonth = useCallback((month: string) => {
+    setSaleSelectedMonthState(month);
+    saleSelectedMonthRef.current = month;
+    const year = saleSelectedYearRef.current;
+    const key = `${year}-${month}`;
+    const hasData = hasRecordsInState(year, month);
+    if (!hasData && !fetchedPeriodsRef.current.has(key)) {
+      setSaleRecordsLoading(true);
+    } else {
+      setSaleRecordsLoading(false);
+    }
+  }, [hasRecordsInState]);
 
   // Show a message using sonner
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
@@ -141,6 +244,7 @@ const mergeMonthRecords = (
     }
   }, []);
 
+  const inFlightFetchesRef = useRef<Map<string, Promise<void>>>(new Map());
   const fetchingKeysRef = useRef<Set<string>>(new Set());
   const lastFetchedTimeRef = useRef<Map<string, number>>(new Map());
 
@@ -168,189 +272,218 @@ const mergeMonthRecords = (
     targetMonth: string,
     isSilent: boolean = false,
     force: boolean = false,
-    isSale: boolean = false
+    _isSale: boolean = false
   ) => {
     if (!sessionUser || !profile) return;
     
     const fetchKey = `${targetYear}-${targetMonth}-${sessionUser.id}`;
-    const now = Date.now();
-    const lastFetched = lastFetchedTimeRef.current.get(fetchKey) || 0;
-    
-    // If not forced, not silent, and loaded within 5 mins: skip remote fetch
-    const canSkipRemote = (now - lastFetched < CACHE_THROTTLE_MS) && !force && !isSilent;
 
-    // 1. SWR Instant Paint: load cached records immediately without waiting for network
-    const localRecords = await getFilteredLocalRecords(targetYear, targetMonth);
-    if (localRecords.length > 0) {
-      setRecords(prev => mergeMonthRecords(prev, localRecords, targetYear, targetMonth));
-      if (isSale) {
-        setSaleRecordsLoading(false);
-      } else {
-        setRecordsLoading(false);
-      }
-    } else if (!isSilent) {
-      if (isSale) {
-        setSaleRecordsLoading(true);
-      } else {
-        setRecordsLoading(true);
-      }
-    }
-
-    if (canSkipRemote) {
-      if (isSale) setSaleRecordsLoading(false);
-      else setRecordsLoading(false);
-      setInitialFetchDone(true);
+    // Deduplicate in-flight fetch for the exact same target period
+    const existingInFlight = inFlightFetchesRef.current.get(fetchKey);
+    if (existingInFlight) {
+      await existingInFlight;
       return;
     }
 
-    if (fetchingKeysRef.current.has(fetchKey)) {
-      return;
-    }
-    fetchingKeysRef.current.add(fetchKey);
+    const fetchPromise = (async () => {
+      try {
+        const now = Date.now();
+        const lastFetched = lastFetchedTimeRef.current.get(fetchKey) || 0;
+        
+        // If not forced, not silent, and loaded within 5 mins: skip remote fetch
+        const canSkipRemote = (now - lastFetched < CACHE_THROTTLE_MS) && !force && !isSilent;
 
-    try {
-      if (navigator.onLine) {
-        try {
-          // 0. Self-healing check: if user switched accounts, clear database cache
-          const cachedUserId = await getSyncTimestamp('active_user_id');
-          const localCachedItems = await getCacheData<RecordItem>('records_cache');
-          
-          if (cachedUserId !== sessionUser.id || localCachedItems.length === 0) {
-            await clearAllCache();
-            await setSyncTimestamp('active_user_id', sessionUser.id);
+        // 1. SWR Instant Paint: load cached records immediately without waiting for network
+        const localRecords = await getFilteredLocalRecords(targetYear, targetMonth);
+        if (localRecords.length > 0) {
+          setRecords(prev => mergeMonthRecords(prev, localRecords, targetYear, targetMonth));
+          if (targetYear === selectedYearRef.current && targetMonth === selectedMonthRef.current) {
+            setRecordsLoading(false);
           }
-
-          const isApproverScope = isAdminRole(profile) || profile.role === 'supervisor';
-          const recordsScope = isApproverScope ? 'all' : 'self';
-          const prevRecordsScope = await getSyncTimestamp('records_scope');
-          if (prevRecordsScope && prevRecordsScope !== recordsScope) {
-            await setSyncTimestamp('records', '');
+          if (targetYear === saleSelectedYearRef.current && targetMonth === saleSelectedMonthRef.current) {
+            setSaleRecordsLoading(false);
           }
-          await setSyncTimestamp('records_scope', recordsScope);
-
-          // 1. Sync pending offline mutations
-          try {
-            const syncRes = await syncOfflineData();
-            if (syncRes.success && syncRes.syncedCount > 0) {
-              showToast('success', `Synced ${syncRes.syncedCount} offline actions to the server.`);
-            }
-            if (syncRes.conflicts && syncRes.conflicts.length > 0) {
-              syncRes.conflicts.forEach(c => {
-                showToast('error', c.reason);
-              });
-            }
-          } catch (syncErr) {
-            console.error('Failed to sync offline data before fetch:', syncErr);
+        } else if (!isSilent) {
+          if (targetYear === selectedYearRef.current && targetMonth === selectedMonthRef.current) {
+            setRecordsLoading(true);
           }
-
-          // 2. Fetch data for the target month and year using canonical Asia/Dhaka (+06:00) range
-          const { startIso: startDate, endIso: endDate } = getDhakaMonthRange(targetYear, targetMonth);
-
-          let monthlyData: RecordItem[] = [];
-          let mPage = 0;
-          const mPageSize = 1000;
-          let mHasMore = true;
-
-          while (mHasMore) {
-            const from = mPage * mPageSize;
-            const to = from + mPageSize - 1;
-
-            let query = supabase
-              .from('records')
-              .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
-              .gte('submitted_at', startDate)
-              .lte('submitted_at', endDate)
-              .order('submitted_at', { ascending: false })
-              .range(from, to);
-            if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
-
-            const { data, error } = await query;
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-              monthlyData = [...monthlyData, ...(data as unknown as RecordItem[])];
-              if (data.length < mPageSize) {
-                mHasMore = false;
-              } else {
-                mPage++;
-              }
-            } else {
-              mHasMore = false;
-            }
+          if (targetYear === saleSelectedYearRef.current && targetMonth === saleSelectedMonthRef.current) {
+            setSaleRecordsLoading(true);
           }
-
-          // Merge this month's fresh server records into IndexedDB cache for offline SWR
-          await mergeCacheData('records_cache', monthlyData);
-
-          // Active pruning of deleted records for this month
-          const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
-          const localMonthRecords = localCachedForPrune.filter(r => {
-            if (!isAdminRole(profile) && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
-            if (!r.submitted_at) return false;
-            const { year: y, month: m } = getDhakaDateParts(r.submitted_at);
-            return y === targetYear && m === targetMonth;
-          });
-
-          const serverIdSet = new Set(monthlyData.map(row => row.id));
-          const pending = await getOfflineRecords();
-          const pendingInsertIds = new Set(
-            pending.filter(p => p.action === 'insert').map(p => p.localId)
-          );
-
-          for (const r of localMonthRecords) {
-            if (!serverIdSet.has(r.id) && !pendingInsertIds.has(r.id)) {
-              await deleteCacheItem('records_cache', r.id);
-            }
-          }
-
-          lastFetchedTimeRef.current.set(fetchKey, Date.now());
-          await setSyncTimestamp('records', new Date().toISOString());
-
-          // 3. Update React state directly with fresh server records plus any un-synced offline inserts
-          const pendingForMonth = pending.filter(p => {
-            if (p.action !== 'insert') return false;
-            const { year: py, month: pm } = getDhakaDateParts(p.submitted_at);
-            return py === targetYear && pm === targetMonth;
-          }).map(p => ({
-            id: p.localId || crypto.randomUUID(),
-            user_id: p.user_id,
-            file_name: p.file_name,
-            branch_name: p.branch_name,
-            codename: p.codename,
-            file_type: p.file_type,
-            submitted_at: p.submitted_at,
-            created_at: p.submitted_at,
-            profiles: {
-              username: p.codename,
-              full_name: profile?.full_name || null,
-            },
-          } as RecordItem));
-
-          const combinedFresh = [...monthlyData, ...pendingForMonth];
-          setRecords(prev => mergeMonthRecords(prev, combinedFresh, targetYear, targetMonth));
-
-        } catch (netError: unknown) {
-          const errMsg = netError instanceof Error ? netError.message : String(netError);
-          console.error(`Network sync/fetch failed for ${targetYear}-${targetMonth}, falling back to cache:`, errMsg, netError);
-          // Fallback to local cache when network fails
-          const fallbackFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
-          setRecords(prev => mergeMonthRecords(prev, fallbackFiltered, targetYear, targetMonth));
         }
-      } else {
-        // Offline: load from cache
-        const offlineFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
-        setRecords(prev => mergeMonthRecords(prev, offlineFiltered, targetYear, targetMonth));
+
+        if (canSkipRemote) {
+          if (targetYear === selectedYearRef.current && targetMonth === selectedMonthRef.current) {
+            setRecordsLoading(false);
+          }
+          if (targetYear === saleSelectedYearRef.current && targetMonth === saleSelectedMonthRef.current) {
+            setSaleRecordsLoading(false);
+          }
+          markPeriodFetched(targetYear, targetMonth);
+          setInitialFetchDone(true);
+          return;
+        }
+
+        if (fetchingKeysRef.current.has(fetchKey)) {
+          return;
+        }
+        fetchingKeysRef.current.add(fetchKey);
+
+        try {
+          if (navigator.onLine) {
+            try {
+              // 0. Self-healing check: if user switched accounts, clear database cache
+              const cachedUserId = await getSyncTimestamp('active_user_id');
+              const localCachedItems = await getCacheData<RecordItem>('records_cache');
+              
+              if (cachedUserId !== sessionUser.id || localCachedItems.length === 0) {
+                await clearAllCache();
+                await setSyncTimestamp('active_user_id', sessionUser.id);
+              }
+
+              const isApproverScope = isAdminRole(profile) || profile.role === 'supervisor';
+              const recordsScope = isApproverScope ? 'all' : 'self';
+              const prevRecordsScope = await getSyncTimestamp('records_scope');
+              if (prevRecordsScope && prevRecordsScope !== recordsScope) {
+                await setSyncTimestamp('records', '');
+              }
+              await setSyncTimestamp('records_scope', recordsScope);
+
+              // 1. Sync pending offline mutations
+              try {
+                const syncRes = await syncOfflineData();
+                if (syncRes.success && syncRes.syncedCount > 0) {
+                  showToast('success', `Synced ${syncRes.syncedCount} offline actions to the server.`);
+                }
+                if (syncRes.conflicts && syncRes.conflicts.length > 0) {
+                  syncRes.conflicts.forEach(c => {
+                    showToast('error', c.reason);
+                  });
+                }
+              } catch (syncErr) {
+                console.error('Failed to sync offline data before fetch:', syncErr);
+              }
+
+              // 2. Fetch data for the target month and year using canonical Asia/Dhaka (+06:00) range
+              const { startIso: startDate, endIso: endDate } = getDhakaMonthRange(targetYear, targetMonth);
+
+              let monthlyData: RecordItem[] = [];
+              let mPage = 0;
+              const mPageSize = 1000;
+              let mHasMore = true;
+
+              while (mHasMore) {
+                const from = mPage * mPageSize;
+                const to = from + mPageSize - 1;
+
+                let query = supabase
+                  .from('records')
+                  .select(`${RECORD_COLUMNS}, profiles (username, full_name)`)
+                  .gte('submitted_at', startDate)
+                  .lte('submitted_at', endDate)
+                  .order('submitted_at', { ascending: false })
+                  .range(from, to);
+                if (!isApproverScope) query = query.eq('user_id', sessionUser.id);
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                  monthlyData = [...monthlyData, ...(data as unknown as RecordItem[])];
+                  if (data.length < mPageSize) {
+                    mHasMore = false;
+                  } else {
+                    mPage++;
+                  }
+                } else {
+                  mHasMore = false;
+                }
+              }
+
+              // Merge this month's fresh server records into IndexedDB cache for offline SWR
+              await mergeCacheData('records_cache', monthlyData);
+
+              // Active pruning of deleted records for this month
+              const localCachedForPrune = await getCacheData<RecordItem>('records_cache');
+              const localMonthRecords = localCachedForPrune.filter(r => {
+                if (!isAdminRole(profile) && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
+                if (!r.submitted_at) return false;
+                const { year: y, month: m } = getDhakaDateParts(r.submitted_at);
+                return y === targetYear && m === targetMonth;
+              });
+
+              const serverIdSet = new Set(monthlyData.map(row => row.id));
+              const pending = await getOfflineRecords();
+              const pendingInsertIds = new Set(
+                pending.filter(p => p.action === 'insert').map(p => p.localId)
+              );
+
+              for (const r of localMonthRecords) {
+                if (!serverIdSet.has(r.id) && !pendingInsertIds.has(r.id)) {
+                  await deleteCacheItem('records_cache', r.id);
+                }
+              }
+
+              lastFetchedTimeRef.current.set(fetchKey, Date.now());
+              await setSyncTimestamp('records', new Date().toISOString());
+
+              // 3. Update React state directly with fresh server records plus any un-synced offline inserts
+              const pendingForMonth = pending.filter(p => {
+                if (p.action !== 'insert') return false;
+                const { year: py, month: pm } = getDhakaDateParts(p.submitted_at);
+                return py === targetYear && pm === targetMonth;
+              }).map(p => ({
+                id: p.localId || crypto.randomUUID(),
+                user_id: p.user_id,
+                file_name: p.file_name,
+                branch_name: p.branch_name,
+                codename: p.codename,
+                file_type: p.file_type,
+                submitted_at: p.submitted_at,
+                created_at: p.submitted_at,
+                profiles: {
+                  username: p.codename,
+                  full_name: profile?.full_name || null,
+                },
+              } as RecordItem));
+
+              const combinedFresh = [...monthlyData, ...pendingForMonth];
+              setRecords(prev => mergeMonthRecords(prev, combinedFresh, targetYear, targetMonth));
+              markPeriodFetched(targetYear, targetMonth);
+
+            } catch (netError: unknown) {
+              const errMsg = netError instanceof Error ? netError.message : String(netError);
+              console.error(`Network sync/fetch failed for ${targetYear}-${targetMonth}, falling back to cache:`, errMsg, netError);
+              // Fallback to local cache when network fails
+              const fallbackFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
+              setRecords(prev => mergeMonthRecords(prev, fallbackFiltered, targetYear, targetMonth));
+              markPeriodFetched(targetYear, targetMonth);
+            }
+          } else {
+            // Offline: load from cache
+            const offlineFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
+            setRecords(prev => mergeMonthRecords(prev, offlineFiltered, targetYear, targetMonth));
+            markPeriodFetched(targetYear, targetMonth);
+          }
+        } finally {
+          fetchingKeysRef.current.delete(fetchKey);
+        }
+      } finally {
+        markPeriodFetched(targetYear, targetMonth);
+        inFlightFetchesRef.current.delete(fetchKey);
+        if (targetYear === selectedYearRef.current && targetMonth === selectedMonthRef.current) {
+          setRecordsLoading(false);
+        }
+        if (targetYear === saleSelectedYearRef.current && targetMonth === saleSelectedMonthRef.current) {
+          setSaleRecordsLoading(false);
+        }
+        setInitialFetchDone(true);
       }
-    } finally {
-      fetchingKeysRef.current.delete(fetchKey);
-      if (isSale) {
-        setSaleRecordsLoading(false);
-      } else {
-        setRecordsLoading(false);
-      }
-      setInitialFetchDone(true);
-    }
-  }, [sessionUser, profile, showToast, getFilteredLocalRecords]);
+    })();
+
+    inFlightFetchesRef.current.set(fetchKey, fetchPromise);
+    await fetchPromise;
+  }, [sessionUser, profile, showToast, getFilteredLocalRecords, markPeriodFetched]);
 
   // Fetch all active records (Monthly tab and Sale Summary tab if different) with true SWR
   const fetchRecords = useCallback(async (isSilent: boolean = false, force: boolean = false) => {
@@ -639,6 +772,7 @@ const mergeMonthRecords = (
     setSaleSelectedMonth,
     saleRecordsLoading,
     availableDates,
+    fetchedPeriods,
     fetchAvailableDates,
     fetchRecords,
     fetchRecordsForMonth,
