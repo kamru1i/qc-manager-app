@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.6.3** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.6.4** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -58,7 +58,7 @@ Superadmins and delegated Admins can customize access levels for `User`, `Superv
 
 ### 3. Time-Boxed Temporary Access Controls (`Settings > Access`)
 - Configurable temporary overrides targeting an entire role (`user`, `supervisor`, `admin`) or a specific individual user by `Codename (Full Name)`.
-- Grants or revokes temporary access with explicit duration limits (e.g. 1 hour, 1 day, 7 days) and automatic expiration.
+- Features an intuitive **interactive DateTime picker modal** with presets (`1h`, `4h`, `8h`, `24h`, `3d`, `7d`, `30d`), single-click duration extensions, dynamic status badges, and active countdown timers.
 
 ### 4. Global Feature Flags & Per-User Overrides (`Settings > Feature Flags`)
 - **Global Toggles**: Superadmins and Admins can toggle features ON/OFF globally across the entire organization. Turning OFF a feature flag immediately revokes access for all roles.
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.6.3 — Patch Release (Clear Approved User Requests & Fix User Deletion FK Constraint Error) (Current)
+### 🚀 v7.6.4 — Patch Release (Monthly & Sale Summary Skeleton Loading Fix, Atomic Short Leave Adjustments & Requote Trigger Normalization) (Current)
+
+- **Quotations → Monthly & Sale Summary Loading & Skeleton States**: Resolved premature 'No file records found matching the filters' and 'No sale records found matching the filters' table flash when switching month or year filters while data downloads from the database. Added synchronous loading triggers, period completion tracking (`fetchedPeriods`), and cross-tab cache sharing with in-flight request deduplication.
+- **Quotations → Sale Summary Stats Skeleton Pulse**: Added smooth animated pulse placeholders for Sale Summary stat cards during remote retrieval, matching the Monthly Tab `StatsGrid` behavior.
+- **Leave Management → Atomic Short Leave Adjustments**: Applied and verified `apply_leave_adjustment` and `cancel_leave_adjustment` database functions for atomic transactional consistency across Short Leave, Overtime, and General Adjustment workflows.
+- **Database → Requote Insert Normalization Trigger**: Added `trg_records_normalize_file_type` trigger on `public.records` to normalize incoming `Requote Van` and `Requote Bike` records to canonical `Requote` on insertion while preserving existing historical records.
+- **Timezone Boundary & Data Integrity Verification**: Standardized month-range queries on canonical Asia/Dhaka (+06:00) timezone bounds, confirming 100% record accuracy across all quotation summary tables.
+
+### 🚀 v7.6.3 — Patch Release (Clear Approved User Requests & Fix User Deletion FK Constraint Error)
 
 - **Settings → Users: Clear Approved User Creation Requests**: Excluded approved and rejected user creation requests from the Supervisor's active 'My Account Creation Requests' panel and badge counts while preserving complete historical request records in the database. Approved requests transition seamlessly into active profiles without lingering in the action panel.
 - **User Deletion FK Constraint Fix**: Resolved `audit_logs_target_user_id_fkey` constraint violation during user account deletion. Updated `audit_business_row_change()` trigger function to safely handle foreign key references during cascade deletion while retaining actor and target identification in JSONB metadata indefinitely.
