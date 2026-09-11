@@ -69,6 +69,7 @@ import {
   formatDate,
   exportToCSV,
   buildCleanFileName,
+  getDhakaDateParts,
 } from "@/utils/quotesDashboardHelpers";
 import { FileType, RecordItem } from "@/types";
 import type { Profile } from '@/types';
@@ -765,14 +766,12 @@ export default function QuotesDashboard({
       ) {
         return false;
       }
+      const { year: recordYear, month: recordMonth, dateKey: recordDate } = getDhakaDateParts(r.submitted_at);
       if (selectedDate) {
-        const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
         if (recordDate !== selectedDate) {
           return false;
         }
       } else {
-        const recordYear = String(new Date(r.submitted_at).getFullYear());
-        const recordMonth = String(new Date(r.submitted_at).getMonth() + 1).padStart(2, "0");
         if (recordYear !== selectedYear || recordMonth !== selectedMonth) {
           return false;
         }
@@ -833,14 +832,12 @@ export default function QuotesDashboard({
       ) {
         return false;
       }
+      const { year: recordYear, month: recordMonth, dateKey: recordDate } = getDhakaDateParts(r.submitted_at);
       if (saleSelectedDate) {
-        const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
         if (recordDate !== saleSelectedDate) {
           return false;
         }
       } else {
-        const recordYear = String(new Date(r.submitted_at).getFullYear());
-        const recordMonth = String(new Date(r.submitted_at).getMonth() + 1).padStart(2, "0");
         if (recordYear !== saleSelectedYear || recordMonth !== saleSelectedMonth) {
           return false;
         }

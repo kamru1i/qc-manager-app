@@ -1,6 +1,50 @@
 import { RecordItem } from '@/types';
 import { toast } from 'sonner';
 
+/**
+ * Canonical UTC ISO start and end timestamps for a given Year and Month in Asia/Dhaka (+06:00).
+ * Completely immune to client browser / OS local timezone variations.
+ */
+export const getDhakaMonthRange = (yearStr: string, monthStr: string): { startIso: string; endIso: string } => {
+  const y = parseInt(yearStr, 10);
+  const m = parseInt(monthStr, 10);
+  const mm = String(m).padStart(2, '0');
+  const startIso = new Date(`${y}-${mm}-01T00:00:00+06:00`).toISOString();
+  const nextY = m === 12 ? y + 1 : y;
+  const nextM = m === 12 ? 1 : m + 1;
+  const nextMm = String(nextM).padStart(2, '0');
+  const endIso = new Date(new Date(`${nextY}-${nextMm}-01T00:00:00+06:00`).getTime() - 1).toISOString();
+  return { startIso, endIso };
+};
+
+/**
+ * Returns the Year ('YYYY'), Month ('MM'), Day ('DD'), and full Date string ('YYYY-MM-DD')
+ * for an ISO timestamp string interpreted in Asia/Dhaka (+06:00) business timezone.
+ */
+export const getDhakaDateParts = (dateStr: string | null | undefined): { year: string; month: string; day: string; dateKey: string } => {
+  if (!dateStr) return { year: '', month: '', day: '', dateKey: '' };
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return { year: '', month: '', day: '', dateKey: '' };
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Dhaka',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.format(d).split('-');
+    if (parts.length === 3) {
+      return {
+        year: parts[0],
+        month: parts[1],
+        day: parts[2],
+        dateKey: `${parts[0]}-${parts[1]}-${parts[2]}`,
+      };
+    }
+  } catch {}
+  return { year: '', month: '', day: '', dateKey: '' };
+};
+
 // Helper function to format date from ISO string (or YYYY-MM-DD) to DD-MM-YYYY format
 // AUDIT FIX M7: Kept local `formatDate` instead of importing from `formatters.ts`
 // because callers here (e.g., RecordsTable) pass ISO timestamp strings like `submitted_at`,

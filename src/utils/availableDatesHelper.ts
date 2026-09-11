@@ -1,5 +1,6 @@
 import { recordsService } from '@/services/recordsService';
 import { RecordItem } from '@/types';
+import { getDhakaDateParts } from '@/utils/quotesDashboardHelpers';
 
 export interface AvailableDate {
   year: string;
@@ -15,10 +16,8 @@ export function extractAvailableDatesFromRecords(records: RecordItem[]): Availab
   const datesSet = new Set<string>();
   records.forEach((r) => {
     if (r.submitted_at) {
-      const d = new Date(r.submitted_at);
-      if (!isNaN(d.getTime())) {
-        const year = d.getFullYear().toString();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
+      const { year, month } = getDhakaDateParts(r.submitted_at);
+      if (year && month) {
         datesSet.add(`${year}-${month}`);
       }
     }

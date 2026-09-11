@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { fetchSubmittedMonths, extractAvailableDatesFromRecords } from '@/utils/availableDatesHelper';
+import { getDhakaMonthRange, getDhakaDateParts } from '@/utils/quotesDashboardHelpers';
 import { PROFILE_COLUMNS, RECORD_COLUMNS } from '@/utils/dbColumns';
 import { isAdminRole } from '@/utils/permissionService';
 import {
@@ -24,7 +25,6 @@ import {
   mergeCacheData,
   getSyncTimestamp,
   setSyncTimestamp,
-  purgeStaleCacheData,
   getOfflineRecords,
   deleteCacheItem,
   clearAllCache
@@ -109,10 +109,8 @@ const mergeMonthRecords = (
   const remaining = prev.filter(r => {
     if (freshIds.has(r.id)) return false;
     if (!r.submitted_at) return true;
-    const d = new Date(r.submitted_at);
-    if (isNaN(d.getTime())) return true;
-    const rYear = d.getFullYear().toString();
-    const rMonth = String(d.getMonth() + 1).padStart(2, '0');
+    const { year: rYear, month: rMonth } = getDhakaDateParts(r.submitted_at);
+    if (!rYear || !rMonth) return true;
     return !(rYear === year && rMonth === month);
   });
 
@@ -154,9 +152,8 @@ const mergeMonthRecords = (
       const filtered = cached.filter(r => {
         if (!r.submitted_at) return false;
         if (!isApproverScope && r.user_id !== sessionUser?.id) return false;
-        const date = new Date(r.submitted_at);
-        if (isNaN(date.getTime())) return false;
-        return date.getFullYear().toString() === year && String(date.getMonth() + 1).padStart(2, '0') === month;
+        const { year: rYear, month: rMonth } = getDhakaDateParts(r.submitted_at);
+        return rYear === year && rMonth === month;
       });
       filtered.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
       return filtered;
@@ -246,11 +243,8 @@ const mergeMonthRecords = (
             console.error('Failed to sync offline data before fetch:', syncErr);
           }
 
-          // 2. Fetch data for the target month and year
-          const yearNum = parseInt(targetYear, 10);
-          const monthNum = parseInt(targetMonth, 10);
-          const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0).toISOString();
-          const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999).toISOString();
+          // 2. Fetch data for the target month and year using canonical Asia/Dhaka (+06:00) range
+          const { startIso: startDate, endIso: endDate } = getDhakaMonthRange(targetYear, targetMonth);
 
           let monthlyData: RecordItem[] = [];
           let mPage = 0;
@@ -285,7 +279,7 @@ const mergeMonthRecords = (
             }
           }
 
-          // Merge this month's fresh server records into IndexedDB cache
+          // Merge this month's fresh server records into IndexedDB cache for offline SWR
           await mergeCacheData('records_cache', monthlyData);
 
           // Active pruning of deleted records for this month
@@ -293,9 +287,7 @@ const mergeMonthRecords = (
           const localMonthRecords = localCachedForPrune.filter(r => {
             if (!isAdminRole(profile) && profile.role !== 'supervisor' && r.user_id !== sessionUser.id) return false;
             if (!r.submitted_at) return false;
-            const date = new Date(r.submitted_at);
-            const y = date.getFullYear().toString();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const { year: y, month: m } = getDhakaDateParts(r.submitted_at);
             return y === targetYear && m === targetMonth;
           });
 
@@ -314,26 +306,41 @@ const mergeMonthRecords = (
           lastFetchedTimeRef.current.set(fetchKey, Date.now());
           await setSyncTimestamp('records', new Date().toISOString());
 
-          // Clean up cache older than 90 days in the background
-          purgeStaleCacheData('records_cache', 'submitted_at', 90).catch(() => {});
+          // 3. Update React state directly with fresh server records plus any un-synced offline inserts
+          const pendingForMonth = pending.filter(p => {
+            if (p.action !== 'insert') return false;
+            const { year: py, month: pm } = getDhakaDateParts(p.submitted_at);
+            return py === targetYear && pm === targetMonth;
+          }).map(p => ({
+            id: p.localId || crypto.randomUUID(),
+            user_id: p.user_id,
+            file_name: p.file_name,
+            branch_name: p.branch_name,
+            codename: p.codename,
+            file_type: p.file_type,
+            submitted_at: p.submitted_at,
+            created_at: p.submitted_at,
+            profiles: {
+              username: p.codename,
+              full_name: profile?.full_name || null,
+            },
+          } as RecordItem));
+
+          const combinedFresh = [...monthlyData, ...pendingForMonth];
+          setRecords(prev => mergeMonthRecords(prev, combinedFresh, targetYear, targetMonth));
 
         } catch (netError: unknown) {
           const errMsg = netError instanceof Error ? netError.message : String(netError);
           console.error(`Network sync/fetch failed for ${targetYear}-${targetMonth}, falling back to cache:`, errMsg, netError);
+          // Fallback to local cache when network fails
+          const fallbackFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
+          setRecords(prev => mergeMonthRecords(prev, fallbackFiltered, targetYear, targetMonth));
         }
+      } else {
+        // Offline: load from cache
+        const offlineFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
+        setRecords(prev => mergeMonthRecords(prev, offlineFiltered, targetYear, targetMonth));
       }
-
-      // 3. Load fresh records from local cache
-      const freshFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
-      setRecords(prev => mergeMonthRecords(prev, freshFiltered, targetYear, targetMonth));
-
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      console.error(`Error fetching records for ${targetYear}-${targetMonth}:`, errMsg);
-      showToast('error', 'Error loading data: ' + errMsg);
-      // Fallback to local cache
-      const fallbackFiltered = await getFilteredLocalRecords(targetYear, targetMonth);
-      setRecords(prev => mergeMonthRecords(prev, fallbackFiltered, targetYear, targetMonth));
     } finally {
       fetchingKeysRef.current.delete(fetchKey);
       if (isSale) {
