@@ -16,8 +16,6 @@ import {
   getRecordRemainingMinutes,
   getRecordAdjustmentEntries
 } from '@/utils/dashboardHelpers';
-import { ShortLeaveHistoryModal } from './modals/ShortLeaveHistoryModal';
-
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 
 interface LeavesRecordsTableProps {
@@ -109,7 +107,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
-  const [selectedHistoryRecord, setSelectedHistoryRecord] = useState<ChutiRecord | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -727,19 +724,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                                       <span className="text-theme-text-muted">No</span>
                                     )}
                                   </span>
-                                  {hasHistory && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedHistoryRecord(r);
-                                      }}
-                                      className="p-0.5 text-theme-text-muted hover:text-blue-400 transition-colors cursor-pointer ml-0.5"
-                                      title="View Adjustment History"
-                                    >
-                                      <History className="h-3.5 w-3.5" />
-                                    </button>
-                                  )}
                                 </div>
                               );
                             }
@@ -760,19 +744,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                                     <span className="text-theme-text-muted">No</span>
                                   )}
                                 </span>
-                                {hasHistory && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedHistoryRecord(r);
-                                    }}
-                                    className="p-0.5 text-theme-text-muted hover:text-blue-400 transition-colors cursor-pointer ml-0.5"
-                                    title="View Adjustment History"
-                                  >
-                                    <History className="h-3.5 w-3.5" />
-                                  </button>
-                                )}
                               </div>
                             );
                           })()}
@@ -944,13 +915,6 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
           confirmText="Delete"
           cancelText="Cancel"
           isDanger={true}
-        />
-      )}
-      {selectedHistoryRecord && (
-        <ShortLeaveHistoryModal
-          isOpen={!!selectedHistoryRecord}
-          onClose={() => setSelectedHistoryRecord(null)}
-          record={selectedHistoryRecord}
         />
       )}
     </div>

@@ -34,17 +34,14 @@ export const getRecordAdjustmentEntries = (record?: Partial<ChutiRecord> | null)
     const isSalary = record.reserve_holiday === 'Salary' || record.comment?.toLowerCase().includes('salary');
     const isEidFitr = record.reserve_holiday === 'Eid-ul-Fitr';
     const isEidAdha = record.reserve_holiday === 'Eid-ul-Adha';
-    const isGeneral = record.reserve_holiday === 'General Adjustment' || record.comment?.includes('General Adjustment');
 
     let source = 'General Adjustment';
     if (isGovt) source = 'Govt Holiday';
     else if (isSalary) source = 'Salary';
     else if (isEidFitr) source = 'Eid-ul-Fitr';
     else if (isEidAdha) source = 'Eid-ul-Adha';
-    else if (record.reserve_holiday === 'Overtime' || record.comment?.includes('Overtime')) source = 'Overtime';
-    else if (!isGeneral && record.leave_type && ['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
-      source = 'Overtime';
-    }
+    else if (record.reserve_holiday === 'Overtime' || record.comment?.toLowerCase().includes('overtime')) source = 'Overtime';
+    else source = 'General Adjustment';
 
     const originalMins = record.leave_hour ? parseIntervalToMinutes(record.leave_hour) : 0;
     const amountMinutes = record.adjusted_hour 
@@ -477,7 +474,8 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
             const isEidAdhaShort = r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid-ul-Adha") || false;
             const isGovtHolidayShort = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
             const isSalaryShort = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
-            const isGeneralShort = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
+            const isGeneralShort = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || r.comment?.toLowerCase().includes("general") || false;
+            const isOvertimeShort = r.reserve_holiday === "Overtime" || r.comment?.toLowerCase().includes("overtime") || false;
 
             if (isOfficeLeaveShort) officeLeaveAdjMins = originalMins;
             else if (isEidFitrShort) eidFitrAdjMins = originalMins;
@@ -485,22 +483,25 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
             else if (isGovtHolidayShort) govtAdjMins = originalMins;
             else if (isSalaryShort) salaryAdjMins = originalMins;
             else if (isGeneralShort) generalAdjMins = originalMins;
-            else otAdjMins = originalMins;
+            else if (isOvertimeShort) otAdjMins = originalMins;
+            else generalAdjMins = originalMins; // Strict safeguard: never deduct Overtime unless explicitly specified!
           } else if (r.adjusted_hour) {
             const adjMins = parseIntervalToMinutes(r.adjusted_hour);
             totalAdjMins = adjMins;
             const isSalaryShort = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
-            const isGeneralShort = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
+            const isGeneralShort = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || r.comment?.toLowerCase().includes("general") || false;
             const isGovtHolidayShort = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
             const isEidFitrShort = r.reserve_holiday === "Eid-ul-Fitr" || r.comment?.includes("Eid-ul-Fitr") || false;
             const isEidAdhaShort = r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid-ul-Adha") || false;
+            const isOvertimeShort = r.reserve_holiday === "Overtime" || r.comment?.toLowerCase().includes("overtime") || false;
 
             if (isSalaryShort) salaryAdjMins = adjMins;
             else if (isGeneralShort) generalAdjMins = adjMins;
             else if (isGovtHolidayShort) govtAdjMins = adjMins;
             else if (isEidFitrShort) eidFitrAdjMins = adjMins;
             else if (isEidAdhaShort) eidAdhaAdjMins = adjMins;
-            else otAdjMins = adjMins;
+            else if (isOvertimeShort) otAdjMins = adjMins;
+            else generalAdjMins = adjMins;
           }
 
           const remainingMins = r.adjustment ? 0 : Math.max(0, originalMins - totalAdjMins);
@@ -973,9 +974,10 @@ export function getOvertimeAdjustmentHistory(userRecords: ChutiRecord[]): Overti
         const isEidAdha = r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid-ul-Adha") || false;
         const isGovt = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
         const isSalary = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
-        const isGeneral = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
+        const isGeneral = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || r.comment?.toLowerCase().includes("general") || false;
+        const isOvertime = r.reserve_holiday === "Overtime" || r.comment?.toLowerCase().includes("overtime") || false;
 
-        if (!isOfficeLeave && !isEidFitr && !isEidAdha && !isGovt && !isSalary && !isGeneral) {
+        if (isOvertime && !isOfficeLeave && !isEidFitr && !isEidAdha && !isGovt && !isSalary && !isGeneral) {
           const mins = r.leave_hour ? parseIntervalToMinutes(r.leave_hour) : 0;
           if (mins > 0) {
             items.push({
@@ -992,11 +994,12 @@ export function getOvertimeAdjustmentHistory(userRecords: ChutiRecord[]): Overti
       } else if (r.adjusted_hour) {
         // Legacy partial adjustment with Overtime
         const isSalary = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
-        const isGeneral = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
+        const isGeneral = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || r.comment?.toLowerCase().includes("general") || false;
         const isGovt = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
         const isEid = r.reserve_holiday === "Eid-ul-Fitr" || r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid") || false;
+        const isOvertime = r.reserve_holiday === "Overtime" || r.comment?.toLowerCase().includes("overtime") || false;
 
-        if (!isSalary && !isGeneral && !isGovt && !isEid) {
+        if (isOvertime && !isSalary && !isGeneral && !isGovt && !isEid) {
           const adjMins = parseIntervalToMinutes(r.adjusted_hour);
           if (adjMins > 0) {
             items.push({

@@ -225,7 +225,7 @@ export function AdjustmentModal({
         { month: selectedSalaryMonth, year: selectedSalaryYear },
         null
       );
-    } else if (selectedCategory === 'None' && adjustmentRecord?.leave_type === 'Full Leave') {
+    } else if ((selectedCategory === 'None' || selectedCategory === 'General Adjustment') && adjustmentRecord?.leave_type === 'Full Leave') {
       if (!generalAdjustmentReason.trim()) {
         toast.error('Please enter adjustment details / reason.');
         return;
@@ -268,7 +268,7 @@ export function AdjustmentModal({
           return;
         }
       }
-      handleSaveAdjustment(undefined, 'None', null, null, generalAdjustmentReason.trim() || null);
+      handleSaveAdjustment(undefined, 'General Adjustment', null, null, generalAdjustmentReason.trim() || null);
     } else {
       handleSaveAdjustment(undefined, selectedCategory);
     }
@@ -278,10 +278,10 @@ export function AdjustmentModal({
     submitting ||
     (selectedCategory === 'Govt Holiday' && !selectedHolidayDate) ||
     (selectedCategory === 'Salary' && !selectedSalaryMonth) ||
-    (adjustmentRecord?.leave_type === 'Full Leave' && selectedCategory === 'None' && !generalAdjustmentReason.trim()) ||
+    (adjustmentRecord?.leave_type === 'Full Leave' && (selectedCategory === 'None' || selectedCategory === 'General Adjustment') && !generalAdjustmentReason.trim()) ||
     (isPartialLeave && selectedCategory === 'Overtime' && availableOvertimeMins <= 0) ||
     (isPartialLeave && selectedCategory === 'Overtime' && adjustmentType === 'partial' && (!parsedPartialTime || parsedPartialTime <= 0 || parsedPartialTime > maxOtAdjust)) ||
-    (isPartialLeave && selectedCategory === 'None' && adjustmentType === 'partial' && (!parsedPartialTime || parsedPartialTime <= 0 || parsedPartialTime > remainingSlMins))
+    (isPartialLeave && (selectedCategory === 'None' || selectedCategory === 'General Adjustment') && adjustmentType === 'partial' && (!parsedPartialTime || parsedPartialTime <= 0 || parsedPartialTime > remainingSlMins))
   );
 
   return (
@@ -456,9 +456,9 @@ export function AdjustmentModal({
                   {/* General / Partial Option */}
                   <button
                     type="button"
-                    onClick={() => setSelectedCategory('None')}
+                    onClick={() => setSelectedCategory('General Adjustment')}
                     className={`flex items-center justify-between p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                      selectedCategory === 'None'
+                      (selectedCategory === 'General Adjustment' || selectedCategory === 'None')
                         ? 'bg-blue-950/20 border-blue-500/80 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
                         : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                     }`}
@@ -468,9 +468,9 @@ export function AdjustmentModal({
                       <span className="text-[10px] text-theme-text-muted">Custom time deduction</span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      selectedCategory === 'None' ? 'border-blue-500' : 'border-theme-border-input'
+                      (selectedCategory === 'General Adjustment' || selectedCategory === 'None') ? 'border-blue-500' : 'border-theme-border-input'
                     }`}>
-                      {selectedCategory === 'None' && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                      {(selectedCategory === 'General Adjustment' || selectedCategory === 'None') && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                     </div>
                   </button>
 
@@ -639,7 +639,7 @@ export function AdjustmentModal({
               )}
 
               {/* Duration configuration for Overtime or General adjustment */}
-              {(selectedCategory === 'Overtime' || selectedCategory === 'None') && (
+              {(selectedCategory === 'Overtime' || selectedCategory === 'None' || selectedCategory === 'General Adjustment') && (
                 <div className="bg-theme-page-bg/60 border border-theme-border-muted p-3.5 rounded-xl space-y-3">
                   <div className="flex gap-2">
                     <label className={`flex-1 flex items-center gap-2 p-2.5 bg-theme-card-bg/60 border rounded-lg transition-all ${
@@ -720,7 +720,7 @@ export function AdjustmentModal({
                     </div>
                   )}
 
-                  {selectedCategory === 'None' && (
+                  {(selectedCategory === 'None' || selectedCategory === 'General Adjustment') && (
                     <div className="pt-2 border-t border-theme-border-muted/60 space-y-1.5">
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-theme-text-muted">Remaining Leave to Adjust:</span>
@@ -824,18 +824,18 @@ export function AdjustmentModal({
                   {/* General Adjustment Option */}
                   <button
                     type="button"
-                    onClick={() => setSelectedCategory('None')}
+                    onClick={() => setSelectedCategory('General Adjustment')}
                     className={`flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
-                      selectedCategory === 'None'
+                      (selectedCategory === 'General Adjustment' || selectedCategory === 'None')
                         ? 'bg-blue-950/20 border-blue-500/80 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
                         : 'bg-theme-page-bg/20 border-theme-border-muted hover:bg-theme-border-muted/40 hover:border-theme-border-input'
                     }`}
                   >
                     <span className="text-xs font-bold text-theme-text-primary">General Adjustment</span>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      selectedCategory === 'None' ? 'border-blue-500' : 'border-theme-border-input'
+                      (selectedCategory === 'General Adjustment' || selectedCategory === 'None') ? 'border-blue-500' : 'border-theme-border-input'
                     }`}>
-                      {selectedCategory === 'None' && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                      {(selectedCategory === 'General Adjustment' || selectedCategory === 'None') && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                     </div>
                   </button>
 
