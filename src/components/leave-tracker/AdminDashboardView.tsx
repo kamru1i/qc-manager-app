@@ -60,6 +60,7 @@ interface AdminDashboardViewProps {
   onExportIndividualExcel: (filtered: ChutiRecord[], searchTerm: string) => void;
   onExportIndividualPDF: (filtered: ChutiRecord[], searchTerm: string) => void;
   onToggleAdjustment: (r: ChutiRecord) => void;
+  onOpenAdditionalAdjustment?: (r: ChutiRecord) => void;
   onEditClick: (r: ChutiRecord) => void;
   onDeleteClick: (r: ChutiRecord) => void;
   selectedYear: string;
@@ -114,6 +115,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onExportIndividualExcel,
   onExportIndividualPDF,
   onToggleAdjustment,
+  onOpenAdditionalAdjustment,
   onEditClick,
   onDeleteClick,
   selectedYear,
@@ -432,6 +434,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 onExportExcel={onExportIndividualExcel}
                 onExportPDF={onExportIndividualPDF}
                 onToggleAdjustment={onToggleAdjustment}
+                onOpenAdditionalAdjustment={onOpenAdditionalAdjustment}
                 onEditClick={onEditClick}
                 onDeleteClick={onDeleteClick}
                 onAddLeaveClick={onAddLeaveClick}

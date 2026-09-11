@@ -16,7 +16,11 @@ import {
   getCleanComment,
   HalfYearlyOfficeLeaveStats,
   formatDaysAndHours,
+  getOvertimeAdjustmentHistory,
+  getRecordAdjustedMinutes,
 } from "@/utils/dashboardHelpers";
+import { ShortLeaveHistoryModal } from "./modals/ShortLeaveHistoryModal";
+import { OvertimeHistoryModal } from "./modals/OvertimeHistoryModal";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -137,6 +141,8 @@ export const UserStats: React.FC<UserStatsProps> = ({
 }) => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showFullLeaveHistoryModal, setShowFullLeaveHistoryModal] = useState(false);
+  const [showShortLeaveHistoryModal, setShowShortLeaveHistoryModal] = useState(false);
+  const [showOvertimeHistoryModal, setShowOvertimeHistoryModal] = useState(false);
   const [showOfficeDetailsModal, setShowOfficeDetailsModal] = useState(false);
   const [updatingHolidayDate, setUpdatingHolidayDate] = useState<string | null>(
     null,
@@ -186,6 +192,19 @@ export const UserStats: React.FC<UserStatsProps> = ({
         const timeB = new Date(b.updated_at || b.created_at || b.date).getTime();
         return timeB - timeA;
       });
+  }, [userLeaves]);
+
+  // Adjusted Short Leaves for history modal
+  const adjustedShortLeaves = React.useMemo(() => {
+    return (userLeaves || []).filter((r: any) => {
+      if (!['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type)) return false;
+      return r.adjustment || getRecordAdjustedMinutes(r) > 0;
+    });
+  }, [userLeaves]);
+
+  // Overtime adjustment history
+  const overtimeHistory = React.useMemo(() => {
+    return getOvertimeAdjustmentHistory(userLeaves || []);
   }, [userLeaves]);
 
   // Edit preference modal states
@@ -398,6 +417,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
           subtitle={
             convertedHours > 0 ? `Converted: ${convertedHours} hrs` : undefined
           }
+          onIconClick={
+            adjustedShortLeaves.length > 0
+              ? () => setShowShortLeaveHistoryModal(true)
+              : undefined
+          }
+          iconTooltip={
+            adjustedShortLeaves.length > 0
+              ? "View Short Leave Adjustment History"
+              : undefined
+          }
           bottomAction={
             onConvertToFullLeave && hasConvertibleHours ? (
               <button
@@ -474,6 +503,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
             iconBorderClass="border-emerald-500/20"
             title="Overtime"
             value={`${stats.overtimeHours} hrs`}
+            onIconClick={
+              overtimeHistory.length > 0
+                ? () => setShowOvertimeHistoryModal(true)
+                : undefined
+            }
+            iconTooltip={
+              overtimeHistory.length > 0
+                ? "View Overtime Adjustment History"
+                : undefined
+            }
             loading={!initialFetchDone}
           />
         )}
@@ -1333,6 +1372,23 @@ export const UserStats: React.FC<UserStatsProps> = ({
           </div>,
           document.body,
         )}
+
+      {showShortLeaveHistoryModal && (
+        <ShortLeaveHistoryModal
+          isOpen={showShortLeaveHistoryModal}
+          onClose={() => setShowShortLeaveHistoryModal(false)}
+          userRecords={userLeaves}
+        />
+      )}
+
+      {showOvertimeHistoryModal && (
+        <OvertimeHistoryModal
+          isOpen={showOvertimeHistoryModal}
+          onClose={() => setShowOvertimeHistoryModal(false)}
+          userRecords={userLeaves}
+          remainingOvertime={stats.overtimeHours ? `${stats.overtimeHours} hrs` : undefined}
+        />
+      )}
     </div>
   );
 };

@@ -2,6 +2,94 @@ import { ChutiRecord } from '@/utils/offlineSync';
 import { GlobalSettings } from './globalSettingsHelpers';
 import { parseToCanonicalTime } from './timeFormatHelpers';
 
+export interface LeaveAdjustmentEntry {
+  id: string;
+  amount_minutes: number;
+  source: 'Overtime' | 'General Adjustment' | 'Govt Holiday' | 'Salary' | 'Eid-ul-Fitr' | 'Eid-ul-Adha' | string;
+  source_record_id?: string | null;
+  source_date?: string | null;
+  source_name?: string | null;
+  salary_month?: string | null;
+  salary_year?: string | null;
+  reason?: string | null;
+  action_date: string;
+  comment?: string | null;
+  adjusted_by?: string | null;
+}
+
+export const getRecordAdjustmentEntries = (record?: Partial<ChutiRecord> | null): LeaveAdjustmentEntry[] => {
+  if (!record) return [];
+  const adminReq = record.admin_edit_request as Record<string, unknown> | null | undefined;
+  if (adminReq && Array.isArray(adminReq.adjustments) && adminReq.adjustments.length > 0) {
+    return adminReq.adjustments as LeaveAdjustmentEntry[];
+  }
+
+  // Fallback for legacy records that don't have adjustments array
+  if (record.adjustment || record.adjusted_hour) {
+    const isGovt = record.reserve_holiday && (
+      record.reserve_holiday.includes('—') || 
+      record.reserve_holiday === 'Govt Holiday' || 
+      record.comment?.includes('Govt Holiday')
+    );
+    const isSalary = record.reserve_holiday === 'Salary' || record.comment?.toLowerCase().includes('salary');
+    const isEidFitr = record.reserve_holiday === 'Eid-ul-Fitr';
+    const isEidAdha = record.reserve_holiday === 'Eid-ul-Adha';
+    const isGeneral = record.reserve_holiday === 'General Adjustment' || record.comment?.includes('General Adjustment');
+
+    let source = 'General Adjustment';
+    if (isGovt) source = 'Govt Holiday';
+    else if (isSalary) source = 'Salary';
+    else if (isEidFitr) source = 'Eid-ul-Fitr';
+    else if (isEidAdha) source = 'Eid-ul-Adha';
+    else if (record.reserve_holiday === 'Overtime' || record.comment?.includes('Overtime')) source = 'Overtime';
+    else if (!isGeneral && record.leave_type && ['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
+      source = 'Overtime';
+    }
+
+    const originalMins = record.leave_hour ? parseIntervalToMinutes(record.leave_hour) : 0;
+    const amountMinutes = record.adjusted_hour 
+      ? parseIntervalToMinutes(record.adjusted_hour)
+      : (record.adjustment ? originalMins : 0);
+
+    if (amountMinutes > 0) {
+      return [{
+        id: record.id || `legacy-${Date.now()}`,
+        amount_minutes: amountMinutes,
+        source,
+        source_date: record.reserve_holiday?.includes('—') ? record.reserve_holiday.split('—')[0].trim() : null,
+        source_name: record.reserve_holiday?.includes('—') ? record.reserve_holiday.split('—')[1].trim() : (record.reserve_holiday || null),
+        action_date: record.updated_at || record.created_at || new Date().toISOString(),
+        comment: record.comment || null
+      }];
+    }
+  }
+
+  return [];
+};
+
+export const getRecordAdjustedMinutes = (record?: Partial<ChutiRecord> | null): number => {
+  if (!record) return 0;
+  const entries = getRecordAdjustmentEntries(record);
+  if (entries.length > 0) {
+    return entries.reduce((sum, e) => sum + (Number(e.amount_minutes) || 0), 0);
+  }
+  if (record.adjusted_hour) {
+    return parseIntervalToMinutes(record.adjusted_hour);
+  }
+  if (record.adjustment && record.leave_hour) {
+    return parseIntervalToMinutes(record.leave_hour);
+  }
+  return 0;
+};
+
+export const getRecordRemainingMinutes = (record?: Partial<ChutiRecord> | null): number => {
+  if (!record || !record.leave_hour) return 0;
+  if (record.adjustment) return 0;
+  const originalMins = parseIntervalToMinutes(record.leave_hour);
+  const adjustedMins = getRecordAdjustedMinutes(record);
+  return Math.max(0, originalMins - adjustedMins);
+};
+
 export const applyLeaveFilters = <T extends ChutiRecord>(
   records: T[],
   selectedYear: string,
@@ -143,6 +231,13 @@ export const getLatestActionComment = (comment: string | null | undefined, recor
     }
     if (record.reserve_holiday === 'Office Leave' || (comment && /Adjusted:\s*Office Leave|Adjusted with Office Leave/i.test(comment))) {
       return 'Adjusted with Office Leave';
+    }
+    if (record.reserve_holiday === 'General Adjustment' || (comment && /General Adjustment/i.test(comment))) {
+      const matchGen = comment ? comment.match(/Adjusted with General Adjustment\s*—\s*([^|\n\]]+)/i) : null;
+      if (matchGen && matchGen[1]) {
+        return `Adjusted with General Adjustment — ${matchGen[1].trim()}`;
+      }
+      return 'Adjusted with General Adjustment';
     }
     if (record.leave_type === 'Overtime' && record.adjust_short_leave) {
       return 'Adjusted with Short Leave';
@@ -350,45 +445,80 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
         }
       } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type)) {
         if (r.leave_hour) {
-          let mins = parseIntervalToMinutes(r.leave_hour);
+          const originalMins = parseIntervalToMinutes(r.leave_hour);
           const isNegative = r.leave_hour.toString().startsWith('-');
-          if (r.adjustment) {
-            mins = 0;
-            const fullAdjMins = parseIntervalToMinutes(r.leave_hour);
-            
+          
+          let otAdjMins = 0;
+          let govtAdjMins = 0;
+          let eidFitrAdjMins = 0;
+          let eidAdhaAdjMins = 0;
+          let salaryAdjMins = 0;
+          let generalAdjMins = 0;
+          let officeLeaveAdjMins = 0;
+          let totalAdjMins = 0;
+
+          const adminReq = r.admin_edit_request as Record<string, unknown> | null | undefined;
+          if (adminReq && Array.isArray(adminReq.adjustments) && adminReq.adjustments.length > 0) {
+            for (const adj of adminReq.adjustments as LeaveAdjustmentEntry[]) {
+              const amt = Number(adj.amount_minutes) || 0;
+              totalAdjMins += amt;
+              if (adj.source === 'Overtime') otAdjMins += amt;
+              else if (adj.source === 'Govt Holiday') govtAdjMins += amt;
+              else if (adj.source === 'Eid-ul-Fitr') eidFitrAdjMins += amt;
+              else if (adj.source === 'Eid-ul-Adha') eidAdhaAdjMins += amt;
+              else if (adj.source === 'Salary') salaryAdjMins += amt;
+              else if (adj.source === 'Office Leave') officeLeaveAdjMins += amt;
+              else if (adj.source === 'General Adjustment') generalAdjMins += amt;
+            }
+          } else if (r.adjustment) {
+            totalAdjMins = originalMins;
             const isOfficeLeaveShort = r.reserve_holiday === "Office Leave" || r.comment?.includes("Office Leave") || false;
             const isEidFitrShort = r.reserve_holiday === "Eid-ul-Fitr" || r.comment?.includes("Eid-ul-Fitr") || false;
             const isEidAdhaShort = r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid-ul-Adha") || false;
-            const isGovtHolidayShort = r.reserve_holiday === "Govt Holiday" || r.comment?.includes("Govt Holiday") || false;
+            const isGovtHolidayShort = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
             const isSalaryShort = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
+            const isGeneralShort = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
 
-            if (isOfficeLeaveShort || isEidFitrShort || isEidAdhaShort || isGovtHolidayShort) {
-              const daysEquivalent = fullAdjMins / (workingHours * 60);
-              const signedDaysEquivalent = isNegative ? -daysEquivalent : daysEquivalent;
-              if (isOfficeLeaveShort) officeLeavesTaken += signedDaysEquivalent;
-              else if (isEidFitrShort) eidFitrTaken += signedDaysEquivalent;
-              else if (isEidAdhaShort) eidAdhaTaken += signedDaysEquivalent;
-              else if (isGovtHolidayShort) govtHolidaysTaken += signedDaysEquivalent;
-            } else if (isSalaryShort) {
-              // Salary adjusted short leave: does not deduct from overtime or reserves
-            } else {
-              totalOvertimeMinutes -= isNegative ? -fullAdjMins : fullAdjMins;
-            }
-          } else {
-            // Default/unadjusted short leaves count against Office Leave automatically
-            const daysEquivalent = mins / (workingHours * 60);
-            officeLeavesTaken += isNegative ? -daysEquivalent : daysEquivalent;
+            if (isOfficeLeaveShort) officeLeaveAdjMins = originalMins;
+            else if (isEidFitrShort) eidFitrAdjMins = originalMins;
+            else if (isEidAdhaShort) eidAdhaAdjMins = originalMins;
+            else if (isGovtHolidayShort) govtAdjMins = originalMins;
+            else if (isSalaryShort) salaryAdjMins = originalMins;
+            else if (isGeneralShort) generalAdjMins = originalMins;
+            else otAdjMins = originalMins;
+          } else if (r.adjusted_hour) {
+            const adjMins = parseIntervalToMinutes(r.adjusted_hour);
+            totalAdjMins = adjMins;
+            const isSalaryShort = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
+            const isGeneralShort = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
+            const isGovtHolidayShort = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
+            const isEidFitrShort = r.reserve_holiday === "Eid-ul-Fitr" || r.comment?.includes("Eid-ul-Fitr") || false;
+            const isEidAdhaShort = r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid-ul-Adha") || false;
 
-            if (r.adjusted_hour) {
-              const adjMins = parseIntervalToMinutes(r.adjusted_hour);
-              mins = Math.max(0, mins - adjMins);
-              const isSalaryShort = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
-              if (!isSalaryShort) {
-                totalOvertimeMinutes -= isNegative ? -adjMins : adjMins;
-              }
-            }
+            if (isSalaryShort) salaryAdjMins = adjMins;
+            else if (isGeneralShort) generalAdjMins = adjMins;
+            else if (isGovtHolidayShort) govtAdjMins = adjMins;
+            else if (isEidFitrShort) eidFitrAdjMins = adjMins;
+            else if (isEidAdhaShort) eidAdhaAdjMins = adjMins;
+            else otAdjMins = adjMins;
           }
-          totalShortMinutes += isNegative ? -mins : mins;
+
+          const remainingMins = r.adjustment ? 0 : Math.max(0, originalMins - totalAdjMins);
+
+          // Overtime deduction: Deduct ONLY the amount adjusted against Overtime
+          totalOvertimeMinutes -= isNegative ? -otAdjMins : otAdjMins;
+
+          // Reserves deduction
+          if (govtAdjMins > 0) govtHolidaysTaken += (isNegative ? -govtAdjMins : govtAdjMins) / (workingHours * 60);
+          if (eidFitrAdjMins > 0) eidFitrTaken += (isNegative ? -eidFitrAdjMins : eidFitrAdjMins) / (workingHours * 60);
+          if (eidAdhaAdjMins > 0) eidAdhaTaken += (isNegative ? -eidAdhaAdjMins : eidAdhaAdjMins) / (workingHours * 60);
+          if (officeLeaveAdjMins > 0) officeLeavesTaken += (isNegative ? -officeLeaveAdjMins : officeLeaveAdjMins) / (workingHours * 60);
+
+          // Remaining unadjusted Short Leave counts against Office Leave and totalShortMinutes
+          if (remainingMins > 0) {
+            officeLeavesTaken += (isNegative ? -remainingMins : remainingMins) / (workingHours * 60);
+          }
+          totalShortMinutes += isNegative ? -remainingMins : remainingMins;
         }
       } else if (r.leave_type === 'Overtime') {
         if (r.leave_hour) {
@@ -414,11 +544,11 @@ export const calculateStats = (records: ChutiRecord[], workingHours: number = 9.
   });
 
   return {
-    shortHours: formatDuration(totalShortMinutes),
-    overtimeHours: formatDuration(totalOvertimeMinutes),
+    shortHours: formatDuration(Math.max(0, totalShortMinutes)),
+    overtimeHours: formatDuration(Math.max(0, totalOvertimeMinutes)),
     fullLeaves: Math.max(0, totalFullLeaves),
     reserveLeaves: totalReserveLeaves,
-    totalHours: formatDuration(totalShortMinutes),
+    totalHours: formatDuration(Math.max(0, totalShortMinutes)),
     officeLeavesTaken,
     eidFitrTaken,
     eidAdhaTaken,
@@ -801,5 +931,135 @@ export function getMaxDaysInMonth(dateString?: string): number {
   }
 
   return new Date(year, month + 1, 0).getDate();
+}
+
+export interface OvertimeAdjustmentItem {
+  id: string;
+  leaveDate: string;
+  leaveType: string;
+  overtimeUsedMinutes: number;
+  actionDate: string | null;
+  comment: string;
+  recordId: string;
+}
+
+export function getOvertimeAdjustmentHistory(userRecords: ChutiRecord[]): OvertimeAdjustmentItem[] {
+  const items: OvertimeAdjustmentItem[] = [];
+
+  for (const r of userRecords) {
+    if (r.status !== 'approved') continue;
+
+    // 1. Check partial leave records
+    if (['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type)) {
+      const adminReq = r.admin_edit_request as Record<string, unknown> | null | undefined;
+      if (adminReq && Array.isArray(adminReq.adjustments) && adminReq.adjustments.length > 0) {
+        for (const adj of adminReq.adjustments as LeaveAdjustmentEntry[]) {
+          if (adj.source === 'Overtime') {
+            items.push({
+              id: adj.id || `${r.id}-${adj.action_date}`,
+              leaveDate: r.date,
+              leaveType: r.leave_type,
+              overtimeUsedMinutes: Number(adj.amount_minutes) || 0,
+              actionDate: adj.action_date || r.updated_at || r.created_at || null,
+              comment: adj.comment || adj.reason || getCleanComment(r.comment) || 'Adjusted with Overtime',
+              recordId: r.id || '',
+            });
+          }
+        }
+      } else if (r.adjustment) {
+        // Legacy full adjustment with Overtime
+        const isOfficeLeave = r.reserve_holiday === "Office Leave" || r.comment?.includes("Office Leave") || false;
+        const isEidFitr = r.reserve_holiday === "Eid-ul-Fitr" || r.comment?.includes("Eid-ul-Fitr") || false;
+        const isEidAdha = r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid-ul-Adha") || false;
+        const isGovt = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
+        const isSalary = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
+        const isGeneral = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
+
+        if (!isOfficeLeave && !isEidFitr && !isEidAdha && !isGovt && !isSalary && !isGeneral) {
+          const mins = r.leave_hour ? parseIntervalToMinutes(r.leave_hour) : 0;
+          if (mins > 0) {
+            items.push({
+              id: `${r.id}-legacy`,
+              leaveDate: r.date,
+              leaveType: r.leave_type,
+              overtimeUsedMinutes: mins,
+              actionDate: r.updated_at || r.created_at || null,
+              comment: getCleanComment(r.comment) || 'Adjusted with Overtime',
+              recordId: r.id || '',
+            });
+          }
+        }
+      } else if (r.adjusted_hour) {
+        // Legacy partial adjustment with Overtime
+        const isSalary = r.reserve_holiday === "Salary" || r.comment?.includes("Salary") || false;
+        const isGeneral = r.reserve_holiday === "General Adjustment" || r.comment?.includes("General Adjustment") || false;
+        const isGovt = r.reserve_holiday === "Govt Holiday" || r.reserve_holiday?.includes("—") || r.comment?.includes("Govt Holiday") || false;
+        const isEid = r.reserve_holiday === "Eid-ul-Fitr" || r.reserve_holiday === "Eid-ul-Adha" || r.comment?.includes("Eid") || false;
+
+        if (!isSalary && !isGeneral && !isGovt && !isEid) {
+          const adjMins = parseIntervalToMinutes(r.adjusted_hour);
+          if (adjMins > 0) {
+            items.push({
+              id: `${r.id}-legacy-partial`,
+              leaveDate: r.date,
+              leaveType: r.leave_type,
+              overtimeUsedMinutes: adjMins,
+              actionDate: r.updated_at || r.created_at || null,
+              comment: getCleanComment(r.comment) || 'Adjusted with Overtime',
+              recordId: r.id || '',
+            });
+          }
+        }
+      }
+    }
+
+    // 2. Check Overtime records with adjust_short_leave (legacy overtime record adjustment)
+    if (r.leave_type === 'Overtime' && r.adjust_short_leave) {
+      const usedMins = r.adjustment 
+        ? (r.leave_hour ? parseIntervalToMinutes(r.leave_hour) : 0)
+        : (r.adjusted_hour ? parseIntervalToMinutes(r.adjusted_hour) : 0);
+      if (usedMins > 0) {
+        items.push({
+          id: `${r.id}-ot-record`,
+          leaveDate: r.date,
+          leaveType: 'Overtime',
+          overtimeUsedMinutes: usedMins,
+          actionDate: r.updated_at || r.created_at || null,
+          comment: getCleanComment(r.comment) || 'Adjusted against Short Leave',
+          recordId: r.id || '',
+        });
+      }
+    }
+  }
+
+  // Sort descending by action date or leave date
+  return items.sort((a, b) => {
+    const timeA = new Date(a.actionDate || a.leaveDate).getTime();
+    const timeB = new Date(b.actionDate || b.leaveDate).getTime();
+    return timeB - timeA;
+  });
+}
+
+export function getOvertimeSummary(userRecords: ChutiRecord[]) {
+  let earnedMinutes = 0;
+  for (const r of userRecords) {
+    if (r.status === 'approved' && r.leave_type === 'Overtime' && r.leave_hour) {
+      earnedMinutes += parseIntervalToMinutes(r.leave_hour);
+    }
+  }
+
+  const history = getOvertimeAdjustmentHistory(userRecords);
+  const usedMinutes = history.reduce((sum, item) => sum + item.overtimeUsedMinutes, 0);
+  const remainingMinutes = Math.max(0, earnedMinutes - usedMinutes);
+
+  return {
+    earnedMinutes,
+    usedMinutes,
+    remainingMinutes,
+    earnedFormatted: formatDuration(earnedMinutes),
+    usedFormatted: formatDuration(usedMinutes),
+    remainingFormatted: formatDuration(remainingMinutes),
+    history,
+  };
 }
 

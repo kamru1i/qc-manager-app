@@ -4,7 +4,22 @@ import { useState } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Profile, ChutiRecordWithProfile } from '@/types';
 import { ChutiRecord, saveOfflineUpdate } from '@/utils/offlineSync';
-import { formatDate, formatTimeToAMPM, getDetailedLeaveLabel, getExistingNotifications, createNotification, formatLeaveDuration, getCleanComment, getApprovalsPrefix } from '@/utils/dashboardHelpers';
+import { 
+  formatDate, 
+  formatTimeToAMPM, 
+  getDetailedLeaveLabel, 
+  getExistingNotifications, 
+  createNotification, 
+  formatLeaveDuration, 
+  getCleanComment, 
+  getApprovalsPrefix,
+  parseIntervalToMinutes,
+  formatDuration,
+  getRecordAdjustedMinutes,
+  getRecordRemainingMinutes,
+  getRecordAdjustmentEntries,
+  LeaveAdjustmentEntry
+} from '@/utils/dashboardHelpers';
 import { isAdminRole, isSuperadmin } from '@/utils/permissionService';
 
 interface useAdjustmentOperationsParams {
@@ -45,17 +60,37 @@ export const useAdjustmentOperations = ({
   const [showCancelAdjustmentModal, setShowCancelAdjustmentModal] = useState(false);
   const [cancelAdjustmentRecord, setCancelAdjustmentRecord] = useState<ChutiRecord | null>(null);
 
+  // Open adjustment modal for additional adjustment on partially adjusted record
+  const handleOpenAdditionalAdjustment = (record: ChutiRecord) => {
+    setAdjustmentRecord(record);
+    setAdjustShortLeaveOption(record.adjust_short_leave === true);
+    if (['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
+      const remMins = getRecordRemainingMinutes(record);
+      setAdjustmentType('full');
+      setPartialAdjustmentTime(formatDuration(remMins));
+    }
+    setShowAdjustmentModal(true);
+  };
+
   // Toggle Adjustment Status click trigger
   const handleToggleAdjustmentClick = (record: ChutiRecord) => {
-    if (record.adjustment || record.adjusted_hour || record.reserve_adjustment_status === 'pending') {
+    const isPartialLeave = ['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type);
+    const remMins = isPartialLeave ? getRecordRemainingMinutes(record) : 0;
+
+    // If fully adjusted or pending, open cancel modal
+    if (record.adjustment || record.reserve_adjustment_status === 'pending' || (isPartialLeave && remMins === 0)) {
+      setCancelAdjustmentRecord(record);
+      setShowCancelAdjustmentModal(true);
+    } else if (record.adjusted_hour && isPartialLeave && remMins > 0) {
+      // Partially adjusted: toggle switch allows cancellation, or opening additional adjustment
       setCancelAdjustmentRecord(record);
       setShowCancelAdjustmentModal(true);
     } else {
       setAdjustmentRecord(record);
       setAdjustShortLeaveOption(record.adjust_short_leave === true);
-      if (['Short Leave', 'Early Leave', 'Late Join'].includes(record.leave_type)) {
+      if (isPartialLeave) {
         setAdjustmentType('full');
-        setPartialAdjustmentTime(record.leave_hour ? record.leave_hour.toString().split('.')[0].substring(0, 5) : '02:00');
+        setPartialAdjustmentTime(record.leave_hour ? record.leave_hour.toString().split('.')[0].substring(0, 5) : '00:30');
       }
       setShowAdjustmentModal(true);
     }
@@ -231,34 +266,127 @@ export const useAdjustmentOperations = ({
           }
         };
       } else if (isPartialLeave) {
-        if (selectedCat === 'Govt Holiday' || selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
-          const cleanComment = getCleanComment(record.comment);
-          const approvalsPrefix = getApprovalsPrefix(record.comment);
-          const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: ${selectedCat}${cleanComment ? ` | ${cleanComment}` : ''}`;
-          requestedUpdates = {
-            adjustment: true,
-            adjusted_hour: null,
-            adjust_short_leave: false,
-            reserve_holiday: selectedCat,
-            comment: finalComment || null
-          };
-        } else if (adjustmentType === 'full') {
-          const cleanComment = getCleanComment(record.comment);
-          const approvalsPrefix = getApprovalsPrefix(record.comment);
-          const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: Overtime${cleanComment ? ` | ${cleanComment}` : ''}`;
-          requestedUpdates = { adjustment: true, adjusted_hour: null, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
-        } else {
-          const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
-          if (!timeRegex.test(partialAdjustmentTime)) {
-            setMessage({ type: 'error', text: 'Please use correct time format (e.g. 02:30).' });
+        const originalMins = record.leave_hour ? parseIntervalToMinutes(record.leave_hour) : 0;
+        const alreadyAdjustedMins = getRecordAdjustedMinutes(record);
+        const remainingMins = Math.max(0, originalMins - alreadyAdjustedMins);
+
+        if (remainingMins <= 0) {
+          setMessage({ type: 'error', text: 'This leave record is already fully adjusted.' });
+          setSubmitting(false);
+          return;
+        }
+
+        let amountToAdjust = remainingMins;
+        let adjSource = selectedCat;
+        let adjMessage = '';
+
+        if (selectedCat === 'Overtime') {
+          adjSource = 'Overtime';
+          if (adjustmentType === 'partial') {
+            const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
+            if (!timeRegex.test(partialAdjustmentTime)) {
+              setMessage({ type: 'error', text: 'Please use correct time format (e.g. 00:30).' });
+              setSubmitting(false);
+              return;
+            }
+            amountToAdjust = parseIntervalToMinutes(partialAdjustmentTime);
+          } else {
+            amountToAdjust = remainingMins;
+          }
+
+          if (amountToAdjust <= 0) {
+            setMessage({ type: 'error', text: 'Adjustment time must be greater than zero.' });
             setSubmitting(false);
             return;
           }
-          const cleanComment = getCleanComment(record.comment);
-          const approvalsPrefix = getApprovalsPrefix(record.comment);
-          const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}Adjusted: partial (${partialAdjustmentTime})${cleanComment ? ` | ${cleanComment}` : ''}`;
-          requestedUpdates = { adjustment: false, adjusted_hour: `${partialAdjustmentTime}:00`, adjust_short_leave: false, reserve_holiday: null, comment: finalComment || null };
+          if (amountToAdjust > remainingMins) {
+            setMessage({ type: 'error', text: `Adjustment amount (${formatDuration(amountToAdjust)}) cannot exceed remaining leave duration (${formatDuration(remainingMins)}).` });
+            setSubmitting(false);
+            return;
+          }
+          adjMessage = `${formatDuration(amountToAdjust)} minutes of ${record.leave_type} adjusted with Overtime`;
+        } else if (selectedCat === 'None' || selectedCat === 'General Adjustment') {
+          adjSource = 'General Adjustment';
+          if (adjustmentType === 'partial') {
+            const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
+            if (!timeRegex.test(partialAdjustmentTime)) {
+              setMessage({ type: 'error', text: 'Please use correct time format (e.g. 00:30).' });
+              setSubmitting(false);
+              return;
+            }
+            amountToAdjust = parseIntervalToMinutes(partialAdjustmentTime);
+          } else {
+            amountToAdjust = remainingMins;
+          }
+
+          if (amountToAdjust <= 0) {
+            setMessage({ type: 'error', text: 'Adjustment time must be greater than zero.' });
+            setSubmitting(false);
+            return;
+          }
+          if (amountToAdjust > remainingMins) {
+            setMessage({ type: 'error', text: `Adjustment amount (${formatDuration(amountToAdjust)}) cannot exceed remaining leave duration (${formatDuration(remainingMins)}).` });
+            setSubmitting(false);
+            return;
+          }
+          const reason = generalDetails?.trim();
+          adjMessage = reason 
+            ? `${formatDuration(amountToAdjust)} minutes of ${record.leave_type} adjusted with General Adjustment — ${reason}`
+            : `${formatDuration(amountToAdjust)} minutes of ${record.leave_type} adjusted with General Adjustment`;
+        } else if (selectedCat === 'Govt Holiday' && specificHoliday) {
+          adjSource = 'Govt Holiday';
+          amountToAdjust = remainingMins;
+          adjMessage = `Adjusted with Government Holiday on ${formatDate(specificHoliday.date)} — ${specificHoliday.name}`;
+        } else if (selectedCat === 'Salary') {
+          adjSource = 'Salary';
+          amountToAdjust = remainingMins;
+          const salaryLabel = salaryInfo ? `${salaryInfo.month} ${salaryInfo.year}` : `${new Date().toLocaleString('en-US', { month: 'long' })} ${new Date().getFullYear()}`;
+          adjMessage = `Adjusted with ${salaryLabel} salary deduction`;
+        } else if (selectedCat === 'Eid-ul-Fitr' || selectedCat === 'Eid-ul-Adha') {
+          adjSource = selectedCat;
+          amountToAdjust = remainingMins;
+          adjMessage = `Adjusted with ${selectedCat}`;
         }
+
+        const existingAdjustments = getRecordAdjustmentEntries(record);
+        const newEntry: LeaveAdjustmentEntry = {
+          id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `adj-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          amount_minutes: amountToAdjust,
+          source: adjSource,
+          source_date: specificHoliday?.date || null,
+          source_name: specificHoliday?.name || null,
+          salary_month: salaryInfo?.month || null,
+          salary_year: salaryInfo?.year || null,
+          reason: generalDetails?.trim() || null,
+          action_date: new Date().toISOString(),
+          comment: adjMessage,
+          adjusted_by: profile?.id || null
+        };
+
+        const updatedAdjustments = [...existingAdjustments, newEntry];
+        const newTotalAdjusted = updatedAdjustments.reduce((sum, a) => sum + (Number(a.amount_minutes) || 0), 0);
+        const newRemaining = Math.max(0, originalMins - newTotalAdjusted);
+        const isFullyAdjusted = (newRemaining === 0);
+        const formattedAdjHour = `${formatDuration(newTotalAdjusted)}:00`;
+
+        const cleanComment = getCleanComment(record.comment);
+        const approvalsPrefix = getApprovalsPrefix(record.comment);
+        const finalComment = `${approvalsPrefix ? `${approvalsPrefix} | ` : ''}${adjMessage}${cleanComment ? ` | ${cleanComment}` : ''}`;
+
+        requestedUpdates = {
+          adjustment: isFullyAdjusted,
+          adjusted_hour: formattedAdjHour,
+          adjust_short_leave: false,
+          reserve_holiday: isFullyAdjusted 
+            ? (updatedAdjustments.length === 1 ? updatedAdjustments[0].source : 'Multiple Adjustments') 
+            : (adjSource === 'General Adjustment' ? 'General Adjustment' : (record.reserve_holiday || adjSource)),
+          comment: finalComment || null,
+          admin_edit_request: {
+            adjustments: updatedAdjustments,
+            last_adjustment_source: adjSource,
+            last_adjusted_at: new Date().toISOString()
+          }
+        };
       } else if (record.leave_type === 'Overtime') {
         const shouldAdjust = overrideAdjustShortLeave !== undefined ? overrideAdjustShortLeave : adjustShortLeaveOption;
         const cleanComment = getCleanComment(record.comment);
@@ -502,6 +630,7 @@ export const useAdjustmentOperations = ({
     setCancelAdjustmentRecord,
 
     handleToggleAdjustmentClick,
+    handleOpenAdditionalAdjustment,
     handleConfirmCancelAdjustment,
     handleSaveAdjustment,
     handleApproveReserveAdjustment,

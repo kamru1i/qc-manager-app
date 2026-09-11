@@ -1,12 +1,22 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, Trash2, Search, Plus, Download } from 'lucide-react';
+import { Edit, Trash2, Search, Plus, Download, History } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { Profile } from '@/types';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
-import { sortChutiRecordsDescending, getLatestActionComment, getLeaveDisplayComment, getFullCommentHistory } from '@/utils/dashboardHelpers';
+import { 
+  sortChutiRecordsDescending, 
+  getLatestActionComment, 
+  getLeaveDisplayComment, 
+  getFullCommentHistory,
+  formatDuration,
+  getRecordAdjustedMinutes,
+  getRecordRemainingMinutes,
+  getRecordAdjustmentEntries
+} from '@/utils/dashboardHelpers';
+import { ShortLeaveHistoryModal } from './modals/ShortLeaveHistoryModal';
 
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 
@@ -25,6 +35,7 @@ interface LeavesRecordsTableProps {
   onExportExcel: (filtered: ChutiRecord[], searchTerm: string) => void;
   onExportPDF?: (filtered: ChutiRecord[], searchTerm: string) => void;
   onToggleAdjustment: (r: ChutiRecord) => void;
+  onOpenAdditionalAdjustment?: (r: ChutiRecord) => void;
   onDeleteClick: (r: ChutiRecord) => void;
   onRequestRemovalClick?: (r: ChutiRecord) => void;
   onEditClick?: (r: ChutiRecord) => void;
@@ -71,6 +82,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   onExportExcel,
   onExportPDF,
   onToggleAdjustment,
+  onOpenAdditionalAdjustment,
   onDeleteClick,
   onRequestRemovalClick,
   onEditClick,
@@ -97,6 +109,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedHistoryRecord, setSelectedHistoryRecord] = useState<ChutiRecord | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -660,9 +673,15 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                               return <span className="text-theme-text-muted/60 font-mono">-</span>;
                             }
 
+                            const isPartialLeave = ['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type);
+                            const adjustedMins = isPartialLeave ? getRecordAdjustedMinutes(r) : 0;
+                            const remMins = isPartialLeave ? getRecordRemainingMinutes(r) : 0;
+                            const adjEntries = isPartialLeave ? getRecordAdjustmentEntries(r) : [];
+                            const hasHistory = adjEntries.length > 0 || (isPartialLeave && (r.adjustment || adjustedMins > 0));
+
                             if (canToggleAdjustment) {
                               return (
-                                <div className="flex items-center justify-center gap-2">
+                                <div className="flex items-center justify-center gap-1.5">
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -687,32 +706,74 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                                     ) : r.adjustment ? (
                                       <span className="text-blue-400">Yes</span>
                                     ) : r.adjusted_hour ? (
-                                      <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (onOpenAdditionalAdjustment) {
+                                            onOpenAdditionalAdjustment(r);
+                                          } else {
+                                            onToggleAdjustment(r);
+                                          }
+                                        }}
+                                        className="text-cyan-400 font-mono hover:underline cursor-pointer"
+                                        title={remMins > 0 ? "Click to adjust remaining duration" : undefined}
+                                      >
+                                        Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})
+                                      </button>
                                     ) : r.reserve_adjustment_status === 'rejected' ? (
                                       <span className="text-theme-text-muted">No (Rejected)</span>
                                     ) : (
                                       <span className="text-theme-text-muted">No</span>
                                     )}
                                   </span>
+                                  {hasHistory && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedHistoryRecord(r);
+                                      }}
+                                      className="p-0.5 text-theme-text-muted hover:text-blue-400 transition-colors cursor-pointer ml-0.5"
+                                      title="View Adjustment History"
+                                    >
+                                      <History className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               );
                             }
 
                             // Read-only view for own leave records (no interactive toggle switch)
                             return (
-                              <span className="text-xs font-semibold">
-                                {r.reserve_adjustment_status === 'pending' ? (
-                                  <span className="text-purple-400 animate-pulse font-semibold">Pending</span>
-                                ) : r.adjustment ? (
-                                  <span className="text-blue-400 font-semibold">Yes</span>
-                                ) : r.adjusted_hour ? (
-                                  <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
-                                ) : r.reserve_adjustment_status === 'rejected' ? (
-                                  <span className="text-theme-text-muted">No (Rejected)</span>
-                                ) : (
-                                  <span className="text-theme-text-muted">No</span>
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span className="text-xs font-semibold">
+                                  {r.reserve_adjustment_status === 'pending' ? (
+                                    <span className="text-purple-400 animate-pulse font-semibold">Pending</span>
+                                  ) : r.adjustment ? (
+                                    <span className="text-blue-400 font-semibold">Yes</span>
+                                  ) : r.adjusted_hour ? (
+                                    <span className="text-cyan-400 font-mono">Partial ({r.adjusted_hour.toString().split('.')[0].substring(0, 5)})</span>
+                                  ) : r.reserve_adjustment_status === 'rejected' ? (
+                                    <span className="text-theme-text-muted">No (Rejected)</span>
+                                  ) : (
+                                    <span className="text-theme-text-muted">No</span>
+                                  )}
+                                </span>
+                                {hasHistory && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedHistoryRecord(r);
+                                    }}
+                                    className="p-0.5 text-theme-text-muted hover:text-blue-400 transition-colors cursor-pointer ml-0.5"
+                                    title="View Adjustment History"
+                                  >
+                                    <History className="h-3.5 w-3.5" />
+                                  </button>
                                 )}
-                              </span>
+                              </div>
                             );
                           })()}
                         </td>
@@ -721,7 +782,23 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         {r.leave_type === 'Full Leave' ? '-' : `${formatTimeToAMPM(r.sign_in_time)} / ${formatTimeToAMPM(r.sign_out_time)}`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary font-mono font-bold text-center">
-                        {r.leave_type === 'Full Leave' || r.leave_type === 'Overtime' ? '-' : (r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '-')}
+                        {(() => {
+                          if (r.leave_type === 'Full Leave' || r.leave_type === 'Overtime') return '-';
+                          const isPartial = ['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type);
+                          const adjMins = isPartial ? getRecordAdjustedMinutes(r) : 0;
+                          const rem = isPartial ? getRecordRemainingMinutes(r) : 0;
+                          if (isPartial && adjMins > 0 && !r.adjustment) {
+                            return (
+                              <div className="flex flex-col items-center justify-center">
+                                <span className="font-mono font-bold text-amber-400">{formatDuration(rem)}</span>
+                                <span className="text-[10px] text-theme-text-muted font-normal font-sans tracking-tight">
+                                  Adjusted: {formatDuration(adjMins)}
+                                </span>
+                              </div>
+                            );
+                          }
+                          return r.leave_hour ? r.leave_hour.toString().split('.')[0].substring(0, 5) : '-';
+                        })()}
                       </td>
                       {allowOvertime && !hideAdjustmentAndOvertime && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary font-mono font-bold text-center">
@@ -867,6 +944,13 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
           confirmText="Delete"
           cancelText="Cancel"
           isDanger={true}
+        />
+      )}
+      {selectedHistoryRecord && (
+        <ShortLeaveHistoryModal
+          isOpen={!!selectedHistoryRecord}
+          onClose={() => setSelectedHistoryRecord(null)}
+          record={selectedHistoryRecord}
         />
       )}
     </div>

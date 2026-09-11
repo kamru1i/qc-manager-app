@@ -425,6 +425,7 @@ export default function ChutiDashboard({
 
   const {
     handleToggleAdjustmentClick,
+    handleOpenAdditionalAdjustment,
     handleApproveReserveAdjustment,
   } = adjustmentOps;
 
@@ -875,6 +876,7 @@ export default function ChutiDashboard({
               onChutiTabChange('add_leave');
             }}
             onToggleAdjustment={handleToggleAdjustmentClick}
+            onOpenAdditionalAdjustment={handleOpenAdditionalAdjustment}
             onDeleteClick={triggerDeleteRecord}
             onRequestRemovalClick={handleOpenRequestRemoval}
             onEditClick={(record) => {
@@ -923,6 +925,7 @@ export default function ChutiDashboard({
             onExportIndividualExcel={(filtered, term) => handleExportIndividualExcel(viewingStaffId || '', filtered, term)}
             onExportIndividualPDF={(filtered, term) => handleExportIndividualPDF(viewingStaffId || '', filtered, term)}
             onToggleAdjustment={handleToggleAdjustmentClick}
+            onOpenAdditionalAdjustment={handleOpenAdditionalAdjustment}
             onEditClick={handleOpenAdminEditModal}
             onDeleteClick={triggerDeleteRecord}
             selectedYear={selectedYear}

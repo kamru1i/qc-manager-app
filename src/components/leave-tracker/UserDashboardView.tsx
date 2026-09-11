@@ -50,6 +50,7 @@ interface UserDashboardViewProps {
   onExportPDF: (filtered: ChutiRecord[], searchTerm: string) => void;
   onAddLeaveClick: () => void;
   onToggleAdjustment: (r: ChutiRecord) => void;
+  onOpenAdditionalAdjustment?: (r: ChutiRecord) => void;
   onDeleteClick: (r: ChutiRecord) => void;
   onRequestRemovalClick?: (r: ChutiRecord) => void;
   onEditClick?: (r: ChutiRecord) => void;
@@ -94,6 +95,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   onExportPDF,
   onAddLeaveClick,
   onToggleAdjustment,
+  onOpenAdditionalAdjustment,
   onDeleteClick,
   onRequestRemovalClick,
   onEditClick,
@@ -364,6 +366,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         onExportPDF={onExportPDF}
         onAddLeaveClick={onAddLeaveClick}
         onToggleAdjustment={onToggleAdjustment}
+        onOpenAdditionalAdjustment={onOpenAdditionalAdjustment}
         onDeleteClick={onDeleteClick}
         onRequestRemovalClick={onRequestRemovalClick}
         onEditClick={onEditClick}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { SlidersHorizontal, RefreshCw, AlertCircle } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
-import { calculateStats, GlobalSettings, parseIntervalToMinutes, formatDuration } from '@/utils/dashboardHelpers';
+import { calculateStats, GlobalSettings, parseIntervalToMinutes, formatDuration, getRecordAdjustedMinutes, getRecordRemainingMinutes } from '@/utils/dashboardHelpers';
 import { formatDate } from '@/utils/quotesDashboardHelpers';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { Modal } from '@/components/common/Modal';
@@ -164,11 +164,33 @@ export function AdjustmentModal({
   const slMins = isPartialLeave
     ? parseIntervalToMinutes(adjustmentRecord.leave_hour)
     : 0;
+  const alreadyAdjustedSlMins = isPartialLeave
+    ? getRecordAdjustedMinutes(adjustmentRecord)
+    : 0;
+  const remainingSlMins = isPartialLeave
+    ? getRecordRemainingMinutes(adjustmentRecord)
+    : 0;
+
+  const canOvertimeFull = availableOvertimeMins >= remainingSlMins && remainingSlMins > 0;
+  const maxOtAdjust = Math.min(remainingSlMins, availableOvertimeMins);
+
+  // Auto-switch to partial if Overtime selected but full adjustment is not possible
+  useEffect(() => {
+    if (isPartialLeave && selectedCategory === 'Overtime' && !canOvertimeFull) {
+      if (adjustmentType === 'full') {
+        setAdjustmentType('partial');
+        setPartialAdjustmentTime(formatDuration(maxOtAdjust));
+      }
+    }
+  }, [isPartialLeave, selectedCategory, canOvertimeFull, adjustmentType, maxOtAdjust, setAdjustmentType, setPartialAdjustmentTime]);
 
   const parsedPartialTime = parseIntervalToMinutes(partialAdjustmentTime);
   const activeAdjustMins = adjustmentType === 'full'
-    ? (selectedCategory === 'Overtime' ? Math.min(slMins, availableOvertimeMins) : slMins)
-    : Math.min(parsedPartialTime, slMins);
+    ? (selectedCategory === 'Overtime' ? Math.min(remainingSlMins, availableOvertimeMins) : remainingSlMins)
+    : Math.min(
+        parsedPartialTime > 0 ? parsedPartialTime : (selectedCategory === 'Overtime' ? maxOtAdjust : remainingSlMins),
+        selectedCategory === 'Overtime' ? maxOtAdjust : remainingSlMins
+      );
 
   const monthOptions = useMemo(() => MONTH_NAMES.map(m => ({ value: m, label: m })), []);
   const yearOptions = useMemo(() => [
@@ -215,16 +237,48 @@ export function AdjustmentModal({
         null,
         generalAdjustmentReason.trim()
       );
+    } else if (isPartialLeave && selectedCategory === 'Overtime') {
+      if (adjustmentType === 'partial') {
+        const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
+        const timeToUse = partialAdjustmentTime || formatDuration(activeAdjustMins);
+        if (!timeRegex.test(timeToUse)) {
+          toast.error('Please enter a valid time (HH:MM).');
+          return;
+        }
+        if (parsedPartialTime > maxOtAdjust) {
+          toast.error(`Adjustment cannot exceed available Overtime (${formatDuration(maxOtAdjust)}).`);
+          return;
+        }
+      }
+      handleSaveAdjustment(undefined, 'Overtime');
+    } else if (isPartialLeave && (selectedCategory === 'None' || selectedCategory === 'General Adjustment')) {
+      if (adjustmentType === 'partial') {
+        const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
+        const timeToUse = partialAdjustmentTime || formatDuration(activeAdjustMins);
+        if (!timeRegex.test(timeToUse)) {
+          toast.error('Please enter a valid time (HH:MM).');
+          return;
+        }
+        if (parsedPartialTime > remainingSlMins) {
+          toast.error(`Adjustment cannot exceed remaining leave duration (${formatDuration(remainingSlMins)}).`);
+          return;
+        }
+      }
+      handleSaveAdjustment(undefined, 'None', null, null, generalAdjustmentReason.trim() || null);
     } else {
       handleSaveAdjustment(undefined, selectedCategory);
     }
   };
 
-  const isConfirmDisabled =
+  const isConfirmDisabled = Boolean(
     submitting ||
     (selectedCategory === 'Govt Holiday' && !selectedHolidayDate) ||
     (selectedCategory === 'Salary' && !selectedSalaryMonth) ||
-    (adjustmentRecord?.leave_type === 'Full Leave' && selectedCategory === 'None' && !generalAdjustmentReason.trim());
+    (adjustmentRecord?.leave_type === 'Full Leave' && selectedCategory === 'None' && !generalAdjustmentReason.trim()) ||
+    (isPartialLeave && selectedCategory === 'Overtime' && availableOvertimeMins <= 0) ||
+    (isPartialLeave && selectedCategory === 'Overtime' && adjustmentType === 'partial' && (!parsedPartialTime || parsedPartialTime <= 0 || parsedPartialTime > maxOtAdjust)) ||
+    (isPartialLeave && selectedCategory === 'None' && adjustmentType === 'partial' && (!parsedPartialTime || parsedPartialTime <= 0 || parsedPartialTime > remainingSlMins))
+  );
 
   return (
     <Modal
@@ -324,9 +378,22 @@ export function AdjustmentModal({
             /* 2. PARTIAL LEAVE (SHORT LEAVE / EARLY LEAVE / LATE JOIN) ADJUSTMENT VIEW  */
             /* ========================================================================= */
             <div className="space-y-4 font-sans text-xs">
-              <p className="text-xs text-theme-text-muted">
-                Choose how you want to adjust this <strong className="text-theme-text-primary">{adjustmentRecord.leave_type}</strong> ({adjustmentRecord.leave_hour ? adjustmentRecord.leave_hour.toString().split('.')[0].substring(0, 5) : '00:00'} hrs).
-              </p>
+              <div className="space-y-1 font-sans text-xs">
+                <p className="text-xs text-theme-text-muted">
+                  Choose how you want to adjust this <strong className="text-theme-text-primary">{adjustmentRecord.leave_type}</strong> record for date <strong className="text-theme-text-primary">{formatDate(adjustmentRecord.date)}</strong>.
+                </p>
+                <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] pt-1">
+                  <span className="text-theme-text-muted">Original: <strong className="text-theme-text-primary">{formatDuration(slMins)}</strong></span>
+                  {alreadyAdjustedSlMins > 0 && (
+                    <>
+                      <span className="text-theme-border-input">|</span>
+                      <span className="text-cyan-400">Already Adjusted: <strong>{formatDuration(alreadyAdjustedSlMins)}</strong></span>
+                      <span className="text-theme-border-input">|</span>
+                      <span className="text-amber-400 font-bold">Remaining: <strong>{formatDuration(remainingSlMins)}</strong></span>
+                    </>
+                  )}
+                </div>
+              </div>
 
               {/* Leave Quota and Balance Summary Bar */}
               <div className="bg-theme-page-bg/40 border border-theme-border-muted p-3 rounded-xl space-y-2">
@@ -571,11 +638,16 @@ export function AdjustmentModal({
               {(selectedCategory === 'Overtime' || selectedCategory === 'None') && (
                 <div className="bg-theme-page-bg/60 border border-theme-border-muted p-3.5 rounded-xl space-y-3">
                   <div className="flex gap-2">
-                    <label className="flex-1 flex items-center gap-2 p-2.5 bg-theme-card-bg/60 border border-theme-border-input rounded-lg cursor-pointer hover:border-theme-border-active transition-all">
+                    <label className={`flex-1 flex items-center gap-2 p-2.5 bg-theme-card-bg/60 border rounded-lg transition-all ${
+                      selectedCategory === 'Overtime' && !canOvertimeFull
+                        ? 'opacity-50 cursor-not-allowed border-theme-border-input'
+                        : 'border-theme-border-input cursor-pointer hover:border-theme-border-active'
+                    }`}>
                       <input
                         type="radio"
                         name="adjustmentType"
                         checked={adjustmentType === 'full'}
+                        disabled={selectedCategory === 'Overtime' && !canOvertimeFull}
                         onChange={() => setAdjustmentType('full')}
                         className="text-blue-500 focus:ring-blue-500"
                       />
@@ -593,16 +665,27 @@ export function AdjustmentModal({
                     </label>
                   </div>
 
+                  {selectedCategory === 'Overtime' && !canOvertimeFull && (
+                    <div className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg">
+                      Full adjustment unavailable: Overtime balance ({formatDuration(availableOvertimeMins)}) is less than remaining leave duration ({formatDuration(remainingSlMins)}). Only partial adjustment is available.
+                    </div>
+                  )}
+
                   {adjustmentType === 'partial' && (
                     <div className="space-y-1.5 pt-1">
-                      <label className="block text-[11px] font-semibold text-theme-text-muted">
-                        Adjustment Time (HH:MM)
-                      </label>
+                      <div className="flex justify-between items-center">
+                        <label className="block text-[11px] font-semibold text-theme-text-muted">
+                          Adjustment Time (HH:MM)
+                        </label>
+                        <span className="text-[10px] text-theme-text-muted font-mono">
+                          Max: {formatDuration(selectedCategory === 'Overtime' ? maxOtAdjust : remainingSlMins)}
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={partialAdjustmentTime}
                         onChange={(e) => setPartialAdjustmentTime(e.target.value)}
-                        placeholder="e.g. 01:30"
+                        placeholder={`e.g. ${formatDuration(Math.min(30, selectedCategory === 'Overtime' ? maxOtAdjust : remainingSlMins))}`}
                         className="w-full px-3 py-2 bg-theme-page-bg/80 border border-theme-border-input rounded-lg text-xs font-mono font-bold text-theme-text-primary focus:outline-none focus:border-blue-500"
                       />
                     </div>
@@ -611,8 +694,8 @@ export function AdjustmentModal({
                   {selectedCategory === 'Overtime' && (
                     <div className="pt-2 border-t border-theme-border-muted/60 space-y-1.5">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-theme-text-muted">Leave Duration:</span>
-                        <span className="font-mono font-bold text-theme-text-primary">{formatDuration(slMins)}</span>
+                        <span className="text-theme-text-muted">Remaining Leave to Adjust:</span>
+                        <span className="font-mono font-bold text-theme-text-primary">{formatDuration(remainingSlMins)}</span>
                       </div>
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-theme-text-muted">Deduct from Overtime:</span>
@@ -623,6 +706,35 @@ export function AdjustmentModal({
                         <span className="font-mono font-bold text-theme-text-primary">
                           {formatDuration(Math.max(0, availableOvertimeMins - activeAdjustMins))}
                         </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs font-semibold">
+                        <span className="text-theme-text-primary">Remaining Leave After:</span>
+                        <span className="font-mono font-bold text-blue-400">
+                          {formatDuration(Math.max(0, remainingSlMins - activeAdjustMins))}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedCategory === 'None' && (
+                    <div className="pt-2 border-t border-theme-border-muted/60 space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-theme-text-muted">Remaining Leave to Adjust:</span>
+                        <span className="font-mono font-bold text-theme-text-primary">{formatDuration(remainingSlMins)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-theme-text-muted">Deduct from Short Leave:</span>
+                        <span className="font-mono font-bold text-blue-400">-{formatDuration(activeAdjustMins)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs font-semibold pt-1">
+                        <span className="text-theme-text-primary">Remaining Leave After:</span>
+                        <span className="font-mono font-bold text-theme-text-primary">
+                          {formatDuration(Math.max(0, remainingSlMins - activeAdjustMins))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs text-theme-text-muted pt-1 border-t border-theme-border-muted/30">
+                        <span>Overtime Balance:</span>
+                        <span className="font-mono font-bold text-emerald-400">Unchanged ({stats.overtimeHours})</span>
                       </div>
                     </div>
                   )}

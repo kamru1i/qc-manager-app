@@ -18,6 +18,9 @@ export interface AdminEditRequest {
   salary_year?: string;
   govt_holiday_date?: string;
   govt_holiday_name?: string;
+  adjustments?: any[];
+  adjustment_source?: string;
+  adjustment_reason?: string;
 }
 
 export interface ChutiRecord {
@@ -34,6 +37,7 @@ export interface ChutiRecord {
   leave_hour: string | null;
   reserve_holiday: string | null;
   created_at?: string;
+  updated_at?: string | null;
   reserve_adjustment_status?: string;
   status?: string;
   admin_edit_request?: AdminEditRequest | null;
