@@ -187,13 +187,10 @@ export function ShortLeaveHistoryModal({
           <table className="w-full text-left text-xs border-collapse table-auto">
             <thead>
               <tr className="border-b border-theme-border-input/80 text-[10px] text-theme-text-muted uppercase font-bold tracking-wider bg-theme-card-container/50">
-                <th className="py-2.5 px-3 whitespace-nowrap">Leave Date</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Type</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Original</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Adjusted</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Remaining</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Adjustment Source(s)</th>
-                <th className="py-2.5 px-4 min-w-[180px]">Details</th>
+                <th className="py-2.5 px-3.5 whitespace-nowrap">Leave Date & Type</th>
+                <th className="py-2.5 px-3.5 whitespace-nowrap">Duration Status</th>
+                <th className="py-2.5 px-3.5 whitespace-nowrap">Adjustment Source(s)</th>
+                <th className="py-2.5 px-4 min-w-[200px] w-full">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-theme-border-input/40">
@@ -205,41 +202,59 @@ export function ShortLeaveHistoryModal({
 
                 return (
                   <tr key={r.id} className="hover:bg-theme-card-bg/20 transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-theme-text-primary whitespace-nowrap">
-                      {formatDate(r.date)}
+                    {/* 1. Date & Type (Stacked) */}
+                    <td className="py-2.5 px-3.5 whitespace-nowrap align-top">
+                      <div className="font-mono font-bold text-theme-text-primary text-xs">
+                        {formatDate(r.date)}
+                      </div>
+                      <div className="text-[10px] text-theme-text-muted font-medium mt-0.5">
+                        {r.leave_type}
+                      </div>
                     </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap text-theme-text-secondary text-[11px]">
-                      {r.leave_type}
+
+                    {/* 2. Original, Adjusted & Remaining (Stacked) */}
+                    <td className="py-2.5 px-3.5 whitespace-nowrap font-mono text-[11px] align-top">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase font-bold text-theme-text-muted/70 w-8">Orig:</span>
+                          <span className="text-theme-text-muted font-medium">{formatDuration(origMins)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase font-bold text-cyan-400/80 w-8">Adj:</span>
+                          <span className="text-cyan-400 font-bold">{formatDuration(adjMins)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase font-bold text-theme-text-muted/70 w-8">Rem:</span>
+                          <span className={`font-bold ${remMins === 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            {formatDuration(remMins)}
+                          </span>
+                        </div>
+                      </div>
                     </td>
-                    <td className="py-2.5 px-3 font-mono text-theme-text-muted whitespace-nowrap">
-                      {formatDuration(origMins)}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-cyan-400 whitespace-nowrap">
-                      {formatDuration(adjMins)}
-                    </td>
-                    <td className={`py-2.5 px-3 font-mono font-bold whitespace-nowrap ${remMins === 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {formatDuration(remMins)}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <div className="flex flex-wrap gap-1">
+
+                    {/* 3. Adjustment Source(s) */}
+                    <td className="py-2.5 px-3.5 whitespace-nowrap align-top">
+                      <div className="flex flex-col gap-1 items-start">
                         {entries.length > 0 ? (
                           entries.map((e, idx) => (
                             <Badge 
                               key={e.id || idx} 
                               variant={e.source === 'Overtime' ? 'warning' : e.source === 'Govt Holiday' ? 'success' : 'default'} 
-                              className="text-[9px] px-1.5 py-0"
+                              className="text-[9px] px-1.5 py-0.5 font-medium whitespace-nowrap"
                             >
                               {e.source} ({formatDuration(e.amount_minutes)})
                             </Badge>
                           ))
                         ) : (
-                          <Badge variant="default" className="text-[9px]">
-                            {r.reserve_holiday || 'General'}
+                          <Badge variant="default" className="text-[9px] px-1.5 py-0.5">
+                            {r.reserve_holiday || 'General Adjustment'}
                           </Badge>
                         )}
                       </div>
                     </td>
-                    <td className="py-2.5 px-4 text-theme-text-secondary text-[11px] font-sans break-words whitespace-normal leading-relaxed">
+
+                    {/* 4. Details (Wide space for full readability) */}
+                    <td className="py-2.5 px-4 text-theme-text-secondary text-xs font-sans break-words whitespace-normal leading-relaxed align-top">
                       {r.comment || '—'}
                     </td>
                   </tr>
@@ -254,7 +269,7 @@ export function ShortLeaveHistoryModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
-      <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-3xl p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+      <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-4xl p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
         <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
 
         <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4 shrink-0">
