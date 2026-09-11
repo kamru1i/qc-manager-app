@@ -297,7 +297,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         onClick: () => onQuotesTabChange?.("my_report" as any),
       });
     }
-    if (hasQuotes && (isAdminRole(profile) || profile?.role === "supervisor") && canAccessModule(profile, null, "all_report")) {
+    if ((isAdminRole(profile) || (hasQuotes && profile?.role === "supervisor")) && canAccessModule(profile, null, "all_report")) {
       subTabs.push({
         id: "all_report",
         label: "All Report",

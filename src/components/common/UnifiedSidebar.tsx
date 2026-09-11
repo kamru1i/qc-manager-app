@@ -149,7 +149,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
     const canKpi = canAccessModule(profile, null, 'kpi') && !tabHidden('kpi');
     const canLeaderboard = canAccessModule(profile, null, 'leaderboard');
     const canMyReport = hasQuotes && canAccessModule(profile, null, 'my_report');
-    const canAllReport = hasQuotes && (isAdminRole(profile) || profile?.role === 'supervisor') && canAccessModule(profile, null, 'all_report');
+    const canAllReport = (isAdminRole(profile) || (hasQuotes && profile?.role === 'supervisor')) && canAccessModule(profile, null, 'all_report');
 
     let savedSubtab = localStorage.getItem('last_active_reports_subtab');
     if (savedSubtab === 'leaderboard' && !canLeaderboard) savedSubtab = null;
@@ -264,6 +264,7 @@ export const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
         {(
           (canAccessModule(profile, null, 'kpi') && !tabHidden('kpi')) ||
           canAccessModule(profile, null, 'leaderboard') ||
+          canAccessModule(profile, null, 'all_report') ||
           (canAccessModule(profile, null, 'quotes') && canAccessModule(profile, null, 'reports'))
         ) && (
           <div className="space-y-1">

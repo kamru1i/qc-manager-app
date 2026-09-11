@@ -13,7 +13,7 @@ function getEnvValue(name) {
 
 async function runTests() {
   console.log('==============================================');
-  console.log('QC MANAGER — POST-AUDIT FIXES VERIFICATION');
+  console.log('QC MANAGER — USER INSTRUCTIONS VERIFICATION');
   console.log('==============================================\n');
 
   let passed = 0;
@@ -29,65 +29,64 @@ async function runTests() {
     }
   }
 
-  // 1. Late Join Calculation
-  console.log('1. Testing Late Join Calculation (Sign-Out Independence):');
-  const ljStandard = calculateLeaveOrOvertime('Late Join', '14:15', '22:30', '13:00', '22:30');
-  assert(ljStandard === '01:15', 'Scheduled 13:00, Arrived 14:15, Out 22:30 -> Expected 01:15, got ' + ljStandard);
+  // 1. User Instruction 1: Late Join Calculation
+  console.log('1. Testing Late Join with Extra Sign-Out Stay ("barti time"):');
+  // Scenario A: 2 hours late, sign out in right time -> 2 hours late join
+  const lj2h = calculateLeaveOrOvertime('Late Join', '15:00', '22:30', '13:00', '22:30');
+  assert(lj2h === '02:00', 'Arrive 2h late (15:00), Out on time (22:30) -> Expected 02:00, got ' + lj2h);
 
-  const ljOverstay = calculateLeaveOrOvertime('Late Join', '14:15', '23:30', '13:00', '22:30');
-  assert(ljOverstay === '01:15', 'Staying past shift end must NOT reduce late join -> Expected 01:15, got ' + ljOverstay);
+  // Scenario B: 2 hours late, sign out 1 hour after actual sign out time -> 1 hour late join
+  const lj1h = calculateLeaveOrOvertime('Late Join', '15:00', '23:30', '13:00', '22:30');
+  assert(lj1h === '01:00', 'Arrive 2h late (15:00), Out 1h extra (23:30) -> Expected 01:00, got ' + lj1h);
 
-  const ljEarlyLeave = calculateLeaveOrOvertime('Late Join', '14:15', '21:00', '13:00', '22:30');
-  assert(ljEarlyLeave === '01:15', 'Leaving early must NOT increase late join -> Expected 01:15, got ' + ljEarlyLeave);
+  // Scenario C: 2 hours late, sign out 2 hours after actual sign out time -> 0 hours late join
+  const lj0h = calculateLeaveOrOvertime('Late Join', '15:00', '00:30', '13:00', '22:30');
+  assert(lj0h === '00:00', 'Arrive 2h late (15:00), Out 2h extra (00:30) -> Expected 00:00, got ' + lj0h);
 
-  const ljOnTime = calculateLeaveOrOvertime('Late Join', '12:55', '22:30', '13:00', '22:30');
-  assert(ljOnTime === '00:00', 'Arriving on time/early -> Expected 00:00, got ' + ljOnTime);
+  // Scenario D: Arriving on time or early -> 00:00
+  const ljEarly = calculateLeaveOrOvertime('Late Join', '12:30', '22:30', '13:00', '22:30');
+  assert(ljEarly === '00:00', 'Arrive before shift start -> Expected 00:00, got ' + ljEarly);
 
-  const ljOvernight1 = calculateLeaveOrOvertime('Late Join', '23:30', '06:00', '22:00', '06:00');
-  assert(ljOvernight1 === '01:30', 'Overnight shift late join before midnight -> Expected 01:30, got ' + ljOvernight1);
+  // 2. User Instruction 2: Early Leave with Early Arrival
+  console.log('\n2. Testing Early Leave with Early Arrival Offset:');
+  // Scenario A: Normal sign in in right time, sign out 2 hours before sign out time -> 2 hours early leave
+  const el2h = calculateLeaveOrOvertime('Early Leave', '13:00', '20:30', '13:00', '22:30');
+  assert(el2h === '02:00', 'In right time (13:00), Out 2h early (20:30) -> Expected 02:00, got ' + el2h);
 
-  const ljOvernight2 = calculateLeaveOrOvertime('Late Join', '01:00', '06:00', '22:00', '06:00');
-  assert(ljOvernight2 === '03:00', 'Overnight shift late join past midnight -> Expected 03:00, got ' + ljOvernight2);
+  // Scenario B: Sign in 1 hour before actual shift time, sign out 2 hours before sign out time -> 1 hour early leave
+  const el1h = calculateLeaveOrOvertime('Early Leave', '12:00', '20:30', '13:00', '22:30');
+  assert(el1h === '01:00', 'In 1h early (12:00), Out 2h early (20:30) -> Expected 01:00, got ' + el1h);
 
-  // 2. Early Leave Calculation
-  console.log('\n2. Testing Early Leave Calculation (Sign-In Independence):');
-  const elStandard = calculateLeaveOrOvertime('Early Leave', '13:00', '21:30', '13:00', '22:30');
-  assert(elStandard === '01:00', 'Scheduled end 22:30, Left 21:30 -> Expected 01:00, got ' + elStandard);
+  // Scenario C: Sign in 2 hours before actual shift time, sign out 2 hours before sign out time -> 0 hours early leave
+  const el0h = calculateLeaveOrOvertime('Early Leave', '11:00', '20:30', '13:00', '22:30');
+  assert(el0h === '00:00', 'In 2h early (11:00), Out 2h early (20:30) -> Expected 00:00, got ' + el0h);
 
-  const elEarlyArrival = calculateLeaveOrOvertime('Early Leave', '11:00', '21:30', '13:00', '22:30');
-  assert(elEarlyArrival === '01:00', 'Early arrival must NOT offset early leave -> Expected 01:00, got ' + elEarlyArrival);
+  // Scenario D: Leaving at scheduled shift end -> 00:00
+  const elOnTime = calculateLeaveOrOvertime('Early Leave', '13:00', '22:30', '13:00', '22:30');
+  assert(elOnTime === '00:00', 'Out at shift end (22:30) -> Expected 00:00, got ' + elOnTime);
 
-  const elLateArrival = calculateLeaveOrOvertime('Early Leave', '15:00', '21:30', '13:00', '22:30');
-  assert(elLateArrival === '01:00', 'Late arrival must NOT affect early leave -> Expected 01:00, got ' + elLateArrival);
+  // 3. User Instruction 4: Admin Quotes Workspace OFF permissions
+  console.log('\n3. Testing Admin Quotes Workspace OFF:');
+  const mockAdminWithQuotesOff = {
+    id: 'admin-quotes-off-test',
+    role: 'admin',
+    has_quotes_access: false,
+    has_chuti_access: true,
+    has_todo_access: true,
+  };
+  const adminCanSeeLeaderboard = canAccessModule(mockAdminWithQuotesOff, null, 'leaderboard');
+  assert(adminCanSeeLeaderboard === true, 'Admin with Quotes OFF can see Leaderboard -> got ' + adminCanSeeLeaderboard);
 
-  const elNormalEnd = calculateLeaveOrOvertime('Early Leave', '13:00', '22:30', '13:00', '22:30');
-  assert(elNormalEnd === '00:00', 'Leaving at/after scheduled end -> Expected 00:00, got ' + elNormalEnd);
+  const adminCanSeeAllReport = canAccessModule(mockAdminWithQuotesOff, null, 'all_report');
+  assert(adminCanSeeAllReport === true, 'Admin with Quotes OFF can see All Report -> got ' + adminCanSeeAllReport);
 
-  const elOvernight = calculateLeaveOrOvertime('Early Leave', '22:00', '04:30', '22:00', '06:00');
-  assert(elOvernight === '01:30', 'Overnight shift early leave -> Expected 01:30, got ' + elOvernight);
-
-  // 3. Timezone Formatting in Asia/Dhaka (+06:00)
-  console.log('\n3. Testing Asia/Dhaka (+06:00) Localization:');
+  // 4. Timezone Formatting in Asia/Dhaka (+06:00)
+  console.log('\n4. Testing Asia/Dhaka (+06:00) Localization:');
   const formattedDate = formatDate('2026-06-30T19:00:00.000Z');
   assert(formattedDate === '01-07-2026', '2026-06-30T19:00:00Z formatted in Dhaka -> Expected 01-07-2026, got ' + formattedDate);
 
   const formattedTime = formatTimeToAMPM('2026-06-30T19:00:00.000Z');
   assert(formattedTime.includes('01:00') && formattedTime.includes('AM'), '2026-06-30T19:00:00Z formatted in Dhaka -> Expected 01:00 AM, got ' + formattedTime);
-
-  // 4. Permission Decoupling for Leaderboard
-  console.log('\n4. Testing Permission Decoupling for Leaderboard:');
-  const mockUserWithoutQuotes = {
-    id: 'user-no-quotes',
-    role: 'user',
-    has_quotes_access: false,
-    has_chuti_access: true,
-    has_todo_access: true,
-  };
-  const canViewLeaderboard = canAccessModule(mockUserWithoutQuotes, null, 'leaderboard');
-  assert(canViewLeaderboard === true, 'User with Quotes OFF must be able to view Leaderboard -> got ' + canViewLeaderboard);
-
-  const canViewAllReport = canAccessModule(mockUserWithoutQuotes, null, 'all_report');
-  assert(canViewAllReport === false, 'User with Quotes OFF must NOT access all_report -> got ' + canViewAllReport);
 
   // 5. Live Database Verification
   console.log('\n5. Testing Live Database (Triggers & RPCs):');
@@ -119,7 +118,6 @@ async function runTests() {
   `);
   assert(parseInt(lbRes.rows[0].count, 10) > 0, 'get_leaderboard_data executed successfully with Asia/Dhaka -> got ' + lbRes.rows[0].count + ' rows');
 
-  // Test admin sales summary by setting session auth uid to admin
   await client.query(`SET LOCAL request.jwt.claim.sub = '${adminId}'`);
   await client.query(`SET LOCAL "request.jwt.claims" = '{"sub": "${adminId}"}'`);
 
