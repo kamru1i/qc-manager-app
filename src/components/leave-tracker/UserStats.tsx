@@ -558,6 +558,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       r.status === "approved" &&
                       r.adjustment &&
                       (r.reserve_holiday === "Govt Holiday" ||
+                        r.reserve_holiday?.includes("—") ||
                         r.comment?.includes("Govt Holiday")),
                   );
 
@@ -695,7 +696,7 @@ export const UserStats: React.FC<UserStatsProps> = ({
         isMounted &&
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-page-bg/80 backdrop-blur-md p-4">
-            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-3xl p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div className="bg-theme-card-bg border border-theme-border-input shadow-2xl rounded-2xl w-full max-w-4xl p-6 relative overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
               <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
 
               <div className="flex justify-between items-center border-b border-theme-border-input/80 pb-3 mb-4 shrink-0">
@@ -722,9 +723,9 @@ export const UserStats: React.FC<UserStatsProps> = ({
                       <thead>
                         <tr className="border-b border-theme-border-input/80 text-[10px] text-theme-text-muted uppercase font-bold tracking-wider bg-theme-card-container/50">
                           <th className="py-2.5 px-3 whitespace-nowrap w-[110px]">Leave Date</th>
-                          <th className="py-2.5 px-3 whitespace-nowrap w-[180px]">Adjustment Source</th>
-                          <th className="py-2.5 px-3 whitespace-nowrap w-[160px]">Action Date</th>
-                          <th className="py-2.5 px-4 min-w-[200px]">Details / Comment</th>
+                          <th className="py-2.5 px-3 whitespace-nowrap w-[160px]">Adjustment Source</th>
+                          <th className="py-2.5 px-3 whitespace-nowrap w-[150px]">Action Date</th>
+                          <th className="py-2.5 px-4 min-w-[200px] w-full">Details / Comment</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-theme-border-input/40">
@@ -755,27 +756,57 @@ export const UserStats: React.FC<UserStatsProps> = ({
                           );
 
                           if (isGovt) {
+                            let holidayDate = "";
+                            let holidayName = "";
+                            if (r.reserve_holiday && r.reserve_holiday.includes("—")) {
+                              const parts = r.reserve_holiday.split("—");
+                              holidayDate = parts[0]?.trim() || "";
+                              holidayName = parts[1]?.trim() || "";
+                            } else if (r.comment) {
+                              const match = r.comment.match(/(?:Adjusted with Government Holiday|Govt Holiday)\s*—\s*(\d{4}-\d{2}-\d{2})\s*—\s*([^|\n\]]+)/i);
+                              if (match) {
+                                holidayDate = match[1]?.trim() || "";
+                                holidayName = match[2]?.trim() || "";
+                              }
+                            }
+
                             sourceBadge = (
-                              <Badge
-                                variant="success"
-                                className="text-[10px] font-semibold bg-teal-500/10 text-teal-300 border-teal-500/30 whitespace-nowrap"
-                              >
-                                {r.reserve_holiday?.includes("—")
-                                  ? `Govt Holiday (${r.reserve_holiday})`
-                                  : "Govt Holiday"}
-                              </Badge>
+                              <div className="space-y-0.5">
+                                <Badge
+                                  variant="success"
+                                  className="text-[9px] font-semibold bg-teal-500/10 text-teal-300 border-teal-500/30 whitespace-nowrap"
+                                >
+                                  Govt Holiday
+                                </Badge>
+                                {holidayDate && (
+                                  <div className="font-mono text-[10px] text-theme-text-muted font-medium">
+                                    {formatDate(holidayDate)}
+                                  </div>
+                                )}
+                                {holidayName && (
+                                  <div className="text-[10px] text-teal-400 font-semibold leading-tight">
+                                    {holidayName}
+                                  </div>
+                                )}
+                              </div>
                             );
                           } else if (isSalary) {
-                            const salaryLabel = r.admin_edit_request?.salary_month
-                              ? `${r.admin_edit_request.salary_month} ${r.admin_edit_request.salary_year || ""} Salary`
-                              : "Salary Deduction";
+                            const salaryMonth = r.admin_edit_request?.salary_month;
+                            const salaryYear = r.admin_edit_request?.salary_year;
                             sourceBadge = (
-                              <Badge
-                                variant="warning"
-                                className="text-[10px] font-semibold bg-amber-500/10 text-amber-300 border-amber-500/30 whitespace-nowrap"
-                              >
-                                {salaryLabel}
-                              </Badge>
+                              <div className="space-y-0.5">
+                                <Badge
+                                  variant="warning"
+                                  className="text-[10px] font-semibold bg-amber-500/10 text-amber-300 border-amber-500/30 whitespace-nowrap"
+                                >
+                                  Salary Deduction
+                                </Badge>
+                                {salaryMonth && (
+                                  <div className="font-mono text-[10px] text-theme-text-muted font-medium">
+                                    {salaryMonth} {salaryYear || ""}
+                                  </div>
+                                )}
+                              </div>
                             );
                           } else if (isEid) {
                             sourceBadge = (
@@ -827,16 +858,16 @@ export const UserStats: React.FC<UserStatsProps> = ({
                               key={r.id}
                               className="hover:bg-theme-card-bg/20 transition-colors"
                             >
-                              <td className="py-2.5 px-3 font-bold text-theme-text-primary whitespace-nowrap font-mono">
+                              <td className="py-2.5 px-3 font-bold text-theme-text-primary whitespace-nowrap font-mono align-top">
                                 {formatDate(r.date)}
                               </td>
-                              <td className="py-2.5 px-3 whitespace-nowrap">
+                              <td className="py-2.5 px-3 whitespace-nowrap align-top">
                                 {sourceBadge}
                               </td>
-                              <td className="py-2.5 px-3 text-theme-text-muted text-[11px] whitespace-nowrap font-mono">
+                              <td className="py-2.5 px-3 text-theme-text-muted text-[11px] whitespace-nowrap font-mono align-top">
                                 {formatDateTime(r.updated_at || r.created_at)}
                               </td>
-                              <td className="py-2.5 px-4 text-theme-text-secondary text-[11px] font-sans break-words whitespace-normal leading-relaxed">
+                              <td className="py-2.5 px-4 text-theme-text-secondary text-[11px] font-sans break-words whitespace-normal leading-relaxed align-top">
                                 {detailText}
                               </td>
                             </tr>
