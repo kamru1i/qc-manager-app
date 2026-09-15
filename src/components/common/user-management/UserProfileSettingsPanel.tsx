@@ -3,6 +3,7 @@
 import React from "react";
 import { Profile } from "@/types";
 import { StaffSettingsForm } from "@/components/leave-tracker/StaffSettingsForm";
+import { GlobalSettings, UserLeaveOverrides } from "@/utils/dashboardHelpers";
 import { useProfiles } from "@/contexts/ProfilesContext";
 import {
   RefreshCw,
@@ -85,6 +86,9 @@ interface UserProfileSettingsPanelProps {
   editUserFeatureFlags?: Record<string, boolean>;
   setEditUserFeatureFlags?: (val: Record<string, boolean>) => void;
   onResetAllUserFlags?: () => void;
+  editUserLeaveOverrides?: UserLeaveOverrides;
+  setEditUserLeaveOverrides?: (val: UserLeaveOverrides) => void;
+  globalSettings?: GlobalSettings;
   hasChanges?: boolean;
 }
 
@@ -159,6 +163,9 @@ export const UserProfileSettingsPanel: React.FC<
   editUserFeatureFlags,
   setEditUserFeatureFlags,
   onResetAllUserFlags,
+  editUserLeaveOverrides,
+  setEditUserLeaveOverrides,
+  globalSettings,
 }) => {
   const { profilesList } = useProfiles();
   const superadminProfile = React.useMemo(() => profilesList.find((p) => p.role === "superadmin"), [profilesList]);
@@ -247,6 +254,9 @@ export const UserProfileSettingsPanel: React.FC<
         setUserFeatureFlags={setEditUserFeatureFlags}
         adminDelegatedFlags={effectiveAdminDelegatedFlags}
         onResetAllUserFlags={onResetAllUserFlags}
+        leaveOverrides={editUserLeaveOverrides}
+        setLeaveOverrides={setEditUserLeaveOverrides}
+        globalSettings={globalSettings}
       />
 
       {viewingStaff.is_pending_approval ? (

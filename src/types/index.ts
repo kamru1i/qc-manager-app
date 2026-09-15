@@ -322,3 +322,4 @@ export interface UserCreationRequest {
   };
 }
 
+export type { UserLeaveOverrides } from '@/utils/globalSettingsHelpers';

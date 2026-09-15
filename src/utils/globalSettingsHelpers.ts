@@ -1,5 +1,10 @@
 import { SanitizerRule, resolveSanitizerRules, enabledSanitizerWords } from '@/utils/fileNameSanitizer';
 
+export interface UserLeaveOverrides {
+  office_leave_h1_override?: number | null;
+  office_leave_h2_override?: number | null;
+}
+
 export interface GlobalSettings {
   office_leave_mode?: 'split' | 'merged';
   office_leave_h1: number;
@@ -30,6 +35,8 @@ export interface GlobalSettings {
   feature_flags?: Record<string, boolean>;
   /** Superadmin per-user feature flag overrides stored on user's profile. */
   user_feature_flags?: Record<string, boolean>;
+  /** Per-user leave allocation overrides (Office Leave H1 / H2). */
+  leave_overrides?: UserLeaveOverrides;
   /** Superadmin-configured flags that Admins are allowed to manage globally and per-user. */
   admin_delegated_flags?: Record<string, boolean>;
   /** Superadmin time-boxed per-role tab overrides (auto-expire client-side). */
@@ -198,6 +205,8 @@ export const getGlobalSettingsFromProfile = (profile: any): GlobalSettings => {
           sanitizer_rules: Array.isArray(gs.sanitizer_rules) ? gs.sanitizer_rules : undefined,
           role_visibility: (gs.role_visibility && typeof gs.role_visibility === "object") ? gs.role_visibility : undefined,
           feature_flags: (gs.feature_flags && typeof gs.feature_flags === "object") ? gs.feature_flags : undefined,
+          user_feature_flags: (gs.user_feature_flags && typeof gs.user_feature_flags === "object") ? gs.user_feature_flags : undefined,
+          leave_overrides: (gs.leave_overrides && typeof gs.leave_overrides === "object") ? gs.leave_overrides : undefined,
           admin_delegated_flags: (gs.admin_delegated_flags && typeof gs.admin_delegated_flags === "object") ? gs.admin_delegated_flags : undefined,
           temp_access: Array.isArray(gs.temp_access) ? gs.temp_access : undefined
         };

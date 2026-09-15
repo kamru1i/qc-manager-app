@@ -26,7 +26,8 @@ import {
   getMaxDaysInMonth,
   getCleanComment,
   getLeaveDisplayComment,
-  getApprovalsPrefix
+  getApprovalsPrefix,
+  resolveEffectiveLeaveSettings
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 
@@ -319,7 +320,8 @@ export function AddLeave({
   const govtHolidayRemaining = adjustedGovtHolidayStats.remaining;
   const govtHolidayTotal = adjustedGovtHolidayStats.total;
 
-  const officeLeaveTotalBase = isOfficeLeaveEligible ? (globalSettings.office_leave_h1 + globalSettings.office_leave_h2) : 0;
+  const effectiveLeaves = resolveEffectiveLeaveSettings(targetProfile, globalSettings);
+  const officeLeaveTotalBase = effectiveLeaves.office_leave_total;
   const officeLeaveTotal = isOfficeLeaveEligible
     ? officeLeaveTotalBase + carriedOffice + (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha
     : (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
@@ -439,8 +441,8 @@ export function AddLeave({
 
   const halfYearlyStats = useHalfYearlyStats(
     staffRecords,
-    isOfficeLeaveEligible ? globalSettings.office_leave_h1 : 0,
-    isOfficeLeaveEligible ? globalSettings.office_leave_h2 : 0,
+    effectiveLeaves.office_leave_h1,
+    effectiveLeaves.office_leave_h2,
     selectedYear,
     leaveSettlements,
     targetProfile?.id,

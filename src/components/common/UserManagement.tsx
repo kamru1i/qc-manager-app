@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/utils/supabase';
-import { Profile } from '@/types';
+import { Profile, UserLeaveOverrides } from '@/types';
 import { mapProfilePasswordResetStatus } from '@/utils/profileHelpers';
 import { useAdminActions } from '@/hooks/leave-tracker/useAdminActions';
 import { canAccessModule, canAccessUserProfileSubtab, isAdminRole, getDisplayRole, getRoleLabel } from '@/utils/permissionService';
@@ -152,6 +152,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [editDelegatedLeaveSupervisorId, setEditDelegatedLeaveSupervisorId] = useState<string | null>(null);
   const [editDelegatedKpiSupervisorId, setEditDelegatedKpiSupervisorId] = useState<string | null>(null);
   const [editUserFeatureFlags, setEditUserFeatureFlags] = useState<Record<string, boolean>>({});
+  const [editUserLeaveOverrides, setEditUserLeaveOverrides] = useState<UserLeaveOverrides>({});
 
   // Delete User State
   const [deletingUserAccount, setDeletingUserAccount] = useState<{ id: string; username: string } | null>(null);
@@ -350,8 +351,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       setEditDelegatedLeaveSupervisorId(viewingStaff.delegated_leave_supervisor_id || null);
       setEditDelegatedKpiSupervisorId(viewingStaff.delegated_kpi_supervisor_id || null);
       setEditUserFeatureFlags(viewingStaff.global_settings?.user_feature_flags || {});
+      setEditUserLeaveOverrides(viewingStaff.global_settings?.leave_overrides || {});
     } else {
       setEditUserFeatureFlags({});
+      setEditUserLeaveOverrides({});
     }
   }, [viewingStaff]);
 
@@ -467,6 +470,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     const isDelegatedLeaveSupervisorIdChanged = editDelegatedLeaveSupervisorId !== (viewingStaff.delegated_leave_supervisor_id || null);
     const isDelegatedKpiSupervisorIdChanged = editDelegatedKpiSupervisorId !== (viewingStaff.delegated_kpi_supervisor_id || null);
     const isUserFeatureFlagsChanged = JSON.stringify(editUserFeatureFlags) !== JSON.stringify(viewingStaff.global_settings?.user_feature_flags || {});
+    const isLeaveOverridesChanged = JSON.stringify(editUserLeaveOverrides) !== JSON.stringify(viewingStaff.global_settings?.leave_overrides || {});
 
     return isCodenameChanged || isFullNameChanged || isRoleChanged || isWorkingHoursChanged ||
            isBreakTimeChanged || isJobRoleChanged || isSignInChanged || isSignOutChanged ||
@@ -476,7 +480,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
            isCanManageRulesChanged || isKpiSkillsChanged || isKpiDeptIndicatorsChanged ||
            isKpiOtherDeptIndicatorsChanged || isPerformsDataEntryChanged || isDepartmentChanged ||
            isPerformsOtherDeptTasksChanged || isOtherDepartmentChanged || isDelegatedLeaveSupervisorIdChanged ||
-           isDelegatedKpiSupervisorIdChanged || isUserFeatureFlagsChanged;
+           isDelegatedKpiSupervisorIdChanged || isUserFeatureFlagsChanged || isLeaveOverridesChanged;
   }, [
     viewingStaff, editUserCodename, editUserFullName, editUserRole, editUserWorkingHours,
     editUserBreakTime, editUserJobRole, editUserSignInTime, editUserSignOutTime,
@@ -485,7 +489,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     editUserAllowedTypes, editUserCanManageRules, editUserKpiSkills, editUserKpiDeptIndicators,
     editUserKpiOtherDeptIndicators, editUserPerformsDataEntry, editUserDepartment,
     editUserPerformsOtherDeptTasks, editUserOtherDepartment, editDelegatedLeaveSupervisorId,
-    editDelegatedKpiSupervisorId, editUserFeatureFlags
+    editDelegatedKpiSupervisorId, editUserFeatureFlags, editUserLeaveOverrides
   ]);
 
   // Redirect to an authorized subtab if the current subtab is restricted
@@ -1546,7 +1550,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           editUserKpiOtherDeptIndicators,
           editDelegatedLeaveSupervisorId,
           editDelegatedKpiSupervisorId,
-          editUserFeatureFlags
+          editUserFeatureFlags,
+          editUserLeaveOverrides
         );
 
         if (success) {
@@ -1582,6 +1587,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               performs_other_dept_tasks: editUserPerformsOtherDeptTasks,
               other_department: editUserOtherDepartment,
               user_feature_flags: editUserFeatureFlags,
+              leave_overrides: editUserLeaveOverrides,
             },
           };
           updateViewingStaff(updated);
@@ -1981,6 +1987,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   editUserFeatureFlags={editUserFeatureFlags}
                   setEditUserFeatureFlags={setEditUserFeatureFlags}
                   onResetAllUserFlags={resetAllUserFeatureFlags}
+                  editUserLeaveOverrides={editUserLeaveOverrides}
+                  setEditUserLeaveOverrides={setEditUserLeaveOverrides}
+                  globalSettings={globalSettings}
                   hasChanges={hasUserChanges}
                   onViewKpiReport={(periodKey) => {
                     setPreSelectedKpiPeriodKey(periodKey);

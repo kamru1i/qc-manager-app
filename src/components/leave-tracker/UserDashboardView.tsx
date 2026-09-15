@@ -15,7 +15,8 @@ import {
   getSettlementLabel,
   getCarriedBalances,
   getActiveSettlements,
-  getAdjustedLeaveStats
+  getAdjustedLeaveStats,
+  resolveEffectiveLeaveSettings
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 import {  RotateCcw, ArrowLeft } from 'lucide-react';
@@ -142,15 +143,15 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
     remaining: Math.max(0, govtHolidayStats.reserved + carriedGovt - govtHolidayStats.taken - activeGovtSettled)
   };
 
-  const officeLeaveTotal = isOfficeLeaveEligible
-    ? (globalSettings.office_leave_h1 + globalSettings.office_leave_h2) + carriedOffice + (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha
-    : (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
+  const effectiveLeaves = resolveEffectiveLeaveSettings(profile, globalSettings);
+
+  const officeLeaveTotal = effectiveLeaves.office_leave_total + carriedOffice + (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
 
   // Half-yearly split calculations using shared hook
   const { halfYearlyStats } = useHalfYearlyStats(
     userRecords,
-    isOfficeLeaveEligible ? globalSettings.office_leave_h1 : 0,
-    isOfficeLeaveEligible ? globalSettings.office_leave_h2 : 0,
+    effectiveLeaves.office_leave_h1,
+    effectiveLeaves.office_leave_h2,
     selectedYear,
     leaveSettlements,
     profile?.id,

@@ -5,7 +5,7 @@ import { RotateCcw, CheckCircle2, AlertCircle, Send, BellOff, Edit3, HelpCircle,
 import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 
 import { ChutiRecord } from '@/utils/offlineSync';
-import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getSettlementLabel } from '@/utils/dashboardHelpers';
+import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getSettlementLabel, resolveEffectiveLeaveSettings } from '@/utils/dashboardHelpers';
 import { AdminSettleUserModal } from '@/components/leave-tracker/modals/AdminSettleUserModal';
 import { toast } from 'sonner';
 import { Modal } from '@/components/common/Modal';
@@ -45,10 +45,11 @@ export const calculateRemainingDaysForCategoryPeriod = (
 
   if (category === 'Office Leave') {
     const staffUserRecords = records.filter(r => r.user_id === staff.id);
+    const effectiveLeaves = resolveEffectiveLeaveSettings(staff, globalSettings);
     const halfYearlyStats = calculateHalfYearlyOfficeLeave(
       staffUserRecords,
-      globalSettings.office_leave_h1,
-      globalSettings.office_leave_h2,
+      effectiveLeaves.office_leave_h1,
+      effectiveLeaves.office_leave_h2,
       selectedYear,
       leaveSettlements,
       staff.id,

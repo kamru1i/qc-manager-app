@@ -1,11 +1,11 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Check, Settings, AlertTriangle, UserCheck, Users } from "lucide-react";
+import { Check, Settings, AlertTriangle, UserCheck, Users, CalendarClock, RotateCcw } from "lucide-react";
 import { TimeInput } from "@/components/common/TimeInput";
 import { Toggle } from "@/components/common/Toggle";
 import { CategoryCheckboxList } from "@/components/quotes-tracker/CategoryCheckboxList";
 import { Profile } from "@/types";
-import { formatTimeToAMPM } from "@/utils/dashboardHelpers";
+import { formatTimeToAMPM, GlobalSettings, UserLeaveOverrides } from "@/utils/dashboardHelpers";
 import { supabase } from "@/utils/supabase";
 import { useProfiles } from "@/contexts/ProfilesContext";
 import {
@@ -105,6 +105,9 @@ interface StaffSettingsFormProps {
   setUserFeatureFlags?: (val: Record<string, boolean>) => void;
   adminDelegatedFlags?: Record<string, boolean>;
   onResetAllUserFlags?: () => void;
+  leaveOverrides?: UserLeaveOverrides;
+  setLeaveOverrides?: (val: UserLeaveOverrides) => void;
+  globalSettings?: GlobalSettings;
 }
 
 export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
@@ -172,6 +175,9 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
   setUserFeatureFlags,
   adminDelegatedFlags = {},
   onResetAllUserFlags,
+  leaveOverrides = {},
+  setLeaveOverrides,
+  globalSettings,
 }) => {
   const effectiveAdminDelegatedFlags = React.useMemo(() => {
     const userFlags = currentUser?.global_settings?.admin_delegated_flags;
@@ -987,6 +993,270 @@ export const StaffSettingsForm: React.FC<StaffSettingsFormProps> = ({
           </div>
         )}
       </div>
+
+      {/* User-Specific Leave Settings (Admin/Superadmin Only) */}
+      {!isNewUser && hasChutiAccess && currentUser && (isAdminRole(currentUser) || isSuperadmin(currentUser)) && setLeaveOverrides && (() => {
+        const globalH1 = globalSettings?.office_leave_h1 ?? 7;
+        const globalH2 = globalSettings?.office_leave_h2 ?? 7;
+        const h1Override = leaveOverrides.office_leave_h1_override;
+        const h2Override = leaveOverrides.office_leave_h2_override;
+        const isH1Overridden = typeof h1Override === 'number';
+        const isH2Overridden = typeof h2Override === 'number';
+        const effectiveH1 = !eligibleOfficeLeave ? 0 : (isH1Overridden ? h1Override : globalH1);
+        const effectiveH2 = !eligibleOfficeLeave ? 0 : (isH2Overridden ? h2Override : globalH2);
+        const totalEffective = effectiveH1 + effectiveH2;
+
+        return (
+          <div className="bg-theme-card-bg/40 border border-theme-border-input/60 p-5 rounded-2xl shadow-xl space-y-4 font-sans">
+            <div className="border-b border-theme-border-input/60 pb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
+                  <CalendarClock className="h-4 w-4 text-emerald-400" />
+                  User Leave Settings
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-theme-accent-bg/40 border border-theme-accent-border/50 text-theme-accent-text font-mono font-normal">
+                    {codename || fullName || 'User'}
+                  </span>
+                </h3>
+                <p className="text-[11px] text-theme-text-muted mt-1">
+                  Configure user-specific leave quota overrides. By default, values seamlessly inherit from the unified global Leave Settings.
+                </p>
+              </div>
+              {(isH1Overridden || isH2Overridden) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = { ...leaveOverrides };
+                    delete next.office_leave_h1_override;
+                    delete next.office_leave_h2_override;
+                    setLeaveOverrides(next);
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-theme-card-bg border border-theme-border-muted hover:border-theme-border-active text-theme-text-muted hover:text-theme-text-primary transition-all shadow-sm"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset All to Global
+                </button>
+              )}
+            </div>
+
+            {!eligibleOfficeLeave && (
+              <div className="bg-amber-500/10 border border-amber-500/20 px-3.5 py-2.5 rounded-xl flex items-center gap-2 text-xs text-amber-300">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+                <span>Office Leave is disabled for this user (Office Leave Eligible = OFF). Base quota is 0 days until eligibility is enabled.</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* H1 Card */}
+              <div className="p-4 rounded-xl border border-theme-border-input/60 bg-theme-page-bg/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-theme-text-primary">
+                    Office Leave — H1 (Jan–Jun)
+                  </span>
+                  {isH1Overridden ? (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Custom Override
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-theme-card-bg text-theme-text-muted border border-theme-border-muted/50">
+                      Inheriting Global
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-[11px] text-theme-text-muted flex items-center justify-between">
+                  <span>Global Setting:</span>
+                  <span className="font-semibold text-theme-text-secondary">{globalH1} days</span>
+                </div>
+
+                {/* Mode Selector */}
+                <div className="flex items-center gap-1 bg-theme-card-bg/60 p-1 rounded-xl border border-theme-border-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = { ...leaveOverrides };
+                      delete next.office_leave_h1_override;
+                      setLeaveOverrides(next);
+                    }}
+                    className={`flex-1 py-1 px-2 text-xs font-semibold rounded-lg transition-all ${
+                      !isH1Overridden
+                        ? "bg-theme-accent-bg border border-theme-accent-border text-theme-accent-text shadow-sm"
+                        : "text-theme-text-muted hover:text-theme-text-primary"
+                    }`}
+                  >
+                    Inherit ({globalH1}d)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLeaveOverrides({
+                        ...leaveOverrides,
+                        office_leave_h1_override: isH1Overridden ? h1Override : globalH1,
+                      });
+                    }}
+                    className={`flex-1 py-1 px-2 text-xs font-semibold rounded-lg transition-all ${
+                      isH1Overridden
+                        ? "bg-purple-600/30 border border-purple-500/40 text-purple-200 shadow-sm"
+                        : "text-theme-text-muted hover:text-theme-text-primary"
+                    }`}
+                  >
+                    Custom Override
+                  </button>
+                </div>
+
+                {isH1Overridden && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <label className="text-xs text-theme-text-secondary font-medium">H1 Quota:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="365"
+                      step="0.5"
+                      value={h1Override ?? 0}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? 0 : Math.max(0, parseFloat(e.target.value) || 0);
+                        setLeaveOverrides({
+                          ...leaveOverrides,
+                          office_leave_h1_override: val,
+                        });
+                      }}
+                      className="w-24 px-3 py-1.5 rounded-xl border border-theme-border-input/80 bg-theme-page-bg/70 text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-theme-accent-border"
+                    />
+                    <span className="text-xs text-theme-text-muted">days</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = { ...leaveOverrides };
+                        delete next.office_leave_h1_override;
+                        setLeaveOverrides(next);
+                      }}
+                      className="ml-auto text-[11px] text-purple-400 hover:text-purple-300 transition-colors underline"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-theme-border-muted/30 flex items-center justify-between text-xs">
+                  <span className="text-theme-text-muted">Effective H1:</span>
+                  <span className="font-bold text-theme-text-primary">
+                    {effectiveH1} days
+                    {!eligibleOfficeLeave && <span className="text-[10px] text-amber-400 ml-1 font-normal">(Eligible OFF)</span>}
+                  </span>
+                </div>
+              </div>
+
+              {/* H2 Card */}
+              <div className="p-4 rounded-xl border border-theme-border-input/60 bg-theme-page-bg/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-theme-text-primary">
+                    Office Leave — H2 (Jul–Dec)
+                  </span>
+                  {isH2Overridden ? (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Custom Override
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-theme-card-bg text-theme-text-muted border border-theme-border-muted/50">
+                      Inheriting Global
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-[11px] text-theme-text-muted flex items-center justify-between">
+                  <span>Global Setting:</span>
+                  <span className="font-semibold text-theme-text-secondary">{globalH2} days</span>
+                </div>
+
+                {/* Mode Selector */}
+                <div className="flex items-center gap-1 bg-theme-card-bg/60 p-1 rounded-xl border border-theme-border-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = { ...leaveOverrides };
+                      delete next.office_leave_h2_override;
+                      setLeaveOverrides(next);
+                    }}
+                    className={`flex-1 py-1 px-2 text-xs font-semibold rounded-lg transition-all ${
+                      !isH2Overridden
+                        ? "bg-theme-accent-bg border border-theme-accent-border text-theme-accent-text shadow-sm"
+                        : "text-theme-text-muted hover:text-theme-text-primary"
+                    }`}
+                  >
+                    Inherit ({globalH2}d)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLeaveOverrides({
+                        ...leaveOverrides,
+                        office_leave_h2_override: isH2Overridden ? h2Override : globalH2,
+                      });
+                    }}
+                    className={`flex-1 py-1 px-2 text-xs font-semibold rounded-lg transition-all ${
+                      isH2Overridden
+                        ? "bg-purple-600/30 border border-purple-500/40 text-purple-200 shadow-sm"
+                        : "text-theme-text-muted hover:text-theme-text-primary"
+                    }`}
+                  >
+                    Custom Override
+                  </button>
+                </div>
+
+                {isH2Overridden && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <label className="text-xs text-theme-text-secondary font-medium">H2 Quota:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="365"
+                      step="0.5"
+                      value={h2Override ?? 0}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? 0 : Math.max(0, parseFloat(e.target.value) || 0);
+                        setLeaveOverrides({
+                          ...leaveOverrides,
+                          office_leave_h2_override: val,
+                        });
+                      }}
+                      className="w-24 px-3 py-1.5 rounded-xl border border-theme-border-input/80 bg-theme-page-bg/70 text-xs font-semibold text-theme-text-primary focus:outline-none focus:border-theme-accent-border"
+                    />
+                    <span className="text-xs text-theme-text-muted">days</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = { ...leaveOverrides };
+                        delete next.office_leave_h2_override;
+                        setLeaveOverrides(next);
+                      }}
+                      className="ml-auto text-[11px] text-purple-400 hover:text-purple-300 transition-colors underline"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-theme-border-muted/30 flex items-center justify-between text-xs">
+                  <span className="text-theme-text-muted">Effective H2:</span>
+                  <span className="font-bold text-theme-text-primary">
+                    {effectiveH2} days
+                    {!eligibleOfficeLeave && <span className="text-[10px] text-amber-400 ml-1 font-normal">(Eligible OFF)</span>}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Annual Effective Quota Bar */}
+            <div className="p-3 rounded-xl bg-theme-page-bg/60 border border-theme-border-input/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-theme-text-secondary font-medium">
+                Total Effective Annual Office Leave (H1 + H2):
+              </span>
+              <span className="font-bold text-sm text-theme-accent-text">
+                {totalEffective} days
+              </span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Per-User Feature Flags Overrides (Superadmin & Delegated Admin) */}
       {currentUser && (isSuperadmin(currentUser) || isAdminRole(currentUser)) && setUserFeatureFlags && (

@@ -27,7 +27,8 @@ import {
   getCarriedBalances,
   getActiveSettlements,
   getAdjustedLeaveStats,
-  parseHolidayItem
+  parseHolidayItem,
+  resolveEffectiveLeaveSettings
 } from '@/utils/dashboardHelpers';
 import { useGovtHolidayStats, useHalfYearlyStats } from '@/hooks/leave-tracker/useLeaveQuotaStats';
 import { UserStats } from '@/components/leave-tracker/UserStats';
@@ -210,10 +211,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   // Previous year carried balances
   const { carriedOffice, carriedGovt, carriedEidFitr, carriedEidAdha } = getCarriedBalances(staffProfile?.id, selectedYear, leaveSettlements);
 
+  const effectiveLeaves = resolveEffectiveLeaveSettings(staffProfile, globalSettings);
+
   // Staff deduction is deleted from DB settings, default is 0
-  const staffOfficeQuota = isOfficeLeaveEligible
-    ? (globalSettings.office_leave_h1 + globalSettings.office_leave_h2) + carriedOffice + (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha
-    : (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
+  const staffOfficeQuota = effectiveLeaves.office_leave_total + carriedOffice + (globalSettings.eid_fitr_leave ?? 0) + carriedEidFitr + (globalSettings.eid_adha_leave ?? 0) + carriedEidAdha;
 
 
   const approvedIndividualRecs = React.useMemo(() => {
@@ -249,8 +250,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   // Half-yearly split calculations using shared hook
   const { halfYearlyStats } = useHalfYearlyStats(
     unfilteredStaffRecords,
-    isOfficeLeaveEligible ? globalSettings.office_leave_h1 : 0,
-    isOfficeLeaveEligible ? globalSettings.office_leave_h2 : 0,
+    effectiveLeaves.office_leave_h1,
+    effectiveLeaves.office_leave_h2,
     selectedYear,
     leaveSettlements,
     staffProfile?.id,

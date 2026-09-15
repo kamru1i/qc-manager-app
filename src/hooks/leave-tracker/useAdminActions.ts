@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/utils/supabase';
 import { adminService, profilesService } from '@/services';
-import { Profile } from '@/types';
+import { Profile, UserLeaveOverrides } from '@/types';
 import { useProfiles } from '@/contexts/ProfilesContext';
 
 interface UseAdminActionsOptions {
@@ -231,7 +231,8 @@ const getErrorMessage = (err: any): string => {
     kpiOtherDeptIndicators?: string[],
     delegatedLeaveSupervisorId?: string | null,
     delegatedKpiSupervisorId?: string | null,
-    userFeatureFlags?: Record<string, boolean>
+    userFeatureFlags?: Record<string, boolean>,
+    leaveOverrides?: UserLeaveOverrides
   ) => {
     if (!navigator.onLine) {
       showToast('error', 'This action requires an active internet connection.');
@@ -279,7 +280,8 @@ const getErrorMessage = (err: any): string => {
         department: resolvedDept,
         performs_other_dept_tasks: performsOtherDeptTasks !== undefined ? performsOtherDeptTasks : (!!existingSettings.performs_other_dept_tasks),
         other_department: resolvedOtherDept,
-        user_feature_flags: userFeatureFlags !== undefined ? userFeatureFlags : existingSettings.user_feature_flags || {}
+        user_feature_flags: userFeatureFlags !== undefined ? userFeatureFlags : existingSettings.user_feature_flags || {},
+        leave_overrides: leaveOverrides !== undefined ? leaveOverrides : existingSettings.leave_overrides
       };
 
       const updatePayload: any = {
@@ -530,6 +532,20 @@ const getErrorMessage = (err: any): string => {
         const newKpiOtherDept = [...(kpiOtherDeptIndicators || [])].sort().join(', ');
         if (kpiOtherDeptIndicators !== undefined && oldKpiOtherDept !== newKpiOtherDept) {
           changes.push(`KPI Other Department Indicators:\n${oldKpiOtherDept || 'None'} → ${newKpiOtherDept || 'None'}`);
+        }
+
+        // 26. Leave Overrides
+        if (editorRole === 'admin' && leaveOverrides !== undefined) {
+          const oldH1 = existingSettings.leave_overrides?.office_leave_h1_override;
+          const newH1 = leaveOverrides.office_leave_h1_override;
+          if (oldH1 !== newH1) {
+            changes.push(`Office Leave H1:\n${oldH1 != null ? oldH1 + ' days' : 'Inherited Global'} → ${newH1 != null ? newH1 + ' days' : 'Inherited Global'}`);
+          }
+          const oldH2 = existingSettings.leave_overrides?.office_leave_h2_override;
+          const newH2 = leaveOverrides.office_leave_h2_override;
+          if (oldH2 !== newH2) {
+            changes.push(`Office Leave H2:\n${oldH2 != null ? oldH2 + ' days' : 'Inherited Global'} → ${newH2 != null ? newH2 + ' days' : 'Inherited Global'}`);
+          }
         }
       } else {
         changes.push(`Full Name:\nNone → ${fullName.trim()}`);

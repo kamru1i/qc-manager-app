@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, RotateCcw, Sparkles, CheckCircle2, DollarSign, ArrowRightLeft, FolderPlus, ShieldAlert } from 'lucide-react';
 import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { ChutiRecord } from '@/utils/offlineSync';
-import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getOutstandingOfficeLeave, formatDaysAndHours } from '@/utils/dashboardHelpers';
+import { GlobalSettings, calculateStats, calculateHalfYearlyOfficeLeave, getSettlementSplits, getOutstandingOfficeLeave, formatDaysAndHours, resolveEffectiveLeaveSettings } from '@/utils/dashboardHelpers';
 import { Modal } from '@/components/common/Modal';
 
 interface UserSettleModalProps {
@@ -59,29 +59,33 @@ export function UserSettleModal({
     .reduce((acc, s) => acc + getSettlementSplits(s).carry_forward, 0);
 
   const isGovtHolidayEligible = profile?.eligible_govt_holiday !== false;
+  const effectiveLeaves = React.useMemo(
+    () => resolveEffectiveLeaveSettings(profile, globalSettings),
+    [profile, globalSettings]
+  );
   const halfYearlyStats = React.useMemo(() => calculateHalfYearlyOfficeLeave(
     records,
-    globalSettings.office_leave_h1,
-    globalSettings.office_leave_h2,
+    effectiveLeaves.office_leave_h1,
+    effectiveLeaves.office_leave_h2,
     selectedYear,
     settlements,
     profile?.id,
     undefined,
     profile?.working_hours || 9.5
-  ), [records, globalSettings.office_leave_h1, globalSettings.office_leave_h2, selectedYear, settlements, profile?.id, profile?.working_hours]);
+  ), [records, effectiveLeaves.office_leave_h1, effectiveLeaves.office_leave_h2, selectedYear, settlements, profile?.id, profile?.working_hours]);
 
   const totalOutstandingOffice = React.useMemo(() => {
     if (!profile?.id) return 0;
     return getOutstandingOfficeLeave(
       records,
-      globalSettings.office_leave_h1,
-      globalSettings.office_leave_h2,
+      effectiveLeaves.office_leave_h1,
+      effectiveLeaves.office_leave_h2,
       selectedYear,
       settlements,
       profile.id,
       profile.working_hours || 9.5
     );
-  }, [records, globalSettings.office_leave_h1, globalSettings.office_leave_h2, selectedYear, settlements, profile]);
+  }, [records, effectiveLeaves.office_leave_h1, effectiveLeaves.office_leave_h2, selectedYear, settlements, profile]);
 
   const currentHalfPeriod: 'H1' | 'H2' = halfYearlyStats.currentHalf === 1 ? 'H1' : 'H2';
   const officeRemaining = halfYearlyStats.isMergedMode
@@ -421,7 +425,7 @@ export function UserSettleModal({
                               <div>
                                 <span className="text-xs font-bold text-theme-text-primary block">Adjust with H2 Office Leave</span>
                                 <span className="text-[10px] text-theme-text-muted block mt-0.5">
-                                  Deduct from H2 quota ({formatDaysAndHours(globalSettings.office_leave_h2, workingHours)} ➔ {formatDaysAndHours(globalSettings.office_leave_h2 - Math.abs(item.remaining_days), workingHours)} remaining).
+                                  Deduct from H2 quota ({formatDaysAndHours(effectiveLeaves.office_leave_h2, workingHours)} ➔ {formatDaysAndHours(effectiveLeaves.office_leave_h2 - Math.abs(item.remaining_days), workingHours)} remaining).
                                 </span>
                               </div>
                               <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${

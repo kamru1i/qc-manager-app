@@ -17,7 +17,8 @@ import {
   isBreakEligible,
   addBreakToShortLeave,
   applyBreakComment,
-  getMaxDaysInMonth
+  getMaxDaysInMonth,
+  resolveEffectiveLeaveSettings
 } from "@/utils/dashboardHelpers";
 import { ChutiRecord } from "@/utils/offlineSync";
 import { generateUUID } from '@/utils/idbStoreFactory';
@@ -217,10 +218,9 @@ export function AdminAddLeaveModal({
     return 0;
   };
 
-  const isOfficeLeaveEligible = staffProfile?.eligible_office_leave !== false;
-  const officeLeaveTotalBase = isOfficeLeaveEligible
-    ? globalSettings.office_leave_h1 + globalSettings.office_leave_h2
-    : 0;
+  const effectiveLeaves = resolveEffectiveLeaveSettings(staffProfile, globalSettings);
+  const isOfficeLeaveEligible = effectiveLeaves.is_office_leave_eligible;
+  const officeLeaveTotalBase = effectiveLeaves.office_leave_total;
 
   const reservedCount = userResponses.filter(
     (r: GovtHolidayResponse) => r.response === "reserve",
@@ -348,8 +348,8 @@ export function AdminAddLeaveModal({
   const halfYearlyStats = React.useMemo(() => {
     return calculateHalfYearlyOfficeLeave(
       records,
-      globalSettings.office_leave_h1,
-      globalSettings.office_leave_h2,
+      effectiveLeaves.office_leave_h1,
+      effectiveLeaves.office_leave_h2,
       selectedYear,
       leaveSettlements,
       staffProfile?.id,
@@ -358,8 +358,8 @@ export function AdminAddLeaveModal({
     );
   }, [
     records,
-    globalSettings.office_leave_h1,
-    globalSettings.office_leave_h2,
+    effectiveLeaves.office_leave_h1,
+    effectiveLeaves.office_leave_h2,
     selectedYear,
     staffProfile,
     leaveSettlements,

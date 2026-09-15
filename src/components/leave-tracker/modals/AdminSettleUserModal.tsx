@@ -5,7 +5,7 @@ import { RefreshCw, RotateCcw, ShieldAlert, DollarSign, FolderPlus, ArrowRightLe
 import { Profile, LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { Modal } from '@/components/common/Modal';
 
-import { GlobalSettings, getOutstandingOfficeLeave, calculateStats, formatDaysAndHours } from '@/utils/dashboardHelpers';
+import { GlobalSettings, getOutstandingOfficeLeave, calculateStats, formatDaysAndHours, resolveEffectiveLeaveSettings } from '@/utils/dashboardHelpers';
 import { ChutiRecord } from '@/utils/offlineSync';
 
 interface AdminSettleUserModalProps {
@@ -122,18 +122,22 @@ export function AdminSettleUserModal({
 
   const isNegative = total < 0;
 
+  const effectiveLeaves = React.useMemo(() => {
+    return resolveEffectiveLeaveSettings(staff, globalSettings);
+  }, [staff, globalSettings]);
+
   const totalOutstandingOffice = React.useMemo(() => {
     if (!staff?.id || !settlement) return 0;
     return getOutstandingOfficeLeave(
       records,
-      globalSettings.office_leave_h1,
-      globalSettings.office_leave_h2,
+      effectiveLeaves.office_leave_h1,
+      effectiveLeaves.office_leave_h2,
       settlement.year,
       leaveSettlements,
       staff.id,
       staff?.working_hours || 9.5
     );
-  }, [records, globalSettings.office_leave_h1, globalSettings.office_leave_h2, settlement, leaveSettlements, staff]);
+  }, [records, effectiveLeaves.office_leave_h1, effectiveLeaves.office_leave_h2, settlement, leaveSettlements, staff]);
 
   // Calculate remaining reserve/holiday balances for other categories
   const reserveOptions = React.useMemo(() => {
@@ -424,7 +428,7 @@ export function AdminSettleUserModal({
                     <div>
                       <span className="text-xs font-bold text-theme-text-primary block">Adjust with H2 Office Leave</span>
                       <span className="text-[10px] text-theme-text-muted block mt-0.5">
-                        Deduct from H2 quota ({globalSettings.office_leave_h2} ➔ {globalSettings.office_leave_h2 - Math.abs(total)} days remaining).
+                        Deduct from H2 quota ({effectiveLeaves.office_leave_h2} ➔ {effectiveLeaves.office_leave_h2 - Math.abs(total)} days remaining).
                       </span>
                     </div>
                     <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
