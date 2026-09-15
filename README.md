@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.6.4** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 7.7.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,16 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.6.4 — Patch Release (Monthly & Sale Summary Skeleton Loading Fix, Atomic Short Leave Adjustments & Requote Trigger Normalization) (Current)
+### 🚀 v7.7.0 — Minor Release (Quotes Dashboard Request AbortController & Cache Pruning, Quotation Mistakes Automation & Leave Overrides) (Current)
+
+- **Quotes Dashboard Request AbortController & Request Sequencing**: Integrated active `AbortController` and monotonic request sequence IDs (`fetchSeqRef`) into the quotations pipeline. Rapidly changing Month/Year filters immediately cancels obsolete in-flight HTTP requests, preventing race conditions and stale network responses.
+- **Background Cache Pruning & Cache Optimization**: Added non-blocking background cache pruning for IndexedDB records cache, keeping local client storage lightweight and fast.
+- **Optimized Date Formatting & Dhaka Timezone Caching**: Implemented memoized date-part parsing for Asia/Dhaka (`+06:00`) timezone strings, eliminating redundant parsing overhead during large dataset filtering.
+- **Quotation Mistakes Automation**: Introduced smart default period computation and automated filter initialization for reliable historical mistake tracking.
+- **Leave Settings & Per-User Overrides**: Added merged mode support, custom annual leave overrides, and dynamic per-user leave settings resolution.
+- **Realtime Synchronization Enhancements**: Refined profile and leave update emissions in UserManagement and DashboardModals for instantaneous multi-device UI updates.
+
+### 🚀 v7.6.4 — Patch Release (Monthly & Sale Summary Skeleton Loading Fix, Atomic Short Leave Adjustments & Requote Trigger Normalization)
 
 - **Quotations → Monthly & Sale Summary Loading & Skeleton States**: Resolved premature 'No file records found matching the filters' and 'No sale records found matching the filters' table flash when switching month or year filters while data downloads from the database. Added synchronous loading triggers, period completion tracking (`fetchedPeriods`), and cross-tab cache sharing with in-flight request deduplication.
 - **Quotations → Sale Summary Stats Skeleton Pulse**: Added smooth animated pulse placeholders for Sale Summary stat cards during remote retrieval, matching the Monthly Tab `StatsGrid` behavior.
