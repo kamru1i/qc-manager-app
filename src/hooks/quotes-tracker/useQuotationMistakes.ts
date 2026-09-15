@@ -7,11 +7,21 @@ import { mistakesService } from '@/services';
 import { Profile, QuotationMistake } from '@/types';
 import { canWriteQuotationMistakes, isFeatureEnabled } from '@/utils/permissionService';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
+import {
+  getDhakaDateParts,
+  computeSmartMistakePeriod,
+} from '@/utils/quotesDashboardHelpers';
 
 let _mistakesCache: {
   key: string;
   data: QuotationMistake[];
   count: number;
+} | null = null;
+
+let _availableFiltersCache: {
+  scopeKey: string;
+  branches: string[];
+  dates: Array<{ year: string; month: string }>;
 } | null = null;
 
 const MONTH_NAMES: Record<string, string> = {
@@ -45,25 +55,55 @@ export function useQuotationMistakes({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const now = new Date();
-  const currentYearStr = now.getFullYear().toString();
-  const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
+  const profileId = profile?.id || '';
+  const sessionUserId = sessionUser?.id || '';
+  const isUserRole = profile?.role === 'user';
+  const scopeKey = isUserRole ? sessionUserId : '__all__';
 
-  // Filter States (defaults to current year + current month, all branches, empty search & date)
+  const { year: currentYearStr, month: currentMonthStr } = useMemo(() => {
+    const parts = getDhakaDateParts(new Date().toISOString());
+    const fallbackNow = new Date();
+    return {
+      year: parts.year || fallbackNow.getFullYear().toString(),
+      month: parts.month || String(fallbackNow.getMonth() + 1).padStart(2, '0'),
+    };
+  }, []);
+
+  const cachedFilters = _availableFiltersCache?.scopeKey === scopeKey ? _availableFiltersCache : null;
+
+  const initialSmartPeriod = useMemo(() => {
+    if (cachedFilters) {
+      return computeSmartMistakePeriod(cachedFilters.dates, currentYearStr, currentMonthStr);
+    }
+    return {
+      year: currentYearStr,
+      month: '',
+    };
+  }, [cachedFilters, currentYearStr, currentMonthStr]);
+
+  const [isFiltersReady, setIsFiltersReady] = useState<boolean>(() => Boolean(cachedFilters));
+  const isDefaultInitializedRef = useRef<boolean>(Boolean(cachedFilters));
+  const prevScopeKeyRef = useRef<string>(scopeKey);
+
+  // Filter States
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>('');
-  const [selectedYear, setSelectedYear] = useState<string>(() => currentYearStr);
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => currentMonthStr);
+  const [selectedYear, setSelectedYear] = useState<string>(() => initialSmartPeriod.year);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => initialSmartPeriod.month);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   // Available metadata derived dynamically from actual quotation mistake records
-  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
-  const [availableDates, setAvailableDates] = useState<Array<{ year: string; month: string }>>([]);
+  const [availableBranches, setAvailableBranches] = useState<string[]>(() => cachedFilters?.branches || []);
+  const [availableDates, setAvailableDates] = useState<Array<{ year: string; month: string }>>(() => cachedFilters?.dates || []);
 
-  const profileId = profile?.id || '';
-  const sessionUserId = sessionUser?.id || '';
-  const isUserRole = profile?.role === 'user';
+  useEffect(() => {
+    if (prevScopeKeyRef.current !== scopeKey) {
+      prevScopeKeyRef.current = scopeKey;
+      isDefaultInitializedRef.current = false;
+      setIsFiltersReady(false);
+    }
+  }, [scopeKey]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -106,13 +146,42 @@ export function useQuotationMistakes({
       const scopeUserId = isUserRole ? sessionUserId : undefined;
       const { data, error: rpcErr } = await mistakesService.getAvailableMistakeFilters(scopeUserId);
       if (!rpcErr && data) {
-        setAvailableBranches(data.branches || []);
-        setAvailableDates(data.dates || []);
+        const branches = data.branches || [];
+        const dates = data.dates || [];
+        setAvailableBranches(branches);
+        setAvailableDates(dates);
+
+        _availableFiltersCache = {
+          scopeKey,
+          branches,
+          dates,
+        };
+
+        if (!isDefaultInitializedRef.current) {
+          isDefaultInitializedRef.current = true;
+          const { year: smartYear, month: smartMonth } = computeSmartMistakePeriod(
+            dates,
+            currentYearStr,
+            currentMonthStr
+          );
+          setSelectedYear(smartYear);
+          setSelectedMonth(smartMonth);
+          setIsFiltersReady(true);
+        }
+      } else {
+        if (!isDefaultInitializedRef.current) {
+          isDefaultInitializedRef.current = true;
+          setIsFiltersReady(true);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch available mistake filters:', err);
+      if (!isDefaultInitializedRef.current) {
+        isDefaultInitializedRef.current = true;
+        setIsFiltersReady(true);
+      }
     }
-  }, [sessionUserId, profileId, canRead, isUserRole]);
+  }, [sessionUserId, profileId, canRead, isUserRole, scopeKey, currentYearStr, currentMonthStr]);
 
   useEffect(() => {
     void fetchAvailableFilters();
@@ -184,13 +253,14 @@ export function useQuotationMistakes({
     }
   }, [sessionUserId, profileId, canRead, isUserRole, currentPage, debouncedSearchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate, availableYearsWithThisMonth, getCacheKey]);
 
-  // Initial Fetch
+  // Fetch mistakes once filters are initialized
   useEffect(() => {
+    if (!isFiltersReady) return;
     const isCached = _mistakesCache?.key === getCacheKey();
     const controller = new AbortController();
     void fetchMistakes(isCached, controller.signal);
     return () => controller.abort();
-  }, [fetchMistakes, getCacheKey]);
+  }, [fetchMistakes, getCacheKey, isFiltersReady]);
 
   // Realtime Integration
   const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -343,20 +413,37 @@ export function useQuotationMistakes({
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  // Check if any filter is active
+  // Check if any filter is active relative to smart defaults
   const isFilterActive = useMemo(() => {
-    return Boolean(searchQuery || selectedBranch || selectedYear || selectedMonth || selectedDate);
-  }, [searchQuery, selectedBranch, selectedYear, selectedMonth, selectedDate]);
+    const { year: defaultYear, month: defaultMonth } = computeSmartMistakePeriod(
+      availableDates,
+      currentYearStr,
+      currentMonthStr
+    );
+    return Boolean(
+      searchQuery ||
+      selectedBranch ||
+      selectedDate ||
+      selectedYear !== defaultYear ||
+      selectedMonth !== defaultMonth
+    );
+  }, [searchQuery, selectedBranch, selectedDate, selectedYear, selectedMonth, availableDates, currentYearStr, currentMonthStr]);
 
-  // Reset all filters to "All"
+  // Reset all filters to smart defaults
   const resetFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedBranch('');
-    setSelectedYear('');
-    setSelectedMonth('');
     setSelectedDate('');
     setCurrentPage(1);
-  }, []);
+
+    const { year: defaultYear, month: defaultMonth } = computeSmartMistakePeriod(
+      availableDates,
+      currentYearStr,
+      currentMonthStr
+    );
+    setSelectedYear(defaultYear);
+    setSelectedMonth(defaultMonth);
+  }, [availableDates, currentYearStr, currentMonthStr]);
 
   // ADD MISTAKE
   const addMistake = useCallback(
@@ -544,7 +631,7 @@ export function useQuotationMistakes({
     mistakes,
     allFilteredCount: totalCount,
     totalCount,
-    isLoading,
+    isLoading: isLoading || !isFiltersReady,
     isSubmitting,
     error,
     canWrite,

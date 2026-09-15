@@ -288,6 +288,43 @@ export const downloadCSVRows = (
   document.body.removeChild(link);
 };
 
+/**
+ * Computes smart default Year and Month for Quotation Mistakes based on actual data:
+ * - Default Year: currentYearStr if it has mistakes, otherwise most recent available year (or currentYearStr if empty).
+ * - Default Month: currentMonthStr if targetYear has mistake records in currentMonthStr, otherwise '' ("All Months").
+ */
+export function computeSmartMistakePeriod(
+  availableDates: Array<{ year: string; month: string }>,
+  currentYearStr: string,
+  currentMonthStr: string,
+): { year: string; month: string } {
+  const yearsSet = new Set<string>();
+  availableDates.forEach((d) => {
+    if (d.year && /^\d{4}$/.test(d.year)) {
+      yearsSet.add(d.year);
+    }
+  });
+  const dynamicYears = Array.from(yearsSet).sort(
+    (a, b) => parseInt(b, 10) - parseInt(a, 10)
+  );
+
+  let targetYear = currentYearStr;
+  if (dynamicYears.length > 0 && !dynamicYears.includes(currentYearStr)) {
+    targetYear = dynamicYears[0];
+  }
+
+  const hasCurrentMonthData = availableDates.some(
+    (d) => (!targetYear || d.year === targetYear) && d.month === currentMonthStr
+  );
+
+  const targetMonth = hasCurrentMonthData ? currentMonthStr : '';
+
+  return {
+    year: targetYear,
+    month: targetMonth,
+  };
+}
+
 // Sanitizes pasted/typed quote file names by stripping comments, file types,
 // branch names, dots, etc. The implementation now lives in a reusable module
 // (src/utils/fileNameSanitizer.ts) — the single source of truth. This re-export
