@@ -536,6 +536,11 @@ const getErrorMessage = (err: any): string => {
 
         // 26. Leave Overrides
         if (editorRole === 'admin' && leaveOverrides !== undefined) {
+          const oldAnnual = existingSettings.leave_overrides?.office_leave_annual_override;
+          const newAnnual = leaveOverrides.office_leave_annual_override;
+          if (oldAnnual !== newAnnual) {
+            changes.push(`Office Leave Annual:\n${oldAnnual != null ? oldAnnual + ' days' : 'Inherited Global'} → ${newAnnual != null ? newAnnual + ' days' : 'Inherited Global'}`);
+          }
           const oldH1 = existingSettings.leave_overrides?.office_leave_h1_override;
           const newH1 = leaveOverrides.office_leave_h1_override;
           if (oldH1 !== newH1) {

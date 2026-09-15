@@ -23,28 +23,68 @@ function resolveEffectiveLeaveSettings(profile, globalSettings = { office_leave_
 
   const rawOverrides = userGs?.leave_overrides;
 
+  const isMergedMode = globalSettings?.office_leave_mode === 'merged' ||
+    (globalSettings?.office_leave_h2 === 0 && globalSettings?.office_leave_mode !== 'split');
+
+  const hasAnnualOverride = typeof rawOverrides?.office_leave_annual_override === 'number';
   const hasH1Override = typeof rawOverrides?.office_leave_h1_override === 'number';
   const hasH2Override = typeof rawOverrides?.office_leave_h2_override === 'number';
 
+  const globalH1 = globalSettings?.office_leave_h1 ?? 7;
+  const globalH2 = globalSettings?.office_leave_h2 ?? 7;
+  const globalAnnual = globalSettings?.office_leave_default ?? (isMergedMode ? globalH1 : (globalH1 + globalH2));
+
+  if (isMergedMode) {
+    const rawAnnual = hasAnnualOverride
+      ? rawOverrides.office_leave_annual_override
+      : globalAnnual;
+    const effectiveAnnual = isEligible ? rawAnnual : 0;
+
+    return {
+      office_leave_mode: 'merged',
+      office_leave_annual: effectiveAnnual,
+      office_leave_h1: effectiveAnnual,
+      office_leave_h2: 0,
+      office_leave_total: effectiveAnnual,
+      raw_office_leave_annual: rawAnnual,
+      raw_office_leave_h1: rawAnnual,
+      raw_office_leave_h2: 0,
+      is_annual_overridden: hasAnnualOverride,
+      is_h1_overridden: hasH1Override,
+      is_h2_overridden: hasH2Override,
+      annual_override_value: hasAnnualOverride ? rawOverrides.office_leave_annual_override : null,
+      h1_override_value: hasH1Override ? rawOverrides.office_leave_h1_override : null,
+      h2_override_value: hasH2Override ? rawOverrides.office_leave_h2_override : null,
+      is_office_leave_eligible: isEligible,
+    };
+  }
+
+  // Split mode
   const rawH1 = hasH1Override
     ? rawOverrides.office_leave_h1_override
-    : (globalSettings?.office_leave_h1 ?? 7);
-
+    : globalH1;
   const rawH2 = hasH2Override
     ? rawOverrides.office_leave_h2_override
-    : (globalSettings?.office_leave_h2 ?? 7);
+    : globalH2;
 
   const effectiveH1 = isEligible ? rawH1 : 0;
   const effectiveH2 = isEligible ? rawH2 : 0;
+  const effectiveAnnual = effectiveH1 + effectiveH2;
+  const rawAnnual = rawH1 + rawH2;
 
   return {
+    office_leave_mode: 'split',
+    office_leave_annual: effectiveAnnual,
     office_leave_h1: effectiveH1,
     office_leave_h2: effectiveH2,
-    office_leave_total: effectiveH1 + effectiveH2,
+    office_leave_total: effectiveAnnual,
+    raw_office_leave_annual: rawAnnual,
     raw_office_leave_h1: rawH1,
     raw_office_leave_h2: rawH2,
+    is_annual_overridden: hasAnnualOverride,
     is_h1_overridden: hasH1Override,
     is_h2_overridden: hasH2Override,
+    annual_override_value: hasAnnualOverride ? rawOverrides.office_leave_annual_override : null,
     h1_override_value: hasH1Override ? rawOverrides.office_leave_h1_override : null,
     h2_override_value: hasH2Override ? rawOverrides.office_leave_h2_override : null,
     is_office_leave_eligible: isEligible,
@@ -188,6 +228,119 @@ async function runTests() {
   const resB = resolveEffectiveLeaveSettings(userB, defaultGlobal);
   assert(resA.office_leave_h1 === 10, 'User A has 10');
   assert(resB.office_leave_h1 === 3, 'User B has 3');
+
+  // MERGED MODE TESTS (Sections 32-37)
+  console.log('\n==================================================');
+  console.log('RUNNING MERGED / FULL-YEAR MODE TEST MATRIX');
+  console.log('==================================================\n');
+
+  const mergedGlobal = {
+    office_leave_mode: 'merged',
+    office_leave_default: 14,
+    office_leave_h1: 14,
+    office_leave_h2: 0,
+  };
+
+  // TEST M1: Merged mode global inheritance
+  console.log('--- TEST M1: Merged mode global inheritance ---');
+  const userM1 = { id: 'um1', username: 'USER_M1' };
+  const resM1 = resolveEffectiveLeaveSettings(userM1, mergedGlobal);
+  assert(resM1.office_leave_mode === 'merged', 'Mode is merged');
+  assert(resM1.office_leave_annual === 14, 'Effective annual inherits global 14');
+  assert(resM1.office_leave_h1 === 14, 'office_leave_h1 is 14 for full-year bucket compatibility');
+  assert(resM1.office_leave_h2 === 0, 'office_leave_h2 is 0');
+  assert(resM1.office_leave_total === 14, 'Total is 14');
+  assert(!resM1.is_annual_overridden, 'Not annual overridden');
+
+  // TEST M2: Merged mode annual override
+  console.log('\n--- TEST M2: Merged mode annual override ---');
+  const userM2 = { id: 'um2', global_settings: { leave_overrides: { office_leave_annual_override: 18 } } };
+  const resM2 = resolveEffectiveLeaveSettings(userM2, mergedGlobal);
+  assert(resM2.office_leave_mode === 'merged', 'Mode is merged');
+  assert(resM2.office_leave_annual === 18, 'Effective annual is 18 (overridden)');
+  assert(resM2.office_leave_h1 === 18, 'office_leave_h1 is 18');
+  assert(resM2.office_leave_h2 === 0, 'office_leave_h2 is 0');
+  assert(resM2.office_leave_total === 18, 'Total is 18');
+  assert(resM2.is_annual_overridden === true, 'is_annual_overridden is true');
+  assert(resM2.annual_override_value === 18, 'annual_override_value is 18');
+
+  // TEST M3: Merged mode explicit zero override
+  console.log('\n--- TEST M3: Merged mode explicit zero override ---');
+  const userM3 = { id: 'um3', global_settings: { leave_overrides: { office_leave_annual_override: 0 } } };
+  const resM3 = resolveEffectiveLeaveSettings(userM3, mergedGlobal);
+  assert(resM3.office_leave_annual === 0, 'Explicit 0 is preserved as 0, NOT falling back to 14');
+  assert(resM3.office_leave_h1 === 0, 'office_leave_h1 is 0');
+  assert(resM3.office_leave_h2 === 0, 'office_leave_h2 is 0');
+  assert(resM3.office_leave_total === 0, 'Total is 0');
+  assert(resM3.is_annual_overridden === true, 'is_annual_overridden is true');
+  assert(resM3.annual_override_value === 0, 'annual_override_value is 0');
+
+  // TEST M4: Merged mode reset override (null)
+  console.log('\n--- TEST M4: Merged mode reset override ---');
+  const userM4 = { id: 'um4', global_settings: { leave_overrides: { office_leave_annual_override: null } } };
+  const resM4 = resolveEffectiveLeaveSettings(userM4, mergedGlobal);
+  assert(resM4.office_leave_annual === 14, 'Reset override inherits global 14');
+  assert(resM4.is_annual_overridden === false, 'is_annual_overridden is false');
+  assert(resM4.annual_override_value === null, 'annual_override_value is null');
+
+  // TEST M5: Merged mode eligibility OFF
+  console.log('\n--- TEST M5: Merged mode eligibility OFF ---');
+  const userM5 = {
+    id: 'um5',
+    eligible_office_leave: false,
+    global_settings: { leave_overrides: { office_leave_annual_override: 20 } }
+  };
+  const resM5 = resolveEffectiveLeaveSettings(userM5, mergedGlobal);
+  assert(resM5.office_leave_annual === 0, 'Effective annual is 0 when eligible_office_leave is false');
+  assert(resM5.office_leave_h1 === 0, 'Effective H1 is 0');
+  assert(resM5.office_leave_h2 === 0, 'Effective H2 is 0');
+  assert(resM5.office_leave_total === 0, 'Total is 0');
+  assert(resM5.raw_office_leave_annual === 20, 'Raw underlying annual allocation 20 is preserved');
+
+  // TEST M6: Mode switching data isolation
+  console.log('\n--- TEST M6: Mode switching data isolation ---');
+  const userM6 = {
+    id: 'um6',
+    global_settings: {
+      leave_overrides: {
+        office_leave_annual_override: 22,
+        office_leave_h1_override: 8,
+        office_leave_h2_override: 9
+      }
+    }
+  };
+  const resM6Merged = resolveEffectiveLeaveSettings(userM6, mergedGlobal);
+  const resM6Split = resolveEffectiveLeaveSettings(userM6, defaultGlobal);
+  assert(resM6Merged.office_leave_mode === 'merged' && resM6Merged.office_leave_annual === 22, 'In merged mode, user gets annual override 22');
+  assert(resM6Split.office_leave_mode === 'split' && resM6Split.office_leave_h1 === 8 && resM6Split.office_leave_h2 === 9, 'In split mode, user gets H1=8, H2=9');
+  assert(resM6Split.office_leave_total === 17, 'In split mode, total is 17');
+  assert(userM6.global_settings.leave_overrides.office_leave_annual_override === 22, 'Annual override is preserved in storage');
+  assert(userM6.global_settings.leave_overrides.office_leave_h1_override === 8, 'H1 override is preserved in storage');
+  assert(userM6.global_settings.leave_overrides.office_leave_h2_override === 9, 'H2 override is preserved in storage');
+
+  // TEST M7: Full-year leave consumption without July 1 reset
+  console.log('\n--- TEST M7: Full-year leave consumption simulation ---');
+  const records = [
+    { status: 'approved', leave_type: 'Full Leave', date: '2026-03-10', user_id: 'um2' },
+    { status: 'approved', leave_type: 'Full Leave', date: '2026-07-15', user_id: 'um2' },
+    { status: 'approved', leave_type: 'Full Leave', date: '2026-11-20', user_id: 'um2' },
+  ];
+  const isMergedMode = resM2.office_leave_h2 === 0;
+  let h1Taken = 0;
+  let h2Taken = 0;
+  records.forEach(r => {
+    const month = parseInt(r.date.substring(5, 7), 10);
+    if (isMergedMode || month <= 6) {
+      h1Taken += 1;
+    } else {
+      h2Taken += 1;
+    }
+  });
+  const h1Remaining = resM2.office_leave_h1 - h1Taken;
+  assert(isMergedMode === true, 'Merged mode detected via office_leave_h2 === 0');
+  assert(h1Taken === 3, 'All 3 leaves throughout the year (Mar, Jul, Nov) count against the single annual bucket');
+  assert(h2Taken === 0, 'H2 taken is 0');
+  assert(h1Remaining === 15, '18 allocated - 3 taken = 15 remaining (no July 1 reset)');
 
   // TEST 20: Database trigger check on live PostgreSQL
   console.log('\n--- TEST 20: Database Trigger check (check_profile_updates) ---');

@@ -3,6 +3,7 @@ import { SanitizerRule, resolveSanitizerRules, enabledSanitizerWords } from '@/u
 export interface UserLeaveOverrides {
   office_leave_h1_override?: number | null;
   office_leave_h2_override?: number | null;
+  office_leave_annual_override?: number | null;
 }
 
 export interface GlobalSettings {
