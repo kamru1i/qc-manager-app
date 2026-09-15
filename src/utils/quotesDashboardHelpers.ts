@@ -17,29 +17,51 @@ export const getDhakaMonthRange = (yearStr: string, monthStr: string): { startIs
   return { startIso, endIso };
 };
 
+// Cached module-level formatters for Asia/Dhaka (+06:00) business timezone
+// Prevents instantiating new Intl.DateTimeFormat objects repeatedly inside loops and cell renders
+const dhakaDateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Dhaka',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+const dhakaTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Dhaka',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+});
+
+const dhakaDatePartsCache = new Map<string, { year: string; month: string; day: string; dateKey: string }>();
+const MAX_DHAKA_CACHE_SIZE = 10000;
+
 /**
  * Returns the Year ('YYYY'), Month ('MM'), Day ('DD'), and full Date string ('YYYY-MM-DD')
  * for an ISO timestamp string interpreted in Asia/Dhaka (+06:00) business timezone.
+ * Optimized with module-level cached formatter and in-memory Map lookup.
  */
 export const getDhakaDateParts = (dateStr: string | null | undefined): { year: string; month: string; day: string; dateKey: string } => {
   if (!dateStr) return { year: '', month: '', day: '', dateKey: '' };
+  const cached = dhakaDatePartsCache.get(dateStr);
+  if (cached) return cached;
+
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return { year: '', month: '', day: '', dateKey: '' };
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Dhaka',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    const parts = formatter.format(d).split('-');
+    const parts = dhakaDateFormatter.format(d).split('-');
     if (parts.length === 3) {
-      return {
+      const res = {
         year: parts[0],
         month: parts[1],
         day: parts[2],
         dateKey: `${parts[0]}-${parts[1]}-${parts[2]}`,
       };
+      if (dhakaDatePartsCache.size >= MAX_DHAKA_CACHE_SIZE) {
+        dhakaDatePartsCache.clear();
+      }
+      dhakaDatePartsCache.set(dateStr, res);
+      return res;
     }
   } catch {}
   return { year: '', month: '', day: '', dateKey: '' };
@@ -130,13 +152,7 @@ export const formatTimeToAMPM = (dateStr: string | null | undefined): string => 
   try {
     const d = new Date(str.includes('T') ? str : `1970-01-01T${str}`);
     if (!isNaN(d.getTime())) {
-      const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Dhaka',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      });
-      return formatter.format(d);
+      return dhakaTimeFormatter.format(d);
     }
   } catch {}
 

@@ -758,13 +758,15 @@ export default function QuotesDashboard({
 
   // Filtered records for Monthly Tab
   const monthlyFilteredRecords = useMemo(() => {
+    const q = searchQuery ? searchQuery.toLowerCase().trim() : "";
+    const matchedFileType = q ? ALL_10_FILE_TYPES.find((ft) => ft.toLowerCase() === q) : undefined;
+    const branchUpper = selectedBranch ? selectedBranch.toUpperCase().trim() : "";
+    const isApprover = !isQuotesOffAdmin && (isAdminRole(profile) || profile?.role === "supervisor");
+    const isMineOnly = isApprover && adminViewMode === "mine";
+    const currentUid = sessionUser?.id;
+
     return records.filter((r) => {
-      if (
-        !isQuotesOffAdmin &&
-        (isAdminRole(profile) || profile?.role === "supervisor") &&
-        adminViewMode === "mine" &&
-        r.user_id !== sessionUser?.id
-      ) {
+      if (isMineOnly && r.user_id !== currentUid) {
         return false;
       }
       const { year: recordYear, month: recordMonth, dateKey: recordDate } = getDhakaDateParts(r.submitted_at);
@@ -777,20 +779,12 @@ export default function QuotesDashboard({
           return false;
         }
       }
-      if (selectedBranch) {
-        if (
-          r.branch_name.toUpperCase().trim() !==
-          selectedBranch.toUpperCase().trim()
-        ) {
+      if (branchUpper) {
+        if (r.branch_name.toUpperCase().trim() !== branchUpper) {
           return false;
         }
       }
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchedFileType = ALL_10_FILE_TYPES.find(
-          (ft) => ft.toLowerCase() === q,
-        );
-
+      if (q) {
         if (matchedFileType) {
           if (r.file_type !== matchedFileType) {
             return false;
@@ -813,7 +807,6 @@ export default function QuotesDashboard({
     selectedDate,
     selectedBranch,
     searchQuery,
-    uniqueBranches,
     selectedYear,
     selectedMonth,
     isQuotesOffAdmin,
@@ -821,16 +814,17 @@ export default function QuotesDashboard({
 
   // Filtered records for Sale Summary Tab
   const saleSummaryRecords = useMemo(() => {
+    const q = saleSearchQuery ? saleSearchQuery.toLowerCase().trim() : "";
+    const branchUpper = saleSelectedBranch ? saleSelectedBranch.toUpperCase().trim() : "";
+    const isApprover = !isQuotesOffAdmin && (isAdminRole(profile) || profile?.role === "supervisor");
+    const isMineOnly = isApprover && saleAdminViewMode === "mine";
+    const currentUid = sessionUser?.id;
+
     return records.filter((r) => {
       if (r.file_type !== "Sale") {
         return false;
       }
-      if (
-        !isQuotesOffAdmin &&
-        (isAdminRole(profile) || profile?.role === "supervisor") &&
-        saleAdminViewMode === "mine" &&
-        r.user_id !== sessionUser?.id
-      ) {
+      if (isMineOnly && r.user_id !== currentUid) {
         return false;
       }
       const { year: recordYear, month: recordMonth, dateKey: recordDate } = getDhakaDateParts(r.submitted_at);
@@ -843,16 +837,12 @@ export default function QuotesDashboard({
           return false;
         }
       }
-      if (saleSelectedBranch) {
-        if (
-          r.branch_name.toUpperCase().trim() !==
-          saleSelectedBranch.toUpperCase().trim()
-        ) {
+      if (branchUpper) {
+        if (r.branch_name.toUpperCase().trim() !== branchUpper) {
           return false;
         }
       }
-      if (saleSearchQuery) {
-        const q = saleSearchQuery.toLowerCase().trim();
+      if (q) {
         const matchFileName = r.file_name.toLowerCase().includes(q);
         const matchCodename = r.codename.toLowerCase().includes(q);
         if (!matchFileName && !matchCodename) {

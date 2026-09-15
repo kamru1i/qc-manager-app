@@ -421,8 +421,9 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     const prevRecords = prevRecordsRef.current;
     prevRecordsRef.current = records;
 
-    // Check if there is any overlap in record IDs
-    const hasOverlap = records.some(r => prevRecords.some(pr => pr.id === r.id));
+    // Check if there is any overlap in record IDs using O(1) Set lookup
+    const prevIds = new Set(prevRecords.map(pr => pr.id));
+    const hasOverlap = records.some(r => prevIds.has(r.id));
 
     // If there was previous records, and now there is no overlap, it means filters/month changed completely
     if (prevRecords.length > 0 && !hasOverlap) {
@@ -434,7 +435,8 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
     } else {
       // If there is overlap, or if it's the initial load, we don't want to clear selection.
       // But we filter out selectedIds that are no longer present in records.
-      setSelectedIds(prev => prev.filter(id => records.some(r => r.id === id)));
+      const currentIds = new Set(records.map(r => r.id));
+      setSelectedIds(prev => prev.filter(id => currentIds.has(id)));
     }
   }, [records]);
 
