@@ -1140,10 +1140,18 @@ function AppPortalInner({
   }, [profile, hasQuotesWorkspace]);
 
   useAppEvent('profile-updated', (payload) => {
-    if (payload) {
-      setProfile(payload as unknown as Profile);
+    const updated = payload as Partial<Profile> | null | undefined;
+    if (updated && updated.id && sessionUser?.id && updated.id === sessionUser.id) {
+      const updatedProfile = mapProfilePasswordResetStatus(
+        updated as Profile,
+      ) as unknown as Profile;
+      setProfile(updatedProfile);
+      localStorage.setItem(
+        `cached_profile_${sessionUser.id}`,
+        JSON.stringify(updatedProfile),
+      );
     }
-  }, [setProfile]);
+  }, [sessionUser?.id, setProfile]);
 
   const fetchAndCacheGlobalRankings = useCallback(async () => {
     if (profile && !canAccessModule(profile, null, "leaderboard")) return;

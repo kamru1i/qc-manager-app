@@ -287,7 +287,6 @@ export const DashboardModals = () => {
       }
       toast.success(`User account for "${req.data?.full_name || req.data?.codename}" approved & created!`);
       fetchPendingUserCreationRequests();
-      emit('profile-updated', {});
       emit('user-creation-requests-updated');
     } catch (err: any) {
       toast.error(err?.message || 'Error approving user request');

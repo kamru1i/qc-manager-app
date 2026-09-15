@@ -1428,7 +1428,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       setSubmitting(false);
       await fetchProfiles();
       await fetchUserCreationRequests();
-      emit('profile-updated', {});
       emit('user-creation-requests-updated');
     } catch (err: any) {
       toast.error(err?.message || 'Error approving request');
@@ -1591,7 +1590,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             },
           };
           updateViewingStaff(updated);
-          emit('profile-updated', updated);
+          // Only emit current session profile update if editing own profile!
+          if (viewingStaff.id === sessionUser?.id) {
+            emit('profile-updated', updated);
+          }
         }
       }
     } catch (err: any) {
@@ -1619,7 +1621,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       } else {
         await deleteUser(deletingUserAccount.id);
         fetchProfiles();
-        emit('profile-updated', {});
       }
       setDeletingUserAccount(null);
     }
