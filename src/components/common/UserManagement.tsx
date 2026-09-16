@@ -1364,6 +1364,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
   }, []);
 
+  useAppEvent('open-user-profile', ({ userId, subtab }: { userId: string; subtab?: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi' }) => {
+    if (!userId) return;
+    const target = profiles.find((p) => p.id === userId);
+    if (target) {
+      updateViewingStaff(target);
+      if (subtab) {
+        setActiveSubTab(subtab);
+      }
+    }
+  }, [profiles, updateViewingStaff]);
+
   const handleSubmitRequestWrapper = async (data: UserCreationSubmittedData) => {
     setSubmitting(true);
     try {

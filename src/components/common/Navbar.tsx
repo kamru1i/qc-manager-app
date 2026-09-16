@@ -9,10 +9,13 @@ import {
   Bell,
   RefreshCw,
   Menu,
+  Search,
+  Keyboard,
 } from "lucide-react";
 import { Profile } from "@/types";
 import { useRouter } from "next/navigation";
 import { isNativeApp } from "@/utils/envHelper";
+import { useGlobalSearch } from "@/contexts/GlobalSearchContext";
 
 import { isTabVisibleForRole } from "@/utils/permissionService";
 import { getGlobalSettingsFromProfile } from "@/utils/dashboardHelpers";
@@ -60,6 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const router = useRouter();
+  const { openSearch, openShortcutsHelp, isMac } = useGlobalSearch();
   const [isNative, setIsNative] = React.useState(false);
 
   React.useEffect(() => {
@@ -133,6 +137,32 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="hidden md:flex items-center gap-3 flex-wrap">
+          {/* Universal Search Trigger */}
+          <button
+            type="button"
+            onClick={() => openSearch()}
+            className="flex items-center gap-2.5 px-3 py-1.5 bg-theme-page-bg/50 hover:bg-theme-card-bg border border-theme-border-input hover:border-purple-500/50 text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs transition-all cursor-pointer shadow-xs group shrink-0"
+            title={`Universal Search (${isMac ? '⌘K' : 'Ctrl+K'})`}
+          >
+            <Search className="h-3.5 w-3.5 text-theme-text-muted group-hover:text-purple-400 transition-colors" />
+            <span className="hidden lg:inline text-theme-text-muted group-hover:text-theme-text-secondary">
+              Search anything...
+            </span>
+            <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-medium text-theme-text-muted bg-theme-card-bg border border-theme-border-input rounded shadow-2xs">
+              {isMac ? '⌘K' : 'Ctrl+K'}
+            </kbd>
+          </button>
+
+          {/* Keyboard Shortcuts Help Trigger */}
+          <button
+            type="button"
+            onClick={openShortcutsHelp}
+            className="p-2 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg cursor-pointer hover:scale-[1.03] active:scale-[0.97] transition-all flex items-center justify-center shrink-0"
+            title="Keyboard Shortcuts (?)"
+          >
+            <Keyboard className="h-4 w-4 text-theme-text-muted hover:text-purple-400" />
+          </button>
+
           {/* Offline Sync Area */}
           {offlineCount > 0 && onManualSync && (
             <button
@@ -197,6 +227,35 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <LogOut className="h-4 w-4" /> Logout
           </button>
+        </div>
+
+        {/* Mobile Action Controls */}
+        <div className="flex md:hidden items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openSearch()}
+            aria-label="Universal Search"
+            className="p-2 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg cursor-pointer"
+            title="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          {profile && onNotificationClick && (
+            <button
+              onClick={onNotificationClick}
+              className="relative p-2 bg-theme-card-bg border border-theme-border-input hover:bg-theme-border-input text-theme-text-secondary hover:text-theme-text-primary rounded-lg cursor-pointer"
+              title="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              {notificationCount > 0 && (
+                <span className="absolute top-[-4px] right-[-4px] flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-red-500 animate-pulse">
+                  <span className="text-[9px] font-sans font-bold text-white leading-none">
+                    {notificationCount}
+                  </span>
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </header>

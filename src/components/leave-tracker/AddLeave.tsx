@@ -118,6 +118,20 @@ export function AddLeave({
   const [dateErrors, setDateErrors] = useState<Record<string, boolean>>({});
   const [showMultipleShortLeaveModal, setShowMultipleShortLeaveModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const el = formRef.current;
+    if (!el) return;
+    const handleShortcut = (e: Event) => {
+      e.preventDefault();
+      if (!submitting) {
+        el.requestSubmit();
+      }
+    };
+    el.addEventListener('shortcut-submit', handleShortcut);
+    return () => el.removeEventListener('shortcut-submit', handleShortcut);
+  }, [submitting]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -1048,7 +1062,20 @@ export function AddLeave({
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
-          <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-4 font-sans text-xs">
+          <form
+            ref={formRef}
+            data-shortcut-form="add-leave"
+            onSubmit={handleSubmit}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                if (!submitting) {
+                  e.preventDefault();
+                  formRef.current?.requestSubmit();
+                }
+              }
+            }}
+            className="lg:col-span-2 space-y-4 font-sans text-xs"
+          >
             <AddLeaveFormFields
               date={date}
               setDate={setDate}

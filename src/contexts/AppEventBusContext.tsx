@@ -46,6 +46,14 @@ export interface AppEventMap {
 
   // THEME
   'theme-change': { theme: 'dark' | 'light' } | string;
+
+  // GLOBAL SEARCH & DEEP NAVIGATION
+  'open-user-profile': { userId: string; subtab?: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi' };
+  'filter-quotations-branch': { branch?: string };
+  'filter-quotations-search': { search?: string };
+  'filter-mistakes': { search?: string; date?: string; branch?: string };
+  'filter-leave': { search?: string; date?: string };
+  'select-quote-rule': { ruleId?: string };
 }
 
 export type AppEventName = keyof AppEventMap;

@@ -375,6 +375,20 @@ export default function QuotesDashboard({
     setSaleSelectedMonth,
   });
 
+  useAppEvent('filter-quotations-search', ({ search }: { search?: string }) => {
+    if (search) {
+      setSearchQuery(search);
+      setTodaySearchQuery(search);
+    }
+  }, [setSearchQuery, setTodaySearchQuery]);
+
+  useAppEvent('filter-quotations-branch', ({ branch }: { branch?: string }) => {
+    if (branch) {
+      setSelectedBranch(branch);
+      setTodaySelectedBranch(branch);
+    }
+  }, [setSelectedBranch, setTodaySelectedBranch]);
+
   const {
     selectedDate,
     setSelectedDate,

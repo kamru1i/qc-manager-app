@@ -272,6 +272,15 @@ export default function ChutiDashboard({
     setViewingStaffId(staffId);
   }, [setViewingStaffId]);
 
+  // Listen for search filter events dispatched from Global Search
+  useAppEvent('filter-leave', ({ search, date }: { search?: string; date?: string }) => {
+    if (search) setSearchQuery(search);
+    if (date) {
+      setFilterStartDate(date);
+      setFilterEndDate(date);
+    }
+  }, [setSearchQuery, setFilterStartDate, setFilterEndDate]);
+
   // Derived state (filtering, grouping, notifications, stats)
   const derivedState = useDerivedState({
     sessionUser,

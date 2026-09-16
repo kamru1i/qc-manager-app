@@ -55,6 +55,9 @@ import { ProfilesProvider, useProfiles } from "@/contexts/ProfilesContext";
 import { fetchOwnProfileRow } from "@/utils/profileFetcher";
 import { ProfileSettings } from "@/components/common/ProfileSettings";
 import { clearOwnedOfflineCaches, prepareOfflineCachesForUser } from '@/utils/cacheOwnership';
+import { GlobalSearchProvider } from "@/contexts/GlobalSearchContext";
+import { GlobalSearchModal } from "@/components/common/search/GlobalSearchModal";
+import { KeyboardShortcutsModal } from "@/components/common/shortcuts/KeyboardShortcutsModal";
 
 function getInitialState() {
   if (typeof window === "undefined") {
@@ -454,13 +457,15 @@ export default function AppPortal() {
   return (
     <RealtimeProvider sessionUser={sessionUser} profile={profile}>
       <ProfilesProvider sessionUser={sessionUser} profile={profile}>
-        <AppPortalInner
-          sessionUser={sessionUser}
-          profile={profile}
-          setProfile={setProfile}
-          handleLogout={handleLogout}
-          isProfileFresh={isProfileFresh}
-        />
+        <GlobalSearchProvider>
+          <AppPortalInner
+            sessionUser={sessionUser}
+            profile={profile}
+            setProfile={setProfile}
+            handleLogout={handleLogout}
+            isProfileFresh={isProfileFresh}
+          />
+        </GlobalSearchProvider>
       </ProfilesProvider>
     </RealtimeProvider>
   );
@@ -744,6 +749,47 @@ function AppPortalInner({
     setActiveChutiTab(tab);
     sessionStorage.setItem("adminActiveTab", tab);
   };
+
+  const handleGlobalNavigate = useCallback((targetTab: string, targetSubtab?: string) => {
+    if (targetTab === "quotes") {
+      if (canAccessModule(profile, null, "quotes")) {
+        setActiveTab("quotes");
+        if (targetSubtab) {
+          handleQuotesTabChange(targetSubtab as any);
+        }
+      }
+    } else if (targetTab === "chuti") {
+      if (canAccessModule(profile, null, "leave")) {
+        setActiveTab("chuti");
+        if (targetSubtab) {
+          handleChutiTabChange(targetSubtab as any);
+        }
+      }
+    } else if (targetTab === "user_management") {
+      if (canAccessModule(profile, null, "user_management")) {
+        setActiveTab("user_management");
+      }
+    } else if (targetTab === "todo") {
+      if (canAccessModule(profile, null, "todo")) {
+        setActiveTab("todo");
+      }
+    } else if (targetTab === "kpi") {
+      if (canAccessModule(profile, null, "kpi")) {
+        setActiveTab("kpi");
+      }
+    } else if (targetTab === "profile_settings") {
+      setActiveTab("profile_settings");
+    } else if (
+      targetTab === "leaderboard" ||
+      targetTab === "reports" ||
+      targetTab === "all_report" ||
+      targetTab === "my_report"
+    ) {
+      if (canAccessModule(profile, null, targetTab === "reports" ? "leaderboard" : targetTab)) {
+        setActiveTab(targetTab as any);
+      }
+    }
+  }, [profile, handleQuotesTabChange, handleChutiTabChange]);
 
   const [isUserManagementFullView, setIsUserManagementFullView] =
     useState(false);
@@ -1752,6 +1798,16 @@ function AppPortalInner({
           </div>
         </div>
       )}
+
+      {/* Global Universal Search Palette */}
+      <GlobalSearchModal
+        sessionUser={sessionUser}
+        profile={profile}
+        onNavigateTab={handleGlobalNavigate}
+      />
+
+      {/* Keyboard Shortcuts Reference Dialog */}
+      <KeyboardShortcutsModal />
     </AppLayout>
   );
 }

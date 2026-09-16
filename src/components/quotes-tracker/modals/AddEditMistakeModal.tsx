@@ -44,6 +44,20 @@ export function AddEditMistakeModal({
   // Validation Error States
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [dateInputHasError, setDateInputHasError] = useState<boolean>(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const el = formRef.current;
+    if (!el) return;
+    const handleShortcut = (e: Event) => {
+      e.preventDefault();
+      if (!isSubmitting) {
+        el.requestSubmit();
+      }
+    };
+    el.addEventListener('shortcut-submit', handleShortcut);
+    return () => el.removeEventListener('shortcut-submit', handleShortcut);
+  }, [isSubmitting]);
 
   // User Options for Codename Dropdown (All roles with Quotes workspace enabled)
   const userOptions = useMemo(() => {
@@ -146,7 +160,20 @@ export function AddEditMistakeModal({
       glowClass="bg-rose-900/10"
       maxWidthClass="max-w-xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      <form
+        ref={formRef}
+        data-shortcut-form="add-mistake"
+        onSubmit={handleSubmit}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            if (!isSubmitting) {
+              e.preventDefault();
+              formRef.current?.requestSubmit();
+            }
+          }
+        }}
+        className="space-y-4 pt-1"
+      >
         {/* Row 1: Date & Branch */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>

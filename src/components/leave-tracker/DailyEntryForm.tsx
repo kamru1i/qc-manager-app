@@ -37,11 +37,34 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
   isAdmin = false,
   cleanFileName = defaultCleanFileName,
 }) => {
-  // Reused CategorySelector component handles isRequoteActive, handleRequoteClick, handleReviewClick, etc.
+  const formRef = React.useRef<HTMLFormElement>(null);
+
+  React.useEffect(() => {
+    const el = formRef.current;
+    if (!el) return;
+    const handleShortcut = (e: Event) => {
+      e.preventDefault();
+      if (!submitting && fileName.trim()) {
+        el.requestSubmit();
+      }
+    };
+    el.addEventListener('shortcut-submit', handleShortcut);
+    return () => el.removeEventListener('shortcut-submit', handleShortcut);
+  }, [submitting, fileName]);
 
   return (
     <form
+      ref={formRef}
+      data-shortcut-form="daily-entry"
       onSubmit={onSubmit}
+      onKeyDown={(e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          if (!submitting && fileName.trim()) {
+            e.preventDefault();
+            formRef.current?.requestSubmit();
+          }
+        }
+      }}
       className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-theme-page-bg/40 p-5 rounded-2xl border border-theme-border-muted"
     >
       {/* Left side inputs */}

@@ -30,6 +30,7 @@ import { AddEditMistakeModal } from './modals/AddEditMistakeModal';
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
 import { DateInput } from '@/components/common/DateInput';
 import { CustomSelect } from '@/components/common/CustomSelect';
+import { useAppEvent } from '@/contexts/AppEventBusContext';
 
 interface QuotationMistakesPanelProps {
   sessionUser: SupabaseUser | null;
@@ -100,6 +101,12 @@ export function QuotationMistakesPanel({
     globalSettings,
     profilesList,
   });
+
+  useAppEvent('filter-mistakes', ({ search, date, branch }: { search?: string; date?: string; branch?: string }) => {
+    if (search) setSearchQuery(search);
+    if (branch) setSelectedBranch(branch);
+    if (date) handleDateChange(date);
+  }, [setSearchQuery, setSelectedBranch, handleDateChange]);
 
   // Modal States
   const [isAddEditOpen, setIsAddEditOpen] = useState<boolean>(false);
