@@ -106,9 +106,9 @@ export const MistakeEntityContent: React.FC<MistakeEntityContentProps> = ({
         <div
           onClick={() => {
             if (submitterProfile) {
-              onOpenChildDrawer({ type: 'user', profile: submitterProfile });
+              onOpenChildDrawer({ type: 'user', profile: submitterProfile, sourceContext: 'mistake' });
             } else if (mistake.codename) {
-              onOpenChildDrawer({ type: 'user', username: mistake.codename });
+              onOpenChildDrawer({ type: 'user', username: mistake.codename, sourceContext: 'mistake' });
             }
           }}
           className="p-3 bg-theme-page-bg/60 hover:bg-theme-card-bg border border-theme-border-input/60 hover:border-theme-border-active rounded-xl transition-all cursor-pointer flex items-center justify-between text-xs group"
@@ -202,14 +202,14 @@ export const MistakeEntityContent: React.FC<MistakeEntityContentProps> = ({
               onClose();
               onNavigateAction({
                 tab: 'user_management',
-                subtab: 'profile',
+                subtab: 'quotes',
                 userId: submitterProfile.id,
               });
             }}
             className="flex-1 min-w-[140px] py-2 px-3 bg-theme-card-bg hover:bg-theme-border-input border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <User className="w-3.5 h-3.5 text-amber-400" />
-            User Profile
+            User History
           </button>
         )}
       </div>

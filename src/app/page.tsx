@@ -768,15 +768,14 @@ function AppPortalInner({
   };
 
   const handleChutiTabChange = (
-    tab:
-      | "add_leave"
-      | "leave_history"
-      | "settlement"
-      | "leave_settings"
-      | "team_leaves",
+    tab: string,
   ) => {
-    setActiveChutiTab(tab);
-    sessionStorage.setItem("adminActiveTab", tab);
+    const validTabs = ["add_leave", "leave_history", "settlement", "leave_settings", "team_leaves"];
+    const isViewerAdmin = isAdminRole(profile);
+    const fallbackTab = isViewerAdmin ? "settlement" : "leave_history";
+    const resolvedTab = validTabs.includes(tab) ? (tab as any) : fallbackTab;
+    setActiveChutiTab(resolvedTab);
+    sessionStorage.setItem("adminActiveTab", resolvedTab);
   };
 
   const handleGlobalNavigate = useCallback((targetTab: string, targetSubtab?: string) => {
@@ -1031,6 +1030,13 @@ function AppPortalInner({
   useAppEvent('chuti-offline-count-change', (payload) => {
     setChutiOfflineCount(typeof payload === 'number' ? payload : (payload?.count ?? 0));
   }, []);
+
+  useAppEvent('chuti-tab-change', (payload: any) => {
+    const tab = payload?.tab || payload?.subtab || (typeof payload === 'string' ? payload : undefined);
+    if (tab) {
+      handleChutiTabChange(tab);
+    }
+  }, [handleChutiTabChange]);
 
   useAppEvent('open-user-notifications-modal', () => {
     setShowNotificationsModal(true);

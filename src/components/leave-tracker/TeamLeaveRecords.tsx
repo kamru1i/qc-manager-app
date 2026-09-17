@@ -32,6 +32,7 @@ import { Modal } from "@/components/common/Modal";
 import { supabase } from "@/utils/supabase";
 import { toast } from "sonner";
 import { isAdminRole } from '@/utils/permissionService';
+import { useAppEvent } from "@/contexts/AppEventBusContext";
 
 interface TeamLeaveRecordsProps {
   profile: Profile;
@@ -52,8 +53,12 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   setProfile,
   setProfilesList,
 }) => {
-  // Initialize to local today's date in 'YYYY-MM-DD' Swedish format
+  // Initialize to stored date or local today's date in 'YYYY-MM-DD' Swedish format
   const [selectedDate, setSelectedDate] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("filterStartDate");
+      if (stored) return stored;
+    }
     const d = new Date();
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -69,6 +74,11 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
   const [selectedYear, setSelectedYear] = useState(() =>
     new Date().getFullYear().toString(),
   );
+
+  useAppEvent('filter-leave', ({ search, date }: { search?: string; date?: string }) => {
+    if (search) setSearchTerm(search);
+    if (date) setSelectedDate(date);
+  });
 
   // Delegate / Access control states
   const [showAccessModal, setShowAccessModal] = useState(false);

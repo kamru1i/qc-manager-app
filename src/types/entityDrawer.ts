@@ -8,6 +8,7 @@ export interface UserEntityRequest {
   userId?: string;
   username?: string; // codename
   profile?: Profile;
+  sourceContext?: 'quotation' | 'leave' | 'mistake' | 'general';
 }
 
 export interface QuotationEntityRequest {

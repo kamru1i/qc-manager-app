@@ -159,9 +159,9 @@ export const QuotationEntityContent: React.FC<QuotationEntityContentProps> = ({
         <div
           onClick={() => {
             if (submitterProfile) {
-              onOpenChildDrawer({ type: 'user', profile: submitterProfile });
+              onOpenChildDrawer({ type: 'user', profile: submitterProfile, sourceContext: 'quotation' });
             } else if (record.codename) {
-              onOpenChildDrawer({ type: 'user', username: record.codename });
+              onOpenChildDrawer({ type: 'user', username: record.codename, sourceContext: 'quotation' });
             }
           }}
           className="p-3 bg-theme-page-bg/60 hover:bg-theme-card-bg border border-theme-border-input/60 hover:border-theme-border-active rounded-xl transition-all cursor-pointer flex items-center justify-between text-xs group"
@@ -258,6 +258,24 @@ export const QuotationEntityContent: React.FC<QuotationEntityContentProps> = ({
           <Calendar className="w-3.5 h-3.5 text-purple-400" />
           Monthly Summary
         </button>
+
+        {(submitterProfile?.id || record.codename) && (
+          <button
+            onClick={() => {
+              onClose();
+              onNavigateAction({
+                tab: 'user_management',
+                subtab: 'quotes',
+                userId: submitterProfile?.id,
+                search: !submitterProfile?.id ? record.codename : undefined,
+              });
+            }}
+            className="flex-1 min-w-[130px] py-2 px-3 bg-theme-card-bg hover:bg-theme-border-input border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <User className="w-3.5 h-3.5 text-amber-400" />
+            User History
+          </button>
+        )}
       </div>
     </div>
   );

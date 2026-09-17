@@ -113,8 +113,26 @@ export default function ChutiDashboard({
 
   // View Filter states
   const [filterType, setFilterType] = useState('all');
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('filterStartDate');
+      if (stored) {
+        sessionStorage.removeItem('filterStartDate');
+        return stored;
+      }
+    }
+    return '';
+  });
+  const [filterEndDate, setFilterEndDate] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('filterEndDate');
+      if (stored) {
+        sessionStorage.removeItem('filterEndDate');
+        return stored;
+      }
+    }
+    return '';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdminAddLeaveModal, setShowAdminAddLeaveModal] = useState(false);
 
@@ -271,7 +289,10 @@ export default function ChutiDashboard({
   useAppEvent('trigger-viewing-staff', (payload) => {
     const staffId = payload && typeof payload === 'object' && 'userId' in payload ? payload.userId : (payload as string | null);
     setViewingStaffId(staffId);
-  }, [setViewingStaffId]);
+    if (staffId && isAdminRole(profile)) {
+      handleChutiTabChange('settlement');
+    }
+  }, [setViewingStaffId, profile]);
 
   // Listen for search filter events dispatched from Global Search
   useAppEvent('filter-leave', ({ search, date }: { search?: string; date?: string }) => {

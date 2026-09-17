@@ -29,6 +29,7 @@ import { QuotationEntityContent } from './QuotationEntityContent';
 import { MistakeEntityContent } from './MistakeEntityContent';
 import { LeaveEntityContent } from './LeaveEntityContent';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import { navigateToUserProfile, navigateToLeaveTracker } from '@/utils/actionableWorkflowHelpers';
 
 interface EntityDrawerProps {
   viewerProfile: Profile | null;
@@ -174,19 +175,41 @@ export const EntityDrawer: React.FC<EntityDrawerProps> = ({
     }) => {
       closeEntityDrawer();
 
-      // If user profile canonical navigation (Settings > Users > Target User)
-      if (action.userId && (action.tab === 'user_management' || action.subtab === 'profile')) {
-        emit('open-user-profile', {
-          userId: action.userId,
-          subtab: action.subtab === 'leave' ? 'leave_history' : 'profile',
-        });
-        if (onNavigateTab) {
-          onNavigateTab('user_management', action.subtab);
+      // 1. User profile canonical navigation (Settings > Users > Target User)
+      if (
+        (action.userId || action.search) &&
+        (action.tab === 'user_management' ||
+          action.subtab === 'profile' ||
+          action.subtab === 'quotes' ||
+          action.subtab === 'leave' ||
+          action.subtab === 'kpi' ||
+          action.subtab === 'analytics')
+      ) {
+        let targetId = action.userId;
+        if (!targetId && action.search) {
+          const matched = profilesList.find(
+            (p) =>
+              p.username?.toLowerCase() === action.search?.toLowerCase() ||
+              p.codename?.toLowerCase() === action.search?.toLowerCase() ||
+              p.full_name?.toLowerCase() === action.search?.toLowerCase()
+          );
+          if (matched) {
+            targetId = matched.id;
+          }
         }
-        return;
+
+        if (targetId) {
+          navigateToUserProfile({
+            userId: targetId,
+            subtab: (action.subtab as any) || 'profile',
+            emit,
+            onNavigateTab,
+          });
+          return;
+        }
       }
 
-      // If quotation search navigation
+      // 2. Quotation search navigation
       if (action.tab === 'quotes') {
         if (action.subtab === 'mistakes') {
           if (action.search || action.branch || action.date) {
@@ -211,27 +234,26 @@ export const EntityDrawer: React.FC<EntityDrawerProps> = ({
         return;
       }
 
-      // If leave tracker navigation
+      // 3. Leave tracker navigation
       if (action.tab === 'chuti') {
-        if (action.userId) {
-          emit('trigger-viewing-staff', { userId: action.userId });
-        }
-        if (action.search || action.date) {
-          emit('filter-leave', { search: action.search, date: action.date });
-        }
-        emit('chuti-tab-change', { tab: action.subtab || 'dashboard' });
-        if (onNavigateTab) {
-          onNavigateTab('chuti', action.subtab);
-        }
+        navigateToLeaveTracker({
+          userId: action.userId,
+          subtab: action.subtab as any,
+          date: action.date,
+          search: action.search,
+          viewerProfile,
+          emit,
+          onNavigateTab,
+        });
         return;
       }
 
-      // General fallback
+      // 4. General fallback
       if (onNavigateTab) {
         onNavigateTab(action.tab, action.subtab);
       }
     },
-    [closeEntityDrawer, emit, onNavigateTab]
+    [closeEntityDrawer, emit, onNavigateTab, viewerProfile]
   );
 
   // Return null if not mounted or not open
@@ -346,6 +368,7 @@ export const EntityDrawer: React.FC<EntityDrawerProps> = ({
               onClose={closeEntityDrawer}
               onNavigateAction={handleNavigateAction}
               onOpenChildDrawer={handleOpenChildDrawer}
+              sourceContext={currentRequest.sourceContext}
             />
           ) : currentRequest?.type === 'quotation' && quotationDetails ? (
             <QuotationEntityContent

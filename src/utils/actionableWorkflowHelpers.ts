@@ -1,4 +1,6 @@
 import { ActionableCategory, ActionableType } from '@/types/actionableWorkflows';
+import { Profile } from '@/types';
+import { isAdminRole } from '@/utils/permissionService';
 
 /**
  * Resolves the destination tab within the target User Profile based on the request type and category.
@@ -38,6 +40,70 @@ export function resolveActionableProfileDestination(
   return 'profile';
 }
 
+export type UserProfileSubtab = 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi';
+
+export interface NavigateToUserProfileParams {
+  userId: string;
+  subtab?: UserProfileSubtab | 'leave_history';
+  emit: (event: any, ...args: any[]) => void;
+  onNavigateTab?: (tab: string, subtab?: string) => void;
+  onCloseModal?: () => void;
+}
+
+/**
+ * Canonical helper for navigating to a specific target user's profile within Settings > Users.
+ * Stages identity in sessionStorage/localStorage for unmounted hydration and dispatches
+ * real-time event bus notifications for mounted hydration.
+ */
+export function navigateToUserProfile({
+  userId,
+  subtab = 'profile',
+  emit,
+  onNavigateTab,
+  onCloseModal,
+}: NavigateToUserProfileParams): void {
+  if (!userId) return;
+
+  const normalizedSubtab: UserProfileSubtab = subtab === 'leave_history' ? 'leave' : subtab;
+
+  if (onCloseModal) {
+    try {
+      onCloseModal();
+    } catch {}
+  }
+  try {
+    emit('close-approval-modals');
+  } catch {}
+
+  // 1. Stage target user and subtab in session/local storage for deterministic mount hydration
+  try {
+    sessionStorage.setItem('viewingStaffId', userId);
+    sessionStorage.setItem('viewingStaffSubTab', normalizedSubtab);
+    sessionStorage.setItem('viewingStaffFromUserManagement', 'true');
+
+    localStorage.setItem('user_management_viewing_staff_id', userId);
+    localStorage.setItem('user_management_active_subtab', normalizedSubtab);
+    localStorage.setItem('settings_active_subtab', 'user_management');
+    localStorage.setItem('last_active_dashboard', 'profile_settings');
+  } catch (err) {
+    console.error('Failed to set storage for user profile navigation:', err);
+  }
+
+  // 2. Coordinate navigation via event bus
+  try {
+    emit('workspace-change', 'user_management');
+    emit('settings-subtab-change', { subtab: 'user_management' });
+    emit('open-user-profile', { userId, subtab: normalizedSubtab });
+  } catch (err) {
+    console.error('Failed to dispatch user profile navigation events:', err);
+  }
+
+  // 3. Trigger direct tab navigation callback if provided
+  if (onNavigateTab) {
+    onNavigateTab('user_management', normalizedSubtab);
+  }
+}
+
 export interface ExecuteActionableProfileNavigationParams {
   userId: string;
   destinationTab: 'leave' | 'profile';
@@ -55,38 +121,68 @@ export function executeActionableProfileNavigation({
   emit,
   onCloseModal,
 }: ExecuteActionableProfileNavigationParams): void {
-  if (!userId) return;
+  navigateToUserProfile({
+    userId,
+    subtab: destinationTab,
+    emit,
+    onCloseModal,
+  });
+}
 
-  // 1. Immediately and deterministically close the approval modal
-  try {
-    if (onCloseModal) {
-      onCloseModal();
+export interface NavigateToLeaveTrackerParams {
+  userId?: string;
+  subtab?: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves';
+  date?: string;
+  search?: string;
+  viewerProfile?: Profile | null;
+  emit: (event: any, ...args: any[]) => void;
+  onNavigateTab?: (tab: string, subtab?: string) => void;
+}
+
+/**
+ * Canonical helper for navigating to the Leave Tracker workspace with target user, subtab,
+ * and date filter context safely preserved.
+ */
+export function navigateToLeaveTracker({
+  userId,
+  subtab,
+  date,
+  search,
+  viewerProfile,
+  emit,
+  onNavigateTab,
+}: NavigateToLeaveTrackerParams): void {
+  const isViewerAdmin = isAdminRole(viewerProfile || null);
+  const isSelf = !!(userId && viewerProfile?.id === userId);
+
+  // Resolve canonical target subtab
+  let resolvedSubtab = subtab;
+  if (!resolvedSubtab) {
+    if (isViewerAdmin && userId && !isSelf) {
+      resolvedSubtab = 'settlement';
+    } else {
+      resolvedSubtab = 'leave_history';
     }
-    emit('close-approval-modals');
-  } catch (err) {
-    console.error('Failed to close approval modal on navigation:', err);
   }
 
-  // 2. Set canonical session and local storage keys for target user and subtab
-  try {
+  // Stage target staff if specified
+  if (userId) {
     sessionStorage.setItem('viewingStaffId', userId);
-    sessionStorage.setItem('viewingStaffSubTab', destinationTab);
-    sessionStorage.setItem('viewingStaffFromUserManagement', 'true');
-
-    localStorage.setItem('user_management_viewing_staff_id', userId);
-    localStorage.setItem('user_management_active_subtab', destinationTab);
-    localStorage.setItem('settings_active_subtab', 'user_management');
-    localStorage.setItem('last_active_dashboard', 'profile_settings');
-  } catch (err) {
-    console.error('Failed to set storage for user profile navigation:', err);
+    emit('trigger-viewing-staff', { userId });
   }
 
-  // 3. Coordinate navigation and profile activation via event bus
-  try {
-    emit('workspace-change', 'user_management');
-    emit('settings-subtab-change', { subtab: 'user_management' });
-    emit('open-user-profile', { userId, subtab: destinationTab });
-  } catch (err) {
-    console.error('Failed to dispatch user profile navigation events:', err);
+  // Stage and dispatch filters
+  if (date) {
+    sessionStorage.setItem('filterStartDate', date);
+    sessionStorage.setItem('filterEndDate', date);
+    emit('filter-leave', { date, search });
+  } else if (search) {
+    emit('filter-leave', { search });
+  }
+
+  emit('workspace-change', 'chuti');
+  emit('chuti-tab-change', { tab: resolvedSubtab });
+  if (onNavigateTab) {
+    onNavigateTab('chuti', resolvedSubtab);
   }
 }

@@ -29,6 +29,7 @@ interface LeaveEntityContentProps {
     subtab?: string;
     search?: string;
     userId?: string;
+    date?: string;
   }) => void;
   onOpenChildDrawer: (req: EntityDrawerRequest) => void;
 }
@@ -256,13 +257,15 @@ export const LeaveEntityContent: React.FC<LeaveEntityContentProps> = ({
             onClose();
             onNavigateAction({
               tab: 'chuti',
-              subtab: 'dashboard',
+              subtab: isViewerAdmin && leave.user_id !== viewerProfile?.id ? 'settlement' : 'leave_history',
+              userId: leave.user_id,
+              date: leave.date,
             });
           }}
           className="flex-1 min-w-[140px] py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <ExternalLink className="w-3.5 h-3.5" />
-          Open Leave Tracker
+          View Leave Tracker
         </button>
 
         {canViewLeaveHistory && employeeProfile && (
