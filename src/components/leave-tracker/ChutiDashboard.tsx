@@ -27,6 +27,7 @@ import { supabase } from '@/utils/supabase';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
 import { userCreationRequestService } from '@/services/userCreationRequestService';
+import { getNavigationContext, saveNavigationContext } from '@/services';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Profile } from '@/types';
 
@@ -112,7 +113,29 @@ export default function ChutiDashboard({
   }, [userRecords, holidayResponses, initialFetchDone, onDataReady]);
 
   // View Filter states
-  const [filterType, setFilterType] = useState('all');
+  const [filterType, setFilterTypeState] = useState(() => {
+    if (typeof window !== 'undefined' && rootSessionUser?.id) {
+      const nav = getNavigationContext(rootSessionUser.id, profile);
+      const validTypes = ['all', 'Early Leave', 'Full Leave', 'Late Join', 'Overtime', 'Short Leave'];
+      if (nav?.leaveFilters?.filterType && validTypes.includes(nav.leaveFilters.filterType)) {
+        return nav.leaveFilters.filterType;
+      }
+    }
+    return 'all';
+  });
+
+  const setFilterType = useCallback((valOrFn: string | ((prev: string) => string)) => {
+    setFilterTypeState(prev => {
+      const next = typeof valOrFn === 'function' ? valOrFn(prev) : valOrFn;
+      if (rootSessionUser?.id) {
+        saveNavigationContext(rootSessionUser.id, {
+          leaveFilters: { filterType: next }
+        });
+      }
+      return next;
+    });
+  }, [rootSessionUser]);
+
   const [filterStartDate, setFilterStartDate] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = sessionStorage.getItem('filterStartDate');
@@ -133,7 +156,29 @@ export default function ChutiDashboard({
     }
     return '';
   });
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const [searchQuery, setSearchQueryState] = useState(() => {
+    if (typeof window !== 'undefined' && rootSessionUser?.id) {
+      const nav = getNavigationContext(rootSessionUser.id, profile);
+      if (nav?.leaveFilters?.search) {
+        return nav.leaveFilters.search;
+      }
+    }
+    return '';
+  });
+
+  const setSearchQuery = useCallback((valOrFn: string | ((prev: string) => string)) => {
+    setSearchQueryState(prev => {
+      const next = typeof valOrFn === 'function' ? valOrFn(prev) : valOrFn;
+      if (rootSessionUser?.id) {
+        saveNavigationContext(rootSessionUser.id, {
+          leaveFilters: { search: next }
+        });
+      }
+      return next;
+    });
+  }, [rootSessionUser]);
+
   const [showAdminAddLeaveModal, setShowAdminAddLeaveModal] = useState(false);
 
   const handleChutiTabChange = (tab: 'add_leave' | 'leave_history' | 'settlement' | 'leave_settings' | 'team_leaves') => {

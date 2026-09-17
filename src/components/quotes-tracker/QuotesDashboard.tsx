@@ -372,12 +372,17 @@ export default function QuotesDashboard({
     saleAdminViewMode,
     setSaleAdminViewMode,
     handleClearTodayFilters,
-  } = useQuotesPageFilters(setSelectedYear, setSelectedMonth, {
-    saleSelectedYear,
-    setSaleSelectedYear,
-    saleSelectedMonth,
-    setSaleSelectedMonth,
-  });
+  } = useQuotesPageFilters(
+    setSelectedYear,
+    setSelectedMonth,
+    {
+      saleSelectedYear,
+      setSaleSelectedYear,
+      saleSelectedMonth,
+      setSaleSelectedMonth,
+    },
+    rootSessionUser?.id,
+  );
 
   useAppEvent('filter-quotations-search', ({ search }: { search?: string }) => {
     if (search) {
@@ -701,6 +706,7 @@ export default function QuotesDashboard({
 
   // Adjust selected month when selected year/dynamicMonths updates
   useEffect(() => {
+    if (availableDates.length === 0) return;
     const monthValues = dynamicMonths.map((m) => m.val);
     const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
     if (!monthValues.includes(selectedMonth)) {
@@ -710,10 +716,11 @@ export default function QuotesDashboard({
         setSelectedMonth(monthValues[monthValues.length - 1]);
       }
     }
-  }, [dynamicMonths, selectedMonth, setSelectedMonth]);
+  }, [availableDates.length, dynamicMonths, selectedMonth, setSelectedMonth]);
 
   // Adjust selected year if it's no longer valid
   useEffect(() => {
+    if (availableDates.length === 0) return;
     const isValid = dynamicYears.includes(selectedYear);
     if (!isValid && dynamicYears.length > 0) {
       const curYear = new Date().getFullYear().toString();
@@ -723,10 +730,11 @@ export default function QuotesDashboard({
         setSelectedYear(dynamicYears[0]);
       }
     }
-  }, [dynamicYears, selectedYear, setSelectedYear]);
+  }, [availableDates.length, dynamicYears, selectedYear, setSelectedYear]);
 
   // Adjust sale selected month when saleSelectedYear/saleDynamicMonths updates
   useEffect(() => {
+    if (availableDates.length === 0) return;
     const monthValues = saleDynamicMonths.map((m) => m.val);
     const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
     if (!monthValues.includes(saleSelectedMonth)) {
@@ -736,10 +744,11 @@ export default function QuotesDashboard({
         setSaleSelectedMonth(monthValues[monthValues.length - 1]);
       }
     }
-  }, [saleDynamicMonths, saleSelectedMonth, setSaleSelectedMonth]);
+  }, [availableDates.length, saleDynamicMonths, saleSelectedMonth, setSaleSelectedMonth]);
 
   // Adjust sale selected year if it's no longer valid
   useEffect(() => {
+    if (availableDates.length === 0) return;
     const isValid = dynamicYears.includes(saleSelectedYear);
     if (!isValid && dynamicYears.length > 0) {
       const curYear = new Date().getFullYear().toString();
@@ -749,7 +758,7 @@ export default function QuotesDashboard({
         setSaleSelectedYear(dynamicYears[0]);
       }
     }
-  }, [dynamicYears, saleSelectedYear, setSaleSelectedYear]);
+  }, [availableDates.length, dynamicYears, saleSelectedYear, setSaleSelectedYear]);
 
   // Unique branches extracted dynamically from all records and normalized
   const uniqueBranches = useMemo(() => {

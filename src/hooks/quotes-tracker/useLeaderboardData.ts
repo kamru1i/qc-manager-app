@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { recordsService } from '@/services';
+import { recordsService, getNavigationContext, saveNavigationContext } from '@/services';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
 import { Profile } from '@/types';
@@ -56,25 +56,85 @@ const monthsList = [
 ];
 
 export const useLeaderboardData = (currentProfile: Profile | null) => {
-  const [leaderboardPeriod, setLeaderboardPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  
   const currentYearStr = getBusinessYear();
+
+  const [leaderboardPeriod, setLeaderboardPeriodState] = useState<'monthly' | 'yearly'>(() => {
+    if (typeof window !== 'undefined' && currentProfile?.id) {
+      const nav = getNavigationContext(currentProfile.id, currentProfile);
+      if (nav?.leaderboardFilters?.period) {
+        return nav.leaderboardFilters.period;
+      }
+    }
+    return 'monthly';
+  });
   
   // Default strictly to current month and current year
-  const [selectedYear, setSelectedYear] = useState(() => currentYearStr);
-  const [selectedMonth, setSelectedMonth] = useState(() => getBusinessMonth());
+  const [selectedYear, setSelectedYearState] = useState(() => {
+    if (typeof window !== 'undefined' && currentProfile?.id) {
+      const nav = getNavigationContext(currentProfile.id, currentProfile);
+      if (nav?.leaderboardFilters?.year) {
+        return nav.leaderboardFilters.year;
+      }
+    }
+    return currentYearStr;
+  });
+  const [selectedMonth, setSelectedMonthState] = useState(() => {
+    if (typeof window !== 'undefined' && currentProfile?.id) {
+      const nav = getNavigationContext(currentProfile.id, currentProfile);
+      if (nav?.leaderboardFilters?.month) {
+        return nav.leaderboardFilters.month;
+      }
+    }
+    return getBusinessMonth();
+  });
+
+  const setLeaderboardPeriod = useCallback((periodOrFn: ('monthly' | 'yearly') | ((prev: 'monthly' | 'yearly') => 'monthly' | 'yearly')) => {
+    setLeaderboardPeriodState(prev => {
+      const next = typeof periodOrFn === 'function' ? periodOrFn(prev) : periodOrFn;
+      if (currentProfile?.id) {
+        saveNavigationContext(currentProfile.id, {
+          leaderboardFilters: { period: next }
+        });
+      }
+      return next;
+    });
+  }, [currentProfile]);
+
+  const setSelectedYear = useCallback((yearOrFn: string | ((prev: string) => string)) => {
+    setSelectedYearState(prev => {
+      const next = typeof yearOrFn === 'function' ? yearOrFn(prev) : yearOrFn;
+      if (currentProfile?.id) {
+        saveNavigationContext(currentProfile.id, {
+          leaderboardFilters: { year: next }
+        });
+      }
+      return next;
+    });
+  }, [currentProfile]);
+
+  const setSelectedMonth = useCallback((monthOrFn: string | ((prev: string) => string)) => {
+    setSelectedMonthState(prev => {
+      const next = typeof monthOrFn === 'function' ? monthOrFn(prev) : monthOrFn;
+      if (currentProfile?.id) {
+        saveNavigationContext(currentProfile.id, {
+          leaderboardFilters: { month: next }
+        });
+      }
+      return next;
+    });
+  }, [currentProfile]);
 
   const getCacheKey = useCallback(() => {
     return `${leaderboardPeriod}_${selectedYear}_${leaderboardPeriod === 'monthly' ? selectedMonth : 'all'}`;
   }, [leaderboardPeriod, selectedYear, selectedMonth]);
 
   const [rawLeaderboardData, setRawLeaderboardData] = useState<LeaderboardUser[]>(() => {
-    const key = `${leaderboardPeriod}_${currentYearStr}_${getBusinessMonth()}`;
+    const key = `${leaderboardPeriod}_${selectedYear}_${leaderboardPeriod === 'monthly' ? selectedMonth : 'all'}`;
     return _leaderboardCache?.key === key ? _leaderboardCache.data : [];
   });
   
   const [loading, setLoading] = useState(() => {
-    const key = `${leaderboardPeriod}_${currentYearStr}_${getBusinessMonth()}`;
+    const key = `${leaderboardPeriod}_${selectedYear}_${leaderboardPeriod === 'monthly' ? selectedMonth : 'all'}`;
     return _leaderboardCache?.key !== key;
   });
   const [error, setError] = useState<string | null>(null);
@@ -456,7 +516,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
     if (period === 'monthly') {
       setSelectedYear(currentYearStr);
     }
-  }, [currentYearStr]);
+  }, [currentYearStr, setLeaderboardPeriod, setSelectedYear]);
 
   return {
     leaderboardData,

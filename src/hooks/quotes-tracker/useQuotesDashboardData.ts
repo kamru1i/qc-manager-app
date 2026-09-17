@@ -30,6 +30,7 @@ import {
   clearAllCache
 } from '@/utils/quotesOfflineSync';
 import { clearOwnedOfflineCaches } from '@/utils/cacheOwnership';
+import { getNavigationContext, saveNavigationContext } from '@/services';
 
 const sanitizeProfile = (p: Profile | null): Profile | null => {
   if (!p) return null;
@@ -123,12 +124,44 @@ const mergeMonthRecords = (
   const { theme, toggleTheme } = useQuotesTheme();
 
   // Filter States - Monthly Tab
-  const [selectedYear, setSelectedYearState] = useState<string>(() => new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonthState] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [selectedYear, setSelectedYearState] = useState<string>(() => {
+    if (typeof window !== 'undefined' && sessionUser?.id) {
+      const nav = getNavigationContext(sessionUser.id, rootProfile);
+      if (nav?.quotesFilters?.monthly?.year) {
+        return nav.quotesFilters.monthly.year;
+      }
+    }
+    return new Date().getFullYear().toString();
+  });
+  const [selectedMonth, setSelectedMonthState] = useState<string>(() => {
+    if (typeof window !== 'undefined' && sessionUser?.id) {
+      const nav = getNavigationContext(sessionUser.id, rootProfile);
+      if (nav?.quotesFilters?.monthly?.month) {
+        return nav.quotesFilters.monthly.month;
+      }
+    }
+    return String(new Date().getMonth() + 1).padStart(2, '0');
+  });
 
   // Filter States - Sale Summary Tab
-  const [saleSelectedYear, setSaleSelectedYearState] = useState<string>(() => new Date().getFullYear().toString());
-  const [saleSelectedMonth, setSaleSelectedMonthState] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [saleSelectedYear, setSaleSelectedYearState] = useState<string>(() => {
+    if (typeof window !== 'undefined' && sessionUser?.id) {
+      const nav = getNavigationContext(sessionUser.id, rootProfile);
+      if (nav?.quotesFilters?.saleSummary?.year) {
+        return nav.quotesFilters.saleSummary.year;
+      }
+    }
+    return new Date().getFullYear().toString();
+  });
+  const [saleSelectedMonth, setSaleSelectedMonthState] = useState<string>(() => {
+    if (typeof window !== 'undefined' && sessionUser?.id) {
+      const nav = getNavigationContext(sessionUser.id, rootProfile);
+      if (nav?.quotesFilters?.saleSummary?.month) {
+        return nav.quotesFilters.saleSummary.month;
+      }
+    }
+    return String(new Date().getMonth() + 1).padStart(2, '0');
+  });
 
   const [saleRecordsLoading, setSaleRecordsLoading] = useState(true);
 
@@ -186,6 +219,13 @@ const mergeMonthRecords = (
   const setSelectedYear = useCallback((year: string) => {
     setSelectedYearState(year);
     selectedYearRef.current = year;
+    if (sessionUser?.id) {
+      saveNavigationContext(sessionUser.id, {
+        quotesFilters: {
+          monthly: { year }
+        }
+      });
+    }
     const month = selectedMonthRef.current;
     const key = `${year}-${month}`;
     const hasData = hasRecordsInState(year, month);
@@ -194,11 +234,18 @@ const mergeMonthRecords = (
     } else {
       setRecordsLoading(false);
     }
-  }, [hasRecordsInState]);
+  }, [hasRecordsInState, sessionUser]);
 
   const setSelectedMonth = useCallback((month: string) => {
     setSelectedMonthState(month);
     selectedMonthRef.current = month;
+    if (sessionUser?.id) {
+      saveNavigationContext(sessionUser.id, {
+        quotesFilters: {
+          monthly: { month }
+        }
+      });
+    }
     const year = selectedYearRef.current;
     const key = `${year}-${month}`;
     const hasData = hasRecordsInState(year, month);
@@ -207,11 +254,18 @@ const mergeMonthRecords = (
     } else {
       setRecordsLoading(false);
     }
-  }, [hasRecordsInState]);
+  }, [hasRecordsInState, sessionUser]);
 
   const setSaleSelectedYear = useCallback((year: string) => {
     setSaleSelectedYearState(year);
     saleSelectedYearRef.current = year;
+    if (sessionUser?.id) {
+      saveNavigationContext(sessionUser.id, {
+        quotesFilters: {
+          saleSummary: { year }
+        }
+      });
+    }
     const month = saleSelectedMonthRef.current;
     const key = `${year}-${month}`;
     const hasData = hasRecordsInState(year, month);
@@ -220,11 +274,18 @@ const mergeMonthRecords = (
     } else {
       setSaleRecordsLoading(false);
     }
-  }, [hasRecordsInState]);
+  }, [hasRecordsInState, sessionUser]);
 
   const setSaleSelectedMonth = useCallback((month: string) => {
     setSaleSelectedMonthState(month);
     saleSelectedMonthRef.current = month;
+    if (sessionUser?.id) {
+      saveNavigationContext(sessionUser.id, {
+        quotesFilters: {
+          saleSummary: { month }
+        }
+      });
+    }
     const year = saleSelectedYearRef.current;
     const key = `${year}-${month}`;
     const hasData = hasRecordsInState(year, month);
@@ -233,7 +294,7 @@ const mergeMonthRecords = (
     } else {
       setSaleRecordsLoading(false);
     }
-  }, [hasRecordsInState]);
+  }, [hasRecordsInState, sessionUser]);
 
   // Show a message using sonner
   const showToast = useCallback((type: 'success' | 'error', text: string) => {

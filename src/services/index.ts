@@ -9,3 +9,4 @@ export * from './holidaysService';
 export * from './loginCodesService';
 export * from './entityDrawerService';
 export * from './recentItemsService';
+export * from './navigationContextService';

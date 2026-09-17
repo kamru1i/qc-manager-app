@@ -67,10 +67,20 @@ import { GlobalSearchModal } from "@/components/common/search/GlobalSearchModal"
 import { KeyboardShortcutsModal } from "@/components/common/shortcuts/KeyboardShortcutsModal";
 import { EntityDrawerProvider } from "@/contexts/EntityDrawerContext";
 import { EntityDrawer } from "@/components/common/drawer/EntityDrawer";
+import {
+  getNavigationContext,
+  saveNavigationContext,
+  NavigationContextState,
+} from "@/services";
 
-function getInitialState() {
+function getInitialState(): {
+  sessionUser: any;
+  profile: any;
+  initialTab: any;
+  initialNavContext?: NavigationContextState | null;
+} {
   if (typeof window === "undefined") {
-    return { sessionUser: null, profile: null, initialTab: null };
+    return { sessionUser: null, profile: null, initialTab: null, initialNavContext: null };
   }
   try {
     // AUDIT FIX M3: Use Object.keys instead of index-based localStorage iteration
@@ -86,14 +96,16 @@ function getInitialState() {
       }
     }
     if (!authUser)
-      return { sessionUser: null, profile: null, initialTab: null };
+      return { sessionUser: null, profile: null, initialTab: null, initialNavContext: null };
 
     const cacheKey = `cached_profile_${authUser.id}`;
     const cachedStr = localStorage.getItem(cacheKey);
     if (cachedStr) {
       const cachedProfile = JSON.parse(cachedStr);
 
-      let lastActive = localStorage.getItem("last_active_dashboard") as any;
+      const navContext = getNavigationContext(authUser.id, cachedProfile);
+
+      let lastActive = (navContext?.mainTab as any) || (localStorage.getItem("last_active_dashboard") as any);
       if (lastActive && !canAccessModule(cachedProfile, null, lastActive)) {
         lastActive = null;
       }
@@ -116,12 +128,13 @@ function getInitialState() {
         sessionUser: authUser,
         profile: cachedProfile,
         initialTab: lastActive,
+        initialNavContext: navContext,
       };
     }
-    return { sessionUser: authUser, profile: null, initialTab: null };
+    return { sessionUser: authUser, profile: null, initialTab: null, initialNavContext: null };
   } catch (e) {
     console.error("Error loading initial synchronous state:", e);
-    return { sessionUser: null, profile: null, initialTab: null };
+    return { sessionUser: null, profile: null, initialTab: null, initialNavContext: null };
   }
 }
 
@@ -495,11 +508,12 @@ function AppPortalInner({
   handleLogout: () => Promise<void>;
   isProfileFresh: boolean;
 }) {
+  const sessionUserId = sessionUser?.id;
   const { emit } = useAppEventBus();
   
   // Continuously track user activity to prevent premature 7-day logouts
   // for users who never close the app (Desktop/Android/pinned tabs).
-  useActivityTracker(sessionUser?.id);
+  useActivityTracker(sessionUserId);
   
   const [activeTab, setActiveTab] = useState<
     | "chuti"
@@ -635,6 +649,26 @@ function AppPortalInner({
     | "mistakes"
   >(() => {
     if (typeof window !== "undefined") {
+      const nav = _cachedInitialState?.initialNavContext || (sessionUser?.id ? getNavigationContext(sessionUser.id, profile) : null);
+      if (nav?.mainTab === "quotes" && nav?.subtab) {
+        const s = nav.subtab;
+        if (
+          s === "entry" ||
+          s === "monthly" ||
+          s === "sale_summary" ||
+          s === "leaderboard" ||
+          s === "reports" ||
+          s === "rules" ||
+          s === "login_codes" ||
+          s === "copy_helper" ||
+          s === "save_file" ||
+          s === "quick_import" ||
+          s === "mistakes" ||
+          s === "causality"
+        ) {
+          return s as any;
+        }
+      }
       let saved = localStorage.getItem("quotes_sales_active_tab");
       if (saved === "analytics") saved = "leaderboard";
       if (
@@ -671,6 +705,19 @@ function AppPortalInner({
     | "team_leaves"
   >(() => {
     if (typeof window !== "undefined") {
+      const nav = _cachedInitialState?.initialNavContext || (sessionUser?.id ? getNavigationContext(sessionUser.id, profile) : null);
+      if (nav?.mainTab === "chuti" && nav?.subtab) {
+        const s = nav.subtab;
+        if (
+          s === "add_leave" ||
+          s === "leave_history" ||
+          s === "settlement" ||
+          s === "leave_settings" ||
+          s === "team_leaves"
+        ) {
+          return s as any;
+        }
+      }
       const saved = sessionStorage.getItem("adminActiveTab");
       if (
         saved === "add_leave" ||
@@ -747,6 +794,9 @@ function AppPortalInner({
       if (targetTab === "leaderboard" || targetTab === "kpi" || targetTab === "my_report" || targetTab === "all_report") {
         localStorage.setItem("last_active_reports_subtab", targetTab);
       }
+      saveNavigationContext(sessionUser?.id, {
+        mainTab: targetTab,
+      });
     } else {
       const isQuotesOffAdmin = checkIsQuotesOffAdmin(profile);
       let targetQuotesTab = tab;
@@ -764,6 +814,10 @@ function AppPortalInner({
       localStorage.setItem("last_active_dashboard", "quotes");
       setActiveQuotesTab(targetQuotesTab as any);
       localStorage.setItem("quotes_sales_active_tab", targetQuotesTab);
+      saveNavigationContext(sessionUser?.id, {
+        mainTab: "quotes",
+        subtab: targetQuotesTab,
+      });
     }
   };
 
@@ -776,21 +830,31 @@ function AppPortalInner({
     const resolvedTab = validTabs.includes(tab) ? (tab as any) : fallbackTab;
     setActiveChutiTab(resolvedTab);
     sessionStorage.setItem("adminActiveTab", resolvedTab);
+    saveNavigationContext(sessionUser?.id, {
+      mainTab: "chuti",
+      subtab: resolvedTab,
+    });
   };
 
   const handleGlobalNavigate = useCallback((targetTab: string, targetSubtab?: string) => {
     if (targetTab === "quotes") {
       if (canAccessModule(profile, null, "quotes")) {
         setActiveTab("quotes");
+        localStorage.setItem("last_active_dashboard", "quotes");
         if (targetSubtab) {
           handleQuotesTabChange(targetSubtab as any);
+        } else {
+          saveNavigationContext(sessionUserId, { mainTab: "quotes", subtab: activeQuotesTab });
         }
       }
     } else if (targetTab === "chuti") {
       if (canAccessModule(profile, null, "leave")) {
         setActiveTab("chuti");
+        localStorage.setItem("last_active_dashboard", "chuti");
         if (targetSubtab) {
           handleChutiTabChange(targetSubtab as any);
+        } else {
+          saveNavigationContext(sessionUserId, { mainTab: "chuti", subtab: activeChutiTab });
         }
       }
     } else if (targetTab === "user_management") {
@@ -799,14 +863,19 @@ function AppPortalInner({
         localStorage.setItem("settings_active_subtab", "user_management");
         localStorage.setItem("last_active_dashboard", "profile_settings");
         emit("settings-subtab-change", { subtab: "user_management" });
+        saveNavigationContext(sessionUserId, { mainTab: "profile_settings", subtab: "user_management" });
       }
     } else if (targetTab === "todo") {
       if (canAccessModule(profile, null, "todo")) {
         setActiveTab("todo");
+        localStorage.setItem("last_active_dashboard", "todo");
+        saveNavigationContext(sessionUserId, { mainTab: "todo" });
       }
     } else if (targetTab === "kpi") {
       if (canAccessModule(profile, null, "kpi")) {
         setActiveTab("kpi");
+        localStorage.setItem("last_active_dashboard", "kpi");
+        saveNavigationContext(sessionUserId, { mainTab: "kpi" });
       }
     } else if (targetTab === "profile_settings") {
       setActiveTab("profile_settings");
@@ -814,6 +883,9 @@ function AppPortalInner({
       if (targetSubtab) {
         localStorage.setItem("settings_active_subtab", targetSubtab);
         emit("settings-subtab-change", { subtab: targetSubtab });
+        saveNavigationContext(sessionUserId, { mainTab: "profile_settings", subtab: targetSubtab });
+      } else {
+        saveNavigationContext(sessionUserId, { mainTab: "profile_settings" });
       }
     } else if (
       targetTab === "leaderboard" ||
@@ -823,9 +895,12 @@ function AppPortalInner({
     ) {
       if (canAccessModule(profile, null, targetTab === "reports" ? "leaderboard" : targetTab)) {
         setActiveTab(targetTab as any);
+        localStorage.setItem("last_active_dashboard", targetTab);
+        localStorage.setItem("last_active_reports_subtab", targetTab);
+        saveNavigationContext(sessionUserId, { mainTab: targetTab });
       }
     }
-  }, [profile, handleQuotesTabChange, handleChutiTabChange, emit]);
+  }, [profile, handleQuotesTabChange, handleChutiTabChange, emit, activeQuotesTab, activeChutiTab, sessionUserId]);
 
   const [isUserManagementFullView, setIsUserManagementFullView] =
     useState(false);
@@ -1233,7 +1308,17 @@ function AppPortalInner({
     }
 
     setActiveTab(targetWorkspace as typeof activeTab);
-  }, [profile, hasQuotesWorkspace, emit]);
+    localStorage.setItem("last_active_dashboard", targetWorkspace);
+    saveNavigationContext(sessionUserId, {
+      mainTab: targetWorkspace,
+      subtab:
+        targetWorkspace === "quotes"
+          ? activeQuotesTab
+          : targetWorkspace === "chuti"
+            ? activeChutiTab
+            : undefined,
+    });
+  }, [profile, hasQuotesWorkspace, emit, activeQuotesTab, activeChutiTab, sessionUserId]);
 
   useAppEvent('profile-updated', (payload) => {
     const updated = payload as Partial<Profile> | null | undefined;

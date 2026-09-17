@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { mistakesService } from '@/services';
+import { mistakesService, getNavigationContext, saveNavigationContext } from '@/services';
 import { Profile, QuotationMistake } from '@/types';
 import { canWriteQuotationMistakes, isFeatureEnabled } from '@/utils/permissionService';
 import { useRealtimeHandler, RealtimePayload } from '@/contexts/RealtimeContext';
@@ -88,10 +88,61 @@ export function useQuotationMistakes({
   const prevScopeKeyRef = useRef<string>(scopeKey);
 
   // Filter States
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedBranch, setSelectedBranch] = useState<string>('');
-  const [selectedYear, setSelectedYear] = useState<string>(() => initialSmartPeriod.year);
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => initialSmartPeriod.month);
+  const initialNav = typeof window !== 'undefined' && sessionUserId ? getNavigationContext(sessionUserId, profile) : null;
+  const savedMistakes = initialNav?.quotesFilters?.mistakes;
+
+  const [searchQuery, setSearchQueryState] = useState<string>(() => savedMistakes?.search || '');
+  const setSearchQuery = useCallback((queryOrFn: string | ((prev: string) => string)) => {
+    setSearchQueryState(prev => {
+      const next = typeof queryOrFn === 'function' ? queryOrFn(prev) : queryOrFn;
+      if (sessionUserId) {
+        saveNavigationContext(sessionUserId, {
+          quotesFilters: { mistakes: { search: next } }
+        });
+      }
+      return next;
+    });
+  }, [sessionUserId]);
+
+  const [selectedBranch, setSelectedBranchState] = useState<string>(() => savedMistakes?.branch || '');
+  const setSelectedBranch = useCallback((branchOrFn: string | ((prev: string) => string)) => {
+    setSelectedBranchState(prev => {
+      const next = typeof branchOrFn === 'function' ? branchOrFn(prev) : branchOrFn;
+      if (sessionUserId) {
+        saveNavigationContext(sessionUserId, {
+          quotesFilters: { mistakes: { branch: next } }
+        });
+      }
+      return next;
+    });
+  }, [sessionUserId]);
+
+  const [selectedYear, setSelectedYearState] = useState<string>(() => savedMistakes?.year || initialSmartPeriod.year);
+  const setSelectedYear = useCallback((yearOrFn: string | ((prev: string) => string)) => {
+    setSelectedYearState(prev => {
+      const next = typeof yearOrFn === 'function' ? yearOrFn(prev) : yearOrFn;
+      if (sessionUserId) {
+        saveNavigationContext(sessionUserId, {
+          quotesFilters: { mistakes: { year: next } }
+        });
+      }
+      return next;
+    });
+  }, [sessionUserId]);
+
+  const [selectedMonth, setSelectedMonthState] = useState<string>(() => savedMistakes?.month || initialSmartPeriod.month);
+  const setSelectedMonth = useCallback((monthOrFn: string | ((prev: string) => string)) => {
+    setSelectedMonthState(prev => {
+      const next = typeof monthOrFn === 'function' ? monthOrFn(prev) : monthOrFn;
+      if (sessionUserId) {
+        saveNavigationContext(sessionUserId, {
+          quotesFilters: { mistakes: { month: next } }
+        });
+      }
+      return next;
+    });
+  }, [sessionUserId]);
+
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
