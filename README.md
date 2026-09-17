@@ -1,6 +1,6 @@
 # 🌟 QC Manager — Unified Office Leave Tracker & Quotes Manager
 
-**Version 7.7.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
+**Version 8.0.0** | A premium, modern, and high-performance desktop, web, and mobile utility built with **Next.js 16 (React 19 & TypeScript)**, **Supabase (PostgreSQL)**, **Tauri v2 (Rust Core)**, and **Capacitor v8**. It integrates two comprehensive corporate workspaces under a unified, enterprise-grade, role-based access control (RBAC) and feature flag management structure.
 
 ---
 
@@ -135,7 +135,15 @@ npm run tauri build
 
 ## 📜 Version History / Changelog
 
-### 🚀 v7.7.0 — Minor Release (Quotes Dashboard Request AbortController & Cache Pruning, Quotation Mistakes Automation & Leave Overrides) (Current)
+### 🚀 v8.0.0 — Major Release (Context-Aware Global Search, Recent Items, Continue Where You Left Off & Local-First Draft Recovery) (Current)
+
+- **Context-Aware Global Search & Deep Navigation**: Upgraded the existing Global Search into an intelligent context-aware command and navigation layer supporting 13 core entities (Codename, Employee Name, Filename, Branch, Leave, Leave Comment, Quotation, Quotation File Type, Mistake, Date, User, Quote Rule, and Login Code) with group categorizations, deep links into tabs, filters, and entity drawers, and intentional exclusion of audit logs.
+- **Global Search Recent Items**: Lightweight, client-only recent history experience when Global Search opens with an empty query, allowing rapid re-navigation to recently opened profiles, records, and settings.
+- **Continue Where You Left Off**: Resilient local persistence of the user's last meaningful navigation context (active route, subtab, year/month date filters, branch selectors, and scroll positions) to immediately restore working context upon returning to the app or refreshing.
+- **Local-First Draft Recovery & Unsaved Form Protection**: Comprehensive protection across all critical data-entry forms (Daily Quotation Entry, Leave Application, Quotation Mistake, Quick Import Batch, and Save File Helper) to eliminate accidental data loss from navigation, refreshes, or app closure.
+- **Save File Outlook Rich Content Field Protection**: Full markup preservation for rich Outlook pastes (complex tables, borders, colors, inline CSS, layouts, and fonts) using DOMPurify sanitization, immediate onPaste synchronization, unmount flushes, and dedicated draft recovery modal previews.
+
+### 🚀 v7.7.0 — Minor Release (Quotes Dashboard Request AbortController & Cache Pruning, Quotation Mistakes Automation & Leave Overrides)
 
 - **Quotes Dashboard Request AbortController & Request Sequencing**: Integrated active `AbortController` and monotonic request sequence IDs (`fetchSeqRef`) into the quotations pipeline. Rapidly changing Month/Year filters immediately cancels obsolete in-flight HTTP requests, preventing race conditions and stale network responses.
 - **Background Cache Pruning & Cache Optimization**: Added non-blocking background cache pruning for IndexedDB records cache, keeping local client storage lightweight and fast.
