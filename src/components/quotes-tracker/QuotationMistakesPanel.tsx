@@ -645,6 +645,7 @@ export function QuotationMistakesPanel({
         editingMistake={editingMistake}
         profilesList={profilesList}
         isSubmitting={isSubmitting}
+        currentUserId={sessionUser?.id || profile?.id}
       />
 
       {/* Delete Confirmation Modal */}

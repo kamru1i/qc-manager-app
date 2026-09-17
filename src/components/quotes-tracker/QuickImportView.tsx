@@ -23,6 +23,9 @@ import {
   getTodayYYYYMMDD,
 } from "@/utils/bulkQuoteParser";
 import { CustomSelect } from "@/components/common/CustomSelect";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { UnsavedDraftModal } from "@/components/common/drafts/UnsavedDraftModal";
+import { QuotationQuickImportDraft } from "@/services/draftService";
 
 export const formatYYYYMMDDToDDMMYYYY = (isoDate?: string): string => {
   const dateStr = isoDate || getTodayYYYYMMDD();
@@ -37,6 +40,7 @@ export interface QuickImportViewProps {
   isOpen?: boolean;
   isInline?: boolean;
   onClose?: () => void;
+  userId?: string;
   allowedBranches: string[];
   allowedTypes: string[];
   sanitizerWords: string[];
@@ -55,6 +59,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
   isOpen = true,
   isInline = false,
   onClose = () => {},
+  userId,
   allowedBranches,
   allowedTypes,
   sanitizerWords,
@@ -68,6 +73,58 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [totalToSubmit, setTotalToSubmit] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Draft Recovery for Quick Import Form
+  const quickImportDraftData: QuotationQuickImportDraft = React.useMemo(
+    () => ({
+      rawText,
+      items: items.map((item) => ({
+        id: item.id,
+        raw_line: item.raw_line,
+        file_name: item.file_name,
+        branch_name: item.branch_name,
+        file_type: item.file_type,
+        sale_status: item.sale_status,
+        entry_date: item.entry_date,
+        status: item.status,
+        error_message: item.error_message,
+      })),
+    }),
+    [rawText, items],
+  );
+
+  const handleRestoreQuickImportDraft = React.useCallback(
+    (draft: QuotationQuickImportDraft) => {
+      if (draft.rawText !== undefined) {
+        setRawText(draft.rawText);
+      }
+      if (draft.items && draft.items.length > 0) {
+        setItems(draft.items);
+      }
+    },
+    [],
+  );
+
+  const handleDiscardQuickImportDraft = React.useCallback(() => {
+    setRawText("");
+    setItems([]);
+  }, []);
+
+  const {
+    isDraftModalOpen: isQuickImportDraftModalOpen,
+    storedDraft: storedQuickImportDraft,
+    handleContinueDraft: handleContinueQuickImportDraft,
+    handleDiscardDraft: onDiscardQuickImportDraft,
+    handleDismissModal: handleDismissQuickImportDraftModal,
+    clearDraftOnSuccess: clearQuickImportDraftOnSuccess,
+  } = useFormDraft<QuotationQuickImportDraft>({
+    formType: "quotation_quick_import",
+    userId,
+    formData: quickImportDraftData,
+    onRestore: handleRestoreQuickImportDraft,
+    onDiscard: handleDiscardQuickImportDraft,
+    enabled: isOpen,
+  });
 
   // Master branches list: merge DEFAULT_BRANCHES with allowedBranches and normalize to deduplicate unspaced variants
   const branchesList = React.useMemo(
@@ -271,6 +328,7 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
     setCurrentIndex(null);
 
     if (successCount > 0) {
+      clearQuickImportDraftOnSuccess();
       onCompleteSuccess(successCount);
       if (!isInline) {
         onClose();
@@ -573,14 +631,41 @@ export const QuickImportView: React.FC<QuickImportViewProps> = ({
     </div>
   );
 
+  const draftModal = (
+    <UnsavedDraftModal
+      isOpen={isQuickImportDraftModalOpen}
+      formType="quotation_quick_import"
+      timestamp={storedQuickImportDraft?.metadata.timestamp}
+      previewData={{
+        rawLines: storedQuickImportDraft?.data.rawText
+          ? `${storedQuickImportDraft.data.rawText.split('\n').filter(Boolean).length} lines`
+          : undefined,
+        parsedItems: storedQuickImportDraft?.data.items?.length
+          ? `${storedQuickImportDraft.data.items.length} items`
+          : undefined,
+      }}
+      onContinue={handleContinueQuickImportDraft}
+      onDiscard={onDiscardQuickImportDraft}
+      onClose={handleDismissQuickImportDraftModal}
+    />
+  );
+
   if (isInline) {
-    return <div className="w-full animate-fade-in font-sans">{content}</div>;
+    return (
+      <div className="w-full animate-fade-in font-sans">
+        {content}
+        {draftModal}
+      </div>
+    );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-      {content}
-    </div>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+        {content}
+      </div>
+      {draftModal}
+    </>
   );
 };
 

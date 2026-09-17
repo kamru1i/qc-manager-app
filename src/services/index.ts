@@ -10,3 +10,4 @@ export * from './loginCodesService';
 export * from './entityDrawerService';
 export * from './recentItemsService';
 export * from './navigationContextService';
+export * from './draftService';

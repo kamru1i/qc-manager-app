@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, Suspense } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, usePathname } from "next/navigation";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { UnsavedDraftModal } from "@/components/common/drafts/UnsavedDraftModal";
+import { QuotationEntryDraft } from "@/services/draftService";
 import { useQuotesDashboardData } from "@/hooks/quotes-tracker/useQuotesDashboardData";
 import { useSaveFileHelper } from "@/hooks/quotes-tracker/useSaveFileHelper";
 import { useCopyHelper } from "@/hooks/quotes-tracker/useCopyHelper";
@@ -278,6 +281,50 @@ export default function QuotesDashboard({
     () => profile?.username || "",
   );
   const [fileType, setFileType] = useState<FileType>("Quote");
+
+  // Draft Recovery for Daily Quotation Entry
+  const entryDraftData: QuotationEntryDraft = useMemo(
+    () => ({
+      fileName,
+      branchName,
+      fileType,
+      codenameInput,
+    }),
+    [fileName, branchName, fileType, codenameInput],
+  );
+
+  const handleRestoreEntryDraft = useCallback((draft: QuotationEntryDraft) => {
+    if (draft.fileName !== undefined) setFileName(draft.fileName);
+    if (draft.branchName !== undefined) setBranchName(draft.branchName);
+    if (draft.fileType !== undefined) setFileType(draft.fileType as FileType);
+    if (draft.codenameInput !== undefined) setCodenameInput(draft.codenameInput);
+  }, []);
+
+  const handleDiscardEntryDraft = useCallback(() => {
+    setFileName("");
+    setBranchName("");
+    if (profile?.allowed_types && profile.allowed_types.length > 0) {
+      setFileType(profile.allowed_types[0] as FileType);
+    } else {
+      setFileType("Quote");
+    }
+  }, [profile]);
+
+  const {
+    isDraftModalOpen: isEntryDraftModalOpen,
+    storedDraft: storedEntryDraft,
+    handleContinueDraft: handleContinueEntryDraft,
+    handleDiscardDraft: onDiscardEntryDraft,
+    handleDismissModal: handleDismissEntryDraftModal,
+    clearDraftOnSuccess: clearEntryDraftOnSuccess,
+  } = useFormDraft<QuotationEntryDraft>({
+    formType: "quotation_entry",
+    userId: sessionUser?.id,
+    formData: entryDraftData,
+    onRestore: handleRestoreEntryDraft,
+    onDiscard: handleDiscardEntryDraft,
+    enabled: activeTab === "entry",
+  });
 
   const isQuotesOffAdmin = checkIsQuotesOffAdmin(profile);
 
@@ -1105,6 +1152,7 @@ export default function QuotesDashboard({
     customSaleDetails,
     setCustomSaleDetails,
     setShowSaleModal,
+    onEntrySuccess: clearEntryDraftOnSuccess,
   });
 
   // Loading Screen
@@ -1556,6 +1604,7 @@ export default function QuotesDashboard({
       {activeTab === "quick_import" && (
         <QuickImportView
           isInline={true}
+          userId={sessionUser?.id}
           allowedBranches={allMasterBranches}
           allowedTypes={allowedCategories}
           sanitizerWords={getSanitizerWords(globalSettings)}
@@ -1584,6 +1633,21 @@ export default function QuotesDashboard({
           }}
         />
       )}
+
+      {/* Daily Entry Draft Recovery Modal */}
+      <UnsavedDraftModal
+        isOpen={isEntryDraftModalOpen}
+        formType="quotation_entry"
+        timestamp={storedEntryDraft?.metadata.timestamp}
+        previewData={{
+          fileName: storedEntryDraft?.data.fileName,
+          branch: storedEntryDraft?.data.branchName,
+          type: storedEntryDraft?.data.fileType,
+        }}
+        onContinue={handleContinueEntryDraft}
+        onDiscard={onDiscardEntryDraft}
+        onClose={handleDismissEntryDraftModal}
+      />
 
       <QuotesModalsGroup
         showSaleModal={showSaleModal}

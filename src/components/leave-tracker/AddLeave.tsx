@@ -36,6 +36,9 @@ import { toast } from 'sonner';
 import { AddLeaveFormFields } from '@/components/leave-tracker/AddLeaveFormFields';
 import { LeaveUsageSummary } from '@/components/leave-tracker/LeaveUsageSummary';
 import { isAdminRole, isSuperadmin, isFeatureEnabled } from '@/utils/permissionService';
+import { useFormDraft } from '@/hooks/useFormDraft';
+import { UnsavedDraftModal } from '@/components/common/drafts/UnsavedDraftModal';
+import { LeaveAddDraft, sanitizeLeaveDraft } from '@/services/draftService';
 
 interface AddLeaveProps {
   profile: Profile | null;
@@ -160,6 +163,94 @@ export function AddLeave({
   const leaveAdjustmentsOn = canSubmitAdjustment && isFeatureEnabled('leave_adjustments', globalSettings, effectiveProfileForFlags);
   const bulkLeaveOn = isFeatureEnabled('bulk_leave_submission', globalSettings, effectiveProfileForFlags);
   const reserveClaimingOn = canSubmitAdjustment && isFeatureEnabled('reserve_holiday_claiming', globalSettings, effectiveProfileForFlags);
+
+  // Draft Recovery for Add Leave Form
+  const leaveDraftData: LeaveAddDraft = React.useMemo(
+    () => ({
+      leaveType,
+      date,
+      signInTime,
+      signOutTime,
+      leaveHour,
+      comment,
+      adjustment,
+      adjustmentCategory,
+      adjustShortLeave,
+      adjustJummah,
+      breakEnabled,
+      breakMinutes,
+      bulkDates,
+      bulkAdjustments,
+    }),
+    [
+      leaveType,
+      date,
+      signInTime,
+      signOutTime,
+      leaveHour,
+      comment,
+      adjustment,
+      adjustmentCategory,
+      adjustShortLeave,
+      adjustJummah,
+      breakEnabled,
+      breakMinutes,
+      bulkDates,
+      bulkAdjustments,
+    ],
+  );
+
+  const handleRestoreLeaveDraft = React.useCallback((rawDraft: LeaveAddDraft) => {
+    const draft = sanitizeLeaveDraft(rawDraft);
+    if (draft.leaveType) setLeaveType(draft.leaveType);
+    if (draft.date) setDate(draft.date);
+    if (draft.signInTime) setSignInTime(draft.signInTime);
+    if (draft.signOutTime) setSignOutTime(draft.signOutTime);
+    if (draft.leaveHour) setLeaveHour(draft.leaveHour);
+    if (draft.comment !== undefined) setComment(draft.comment);
+    if (draft.adjustment !== undefined) setAdjustment(draft.adjustment);
+    if (draft.adjustmentCategory !== undefined) setAdjustmentCategory(draft.adjustmentCategory);
+    if (draft.adjustShortLeave !== undefined) setAdjustShortLeave(draft.adjustShortLeave);
+    if (draft.adjustJummah !== undefined) setAdjustJummah(draft.adjustJummah);
+    if (draft.breakEnabled !== undefined) setBreakEnabled(draft.breakEnabled);
+    if (draft.breakMinutes !== undefined) setBreakMinutes(draft.breakMinutes);
+    if (draft.bulkDates) setBulkDates(draft.bulkDates);
+    if (draft.bulkAdjustments) setBulkAdjustments(draft.bulkAdjustments);
+  }, []);
+
+  const handleDiscardLeaveDraft = React.useCallback(() => {
+    const today = new Date();
+    const localDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    setDate(localDate);
+    setLeaveType('Select');
+    setSignInTime(defaultSignIn || '13:00');
+    setSignOutTime(defaultSignOut || '22:30');
+    setLeaveHour('00:00');
+    setComment('');
+    setAdjustment(false);
+    setAdjustmentCategory('None');
+    setAdjustShortLeave(false);
+    setAdjustJummah(false);
+    setBreakEnabled(false);
+    setBulkDates([]);
+    setBulkAdjustments([]);
+  }, [defaultSignIn, defaultSignOut]);
+
+  const {
+    isDraftModalOpen: isLeaveDraftModalOpen,
+    storedDraft: storedLeaveDraft,
+    handleContinueDraft: handleContinueLeaveDraft,
+    handleDiscardDraft: onDiscardLeaveDraft,
+    handleDismissModal: handleDismissLeaveDraftModal,
+    clearDraftOnSuccess: clearLeaveDraftOnSuccess,
+  } = useFormDraft<LeaveAddDraft>({
+    formType: 'leave_add',
+    userId: profile?.id,
+    formData: leaveDraftData,
+    onRestore: handleRestoreLeaveDraft,
+    onDiscard: handleDiscardLeaveDraft,
+    enabled: !editingRecord,
+  });
 
   // Break time is only offered for Short Leave / Late Join when signed in more than 1 hour late.
   const breakEligible = breakFeatureOn && isBreakEligible(leaveType, signInTime, defaultSignIn || '13:00', defaultSignOut || '22:30');
@@ -1003,6 +1094,7 @@ export function AddLeave({
         }
       }
 
+      clearLeaveDraftOnSuccess();
       onSuccess(data || undefined);
 
       // Reset form
@@ -1356,6 +1448,21 @@ export function AddLeave({
         </div>,
         document.body
       )}
+
+      {/* Add Leave Draft Recovery Modal */}
+      <UnsavedDraftModal
+        isOpen={isLeaveDraftModalOpen}
+        formType="leave_add"
+        timestamp={storedLeaveDraft?.metadata.timestamp}
+        previewData={{
+          leaveType: storedLeaveDraft?.data.leaveType,
+          date: storedLeaveDraft?.data.date,
+          comment: storedLeaveDraft?.data.comment,
+        }}
+        onContinue={handleContinueLeaveDraft}
+        onDiscard={onDiscardLeaveDraft}
+        onClose={handleDismissLeaveDraftModal}
+      />
     </div>
   );
 }

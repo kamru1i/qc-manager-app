@@ -7,6 +7,9 @@ import { DateInput } from '@/components/common/DateInput';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { DEFAULT_BRANCHES } from '@/utils/bulkQuoteParser';
 import { Profile, QuotationMistake } from '@/types';
+import { useFormDraft } from '@/hooks/useFormDraft';
+import { UnsavedDraftModal } from '@/components/common/drafts/UnsavedDraftModal';
+import { QuotationMistakeDraft } from '@/services/draftService';
 
 interface AddEditMistakeModalProps {
   isOpen: boolean;
@@ -23,6 +26,7 @@ interface AddEditMistakeModalProps {
   editingMistake: QuotationMistake | null;
   profilesList: Profile[];
   isSubmitting: boolean;
+  currentUserId?: string;
 }
 
 export function AddEditMistakeModal({
@@ -32,6 +36,7 @@ export function AddEditMistakeModal({
   editingMistake,
   profilesList,
   isSubmitting,
+  currentUserId,
 }: AddEditMistakeModalProps) {
   const [date, setDate] = useState<string>('');
   const [filename, setFilename] = useState<string>('');
@@ -116,6 +121,58 @@ export function AddEditMistakeModal({
     }
   };
 
+  // Draft Recovery for Add Mistake Form
+  const mistakeDraftData: QuotationMistakeDraft = useMemo(
+    () => ({
+      date,
+      filename,
+      branch,
+      userId,
+      codename,
+      details,
+      penalty,
+    }),
+    [date, filename, branch, userId, codename, details, penalty],
+  );
+
+  const handleRestoreMistakeDraft = React.useCallback((draft: QuotationMistakeDraft) => {
+    if (draft.date) setDate(draft.date);
+    if (draft.filename !== undefined) setFilename(draft.filename);
+    if (draft.branch) setBranch(draft.branch);
+    if (draft.userId) setUserId(draft.userId);
+    if (draft.codename) setCodename(draft.codename);
+    if (draft.details !== undefined) setDetails(draft.details);
+    if (draft.penalty !== undefined) setPenalty(draft.penalty);
+  }, []);
+
+  const handleDiscardMistakeDraft = React.useCallback(() => {
+    const today = new Date().toISOString().split('T')[0];
+    setDate(today);
+    setFilename('');
+    setBranch(branchOptions[0]?.value || 'ADI');
+    setUserId(userOptions[0]?.value || '');
+    setCodename(userOptions[0]?.codename || '');
+    setDetails('');
+    setPenalty('');
+    setErrors({});
+  }, [branchOptions, userOptions]);
+
+  const {
+    isDraftModalOpen: isMistakeDraftModalOpen,
+    storedDraft: storedMistakeDraft,
+    handleContinueDraft: handleContinueMistakeDraft,
+    handleDiscardDraft: onDiscardMistakeDraft,
+    handleDismissModal: handleDismissMistakeDraftModal,
+    clearDraftOnSuccess: clearMistakeDraftOnSuccess,
+  } = useFormDraft<QuotationMistakeDraft>({
+    formType: 'quotation_add_mistake',
+    userId: currentUserId,
+    formData: mistakeDraftData,
+    onRestore: handleRestoreMistakeDraft,
+    onDiscard: handleDiscardMistakeDraft,
+    enabled: isOpen && !editingMistake,
+  });
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -145,13 +202,15 @@ export function AddEditMistakeModal({
     });
 
     if (success) {
+      clearMistakeDraftOnSuccess();
       onClose();
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
+    <>
+      <Modal
+        isOpen={isOpen}
       onClose={() => {
         if (!isSubmitting) onClose();
       }}
@@ -323,6 +382,22 @@ export function AddEditMistakeModal({
           </button>
         </div>
       </form>
-    </Modal>
+      </Modal>
+
+      <UnsavedDraftModal
+        isOpen={isMistakeDraftModalOpen}
+        formType="quotation_add_mistake"
+        timestamp={storedMistakeDraft?.metadata.timestamp}
+        previewData={{
+          filename: storedMistakeDraft?.data.filename,
+          codename: storedMistakeDraft?.data.codename,
+          details: storedMistakeDraft?.data.details,
+          penalty: storedMistakeDraft?.data.penalty,
+        }}
+        onContinue={handleContinueMistakeDraft}
+        onDiscard={onDiscardMistakeDraft}
+        onClose={handleDismissMistakeDraftModal}
+      />
+    </>
   );
 }

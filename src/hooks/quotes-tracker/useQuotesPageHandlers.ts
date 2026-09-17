@@ -31,6 +31,7 @@ interface HandlersProps {
   customSaleDetails: any;
   setCustomSaleDetails: (val: any) => void;
   setShowSaleModal: (val: boolean) => void;
+  onEntrySuccess?: () => void;
 }
 
 export function useQuotesPageHandlers({
@@ -60,6 +61,7 @@ export function useQuotesPageHandlers({
   customSaleDetails,
   setCustomSaleDetails,
   setShowSaleModal,
+  onEntrySuccess,
 }: HandlersProps) {
   const handleExportTodayExcel = () => {
     const todayStr = getBusinessTodayDateKey();
@@ -194,6 +196,7 @@ export function useQuotesPageHandlers({
       } else {
         setFileType("Quote");
       }
+      onEntrySuccess?.();
     }
   };
 

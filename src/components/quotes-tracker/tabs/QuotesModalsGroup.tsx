@@ -167,6 +167,7 @@ export const QuotesModalsGroup = React.memo((props: QuotesModalsGroupProps) => {
 
       <QuickImportView
         isOpen={props.isBulkModalOpen}
+        userId={props.profile?.id}
         onClose={() => props.setIsBulkModalOpen(false)}
         allowedBranches={props.allMasterBranches}
         allowedTypes={props.allowedCategories}
