@@ -18,16 +18,22 @@ import {
   Sparkles,
   Command,
   CornerDownLeft,
+  Key,
+  Clock,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useGlobalSearch } from '@/contexts/GlobalSearchContext';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { useProfiles } from '@/contexts/ProfilesContext';
+import { useEntityDrawer } from '@/contexts/EntityDrawerContext';
 import { Profile } from '@/types';
 import {
   SearchCategory,
   SearchResultItem,
+  SearchResultGroup,
   searchLocalEntities,
   searchRemoteEntities,
+  groupSearchResults,
   APP_NAVIGATION_TARGETS,
 } from '@/services/globalSearchService';
 import { isAdminRole, isSuperadmin } from '@/utils/permissionService';
@@ -38,26 +44,57 @@ interface GlobalSearchModalProps {
   onNavigateTab: (tab: any, subtab?: any) => void;
 }
 
+const RECENT_SEARCH_KEY = 'qc_global_search_recent';
+
+function getStoredRecentItems(): SearchResultItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(RECENT_SEARCH_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentItem(item: SearchResultItem) {
+  if (typeof window === 'undefined') return;
+  try {
+    const existing = getStoredRecentItems().filter((r) => r.id !== item.id);
+    const updated = [item, ...existing].slice(0, 5);
+    localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(updated));
+  } catch {}
+}
+
+function clearStoredRecentItems() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(RECENT_SEARCH_KEY);
+  } catch {}
+}
+
 const CATEGORY_TABS: { id: SearchCategory | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'navigation', label: 'Pages' },
   { id: 'users', label: 'Staff' },
   { id: 'quotations', label: 'Quotes' },
   { id: 'mistakes', label: 'Mistakes' },
   { id: 'leave', label: 'Leave' },
-  { id: 'branches', label: 'Branches' },
-  { id: 'todos', label: 'Todos' },
   { id: 'rules', label: 'Rules' },
+  { id: 'branches', label: 'Branches' },
+  { id: 'login_codes', label: 'Login Codes' },
+  { id: 'todos', label: 'Todos' },
+  { id: 'navigation', label: 'Pages' },
 ];
 
 export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: GlobalSearchModalProps) {
-  const { isSearchOpen, closeSearch, openShortcutsHelp, isMac } = useGlobalSearch();
+  const { isSearchOpen, closeSearch, openShortcutsHelp } = useGlobalSearch();
   const { emit } = useAppEventBus();
   const { profilesList } = useProfiles();
+  const { openEntityDrawer } = useEntityDrawer();
 
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<SearchCategory | 'all'>('all');
   const [results, setResults] = useState<SearchResultItem[]>([]);
+  const [recentItems, setRecentItems] = useState<SearchResultItem[]>([]);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -65,12 +102,13 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
   const listRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Focus input when opened
+  // Focus input & reload recent items when opened
   useEffect(() => {
     if (isSearchOpen) {
       setQuery('');
       setActiveCategory('all');
       setSelectedIndex(0);
+      setRecentItems(getStoredRecentItems());
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isSearchOpen]);
@@ -113,12 +151,12 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
           query: trimmed,
           sessionUser,
           profile,
+          profilesList,
           signal: controller.signal,
         });
 
         if (!controller.signal.aborted) {
-          setResults((prev) => {
-            // Keep local matches and append remote matches
+          setResults(() => {
             const currentLocal = searchLocalEntities({
               query: trimmed,
               profile,
@@ -140,11 +178,20 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
     };
   }, [query, isSearchOpen, profile, profilesList, sessionUser]);
 
-  // Filter results by category tab
-  const filteredResults = useMemo(() => {
-    if (activeCategory === 'all') return results;
-    return results.filter((item) => item.category === activeCategory);
-  }, [results, activeCategory]);
+  // Grouped results for 'all' tab
+  const groupedResults = useMemo(() => {
+    return groupSearchResults(results, query);
+  }, [results, query]);
+
+  // Linear flattened list of items currently visible for keyboard navigation
+  const visibleItems = useMemo(() => {
+    if (activeCategory === 'all') {
+      return groupedResults.flatMap((g) => g.items);
+    }
+    return results
+      .filter((item) => item.category === activeCategory)
+      .sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0));
+  }, [activeCategory, groupedResults, results]);
 
   // Category counts
   const categoryCounts = useMemo(() => {
@@ -157,10 +204,10 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
   // Ensure selectedIndex is within bounds
   useEffect(() => {
-    if (selectedIndex >= filteredResults.length) {
-      setSelectedIndex(Math.max(0, filteredResults.length - 1));
+    if (selectedIndex >= visibleItems.length) {
+      setSelectedIndex(Math.max(0, visibleItems.length - 1));
     }
-  }, [filteredResults.length, selectedIndex]);
+  }, [visibleItems.length, selectedIndex]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -174,6 +221,7 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
   // Deep navigation action handler
   const handleSelectItem = useCallback(
     (item: SearchResultItem) => {
+      saveRecentItem(item);
       closeSearch();
 
       switch (item.category) {
@@ -186,27 +234,27 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
         }
 
         case 'users': {
-          const targetUserId = item.metadata?.userId;
-          emit('open-entity-drawer', {
+          const targetUserId = item.metadata?.userId || item.metadata?.user?.id;
+          openEntityDrawer({
             type: 'user',
             userId: targetUserId,
-            username: item.subtitle,
+            username: item.metadata?.user?.username || item.metadata?.user?.codename,
           });
           break;
         }
 
         case 'branches': {
-          const branchName = item.metadata?.branch;
+          const branchName = item.metadata?.branch || item.title;
           onNavigateTab('quotes', 'monthly');
           setTimeout(() => {
             emit('filter-quotations-branch', { branch: branchName });
-          }, 100);
+          }, 50);
           break;
         }
 
         case 'quotations': {
           const quotation = item.metadata?.quotation;
-          emit('open-entity-drawer', {
+          openEntityDrawer({
             type: 'quotation',
             fileName: quotation?.file_name || item.title,
             record: quotation,
@@ -216,7 +264,7 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'mistakes': {
           const mistake = item.metadata?.mistake;
-          emit('open-entity-drawer', {
+          openEntityDrawer({
             type: 'mistake',
             mistake: mistake,
           });
@@ -225,7 +273,7 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'leave': {
           const leave = item.metadata?.leave;
-          emit('open-entity-drawer', {
+          openEntityDrawer({
             type: 'leave',
             leaveRecord: leave,
           });
@@ -236,8 +284,26 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
           const rule = item.metadata?.rule;
           onNavigateTab('quotes', 'rules');
           setTimeout(() => {
-            emit('select-quote-rule', { ruleId: rule?.id });
-          }, 100);
+            emit('select-quote-rule', {
+              ruleId: rule?.id,
+              search: rule?.title || rule?.company_name,
+            });
+          }, 50);
+          break;
+        }
+
+        case 'login_codes': {
+          const lc = item.metadata?.loginCode;
+          if (lc?.code) {
+            try {
+              navigator.clipboard.writeText(lc.code);
+              toast.success(`Copied code: ${lc.code} (${lc.login_id})`);
+            } catch {}
+          }
+          onNavigateTab('quotes', 'login_codes');
+          setTimeout(() => {
+            emit('filter-login-codes', { search: lc?.login_id || item.title });
+          }, 50);
           break;
         }
 
@@ -250,21 +316,21 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
           break;
       }
     },
-    [closeSearch, onNavigateTab, profile, sessionUser, emit]
+    [closeSearch, onNavigateTab, openEntityDrawer, emit]
   );
 
   // Key navigation inside search modal
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev < filteredResults.length - 1 ? prev + 1 : 0));
+      setSelectedIndex((prev) => (prev < visibleItems.length - 1 ? prev + 1 : 0));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredResults.length - 1));
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : visibleItems.length - 1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (filteredResults[selectedIndex]) {
-        handleSelectItem(filteredResults[selectedIndex]);
+      if (visibleItems[selectedIndex]) {
+        handleSelectItem(visibleItems[selectedIndex]);
       }
     }
   };
@@ -287,6 +353,8 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
         return <CheckSquare className="w-4 h-4 text-teal-400" />;
       case 'rules':
         return <ShieldCheck className="w-4 h-4 text-purple-400" />;
+      case 'login_codes':
+        return <Key className="w-4 h-4 text-amber-400" />;
       default:
         return <Search className="w-4 h-4 text-slate-400" />;
     }
@@ -381,8 +449,59 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
         {/* Results List or Quick Suggestions */}
         <div ref={listRef} className="overflow-y-auto flex-1 p-2 space-y-1 divide-y divide-theme-border-input/20">
           {query.trim() === '' ? (
-            /* Empty State: Quick Suggestions */
+            /* Empty State: Recent Items & Quick Suggestions */
             <div className="p-4 space-y-4">
+              {recentItems.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Recent Searches</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        clearStoredRecentItems();
+                        setRecentItems([]);
+                      }}
+                      className="text-[11px] text-theme-text-muted hover:text-rose-400 normal-case font-normal transition-colors cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {recentItems.map((item) => (
+                      <div
+                        key={`recent-${item.id}`}
+                        onClick={() => handleSelectItem(item)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer hover:bg-theme-page-bg/80 text-theme-text-primary group transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <div className="p-1.5 rounded-lg bg-theme-page-bg border border-theme-border-input/60 text-theme-text-muted shrink-0">
+                            {getCategoryIcon(item.category)}
+                          </div>
+                          <div className="overflow-hidden">
+                            <div className="text-xs font-medium text-theme-text-primary group-hover:text-purple-400 transition-colors truncate flex items-center gap-1.5">
+                              <span>{item.title}</span>
+                              {item.badge && (
+                                <span className="text-[10px] uppercase font-semibold text-theme-text-muted">
+                                  ({item.badge})
+                                </span>
+                              )}
+                            </div>
+                            {item.subtitle && (
+                              <div className="text-[11px] text-theme-text-muted truncate">
+                                {item.subtitle}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-theme-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-2 text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                 <span>Quick Navigation</span>
@@ -427,72 +546,166 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
                 </div>
               </div>
             </div>
-          ) : filteredResults.length > 0 ? (
+          ) : visibleItems.length > 0 ? (
             /* Results List */
-            filteredResults.map((item, idx) => {
-              const isSelected = idx === selectedIndex;
-              return (
-                <div
-                  key={item.id}
-                  data-index={idx}
-                  onClick={() => handleSelectItem(item)}
-                  onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
-                    isSelected
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'hover:bg-theme-page-bg/80 text-theme-text-primary'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div
-                      className={`p-2 rounded-lg shrink-0 ${
-                        isSelected
-                          ? 'bg-purple-700 text-white'
-                          : 'bg-theme-page-bg border border-theme-border-input/60 text-theme-text-muted'
-                      }`}
-                    >
-                      {getCategoryIcon(item.category)}
+            activeCategory === 'all' ? (
+              <div className="space-y-4 py-1">
+                {groupedResults.map((group) => (
+                  <div key={group.category} className="space-y-1">
+                    {/* Category Header */}
+                    <div className="px-3 pt-2 pb-1 text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider flex items-center justify-between border-b border-theme-border-input/30">
+                      <div className="flex items-center gap-1.5">
+                        {getCategoryIcon(group.category)}
+                        <span>{group.label}</span>
+                      </div>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-theme-page-bg text-theme-text-muted border border-theme-border-input/40">
+                        {group.items.length}
+                      </span>
                     </div>
-                    <div className="overflow-hidden">
-                      <div className="text-sm font-medium truncate flex items-center gap-2">
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <span
-                            className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md ${
+
+                    {/* Category Items */}
+                    <div className="space-y-0.5">
+                      {group.items.map((item) => {
+                        const linearIdx = visibleItems.findIndex((vi) => vi.id === item.id);
+                        const isSelected = linearIdx === selectedIndex;
+                        return (
+                          <div
+                            key={item.id}
+                            data-index={linearIdx}
+                            onClick={() => handleSelectItem(item)}
+                            onMouseEnter={() => setSelectedIndex(linearIdx)}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all ${
                               isSelected
-                                ? 'bg-purple-800 text-white'
-                                : 'bg-theme-page-bg/80 text-theme-text-muted border border-theme-border-input/40'
+                                ? 'bg-purple-600 text-white shadow-md'
+                                : 'hover:bg-theme-page-bg/80 text-theme-text-primary'
                             }`}
                           >
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
-                      {item.subtitle && (
-                        <div
-                          className={`text-xs truncate ${
-                            isSelected ? 'text-purple-200' : 'text-theme-text-muted'
-                          }`}
-                        >
-                          {item.subtitle}
-                        </div>
-                      )}
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div
+                                className={`p-2 rounded-lg shrink-0 ${
+                                  isSelected
+                                    ? 'bg-purple-700 text-white'
+                                    : 'bg-theme-page-bg border border-theme-border-input/60 text-theme-text-muted'
+                                }`}
+                              >
+                                {getCategoryIcon(item.category)}
+                              </div>
+                              <div className="overflow-hidden">
+                                <div className="text-sm font-medium truncate flex items-center gap-2">
+                                  <span>{item.title}</span>
+                                  {item.badge && (
+                                    <span
+                                      className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md ${
+                                        isSelected
+                                          ? 'bg-purple-800 text-white'
+                                          : 'bg-theme-page-bg/80 text-theme-text-muted border border-theme-border-input/40'
+                                      }`}
+                                    >
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                {item.subtitle && (
+                                  <div
+                                    className={`text-xs truncate ${
+                                      isSelected ? 'text-purple-200' : 'text-theme-text-muted'
+                                    }`}
+                                  >
+                                    {item.subtitle}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 pl-2 shrink-0">
+                              {isSelected && (
+                                <CornerDownLeft className="w-4 h-4 text-purple-200 animate-pulse" />
+                              )}
+                              <ArrowRight
+                                className={`w-3.5 h-3.5 ${
+                                  isSelected
+                                    ? 'text-white'
+                                    : 'text-theme-text-muted opacity-0 group-hover:opacity-100'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2 pl-2 shrink-0">
-                    {isSelected && (
-                      <CornerDownLeft className="w-4 h-4 text-purple-200 animate-pulse" />
-                    )}
-                    <ArrowRight
-                      className={`w-3.5 h-3.5 ${
-                        isSelected ? 'text-white' : 'text-theme-text-muted opacity-0 group-hover:opacity-100'
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-0.5 py-1">
+                {visibleItems.map((item, idx) => {
+                  const isSelected = idx === selectedIndex;
+                  return (
+                    <div
+                      key={item.id}
+                      data-index={idx}
+                      onClick={() => handleSelectItem(item)}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-purple-600 text-white shadow-md'
+                          : 'hover:bg-theme-page-bg/80 text-theme-text-primary'
                       }`}
-                    />
-                  </div>
-                </div>
-              );
-            })
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div
+                          className={`p-2 rounded-lg shrink-0 ${
+                            isSelected
+                              ? 'bg-purple-700 text-white'
+                              : 'bg-theme-page-bg border border-theme-border-input/60 text-theme-text-muted'
+                          }`}
+                        >
+                          {getCategoryIcon(item.category)}
+                        </div>
+                        <div className="overflow-hidden">
+                          <div className="text-sm font-medium truncate flex items-center gap-2">
+                            <span>{item.title}</span>
+                            {item.badge && (
+                              <span
+                                className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md ${
+                                  isSelected
+                                    ? 'bg-purple-800 text-white'
+                                    : 'bg-theme-page-bg/80 text-theme-text-muted border border-theme-border-input/40'
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          {item.subtitle && (
+                            <div
+                              className={`text-xs truncate ${
+                                isSelected ? 'text-purple-200' : 'text-theme-text-muted'
+                              }`}
+                            >
+                              {item.subtitle}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pl-2 shrink-0">
+                        {isSelected && (
+                          <CornerDownLeft className="w-4 h-4 text-purple-200 animate-pulse" />
+                        )}
+                        <ArrowRight
+                          className={`w-3.5 h-3.5 ${
+                            isSelected
+                              ? 'text-white'
+                              : 'text-theme-text-muted opacity-0 group-hover:opacity-100'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
           ) : !isSearchingRemote ? (
             /* No Results */
             <div className="py-12 text-center text-theme-text-muted space-y-2">

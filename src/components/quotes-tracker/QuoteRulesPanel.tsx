@@ -14,6 +14,7 @@ import { Profile, ComplianceRule } from "@/types";
 import { INSURANCE_DATABASE } from "@/utils/initialRulesData";
 import { COMPLIANCE_RULE_COLUMNS } from "@/utils/dbColumns";
 import { isAdminRole } from '@/utils/permissionService';
+import { useAppEvent } from '@/contexts/AppEventBusContext';
 import {
   Search,
   X,
@@ -169,6 +170,22 @@ export const QuoteRulesPanel: React.FC<QuoteRulesPanelProps> = ({
     null,
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Listen to select-quote-rule event from global search or cross-module links
+  useAppEvent('select-quote-rule', ({ ruleId, search }: { ruleId?: string; search?: string }) => {
+    if (search) {
+      setSearchQuery(search);
+    }
+    if (ruleId) {
+      const matched = rules.find((r) => r.id === ruleId);
+      if (matched?.company_name) {
+        setSelectedCompanyName(matched.company_name);
+      }
+      if (matched && !search) {
+        setSearchQuery(matched.title || matched.company_name || '');
+      }
+    }
+  });
 
   // Authorization check
   const canEdit = useMemo(() => {

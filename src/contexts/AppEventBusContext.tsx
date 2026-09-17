@@ -54,7 +54,8 @@ export interface AppEventMap {
   'filter-quotations-search': { search?: string };
   'filter-mistakes': { search?: string; date?: string; branch?: string };
   'filter-leave': { search?: string; date?: string };
-  'select-quote-rule': { ruleId?: string };
+  'select-quote-rule': { ruleId?: string; search?: string };
+  'filter-login-codes': { search?: string };
 
   // UNIVERSAL ENTITY DRAWER
   'open-entity-drawer': import('@/types/entityDrawer').EntityDrawerRequest;

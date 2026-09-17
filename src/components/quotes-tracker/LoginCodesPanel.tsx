@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { loginCodesService } from "@/services";
 import { LoginCode } from "@/types";
+import { useAppEvent } from "@/contexts/AppEventBusContext";
 import {
   Search,
   X,
@@ -114,6 +115,14 @@ export const LoginCodesPanel: React.FC<LoginCodesPanelProps> = ({
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(30);
+
+  // Listen to filter-login-codes event from global search or cross-module links
+  useAppEvent('filter-login-codes', ({ search }: { search?: string }) => {
+    if (search !== undefined) {
+      setSearchQuery(search);
+      setCurrentPage(1);
+    }
+  });
 
   // Form Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
