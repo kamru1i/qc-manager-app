@@ -160,6 +160,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   // Double-click viewing state (Employee 360 Hub)
   const [viewingStaff, setViewingStaff] = useState<Profile | null>(null);
+  const initialStaffLoadedRef = useRef(false);
 
   const updateViewingStaff = useCallback((staff: Profile | null) => {
     setViewingStaff(staff);
@@ -167,6 +168,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       localStorage.setItem('user_management_viewing_staff_id', staff.id);
     } else {
       localStorage.removeItem('user_management_viewing_staff_id');
+      try {
+        sessionStorage.removeItem('viewingStaffId');
+        sessionStorage.removeItem('viewingStaffSubTab');
+        sessionStorage.removeItem('viewingStaffFromUserManagement');
+      } catch {}
     }
   }, []);
 
@@ -364,25 +370,50 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
   }, [viewingStaff]);
 
-  // Load saved viewingStaff on mount or when profiles finish loading
+  // Load saved viewingStaff on initial mount/data load or from staged navigation redirect
   useEffect(() => {
-    if ((profiles.length > 0 || pendingDisplayProfiles.length > 0) && !viewingStaff) {
-      const savedStaffId = sessionStorage.getItem("viewingStaffId") || localStorage.getItem('user_management_viewing_staff_id');
-      if (savedStaffId) {
-        const staff = allDisplayProfiles.find(p => p.id === savedStaffId);
+    if (profiles.length === 0 && pendingDisplayProfiles.length === 0) return;
+
+    // 1. Check for staged redirect in sessionStorage (Action Center, Global Search, etc.)
+    const redirectStaffId = sessionStorage.getItem("viewingStaffId");
+    if (redirectStaffId) {
+      const staff = allDisplayProfiles.find(p => p.id === redirectStaffId);
+      if (staff && hasStaffAccess(staff)) {
+        updateViewingStaff(staff);
+        const rawSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'leave') as any;
+        const savedSubTab = rawSubTab === 'leave_history' ? 'leave' : rawSubTab;
+        if (savedSubTab === 'profile' || savedSubTab === 'leave' || savedSubTab === 'quotes' || savedSubTab === 'analytics' || savedSubTab === 'kpi') {
+          handleSetActiveSubTab(savedSubTab);
+        }
+      }
+      try {
+        sessionStorage.removeItem("viewingStaffId");
+        sessionStorage.removeItem("viewingStaffSubTab");
+        sessionStorage.removeItem("viewingStaffFromUserManagement");
+      } catch {}
+      initialStaffLoadedRef.current = true;
+      return;
+    }
+
+    // 2. On initial mount only, restore persisted staff from localStorage (for page reloads)
+    if (!initialStaffLoadedRef.current && !viewingStaff) {
+      initialStaffLoadedRef.current = true;
+      const persistedStaffId = localStorage.getItem('user_management_viewing_staff_id');
+      if (persistedStaffId) {
+        const staff = allDisplayProfiles.find(p => p.id === persistedStaffId);
         if (staff && hasStaffAccess(staff)) {
           setViewingStaff(staff);
-          const rawSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'leave') as any;
+          const rawSubTab = (localStorage.getItem('user_management_active_subtab') || 'leave') as any;
           const savedSubTab = rawSubTab === 'leave_history' ? 'leave' : rawSubTab;
           if (savedSubTab === 'profile' || savedSubTab === 'leave' || savedSubTab === 'quotes' || savedSubTab === 'analytics' || savedSubTab === 'kpi') {
             handleSetActiveSubTab(savedSubTab);
           }
-          sessionStorage.removeItem("viewingStaffId");
-          sessionStorage.removeItem("viewingStaffSubTab");
+        } else {
+          localStorage.removeItem('user_management_viewing_staff_id');
         }
       }
     }
-  }, [allDisplayProfiles, viewingStaff, hasStaffAccess, profiles.length, pendingDisplayProfiles.length, handleSetActiveSubTab]);
+  }, [allDisplayProfiles, profiles.length, pendingDisplayProfiles.length, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab, viewingStaff]);
 
   // Synchronize viewingStaff with latest data from profiles or pending list (only if data changed)
   useEffect(() => {
@@ -412,26 +443,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       }
     }
   }, [profiles, pendingDisplayProfiles, viewingStaff, updateViewingStaff]);
-
-  // Pre-select staff member from sessionStorage when redirected from other pages
-  useEffect(() => {
-    if (profiles.length > 0 || pendingDisplayProfiles.length > 0) {
-      const savedStaffId = sessionStorage.getItem("viewingStaffId");
-      if (savedStaffId) {
-        const staff = allDisplayProfiles.find(p => p.id === savedStaffId);
-        if (staff && hasStaffAccess(staff)) {
-          updateViewingStaff(staff);
-          const rawSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'leave') as any;
-          const savedSubTab = rawSubTab === 'leave_history' ? 'leave' : rawSubTab;
-          if (savedSubTab === 'profile' || savedSubTab === 'leave' || savedSubTab === 'quotes' || savedSubTab === 'analytics' || savedSubTab === 'kpi') {
-            handleSetActiveSubTab(savedSubTab);
-          }
-          sessionStorage.removeItem("viewingStaffId");
-          sessionStorage.removeItem("viewingStaffSubTab");
-        }
-      }
-    }
-  }, [allDisplayProfiles, profiles.length, pendingDisplayProfiles.length, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab]);
 
   // Backspace to go back from details view
   useEffect(() => {
@@ -1386,6 +1397,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     if (!userId) return;
     const target = allDisplayProfiles.find((p) => p.id === userId) || profiles.find((p) => p.id === userId);
     if (target && hasStaffAccess(target)) {
+      try {
+        sessionStorage.removeItem('viewingStaffId');
+        sessionStorage.removeItem('viewingStaffSubTab');
+        sessionStorage.removeItem('viewingStaffFromUserManagement');
+      } catch {}
       updateViewingStaff(target);
       if (subtab) {
         const normalized = subtab === 'leave_history' ? 'leave' : subtab;
