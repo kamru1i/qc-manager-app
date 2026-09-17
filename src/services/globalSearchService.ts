@@ -54,7 +54,7 @@ export const APP_NAVIGATION_TARGETS: NavigationTarget[] = [
   { tab: 'chuti', subtab: 'leave_settings', label: 'Leave Settings', description: 'Configure global leave rules and allowances', requiredModule: 'leave_settings' },
 
   // Top-Level Management & Utilities
-  { tab: 'user_management', label: 'User Management', description: 'Staff profiles, access control, and 360 overview', requiredModule: 'user_management' },
+  { tab: 'profile_settings', subtab: 'user_management', label: 'User Management (Settings > Users)', description: 'Staff profiles, access control, and 360 overview', requiredModule: 'user_management' },
   { tab: 'todo', label: 'Todo Tasks', description: 'Assigned tasks and action items', requiredModule: 'todo' },
   { tab: 'kpi', label: 'KPI Performance Panel', description: 'Employee Key Performance Indicators', requiredModule: 'kpi' },
   { tab: 'profile_settings', label: 'My Profile Settings', description: 'Personal details, working hours & password' },

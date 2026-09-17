@@ -173,6 +173,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi'>(() => {
     if (typeof window === 'undefined') return 'leave';
     try {
+      const sessionSaved = sessionStorage.getItem('viewingStaffSubTab');
+      if (sessionSaved === 'profile' || sessionSaved === 'leave' || sessionSaved === 'quotes' || sessionSaved === 'analytics' || sessionSaved === 'kpi') {
+        return sessionSaved;
+      }
       const saved = localStorage.getItem('user_management_active_subtab');
       if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'analytics' || saved === 'kpi') {
         return saved as any;
@@ -258,10 +262,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     });
   }, [profiles, pendingDisplayProfiles]);
 
-  const handleSetActiveSubTab = (tab: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi') => {
+  const handleSetActiveSubTab = useCallback((tab: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi') => {
     setActiveSubTab(tab);
     localStorage.setItem('user_management_active_subtab', tab);
-  };
+  }, []);
   const [preSelectedKpiPeriodKey, setPreSelectedKpiPeriodKey] = useState<string>('');
   const [viewingStaffRecords, setViewingStaffRecords] = useState<ChutiRecord[]>([]);
   const [viewingStaffSettlements, setViewingStaffSettlements] = useState<LeaveSettlement[]>([]);
@@ -361,15 +365,21 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   // Load saved viewingStaff on mount or when profiles finish loading
   useEffect(() => {
     if ((profiles.length > 0 || pendingDisplayProfiles.length > 0) && !viewingStaff) {
-      const savedStaffId = localStorage.getItem('user_management_viewing_staff_id');
+      const savedStaffId = sessionStorage.getItem("viewingStaffId") || localStorage.getItem('user_management_viewing_staff_id');
       if (savedStaffId) {
         const staff = allDisplayProfiles.find(p => p.id === savedStaffId);
         if (staff && hasStaffAccess(staff)) {
           setViewingStaff(staff);
+          const savedSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'profile') as any;
+          if (savedSubTab === 'profile' || savedSubTab === 'leave' || savedSubTab === 'quotes' || savedSubTab === 'analytics' || savedSubTab === 'kpi') {
+            handleSetActiveSubTab(savedSubTab);
+          }
+          sessionStorage.removeItem("viewingStaffId");
+          sessionStorage.removeItem("viewingStaffSubTab");
         }
       }
     }
-  }, [allDisplayProfiles, viewingStaff, hasStaffAccess, profiles.length, pendingDisplayProfiles.length]);
+  }, [allDisplayProfiles, viewingStaff, hasStaffAccess, profiles.length, pendingDisplayProfiles.length, handleSetActiveSubTab]);
 
   // Synchronize viewingStaff with latest data from profiles or pending list (only if data changed)
   useEffect(() => {
@@ -406,14 +416,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       const savedStaffId = sessionStorage.getItem("viewingStaffId");
       if (savedStaffId) {
         const staff = profiles.find(p => p.id === savedStaffId);
-        if (staff) {
+        if (staff && hasStaffAccess(staff)) {
           updateViewingStaff(staff);
-          handleSetActiveSubTab('profile');
+          const savedSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'profile') as any;
+          if (savedSubTab === 'profile' || savedSubTab === 'leave' || savedSubTab === 'quotes' || savedSubTab === 'analytics' || savedSubTab === 'kpi') {
+            handleSetActiveSubTab(savedSubTab);
+          }
           sessionStorage.removeItem("viewingStaffId");
+          sessionStorage.removeItem("viewingStaffSubTab");
         }
       }
     }
-  }, [profiles, updateViewingStaff]);
+  }, [profiles, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab]);
 
   // Backspace to go back from details view
   useEffect(() => {
@@ -1367,13 +1381,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   useAppEvent('open-user-profile', ({ userId, subtab }: { userId: string; subtab?: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi' }) => {
     if (!userId) return;
     const target = profiles.find((p) => p.id === userId);
-    if (target) {
+    if (target && hasStaffAccess(target)) {
       updateViewingStaff(target);
       if (subtab) {
-        setActiveSubTab(subtab);
+        handleSetActiveSubTab(subtab);
       }
     }
-  }, [profiles, updateViewingStaff]);
+  }, [profiles, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab]);
 
   const handleSubmitRequestWrapper = async (data: UserCreationSubmittedData) => {
     setSubmitting(true);

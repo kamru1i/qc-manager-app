@@ -231,25 +231,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
         onClick: () => onQuotesTabChange("login_codes"),
       });
     }
-  } else if (activeTab === "user_management") {
-    subTabs.push({
-      id: "directory",
-      label: "Staff Directory",
-      icon: Users,
-      iconColor: "text-purple-400",
-      active: !isCreatingNewUser,
-      onClick: () => onCreatingNewUserChange?.(false),
-    });
-    if (isSuperAdmin || profile.role === "admin") {
-      subTabs.push({
-        id: "add_user",
-        label: "Add New Staff",
-        icon: UserPlus,
-        iconColor: "text-emerald-400",
-        active: isCreatingNewUser,
-        onClick: () => onCreatingNewUserChange?.(true),
-      });
-    }
+
   } else if (activeTab === "todo") {
     subTabs.push({
       id: "my_todos",

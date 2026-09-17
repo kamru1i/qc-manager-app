@@ -506,12 +506,23 @@ function AppPortalInner({
     if (typeof window !== "undefined") {
       let cached = _cachedInitialState?.initialTab;
       if (cached === "analytics") cached = "leaderboard";
+      if (cached === "user_management") {
+        cached = "profile_settings";
+        localStorage.setItem("settings_active_subtab", "user_management");
+        localStorage.setItem("last_active_dashboard", "profile_settings");
+      }
       if (cached && canAccessModule(profile, null, cached)) return cached as any;
     }
     if (canAccessModule(profile, null, "leave")) return "chuti";
     if (canAccessModule(profile, null, "quotes")) return "quotes";
     if (canAccessModule(profile, null, "todo")) return "todo";
-    if (canAccessModule(profile, null, "user_management")) return "user_management";
+    if (canAccessModule(profile, null, "user_management")) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("settings_active_subtab", "user_management");
+        localStorage.setItem("last_active_dashboard", "profile_settings");
+      }
+      return "profile_settings";
+    }
     if (canAccessModule(profile, null, "kpi")) return "kpi";
     return "profile_settings";
   });
@@ -524,7 +535,7 @@ function AppPortalInner({
       if (canAccessModule(profile, null, "leave")) return "chuti";
       if (canAccessModule(profile, null, "quotes")) return "quotes";
       if (canAccessModule(profile, null, "todo")) return "todo";
-      if (canAccessModule(profile, null, "user_management")) return "user_management";
+      if (canAccessModule(profile, null, "user_management")) return "profile_settings";
       if (canAccessModule(profile, null, "kpi")) return "kpi";
       return "profile_settings";
     };
@@ -559,12 +570,19 @@ function AppPortalInner({
       const fallback = resolveFallbackTab();
       setActiveTab(fallback as any);
       localStorage.setItem("last_active_dashboard", fallback);
-    } else if (activeTab === "user_management" && !canAccessModule(profile, null, "user_management")) {
-      const fallback = resolveFallbackTab();
-      setActiveTab(fallback as any);
-      localStorage.setItem("last_active_dashboard", fallback);
+    } else if (activeTab === "user_management") {
+      if (canAccessModule(profile, null, "user_management")) {
+        setActiveTab("profile_settings");
+        localStorage.setItem("settings_active_subtab", "user_management");
+        localStorage.setItem("last_active_dashboard", "profile_settings");
+        emit("settings-subtab-change", { subtab: "user_management" });
+      } else {
+        const fallback = resolveFallbackTab();
+        setActiveTab(fallback as any);
+        localStorage.setItem("last_active_dashboard", fallback);
+      }
     }
-  }, [activeTab, hasLeaveWorkspace, hasQuotesWorkspace, profile]);
+  }, [activeTab, hasLeaveWorkspace, hasQuotesWorkspace, profile, emit]);
 
   // Defer the heavy quotes dashboard until it is first visited, then keep it
   // mounted so tab switches remain instant without paying its initial queries
@@ -767,7 +785,10 @@ function AppPortalInner({
       }
     } else if (targetTab === "user_management") {
       if (canAccessModule(profile, null, "user_management")) {
-        setActiveTab("user_management");
+        setActiveTab("profile_settings");
+        localStorage.setItem("settings_active_subtab", "user_management");
+        localStorage.setItem("last_active_dashboard", "profile_settings");
+        emit("settings-subtab-change", { subtab: "user_management" });
       }
     } else if (targetTab === "todo") {
       if (canAccessModule(profile, null, "todo")) {
@@ -779,6 +800,11 @@ function AppPortalInner({
       }
     } else if (targetTab === "profile_settings") {
       setActiveTab("profile_settings");
+      localStorage.setItem("last_active_dashboard", "profile_settings");
+      if (targetSubtab) {
+        localStorage.setItem("settings_active_subtab", targetSubtab);
+        emit("settings-subtab-change", { subtab: targetSubtab });
+      }
     } else if (
       targetTab === "leaderboard" ||
       targetTab === "reports" ||
@@ -789,7 +815,7 @@ function AppPortalInner({
         setActiveTab(targetTab as any);
       }
     }
-  }, [profile, handleQuotesTabChange, handleChutiTabChange]);
+  }, [profile, handleQuotesTabChange, handleChutiTabChange, emit]);
 
   const [isUserManagementFullView, setIsUserManagementFullView] =
     useState(false);
@@ -1140,7 +1166,7 @@ function AppPortalInner({
       if (canAccessModule(profile, null, "leave")) return "chuti";
       if (canAccessModule(profile, null, "quotes")) return "quotes";
       if (canAccessModule(profile, null, "todo")) return "todo";
-      if (canAccessModule(profile, null, "user_management")) return "user_management";
+      if (canAccessModule(profile, null, "user_management")) return "profile_settings";
       if (canAccessModule(profile, null, "kpi")) return "kpi";
       return "profile_settings";
     };
@@ -1149,8 +1175,15 @@ function AppPortalInner({
       targetWorkspace = resolveFallbackTab();
     } else if (targetWorkspace === "quotes" && !canAccessModule(profile, null, "quotes")) {
       targetWorkspace = resolveFallbackTab();
-    } else if (targetWorkspace === "user_management" && !canAccessModule(profile, null, "user_management")) {
-      targetWorkspace = resolveFallbackTab();
+    } else if (targetWorkspace === "user_management") {
+      if (canAccessModule(profile, null, "user_management")) {
+        targetWorkspace = "profile_settings";
+        localStorage.setItem("settings_active_subtab", "user_management");
+        localStorage.setItem("last_active_dashboard", "profile_settings");
+        emit("settings-subtab-change", { subtab: "user_management" });
+      } else {
+        targetWorkspace = resolveFallbackTab();
+      }
     } else if (targetWorkspace === "todo" && !canAccessModule(profile, null, "todo")) {
       targetWorkspace = resolveFallbackTab();
     } else if (
@@ -1183,7 +1216,7 @@ function AppPortalInner({
     }
 
     setActiveTab(targetWorkspace as typeof activeTab);
-  }, [profile, hasQuotesWorkspace]);
+  }, [profile, hasQuotesWorkspace, emit]);
 
   useAppEvent('profile-updated', (payload) => {
     const updated = payload as Partial<Profile> | null | undefined;

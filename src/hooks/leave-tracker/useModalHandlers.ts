@@ -185,8 +185,15 @@ export function useModalHandlers({
   // Open Profile Settings for a specific staff member (admin)
   const handleOpenProfileSettingsForStaff = useCallback((staff: Profile) => {
     sessionStorage.setItem("viewingStaffId", staff.id);
+    sessionStorage.setItem("viewingStaffSubTab", "profile");
     sessionStorage.setItem("viewingStaffFromUserManagement", "true");
-    emit("workspace-change", "user_management");
+    localStorage.setItem("user_management_viewing_staff_id", staff.id);
+    localStorage.setItem("user_management_active_subtab", "profile");
+    localStorage.setItem("settings_active_subtab", "user_management");
+    localStorage.setItem("last_active_dashboard", "profile_settings");
+    emit("workspace-change", "profile_settings");
+    emit("settings-subtab-change", { subtab: "user_management" });
+    emit("open-user-profile", { userId: staff.id, subtab: "profile" });
   }, [emit]);
 
   // Open Credentials modal

@@ -186,17 +186,27 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
         }
 
         case 'users': {
-          const targetUser = item.metadata?.user;
           const targetUserId = item.metadata?.userId;
-          const isAdmin = isAdminRole(profile);
+          const isAdminOrSupervisor = isAdminRole(profile) || profile?.role === 'supervisor';
 
-          if (isAdmin) {
-            onNavigateTab('user_management');
+          if (isAdminOrSupervisor && targetUserId) {
+            sessionStorage.setItem('viewingStaffId', targetUserId);
+            sessionStorage.setItem('viewingStaffSubTab', 'profile');
+            localStorage.setItem('user_management_viewing_staff_id', targetUserId);
+            localStorage.setItem('user_management_active_subtab', 'profile');
+            localStorage.setItem('settings_active_subtab', 'user_management');
+            localStorage.setItem('last_active_dashboard', 'profile_settings');
+
+            onNavigateTab('profile_settings', 'user_management');
+            emit('settings-subtab-change', { subtab: 'user_management' });
             setTimeout(() => {
               emit('open-user-profile', { userId: targetUserId, subtab: 'profile' });
-            }, 100);
+            }, 60);
           } else if (sessionUser?.id === targetUserId) {
-            onNavigateTab('profile_settings');
+            localStorage.setItem('settings_active_subtab', 'profile');
+            localStorage.setItem('last_active_dashboard', 'profile_settings');
+            onNavigateTab('profile_settings', 'profile');
+            emit('settings-subtab-change', { subtab: 'profile' });
           } else {
             onNavigateTab('leaderboard');
           }
