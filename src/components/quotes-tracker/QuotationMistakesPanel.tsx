@@ -31,6 +31,7 @@ import { AddEditMistakeModal } from './modals/AddEditMistakeModal';
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
 import { DateInput } from '@/components/common/DateInput';
 import { CustomSelect } from '@/components/common/CustomSelect';
+import { EntityLink } from '@/components/common/EntityLink';
 import { useAppEvent, useAppEventBus } from '@/contexts/AppEventBusContext';
 
 interface QuotationMistakesPanelProps {
@@ -493,28 +494,22 @@ export function QuotationMistakesPanel({
 
                   {/* Filename */}
                   <td className="py-2.5 px-4 text-theme-text-primary font-medium max-w-[200px] truncate" title={item.filename}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        emit("open-entity-drawer", {
-                          type: "quotation",
-                          fileName: item.filename,
-                        });
-                      }}
-                      className="flex items-center gap-1.5 hover:text-cyan-400 text-left truncate transition-colors group/fn cursor-pointer w-full"
-                      title="Inspect quotation"
-                    >
-                      <FileCode className="h-3.5 w-3.5 text-purple-400 shrink-0 group-hover/fn:text-cyan-400 transition-colors" />
-                      <span className="truncate">{item.filename}</span>
-                    </button>
+                    <EntityLink
+                      type="quotation"
+                      fileName={item.filename}
+                      showIcon={true}
+                      className="w-full truncate"
+                    />
                   </td>
 
                   {/* Branch */}
                   <td className="py-2.5 px-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      {item.branch}
-                    </span>
+                    <EntityLink
+                      type="branch"
+                      branchName={item.branch}
+                      variant="badge"
+                      className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px]"
+                    />
                   </td>
 
                   {/* Codename */}
@@ -525,65 +520,47 @@ export function QuotationMistakesPanel({
                         ? profileMatch.codename || profileMatch.username
                         : item.codename;
                       return (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            emit("open-entity-drawer", {
-                              type: "user",
-                              userId: item.user_id,
-                              username: targetName,
-                            });
-                          }}
-                          className="flex items-center gap-1.5 hover:text-cyan-400 transition-colors group/user cursor-pointer"
-                          title="Inspect user"
-                        >
-                          <User className="h-3.5 w-3.5 text-amber-400 shrink-0 group-hover/user:text-cyan-400 transition-colors" />
-                          <span>{targetName}</span>
-                        </button>
+                        <EntityLink
+                          type="user"
+                          userId={item.user_id}
+                          username={targetName}
+                          showIcon={true}
+                        />
                       );
                     })()}
                   </td>
 
                   {/* Details */}
-                  <td
-                    className="py-2.5 px-4 text-theme-text-muted leading-relaxed max-w-[300px] cursor-pointer hover:text-cyan-400 transition-colors"
-                    onClick={(e) => {
-                      if (!isSelectionMode) {
-                        e.stopPropagation();
-                        emit("open-entity-drawer", {
-                          type: "mistake",
-                          mistake: item,
-                        });
-                      }
-                    }}
-                    title="Click to inspect mistake details"
-                  >
-                    <p className="line-clamp-2">
-                      {item.mistake_details}
-                    </p>
+                  <td className="py-2.5 px-4 text-theme-text-muted leading-relaxed max-w-[300px]">
+                    <EntityLink
+                      type="mistake"
+                      mistake={item}
+                      variant="custom"
+                      disabled={isSelectionMode}
+                      className="w-full text-left"
+                    >
+                      <p className="line-clamp-2 hover:text-cyan-400 transition-colors">
+                        {item.mistake_details}
+                      </p>
+                    </EntityLink>
                   </td>
 
                   {/* Penalty */}
-                  <td
-                    className="py-2.5 px-4 font-medium text-rose-400 max-w-[250px] cursor-pointer hover:text-rose-300 transition-colors"
-                    onClick={(e) => {
-                      if (!isSelectionMode) {
-                        e.stopPropagation();
-                        emit("open-entity-drawer", {
-                          type: "mistake",
-                          mistake: item,
-                        });
-                      }
-                    }}
-                    title="Click to inspect mistake details"
-                  >
-                    <div className="flex items-start gap-1.5">
-                      <Gavel className="h-3.5 w-3.5 text-rose-400 shrink-0 mt-0.5" />
-                      <p className="line-clamp-2">
-                        {item.penalty}
-                      </p>
-                    </div>
+                  <td className="py-2.5 px-4 font-medium text-rose-400 max-w-[250px]">
+                    <EntityLink
+                      type="mistake"
+                      mistake={item}
+                      variant="custom"
+                      disabled={isSelectionMode}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-start gap-1.5 hover:text-rose-300 transition-colors">
+                        <Gavel className="h-3.5 w-3.5 text-rose-400 shrink-0 mt-0.5" />
+                        <p className="line-clamp-2">
+                          {item.penalty}
+                        </p>
+                      </div>
+                    </EntityLink>
                   </td>
 
                   {/* Sliding Action Column */}

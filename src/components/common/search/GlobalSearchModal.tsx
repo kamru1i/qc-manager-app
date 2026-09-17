@@ -187,29 +187,11 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'users': {
           const targetUserId = item.metadata?.userId;
-          const isAdminOrSupervisor = isAdminRole(profile) || profile?.role === 'supervisor';
-
-          if (isAdminOrSupervisor && targetUserId) {
-            sessionStorage.setItem('viewingStaffId', targetUserId);
-            sessionStorage.setItem('viewingStaffSubTab', 'profile');
-            localStorage.setItem('user_management_viewing_staff_id', targetUserId);
-            localStorage.setItem('user_management_active_subtab', 'profile');
-            localStorage.setItem('settings_active_subtab', 'user_management');
-            localStorage.setItem('last_active_dashboard', 'profile_settings');
-
-            onNavigateTab('profile_settings', 'user_management');
-            emit('settings-subtab-change', { subtab: 'user_management' });
-            setTimeout(() => {
-              emit('open-user-profile', { userId: targetUserId, subtab: 'profile' });
-            }, 60);
-          } else if (sessionUser?.id === targetUserId) {
-            localStorage.setItem('settings_active_subtab', 'profile');
-            localStorage.setItem('last_active_dashboard', 'profile_settings');
-            onNavigateTab('profile_settings', 'profile');
-            emit('settings-subtab-change', { subtab: 'profile' });
-          } else {
-            onNavigateTab('leaderboard');
-          }
+          emit('open-entity-drawer', {
+            type: 'user',
+            userId: targetUserId,
+            username: item.subtitle,
+          });
           break;
         }
 
@@ -224,37 +206,29 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'quotations': {
           const quotation = item.metadata?.quotation;
-          onNavigateTab('quotes', 'monthly');
-          setTimeout(() => {
-            emit('filter-quotations-search', {
-              search: quotation?.file_name || quotation?.codename || '',
-            });
-          }, 100);
+          emit('open-entity-drawer', {
+            type: 'quotation',
+            fileName: quotation?.file_name || item.title,
+            record: quotation,
+          });
           break;
         }
 
         case 'mistakes': {
           const mistake = item.metadata?.mistake;
-          onNavigateTab('quotes', 'mistakes');
-          setTimeout(() => {
-            emit('filter-mistakes', {
-              search: mistake?.filename || mistake?.codename || '',
-              date: mistake?.date || '',
-              branch: mistake?.branch || '',
-            });
-          }, 100);
+          emit('open-entity-drawer', {
+            type: 'mistake',
+            mistake: mistake,
+          });
           break;
         }
 
         case 'leave': {
           const leave = item.metadata?.leave;
-          onNavigateTab('chuti', 'leave_history');
-          setTimeout(() => {
-            emit('filter-leave', {
-              search: leave?.comment || leave?.leave_type || '',
-              date: leave?.date || '',
-            });
-          }, 100);
+          emit('open-entity-drawer', {
+            type: 'leave',
+            leaveRecord: leave,
+          });
           break;
         }
 

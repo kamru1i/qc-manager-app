@@ -311,6 +311,7 @@ export const UserEntityContent: React.FC<UserEntityContentProps> = ({
                 onNavigateAction({
                   tab: 'chuti',
                   subtab: 'leave_history',
+                  search: profile.username || profile.full_name || '',
                   userId: profile.id,
                 });
               }}
@@ -395,15 +396,16 @@ export const UserEntityContent: React.FC<UserEntityContentProps> = ({
             onClick={() => {
               onClose();
               onNavigateAction({
-                tab: 'user_management',
-                subtab: 'leave',
-                userId: profile.id,
+                tab: 'chuti',
+                subtab: 'leave_history',
+                search: profile.username || profile.full_name || '',
               });
             }}
             className="flex-1 min-w-[120px] py-2 px-3 bg-theme-card-bg hover:bg-theme-border-input border border-theme-border-input rounded-xl text-xs font-semibold text-theme-text-primary transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            title="Open Leave Tracker with employee filter"
           >
             <Calendar className="w-3.5 h-3.5 text-sky-400" />
-            Leave Records
+            Leave History
           </button>
         )}
 

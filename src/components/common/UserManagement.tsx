@@ -58,6 +58,7 @@ import { LeaveSettlement, GovtHolidayResponse } from '@/types';
 import { GlobalSettings, getGlobalSettingsFromProfile, defaultGlobalSettings, sortChutiRecordsDescending, findAdminProfileWithGlobalSettings, createNotification, getExistingNotifications, formatLeaveDuration, formatDate, getDetailedLeaveLabel, getCleanComment, getApprovalsPrefix } from '@/utils/dashboardHelpers';
 import { PROFILE_COLUMNS, CHUTI_COLUMNS, LEAVE_SETTLEMENT_COLUMNS, GOVT_HOLIDAY_RESPONSE_COLUMNS } from '@/utils/dbColumns';
 import { holidaysService } from '@/services/holidaysService';
+import { EntityLink } from '@/components/common/EntityLink';
 import {
   getRecordAdjustmentEntries,
   getRecordAdjustedMinutes,
@@ -2387,8 +2388,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-theme-text-muted uppercase mt-0.5 tracking-wider font-mono">
-                            {u.username.trim()}
+                          <div className="mt-0.5">
+                            <EntityLink
+                              type="user"
+                              userId={u.id}
+                              username={u.username.trim()}
+                              profile={u}
+                              variant="chip"
+                              className="text-[10px] uppercase tracking-wider font-mono px-1 py-0"
+                            />
                           </div>
                         </td>
                         <td className="py-3.5 px-4 text-center">

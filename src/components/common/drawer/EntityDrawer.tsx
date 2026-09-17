@@ -169,11 +169,13 @@ export const EntityDrawer: React.FC<EntityDrawerProps> = ({
       subtab?: string;
       search?: string;
       userId?: string;
+      branch?: string;
+      date?: string;
     }) => {
       closeEntityDrawer();
 
-      // If user profile navigation
-      if (action.userId && (action.tab === 'user_management' || action.subtab === 'profile' || action.subtab === 'leave')) {
+      // If user profile canonical navigation (Settings > Users > Target User)
+      if (action.userId && (action.tab === 'user_management' || action.subtab === 'profile')) {
         emit('open-user-profile', {
           userId: action.userId,
           subtab: action.subtab === 'leave' ? 'leave_history' : 'profile',
@@ -186,8 +188,21 @@ export const EntityDrawer: React.FC<EntityDrawerProps> = ({
 
       // If quotation search navigation
       if (action.tab === 'quotes') {
-        if (action.search) {
-          emit('filter-quotations-search', { search: action.search });
+        if (action.subtab === 'mistakes') {
+          if (action.search || action.branch || action.date) {
+            emit('filter-mistakes', {
+              search: action.search,
+              branch: action.branch,
+              date: action.date,
+            });
+          }
+        } else {
+          if (action.branch) {
+            emit('filter-quotations-branch', { branch: action.branch });
+          }
+          if (action.search) {
+            emit('filter-quotations-search', { search: action.search });
+          }
         }
         emit('quotes-tab-change', { tab: action.subtab || 'entry' });
         if (onNavigateTab) {
@@ -198,6 +213,12 @@ export const EntityDrawer: React.FC<EntityDrawerProps> = ({
 
       // If leave tracker navigation
       if (action.tab === 'chuti') {
+        if (action.userId) {
+          emit('trigger-viewing-staff', { userId: action.userId });
+        }
+        if (action.search || action.date) {
+          emit('filter-leave', { search: action.search, date: action.date });
+        }
         emit('chuti-tab-change', { tab: action.subtab || 'dashboard' });
         if (onNavigateTab) {
           onNavigateTab('chuti', action.subtab);

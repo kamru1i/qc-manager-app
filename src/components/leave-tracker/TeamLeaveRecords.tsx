@@ -8,6 +8,7 @@ import { exportHelper } from "@/utils/exportHelper";
 import { LeavesRecordsTable } from "@/components/leave-tracker/LeavesRecordsTable";
 import { DateInput } from "@/components/common/DateInput";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { EntityLink } from "@/components/common/EntityLink";
 import { TeamLeaveRecordsSkeleton } from "@/components/common/skeleton/TeamLeaveRecordsSkeleton";
 import {
   Calendar,
@@ -590,21 +591,40 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                       return (
                         <tr key={r.id} className="hover:bg-theme-card-bg/60 transition-colors">
                           <td className="py-3 px-4 font-semibold text-theme-text-primary">
-                            {fullName}
+                            <EntityLink
+                              type="user"
+                              userId={r.user_id}
+                              username={codename !== "—" ? codename : undefined}
+                              displayName={fullName}
+                              className="font-semibold text-theme-text-primary"
+                            />
                           </td>
                           <td className="py-3 px-4 font-mono text-theme-text-secondary text-xs text-center">
-                            {codename}
+                            {codename !== "—" ? (
+                              <EntityLink
+                                type="user"
+                                userId={r.user_id}
+                                username={codename}
+                                variant="chip"
+                              />
+                            ) : "—"}
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                              r.leave_type === "Full Leave"
-                                ? "bg-red-955/50 border border-red-800 text-red-300"
-                                : r.leave_type === "Overtime"
-                                ? "bg-emerald-955/50 border border-emerald-800 text-emerald-300"
-                                : "bg-blue-955/50 border border-blue-800 text-blue-300"
-                            }`}>
-                              {r.leave_type}
-                            </span>
+                            <EntityLink
+                              type="leave"
+                              leaveRecord={r}
+                              variant="custom"
+                            >
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium hover:brightness-110 transition-all ${
+                                r.leave_type === "Full Leave"
+                                  ? "bg-red-955/50 border border-red-800 text-red-300"
+                                  : r.leave_type === "Overtime"
+                                  ? "bg-emerald-955/50 border border-emerald-800 text-emerald-300"
+                                  : "bg-blue-955/50 border border-blue-800 text-blue-300"
+                              }`}>
+                                {r.leave_type}
+                              </span>
+                            </EntityLink>
                           </td>
                           <td className="py-3 px-4 font-mono text-xs text-theme-text-secondary text-center">
                             {r.sign_in_time && r.sign_out_time ? `${formatTimeToAMPM(r.sign_in_time)} / ${formatTimeToAMPM(r.sign_out_time)}` : "—"}
@@ -617,7 +637,13 @@ export const TeamLeaveRecords: React.FC<TeamLeaveRecordsProps> = ({
                           </td>
                           <td className="py-3 px-4 text-center">
                             <div className="flex justify-center items-center">
-                              <StatusBadge record={r} />
+                              <EntityLink
+                                type="leave"
+                                leaveRecord={r}
+                                variant="custom"
+                              >
+                                <StatusBadge record={r} />
+                              </EntityLink>
                             </div>
                           </td>
                         </tr>

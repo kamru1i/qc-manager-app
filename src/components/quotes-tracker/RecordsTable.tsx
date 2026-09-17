@@ -10,11 +10,13 @@ import {
   Save,
   Loader2,
   Layers,
+  Building2,
 } from "lucide-react";
 import { RecordItem } from "@/types";
 import { formatDate, formatDateToYYYYMMDD, formatTimeToAMPM, formatTimeToHHMM } from "@/utils/quotesDashboardHelpers";
 import { formatBdAndUkTime } from "@/utils/timeFormatHelpers";
 import { useAppEventBus } from "@/contexts/AppEventBusContext";
+import { EntityLink } from "@/components/common/EntityLink";
 
 interface RecordsTableProps {
   records: RecordItem[];
@@ -997,22 +999,14 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                             "",
                           )}
                         </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            emit("open-entity-drawer", {
-                              type: "quotation",
-                              fileName: r.file_name,
-                              record: r,
-                            });
-                          }}
-                          className="opacity-0 group-hover/fn:opacity-100 p-1 text-theme-text-muted hover:text-cyan-400 hover:bg-cyan-500/10 rounded transition-all ml-1 shrink-0"
+                        <EntityLink
+                          type="quotation"
+                          fileName={r.file_name}
+                          record={r}
+                          variant="inspect-button"
+                          className="opacity-0 group-hover/fn:opacity-100 ml-1 shrink-0"
                           title="Quick inspect quotation"
-                          aria-label={`Inspect quotation ${r.file_name}`}
-                        >
-                          <Layers className="w-3.5 h-3.5" />
-                        </button>
+                        />
                       </div>
                     )}
                   </td>
@@ -1070,24 +1064,37 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                         ))}
                       </select>
                     ) : (
-                      <div
-                        onClick={(e) => handleCellClick(r, "branch_name", e)}
-                        className={`px-2 py-1 rounded border border-transparent transition-all mx-auto w-fit ${
-                          isAdmin || r.user_id === currentUserId
-                            ? "cursor-text"
-                            : ""
-                        } ${
-                          editedRecords[r.id]?.branch_name !== undefined
-                            ? "text-purple-400 font-semibold border border-purple-500/25 bg-purple-500/5"
-                            : ""
-                        }`}
-                        title={
-                          isAdmin || r.user_id === currentUserId
-                            ? "Slow click twice to edit branch"
-                            : ""
-                        }
-                      >
-                        {getCellValue(r, "branch_name")}
+                      <div className="flex items-center justify-center group/br mx-auto w-fit">
+                        <div
+                          onClick={(e) => handleCellClick(r, "branch_name", e)}
+                          className={`px-2 py-1 rounded border border-transparent transition-all mx-auto w-fit ${
+                            isAdmin || r.user_id === currentUserId
+                              ? "cursor-text"
+                              : ""
+                          } ${
+                            editedRecords[r.id]?.branch_name !== undefined
+                              ? "text-purple-400 font-semibold border border-purple-500/25 bg-purple-500/5"
+                              : ""
+                          }`}
+                          title={
+                            isAdmin || r.user_id === currentUserId
+                              ? "Slow click twice to edit branch"
+                              : ""
+                          }
+                        >
+                          {getCellValue(r, "branch_name")}
+                        </div>
+                        {getCellValue(r, "branch_name") && (
+                          <EntityLink
+                            type="branch"
+                            branchName={getCellValue(r, "branch_name")}
+                            variant="inspect-button"
+                            className="opacity-0 group-hover/br:opacity-100 p-0.5 -ml-1 shrink-0"
+                            title={`Filter quotes by ${getCellValue(r, "branch_name")}`}
+                          >
+                            <Building2 className="w-3 h-3 text-emerald-400" />
+                          </EntityLink>
+                        )}
                       </div>
                     )}
                   </td>
@@ -1121,53 +1128,45 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({
                       />
                     ) : (
                       <div className="flex items-center justify-center group/cn mx-auto w-fit">
-                        <div
-                          onClick={() => {
-                            if (!isAdmin) {
-                              emit("open-entity-drawer", {
-                                type: "user",
-                                userId: r.user_id,
-                                username: getCellValue(r, "codename"),
-                              });
+                        {isAdmin ? (
+                          <div
+                            onDoubleClick={() =>
+                              handleCellDoubleClick(r, "codename")
                             }
-                          }}
-                          onDoubleClick={() =>
-                            handleCellDoubleClick(r, "codename")
-                          }
-                          className={`px-2 py-1 rounded border border-transparent transition-all w-fit ${
-                            isAdmin
-                              ? "cursor-text"
-                              : "cursor-pointer hover:text-cyan-400 hover:bg-cyan-500/10"
-                          } ${
-                            editedRecords[r.id]?.codename !== undefined
-                              ? "text-purple-400 border border-purple-500/25 bg-purple-500/5"
-                              : ""
-                          }`}
-                          title={
-                            isAdmin
-                              ? "Double-click to edit codename"
-                              : "Click to view user overview"
-                          }
-                        >
-                          {getCellValue(r, "codename")}
-                        </div>
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              emit("open-entity-drawer", {
-                                type: "user",
-                                userId: r.user_id,
-                                username: getCellValue(r, "codename"),
-                              });
-                            }}
-                            className="opacity-0 group-hover/cn:opacity-100 p-0.5 text-theme-text-muted hover:text-cyan-400 hover:bg-cyan-500/10 rounded transition-all -ml-1 shrink-0"
-                            title="Quick inspect user"
-                            aria-label={`Inspect user ${getCellValue(r, "codename")}`}
+                            className={`px-2 py-1 rounded border border-transparent transition-all w-fit cursor-text ${
+                              editedRecords[r.id]?.codename !== undefined
+                                ? "text-purple-400 border border-purple-500/25 bg-purple-500/5"
+                                : ""
+                            }`}
+                            title="Double-click to edit codename"
                           >
-                            <Layers className="w-3 h-3" />
-                          </button>
+                            {getCellValue(r, "codename")}
+                          </div>
+                        ) : (
+                          <EntityLink
+                            type="user"
+                            userId={r.user_id}
+                            username={getCellValue(r, "codename")}
+                            variant="custom"
+                            className={`px-2 py-1 rounded border border-transparent transition-all w-fit cursor-pointer hover:text-cyan-400 hover:bg-cyan-500/10 ${
+                              editedRecords[r.id]?.codename !== undefined
+                                ? "text-purple-400 border border-purple-500/25 bg-purple-500/5"
+                                : ""
+                            }`}
+                            title="Click to view user overview"
+                          >
+                            {getCellValue(r, "codename")}
+                          </EntityLink>
+                        )}
+                        {isAdmin && (
+                          <EntityLink
+                            type="user"
+                            userId={r.user_id}
+                            username={getCellValue(r, "codename")}
+                            variant="inspect-button"
+                            className="opacity-0 group-hover/cn:opacity-100 p-0.5 -ml-1 shrink-0"
+                            title="Quick inspect user"
+                          />
                         )}
                       </div>
                     )}

@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import { EntityLink } from '@/components/common/EntityLink';
 import { 
   sortChutiRecordsDescending, 
   getLatestActionComment, 
@@ -625,21 +626,16 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                               const staffProfile = profilesList?.find(p => p.id === r.user_id);
                               const displayName = staffProfile?.full_name || staffProfile?.username || r.username || r.user_id;
                               return (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    emit('open-entity-drawer', {
-                                      type: 'user',
-                                      userId: r.user_id,
-                                      username: staffProfile?.username || r.username,
-                                    });
-                                  }}
-                                  className="hover:text-cyan-400 transition-colors text-left font-semibold cursor-pointer"
-                                  title="Inspect user overview"
+                                <EntityLink
+                                  type="user"
+                                  userId={r.user_id}
+                                  username={staffProfile?.username || r.username}
+                                  profile={staffProfile}
+                                  displayName={displayName}
+                                  className="font-semibold text-theme-text-primary"
                                 >
                                   {displayName}
-                                </button>
+                                </EntityLink>
                               );
                             })()}
                             {showPendingBadge && isTemp && (
@@ -654,41 +650,29 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                               const codename = staffProfile?.username || r.username || '-';
                               if (codename === '-') return '-';
                               return (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    emit('open-entity-drawer', {
-                                      type: 'user',
-                                      userId: r.user_id,
-                                      username: codename,
-                                    });
-                                  }}
-                                  className="hover:text-cyan-400 hover:bg-cyan-500/10 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
-                                  title="Inspect user overview"
+                                <EntityLink
+                                  type="user"
+                                  userId={r.user_id}
+                                  username={codename}
+                                  profile={staffProfile}
+                                  variant="chip"
                                 >
                                   {codename}
-                                </button>
+                                </EntityLink>
                               );
                             })()}
                           </td>
                         </>
                       ) : (
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-theme-text-primary flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              emit('open-entity-drawer', {
-                                type: 'leave',
-                                leaveRecord: r,
-                              });
-                            }}
-                            className="hover:text-cyan-400 transition-colors cursor-pointer"
-                            title="Inspect leave details"
+                          <EntityLink
+                            type="leave"
+                            leaveRecord={r}
+                            variant="text"
+                            className="font-semibold text-theme-text-primary hover:text-cyan-400"
                           >
                             {formatDate(r.date)}
-                          </button>
+                          </EntityLink>
                           {showPendingBadge && isTemp && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
                               Pending
@@ -697,16 +681,11 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            emit('open-entity-drawer', {
-                              type: 'leave',
-                              leaveRecord: r,
-                            });
-                          }}
-                          className="cursor-pointer group/type inline-flex"
+                        <EntityLink
+                          type="leave"
+                          leaveRecord={r}
+                          variant="custom"
+                          className="group/type inline-flex"
                           title="Inspect leave details"
                         >
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium transition-all group-hover/type:ring-1 group-hover/type:ring-cyan-400 ${
@@ -718,7 +697,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           }`}>
                             {r.leave_type}
                           </span>
-                        </button>
+                        </EntityLink>
                       </td>
                       {(!hideAdjustmentAndOvertime && (isAdminView || allowOvertime || allowReserve)) && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
@@ -878,15 +857,11 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <div
-                          className="flex flex-col gap-1 items-center cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            emit('open-entity-drawer', {
-                              type: 'leave',
-                              leaveRecord: r,
-                            });
-                          }}
+                        <EntityLink
+                          type="leave"
+                          leaveRecord={r}
+                          variant="custom"
+                          className="flex flex-col gap-1 items-center hover:opacity-80 transition-opacity"
                           title="Inspect leave details"
                         >
                           <StatusBadge record={r} />
@@ -895,7 +870,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                               (Edited)
                             </span>
                           )}
-                        </div>
+                        </EntityLink>
                       </td>
                     </tr>
                   );

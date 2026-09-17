@@ -3,6 +3,7 @@ import { LeaderboardUser } from '@/hooks/quotes-tracker/useLeaderboardData';
 import { UserDisplayName } from '@/components/common/UserDisplayName';
 import { Trophy, Award } from 'lucide-react';
 import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import { EntityLink } from '@/components/common/EntityLink';
 
 interface LeaderboardRowProps {
   user: LeaderboardUser;
@@ -88,21 +89,15 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ user, isCurrentU
               nameClassName="text-sm font-bold text-theme-text-primary hover:text-blue-400 transition-colors"
             />
           </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              emit('open-entity-drawer', {
-                type: 'user',
-                userId: user.user_id,
-                username: user.username,
-              });
-            }}
-            className="text-[9px] text-slate-500 hover:text-cyan-400 font-bold tracking-wider mt-0.5 text-left cursor-pointer transition-colors w-fit"
-            title="Inspect user overview"
+          <EntityLink
+            type="user"
+            userId={user.user_id}
+            username={user.username}
+            variant="chip"
+            className="text-[9px] text-slate-400 hover:text-cyan-400 font-bold tracking-wider mt-0.5 text-left w-fit uppercase px-1 py-0"
           >
             {user.username.toUpperCase()}
-          </button>
+          </EntityLink>
         </div>
       </td>
 
