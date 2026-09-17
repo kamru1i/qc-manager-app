@@ -212,7 +212,7 @@ export async function searchRemoteEntities(params: {
     }
 
     // 4. Compliance Rules Search (`compliance_rules`)
-    let rulesQuery = supabase
+    const rulesQuery = supabase
       .from('compliance_rules')
       .select('id, category, sub_category, company_name, title, content')
       .eq('is_deleted', false)
