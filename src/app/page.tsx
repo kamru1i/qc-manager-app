@@ -65,6 +65,8 @@ import { clearOwnedOfflineCaches, prepareOfflineCachesForUser } from '@/utils/ca
 import { GlobalSearchProvider } from "@/contexts/GlobalSearchContext";
 import { GlobalSearchModal } from "@/components/common/search/GlobalSearchModal";
 import { KeyboardShortcutsModal } from "@/components/common/shortcuts/KeyboardShortcutsModal";
+import { EntityDrawerProvider } from "@/contexts/EntityDrawerContext";
+import { EntityDrawer } from "@/components/common/drawer/EntityDrawer";
 
 function getInitialState() {
   if (typeof window === "undefined") {
@@ -465,13 +467,15 @@ export default function AppPortal() {
     <RealtimeProvider sessionUser={sessionUser} profile={profile}>
       <ProfilesProvider sessionUser={sessionUser} profile={profile}>
         <GlobalSearchProvider>
-          <AppPortalInner
-            sessionUser={sessionUser}
-            profile={profile}
-            setProfile={setProfile}
-            handleLogout={handleLogout}
-            isProfileFresh={isProfileFresh}
-          />
+          <EntityDrawerProvider>
+            <AppPortalInner
+              sessionUser={sessionUser}
+              profile={profile}
+              setProfile={setProfile}
+              handleLogout={handleLogout}
+              isProfileFresh={isProfileFresh}
+            />
+          </EntityDrawerProvider>
         </GlobalSearchProvider>
       </ProfilesProvider>
     </RealtimeProvider>
@@ -1848,6 +1852,12 @@ function AppPortalInner({
 
       {/* Keyboard Shortcuts Reference Dialog */}
       <KeyboardShortcutsModal />
+
+      {/* Universal Entity Context Drawer */}
+      <EntityDrawer
+        viewerProfile={profile}
+        onNavigateTab={handleGlobalNavigate}
+      />
     </AppLayout>
   );
 }

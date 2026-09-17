@@ -55,6 +55,10 @@ export interface AppEventMap {
   'filter-mistakes': { search?: string; date?: string; branch?: string };
   'filter-leave': { search?: string; date?: string };
   'select-quote-rule': { ruleId?: string };
+
+  // UNIVERSAL ENTITY DRAWER
+  'open-entity-drawer': import('@/types/entityDrawer').EntityDrawerRequest;
+  'close-entity-drawer': void;
 }
 
 export type AppEventName = keyof AppEventMap;

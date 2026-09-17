@@ -22,6 +22,7 @@ import {
   Inbox,
   RefreshCw,
   CheckSquare,
+  Layers,
 } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile, QuotationMistake } from '@/types';
@@ -30,7 +31,7 @@ import { AddEditMistakeModal } from './modals/AddEditMistakeModal';
 import { DeleteConfirmModal } from '@/components/common/modals/DeleteConfirmModal';
 import { DateInput } from '@/components/common/DateInput';
 import { CustomSelect } from '@/components/common/CustomSelect';
-import { useAppEvent } from '@/contexts/AppEventBusContext';
+import { useAppEvent, useAppEventBus } from '@/contexts/AppEventBusContext';
 
 interface QuotationMistakesPanelProps {
   sessionUser: SupabaseUser | null;
@@ -54,6 +55,7 @@ export function QuotationMistakesPanel({
   globalSettings,
   profilesList = [],
 }: QuotationMistakesPanelProps) {
+  const { emit } = useAppEventBus();
   const {
     mistakes,
     allFilteredCount,
@@ -491,10 +493,21 @@ export function QuotationMistakesPanel({
 
                   {/* Filename */}
                   <td className="py-2.5 px-4 text-theme-text-primary font-medium max-w-[200px] truncate" title={item.filename}>
-                    <div className="flex items-center gap-1.5">
-                      <FileCode className="h-3.5 w-3.5 text-purple-400 shrink-0" />
-                      {item.filename}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        emit("open-entity-drawer", {
+                          type: "quotation",
+                          fileName: item.filename,
+                        });
+                      }}
+                      className="flex items-center gap-1.5 hover:text-cyan-400 text-left truncate transition-colors group/fn cursor-pointer w-full"
+                      title="Inspect quotation"
+                    >
+                      <FileCode className="h-3.5 w-3.5 text-purple-400 shrink-0 group-hover/fn:text-cyan-400 transition-colors" />
+                      <span className="truncate">{item.filename}</span>
+                    </button>
                   </td>
 
                   {/* Branch */}
@@ -506,29 +519,68 @@ export function QuotationMistakesPanel({
 
                   {/* Codename */}
                   <td className="py-2.5 px-4 font-semibold text-theme-text-primary whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                      {(() => {
-                        const profileMatch = profilesList.find((p) => p.id === item.user_id);
-                        return profileMatch
-                          ? profileMatch.codename || profileMatch.username
-                          : item.codename;
-                      })()}
-                    </div>
+                    {(() => {
+                      const profileMatch = profilesList.find((p) => p.id === item.user_id);
+                      const targetName = profileMatch
+                        ? profileMatch.codename || profileMatch.username
+                        : item.codename;
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            emit("open-entity-drawer", {
+                              type: "user",
+                              userId: item.user_id,
+                              username: targetName,
+                            });
+                          }}
+                          className="flex items-center gap-1.5 hover:text-cyan-400 transition-colors group/user cursor-pointer"
+                          title="Inspect user"
+                        >
+                          <User className="h-3.5 w-3.5 text-amber-400 shrink-0 group-hover/user:text-cyan-400 transition-colors" />
+                          <span>{targetName}</span>
+                        </button>
+                      );
+                    })()}
                   </td>
 
                   {/* Details */}
-                  <td className="py-2.5 px-4 text-theme-text-muted leading-relaxed max-w-[300px]">
-                    <p className="line-clamp-2" title={item.mistake_details}>
+                  <td
+                    className="py-2.5 px-4 text-theme-text-muted leading-relaxed max-w-[300px] cursor-pointer hover:text-cyan-400 transition-colors"
+                    onClick={(e) => {
+                      if (!isSelectionMode) {
+                        e.stopPropagation();
+                        emit("open-entity-drawer", {
+                          type: "mistake",
+                          mistake: item,
+                        });
+                      }
+                    }}
+                    title="Click to inspect mistake details"
+                  >
+                    <p className="line-clamp-2">
                       {item.mistake_details}
                     </p>
                   </td>
 
                   {/* Penalty */}
-                  <td className="py-2.5 px-4 font-medium text-rose-400 max-w-[250px]">
+                  <td
+                    className="py-2.5 px-4 font-medium text-rose-400 max-w-[250px] cursor-pointer hover:text-rose-300 transition-colors"
+                    onClick={(e) => {
+                      if (!isSelectionMode) {
+                        e.stopPropagation();
+                        emit("open-entity-drawer", {
+                          type: "mistake",
+                          mistake: item,
+                        });
+                      }
+                    }}
+                    title="Click to inspect mistake details"
+                  >
                     <div className="flex items-start gap-1.5">
                       <Gavel className="h-3.5 w-3.5 text-rose-400 shrink-0 mt-0.5" />
-                      <p className="line-clamp-2" title={item.penalty}>
+                      <p className="line-clamp-2">
                         {item.penalty}
                       </p>
                     </div>
@@ -660,6 +712,19 @@ export function QuotationMistakesPanel({
               </button>
             )}
 
+            <button
+              onClick={() => {
+                emit("open-entity-drawer", {
+                  type: "mistake",
+                  mistake: contextMenu.record,
+                });
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-cyan-400 hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"
+            >
+              <Layers className="h-3.5 w-3.5 text-cyan-400" />
+              Inspect
+            </button>
             <button
               onClick={() => handleOpenEdit(contextMenu.record)}
               className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2"

@@ -7,4 +7,5 @@ export * from './mistakesService';
 export * from './adminService';
 export * from './holidaysService';
 export * from './loginCodesService';
+export * from './entityDrawerService';
 

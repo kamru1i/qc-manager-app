@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit, Trash2, Search, Plus, Download, History } from 'lucide-react';
+import { Edit, Trash2, Search, Plus, Download, History, Layers } from 'lucide-react';
 import { ChutiRecord } from '@/utils/offlineSync';
 import { Profile } from '@/types';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CustomSelect } from '@/components/common/CustomSelect';
 import { ConfirmModal } from '@/components/common/modals/ConfirmModal';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 import { 
   sortChutiRecordsDescending, 
   getLatestActionComment, 
@@ -105,6 +106,7 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
   profilesList = [],
   hideFilterPanel = false,
 }) => {
+  const { emit } = useAppEventBus();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [isMounted, setIsMounted] = useState(false);
@@ -621,7 +623,24 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-theme-text-primary flex items-center justify-start gap-2">
                             {(() => {
                               const staffProfile = profilesList?.find(p => p.id === r.user_id);
-                              return staffProfile?.full_name || staffProfile?.username || r.username || r.user_id;
+                              const displayName = staffProfile?.full_name || staffProfile?.username || r.username || r.user_id;
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    emit('open-entity-drawer', {
+                                      type: 'user',
+                                      userId: r.user_id,
+                                      username: staffProfile?.username || r.username,
+                                    });
+                                  }}
+                                  className="hover:text-cyan-400 transition-colors text-left font-semibold cursor-pointer"
+                                  title="Inspect user overview"
+                                >
+                                  {displayName}
+                                </button>
+                              );
                             })()}
                             {showPendingBadge && isTemp && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
@@ -632,13 +651,44 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center font-mono">
                             {(() => {
                               const staffProfile = profilesList?.find(p => p.id === r.user_id);
-                              return staffProfile?.username || r.username || '-';
+                              const codename = staffProfile?.username || r.username || '-';
+                              if (codename === '-') return '-';
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    emit('open-entity-drawer', {
+                                      type: 'user',
+                                      userId: r.user_id,
+                                      username: codename,
+                                    });
+                                  }}
+                                  className="hover:text-cyan-400 hover:bg-cyan-500/10 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                                  title="Inspect user overview"
+                                >
+                                  {codename}
+                                </button>
+                              );
                             })()}
                           </td>
                         </>
                       ) : (
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-theme-text-primary flex items-center justify-center gap-2">
-                          {formatDate(r.date)}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              emit('open-entity-drawer', {
+                                type: 'leave',
+                                leaveRecord: r,
+                              });
+                            }}
+                            className="hover:text-cyan-400 transition-colors cursor-pointer"
+                            title="Inspect leave details"
+                          >
+                            {formatDate(r.date)}
+                          </button>
                           {showPendingBadge && isTemp && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-955/80 border border-purple-800 text-purple-400 animate-pulse">
                               Pending
@@ -647,15 +697,28 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${
-                          r.leave_type === 'Full Leave'
-                            ? 'bg-red-955/50 border border-red-800 text-red-300'
-                            : r.leave_type === 'Overtime'
-                            ? 'bg-emerald-955/50 border border-emerald-800 text-emerald-300'
-                            : 'bg-blue-955/50 border border-blue-800 text-blue-300'
-                        }`}>
-                          {r.leave_type}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            emit('open-entity-drawer', {
+                              type: 'leave',
+                              leaveRecord: r,
+                            });
+                          }}
+                          className="cursor-pointer group/type inline-flex"
+                          title="Inspect leave details"
+                        >
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium transition-all group-hover/type:ring-1 group-hover/type:ring-cyan-400 ${
+                            r.leave_type === 'Full Leave'
+                              ? 'bg-red-955/50 border border-red-800 text-red-300'
+                              : r.leave_type === 'Overtime'
+                              ? 'bg-emerald-955/50 border border-emerald-800 text-emerald-300'
+                              : 'bg-blue-955/50 border border-blue-800 text-blue-300'
+                          }`}>
+                            {r.leave_type}
+                          </span>
+                        </button>
                       </td>
                       {(!hideAdjustmentAndOvertime && (isAdminView || allowOvertime || allowReserve)) && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary text-center">
@@ -815,7 +878,17 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <div className="flex flex-col gap-1 items-center">
+                        <div
+                          className="flex flex-col gap-1 items-center cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            emit('open-entity-drawer', {
+                              type: 'leave',
+                              leaveRecord: r,
+                            });
+                          }}
+                          title="Inspect leave details"
+                        >
                           <StatusBadge record={r} />
                           {r.is_edited && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-955/40 border border-blue-800 text-blue-400">
@@ -841,6 +914,21 @@ export const LeavesRecordsTable: React.FC<LeavesRecordsTableProps> = ({
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
             className="fixed z-50 backdrop-blur-lg bg-theme-card-bg/95 border border-theme-border-input rounded-xl shadow-2xl p-1 w-44 select-none animate-fadeIn"
           >
+            <button
+              type="button"
+              onClick={() => {
+                const rec = contextMenu.record;
+                setContextMenu(null);
+                emit('open-entity-drawer', {
+                  type: 'leave',
+                  leaveRecord: rec,
+                });
+              }}
+              className="w-full text-left px-3 py-2 text-xs font-semibold text-theme-text-secondary hover:text-cyan-400 hover:bg-theme-border-input rounded-lg transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap"
+            >
+              <Layers className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+              Inspect Leave
+            </button>
             {isRecordDeletable(contextMenu.record) && (
               selectedIds.includes(contextMenu.record.id || '') ? (
                 <button

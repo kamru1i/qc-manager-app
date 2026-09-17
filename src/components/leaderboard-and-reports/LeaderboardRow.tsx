@@ -2,6 +2,7 @@ import React from 'react';
 import { LeaderboardUser } from '@/hooks/quotes-tracker/useLeaderboardData';
 import { UserDisplayName } from '@/components/common/UserDisplayName';
 import { Trophy, Award } from 'lucide-react';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
 
 interface LeaderboardRowProps {
   user: LeaderboardUser;
@@ -9,6 +10,7 @@ interface LeaderboardRowProps {
 }
 
 export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ user, isCurrentUser }) => {
+  const { emit } = useAppEventBus();
   // Construct a temp profile object for UserDisplayName compatibility
   const tempProfile = React.useMemo(() => ({
     id: user.user_id,
@@ -69,7 +71,7 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ user, isCurrentU
   return (
     <tr
       className={`border-b border-slate-850/20 hover:bg-slate-900/10 text-xs transition-colors ${
-        isCurrentUser ? 'bg-blue-950/10 border-l-2 border-l-blue-600' : ''
+        isCurrentUser ? 'bg-blue-955/10 border-l-2 border-l-blue-600' : ''
       }`}
     >
       {/* 1. Employee Name (uses UserDisplayName for consistent spacing and visual badge checkmark) */}
@@ -86,9 +88,21 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ user, isCurrentU
               nameClassName="text-sm font-bold text-theme-text-primary hover:text-blue-400 transition-colors"
             />
           </div>
-          <span className="text-[9px] text-slate-500 font-bold tracking-wider mt-0.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              emit('open-entity-drawer', {
+                type: 'user',
+                userId: user.user_id,
+                username: user.username,
+              });
+            }}
+            className="text-[9px] text-slate-500 hover:text-cyan-400 font-bold tracking-wider mt-0.5 text-left cursor-pointer transition-colors w-fit"
+            title="Inspect user overview"
+          >
             {user.username.toUpperCase()}
-          </span>
+          </button>
         </div>
       </td>
 

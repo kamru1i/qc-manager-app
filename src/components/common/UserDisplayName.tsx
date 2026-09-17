@@ -3,6 +3,7 @@ import { Profile } from "@/types";
 import { BadgeInfo } from "@/utils/leaderboardHelper";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
 import { isAdminRole } from '@/utils/permissionService';
+import { useAppEventBus } from "@/contexts/AppEventBusContext";
 
 // Global cache for all-time ranks mapping: profileId -> rank number.
 // Single source of truth: fed exclusively by the get_leaderboard_data RPC
@@ -26,6 +27,7 @@ interface UserDisplayNameProps {
   showRank?: boolean;
   rank?: number | null;
   disableBadgeTooltip?: boolean;
+  clickable?: boolean;
 }
 
 export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
@@ -37,7 +39,9 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
   showRank = true,
   rank: rankProp,
   disableBadgeTooltip = true,
+  clickable = true,
 }) => {
+  const { emit } = useAppEventBus();
   const [showTooltip, setShowTooltip] = useState(false);
   const [rank, setRank] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -88,7 +92,20 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
       <span
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="relative group inline-block align-middle select-none cursor-help pb-0.5"
+        onClick={(e) => {
+          if (clickable && (profile?.id || profile?.username)) {
+            e.stopPropagation();
+            emit('open-entity-drawer', {
+              type: 'user',
+              userId: profile.id,
+              username: profile.username,
+              profile,
+            });
+          }
+        }}
+        className={`relative group inline-block align-middle select-none pb-0.5 ${
+          clickable ? 'cursor-pointer hover:text-blue-400 transition-colors' : 'cursor-help'
+        }`}
       >
         <span className="align-middle">{profile.full_name || 'User'}</span>
 
@@ -112,6 +129,22 @@ export const UserDisplayName: React.FC<UserDisplayNameProps> = ({
                 </div>
               </>
             )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                emit('open-entity-drawer', {
+                  type: 'user',
+                  userId: profile.id,
+                  username: profile.username,
+                  profile,
+                });
+              }}
+              className="mt-1 pt-1.5 border-t border-theme-border-muted/80 text-[10px] text-blue-400 hover:text-blue-300 font-semibold flex items-center justify-between cursor-pointer w-full text-left"
+            >
+              <span>Quick Overview</span>
+              <span>&rarr;</span>
+            </button>
           </span>
         )}
       </span>
