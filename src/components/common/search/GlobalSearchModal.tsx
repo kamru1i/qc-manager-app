@@ -44,33 +44,14 @@ interface GlobalSearchModalProps {
   onNavigateTab: (tab: any, subtab?: any) => void;
 }
 
-const RECENT_SEARCH_KEY = 'qc_global_search_recent';
-
-function getStoredRecentItems(): SearchResultItem[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(RECENT_SEARCH_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveRecentItem(item: SearchResultItem) {
-  if (typeof window === 'undefined') return;
-  try {
-    const existing = getStoredRecentItems().filter((r) => r.id !== item.id);
-    const updated = [item, ...existing].slice(0, 5);
-    localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(updated));
-  } catch {}
-}
-
-function clearStoredRecentItems() {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(RECENT_SEARCH_KEY);
-  } catch {}
-}
+import {
+  getRecentItems,
+  recordRecentItem,
+  removeRecentItem,
+  clearRecentItems,
+  isRecentItemAuthorized,
+  RecentItem,
+} from '@/services/recentItemsService';
 
 const CATEGORY_TABS: { id: SearchCategory | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -94,7 +75,7 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<SearchCategory | 'all'>('all');
   const [results, setResults] = useState<SearchResultItem[]>([]);
-  const [recentItems, setRecentItems] = useState<SearchResultItem[]>([]);
+  const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -108,10 +89,10 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
       setQuery('');
       setActiveCategory('all');
       setSelectedIndex(0);
-      setRecentItems(getStoredRecentItems());
+      setRecentItems(getRecentItems(sessionUser?.id, profile, sessionUser));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isSearchOpen]);
+  }, [isSearchOpen, sessionUser, profile]);
 
   // Execute Search: Local (Immediate) + Remote (Debounced)
   useEffect(() => {
@@ -185,13 +166,23 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
   // Linear flattened list of items currently visible for keyboard navigation
   const visibleItems = useMemo(() => {
+    if (query.trim() === '') {
+      return recentItems.map((r) => ({
+        id: r.id,
+        category: (r.type === 'rule' ? 'rules' : r.type) as SearchCategory,
+        title: r.title,
+        subtitle: r.subtitle,
+        badge: r.badge,
+        metadata: r.metadata as any,
+      }));
+    }
     if (activeCategory === 'all') {
       return groupedResults.flatMap((g) => g.items);
     }
     return results
       .filter((item) => item.category === activeCategory)
       .sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0));
-  }, [activeCategory, groupedResults, results]);
+  }, [query, recentItems, activeCategory, groupedResults, results]);
 
   // Category counts
   const categoryCounts = useMemo(() => {
@@ -218,15 +209,141 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
     }
   }, [selectedIndex]);
 
-  // Deep navigation action handler
+  // Handle removing a single recent item
+  const handleRemoveRecent = useCallback(
+    (e: React.MouseEvent, itemId: string) => {
+      e.stopPropagation();
+      const updated = removeRecentItem(sessionUser?.id, itemId);
+      setRecentItems(updated);
+    },
+    [sessionUser?.id]
+  );
+
+  // Handle clearing all recent items
+  const handleClearRecents = useCallback(() => {
+    clearRecentItems(sessionUser?.id);
+    setRecentItems([]);
+  }, [sessionUser?.id]);
+
+  // Deep navigation for Recent items with authorization check
+  const handleSelectRecentItem = useCallback(
+    (item: RecentItem) => {
+      // Re-verify current permission before navigation
+      if (!isRecentItemAuthorized(item, profile, sessionUser)) {
+        toast.error('You do not have permission to access this item.');
+        return;
+      }
+
+      // Bump to the top of recents
+      const updated = recordRecentItem(sessionUser?.id, {
+        id: item.id,
+        type: item.type,
+        title: item.title,
+        subtitle: item.subtitle,
+        badge: item.badge,
+        metadata: item.metadata,
+      });
+      setRecentItems(updated);
+      closeSearch();
+
+      switch (item.type) {
+        case 'user': {
+          openEntityDrawer({
+            type: 'user',
+            userId: item.metadata.userId,
+            username: item.metadata.codename || item.metadata.username,
+          });
+          break;
+        }
+
+        case 'quotation': {
+          openEntityDrawer({
+            type: 'quotation',
+            fileName: item.metadata.fileName,
+            recordId: item.metadata.recordId,
+          });
+          break;
+        }
+
+        case 'mistake': {
+          openEntityDrawer({
+            type: 'mistake',
+            mistakeId: item.metadata.mistakeId,
+          });
+          break;
+        }
+
+        case 'leave': {
+          openEntityDrawer({
+            type: 'leave',
+            leaveId: item.metadata.leaveId,
+          });
+          break;
+        }
+
+        case 'branch': {
+          const branch = item.metadata.branch || item.title;
+          onNavigateTab('quotes', 'monthly');
+          setTimeout(() => {
+            emit('filter-quotations-branch', { branch });
+          }, 50);
+          break;
+        }
+
+        case 'rule': {
+          onNavigateTab('quotes', 'rules');
+          setTimeout(() => {
+            emit('select-quote-rule', {
+              ruleId: item.metadata.ruleId,
+              search: item.metadata.search || item.title,
+            });
+          }, 50);
+          break;
+        }
+
+        case 'login_codes': {
+          onNavigateTab('quotes', 'login_codes');
+          setTimeout(() => {
+            emit('filter-login-codes', { search: item.metadata.search || item.title });
+          }, 50);
+          break;
+        }
+
+        case 'todos': {
+          onNavigateTab('todo');
+          break;
+        }
+
+        case 'navigation': {
+          if (item.metadata.tab) {
+            onNavigateTab(item.metadata.tab, item.metadata.subtab);
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    },
+    [closeSearch, onNavigateTab, openEntityDrawer, emit, profile, sessionUser]
+  );
+
+  // Deep navigation action handler for search results
   const handleSelectItem = useCallback(
     (item: SearchResultItem) => {
-      saveRecentItem(item);
       closeSearch();
 
       switch (item.category) {
         case 'navigation': {
           const { tab, subtab } = item.metadata || {};
+          recordRecentItem(sessionUser?.id, {
+            id: `nav:${tab}/${subtab || ''}`,
+            type: 'navigation',
+            title: item.title,
+            subtitle: item.subtitle,
+            badge: 'Page',
+            metadata: { tab, subtab },
+          });
           if (tab) {
             onNavigateTab(tab, subtab);
           }
@@ -235,16 +352,33 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'users': {
           const targetUserId = item.metadata?.userId || item.metadata?.user?.id;
+          const codename = item.metadata?.user?.username || item.metadata?.user?.codename || item.title;
+          recordRecentItem(sessionUser?.id, {
+            id: `user:${targetUserId || codename}`,
+            type: 'user',
+            title: codename,
+            subtitle: item.subtitle || 'Staff Member',
+            badge: 'Staff',
+            metadata: { userId: targetUserId, username: codename, codename },
+          });
           openEntityDrawer({
             type: 'user',
             userId: targetUserId,
-            username: item.metadata?.user?.username || item.metadata?.user?.codename,
+            username: codename,
           });
           break;
         }
 
         case 'branches': {
           const branchName = item.metadata?.branch || item.title;
+          recordRecentItem(sessionUser?.id, {
+            id: `branch:${branchName}`,
+            type: 'branch',
+            title: branchName,
+            subtitle: 'Branch Quotations',
+            badge: 'Branch',
+            metadata: { branch: branchName },
+          });
           onNavigateTab('quotes', 'monthly');
           setTimeout(() => {
             emit('filter-quotations-branch', { branch: branchName });
@@ -254,9 +388,18 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'quotations': {
           const quotation = item.metadata?.quotation;
+          const fileName = quotation?.file_name || item.title;
+          recordRecentItem(sessionUser?.id, {
+            id: `quotation:${fileName}`,
+            type: 'quotation',
+            title: fileName,
+            subtitle: item.subtitle || 'Quotation Record',
+            badge: 'Quote',
+            metadata: { fileName, recordId: quotation?.id },
+          });
           openEntityDrawer({
             type: 'quotation',
-            fileName: quotation?.file_name || item.title,
+            fileName,
             record: quotation,
           });
           break;
@@ -264,6 +407,15 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'mistakes': {
           const mistake = item.metadata?.mistake;
+          const mistakeId = mistake?.id || item.id;
+          recordRecentItem(sessionUser?.id, {
+            id: `mistake:${mistakeId}`,
+            type: 'mistake',
+            title: item.title,
+            subtitle: item.subtitle || 'Mistake Record',
+            badge: 'Mistake',
+            metadata: { mistakeId, fileName: mistake?.file_name },
+          });
           openEntityDrawer({
             type: 'mistake',
             mistake: mistake,
@@ -273,6 +425,15 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'leave': {
           const leave = item.metadata?.leave;
+          const leaveId = leave?.id || item.id;
+          recordRecentItem(sessionUser?.id, {
+            id: `leave:${leaveId}`,
+            type: 'leave',
+            title: item.title,
+            subtitle: item.subtitle || 'Leave Record',
+            badge: 'Leave',
+            metadata: { leaveId, leaveUserId: leave?.user_id },
+          });
           openEntityDrawer({
             type: 'leave',
             leaveRecord: leave,
@@ -282,11 +443,20 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'rules': {
           const rule = item.metadata?.rule;
+          const ruleId = rule?.id || item.id;
+          recordRecentItem(sessionUser?.id, {
+            id: `rule:${ruleId}`,
+            type: 'rule',
+            title: item.title,
+            subtitle: item.subtitle || 'Quote Rule',
+            badge: 'Rule',
+            metadata: { ruleId, search: rule?.title || rule?.company_name || item.title },
+          });
           onNavigateTab('quotes', 'rules');
           setTimeout(() => {
             emit('select-quote-rule', {
               ruleId: rule?.id,
-              search: rule?.title || rule?.company_name,
+              search: rule?.title || rule?.company_name || item.title,
             });
           }, 50);
           break;
@@ -294,6 +464,15 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
 
         case 'login_codes': {
           const lc = item.metadata?.loginCode;
+          const codeId = lc?.id || item.id;
+          recordRecentItem(sessionUser?.id, {
+            id: `login_code:${codeId}`,
+            type: 'login_codes',
+            title: item.title,
+            subtitle: item.subtitle || 'Supplier Login Code',
+            badge: 'Login Code',
+            metadata: { search: lc?.login_id || item.title },
+          });
           if (lc?.code) {
             try {
               navigator.clipboard.writeText(lc.code);
@@ -308,6 +487,14 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
         }
 
         case 'todos': {
+          recordRecentItem(sessionUser?.id, {
+            id: `todo:${item.id}`,
+            type: 'todos',
+            title: item.title,
+            subtitle: item.subtitle || 'Personal Todo',
+            badge: 'Todo',
+            metadata: { tab: 'todo' },
+          });
           onNavigateTab('todo');
           break;
         }
@@ -316,7 +503,7 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
           break;
       }
     },
-    [closeSearch, onNavigateTab, openEntityDrawer, emit]
+    [closeSearch, onNavigateTab, openEntityDrawer, emit, sessionUser?.id]
   );
 
   // Key navigation inside search modal
@@ -329,7 +516,11 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : visibleItems.length - 1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (visibleItems[selectedIndex]) {
+      if (query.trim() === '') {
+        if (recentItems[selectedIndex]) {
+          handleSelectRecentItem(recentItems[selectedIndex]);
+        }
+      } else if (visibleItems[selectedIndex]) {
         handleSelectItem(visibleItems[selectedIndex]);
       }
     }
@@ -453,51 +644,93 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
             <div className="p-4 space-y-4">
               {recentItems.length > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
+                  <div className="flex items-center justify-between text-xs font-semibold text-theme-text-muted uppercase tracking-wider px-1">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-purple-400" />
-                      <span>Recent Searches</span>
+                      <span>Recent</span>
                     </div>
                     <button
-                      onClick={() => {
-                        clearStoredRecentItems();
-                        setRecentItems([]);
-                      }}
+                      onClick={handleClearRecents}
                       className="text-[11px] text-theme-text-muted hover:text-rose-400 normal-case font-normal transition-colors cursor-pointer"
                     >
                       Clear
                     </button>
                   </div>
                   <div className="space-y-1">
-                    {recentItems.map((item) => (
-                      <div
-                        key={`recent-${item.id}`}
-                        onClick={() => handleSelectItem(item)}
-                        className="flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer hover:bg-theme-page-bg/80 text-theme-text-primary group transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <div className="p-1.5 rounded-lg bg-theme-page-bg border border-theme-border-input/60 text-theme-text-muted shrink-0">
-                            {getCategoryIcon(item.category)}
-                          </div>
-                          <div className="overflow-hidden">
-                            <div className="text-xs font-medium text-theme-text-primary group-hover:text-purple-400 transition-colors truncate flex items-center gap-1.5">
-                              <span>{item.title}</span>
-                              {item.badge && (
-                                <span className="text-[10px] uppercase font-semibold text-theme-text-muted">
-                                  ({item.badge})
+                    {recentItems.map((item, rIdx) => {
+                      const isSelected = rIdx === selectedIndex;
+                      return (
+                        <div
+                          key={`recent-${item.id}`}
+                          data-index={rIdx}
+                          onClick={() => handleSelectRecentItem(item)}
+                          onMouseEnter={() => setSelectedIndex(rIdx)}
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer group transition-all ${
+                            isSelected
+                              ? 'bg-purple-600 text-white shadow-md'
+                              : 'hover:bg-theme-page-bg/80 text-theme-text-primary'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <div
+                              className={`p-1.5 rounded-lg shrink-0 ${
+                                isSelected
+                                  ? 'bg-purple-700 text-white'
+                                  : 'bg-theme-page-bg border border-theme-border-input/60 text-theme-text-muted'
+                              }`}
+                            >
+                              {getCategoryIcon((item.type === 'rule' ? 'rules' : item.type) as SearchCategory)}
+                            </div>
+                            <div className="overflow-hidden">
+                              <div className="text-xs font-medium truncate flex items-center gap-1.5">
+                                <span className={isSelected ? 'text-white' : 'text-theme-text-primary'}>
+                                  {item.title}
                                 </span>
+                                {item.badge && (
+                                  <span
+                                    className={`text-[9px] uppercase px-1 py-0.2 rounded font-semibold ${
+                                      isSelected
+                                        ? 'bg-purple-800 text-purple-100'
+                                        : 'bg-theme-page-bg text-theme-text-muted border border-theme-border-input/40'
+                                    }`}
+                                  >
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </div>
+                              {item.subtitle && (
+                                <div
+                                  className={`text-[11px] truncate ${
+                                    isSelected ? 'text-purple-200' : 'text-theme-text-muted'
+                                  }`}
+                                >
+                                  {item.subtitle}
+                                </div>
                               )}
                             </div>
-                            {item.subtitle && (
-                              <div className="text-[11px] text-theme-text-muted truncate">
-                                {item.subtitle}
-                              </div>
-                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={(e) => handleRemoveRecent(e, item.id)}
+                              title="Remove from recents"
+                              className={`p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100 ${
+                                isSelected
+                                  ? 'text-purple-200 hover:text-white hover:bg-purple-700'
+                                  : 'text-theme-text-muted hover:text-rose-400 hover:bg-theme-page-bg'
+                              }`}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                            <ArrowRight
+                              className={`w-3.5 h-3.5 ${
+                                isSelected ? 'text-white' : 'text-theme-text-muted opacity-0 group-hover:opacity-100'
+                              }`}
+                            />
                           </div>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-theme-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

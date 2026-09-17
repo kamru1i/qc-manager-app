@@ -57,9 +57,10 @@ export interface AppEventMap {
   'select-quote-rule': { ruleId?: string; search?: string };
   'filter-login-codes': { search?: string };
 
-  // UNIVERSAL ENTITY DRAWER
+  // UNIVERSAL ENTITY DRAWER & RECENT ITEMS
   'open-entity-drawer': import('@/types/entityDrawer').EntityDrawerRequest;
   'close-entity-drawer': void;
+  'record-recent-item': import('@/services/recentItemsService').RecentItemInput;
 }
 
 export type AppEventName = keyof AppEventMap;

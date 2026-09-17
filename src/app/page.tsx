@@ -467,7 +467,7 @@ export default function AppPortal() {
     <RealtimeProvider sessionUser={sessionUser} profile={profile}>
       <ProfilesProvider sessionUser={sessionUser} profile={profile}>
         <GlobalSearchProvider>
-          <EntityDrawerProvider>
+          <EntityDrawerProvider sessionUser={sessionUser}>
             <AppPortalInner
               sessionUser={sessionUser}
               profile={profile}
