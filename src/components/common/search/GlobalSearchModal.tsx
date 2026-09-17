@@ -532,7 +532,7 @@ export function GlobalSearchModal({ sessionUser, profile, onNavigateTab }: Globa
             /* Loading State */
             <div className="py-12 text-center text-theme-text-muted space-y-2">
               <Loader2 className="w-6 h-6 mx-auto animate-spin text-purple-400" />
-              <p className="text-xs">Searching databases...</p>
+              <p className="text-xs">Thinking...</p>
             </div>
           )}
         </div>

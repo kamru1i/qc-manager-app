@@ -503,7 +503,7 @@ export const UserKpiPerformancePanel: React.FC<
   ]);
 
   const globalSettingsStr = JSON.stringify(targetStaff.global_settings || {});
-  
+
   const mainDepartment = useMemo(() => {
     return targetStaff.global_settings?.department || "Data Entry";
   }, [targetStaff.global_settings?.department]);
@@ -1834,7 +1834,7 @@ export const UserKpiPerformancePanel: React.FC<
           -moz-appearance: textfield;
         }
       `}</style>
-      
+
       {/* 1. Evaluator Mode Banner (Not printed) */}
       {evaluatorModeProfile && (
         <div className="bg-blue-950/30 border border-blue-900/60 p-4 rounded-2xl text-xs text-blue-300 font-semibold flex justify-between items-center font-sans print:hidden animate-fade-in">
@@ -3384,7 +3384,7 @@ export const UserKpiPerformancePanel: React.FC<
               {searchingAppraisee ? (
                 <div className="flex items-center justify-center py-4 text-theme-text-muted gap-1.5">
                   <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                  <span className="text-xs">Searching database...</span>
+                  <span className="text-xs">Thinking...</span>
                 </div>
               ) : assignedAppraisees.length === 0 ? (
                 <p className="text-xs text-theme-text-muted italic py-2">
