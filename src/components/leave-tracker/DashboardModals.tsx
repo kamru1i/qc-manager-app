@@ -61,6 +61,7 @@ export const DashboardModals = () => {
     pendingProfileRequests,
     pendingPasswordResetRequests,
     pendingReserveRequests,
+    pendingRemovalRequests,
     groupedSupervisorRequests,
     groupedChutiRequests,
     adminHolidayNotifications,
@@ -249,18 +250,28 @@ export const DashboardModals = () => {
   const [reviewingUserReqIds, setReviewingUserReqIds] = React.useState<Set<string>>(new Set());
 
   const fetchPendingUserCreationRequests = React.useCallback(async () => {
-    if (!isAdminRole(profile)) return;
+    if (!profile) return;
     try {
-      const { data } = await userCreationRequestService.fetchRequests({
-        status: 'pending_admin_approval',
-      });
-      if (data) {
-        setPendingUserCreationRequests(data);
+      if (isAdminRole(profile)) {
+        const { data } = await userCreationRequestService.fetchRequests({
+          status: 'pending_admin_approval',
+        });
+        if (data) {
+          setPendingUserCreationRequests(data);
+        }
+      } else if (profile.role === 'supervisor') {
+        const { data } = await userCreationRequestService.fetchRequests({
+          status: 'needs_review',
+          requesterId: sessionUser?.id || profile.id,
+        });
+        if (data) {
+          setPendingUserCreationRequests(data);
+        }
       }
     } catch (err) {
       console.error('Error fetching user creation requests in DashboardModals:', err);
     }
-  }, [profile]);
+  }, [profile, sessionUser]);
 
   React.useEffect(() => {
     fetchPendingUserCreationRequests();
@@ -460,6 +471,14 @@ export const DashboardModals = () => {
           }, 50);
         }}
         userNotificationsCount={unreadUserNotificationsCount}
+        pendingUserCreationRequests={pendingUserCreationRequests}
+        onReviewUserCreationRequest={(req) => {
+          setShowSupervisorApprovalModal(false);
+          emit('workspace-change', 'user_management');
+          setTimeout(() => {
+            emit('open-user-creation-review', req);
+          }, 100);
+        }}
       />
 
       {/* Shared "Reason for Revision" prompt — used by BOTH admin and supervisor
@@ -497,6 +516,7 @@ export const DashboardModals = () => {
         adminHolidayNotifications={adminHolidayNotifications}
         pendingPasswordResetRequests={pendingPasswordResetRequests}
         handleApprovePasswordResetRequest={handleApprovePasswordResetRequest}
+        pendingRemovalRequests={pendingRemovalRequests}
         handleApproveLeaveRemoval={handleApproveLeaveRemoval}
         pendingUserCreationRequests={pendingUserCreationRequests}
         handleApproveUserCreationRequest={handleApproveUserCreationRequest}

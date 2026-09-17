@@ -777,7 +777,11 @@ export function useGlobalNotifications(
         return true;
       }).length;
       
-      count += myTeamPendingCount;
+      const supervisorReviewCount = userCreationRequests.filter(
+        r => r.status === 'needs_review' && r.requester_id === profile.id
+      ).length;
+
+      count += myTeamPendingCount + supervisorReviewCount;
     }
     return count;
   }, [syncedApprovalsCount, profile, adminPendingRecords, supervisorPendingRecords, profilesList, holidayResponses, deleteRequests, userCreationRequests, dismissedNotificationIds]);

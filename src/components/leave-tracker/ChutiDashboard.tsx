@@ -26,6 +26,7 @@ import { useModalHandlers } from '@/hooks/leave-tracker/useModalHandlers';
 import { supabase } from '@/utils/supabase';
 import { useRealtimeHandler } from '@/contexts/RealtimeContext';
 import { isAdminRole } from '@/utils/permissionService';
+import { userCreationRequestService } from '@/services/userCreationRequestService';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Profile } from '@/types';
 
@@ -311,6 +312,7 @@ export default function ChutiDashboard({
     pendingProfileRequests,
     pendingPasswordResetRequests,
     pendingReserveRequests,
+    pendingRemovalRequests,
     groupedSupervisorRequests,
     groupedChutiRequests,
     userNotificationsList,
@@ -636,6 +638,35 @@ export default function ChutiDashboard({
     emit('chuti-offline-count-change', { count: offlineCount });
   }, [offlineCount, emit]);
 
+  const [userCreationCount, setUserCreationCount] = useState(0);
+
+  const fetchUserCreationCount = useCallback(async () => {
+    if (!profile) return;
+    try {
+      if (isAdminRole(profile)) {
+        const { data } = await userCreationRequestService.fetchRequests({
+          status: 'pending_admin_approval',
+        });
+        setUserCreationCount(data ? data.length : 0);
+      } else if (profile.role === 'supervisor') {
+        const { data } = await userCreationRequestService.fetchRequests({
+          status: 'needs_review',
+          requesterId: sessionUser?.id || profile.id,
+        });
+        setUserCreationCount(data ? data.length : 0);
+      }
+    } catch {
+      // ignore
+    }
+  }, [profile, sessionUser]);
+
+  useEffect(() => {
+    fetchUserCreationCount();
+  }, [fetchUserCreationCount]);
+
+  useAppEvent('user-creation-requests-updated', fetchUserCreationCount);
+  useRealtimeHandler('user_creation_requests', fetchUserCreationCount);
+
   // Synchronize approvals count to root page
   useEffect(() => {
     let count = 0;
@@ -645,9 +676,10 @@ export default function ChutiDashboard({
                 pendingReserveRequests.length +
                 pendingProfileRequests.length +
                 pendingPasswordResetRequests.length +
-                adminHolidayNotifications.length;
+                pendingRemovalRequests.length +
+                userCreationCount;
       } else if (profile.role === 'supervisor') {
-        count = groupedSupervisorRequests.length;
+        count = groupedSupervisorRequests.length + userCreationCount;
       }
     }
     emit('chuti-approvals-count-sync', { count });
@@ -657,8 +689,10 @@ export default function ChutiDashboard({
     pendingReserveRequests,
     pendingProfileRequests,
     pendingPasswordResetRequests,
-    adminHolidayNotifications,
-    groupedSupervisorRequests
+    pendingRemovalRequests,
+    userCreationCount,
+    groupedSupervisorRequests,
+    emit
   ]);
 
   // Handle events from unified root Navbar and global modals

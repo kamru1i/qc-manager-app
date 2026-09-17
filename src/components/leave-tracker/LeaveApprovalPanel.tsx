@@ -1,25 +1,44 @@
-"use client";
+'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Search,
   RefreshCw,
-  CheckCircle,
-} from "lucide-react";
-import { Profile, ChutiRecordWithProfile, BulkRepresentative, UserCreationRequest } from "@/types";
-import { formatDate, formatTimeToAMPM, getLeaveDisplayComment, getFullCommentHistory } from "@/utils/dashboardHelpers";
-import { resolveAssignedSupervisor } from "@/utils/profileHelpers";
-import { CustomSelect } from "@/components/common/CustomSelect";
-import { supabase } from "@/utils/supabase";
+  X,
+  Layers,
+  Calendar,
+  Users,
+  Award,
+} from 'lucide-react';
+import {
+  Profile,
+  ChutiRecordWithProfile,
+  BulkRepresentative,
+  UserCreationRequest,
+} from '@/types';
+import {
+  formatDate,
+  formatTimeToAMPM,
+  getLeaveDisplayComment,
+} from '@/utils/dashboardHelpers';
+import { resolveAssignedSupervisor } from '@/utils/profileHelpers';
+import { supabase } from '@/utils/supabase';
+import { useAppEventBus } from '@/contexts/AppEventBusContext';
+import { ActionableItemCard } from '@/components/common/action-panel/ActionableItemCard';
+import {
+  ActionableCategory,
+  ActionableItem,
+  ActionableDetailItem,
+} from '@/types/actionableWorkflows';
 
 interface LeaveApprovalPanelProps {
-  role: "admin" | "supervisor";
+  role: 'admin' | 'supervisor';
   profilesList: Profile[];
   reviewingIds: Set<string>;
   approvedIds: Set<string>;
   approvingIds: Set<string>;
 
-  // Leave Request Handlers (used for both admin and supervisor)
+  // Leave Request Handlers
   groupedChutiRequests: BulkRepresentative[];
   handleApproveChutiRequest: (id: string, approve: boolean, allBulkIds?: string[]) => void;
 
@@ -27,7 +46,7 @@ interface LeaveApprovalPanelProps {
   pendingReserveRequests?: ChutiRecordWithProfile[];
   handleApproveReserveAdjustment?: (
     record: ChutiRecordWithProfile,
-    approve: boolean,
+    approve: boolean
   ) => void;
   pendingProfileRequests?: Profile[];
   handleApproveProfileChangeRequest?: (id: string, approve: boolean) => void;
@@ -36,9 +55,12 @@ interface LeaveApprovalPanelProps {
   adminHolidayNotifications?: any[];
   pendingRemovalRequests?: any[];
   handleApproveLeaveRemoval?: (record: any, approve: boolean) => void;
+
+  // User Creation Workflow Props & Handlers
   pendingUserCreationRequests?: UserCreationRequest[];
   handleApproveUserCreationRequest?: (req: UserCreationRequest) => void;
   handleReviewUserCreationRequest?: (req: UserCreationRequest, notes: string) => void;
+  onOpenUserCreationReview?: (req: UserCreationRequest) => void;
 }
 
 export function LeaveApprovalPanel({
@@ -61,28 +83,47 @@ export function LeaveApprovalPanel({
   pendingUserCreationRequests = [],
   handleApproveUserCreationRequest = () => {},
   handleReviewUserCreationRequest = () => {},
+  onOpenUserCreationReview,
 }: LeaveApprovalPanelProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [notificationTypeFilter, setNotificationTypeFilter] = useState("all");
+  const { emit } = useAppEventBus();
+
+  const [selectedCategory, setSelectedCategory] = useState<ActionableCategory>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [localApprovingIds, setLocalApprovingIds] = useState<Set<string>>(new Set());
   const [reviewRequestPrompt, setReviewRequestPrompt] = useState<UserCreationRequest | null>(null);
-  const [reviewPromptNotes, setReviewPromptNotes] = useState("");
+  const [reviewPromptNotes, setReviewPromptNotes] = useState('');
+
+  // Reset filter when role changes
+  useEffect(() => {
+    setSelectedCategory('all');
+    setSearchQuery('');
+  }, [role]);
+
+  const handleDeepLinkProfile = useCallback((userId?: string) => {
+    if (!userId) return;
+    try {
+      localStorage.setItem('user_management_viewing_staff_id', userId);
+      localStorage.setItem('user_management_active_subtab', 'profile');
+      localStorage.setItem('settings_active_subtab', 'user_management');
+      emit('workspace-change', 'user_management');
+    } catch (e) {
+      console.error('Error navigating to user profile:', e);
+    }
+  }, [emit]);
 
   const handleApproveResponse = async (nId: string, itemType: string) => {
-    setLocalApprovingIds(prev => {
-      const next = new Set(prev);
-      next.add(nId);
-      return next;
-    });
+    setLocalApprovingIds((prev) => new Set(prev).add(nId));
     try {
       if (itemType === 'admin_holiday_response') {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           const { error } = await supabase
             .from('dismissed_notifications')
             .insert({
               user_id: user.id,
-              notification_id: nId
+              notification_id: nId,
             });
           if (error && error.code !== '23505') throw error;
         }
@@ -97,7 +138,7 @@ export function LeaveApprovalPanel({
     } catch (err) {
       console.error('Failed to approve response:', err);
     } finally {
-      setLocalApprovingIds(prev => {
+      setLocalApprovingIds((prev) => {
         const next = new Set(prev);
         next.delete(nId);
         return next;
@@ -105,1297 +146,900 @@ export function LeaveApprovalPanel({
     }
   };
 
-  const notificationTypeOptions = useMemo(() => {
-    if (role === "supervisor") {
-      return [
-        { value: "all", label: "All Categories" },
-        { value: "Early Leave", label: "Early Leave" },
-        { value: "Full Leave", label: "Full Leave" },
-        { value: "Late Join", label: "Late Join" },
-        { value: "Overtime", label: "Overtime" },
-        { value: "Short Leave", label: "Short Leave" },
+  // Convert raw data sources into standard ActionableItem objects
+  const actionableItems = useMemo<ActionableItem[]>(() => {
+    const list: ActionableItem[] = [];
+
+    // 1. Leave Requests (Admin & Supervisor)
+    groupedChutiRequests.forEach((r) => {
+      const user = profilesList.find((p) => p.id === r.user_id);
+      const isReviewing = reviewingIds.has(r.id);
+      const isApproving = approvingIds.has(r.id);
+      const isApproved = approvedIds.has(r.id);
+
+      let accentColor = 'bg-purple-500';
+      let typeBadgeColor = 'bg-purple-955/60 border-purple-900/60 text-purple-400';
+      if (r.leave_type === 'Overtime') {
+        accentColor = 'bg-emerald-500';
+        typeBadgeColor = 'bg-emerald-955/60 border-emerald-900/60 text-emerald-400';
+      } else if (['Short Leave', 'Early Leave', 'Late Join'].includes(r.leave_type)) {
+        accentColor = 'bg-blue-500';
+        typeBadgeColor = 'bg-blue-955/60 border-blue-900/60 text-blue-400';
+      }
+
+      const details: ActionableDetailItem[] = [
+        {
+          label: 'Date',
+          value: r.is_bulk && r.formatted_bulk_dates ? r.formatted_bulk_dates : formatDate(r.date),
+        },
+        {
+          label: 'Leave Type',
+          value: r.leave_type,
+          highlight: 'accent',
+        },
       ];
-    }
-    return [
-      { value: "all", label: "All Types" },
-      { value: "user_creation", label: "User Creation Requests" },
-      { value: "leave_request", label: "Leave Requests (All)" },
-      { value: "removal_request", label: "Leave Removal Requests" },
-      { value: "short_leave", label: "Short Leave Requests" },
-      { value: "reserve_adjustment", label: "Reserve & Adjustments" },
-      { value: "profile_change", label: "Profile Changes" },
-      { value: "password_reset", label: "Password Resets" },
-    ];
-  }, [role]);
 
-  // Reset filters when component is hidden/shown or reset
-  useEffect(() => {
-    setSearchQuery("");
-    setNotificationTypeFilter("all");
-  }, [role]);
+      if (r.leave_type !== 'Full Leave' && r.leave_hour) {
+        details.push({
+          label: 'Duration',
+          value: `${r.leave_hour.substring(0, 5)} hrs`,
+          highlight: 'mono',
+        });
+      }
 
-  const filteredChutiRequests = useMemo(() => {
-    return groupedChutiRequests.filter((r) => {
-      const user = profilesList.find((p) => p.id === r.user_id);
-      const name = (user?.full_name || "").toLowerCase();
-      const username = (user?.username || "").toLowerCase();
-      const query = searchQuery.toLowerCase().trim();
+      if (r.sign_in_time && r.sign_out_time) {
+        details.push({
+          label: 'Timing',
+          value: `${formatTimeToAMPM(r.sign_in_time)} - ${formatTimeToAMPM(r.sign_out_time)}`,
+          highlight: 'mono',
+        });
+      }
 
-      const matchesSearch =
-        !query || name.includes(query) || username.includes(query);
+      if (r.adjustment) {
+        details.push({
+          label: 'Adjustment',
+          value: r.adjustment,
+          highlight: 'warning',
+        });
+      }
 
-      let matchesType = true;
-      if (role === "supervisor") {
-        matchesType =
-          notificationTypeFilter === "all" ||
-          r.leave_type === notificationTypeFilter;
-      } else {
-        if (notificationTypeFilter === "short_leave") {
-          matchesType = ["Short Leave", "Early Leave", "Late Join"].includes(r.leave_type);
-        } else if (notificationTypeFilter === "full_leave") {
-          matchesType = r.leave_type === "Full Leave";
-        } else if (notificationTypeFilter === "overtime") {
-          matchesType = r.leave_type === "Overtime";
+      const commentText = getLeaveDisplayComment(r);
+      if (commentText) {
+        details.push({
+          label: 'Reason',
+          value: commentText,
+        });
+      }
+
+      if (r.reserve_holiday) {
+        details.push({
+          label: 'Reserve For',
+          value: r.reserve_holiday,
+          highlight: 'accent',
+        });
+      }
+
+      const approveLabel = isApproved
+        ? role === 'supervisor'
+          ? 'Verified'
+          : 'Approved'
+        : role === 'supervisor'
+        ? 'Verify'
+        : 'Approve';
+
+      list.push({
+        id: `leave_${r.id}`,
+        category: 'leave',
+        type: 'leave_request',
+        title: `${r.leave_type} Request`,
+        typeBadge: {
+          label: r.leave_type,
+          colorClass: typeBadgeColor,
+        },
+        accentColorClass: accentColor,
+        requester: {
+          id: user?.id,
+          name: user?.full_name || 'No Name',
+          username: user?.username,
+          role: user?.role,
+        },
+        timestamp: r.created_at || r.date,
+        status: isReviewing ? 'needs_review' : isApproved ? 'done' : 'pending',
+        details,
+        actions: [
+          {
+            label: isReviewing ? 'Sending revision...' : 'Needs Review',
+            actionKey: 'needs_review',
+            variant: 'warning',
+            icon: 'edit',
+            disabled: isReviewing || isApproved,
+            loading: isReviewing,
+            onClick: () => handleApproveChutiRequest(r.id, false, r.all_bulk_ids),
+          },
+          {
+            label: approveLabel,
+            actionKey: 'approve',
+            variant: 'primary',
+            icon: 'check',
+            disabled: isApproving || isApproved,
+            loading: isApproving,
+            onClick: () => handleApproveChutiRequest(r.id, true, r.all_bulk_ids),
+          },
+        ],
+        deepLink: user?.id
+          ? {
+              label: 'View Profile',
+              onClick: () => handleDeepLinkProfile(user.id),
+            }
+          : undefined,
+        rawItem: r,
+      });
+    });
+
+    // 2. Reserve & Adjustment Requests (Admin only)
+    if (role === 'admin') {
+      pendingReserveRequests.forEach((r) => {
+        const user = profilesList.find((p) => p.id === r.user_id);
+        const isAdjustmentRequest = r.reserve_adjustment_status === 'pending';
+        const isApproving = approvingIds.has(r.id);
+
+        const details: ActionableDetailItem[] = [
+          {
+            label: 'Date',
+            value: formatDate(r.date),
+          },
+          {
+            label: 'Leave Type',
+            value: r.leave_type,
+            highlight: 'accent',
+          },
+        ];
+
+        if (r.leave_type !== 'Full Leave' && r.leave_hour) {
+          details.push({
+            label: 'Duration',
+            value: `${r.leave_hour.substring(0, 5)} hrs`,
+            highlight: 'mono',
+          });
         }
-      }
 
-      return matchesSearch && matchesType;
-    });
-  }, [
-    groupedChutiRequests,
-    profilesList,
-    searchQuery,
-    notificationTypeFilter,
-    role,
-  ]);
+        if (r.adjustment) {
+          details.push({
+            label: 'Adjustment',
+            value: r.adjustment,
+            highlight: 'warning',
+          });
+        }
 
-  const filteredReserveRequests = useMemo(() => {
-    if (role === "supervisor") return [];
-    return pendingReserveRequests.filter((r) => {
-      const user = profilesList.find((p) => p.id === r.user_id);
-      const name = (user?.full_name || "").toLowerCase();
-      const username = (user?.username || "").toLowerCase();
-      const query = searchQuery.toLowerCase().trim();
+        if (r.comment) {
+          details.push({
+            label: 'Comment',
+            value: r.comment,
+          });
+        }
 
-      const matchesSearch =
-        !query || name.includes(query) || username.includes(query);
-
-      let matchesType = true;
-      if (notificationTypeFilter === "short_leave") {
-        matchesType = ["Short Leave", "Early Leave", "Late Join"].includes(r.leave_type);
-      } else if (notificationTypeFilter === "full_leave") {
-        matchesType = r.leave_type === "Full Leave";
-      } else if (notificationTypeFilter === "overtime") {
-        matchesType = r.leave_type === "Overtime";
-      }
-      return matchesSearch && matchesType;
-    });
-  }, [
-    pendingReserveRequests,
-    profilesList,
-    searchQuery,
-    notificationTypeFilter,
-    role,
-  ]);
-
-  const filteredProfileRequests = useMemo(() => {
-    if (role === "supervisor") return [];
-    return pendingProfileRequests.filter((p: Profile) => {
-      const name = (p.full_name || "").toLowerCase();
-      const username = (p.username || "").toLowerCase();
-      const query = searchQuery.toLowerCase().trim();
-
-      return !query || name.includes(query) || username.includes(query);
-    });
-  }, [pendingProfileRequests, searchQuery, role]);
-
-  const filteredPasswordResetRequests = useMemo(() => {
-    if (role === "supervisor") return [];
-    return pendingPasswordResetRequests.filter((p: Profile) => {
-      const name = (p.full_name || "").toLowerCase();
-      const username = (p.username || "").toLowerCase();
-      const query = searchQuery.toLowerCase().trim();
-
-      return !query || name.includes(query) || username.includes(query);
-    });
-  }, [pendingPasswordResetRequests, searchQuery, role]);
-
-  const filteredHolidayNotifications = useMemo(() => {
-    if (role === "supervisor") return [];
-    const notifications = adminHolidayNotifications || [];
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return notifications;
-    return notifications.filter(
-      (n) =>
-        n.title.toLowerCase().includes(query) ||
-        n.body.toLowerCase().includes(query),
-    );
-  }, [adminHolidayNotifications, searchQuery, role]);
-
-  const filteredRemovalRequests = useMemo(() => {
-    if (role === "supervisor") return [];
-    return (pendingRemovalRequests || []).filter((req) => {
-      const r = req.chuti || req;
-      const user = profilesList.find((p) => p.id === (req.requester_id || r.user_id));
-      const name = (user?.full_name || "").toLowerCase();
-      const username = (user?.username || "").toLowerCase();
-      const query = searchQuery.toLowerCase().trim();
-
-      const matchesSearch =
-        !query || name.includes(query) || username.includes(query);
-
-      const matchesType =
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "removal_request";
-
-      return matchesSearch && matchesType;
-    });
-  }, [pendingRemovalRequests, profilesList, searchQuery, notificationTypeFilter, role]);
-
-  const filteredUserCreationRequests = useMemo(() => {
-    if (role === "supervisor") return [];
-    return (pendingUserCreationRequests || []).filter((req) => {
-      const name = (req.data?.full_name || "").toLowerCase();
-      const codename = (req.data?.codename || "").toLowerCase();
-      const supervisor = (req.submitted_by_name || "").toLowerCase();
-      const supData = resolveAssignedSupervisor(req, profilesList);
-      const supCodename = (supData.codename || "").toLowerCase();
-      const supFullName = (supData.fullName || "").toLowerCase();
-      const query = searchQuery.toLowerCase().trim();
-
-      const matchesSearch =
-        !query ||
-        name.includes(query) ||
-        codename.includes(query) ||
-        supervisor.includes(query) ||
-        supCodename.includes(query) ||
-        supFullName.includes(query);
-
-      const matchesType =
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "user_creation";
-
-      return matchesSearch && matchesType;
-    });
-  }, [pendingUserCreationRequests, searchQuery, notificationTypeFilter, role, profilesList]);
-
-  // Combine and sort all notifications
-  const combinedNotifications = useMemo(() => {
-    const list: Array<{
-      id: string;
-      type:
-        | "leave_request"
-        | "removal_request"
-        | "holiday_response"
-        | "reserve_adjustment"
-        | "profile_change"
-        | "password_reset"
-        | "user_creation";
-      timestamp: string;
-      data: any;
-    }> = [];
-
-    // 1. Leave Requests
-    if (
-      role === "supervisor" ||
-      notificationTypeFilter === "all" ||
-      notificationTypeFilter === "leave_request" ||
-      notificationTypeFilter === "short_leave" ||
-      notificationTypeFilter === "full_leave" ||
-      notificationTypeFilter === "overtime"
-    ) {
-      filteredChutiRequests.forEach((r) => {
         list.push({
-          id: `leave_${r.id}`,
-          type: "leave_request",
-          timestamp: r.created_at || r.date || "",
-          data: r,
+          id: `reserve_${r.id}`,
+          category: 'leave',
+          type: 'reserve_adjustment',
+          title: isAdjustmentRequest ? 'Adjustment Request' : 'Overtime Reserve',
+          typeBadge: {
+            label: isAdjustmentRequest ? 'Adjustment Request' : 'Overtime Reserve',
+            colorClass: 'bg-emerald-955/60 border-emerald-900/60 text-emerald-400',
+          },
+          accentColorClass: 'bg-emerald-500',
+          requester: {
+            id: user?.id,
+            name: user?.full_name || 'No Name',
+            username: user?.username,
+          },
+          timestamp: r.created_at || r.date,
+          status: 'pending',
+          details,
+          actions: [
+            {
+              label: 'Reject',
+              actionKey: 'reject',
+              variant: 'danger',
+              icon: 'x',
+              disabled: isApproving,
+              onClick: () => handleApproveReserveAdjustment(r, false),
+            },
+            {
+              label: 'Approve',
+              actionKey: 'approve',
+              variant: 'primary',
+              icon: 'check',
+              disabled: isApproving,
+              loading: isApproving,
+              onClick: () => handleApproveReserveAdjustment(r, true),
+            },
+          ],
+          deepLink: user?.id
+            ? {
+                label: 'View Profile',
+                onClick: () => handleDeepLinkProfile(user.id),
+              }
+            : undefined,
+          rawItem: r,
+        });
+      });
+
+      // 3. Leave Removal Requests (Admin only)
+      pendingRemovalRequests.forEach((req) => {
+        const r = req.chuti || req;
+        const user = profilesList.find((p) => p.id === (req.requester_id || r.user_id));
+        const removalReason =
+          req.reason ||
+          (r.admin_edit_request as Record<string, unknown>)?.delete_reason;
+        const isApproving = approvingIds.has(r.id);
+
+        const details: ActionableDetailItem[] = [
+          {
+            label: 'Date',
+            value: formatDate(r.date),
+          },
+          {
+            label: 'Leave Type',
+            value: r.leave_type,
+            highlight: 'danger',
+          },
+        ];
+
+        if (r.leave_type !== 'Full Leave' && r.leave_hour) {
+          details.push({
+            label: 'Duration',
+            value: `${r.leave_hour.substring(0, 5)} hrs`,
+            highlight: 'mono',
+          });
+        }
+
+        if (r.comment) {
+          details.push({
+            label: 'Original Comment',
+            value: r.comment,
+          });
+        }
+
+        list.push({
+          id: `removal_${r.id}`,
+          category: 'leave',
+          type: 'leave_removal',
+          title: 'Leave Removal Request',
+          typeBadge: {
+            label: 'Removal Request',
+            colorClass: 'bg-rose-955/60 border-rose-900/60 text-rose-400',
+          },
+          accentColorClass: 'bg-rose-500',
+          requester: {
+            id: user?.id,
+            name: user?.full_name || 'No Name',
+            username: user?.username,
+          },
+          timestamp: r.created_at || r.date,
+          status: 'pending',
+          details,
+          notes: removalReason
+            ? {
+                title: 'Removal Reason',
+                content: String(removalReason),
+                type: 'danger',
+              }
+            : undefined,
+          actions: [
+            {
+              label: 'Reject Removal',
+              actionKey: 'reject_removal',
+              variant: 'secondary',
+              icon: 'x',
+              disabled: isApproving,
+              onClick: () => handleApproveLeaveRemoval(r, false),
+            },
+            {
+              label: 'Approve Removal',
+              actionKey: 'approve_removal',
+              variant: 'danger',
+              icon: 'check',
+              disabled: isApproving,
+              loading: isApproving,
+              onClick: () => handleApproveLeaveRemoval(r, true),
+            },
+          ],
+          deepLink: user?.id
+            ? {
+                label: 'View Profile',
+                onClick: () => handleDeepLinkProfile(user.id),
+              }
+            : undefined,
+          rawItem: req,
+        });
+      });
+
+      // 4. Profile Change Requests (Admin only)
+      pendingProfileRequests.forEach((p) => {
+        const details: ActionableDetailItem[] = [];
+
+        if (p.requested_full_name && p.requested_full_name !== p.full_name) {
+          details.push({
+            label: 'Full Name',
+            value: `${p.full_name || '—'} → ${p.requested_full_name}`,
+            highlight: 'accent',
+          });
+        }
+        if (p.requested_job_role && p.requested_job_role !== p.job_role) {
+          details.push({
+            label: 'Job Role',
+            value: `${p.job_role || '—'} → ${p.requested_job_role}`,
+            highlight: 'accent',
+          });
+        }
+        if (p.requested_working_hours != null && p.requested_working_hours !== p.working_hours) {
+          details.push({
+            label: 'Working Hours',
+            value: `${p.working_hours ?? '—'} hrs → ${p.requested_working_hours} hrs`,
+            highlight: 'mono',
+          });
+        }
+        if (p.requested_break_time != null && p.requested_break_time !== p.break_time) {
+          details.push({
+            label: 'Break Time',
+            value: `${p.break_time ?? '—'} mins → ${p.requested_break_time} mins`,
+            highlight: 'mono',
+          });
+        }
+        if (p.requested_default_sign_in && p.requested_default_sign_in !== p.default_sign_in) {
+          details.push({
+            label: 'Sign-In',
+            value: `${formatTimeToAMPM(p.default_sign_in) || '—'} → ${formatTimeToAMPM(p.requested_default_sign_in) || '—'}`,
+            highlight: 'mono',
+          });
+        }
+        if (p.requested_default_sign_out && p.requested_default_sign_out !== p.default_sign_out) {
+          details.push({
+            label: 'Sign-Out',
+            value: `${formatTimeToAMPM(p.default_sign_out) || '—'} → ${formatTimeToAMPM(p.requested_default_sign_out) || '—'}`,
+            highlight: 'mono',
+          });
+        }
+
+        list.push({
+          id: `profile_${p.id}`,
+          category: 'user_management',
+          type: 'profile_change',
+          title: 'Profile Change Request',
+          typeBadge: {
+            label: 'Profile Change',
+            colorClass: 'bg-amber-955/60 border-amber-900/60 text-amber-400',
+          },
+          accentColorClass: 'bg-amber-500',
+          requester: {
+            id: p.id,
+            name: p.full_name || 'Staff Member',
+            username: p.username,
+          },
+          timestamp: p.created_at,
+          status: 'pending',
+          details,
+          actions: [
+            {
+              label: 'Reject',
+              actionKey: 'reject',
+              variant: 'danger',
+              icon: 'x',
+              onClick: () => handleApproveProfileChangeRequest(p.id, false),
+            },
+            {
+              label: 'Approve',
+              actionKey: 'approve',
+              variant: 'primary',
+              icon: 'check',
+              onClick: () => handleApproveProfileChangeRequest(p.id, true),
+            },
+          ],
+          deepLink: {
+            label: 'View Profile',
+            onClick: () => handleDeepLinkProfile(p.id),
+          },
+          rawItem: p,
+        });
+      });
+
+      // 5. Password Reset Requests (Admin only)
+      pendingPasswordResetRequests.forEach((p) => {
+        const details: ActionableDetailItem[] = [
+          {
+            label: 'Username',
+            value: `@${p.username}`,
+            highlight: 'mono',
+          },
+          {
+            label: 'Request',
+            value: 'Reset password to default: 1234',
+            highlight: 'accent',
+          },
+        ];
+
+        list.push({
+          id: `pwd_${p.id}`,
+          category: 'user_management',
+          type: 'password_reset',
+          title: 'Password Reset Request',
+          typeBadge: {
+            label: 'Password Reset',
+            colorClass: 'bg-orange-955/60 border-orange-900/60 text-orange-400',
+          },
+          accentColorClass: 'bg-orange-500',
+          requester: {
+            id: p.id,
+            name: p.full_name || 'Staff Member',
+            username: p.username,
+          },
+          timestamp: p.created_at,
+          status: 'pending',
+          details,
+          actions: [
+            {
+              label: 'Reject',
+              actionKey: 'reject',
+              variant: 'danger',
+              icon: 'x',
+              onClick: () => handleApprovePasswordResetRequest(p.id, false),
+            },
+            {
+              label: 'Approve',
+              actionKey: 'approve',
+              variant: 'primary',
+              icon: 'check',
+              onClick: () => handleApprovePasswordResetRequest(p.id, true),
+            },
+          ],
+          deepLink: {
+            label: 'View Profile',
+            onClick: () => handleDeepLinkProfile(p.id),
+          },
+          rawItem: p,
+        });
+      });
+
+      // 6. Holiday & Settlement Responses (Admin only)
+      adminHolidayNotifications.forEach((n) => {
+        const isApproving = localApprovingIds.has(n.id);
+        const details: ActionableDetailItem[] = [
+          {
+            label: 'Notification',
+            value: n.body || n.text || n.title,
+          },
+        ];
+
+        list.push({
+          id: `response_${n.id}`,
+          category: 'other',
+          type:
+            n.type === 'admin_settlement_response'
+              ? 'settlement_response'
+              : 'holiday_response',
+          title: n.title || 'Response Notification',
+          typeBadge: {
+            label:
+              n.type === 'admin_settlement_response'
+                ? 'Settlement Choice'
+                : 'Holiday Response',
+            colorClass: 'bg-teal-955/60 border-teal-900/60 text-teal-400',
+          },
+          accentColorClass: 'bg-teal-500',
+          requester: {
+            name: 'System / User Notification',
+          },
+          timestamp: n.timestamp,
+          status: 'pending',
+          details,
+          actions: [
+            {
+              label: isApproving ? 'Approving...' : 'Approve',
+              actionKey: 'approve',
+              variant: 'secondary',
+              icon: 'check',
+              disabled: isApproving,
+              loading: isApproving,
+              onClick: () => handleApproveResponse(n.id, n.type),
+            },
+          ],
+          rawItem: n,
         });
       });
     }
 
-    if (role === "admin") {
-      // Removal Requests
-      if (
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "removal_request"
-      ) {
-        filteredRemovalRequests.forEach((req) => {
-          list.push({
-            id: `removal_${req.id}`,
-            type: "removal_request",
-            timestamp: req.created_at || "",
-            data: req,
-          });
-        });
-      }
-      // 2. Govt Holiday History
-      if (
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "holiday_response"
-      ) {
-        filteredHolidayNotifications.forEach((n) => {
-          list.push({
-            id: `holiday_${n.id}`,
-            type: "holiday_response",
-            timestamp: n.timestamp || "",
-            data: n,
-          });
+    // 7. User Creation Requests (Admin approval & Supervisor revision)
+    pendingUserCreationRequests.forEach((req) => {
+      // Admins see requests awaiting approval; supervisors see requests needing revision
+      if (role === 'admin' && req.status !== 'pending_admin_approval') return;
+      if (role === 'supervisor' && req.status !== 'needs_review') return;
+
+      const supData = resolveAssignedSupervisor(req, profilesList);
+      const isApproving = localApprovingIds.has(req.id);
+
+      const details: ActionableDetailItem[] = [
+        {
+          label: 'Requested Name',
+          value: req.data?.full_name || '—',
+          highlight: 'accent',
+        },
+        {
+          label: 'Username / Codename',
+          value: `@${req.data?.codename || '—'}`,
+          highlight: 'mono',
+        },
+        {
+          label: 'Role',
+          value: req.data?.role || '—',
+        },
+        {
+          label: 'Department',
+          value: req.data?.department || req.data?.other_department || '—',
+        },
+      ];
+
+      if (req.data?.working_hours || req.data?.workingHours) {
+        details.push({
+          label: 'Working Hours',
+          value: `${req.data.working_hours || req.data.workingHours} hrs`,
+          highlight: 'mono',
         });
       }
 
-      // 3. Reserve, Overtime & Adjustment Requests
-      if (
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "reserve_adjustment" ||
-        notificationTypeFilter === "short_leave" ||
-        notificationTypeFilter === "full_leave" ||
-        notificationTypeFilter === "overtime"
-      ) {
-        filteredReserveRequests.forEach((r) => {
-          list.push({
-            id: `reserve_${r.id}`,
-            type: "reserve_adjustment",
-            timestamp: r.created_at || r.date || "",
-            data: r,
-          });
+      if (req.data?.default_sign_in || req.data?.signInTime) {
+        const inTime = formatTimeToAMPM(req.data.default_sign_in || req.data.signInTime);
+        const outTime = formatTimeToAMPM(req.data.default_sign_out || req.data.signOutTime);
+        details.push({
+          label: 'Timing',
+          value: `${inTime || '—'} - ${outTime || '—'}`,
+          highlight: 'mono',
         });
       }
 
-      // 4. Profile Change Requests
-      if (
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "profile_change"
-      ) {
-        filteredProfileRequests.forEach((p) => {
-          list.push({
-            id: `profile_${p.id}`,
-            type: "profile_change",
-            timestamp: (p as any).created_at || "",
-            data: p,
-          });
+      if (supData.fullName) {
+        details.push({
+          label: 'Assigned Supervisor',
+          value: `${supData.fullName} (@${supData.codename})`,
+        });
+      } else if (req.submitted_by_name) {
+        details.push({
+          label: 'Requested By',
+          value: req.submitted_by_name,
         });
       }
 
-      // 5. Password Reset Requests
-      if (
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "password_reset"
-      ) {
-        filteredPasswordResetRequests.forEach((p) => {
-          list.push({
-            id: `pwreset_${p.id}`,
-            type: "password_reset",
-            timestamp: (p as any).created_at || "",
-            data: p,
-          });
+      const actions: ActionableItem['actions'] = [];
+
+      if (role === 'supervisor') {
+        actions.push({
+          label: 'Review & Update',
+          actionKey: 'review_and_update',
+          variant: 'warning',
+          icon: 'edit',
+          onClick: () => {
+            if (onOpenUserCreationReview) {
+              onOpenUserCreationReview(req);
+            } else {
+              emit('workspace-change', 'user_management');
+              setTimeout(() => {
+                emit('open-user-creation-review', req);
+              }, 100);
+            }
+          },
+        });
+      } else {
+        actions.push({
+          label: 'Send for Review',
+          actionKey: 'needs_review',
+          variant: 'warning',
+          icon: 'edit',
+          disabled: isApproving,
+          onClick: () => {
+            setReviewRequestPrompt(req);
+            setReviewPromptNotes('');
+          },
+        });
+        actions.push({
+          label: isApproving ? 'Approving...' : 'Approve Account',
+          actionKey: 'approve_account',
+          variant: 'primary',
+          icon: 'check',
+          disabled: isApproving,
+          loading: isApproving,
+          onClick: () => handleApproveUserCreationRequest(req),
         });
       }
 
-      // 6. User Creation Requests
-      if (
-        notificationTypeFilter === "all" ||
-        notificationTypeFilter === "user_creation"
-      ) {
-        filteredUserCreationRequests.forEach((req) => {
-          list.push({
-            id: `user_creation_${req.id}`,
-            type: "user_creation",
-            timestamp: req.created_at || "",
-            data: req,
-          });
-        });
-      }
-    }
+      list.push({
+        id: `user_req_${req.id}`,
+        category: 'user_management',
+        type: 'user_creation',
+        title: 'User Account Request',
+        typeBadge: {
+          label: 'Account Request',
+          colorClass: 'bg-blue-955/60 border-blue-900/60 text-blue-400',
+        },
+        accentColorClass: 'bg-blue-500',
+        requester: {
+          name: req.submitted_by_name || 'Supervisor',
+          role: req.requester_role || 'Supervisor',
+        },
+        targetUser: {
+          name: req.data?.full_name || req.data?.codename || 'New User',
+          username: req.data?.codename,
+          role: req.data?.role,
+        },
+        timestamp: req.updated_at || req.created_at,
+        status: req.status === 'needs_review' ? 'needs_review' : 'pending',
+        details,
+        notes:
+          req.status === 'needs_review' && req.admin_review_notes
+            ? {
+                title: 'Admin Review Notes',
+                content: req.admin_review_notes,
+                type: 'warning',
+              }
+            : undefined,
+        actions,
+        rawItem: req,
+      });
+    });
 
-    // Sort descending (newest first)
+    // Sort by timestamp descending
     return list.sort((a, b) => {
-      const timeA = new Date(a.timestamp).getTime() || 0;
-      const timeB = new Date(b.timestamp).getTime() || 0;
-      return timeB - timeA;
+      const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return bTime - aTime;
     });
   }, [
-    filteredChutiRequests,
-    filteredHolidayNotifications,
-    filteredReserveRequests,
-    filteredProfileRequests,
-    filteredPasswordResetRequests,
-    filteredRemovalRequests,
-    filteredUserCreationRequests,
-    notificationTypeFilter,
+    groupedChutiRequests,
+    profilesList,
+    reviewingIds,
+    approvingIds,
+    approvedIds,
     role,
+    handleApproveChutiRequest,
+    pendingReserveRequests,
+    handleApproveReserveAdjustment,
+    pendingRemovalRequests,
+    handleApproveLeaveRemoval,
+    pendingProfileRequests,
+    handleApproveProfileChangeRequest,
+    pendingPasswordResetRequests,
+    handleApprovePasswordResetRequest,
+    adminHolidayNotifications,
+    localApprovingIds,
+    pendingUserCreationRequests,
+    handleApproveUserCreationRequest,
+    onOpenUserCreationReview,
+    emit,
+    handleDeepLinkProfile,
   ]);
 
-  const renderNotificationItem = (item: (typeof combinedNotifications)[0]) => {
-    switch (item.type) {
-      case "leave_request": {
-        const r = item.data;
-        const user = profilesList.find((p) => p.id === r.user_id);
-        const tagLabel =
-          role === "supervisor" ? "Verification Request" : "Leave Request";
-        return (
-          <div
-            key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
-            <div className="space-y-1 text-xs text-theme-text-secondary pl-2 font-sans">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-bold text-theme-text-primary text-sm">
-                  {user?.full_name || "No Name"}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">
-                  @{(user?.username || "").toUpperCase()}
-                </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-900/60 text-blue-400 font-bold tracking-wide uppercase">
-                  {tagLabel}
-                </span>
-                {item.timestamp && (
-                  <span className="text-[9px] text-theme-text-muted font-mono">
-                    {new Date(item.timestamp).toLocaleString("en-US", {
-                      hour12: true,
-                    })}
-                  </span>
-                )}
-              </div>
-              <p>
-                <span className="text-theme-text-muted font-medium">Date:</span>{" "}
-                <span className="font-semibold text-theme-text-primary">
-                  {r.is_bulk ? r.formatted_bulk_dates : formatDate(r.date)}
-                </span>
-              </p>
-              <p>
-                <span className="text-theme-text-muted font-medium">
-                  Leave Type:
-                </span>{" "}
-                <span className="font-bold text-blue-400">{r.leave_type}</span>
-              </p>
-              {r.leave_type !== "Full Leave" && (
-                <p>
-                  <span className="text-theme-text-muted font-medium">
-                    Time & Hours:
-                  </span>{" "}
-                  <span className="font-mono text-theme-text-secondary">
-                    {formatTimeToAMPM(r.sign_in_time)} -{" "}
-                    {formatTimeToAMPM(r.sign_out_time)} (
-                    {r.leave_hour ? r.leave_hour.substring(0, 5) : "-"} hrs)
-                  </span>
-                </p>
-              )}
-              <p>
-                <span className="text-theme-text-muted font-medium">
-                  Adjustment:
-                </span>{" "}
-                <span
-                  className={`font-semibold ${r.adjustment ? "text-blue-400 font-bold" : r.adjusted_hour ? "text-cyan-400 font-bold" : "text-theme-text-muted"}`}
-                >
-                  {r.adjustment
-                    ? "Yes"
-                    : r.adjusted_hour
-                      ? `Partial (${r.adjusted_hour.toString().split(".")[0].substring(0, 5)} hrs)`
-                      : "No"}
-                </span>
-              </p>
-              {r.leave_type === "Overtime" && (
-                <p>
-                  <span className="text-theme-text-muted font-medium">
-                    Short Leave Adj:
-                  </span>{" "}
-                  <span
-                    className={`font-semibold ${r.adjust_short_leave ? "text-blue-400 font-bold" : "text-theme-text-muted"}`}
-                  >
-                    {r.adjust_short_leave ? "Yes" : "No"}
-                  </span>
-                </p>
-              )}
-              <p>
-                <span className="text-theme-text-muted font-medium">
-                  Reason/Comment:
-                </span>{" "}
-                <span
-                  className="italic text-theme-text-secondary font-medium"
-                  title={getFullCommentHistory(r.comment, r)}
-                >
-                  {getLeaveDisplayComment(r) || "-"}
-                </span>
-              </p>
-            </div>
+  // Compute category counts
+  const categoryCounts = useMemo(() => {
+    let leave = 0;
+    let userManagement = 0;
+    let other = 0;
 
-            <div className="flex md:flex-col justify-end items-end gap-2 shrink-0 font-sans pl-2">
-              <button
-                onClick={() => handleApproveChutiRequest(r.id, false, r.all_bulk_ids)}
-                disabled={reviewingIds.has(r.id) || approvedIds.has(r.id)}
-                className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-              >
-                {reviewingIds.has(r.id) && (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                )}
-                {reviewingIds.has(r.id)
-                  ? "Sending revision..."
-                  : "Needs Review"}
-              </button>
-              <button
-                onClick={() => handleApproveChutiRequest(r.id, true, r.all_bulk_ids)}
-                disabled={approvingIds.has(r.id) || approvedIds.has(r.id)}
-                className="px-3 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
-              >
-                {approvingIds.has(r.id) && (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                )}
-                {approvedIds.has(r.id) && (
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                )}
-                {approvedIds.has(r.id)
-                  ? role === "supervisor"
-                    ? "Verified"
-                    : "Approved"
-                  : approvingIds.has(r.id)
-                    ? role === "supervisor"
-                      ? "Verifying..."
-                      : "Approving..."
-                    : role === "supervisor"
-                      ? "Verify"
-                      : "Approve"}
-              </button>
-            </div>
-          </div>
-        );
+    actionableItems.forEach((item) => {
+      if (item.category === 'leave') leave++;
+      else if (item.category === 'user_management') userManagement++;
+      else if (item.category === 'other') other++;
+    });
+
+    return {
+      all: actionableItems.length,
+      leave,
+      user_management: userManagement,
+      other,
+    };
+  }, [actionableItems]);
+
+  // Filter items by category and search query
+  const filteredItems = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+
+    return actionableItems.filter((item) => {
+      // 1. Category Filter
+      if (selectedCategory !== 'all' && item.category !== selectedCategory) {
+        return false;
       }
-      case "holiday_response": {
-        const n = item.data;
-        const isSettlement = n.type === 'admin_settlement_response';
-        const isApproving = localApprovingIds.has(n.id);
-        return (
-          <div
-            key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden"
-          >
-            <div className={`absolute top-0 left-0 w-1.5 h-full ${isSettlement ? 'bg-indigo-500' : 'bg-teal-500'}`} />
-            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-bold text-theme-text-primary text-[13px]">
-                  {n.title}
-                </span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wide uppercase ${
-                  isSettlement 
-                    ? 'bg-indigo-950/60 border-indigo-900/60 text-indigo-400' 
-                    : 'bg-teal-950/60 border-teal-900/60 text-teal-400'
-                }`}>
-                  {isSettlement ? 'Settlement Response' : 'Holiday History'}
-                </span>
-                {n.timestamp && (
-                  <span className="text-[9px] text-theme-text-muted font-mono">
-                    {new Date(n.timestamp).toLocaleString("en-US", {
-                      hour12: true,
-                    })}
-                  </span>
-                )}
-              </div>
-              <p className="text-theme-text-secondary font-normal leading-relaxed">
-                {n.body}
-              </p>
-            </div>
-            <div className="flex items-center shrink-0 pl-2 self-end sm:self-center">
-              <button
-                disabled={isApproving}
-                onClick={() => handleApproveResponse(n.id, n.type)}
-                className="px-3.5 py-1.5 bg-theme-border-muted border border-theme-border-active hover:bg-theme-border-active text-theme-text-secondary hover:text-theme-text-primary rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 shrink-0 font-sans"
-              >
-                {isApproving ? 'Approving...' : 'Approve'}
-              </button>
-            </div>
-          </div>
-        );
+
+      // 2. Search Query Filter
+      if (!q) return true;
+
+      const requesterName = item.requester.name.toLowerCase();
+      const requesterUsername = (item.requester.username || '').toLowerCase();
+      const targetName = (item.targetUser?.name || '').toLowerCase();
+      const targetUsername = (item.targetUser?.username || '').toLowerCase();
+      const title = item.title.toLowerCase();
+      const badge = item.typeBadge.label.toLowerCase();
+      const notes = (item.notes?.content || '').toLowerCase();
+
+      if (
+        requesterName.includes(q) ||
+        requesterUsername.includes(q) ||
+        targetName.includes(q) ||
+        targetUsername.includes(q) ||
+        title.includes(q) ||
+        badge.includes(q) ||
+        notes.includes(q)
+      ) {
+        return true;
       }
-      case "removal_request": {
-        const req = item.data;
-        const r = req.chuti || req;
-        const user = profilesList.find((p) => p.id === (req.requester_id || r.user_id));
-        const removalReason = req.reason || (r.admin_edit_request as Record<string, unknown>)?.delete_reason;
-        return (
-          <div
-            key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500" />
-            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-bold text-theme-text-primary text-sm">
-                  {user?.full_name || "No Name"}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono font-bold">
-                  @{(user?.username || "").toUpperCase()}
-                </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-950/60 border border-rose-900/60 text-rose-400 font-bold tracking-wide uppercase">
-                  Removal Request
-                </span>
-                {item.timestamp && (
-                  <span className="text-[9px] text-theme-text-muted font-mono">
-                    {new Date(item.timestamp).toLocaleString("en-US", {
-                      hour12: true,
-                    })}
-                  </span>
-                )}
-              </div>
-              <p>
-                <span className="text-theme-text-muted font-medium">Date:</span>{" "}
-                <span className="font-semibold text-theme-text-primary">
-                  {formatDate(r.date)}
-                </span>
-              </p>
-              <p>
-                <span className="text-theme-text-muted font-medium">Leave Type:</span>{" "}
-                <span className="font-bold text-rose-400">{r.leave_type}</span>
-              </p>
-              {r.leave_type !== "Full Leave" && r.leave_hour && (
-                <p>
-                  <span className="text-theme-text-muted font-medium">Duration:</span>{" "}
-                  <span className="font-mono text-theme-text-secondary">
-                    {r.leave_hour ? r.leave_hour.substring(0, 5) : "-"} hrs
-                  </span>
-                </p>
-              )}
-              {r.comment && (
-                <p>
-                  <span className="text-theme-text-muted font-medium">Original Comment:</span>{" "}
-                  <span className="italic text-theme-text-secondary">{r.comment}</span>
-                </p>
-              )}
-              {removalReason && (
-                <div className="mt-1.5 p-2 bg-rose-955/40 border border-rose-900/40 rounded-lg text-rose-300 text-xs flex flex-col gap-0.5">
-                  <span className="font-bold text-rose-200">Removal Reason:</span>
-                  <span className="text-theme-text-primary">{removalReason}</span>
-                </div>
-              )}
-            </div>
 
-            <div className="flex md:flex-col justify-end items-end gap-2 shrink-0 font-sans pl-2">
-              <button
-                onClick={() => handleApproveLeaveRemoval?.(r, false)}
-                disabled={approvingIds.has(r.id)}
-                className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50"
-              >
-                Reject Removal
-              </button>
-              <button
-                onClick={() => handleApproveLeaveRemoval?.(r, true)}
-                disabled={approvingIds.has(r.id)}
-                className="px-3 py-1.5 border border-rose-500/30 hover:border-rose-500 bg-rose-900/20 hover:bg-rose-900/50 text-rose-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
-              >
-                {approvingIds.has(r.id) ? (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <CheckCircle className="h-3.5 w-3.5 text-rose-400" />
-                )}
-                Approve Removal
-              </button>
-            </div>
-          </div>
-        );
-      }
-      case "reserve_adjustment": {
-        const r = item.data;
-        const user = profilesList.find((p) => p.id === r.user_id);
-        const isAdjustmentRequest = r.reserve_adjustment_status === "pending";
-        return (
-          <div
-            key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
-            <div className="space-y-1 text-xs text-theme-text-secondary font-medium pl-2 font-sans">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-bold text-theme-text-primary text-sm">
-                  {user?.full_name || "No Name"}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono font-bold">
-                  @{(user?.username || "").toUpperCase()}
-                </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-900/60 text-emerald-400 font-bold tracking-wide uppercase">
-                  Reserve & Adjustment
-                </span>
-                {item.timestamp && (
-                  <span className="text-[9px] text-theme-text-muted font-mono">
-                    {new Date(item.timestamp).toLocaleString("en-US", {
-                      hour12: true,
-                    })}
-                  </span>
-                )}
-              </div>
-              <p>
-                <span className="text-theme-text-muted font-medium">Date:</span>{" "}
-                <span className="font-semibold text-theme-text-primary">
-                  {formatDate(r.date)}
-                </span>
-              </p>
-              <p>
-                <span className="text-theme-text-muted font-medium">
-                  Leave Type:
-                </span>{" "}
-                <span className="font-bold text-emerald-500">
-                  {r.leave_type}
-                </span>
-              </p>
-              {r.leave_type !== "Full Leave" && (
-                <p>
-                  <span className="text-theme-text-muted font-medium">
-                    Time & Hours:
-                  </span>{" "}
-                  <span className="font-mono text-theme-text-secondary">
-                    {formatTimeToAMPM(r.sign_in_time)} -{" "}
-                    {formatTimeToAMPM(r.sign_out_time)} (
-                    {r.leave_hour ? r.leave_hour.substring(0, 5) : "-"} hrs)
-                  </span>
-                </p>
-              )}
-              <p>
-                <span className="text-theme-text-muted font-medium">
-                  Adjustment:
-                </span>{" "}
-                <span
-                  className={`font-semibold ${r.adjustment || isAdjustmentRequest ? "text-blue-400 font-bold" : "text-theme-text-muted"}`}
-                >
-                  {r.adjustment || isAdjustmentRequest ? "Yes" : "No"}
-                </span>
-              </p>
-              {r.leave_type === "Overtime" && (
-                <p>
-                  <span className="text-theme-text-muted font-medium">
-                    Short Leave Adj:
-                  </span>{" "}
-                  <span
-                    className={`font-semibold ${r.adjust_short_leave ? "text-blue-400 font-bold" : "text-theme-text-muted"}`}
-                  >
-                    {r.adjust_short_leave ? "Yes" : "No"}
-                  </span>
-                </p>
-              )}
-              {isAdjustmentRequest && r.admin_edit_request && (
-                <div className="mt-1.5 p-2 bg-blue-955/40 border border-blue-900/40 rounded-lg text-blue-300 text-xs flex flex-col gap-0.5 font-sans">
-                  <div>
-                    <span className="font-bold text-theme-text-primary">
-                      Requested Adjustment:
-                    </span>{" "}
-                    {r.admin_edit_request.adjusted_hour ? (
-                      <span className="font-semibold text-cyan-400">
-                        Partial Adjustment (
-                        {r.admin_edit_request.adjusted_hour.substring(0, 5)}{" "}
-                        hrs)
-                      </span>
-                    ) : r.admin_edit_request.adjustment === false ? (
-                      <span className="text-rose-400 font-bold">
-                        Cancel Adjustment
-                      </span>
-                    ) : (
-                      <span className="font-semibold text-blue-400">
-                        Full Adjustment
-                      </span>
-                    )}
-                    {r.admin_edit_request.adjust_short_leave && (
-                      <span className="text-emerald-400">
-                        {" "}
-                        (From Short Leave)
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-              <p>
-                <span className="text-theme-text-muted font-medium">
-                  Reason/Comment:
-                </span>{" "}
-                <span
-                  className="italic text-theme-text-secondary font-medium"
-                  title={getFullCommentHistory(r.comment, r)}
-                >
-                  {getLeaveDisplayComment(r) || "-"}
-                </span>
-              </p>
-            </div>
-
-            <div className="flex md:flex-col justify-end items-end gap-2 shrink-0 font-sans pl-2">
-              {isAdjustmentRequest ? (
-                <>
-                  <button
-                    onClick={() => handleApproveReserveAdjustment(r, false)}
-                    disabled={approvingIds.has(r.id) || approvedIds.has(r.id)}
-                    className="px-3 py-1.5 border border-red-500/30 hover:border-red-500 bg-red-955/20 hover:bg-red-955/50 text-red-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => handleApproveReserveAdjustment(r, true)}
-                    disabled={approvingIds.has(r.id) || approvedIds.has(r.id)}
-                    className="px-3 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-450 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
-                  >
-                    {approvingIds.has(r.id) && (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    )}
-                    {approvedIds.has(r.id) && (
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                    )}
-                    {approvedIds.has(r.id)
-                      ? "Approved"
-                      : approvingIds.has(r.id)
-                        ? "Approving..."
-                        : "Approve"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleApproveChutiRequest(r.id, false, r.all_bulk_ids)}
-                    disabled={reviewingIds.has(r.id) || approvedIds.has(r.id)}
-                    className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                  >
-                    {reviewingIds.has(r.id) && (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    )}
-                    {reviewingIds.has(r.id)
-                      ? "Sending revision..."
-                      : "Needs Review"}
-                  </button>
-                  <button
-                    onClick={() => handleApproveChutiRequest(r.id, true, r.all_bulk_ids)}
-                    disabled={approvingIds.has(r.id) || approvedIds.has(r.id)}
-                    className="px-3 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
-                  >
-                    {approvingIds.has(r.id) && (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    )}
-                    {approvedIds.has(r.id) && (
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                    )}
-                    {approvedIds.has(r.id)
-                      ? "Approved"
-                      : approvingIds.has(r.id)
-                        ? "Approving..."
-                        : "Approve"}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      }
-      case "profile_change": {
-        const p = item.data;
-        return (
-          <div
-            key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-cyan-500" />
-            <div className="flex justify-between items-start pl-2 font-sans">
-              <div>
-                <h4 className="text-xs font-bold text-theme-text-primary flex flex-wrap items-center gap-2">
-                  <span>{p.full_name || "No Name"}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">
-                    @{(p.username || "").toUpperCase()}
-                  </span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-900/60 text-cyan-400 font-bold tracking-wide uppercase">
-                    Profile Edit
-                  </span>
-                  {item.timestamp && (
-                    <span className="text-[9px] text-theme-text-muted font-mono">
-                      {new Date(item.timestamp).toLocaleString("en-US", {
-                        hour12: true,
-                      })}
-                    </span>
-                  )}
-                </h4>
-                <p className="text-[10px] text-theme-text-muted mt-0.5 font-medium font-sans">
-                  Role: {p.job_role || "-"}
-                </p>
-              </div>
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-purple-955 border border-purple-800 text-purple-400">
-                Pending
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] pl-2 font-sans">
-              <div className="bg-theme-card-bg/40 p-2.5 rounded-lg border border-theme-border-muted">
-                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1">
-                  Current Information
-                </span>
-                <div className="space-y-1 text-theme-text-secondary font-medium">
-                  <p>
-                    <span className="text-theme-text-muted font-sans">
-                      Name:
-                    </span>{" "}
-                    {p.full_name || "-"}
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">
-                      Job Role:
-                    </span>{" "}
-                    {p.job_role || "-"}
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">
-                      Working Hours:
-                    </span>{" "}
-                    {p.working_hours} hrs
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">
-                      Break Time:
-                    </span>{" "}
-                    {p.break_time} mins
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">
-                      Sign-In:
-                    </span>{" "}
-                    {formatTimeToAMPM(p.default_sign_in || null) || "-"}
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">
-                      Sign-Out:
-                    </span>{" "}
-                    {formatTimeToAMPM(p.default_sign_out || null) || "-"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-blue-955/20 p-2.5 rounded-lg border border-blue-900/30">
-                <span className="block font-bold text-blue-400 mb-1.5 border-b border-blue-900/30 pb-1">
-                  Requested New Information
-                </span>
-                <div className="space-y-1 text-theme-text-primary font-medium">
-                  <p
-                    className={
-                      p.requested_full_name &&
-                      p.requested_full_name !== p.full_name
-                        ? "text-blue-300 font-bold"
-                        : ""
-                    }
-                  >
-                    <span className="text-theme-text-muted font-sans">
-                      Name:
-                    </span>{" "}
-                    {p.requested_full_name || p.full_name || "-"}
-                  </p>
-                  <p
-                    className={
-                      p.requested_job_role &&
-                      p.requested_job_role !== p.job_role
-                        ? "text-blue-300 font-bold"
-                        : ""
-                    }
-                  >
-                    <span className="text-theme-text-muted font-sans">
-                      Job Role:
-                    </span>{" "}
-                    {p.requested_job_role || p.job_role || "-"}
-                  </p>
-                  <p
-                    className={
-                      p.requested_working_hours &&
-                      p.requested_working_hours !== p.working_hours
-                        ? "text-blue-300 font-bold"
-                        : ""
-                    }
-                  >
-                    <span className="text-theme-text-muted font-sans">
-                      Working Hours:
-                    </span>{" "}
-                    {p.requested_working_hours || p.working_hours} hrs
-                  </p>
-                  <p
-                    className={
-                      p.requested_break_time &&
-                      p.requested_break_time !== p.break_time
-                        ? "text-blue-300 font-bold"
-                        : ""
-                    }
-                  >
-                    <span className="text-theme-text-muted font-sans">
-                      Break Time:
-                    </span>{" "}
-                    {p.requested_break_time || p.break_time} mins
-                  </p>
-                  <p
-                    className={
-                      p.requested_default_sign_in &&
-                      p.requested_default_sign_in !== p.default_sign_in
-                        ? "text-blue-300 font-bold"
-                        : ""
-                    }
-                  >
-                    <span className="text-theme-text-muted font-sans">
-                      Sign-In:
-                    </span>{" "}
-                    {formatTimeToAMPM(
-                      p.requested_default_sign_in || p.default_sign_in || null,
-                    ) || "-"}
-                  </p>
-                  <p
-                    className={
-                      p.requested_default_sign_out &&
-                      p.requested_default_sign_out !== p.default_sign_out
-                        ? "text-blue-300 font-bold"
-                        : ""
-                    }
-                  >
-                    <span className="text-theme-text-muted font-sans">
-                      Sign-Out:
-                    </span>{" "}
-                    {formatTimeToAMPM(
-                      p.requested_default_sign_out ||
-                        p.default_sign_out ||
-                        null,
-                    ) || "-"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-1 font-sans pl-2">
-              <button
-                onClick={() => handleApproveProfileChangeRequest(p.id, false)}
-                disabled={approvingIds.has(p.id) || approvedIds.has(p.id)}
-                className="px-3 py-1.5 border border-red-500/30 hover:border-red-500 bg-red-955/20 hover:bg-red-955/50 text-red-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Reject
-              </button>
-              <button
-                onClick={() => handleApproveProfileChangeRequest(p.id, true)}
-                disabled={approvingIds.has(p.id) || approvedIds.has(p.id)}
-                className="px-3 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-450 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
-              >
-                {approvingIds.has(p.id) && (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                )}
-                {approvedIds.has(p.id) && (
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                )}
-                {approvedIds.has(p.id)
-                  ? "Approved"
-                  : approvingIds.has(p.id)
-                    ? "Approving..."
-                    : "Approve"}
-              </button>
-            </div>
-          </div>
-        );
-      }
-      case "password_reset": {
-        const p = item.data;
-        return (
-          <div
-            key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500" />
-            <div className="space-y-1 pl-2 font-sans">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-theme-text-primary text-sm">
-                  {p.full_name || "No Name"}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">
-                  @{(p.username || "").toUpperCase()}
-                </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-955/60 border border-red-900/60 text-red-400 font-bold tracking-wide uppercase">
-                  Password Reset
-                </span>
-                {item.timestamp && (
-                  <span className="text-[9px] text-theme-text-muted font-mono">
-                    {new Date(item.timestamp).toLocaleString("en-US", {
-                      hour12: true,
-                    })}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-theme-text-muted mt-1 font-sans">
-                Requesting password reset to default:{" "}
-                <span className="font-mono text-blue-400 font-bold bg-theme-card-bg px-1 py-0.2 rounded border border-theme-border-input">
-                  1234
-                </span>
-              </p>
-            </div>
-
-            <div className="flex gap-2 font-sans shrink-0 pl-2">
-              <button
-                onClick={() => handleApprovePasswordResetRequest(p.id, false)}
-                disabled={approvingIds.has(p.id) || approvedIds.has(p.id)}
-                className="px-3 py-1.5 border border-red-500/30 hover:border-red-500 bg-red-955/20 hover:bg-red-955/50 text-red-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Deny
-              </button>
-              <button
-                onClick={() => handleApprovePasswordResetRequest(p.id, true)}
-                disabled={approvingIds.has(p.id) || approvedIds.has(p.id)}
-                className="px-3 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-455 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-80 flex items-center gap-1.5"
-              >
-                {approvingIds.has(p.id) && (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                )}
-                {approvedIds.has(p.id) && (
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                )}
-                {approvedIds.has(p.id)
-                  ? "Allowed"
-                  : approvingIds.has(p.id)
-                    ? "Allowing..."
-                    : "Allow"}
-              </button>
-            </div>
-          </div>
-        );
-      }
-      case "user_creation": {
-        const req = item.data as UserCreationRequest;
-        const d = req.data;
-        const isApproving = approvingIds.has(req.id) || localApprovingIds.has(req.id);
-        const isReviewing = reviewingIds.has(req.id);
-        const isDone = approvedIds.has(req.id);
-        const assignedSupervisor = resolveAssignedSupervisor(req, profilesList);
-
-        return (
-          <div
-            key={item.id}
-            className="bg-theme-page-bg/60 border border-theme-border-muted rounded-xl p-4 flex flex-col gap-4 relative overflow-hidden"
-          >
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
-            <div className="flex justify-between items-start pl-2 font-sans">
-              <div>
-                <h4 className="text-xs font-bold text-theme-text-primary flex flex-wrap items-center gap-2">
-                  <span>{d?.full_name || "Unnamed"}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-theme-card-bg border border-theme-border-input rounded text-theme-text-muted font-mono">
-                    @{d?.codename || "—"}
-                  </span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-900/60 text-blue-400 font-bold tracking-wide uppercase">
-                    New Account Request
-                  </span>
-                  {item.timestamp && (
-                    <span className="text-[9px] text-theme-text-muted font-mono">
-                      {new Date(item.timestamp).toLocaleString("en-US", {
-                        hour12: true,
-                      })}
-                    </span>
-                  )}
-                </h4>
-                <p className="text-[11px] text-theme-text-secondary mt-1 font-medium font-sans">
-                  Submitted by Supervisor:{" "}
-                  <strong className="text-theme-text-primary">
-                    {req.submitted_by_name || "Supervisor"}
-                  </strong>
-                </p>
-              </div>
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
-                Pending Approval
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] pl-2 font-sans">
-              <div className="bg-theme-card-bg/40 p-2.5 rounded-lg border border-theme-border-muted">
-                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1">
-                  Account & Workspace
-                </span>
-                <div className="space-y-1 text-theme-text-secondary font-medium">
-                  <p>
-                    <span className="text-theme-text-muted font-sans">Role:</span>{" "}
-                    User
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">Manager / Supervisor:</span>{" "}
-                    {assignedSupervisor.codename ? (
-                      <span
-                        className="text-blue-400 font-semibold font-mono"
-                        title={
-                          assignedSupervisor.fullName
-                            ? `${assignedSupervisor.fullName} (${assignedSupervisor.codename})`
-                            : assignedSupervisor.codename
-                        }
-                      >
-                        {assignedSupervisor.codename}
-                      </span>
-                    ) : (
-                      <span className="text-theme-text-muted">None</span>
-                    )}
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">Leave Tracker:</span>{" "}
-                    <span className="text-emerald-400 font-semibold">Enabled</span>
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">Quotes Tracker:</span>{" "}
-                    {d?.has_quotes_access ? (
-                      <span className="text-emerald-400 font-semibold">Enabled</span>
-                    ) : (
-                      <span className="text-theme-text-muted">Disabled</span>
-                    )}
-                  </p>
-                  {d?.has_quotes_access && (
-                    <p>
-                      <span className="text-theme-text-muted font-sans">Categories:</span>{" "}
-                      <span className="text-theme-text-primary text-[10px]">
-                        {d?.allowed_types && d.allowed_types.length > 0
-                          ? d.allowed_types.join(", ")
-                          : "None"}
-                      </span>
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-theme-card-bg/40 p-2.5 rounded-lg border border-theme-border-muted">
-                <span className="block font-bold text-theme-text-muted mb-1.5 border-b border-theme-border-input pb-1">
-                  Work & Leave Settings
-                </span>
-                <div className="space-y-1 text-theme-text-secondary font-medium">
-                  <p>
-                    <span className="text-theme-text-muted font-sans">Hours & Break:</span>{" "}
-                    {d?.working_hours ?? 9.5} hrs / {d?.break_time ?? 0} mins
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">Default Shift:</span>{" "}
-                    {formatTimeToAMPM(d?.default_sign_in || null) || "09:00 AM"} –{" "}
-                    {formatTimeToAMPM(d?.default_sign_out || null) || "06:30 PM"}
-                  </p>
-                  <p>
-                    <span className="text-theme-text-muted font-sans">Eligible Leaves:</span>{" "}
-                    {[
-                      d?.eligible_office_leave !== false ? "Office" : null,
-                      d?.eligible_govt_holiday !== false ? "Govt Holiday" : null,
-                      d?.allow_overtime ? "Overtime" : null,
-                      d?.allow_reserve ? "Reserve" : null,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "None"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-theme-border-muted pl-2">
-              {isDone ? (
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 py-1.5 px-3">
-                  <CheckCircle className="h-4 w-4" /> Account Approved & Provisioned
-                </span>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReviewRequestPrompt(req);
-                      setReviewPromptNotes("");
-                    }}
-                    disabled={isReviewing || isApproving}
-                    className="px-3 py-1.5 border border-purple-500/30 hover:border-purple-500 bg-purple-955/20 hover:bg-purple-955/50 text-purple-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 flex items-center gap-1.5 font-sans"
-                  >
-                    {isReviewing && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                    Send for Review
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleApproveUserCreationRequest(req)}
-                    disabled={isReviewing || isApproving}
-                    className="px-3.5 py-1.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-900/20 hover:bg-emerald-900/50 text-emerald-400 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-50 flex items-center gap-1.5 font-sans"
-                  >
-                    {isApproving ? (
-                      <>
-                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        Approving...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                        Approve Account
-                      </>
-                    )}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      }
-      default:
-        return null;
-    }
-  };
-
-  const totalLabel =
-    role === "supervisor" ? "Pending Verifications" : "Notifications";
+      // Check details
+      return item.details.some(
+        (d) =>
+          d.label.toLowerCase().includes(q) ||
+          (typeof d.value === 'string' && d.value.toLowerCase().includes(q))
+      );
+    });
+  }, [actionableItems, selectedCategory, searchQuery]);
 
   return (
-    <div className="space-y-6 pr-1 font-sans">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-theme-page-bg/20 border border-theme-border-input/60 relative">
-        <div className="relative">
-          <label className="block text-xs text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">
-            SEARCH STAFF (NAME OR CODENAME)
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-text-muted">
-              <Search className="h-4 w-4" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search by Name or codename (@username)."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-10 py-2 bg-theme-page-bg border border-theme-border-input rounded-lg text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all font-sans"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-theme-text-muted hover:text-theme-text-secondary transition-colors cursor-pointer text-sm font-semibold"
-                title="Clear search"
+    <div className="space-y-4">
+      {/* Category Tabs & Search Bar */}
+      <div className="space-y-3 bg-theme-page-bg/40 border border-theme-border-muted rounded-xl p-3">
+        {/* Category Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 shrink-0 ${
+              selectedCategory === 'all'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input/50'
+            }`}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            <span>All</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                selectedCategory === 'all'
+                  ? 'bg-purple-700/80 text-white'
+                  : 'bg-theme-border-input text-theme-text-secondary'
+              }`}
+            >
+              {categoryCounts.all}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('leave')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 shrink-0 ${
+              selectedCategory === 'leave'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input/50'
+            }`}
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            <span>Leave & Adjustments</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                selectedCategory === 'leave'
+                  ? 'bg-purple-700/80 text-white'
+                  : 'bg-theme-border-input text-theme-text-secondary'
+              }`}
+            >
+              {categoryCounts.leave}
+            </span>
+          </button>
+
+          {(role === 'admin' || categoryCounts.user_management > 0) && (
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('user_management')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 shrink-0 ${
+                selectedCategory === 'user_management'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input/50'
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span>User Management</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  selectedCategory === 'user_management'
+                    ? 'bg-purple-700/80 text-white'
+                    : 'bg-theme-border-input text-theme-text-secondary'
+                }`}
               >
-                ✕
-              </button>
-            )}
-          </div>
+                {categoryCounts.user_management}
+              </span>
+            </button>
+          )}
+
+          {role === 'admin' && categoryCounts.other > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('other')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 shrink-0 ${
+                selectedCategory === 'other'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-theme-text-muted hover:text-theme-text-primary hover:bg-theme-border-input/50'
+              }`}
+            >
+              <Award className="h-3.5 w-3.5" />
+              <span>Settlement & Holidays</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  selectedCategory === 'other'
+                    ? 'bg-purple-700/80 text-white'
+                    : 'bg-theme-border-input text-theme-text-secondary'
+                }`}
+              >
+                {categoryCounts.other}
+              </span>
+            </button>
+          )}
         </div>
 
-        <div className="flex gap-2 items-end">
-          <div className="flex-1">
-            <label className="block text-xs text-theme-text-muted mb-1.5 uppercase tracking-wider font-bold">
-              {role === "supervisor"
-                ? "Filter Category"
-                : "Filter Notification Type"}
-            </label>
-            <CustomSelect
-              value={notificationTypeFilter}
-              onChange={setNotificationTypeFilter}
-              options={notificationTypeOptions}
-              className="w-full"
-            />
-          </div>
-          {(searchQuery || notificationTypeFilter !== "all") && (
+        {/* Search Bar */}
+        <div className="relative flex items-center">
+          <Search className="absolute left-3 h-3.5 w-3.5 text-theme-text-muted" />
+          <input
+            type="text"
+            placeholder="Search by staff name, codename, leave type, details..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 bg-theme-card-bg/80 border border-theme-border-input rounded-xl text-xs text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:border-purple-500/50"
+          />
+          {searchQuery && (
             <button
-              onClick={() => {
-                setSearchQuery("");
-                setNotificationTypeFilter("all");
-              }}
-              className="p-2 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary border border-theme-border-input rounded-lg cursor-pointer transition-all shrink-0 flex items-center justify-center h-[32px] w-[32px]"
-              title="Reset Filter"
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 p-1 text-theme-text-muted hover:text-theme-text-primary rounded cursor-pointer"
+              title="Clear search"
             >
-              <RefreshCw className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </div>
 
+      {/* Actionable Items List */}
       <div>
-        <h4 className="text-xs font-bold text-theme-text-muted uppercase tracking-wider mb-4 flex items-center gap-1.5 border-b border-theme-border-input pb-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>{" "}
-          {totalLabel} (Total: {combinedNotifications.length})
-        </h4>
-        {combinedNotifications.length === 0 ? (
-          <div className="text-center py-10 bg-theme-page-bg/40 border border-theme-border-muted rounded-xl text-theme-text-muted text-xs font-medium font-sans">
-            No matching items found.
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h4 className="text-xs font-bold text-theme-text-muted uppercase tracking-wider flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+            <span>
+              {role === 'supervisor' ? 'Supervisor Actionable Workflows' : 'Admin Action Center'}
+            </span>
+            <span className="text-theme-text-secondary">({filteredItems.length})</span>
+          </h4>
+
+          {(searchQuery || selectedCategory !== 'all') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory('all');
+                setSearchQuery('');
+              }}
+              className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold cursor-pointer flex items-center gap-1"
+            >
+              <RefreshCw className="h-3 w-3" /> Reset Filter
+            </button>
+          )}
+        </div>
+
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-12 bg-theme-page-bg/40 border border-theme-border-muted rounded-xl text-theme-text-muted text-xs font-medium font-sans">
+            No matching actionable items found.
           </div>
         ) : (
-          <div className="space-y-4 font-sans max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
-            {combinedNotifications.map(renderNotificationItem)}
+          <div className="space-y-3 font-sans max-h-[52vh] overflow-y-auto pr-1 custom-scrollbar">
+            {filteredItems.map((item) => (
+              <ActionableItemCard key={item.id} item={item} />
+            ))}
           </div>
         )}
       </div>
 
-      {/* Review Notes Prompt Modal */}
+      {/* Admin: Send Account Request Back for Review Modal */}
       {reviewRequestPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-theme-card-bg border border-theme-border-input rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 font-sans">
@@ -1407,7 +1051,7 @@ export function LeaveApprovalPanel({
               <strong className="text-theme-text-primary">
                 {reviewRequestPrompt.submitted_by_name || 'the supervisor'}
               </strong>
-              . They will be notified and can update the request.
+              . They will see this in their Action Panel and can update the request.
             </p>
             <div>
               <label className="block text-xs font-semibold text-theme-text-secondary mb-1.5">
@@ -1417,7 +1061,7 @@ export function LeaveApprovalPanel({
                 value={reviewPromptNotes}
                 onChange={(e) => setReviewPromptNotes(e.target.value)}
                 rows={3}
-                placeholder="e.g. Please adjust allowed quotation categories or verify shift timings..."
+                placeholder="e.g. Please verify shift timings or correct the assigned branch..."
                 className="w-full p-2.5 text-xs bg-theme-page-bg border border-theme-border-input rounded-xl text-theme-text-primary placeholder:text-theme-text-muted focus:outline-none focus:border-purple-500/50"
               />
             </div>
@@ -1426,7 +1070,7 @@ export function LeaveApprovalPanel({
                 type="button"
                 onClick={() => {
                   setReviewRequestPrompt(null);
-                  setReviewPromptNotes("");
+                  setReviewPromptNotes('');
                 }}
                 className="px-3.5 py-2 text-xs font-semibold text-theme-text-secondary hover:text-theme-text-primary bg-theme-border-input/50 hover:bg-theme-border-input rounded-xl transition-all cursor-pointer"
               >
@@ -1436,9 +1080,12 @@ export function LeaveApprovalPanel({
                 type="button"
                 disabled={!reviewPromptNotes.trim()}
                 onClick={() => {
-                  handleReviewUserCreationRequest(reviewRequestPrompt, reviewPromptNotes.trim());
+                  handleReviewUserCreationRequest(
+                    reviewRequestPrompt,
+                    reviewPromptNotes.trim()
+                  );
                   setReviewRequestPrompt(null);
-                  setReviewPromptNotes("");
+                  setReviewPromptNotes('');
                 }}
                 className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >

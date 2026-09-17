@@ -170,6 +170,11 @@ export function useDerivedState({
     [adminRecords]
   );
 
+  const pendingRemovalRequests = useMemo(() => 
+    adminRecords.filter(r => (r.admin_edit_request as Record<string, unknown>)?.delete_requested === true), 
+    [adminRecords]
+  );
+
   const pendingSupervisorRequests = useMemo(() => {
     const delegatedFromSupervisorIds = profilesList.filter(p => p.delegated_supervisor_id === sessionUser?.id).map(p => p.id);
 
@@ -460,6 +465,7 @@ export function useDerivedState({
     pendingPasswordResetRequests,
     pendingReserveRequests,
     pendingChutiRequests,
+    pendingRemovalRequests,
     pendingSupervisorRequests,
     groupedSupervisorRequests,
     groupedChutiRequests,

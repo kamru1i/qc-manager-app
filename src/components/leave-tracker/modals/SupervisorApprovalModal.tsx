@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Profile, BulkRepresentative } from '@/types';
+import { Profile, BulkRepresentative, UserCreationRequest } from '@/types';
 import { Modal } from '@/components/common/Modal';
 import { LeaveApprovalPanel } from '@/components/leave-tracker/LeaveApprovalPanel';
 
@@ -19,6 +19,8 @@ interface SupervisorApprovalModalProps {
   profile: Profile | null;
   onSwitchToUserPanel?: () => void;
   userNotificationsCount?: number;
+  pendingUserCreationRequests?: UserCreationRequest[];
+  onReviewUserCreationRequest?: (req: UserCreationRequest) => void;
 }
 
 export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = ({
@@ -33,6 +35,8 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
   profile,
   onSwitchToUserPanel,
   userNotificationsCount = 0,
+  pendingUserCreationRequests = [],
+  onReviewUserCreationRequest,
 }) => {
   if (profile?.role !== 'supervisor') return null;
 
@@ -74,6 +78,8 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
           approvingIds={approvingIds}
           groupedChutiRequests={groupedSupervisorRequests}
           handleApproveChutiRequest={handleSupervisorApproveChuti}
+          pendingUserCreationRequests={pendingUserCreationRequests}
+          onOpenUserCreationReview={onReviewUserCreationRequest}
         />
       </Modal>
     </>
