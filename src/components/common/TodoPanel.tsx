@@ -31,6 +31,11 @@ import {
   useRealtimeHandler,
   RealtimePayload,
 } from "@/contexts/RealtimeContext";
+import {
+  getBusinessTodayDateKey,
+  getBusinessYear,
+  getBusinessMonth,
+} from "@/utils/businessDateTime";
 
 interface TodoPanelProps {
   profile: Profile | null;
@@ -122,16 +127,12 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   }, [subTab]);
 
   // Daily State
-  const [todayStr] = useState(() => new Date().toLocaleDateString("en-CA")); // Local YYYY-MM-DD
+  const [todayStr] = useState(() => getBusinessTodayDateKey()); // Asia/Dhaka YYYY-MM-DD
   const isCarryingOverRef = React.useRef(false);
 
   // Archive / All State
-  const [selectedYear, setSelectedYear] = useState(() =>
-    new Date().getFullYear().toString(),
-  );
-  const [selectedMonth, setSelectedMonth] = useState(() =>
-    String(new Date().getMonth() + 1).padStart(2, "0"),
-  );
+  const [selectedYear, setSelectedYear] = useState(() => getBusinessYear());
+  const [selectedMonth, setSelectedMonth] = useState(() => getBusinessMonth());
 
   const profileId = profile?.id || "";
   const profileUsername = profile?.username || "";
@@ -263,14 +264,14 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Derived available years: only years that have submitted data in DB
   const yearsList = React.useMemo(() => {
     if (!hasLoadedPeriods) {
-      return [new Date().getFullYear().toString()];
+      return [getBusinessYear()];
     }
     const years = Array.from(
       new Set(availablePeriods.map((p) => p.split("-")[0]).filter(Boolean)),
     ).sort((a, b) => b.localeCompare(a));
 
     if (years.length === 0) {
-      return [new Date().getFullYear().toString()];
+      return [getBusinessYear()];
     }
     return years;
   }, [availablePeriods, hasLoadedPeriods]);
@@ -278,7 +279,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Derived available months: only months for the selectedYear that have submitted data in DB
   const monthsList = React.useMemo(() => {
     if (!hasLoadedPeriods) {
-      const curMonthVal = String(new Date().getMonth() + 1).padStart(2, "0");
+      const curMonthVal = getBusinessMonth();
       return ALL_MONTHS.filter((m) => m.val === curMonthVal);
     }
 
@@ -292,7 +293,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
 
     if (matched.length === 0) {
       if (availablePeriods.length === 0) {
-        const curMonthVal = String(new Date().getMonth() + 1).padStart(2, "0");
+        const curMonthVal = getBusinessMonth();
         const fallback = ALL_MONTHS.filter((m) => m.val === curMonthVal);
         return fallback.length > 0 ? fallback : [ALL_MONTHS[0]];
       }
@@ -312,7 +313,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = ({ profile }) => {
   // Auto-sync selectedMonth if monthsList changes and selectedMonth is not in the list
   useEffect(() => {
     if (hasLoadedPeriods && monthsList.length > 0 && !monthsList.some((m) => m.val === selectedMonth)) {
-      const curMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+      const curMonth = getBusinessMonth();
       if (monthsList.some((m) => m.val === curMonth)) {
         setSelectedMonth(curMonth);
       } else {

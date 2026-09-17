@@ -46,6 +46,13 @@ import {
   useRealtimeHandler,
 } from "@/contexts/RealtimeContext";
 import { updateGlobalRankCacheDirect } from "@/components/common/UserDisplayName";
+import { isQuotesOffAdmin as checkIsQuotesOffAdmin } from "@/utils/quotationConsistency";
+import {
+  getBusinessTodayDateKey,
+  getBusinessYear,
+  getBusinessMonth,
+  BUSINESS_TIMEZONE,
+} from "@/utils/businessDateTime";
 import { UserKpiPerformancePanel } from "@/components/common/user-management/UserKpiPerformancePanel";
 import ChutiDashboard from "@/components/leave-tracker/ChutiDashboard";
 import QuotesDashboard from "@/components/quotes-tracker/QuotesDashboard";
@@ -737,7 +744,7 @@ function AppPortalInner({
         localStorage.setItem("last_active_reports_subtab", targetTab);
       }
     } else {
-      const isQuotesOffAdmin = profile?.role === "admin" && profile?.has_quotes_access !== true;
+      const isQuotesOffAdmin = checkIsQuotesOffAdmin(profile);
       let targetQuotesTab = tab;
       if (
         isQuotesOffAdmin &&
@@ -1235,10 +1242,10 @@ function AppPortalInner({
   const fetchAndCacheGlobalRankings = useCallback(async () => {
     if (profile && !canAccessModule(profile, null, "leaderboard")) return;
     try {
-      const todayStr = new Date().toLocaleDateString('en-CA');
-      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-      const currentYear = new Date().getFullYear().toString();
-      const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+      const todayStr = getBusinessTodayDateKey();
+      const timeZone = BUSINESS_TIMEZONE;
+      const currentYear = getBusinessYear();
+      const currentMonth = getBusinessMonth();
 
       const { data, error } = await supabase.rpc('get_leaderboard_data', {
         p_year: currentYear,

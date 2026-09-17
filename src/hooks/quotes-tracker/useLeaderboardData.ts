@@ -6,6 +6,12 @@ import { Profile } from '@/types';
 import { BadgeInfo } from '@/utils/leaderboardHelper';
 import { fetchSubmittedMonths } from '@/utils/availableDatesHelper';
 import { updateGlobalRankCacheDirect } from '@/components/common/UserDisplayName';
+import {
+  getBusinessYear,
+  getBusinessMonth,
+  getBusinessTodayDateKey,
+  BUSINESS_TIMEZONE,
+} from '@/utils/businessDateTime';
 
 export interface LeaderboardUser {
   user_id: string;
@@ -52,23 +58,23 @@ const monthsList = [
 export const useLeaderboardData = (currentProfile: Profile | null) => {
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<'monthly' | 'yearly'>('monthly');
   
-  const currentYearStr = new Date().getFullYear().toString();
+  const currentYearStr = getBusinessYear();
   
   // Default strictly to current month and current year
   const [selectedYear, setSelectedYear] = useState(() => currentYearStr);
-  const [selectedMonth, setSelectedMonth] = useState(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [selectedMonth, setSelectedMonth] = useState(() => getBusinessMonth());
 
   const getCacheKey = useCallback(() => {
     return `${leaderboardPeriod}_${selectedYear}_${leaderboardPeriod === 'monthly' ? selectedMonth : 'all'}`;
   }, [leaderboardPeriod, selectedYear, selectedMonth]);
 
   const [rawLeaderboardData, setRawLeaderboardData] = useState<LeaderboardUser[]>(() => {
-    const key = `${leaderboardPeriod}_${currentYearStr}_${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const key = `${leaderboardPeriod}_${currentYearStr}_${getBusinessMonth()}`;
     return _leaderboardCache?.key === key ? _leaderboardCache.data : [];
   });
   
   const [loading, setLoading] = useState(() => {
-    const key = `${leaderboardPeriod}_${currentYearStr}_${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const key = `${leaderboardPeriod}_${currentYearStr}_${getBusinessMonth()}`;
     return _leaderboardCache?.key !== key;
   });
   const [error, setError] = useState<string | null>(null);
@@ -109,8 +115,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
     if (!isSilent) setLoading(true);
 
     try {
-      const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local format
-      const timeZone = 'Asia/Dhaka';
+      const todayStr = getBusinessTodayDateKey();
+      const timeZone = BUSINESS_TIMEZONE;
 
       const { data, error: rpcError } = await recordsService.getLeaderboardData({
         p_year: selectedYear,
@@ -310,7 +316,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
       }
     });
     if (years.size === 0) {
-      years.add(new Date().getFullYear().toString());
+      years.add(getBusinessYear());
     }
     return Array.from(years).sort((a, b) => b.localeCompare(a));
   }, [availableDates, archiveYears]);
@@ -322,9 +328,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
 
     const monthsSet = new Set<string>(months);
     if (monthsSet.size === 0) {
-      const now = new Date();
-      if (selectedYear === now.getFullYear().toString()) {
-        monthsSet.add(String(now.getMonth() + 1).padStart(2, "0"));
+      if (selectedYear === getBusinessYear()) {
+        monthsSet.add(getBusinessMonth());
       }
     }
 
@@ -335,7 +340,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // Adjust selectedMonth: default to current month if available
   useEffect(() => {
     const monthValues = availableMonthsForSelectedYear.map((m) => m.value);
-    const nowMonthStr = String(new Date().getMonth() + 1).padStart(2, "0");
+    const nowMonthStr = getBusinessMonth();
     if (!monthValues.includes(selectedMonth)) {
       if (monthValues.includes(nowMonthStr)) {
         setSelectedMonth(nowMonthStr);
@@ -348,7 +353,7 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // Adjust selectedYear if it's no longer valid
   useEffect(() => {
     if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
-      const curYear = new Date().getFullYear().toString();
+      const curYear = getBusinessYear();
       if (availableYears.includes(curYear)) {
         setSelectedYear(curYear);
       } else {
@@ -392,8 +397,8 @@ export const useLeaderboardData = (currentProfile: Profile | null) => {
   // Sync current monthly ranks to global rank cache so Navbar name rank always matches Leaderboard table
   useEffect(() => {
     if (leaderboardPeriod === 'monthly') {
-      const curYear = new Date().getFullYear().toString();
-      const curMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+      const curYear = getBusinessYear();
+      const curMonth = getBusinessMonth();
       if (selectedYear === curYear && selectedMonth === curMonth && eligibleRawData.length > 0) {
         const ranks: Record<string, number> = {};
         eligibleRawData.forEach((u) => {

@@ -2,6 +2,7 @@ import { FileType } from "@/types";
 import { exportToCSV } from "@/utils/quotesDashboardHelpers";
 import { validator } from "@/utils/quotesValidator";
 import { isAdminRole } from "@/utils/permissionService";
+import { getBusinessTodayDateKey } from "@/utils/businessDateTime";
 
 interface HandlersProps {
   todayFilteredRecords: any[];
@@ -61,7 +62,7 @@ export function useQuotesPageHandlers({
   setShowSaleModal,
 }: HandlersProps) {
   const handleExportTodayExcel = () => {
-    const todayStr = new Date().toLocaleDateString("en-CA");
+    const todayStr = getBusinessTodayDateKey();
     exportToCSV(todayFilteredRecords, `Today_Logs_${todayStr}`);
     logActivity(
       "EXPORT_EXCEL",

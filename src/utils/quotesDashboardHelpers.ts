@@ -1,234 +1,39 @@
 import { RecordItem } from '@/types';
 import { toast } from 'sonner';
+import { formatDate, formatTimeToAMPM } from './businessDateTime';
 
-/**
- * Canonical UTC ISO start and end timestamps for a given Year and Month in Asia/Dhaka (+06:00).
- * Completely immune to client browser / OS local timezone variations.
- */
-export const getDhakaMonthRange = (yearStr: string, monthStr: string): { startIso: string; endIso: string } => {
-  const y = parseInt(yearStr, 10);
-  const m = parseInt(monthStr, 10);
-  const mm = String(m).padStart(2, '0');
-  const startIso = new Date(`${y}-${mm}-01T00:00:00+06:00`).toISOString();
-  const nextY = m === 12 ? y + 1 : y;
-  const nextM = m === 12 ? 1 : m + 1;
-  const nextMm = String(nextM).padStart(2, '0');
-  const endIso = new Date(new Date(`${nextY}-${nextMm}-01T00:00:00+06:00`).getTime() - 1).toISOString();
-  return { startIso, endIso };
-};
+export {
+  BUSINESS_TIMEZONE,
+  getBusinessDateParts,
+  getDhakaDateParts,
+  getBusinessToday,
+  getBusinessTodayDateKey,
+  getBusinessYear,
+  getBusinessMonth,
+  getBusinessMonthRange,
+  getDhakaMonthRange,
+  formatBusinessDate,
+  formatDate,
+  formatDateToYYYYMMDD,
+  formatBusinessTime,
+  formatTimeToAMPM,
+  formatTimeToHHMM,
+} from './businessDateTime';
+export type { BusinessDateParts } from './businessDateTime';
 
-// Cached module-level formatters for Asia/Dhaka (+06:00) business timezone
-// Prevents instantiating new Intl.DateTimeFormat objects repeatedly inside loops and cell renders
-const dhakaDateFormatter = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Asia/Dhaka',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
-const dhakaTimeFormatter = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'Asia/Dhaka',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: true,
-});
-
-const dhakaDatePartsCache = new Map<string, { year: string; month: string; day: string; dateKey: string }>();
-const MAX_DHAKA_CACHE_SIZE = 10000;
-
-/**
- * Returns the Year ('YYYY'), Month ('MM'), Day ('DD'), and full Date string ('YYYY-MM-DD')
- * for an ISO timestamp string interpreted in Asia/Dhaka (+06:00) business timezone.
- * Optimized with module-level cached formatter and in-memory Map lookup.
- */
-export const getDhakaDateParts = (dateStr: string | null | undefined): { year: string; month: string; day: string; dateKey: string } => {
-  if (!dateStr) return { year: '', month: '', day: '', dateKey: '' };
-  const cached = dhakaDatePartsCache.get(dateStr);
-  if (cached) return cached;
-
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return { year: '', month: '', day: '', dateKey: '' };
-    const parts = dhakaDateFormatter.format(d).split('-');
-    if (parts.length === 3) {
-      const res = {
-        year: parts[0],
-        month: parts[1],
-        day: parts[2],
-        dateKey: `${parts[0]}-${parts[1]}-${parts[2]}`,
-      };
-      if (dhakaDatePartsCache.size >= MAX_DHAKA_CACHE_SIZE) {
-        dhakaDatePartsCache.clear();
-      }
-      dhakaDatePartsCache.set(dateStr, res);
-      return res;
-    }
-  } catch {}
-  return { year: '', month: '', day: '', dateKey: '' };
-};
-
-// Helper function to format date from ISO string (or YYYY-MM-DD) to DD-MM-YYYY format
-// AUDIT FIX M7: Kept local `formatDate` instead of importing from `formatters.ts`
-// because callers here (e.g., RecordsTable) pass ISO timestamp strings like `submitted_at`,
-// which require `new Date()` parsing, unlike the simple split('-') in formatters.ts.
-export const formatDate = (dateStr: string | null | undefined): string => {
-  if (!dateStr) return '';
-  try {
-    // If already formatted as DD-MM-YYYY
-    const ddmmyyyyMatch = String(dateStr).match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if (ddmmyyyyMatch) return dateStr;
-
-    // Interpret ISO timestamps in Asia/Dhaka (+06:00)
-    const { day, month, year } = getDhakaDateParts(dateStr);
-    if (day && month && year) {
-      return `${day}-${month}-${year}`;
-    }
-
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    const dayFallback = String(date.getDate()).padStart(2, '0');
-    const monthFallback = String(date.getMonth() + 1).padStart(2, '0');
-    const yearFallback = date.getFullYear();
-    return `${dayFallback}-${monthFallback}-${yearFallback}`;
-  } catch {
-    return dateStr;
-  }
-};
-
-// Helper function to convert any date string format (ISO, DD-MM-YYYY, YYYY-MM-DD) into YYYY-MM-DD for HTML date inputs
-export const formatDateToYYYYMMDD = (val: string | null | undefined): string => {
-  if (!val) return '';
-  const str = String(val).trim();
-  if (!str) return '';
-
-  // Match DD-MM-YYYY or DD/MM/YYYY
-  const ddmmyyyyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-  if (ddmmyyyyMatch) {
-    const [, day, month, year] = ddmmyyyyMatch;
-    const mm = month.padStart(2, '0');
-    const dd = day.padStart(2, '0');
-    return `${year}-${mm}-${dd}`;
-  }
-
-  // Match YYYY-MM-DD
-  const yyyymmddMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (yyyymmddMatch) {
-    const [, year, month, day] = yyyymmddMatch;
-    const mm = month.padStart(2, '0');
-    const dd = day.padStart(2, '0');
-    return `${year}-${mm}-${dd}`;
-  }
-
-  const d = new Date(str);
-  if (!isNaN(d.getTime())) {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  return '';
-};
-
-// Helper function to format ISO timestamp to 12-hour AM/PM format in Asia/Dhaka (e.g. 03:04 PM)
-export const formatTimeToAMPM = (dateStr: string | null | undefined): string => {
-  if (!dateStr) return '-';
-  const str = String(dateStr).trim();
-  if (!str) return '-';
-
-  // 1. Check if it is a HH:mm or HH:mm:ss string e.g. "13:00" or "22:30"
-  const hhmmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
-  if (hhmmMatch) {
-    let hours = parseInt(hhmmMatch[1], 10);
-    const minutes = hhmmMatch[2];
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const strHours = String(hours).padStart(2, '0');
-    return `${strHours}:${minutes} ${ampm}`;
-  }
-
-  // 2. Format ISO timestamp in Asia/Dhaka (+06:00)
-  try {
-    const d = new Date(str.includes('T') ? str : `1970-01-01T${str}`);
-    if (!isNaN(d.getTime())) {
-      return dhakaTimeFormatter.format(d);
-    }
-  } catch {}
-
-  return str;
-};
-
-// Helper function to format timestamp/time string to 24-hour HH:MM format for HTML time inputs
-export const formatTimeToHHMM = (val: string | null | undefined): string => {
-  if (!val) return '12:00';
-  const str = String(val).trim();
-  if (!str) return '12:00';
-
-  const d = new Date(str);
-  if (!isNaN(d.getTime())) {
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    return `${hh}:${mm}`;
-  }
-
-  const ampmMatch = str.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);
-  if (ampmMatch) {
-    let hours = Number(ampmMatch[1]);
-    const minutes = ampmMatch[2];
-    const meridiem = ampmMatch[3].toUpperCase();
-    if (meridiem === 'PM' && hours !== 12) hours += 12;
-    if (meridiem === 'AM' && hours === 12) hours = 0;
-    const hh = String(hours).padStart(2, '0');
-    return `${hh}:${minutes}`;
-  }
-
-  return '12:00';
-};
-
-// Calculate counts of files of each type
-export const calculateSummaryStats = (records: RecordItem[]) => {
-  let quote = 0;
-  let requote = 0;
-  const requoteVan = 0;
-  const requoteBike = 0;
-  let review = 0;
-  const reviewVan = 0;
-  const reviewBike = 0;
-  let individualReview = 0;
-  let otherSite = 0;
-  let van = 0;
-  let bike = 0;
-  let sale = 0;
-
-  records.forEach(r => {
-    const type = r.file_type;
-    if (type === 'Quote') quote++;
-    else if (type === 'Requote' || type === 'Requote Van' || type === 'Requote Bike') requote++;
-    else if (type === 'Review' || type === 'Review Van' || type === 'Review Bike') review++;
-    else if (type === 'Individual Review') individualReview++;
-    else if (type === 'Other Site') otherSite++;
-    else if (type === 'Van') van++;
-    else if (type === 'Bike') bike++;
-    else if (type === 'Sale') sale++;
-  });
-
-  return {
-    total: records.length - otherSite,
-    quote,
-    requote,
-    requoteVan,
-    requoteBike,
-    review,
-    reviewVan,
-    reviewBike,
-    individualReview,
-    otherSite,
-    van,
-    bike,
-    sale
-  };
-};
+export {
+  ALL_10_ACTIVE_FILE_TYPES,
+  CANONICAL_FILE_TYPES,
+  normalizeQuotationFileType,
+  isCountedInQuotationTotals,
+  isQuotesOffAdmin,
+  canAccessAllQuotesData,
+  calculateCanonicalQuotationStats,
+  calculateCanonicalQuotationStats as calculateSummaryStats,
+  filterQuotationRecordsByDate,
+  resolveQuotationRecordScope,
+} from './quotationConsistency';
+export type { CanonicalQuotationStats } from './quotationConsistency';
 
 // Export records list to CSV file (Microsoft Excel compatible with UTF-8 BOM)
 export const exportToCSV = (records: RecordItem[], fileName: string) => {

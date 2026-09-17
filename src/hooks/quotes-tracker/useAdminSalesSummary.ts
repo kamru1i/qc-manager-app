@@ -9,6 +9,11 @@ import {
   calculateAdminSalesSummary,
   buildSummary,
 } from '@/utils/adminSalesSummary';
+import {
+  getBusinessTodayDateKey,
+  getBusinessDateParts,
+  BUSINESS_TIMEZONE,
+} from '@/utils/businessDateTime';
 
 interface UseAdminSalesSummaryOptions {
   /** Only fetch when the box is actually rendered (Sale permission + tab open). */
@@ -43,12 +48,17 @@ export const useAdminSalesSummary = ({ enabled, records, targetDateStr }: UseAdm
     if (!force && now - lastFetchRef.current < REFRESH_THROTTLE_MS) return;
     lastFetchRef.current = now;
     try {
-      const parsedDate = targetDateStr ? new Date(targetDateStr) : new Date();
-      const dateIso = !isNaN(parsedDate.getTime())
-        ? `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`
-        : new Date().toLocaleDateString('en-CA');
+      let dateIso = getBusinessTodayDateKey();
+      if (targetDateStr) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(targetDateStr)) {
+          dateIso = targetDateStr;
+        } else {
+          const parts = getBusinessDateParts(targetDateStr);
+          if (parts.dateKey) dateIso = parts.dateKey;
+        }
+      }
 
-      const timeZone = 'Asia/Dhaka';
+      const timeZone = BUSINESS_TIMEZONE;
       const { data: row, error } = await recordsService.getAdminSalesSummary(dateIso, timeZone);
       if (error) throw error;
       if (row) {

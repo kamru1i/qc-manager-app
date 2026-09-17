@@ -1,4 +1,6 @@
 import { RecordItem } from '@/types';
+import { filterQuotationRecordsByDate } from '@/utils/quotationConsistency';
+import { getBusinessTodayDateKey } from '@/utils/businessDateTime';
 
 /**
  * Pure helpers for the "Sales Report for Admin" box in Copy Helper.
@@ -30,12 +32,11 @@ const SOLD_SUFFIX_RE = / \[(SOLD|UNSOLD)\]$/;
 
 const isSoldRecord = (r: RecordItem) => r.file_name.endsWith(' [SOLD]');
 
-/** Filter to selected date's Sale submissions (local time), any user. */
+/** Filter to selected date's Sale submissions in Asia/Dhaka business context, any user. */
 export const getTodaySalesRecords = (records: RecordItem[], targetDateStr?: string): RecordItem[] => {
-  const dateStr = targetDateStr || new Date().toDateString();
-  return records.filter(
-    (r) => r.file_type === 'Sale' && new Date(r.submitted_at).toDateString() === dateStr
-  );
+  const dateKey = targetDateStr || getBusinessTodayDateKey();
+  const dateFiltered = filterQuotationRecordsByDate(records, dateKey);
+  return dateFiltered.filter((r) => r.file_type === 'Sale');
 };
 
 /**

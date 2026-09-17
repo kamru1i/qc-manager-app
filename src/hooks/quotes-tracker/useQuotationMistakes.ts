@@ -11,6 +11,10 @@ import {
   getDhakaDateParts,
   computeSmartMistakePeriod,
 } from '@/utils/quotesDashboardHelpers';
+import {
+  getBusinessYear,
+  getBusinessMonth,
+} from '@/utils/businessDateTime';
 
 let _mistakesCache: {
   key: string;
@@ -61,11 +65,9 @@ export function useQuotationMistakes({
   const scopeKey = isUserRole ? sessionUserId : '__all__';
 
   const { year: currentYearStr, month: currentMonthStr } = useMemo(() => {
-    const parts = getDhakaDateParts(new Date().toISOString());
-    const fallbackNow = new Date();
     return {
-      year: parts.year || fallbackNow.getFullYear().toString(),
-      month: parts.month || String(fallbackNow.getMonth() + 1).padStart(2, '0'),
+      year: getBusinessYear(),
+      month: getBusinessMonth(),
     };
   }, []);
 

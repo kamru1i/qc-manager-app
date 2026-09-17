@@ -1,4 +1,5 @@
 import { RecordItem } from '@/types';
+import { calculateCanonicalQuotationStats } from '@/utils/quotationConsistency';
 
 export const monthsList = [
   { value: '01', name: 'January' },
@@ -25,28 +26,14 @@ export interface TypeStats {
 
 // Quote/Requote/Review/Sale tallies + sales conversion rate for a record set
 export const computeTypeStats = (records: RecordItem[]): TypeStats => {
-  let quotes = 0;
-  let requotes = 0;
-  let reviews = 0;
-  let sales = 0;
-
-  records.forEach(r => {
-    const type = r.file_type || '';
-    if (type === 'Quote') {
-      quotes++;
-    } else if (type === 'Requote') {
-      requotes++;
-    } else if (type.toLowerCase().includes('review')) {
-      reviews++;
-    } else if (type === 'Sale') {
-      sales++;
-    }
-  });
-
-  const totalFiles = records.length;
-  const conversionRate = totalFiles > 0 ? parseFloat(((sales / totalFiles) * 100).toFixed(2)) : 0;
-
-  return { quotes, requotes, reviews, sales, conversionRate };
+  const stats = calculateCanonicalQuotationStats(records);
+  return {
+    quotes: stats.quote,
+    requotes: stats.requote,
+    reviews: stats.review + stats.individualReview,
+    sales: stats.sale,
+    conversionRate: stats.conversionRate,
+  };
 };
 
 export type GrowthTrend = 'up' | 'down' | 'neutral';

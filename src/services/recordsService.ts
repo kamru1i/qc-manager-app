@@ -1,6 +1,7 @@
 import { supabase } from '@/utils/supabase';
 import { RECORD_COLUMNS, LEADERBOARD_ARCHIVE_COLUMNS } from '@/utils/dbColumns';
 import type { RecordItem } from '@/types';
+import { normalizeQuotationFileType } from '@/utils/quotationConsistency';
 
 export const recordsService = {
   /**
@@ -39,8 +40,8 @@ export const recordsService = {
    */
   async createRecord(record: Partial<RecordItem>) {
     const payload = { ...record };
-    if (payload.file_type === 'Requote Van' || payload.file_type === 'Requote Bike') {
-      payload.file_type = 'Requote';
+    if (payload.file_type) {
+      payload.file_type = normalizeQuotationFileType(payload.file_type);
     }
     const { data, error } = await supabase
       .from('records')
@@ -54,9 +55,13 @@ export const recordsService = {
    * Update an existing record
    */
   async updateRecord(id: string, updates: Partial<RecordItem>) {
+    const payload = { ...updates };
+    if (payload.file_type) {
+      payload.file_type = normalizeQuotationFileType(payload.file_type);
+    }
     const { data, error } = await supabase
       .from('records')
-      .update(updates as any)
+      .update(payload as any)
       .eq('id', id)
       .select(RECORD_COLUMNS)
       .single();

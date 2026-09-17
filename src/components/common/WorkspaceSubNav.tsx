@@ -28,6 +28,7 @@ import {
 import { Profile } from "@/types";
 import { isSuperadmin, isTabVisibleForRole, isAdminRole, canAccessModule } from "@/utils/permissionService";
 import { useProfiles } from "@/contexts/ProfilesContext";
+import { isQuotesOffAdmin as checkIsQuotesOffAdmin } from "@/utils/quotationConsistency";
 
 interface WorkspaceSubNavProps {
   activeTab: string | null;
@@ -133,7 +134,7 @@ export const WorkspaceSubNav: React.FC<WorkspaceSubNavProps> = ({
       });
     }
   } else if (activeTab === "quotes" && onQuotesTabChange) {
-    const isQuotesOffAdmin = profile?.role === "admin" && profile?.has_quotes_access !== true;
+    const isQuotesOffAdmin = checkIsQuotesOffAdmin(profile);
 
     subTabs.push({
       id: "entry",

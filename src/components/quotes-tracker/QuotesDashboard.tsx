@@ -70,6 +70,10 @@ import {
   exportToCSV,
   buildCleanFileName,
   getDhakaDateParts,
+  getBusinessTodayDateKey,
+  filterQuotationRecordsByDate,
+  resolveQuotationRecordScope,
+  isQuotesOffAdmin as checkIsQuotesOffAdmin,
 } from "@/utils/quotesDashboardHelpers";
 import { FileType, RecordItem } from "@/types";
 import type { Profile } from '@/types';
@@ -275,7 +279,7 @@ export default function QuotesDashboard({
   );
   const [fileType, setFileType] = useState<FileType>("Quote");
 
-  const isQuotesOffAdmin = profile?.role === "admin" && profile?.has_quotes_access !== true;
+  const isQuotesOffAdmin = checkIsQuotesOffAdmin(profile);
 
   // Auto-redirect if an invalid subtab is loaded for an Admin with Quotes Workspace OFF
   useEffect(() => {
@@ -929,20 +933,14 @@ export default function QuotesDashboard({
 
   // Today's entries
   const todayRecords = useMemo(() => {
-    const todayStr = new Date().toLocaleDateString("en-CA");
-    return records.filter((r) => {
-      if (
-        !isQuotesOffAdmin &&
-        (isAdminRole(profile) || profile?.role === "supervisor") &&
-        todayAdminViewMode === "mine" &&
-        r.user_id !== sessionUser?.id
-      ) {
-        return false;
-      }
-      const recordDate = new Date(r.submitted_at).toLocaleDateString("en-CA");
-      return recordDate === todayStr;
+    const todayStr = getBusinessTodayDateKey();
+    const dateRecords = filterQuotationRecordsByDate(records, todayStr);
+    return resolveQuotationRecordScope(dateRecords, {
+      profile,
+      sessionUserId: sessionUser?.id,
+      viewMode: todayAdminViewMode,
     });
-  }, [records, todayAdminViewMode, profile, sessionUser, isQuotesOffAdmin]);
+  }, [records, todayAdminViewMode, profile, sessionUser]);
 
   // Filtered entries for Today's list table
   const todayFilteredRecords = useMemo(() => {
