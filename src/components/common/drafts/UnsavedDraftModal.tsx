@@ -42,6 +42,8 @@ export function UnsavedDraftModal({
         return 'Quotation Mistake';
       case 'quotation_quick_import':
         return 'Quick Import Batch';
+      case 'quotation_save_file':
+        return 'Save File (Outlook Content)';
       default:
         return 'Form';
     }

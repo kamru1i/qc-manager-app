@@ -6,9 +6,11 @@ import { isTauriApp } from '@/utils/apiUrlHelper';
 import { Capacitor } from '@capacitor/core';
 import { sanitizeRichTextHtml } from '@/utils/htmlSanitizer';
 import { isPathContained, sanitizeDocxFilename, isSafeSubdirectory } from '@/utils/pathSecurity';
+import { clearDraft } from '@/services/draftService';
 
 interface UseSaveFileHelperOptions {
   showToast: (type: 'success' | 'error', text: string) => void;
+  userId?: string;
 }
 
 // ── Once-per-day save directory persistence ─────────────────────────
@@ -41,7 +43,7 @@ const setTodayDirectory = (path: string) => {
   localStorage.setItem(DIR_DATE_KEY, new Date().toDateString());
 };
 
-export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
+export const useSaveFileHelper = ({ showToast, userId }: UseSaveFileHelperOptions) => {
   // ── State ──────────────────────────────────────────────────────────
   const [savedRecordIds, setSavedRecordIds] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
@@ -187,21 +189,21 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     }
   };
 
-  const handleSaveAsWord = async (todayUserRecords: RecordItem[]) => {
+  const handleSaveAsWord = async (todayUserRecords: RecordItem[]): Promise<boolean> => {
     if (!selectedRecordIdForSave) {
       showToast("error", "Please select a record (circle checkbox) to generate the file name.");
-      return;
+      return false;
     }
     const record = todayUserRecords.find(r => r.id === selectedRecordIdForSave);
     if (!record) {
       showToast("error", "Selected record not found.");
-      return;
+      return false;
     }
 
     const editorHtml = sanitizeRichTextHtml(editorRef.current?.innerHTML || "");
     if (!editorHtml || editorHtml.trim() === "" || editorHtml === "<br>") {
       showToast("error", "Please paste some content into the input field first.");
-      return;
+      return false;
     }
 
     // 1. Get or choose base directory (for Tauri desktop app)
@@ -211,7 +213,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     if (isTauri) {
       if (!currentBaseDir) {
         currentBaseDir = await handleChooseDirectory();
-        if (!currentBaseDir) return; // Cancelled
+        if (!currentBaseDir) return false; // Cancelled
       }
     }
 
@@ -229,7 +231,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
 
     if (subFolder && !isSafeSubdirectory(subFolder)) {
       showToast("error", "Invalid subfolder path detected.");
-      return;
+      return false;
     }
 
     const cleanName = record.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "").trim();
@@ -279,7 +281,7 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       } else if (isTauri) {
         if (!currentBaseDir) {
           showToast("error", "Please select a save directory first.");
-          return;
+          return false;
         }
 
         const arrayBuffer = await docxBlob.arrayBuffer();
@@ -358,24 +360,27 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       localStorage.setItem("quotes_sales_saved_record_ids", JSON.stringify(updatedRecordIds));
 
       setSavedFilePath(savedPath);
+      clearDraft(userId, 'quotation_save_file');
+      return true;
     } catch (err) {
       const errMsg = String(err);
       if (errMsg !== "Save cancelled") {
         showToast("error", `Failed to save file: ${errMsg}`);
       }
+      return false;
     }
   };
 
-  const handleUpdateWord = async () => {
+  const handleUpdateWord = async (): Promise<boolean> => {
     if (!savedFilePath) {
       showToast("error", "No active file path. Please click 'Save As' first.");
-      return;
+      return false;
     }
 
     const editorHtml = sanitizeRichTextHtml(editorRef.current?.innerHTML || "");
     if (!editorHtml || editorHtml.trim() === "" || editorHtml === "<br>") {
       showToast("error", "Editor content is empty.");
-      return;
+      return false;
     }
 
     try {
@@ -470,8 +475,11 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
       });
       setSavedDocuments(updatedDocs);
       localStorage.setItem("quotes_sales_saved_documents", JSON.stringify(updatedDocs));
+      clearDraft(userId, 'quotation_save_file');
+      return true;
     } catch (err) {
       showToast("error", `Failed to update file: ${err}`);
+      return false;
     }
   };
 
@@ -530,21 +538,21 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
     });
   };
 
-  const triggerSaveWithPermission = async (todayUserRecords: RecordItem[]) => {
+  const triggerSaveWithPermission = async (todayUserRecords: RecordItem[]): Promise<boolean> => {
     if (!selectedRecordIdForSave) {
       showToast("error", "Please select a record (circle checkbox) to generate the file name.");
-      return;
+      return false;
     }
     const record = todayUserRecords.find(r => r.id === selectedRecordIdForSave);
     if (!record) {
       showToast("error", "Selected record not found.");
-      return;
+      return false;
     }
 
     const editorHtml = sanitizeRichTextHtml(editorRef.current?.innerHTML || "");
     if (!editorHtml || editorHtml.trim() === "" || editorHtml === "<br>") {
       showToast("error", "Please paste some content into the input field first.");
-      return;
+      return false;
     }
 
     const isTauri = isTauriApp();
@@ -572,8 +580,9 @@ export const useSaveFileHelper = ({ showToast }: UseSaveFileHelperOptions) => {
           }
         }
       });
+      return false;
     } else {
-      await handleSaveAsWord(todayUserRecords);
+      return await handleSaveAsWord(todayUserRecords);
     }
   };
 

@@ -12,7 +12,8 @@ export type DraftFormType =
   | 'quotation_entry'
   | 'leave_add'
   | 'quotation_add_mistake'
-  | 'quotation_quick_import';
+  | 'quotation_quick_import'
+  | 'quotation_save_file';
 
 export interface DraftMetadata {
   timestamp: number;
@@ -57,6 +58,11 @@ export interface QuotationMistakeDraft {
 export interface QuotationQuickImportDraft {
   rawText: string;
   items?: any[];
+}
+
+export interface QuotationSaveFileDraft {
+  htmlContent: string;
+  selectedRecordId?: string | null;
 }
 
 export interface StoredDraft<T> {
@@ -126,6 +132,12 @@ export function isDraftMeaningful(formType: DraftFormType, data: any): boolean {
       const hasText = Boolean(d.rawText && d.rawText.trim().length > 0);
       const hasItems = Array.isArray(d.items) && d.items.length > 0;
       return hasText || hasItems;
+    }
+    case 'quotation_save_file': {
+      const d = data as QuotationSaveFileDraft;
+      if (!d || !d.htmlContent) return false;
+      const clean = d.htmlContent.replace(/<br\s*\/?>/gi, '').trim();
+      return clean.length > 0;
     }
     default:
       return false;

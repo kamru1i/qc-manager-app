@@ -612,7 +612,7 @@ export default function QuotesDashboard({
     handleEditDocument,
     handleCancelEdit,
     handleDeleteDocument,
-  } = useSaveFileHelper({ showToast });
+  } = useSaveFileHelper({ showToast, userId: sessionUser?.id });
 
   // Wrap handleSaveAsWord to pass todayUserRecords (component expects no-arg version)
   const handleSaveAsWord = () => handleSaveAsWordRaw(todayUserRecords);
@@ -1567,6 +1567,7 @@ export default function QuotesDashboard({
       {activeTab === "save_file" && isSuperAdmin && (
         <Suspense fallback={<SkeletonLoader type="save-file" />}>
           <SaveFileHelperPanel
+            userId={sessionUser?.id}
             editorRef={editorRef}
             baseDirectory={baseDirectory}
             handleChooseDirectory={handleChooseDirectory}

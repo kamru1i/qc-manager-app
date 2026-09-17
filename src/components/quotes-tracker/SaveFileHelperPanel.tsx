@@ -1,13 +1,17 @@
 "use client";
 
 import React from "react";
-import { Save, ArrowLeft, Check, X, Edit3, Trash2 } from "lucide-react";
+import { Save, Check, X, Edit3, Trash2 } from "lucide-react";
 import { RecordItem, SavedDocument } from "@/types";
 import { ConfirmModal } from "@/components/common/modals/ConfirmModal";
 import { isTauriApp } from "@/utils/apiUrlHelper";
 import { plainTextToHtml, sanitizeRichTextHtml } from "@/utils/htmlSanitizer";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { UnsavedDraftModal } from "@/components/common/drafts/UnsavedDraftModal";
+import { QuotationSaveFileDraft, saveDraft } from "@/services/draftService";
 
 interface SaveFileHelperPanelProps {
+  userId?: string;
   editorRef: React.RefObject<HTMLDivElement | null>;
   baseDirectory: string | null;
   handleChooseDirectory: () => void;
@@ -16,9 +20,9 @@ interface SaveFileHelperPanelProps {
   selectedRecordIdForSave: string | null;
   setSelectedRecordIdForSave: (id: string | null) => void;
   savedFilePath: string | null;
-  handleUpdateWord: () => void;
+  handleUpdateWord: () => Promise<boolean> | void;
   handleCancelEdit: () => void;
-  handleSaveAsWord: () => void;
+  handleSaveAsWord: () => Promise<boolean> | void;
   savedDocuments: SavedDocument[];
   handleEditDocument: (doc: SavedDocument) => void;
   handleDeleteDocument: (docId: string, recordId: string) => void;
@@ -40,6 +44,7 @@ interface SaveFileHelperPanelProps {
 }
 
 export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
+  userId,
   editorRef,
   baseDirectory,
   handleChooseDirectory,
@@ -54,37 +59,153 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
   savedDocuments,
   handleEditDocument,
   handleDeleteDocument,
-  setShowSaveFileHelper,
+  setShowSaveFileHelper: _setShowSaveFileHelper,
   permissionModal,
   setPermissionModal,
 }) => {
+  const [editorHtml, setEditorHtml] = React.useState("");
   const [isEditorEmpty, setIsEditorEmpty] = React.useState(true);
 
+  // Keep refs up to date for unmount flush
+  const selectedRecordIdRef = React.useRef(selectedRecordIdForSave);
+  const savedFilePathRef = React.useRef(savedFilePath);
+
   React.useEffect(() => {
+    selectedRecordIdRef.current = selectedRecordIdForSave;
+  }, [selectedRecordIdForSave]);
+
+  React.useEffect(() => {
+    savedFilePathRef.current = savedFilePath;
+  }, [savedFilePath]);
+
+  // Flush unsaved draft on unmount if user switches tabs before debounce fires
+  React.useEffect(() => {
+    const editorEl = editorRef.current;
+    return () => {
+      if (userId && !savedFilePathRef.current && editorEl) {
+        const currentHtml = editorEl.innerHTML || "";
+        const cleanHtml = currentHtml.replace(/<br\s*\/?>/gi, "").trim();
+        if (cleanHtml.length > 0) {
+          saveDraft<QuotationSaveFileDraft>(userId, "quotation_save_file", {
+            htmlContent: currentHtml,
+            selectedRecordId: selectedRecordIdRef.current,
+          });
+        }
+      }
+    };
+  }, [userId, editorRef]);
+
+  // Input & MutationObserver handling
+  React.useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
     const handleInput = () => {
       if (editorRef.current) {
         const text = editorRef.current.innerText || "";
         const html = editorRef.current.innerHTML || "";
         const cleanHtml = html.replace(/<br\s*\/?>/gi, "").trim();
         setIsEditorEmpty(text.trim() === "" && cleanHtml === "");
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          setEditorHtml(editorRef.current?.innerHTML || "");
+        }, 300);
       }
     };
 
     const editorEl = editorRef.current;
     if (editorEl) {
       editorEl.addEventListener("input", handleInput);
-      
+
       const observer = new MutationObserver(handleInput);
       observer.observe(editorEl, { childList: true, characterData: true, subtree: true });
 
       handleInput();
 
       return () => {
+        clearTimeout(debounceTimer);
         editorEl.removeEventListener("input", handleInput);
         observer.disconnect();
       };
     }
   }, [editorRef]);
+
+  const draftData = React.useMemo<QuotationSaveFileDraft>(
+    () => ({
+      htmlContent: editorHtml,
+      selectedRecordId: selectedRecordIdForSave,
+    }),
+    [editorHtml, selectedRecordIdForSave]
+  );
+
+  const {
+    isDraftModalOpen,
+    storedDraft,
+    handleContinueDraft,
+    handleDiscardDraft,
+    handleDismissModal,
+    clearDraftOnSuccess,
+  } = useFormDraft<QuotationSaveFileDraft>({
+    formType: "quotation_save_file",
+    userId,
+    formData: draftData,
+    enabled: !savedFilePath,
+    onRestore: (draft) => {
+      const sanitized = sanitizeRichTextHtml(draft.htmlContent || "");
+      if (editorRef.current) {
+        editorRef.current.innerHTML = sanitized;
+        editorRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      setEditorHtml(sanitized);
+      setIsEditorEmpty(false);
+      if (draft.selectedRecordId) {
+        setSelectedRecordIdForSave(draft.selectedRecordId);
+      }
+    },
+    onDiscard: () => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = "";
+        editorRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      setEditorHtml("");
+      setIsEditorEmpty(true);
+      setSelectedRecordIdForSave(null);
+    },
+  });
+
+  const onSaveAsClick = async () => {
+    const success = await handleSaveAsWord();
+    if (success) {
+      clearDraftOnSuccess();
+    }
+  };
+
+  const onUpdateClick = async () => {
+    const success = await handleUpdateWord();
+    if (success) {
+      clearDraftOnSuccess();
+    }
+  };
+
+  const onCancelClick = () => {
+    handleCancelEdit();
+    handleDiscardDraft();
+  };
+
+  const draftPreviewData = React.useMemo(() => {
+    if (!storedDraft?.data) return {};
+    const html = storedDraft.data.htmlContent || "";
+    const hasTable = html.includes("<table");
+    const cleanText = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const snippet = cleanText.length > 50 ? `${cleanText.slice(0, 50)}...` : cleanText;
+    const rec = todayUserRecords.find((r) => r.id === storedDraft.data.selectedRecordId);
+
+    return {
+      "Content Type": hasTable ? "Table & Formatted Text" : "Rich Text / Outlook Content",
+      Preview: snippet || "Formatted document content",
+      ...(rec ? { "Selected Record": rec.file_name.replace(/ \[(SOLD|UNSOLD)\]$/, "") } : {}),
+    };
+  }, [storedDraft, todayUserRecords]);
 
   return (
     <div className="bg-theme-page-bg/20 border border-theme-border-muted rounded-2xl p-5 space-y-6 animate-fade-in text-theme-text-primary">
@@ -106,6 +227,20 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
                     ? sanitizeRichTextHtml(clipboardHtml)
                     : plainTextToHtml(event.clipboardData.getData("text/plain"));
                   document.execCommand("insertHTML", false, safeHtml);
+
+                  // Immediate sync
+                  const currentHtml = editorRef.current?.innerHTML || safeHtml;
+                  setEditorHtml(currentHtml);
+                  setIsEditorEmpty(false);
+                  editorRef.current?.dispatchEvent(new Event("input", { bubbles: true }));
+
+                  // Immediately save to local draft so navigating away right after paste is 100% protected
+                  if (userId && !savedFilePath) {
+                    saveDraft<QuotationSaveFileDraft>(userId, "quotation_save_file", {
+                      htmlContent: currentHtml,
+                      selectedRecordId: selectedRecordIdForSave,
+                    });
+                  }
                 }}
                 className="w-full min-h-[300px] max-h-[500px] overflow-auto p-4 bg-theme-card-bg/50 border border-theme-border-input rounded-xl text-theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-sans shadow-inner leading-relaxed outlook-rich-editor"
                 style={{ outline: "none" }}
@@ -216,7 +351,7 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
               <>
                 <button
                   disabled={isEditorEmpty}
-                  onClick={handleUpdateWord}
+                  onClick={onUpdateClick}
                   className={`flex items-center gap-1.5 font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all ${
                     isEditorEmpty
                       ? "bg-theme-border-input text-theme-text-muted border border-theme-border-active cursor-not-allowed"
@@ -227,7 +362,7 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
                   <span>Save / Update File</span>
                 </button>
                 <button
-                  onClick={handleCancelEdit}
+                  onClick={onCancelClick}
                   className="flex items-center gap-1.5 bg-theme-border-input hover:bg-theme-border-active text-theme-text-secondary font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all cursor-pointer border border-theme-border-active"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -237,7 +372,7 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
             ) : (
               <button
                 disabled={isEditorEmpty || !selectedRecordIdForSave}
-                onClick={handleSaveAsWord}
+                onClick={onSaveAsClick}
                 className={`flex items-center gap-1.5 font-semibold text-xs py-2.5 px-4 rounded-xl shadow-md transition-all ${
                   isEditorEmpty || !selectedRecordIdForSave
                     ? "bg-theme-border-input text-theme-text-muted border border-theme-border-active cursor-not-allowed"
@@ -318,6 +453,16 @@ export const SaveFileHelperPanel: React.FC<SaveFileHelperPanelProps> = ({
         confirmText={permissionModal.confirmText}
         cancelText="No"
         isDanger={false}
+      />
+
+      <UnsavedDraftModal
+        isOpen={isDraftModalOpen}
+        formType="quotation_save_file"
+        timestamp={storedDraft?.metadata.timestamp}
+        previewData={draftPreviewData}
+        onContinue={handleContinueDraft}
+        onDiscard={handleDiscardDraft}
+        onClose={handleDismissModal}
       />
     </div>
   );
