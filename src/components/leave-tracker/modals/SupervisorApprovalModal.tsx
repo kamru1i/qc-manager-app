@@ -72,6 +72,7 @@ export const SupervisorApprovalModal: React.FC<SupervisorApprovalModalProps> = (
       >
         <LeaveApprovalPanel
           role="supervisor"
+          onCloseModal={handleCloseMain}
           profilesList={profilesList}
           reviewingIds={reviewingIds}
           approvedIds={approvedIds}

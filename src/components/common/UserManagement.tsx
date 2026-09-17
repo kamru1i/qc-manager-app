@@ -173,11 +173,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi'>(() => {
     if (typeof window === 'undefined') return 'leave';
     try {
-      const sessionSaved = sessionStorage.getItem('viewingStaffSubTab');
+      const sessionRaw = sessionStorage.getItem('viewingStaffSubTab');
+      const sessionSaved = sessionRaw === 'leave_history' ? 'leave' : sessionRaw;
       if (sessionSaved === 'profile' || sessionSaved === 'leave' || sessionSaved === 'quotes' || sessionSaved === 'analytics' || sessionSaved === 'kpi') {
         return sessionSaved;
       }
-      const saved = localStorage.getItem('user_management_active_subtab');
+      const raw = localStorage.getItem('user_management_active_subtab');
+      const saved = raw === 'leave_history' ? 'leave' : raw;
       if (saved === 'profile' || saved === 'leave' || saved === 'quotes' || saved === 'analytics' || saved === 'kpi') {
         return saved as any;
       }
@@ -370,7 +372,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         const staff = allDisplayProfiles.find(p => p.id === savedStaffId);
         if (staff && hasStaffAccess(staff)) {
           setViewingStaff(staff);
-          const savedSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'profile') as any;
+          const rawSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'leave') as any;
+          const savedSubTab = rawSubTab === 'leave_history' ? 'leave' : rawSubTab;
           if (savedSubTab === 'profile' || savedSubTab === 'leave' || savedSubTab === 'quotes' || savedSubTab === 'analytics' || savedSubTab === 'kpi') {
             handleSetActiveSubTab(savedSubTab);
           }
@@ -412,13 +415,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   // Pre-select staff member from sessionStorage when redirected from other pages
   useEffect(() => {
-    if (profiles.length > 0) {
+    if (profiles.length > 0 || pendingDisplayProfiles.length > 0) {
       const savedStaffId = sessionStorage.getItem("viewingStaffId");
       if (savedStaffId) {
-        const staff = profiles.find(p => p.id === savedStaffId);
+        const staff = allDisplayProfiles.find(p => p.id === savedStaffId);
         if (staff && hasStaffAccess(staff)) {
           updateViewingStaff(staff);
-          const savedSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'profile') as any;
+          const rawSubTab = (sessionStorage.getItem("viewingStaffSubTab") || localStorage.getItem('user_management_active_subtab') || 'leave') as any;
+          const savedSubTab = rawSubTab === 'leave_history' ? 'leave' : rawSubTab;
           if (savedSubTab === 'profile' || savedSubTab === 'leave' || savedSubTab === 'quotes' || savedSubTab === 'analytics' || savedSubTab === 'kpi') {
             handleSetActiveSubTab(savedSubTab);
           }
@@ -427,7 +431,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         }
       }
     }
-  }, [profiles, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab]);
+  }, [allDisplayProfiles, profiles.length, pendingDisplayProfiles.length, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab]);
 
   // Backspace to go back from details view
   useEffect(() => {
@@ -1378,16 +1382,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
   }, []);
 
-  useAppEvent('open-user-profile', ({ userId, subtab }: { userId: string; subtab?: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi' }) => {
+  useAppEvent('open-user-profile', ({ userId, subtab }: { userId: string; subtab?: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi' | 'leave_history' }) => {
     if (!userId) return;
-    const target = profiles.find((p) => p.id === userId);
+    const target = allDisplayProfiles.find((p) => p.id === userId) || profiles.find((p) => p.id === userId);
     if (target && hasStaffAccess(target)) {
       updateViewingStaff(target);
       if (subtab) {
-        handleSetActiveSubTab(subtab);
+        const normalized = subtab === 'leave_history' ? 'leave' : subtab;
+        handleSetActiveSubTab(normalized as any);
       }
     }
-  }, [profiles, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab]);
+  }, [allDisplayProfiles, profiles, updateViewingStaff, hasStaffAccess, handleSetActiveSubTab]);
 
   const handleSubmitRequestWrapper = async (data: UserCreationSubmittedData) => {
     setSubmitting(true);

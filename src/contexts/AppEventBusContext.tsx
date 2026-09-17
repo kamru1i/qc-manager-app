@@ -38,6 +38,7 @@ export interface AppEventMap {
   'supervisor-approve-chuti': { id: string; approve: boolean };
   'open-admin-approvals-modal': void;
   'open-supervisor-approvals-modal': void;
+  'close-approval-modals': void;
   'open-user-notifications-modal': void;
   'user-creation-requests-updated': void;
   'open-user-creation-review': UserCreationRequest;
@@ -48,7 +49,7 @@ export interface AppEventMap {
   'theme-change': { theme: 'dark' | 'light' } | string;
 
   // GLOBAL SEARCH & DEEP NAVIGATION
-  'open-user-profile': { userId: string; subtab?: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi' };
+  'open-user-profile': { userId: string; subtab?: 'profile' | 'leave' | 'quotes' | 'analytics' | 'kpi' | 'leave_history' };
   'filter-quotations-branch': { branch?: string };
   'filter-quotations-search': { search?: string };
   'filter-mistakes': { search?: string; date?: string; branch?: string };

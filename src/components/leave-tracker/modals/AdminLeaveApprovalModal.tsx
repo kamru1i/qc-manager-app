@@ -92,6 +92,7 @@ export function AdminLeaveApprovalModal({
     >
       <LeaveApprovalPanel
         role="admin"
+        onCloseModal={handleClose}
         profilesList={profilesList}
         reviewingIds={reviewingIds}
         approvedIds={approvedIds}

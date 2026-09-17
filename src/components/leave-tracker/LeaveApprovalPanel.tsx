@@ -29,10 +29,16 @@ import {
   ActionableCategory,
   ActionableItem,
   ActionableDetailItem,
+  ActionableType,
 } from '@/types/actionableWorkflows';
+import {
+  resolveActionableProfileDestination,
+  executeActionableProfileNavigation,
+} from '@/utils/actionableWorkflowHelpers';
 
 interface LeaveApprovalPanelProps {
   role: 'admin' | 'supervisor';
+  onCloseModal?: () => void;
   profilesList: Profile[];
   reviewingIds: Set<string>;
   approvedIds: Set<string>;
@@ -65,6 +71,7 @@ interface LeaveApprovalPanelProps {
 
 export function LeaveApprovalPanel({
   role,
+  onCloseModal,
   profilesList,
   reviewingIds,
   approvedIds,
@@ -99,17 +106,19 @@ export function LeaveApprovalPanel({
     setSearchQuery('');
   }, [role]);
 
-  const handleDeepLinkProfile = useCallback((userId?: string) => {
-    if (!userId) return;
-    try {
-      localStorage.setItem('user_management_viewing_staff_id', userId);
-      localStorage.setItem('user_management_active_subtab', 'profile');
-      localStorage.setItem('settings_active_subtab', 'user_management');
-      emit('workspace-change', 'user_management');
-    } catch (e) {
-      console.error('Error navigating to user profile:', e);
-    }
-  }, [emit]);
+  const handleDeepLinkProfile = useCallback(
+    (userId?: string, itemType?: ActionableType, itemCategory?: ActionableCategory) => {
+      if (!userId) return;
+      const destinationTab = resolveActionableProfileDestination(itemType, itemCategory);
+      executeActionableProfileNavigation({
+        userId,
+        destinationTab,
+        emit,
+        onCloseModal,
+      });
+    },
+    [emit, onCloseModal]
+  );
 
   const handleApproveResponse = async (nId: string, itemType: string) => {
     setLocalApprovingIds((prev) => new Set(prev).add(nId));
@@ -269,7 +278,7 @@ export function LeaveApprovalPanel({
         deepLink: user?.id
           ? {
               label: 'View Profile',
-              onClick: () => handleDeepLinkProfile(user.id),
+              onClick: () => handleDeepLinkProfile(user.id, 'leave_request', 'leave'),
             }
           : undefined,
         rawItem: r,
@@ -358,7 +367,7 @@ export function LeaveApprovalPanel({
           deepLink: user?.id
             ? {
                 label: 'View Profile',
-                onClick: () => handleDeepLinkProfile(user.id),
+                onClick: () => handleDeepLinkProfile(user.id, 'reserve_adjustment', 'leave'),
               }
             : undefined,
           rawItem: r,
@@ -448,7 +457,7 @@ export function LeaveApprovalPanel({
           deepLink: user?.id
             ? {
                 label: 'View Profile',
-                onClick: () => handleDeepLinkProfile(user.id),
+                onClick: () => handleDeepLinkProfile(user.id, 'leave_removal', 'leave'),
               }
             : undefined,
           rawItem: req,
@@ -538,7 +547,7 @@ export function LeaveApprovalPanel({
           ],
           deepLink: {
             label: 'View Profile',
-            onClick: () => handleDeepLinkProfile(p.id),
+            onClick: () => handleDeepLinkProfile(p.id, 'profile_change', 'user_management'),
           },
           rawItem: p,
         });
@@ -595,7 +604,7 @@ export function LeaveApprovalPanel({
           ],
           deepLink: {
             label: 'View Profile',
-            onClick: () => handleDeepLinkProfile(p.id),
+            onClick: () => handleDeepLinkProfile(p.id, 'password_reset', 'user_management'),
           },
           rawItem: p,
         });
@@ -721,10 +730,13 @@ export function LeaveApprovalPanel({
             if (onOpenUserCreationReview) {
               onOpenUserCreationReview(req);
             } else {
+              onCloseModal?.();
+              emit('close-approval-modals');
               emit('workspace-change', 'user_management');
+              emit('settings-subtab-change', { subtab: 'user_management' });
               setTimeout(() => {
                 emit('open-user-creation-review', req);
-              }, 100);
+              }, 60);
             }
           },
         });

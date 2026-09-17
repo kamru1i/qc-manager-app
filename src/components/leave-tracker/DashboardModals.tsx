@@ -281,6 +281,11 @@ export const DashboardModals = () => {
     fetchPendingUserCreationRequests();
   }, [fetchPendingUserCreationRequests]);
 
+  useAppEvent('close-approval-modals', () => {
+    setShowLeaveApprovalModal(false);
+    setShowSupervisorApprovalModal(false);
+  });
+
   useRealtimeHandler(
     'user_creation_requests',
     React.useCallback(() => {

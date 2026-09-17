@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
   return createPortal(
     <div
       className={`fixed inset-0 z-100 overflow-y-auto bg-theme-page-bg/80 backdrop-blur-md transition-opacity duration-200 ease-out ${
-        isAnimated ? "opacity-100" : "opacity-0"
+        isAnimated ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
       <div className="flex min-h-full items-center justify-center p-4">
