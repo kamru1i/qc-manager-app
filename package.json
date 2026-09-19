@@ -1,6 +1,6 @@
 {
   "name": "qc-manager",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint",
     "tauri": "tauri",
-    "generate-icons": "node scripts/generate-icons.js"
+    "generate-icons": "node scripts/generate-icons.js",
+    "version:sync": "node scripts/sync-version.js",
+    "version:check": "node scripts/sync-version.js --check"
   },
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.1",

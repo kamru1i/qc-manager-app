@@ -15,8 +15,15 @@ export interface DownloadInfo {
 }
 
 export const VERSION = packageJson.version;
-export const REPO = "kamru1i/qc-manager-app";
-export const MANIFEST_URL = `https://github.com/${REPO}/releases/latest/download/latest.json`;
+// Public repo that hosts the downloadable binaries. The source repo
+// (bnfcorporate/qc-manager-app) is private, and private release assets return 404 to
+// the unauthenticated desktop/Android updaters — so binaries are published here instead.
+export const REPO = "bnfcorporate/qc-manager-releases";
+
+// B&F-owned, permanent update manifest URL. Served by src/app/updater/latest.json/route.ts,
+// which proxies whichever store currently holds the binaries. Every shipped desktop build
+// bakes this URL in permanently, so it must never change again — change the route instead.
+export const MANIFEST_URL = "https://chuti.bnfcorporate.com/updater/latest.json";
 
 const getReleaseUrl = (fileName: string) =>
   `https://github.com/${REPO}/releases/download/v${VERSION}/${fileName}`;
